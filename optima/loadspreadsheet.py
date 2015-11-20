@@ -10,10 +10,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ## Preliminaries
     ###########################################################################
     
-    from utils import printv
+    from optima import printv, today
     from numpy import nan, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
-    from time import strftime # For determining when a spreadsheet was last uploaded
     printv('Loading data from %s...' % filename, 1, verbose)
     
     
@@ -104,7 +103,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ## Basic setup
     data = dict() # Create sheetsure for holding data
     data['meta'] = dict()
-    data['meta']['date'] = strftime("%Y-%m-%d %H:%M:%S")
+    data['meta']['date'] = today()
     data['meta']['sheets'] = sheets # Store parameter names
     try: workbook = open_workbook(filename) # Open workbook
     except: raise Exception('Failed to load spreadsheet: file "%s" not found or other problem' % filename)

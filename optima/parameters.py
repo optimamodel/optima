@@ -8,7 +8,7 @@ Version: 2015oct22 by cliffk
 
 
 from numpy import array, isnan, zeros, shape, mean
-from utils import printv, sanitize, save, uuid, today, getdate
+from optima import printv, sanitize, uuid, today, getdate
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -214,9 +214,9 @@ class Parameter(object):
 class Parameterset(object):
     ''' A full set of all parameters, possibly including multiple uncertainty runs '''
     
-    def __init__(self, name='default'):
+    def __init__(self, name='default', id=None):
         self.name = name # Name of the parameter set, e.g. 'default'
-        self.id = uuid() # ID
+        self.uuid = uuid() # ID
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
@@ -228,24 +228,14 @@ class Parameterset(object):
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '                ID: %s\n'    % self.id
+        output += '              UUID: %s\n'    % self.uuid
         return output
     
     
-    def save(self, filename=None): # WARNING, can we just use a generic save method? Do we really need a different one for each object?
-        ''' Save this parameter set to a file '''
-        if filename is None: filename = self.name+'.pars'
-        save(self, filename)
-        return None
     
     def makeparsfromdata(self, data, verbose=2):
         self.pars.append(makeparsfromdata(data, verbose=verbose))
         return None
-
-
-
-
-
 
 
 

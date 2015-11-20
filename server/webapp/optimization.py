@@ -13,14 +13,15 @@ import json
 import traceback
 from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from optima.dbconn import db
-from optima.async_calculate import CalculatingThread, start_or_report_calculation
-from optima.async_calculate import cancel_calculation, check_calculation
-from optima.async_calculate import check_calculation_status, good_exit_status
-from optima.utils import check_project_name, check_project_exists, load_model, save_model
-from optima.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
-from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
-from sim.dataio import fromjson, tojson
+from webapp.dbconn import db
+from webapp.async_calculate import CalculatingThread, start_or_report_calculation
+from webapp.async_calculate import cancel_calculation, check_calculation
+from webapp.async_calculate import check_calculation_status, good_exit_status
+from webapp.utils import check_project_name, check_project_exists, load_model, save_model
+from webapp.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
+# TODO fix after v2
+# from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
+from dataio import fromjson, tojson
 
 # route prefix: /api/analysis/optimization
 optimization = Blueprint('optimization',  __name__, static_folder = '../static')
@@ -41,8 +42,9 @@ def getOptimizationParameters():
         # save the defaults once and forever, so that we won't painfully retrieve it later
         D = fromjson(D_dict)
         if 'data' in D:
-            optimizations = tojson(defaultoptimizations(D))
-            D_dict['optimizations'] = optimizations
+            # TODO fix after v2
+            # optimizations = tojson(defaultoptimizations(D))
+            # D_dict['optimizations'] = optimizations
             save_model(project_id, D_dict)
         else:
             optimizations = []
@@ -63,7 +65,12 @@ def startOptimization():
     # get project name
     project_id = request.project_id
     project_name = request.project_name
-    can_start, can_join, current_calculation = start_or_report_calculation(current_user.id, project_id, optimize, db.session)
+
+    # TODO fix after v2
+    # can_start, can_join, current_calculation = start_or_report_calculation(
+    #     current_user.id, project_id, optimize, db.session)
+    can_start, can_join, current_calculation = (False, False, None)
+
     if can_start:
         # Prepare arguments
         args = {'verbose':2}
@@ -79,7 +86,8 @@ def startOptimization():
         timelimit = int(data.get("timelimit")) # for the thread
 #            args["maxiters"] = 5 #test
         numiter = 1 #IMPORTANT: only run it once
-        CalculatingThread(db.engine, current_user, project_id, timelimit, numiter, optimize, args, with_stoppingfunc = True).start()
+        # TODO fix after v2
+        # CalculatingThread(db.engine, current_user, project_id, timelimit, numiter, optimize, args, with_stoppingfunc = True).start()
         msg = "Starting optimization thread for user %s project %s:%s" % (current_user.name, project_id, project_name)
         current_app.logger.debug(msg)
         return jsonify({"result": msg, "join":True})
@@ -94,7 +102,8 @@ def stopCalibration():
     """ Stops calibration """
     project_id = request.project_id
     project_name = request.project_name
-    cancel_calculation(current_user.id, project_id, optimize, db.session)
+    # TODO fix after v2
+    # cancel_calculation(current_user.id, project_id, optimize, db.session)
     return jsonify({"result": "optimize calculation for user %s project %s:%s requested to stop" \
         % (current_user.name, project_id, project_name)})
 
@@ -117,7 +126,9 @@ def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
     new_optimizations = D_dict_new.get('optimizations')
     if not new_optimizations:
         D_new = fromjson(D_dict_new)
-        new_optimizations = tojson(defaultoptimizations(D_new))
+        # TODO fix after v2
+        # new_optimizations = tojson(defaultoptimizations(D_new))
+        new_optimizations = {}
     error_text = None
     status = None
 
@@ -151,17 +162,17 @@ def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
         if optimizations and name in names:
             index = names.index(name)
             if ('result' in optimizations[index]) and (new_optimization.get('result')!=optimizations[index]['result']):
+                current_app.logger.debug("Found updated result for: name %s" % name)
                 new_optimizations[new_index] = deepcopy(optimizations[index])
                 #warn that these results are transient
                 is_dirty = True
+
+    response_status = 200
     result['status'] = status
     result['optimizations'] = new_optimizations
     result['dirty'] = is_dirty
     if error_text:
         result['exception'] = error_text
-    response_status = 200
-    if status == 'Failed':
-        response_status = 500
     return jsonify(result), response_status
 
 
@@ -192,7 +203,8 @@ def revertWorkingModel():
     reply = {'optimizations': D_dict.get('optimizations')}
     if not reply['optimizations']:
         D = fromjson(D_dict)
-        reply['optimizations'] = tojson(defaultoptimizations(D))
+        # TODO fix after v2
+        # reply['optimizations'] = tojson(defaultoptimizations(D))
     return jsonify(reply)
 
 
@@ -237,14 +249,19 @@ def create_optimization():
         if objectives:
             objectives = fromjson( objectives )
         else:
-            objectives = defaultobjectives(D)
+            # TODO fix after v2
+            # objectives = defaultobjectives(D)
+            pass
         if constraints:
             constraints = fromjson( constraints )
         else:
-            constraints = defaultconstraints(D)
+            # TODO fix after v2
+            # constraints = defaultconstraints(D)
+            pass
 
     #save new optimization slot - no need to convert back and forth the whole project for that now
-    D_dict = saveoptimization(D_dict, name, objectives, constraints)
+    # TODO fix after v2
+    # D_dict = saveoptimization(D_dict, name, objectives, constraints)
     D_dict['optimizations'] = tojson(D_dict['optimizations'])
     save_model(project_id, D_dict)
     #return all available optimizations back

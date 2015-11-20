@@ -7,6 +7,7 @@ var karma = require('gulp-karma');
 var livereload = require('gulp-livereload');
 var ngAnnotate = require('gulp-ng-annotate');
 var postcss = require('gulp-postcss');
+var replace = require('gulp-replace');
 var rjs = require('gulp-requirejs');
 var sass = require('gulp-sass');
 var spawn = require('child_process').spawn;

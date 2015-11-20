@@ -6,7 +6,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    * save optimization results.
    */
   module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
+    $interval, $injector, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
     optimizations, optimizationHelpers, info) {
 
     $scope.initialize = function () {
@@ -14,6 +14,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // Make sure that the interval is terminated when this controller is destroyed
         stopTimer();
       });
+
+      $scope.optimizationInProgress = false;
 
       $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
       $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
@@ -89,6 +91,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       var errorMessages = [];
+
+      // scope for values
+      $scope.values = {};
+      $scope.values.constraints = {};
+      // need to define values for radiobutton which are not strings
+      $scope.values.constraints.txelig = [1,2,3];
 
       // Set defaults
       $scope.params = {};
@@ -642,6 +650,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.initTimer = function (status) {
       if ( !angular.isDefined( optimizationTimer ) ) {
+        $scope.optimizationInProgress = true;
         // Keep polling for updated values after every 5 seconds till we get an error.
         // Error indicates that the model is not optimizing anymore.
         optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
@@ -684,15 +693,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function checkWorkingOptimization () {
       $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
         .success( function (data, status, headers, config) {
-          if (data.status == 'Done') {
+          if (data.status == 'Failed') {
+            if($scope.optimizationInProgress === true) {
+              var modalService = $injector.get('modalService');
+              var message = 'Something went wrong. Please try again or contact the support team.';
+              modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
+            }
+            $scope.errorText = data.exception;
             stopTimer();
           } else {
-            if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
-            if (data.status == 'Stopping') $scope.state.optimizationStatus = statusEnum.STOPPING;
-            $scope.initTimer($scope.state.optimizationStatus);
+            if (data.status == 'Done') {
+              stopTimer();
+            } else {
+              if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
+              if (data.status == 'Stopping') $scope.state.optimizationStatus = statusEnum.STOPPING;
+              $scope.initTimer($scope.state.optimizationStatus);
+            }
+            $scope.state.isDirty = data.dirty;
+            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
           }
-          $scope.state.isDirty = data.dirty;
-          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
         })
         .error( function (data, status, headers, config) {
           if (data && data.exception) {
@@ -726,6 +745,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $interval.cancel(optimizationTimer);
         optimizationTimer = undefined;
         $scope.state.optimizationStatus = statusEnum.NOT_RUNNING;
+        $scope.optimizationInProgress = false;
         cfpLoadingBar.complete();
       }
     }
@@ -864,6 +884,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
         _.extend($scope.params.objectives, objectives);
         _.extend($scope.params.constraints, optimization.constraints);
+        $scope.moneyObjectives = $scope.params.objectives.money.objectives;
       }
       if (optimization.result) {
         updateGraphs(optimization.result);

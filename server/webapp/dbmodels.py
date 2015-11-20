@@ -1,5 +1,5 @@
 from sqlalchemy.dialects.postgresql import JSON
-from optima.dbconn import db
+from webapp.dbconn import db
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 

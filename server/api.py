@@ -1,27 +1,25 @@
 from flask import Flask, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
-from sim.dataio import DATADIR
-import optima.dbconn
+import webapp.dbconn
 import os
 import sys
 import logging
 from logging.handlers import SysLogHandler
 
 app = Flask(__name__)
-
 app.config.from_object('config')
-app.config['UPLOAD_FOLDER'] = DATADIR
+
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-optima.dbconn.db = SQLAlchemy(app)
+webapp.dbconn.db = SQLAlchemy(app)
 
-from optima.scenarios import scenarios
-from optima.model import model
-from optima.user import user
-from optima.project import project
-from optima.optimization import optimization
+from webapp.scenarios import scenarios
+from webapp.model import model
+from webapp.user import user
+from webapp.project import project
+from webapp.optimization import optimization
 
 app.register_blueprint(user, url_prefix = '/api/user')
 app.register_blueprint(project, url_prefix = '/api/project')
@@ -42,11 +40,15 @@ def root():
     return 'Optima API v.1.0.0'
 
 def init_db():
-    optima.dbconn.db.create_all()
+    webapp.dbconn.db.create_all()
 
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s '
+        '[in %(pathname)s:%(lineno)d]'
+    ))
     app.logger.addHandler(stream_handler)
     app.logger.setLevel(logging.DEBUG)
 

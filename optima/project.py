@@ -11,27 +11,11 @@ Version: 2015nov02 by cliffk
 ## Header -- imports and version
 #######################################################################################################
 
-
-## Load general modules
-from numpy import array # TEMP?
-
-## Load classes
-from settings import Settings
-from parameters import Parameterset
-
-
-## Load other Optima functions
-from loadspreadsheet import loadspreadsheet
-#from makesimpars import makesimpars
-from model import model
-from utils import save, load, run, getdate, uuid, today, deepcopy
+from optima import Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
+from numpy import array
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 version = 2.0
-
-
-
-
 
 
 #######################################################################################################
@@ -62,7 +46,7 @@ class Project(object):
         4. rename -- rename a structure in the list
         5. show -- show information on all items in the list(s)
     
-    Version: 2015nov02 by cliffk
+    Version: 2015nov19 by cliffk
     """
     
     
@@ -73,7 +57,7 @@ class Project(object):
     
     def __init__(self, name='default', spreadsheet=None):
         ''' Initialize the project ''' 
-        
+
         ## Define the structure sets
         self.parsets = {}
         self.respsets = {}
@@ -86,8 +70,7 @@ class Project(object):
         self.data = {} # Data from the spreadsheet
         
         ## Define metadata
-        self.filename = None
-        self.id = uuid()
+        self.uuid = uuid()
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
@@ -112,7 +95,6 @@ class Project(object):
         output = '\n'
         output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
-        output += '          Filename: %s\n'    % self.filename
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
         output += '     Response sets: %i\n'    % len(self.respsets)
@@ -125,7 +107,7 @@ class Project(object):
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
-        output += '                ID: %s\n'    % self.id
+        output += '              UUID: %s\n'    % self.uuid
         output += '============================================================'
         return output
     
@@ -136,32 +118,6 @@ class Project(object):
     #######################################################################################################
     ## Methods for I/O and spreadsheet loading
     #######################################################################################################
-    
-    
-    def loadfromfile(self, filename=None):
-        ''' Replace the contents of the current project from the file -- WARNING, do we need this?'''
-        filename = self.reconcilefilenames(filename)
-        project = load(filename)
-        return project
-
-
-    def save(self, filename=None):
-        ''' Save the current project '''
-        filename = self.reconcilefilenames(filename)
-        save(self, filename)
-        return None
-        
-        
-    def reconcilefilenames(self, filename=None):
-        ''' If filename exists, update metadata; if not, take from metadata; if that doesn't exist, then generate '''
-        if filename: # filename is available
-            self.filename = filename # Update stored filename with the new filename
-        else: # filename isn't available
-            if self.filename is None: # metadata.filename isn't available
-                self.filename = self.name+'.prj' # Use project name as filename if none provided
-            filename = self.filename # Replace filename with stored filename            
-        return filename
-    
     
     
     def loadspreadsheet(self, filename, name='default'):
@@ -237,7 +193,7 @@ class Project(object):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
-        structlist[new] = deepcopy(structlist[orig])
+        structlist[new] = dcp(structlist[orig])
         print('Item "%s" copied to structure list "%s"' % (new, what))
         return None
     

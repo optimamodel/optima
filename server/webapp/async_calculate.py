@@ -4,8 +4,8 @@ import time
 from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sim.dataio import fromjson, tojson
-from optima.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
+from dataio import fromjson, tojson
+from webapp.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
 
 # Sentinel object used for async calculation
 sentinel = {
@@ -15,12 +15,15 @@ sentinel = {
 # acceptable exit statuses
 good_exit_status = set(['completed', 'cancelled'])
 
+# CONSIDER: methods in async_calculate are never called directly (i.e. from FE), so we don't have to prevent a user from opening the project.
+
+
 def start_or_report_calculation(user_id, project_id, func, db_session): #only called from the application
     work_type = func.__name__
     can_start = False
     can_join = False
 
-    project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+    project = db_session.query(ProjectDb).filter_by(id=project_id).first()
     if project is not None:
         work_log = WorkLogDb(project_id=project.id, work_type = work_type)
         db_session.add(work_log)
@@ -52,7 +55,7 @@ def start_or_report_calculation(user_id, project_id, func, db_session): #only ca
 def finish_calculation(user_id, project_id, func, db_session, status='completed', error_text=None, stop_now = False): # pylint: disable=W0613, R0913
     import datetime
     import dateutil.tz
-    project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+    project = db_session.query(ProjectDb).filter_by(id=project_id).first()
     if project is not None and project.working_project is not None \
     and (project.working_project.is_working or stop_now):
         if project.working_project.work_log_id is not None:
@@ -76,7 +79,7 @@ def cancel_calculation(user_id, project_id, func, db_session):
 def check_calculation(user_id, project_id, func, db_session):
     is_working = not sentinel['exit']
     if is_working:
-        project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+        project = db_session.query(ProjectDb).filter_by(id=project_id).first()
         is_working = project is not None \
         and project.working_project is not None \
         and project.working_project.is_working \
@@ -91,7 +94,7 @@ def check_calculation_status(user_id, project_id, func, db_session):
     status = 'unknown'
     error_text = None
     stop_time = None
-    project = db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+    project = db_session.query(ProjectDb).filter_by(id=project_id).first()
     if project is not None:
         work_log = db_session.query(WorkLogDb).filter_by(project_id=project.id, work_type=func.__name__). \
         order_by(desc(WorkLogDb.start_time)).first()
@@ -228,7 +231,7 @@ class CalculatingThread(threading.Thread):
         print("thread for project %s stopped" % self.project_id)
 
     def load_model_user(self, project_id, user_id, from_json=True, working_model=True):
-        project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+        project = self.db_session.query(ProjectDb).filter_by(id=project_id).first()
         model = None
         if project is not None:
             if project.working_project is None or not working_model:
@@ -241,7 +244,7 @@ class CalculatingThread(threading.Thread):
 
     def save_model_user(self, project_id, user_id, model, working_model=True):
         print("save_model_user:%s %s" % (project_id, user_id))
-        project = self.db_session.query(ProjectDb).filter_by(user_id=user_id, id=project_id).first()
+        project = self.db_session.query(ProjectDb).filter_by(id=project_id).first()
         model = tojson(model)
         if project is not None:
             if not working_model:

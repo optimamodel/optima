@@ -4,11 +4,8 @@
 
  ## Imports
 from numpy import array, zeros, exp, maximum, minimum, concatenate, hstack, absolute, median
-from utils import printv, tic, toc
+from optima import printv, tic, toc, dcp, Results
 from math import pow as mpow
-from copy import deepcopy
-from results import Results
-
 
 
 def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
@@ -27,7 +24,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ###############################################################################
     npops = len(simpars['hivprev']) # WARNING TEMP
     
-    simpars = deepcopy(simpars)
+    simpars = dcp(simpars)
     
     F = {} # WARNING, should change
     F['init']  = 1+zeros(npops)
@@ -107,7 +104,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     dxind    = concatenate([dx, tx1])       # All people who have been diagnosed
     
     # Population sizes
-    popsize = deepcopy(simpars['popsize']) # Population sizes
+    popsize = dcp(simpars['popsize']) # Population sizes
     for pop in range(npops): popsize[pop,:] *= float(F['popsize'][pop]) / simpars['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
@@ -175,7 +172,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         """ Check that the proposed change won't make it go negative in the next timestep, and print a warning if it does -- WARNING, really slow for some reason :("""
         if checknegative: # Don't actually use by default since so slow
             if ((change+amount)<0).any():
-                old = deepcopy(change)
+                old = dcp(change)
                 change = maximum(change, -safetymargin*amount) # Ensure it doesn't go below 0
                 printv('Prevented %0.0f negative people in %s at timestep %i' % (sum(abs(old-change)), label, t), 2, verbose)
                 if debug: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()

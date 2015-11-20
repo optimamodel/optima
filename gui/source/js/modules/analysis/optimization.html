@@ -420,8 +420,8 @@
 
           <div class="margin-top-xs indented" ng-repeat="item in ::state.moneyObjectives">
             <div class="checkbox-block">
-              <label ng-init="iObjective = params.objectives.money.objectives[item.id]">
-                <input type="checkbox" ng-model="iObjective.use">
+              <label>
+                <input type="checkbox" ng-model="moneyObjectives[item.id].use">
                 {{ ::item.title }}
               </label>
             </div>
@@ -429,27 +429,27 @@
               <input type="radio"
                      name="{{ ::item.id }}by_active"
                      ng-value="true"
-                     ng-disabled="!iObjective.use"
-                     ng-model="iObjective.by_active"
+                     ng-disabled="!moneyObjectives[item.id].use"
+                     ng-model="moneyObjectives[item.id].by_active"
                      required>
               by
               <!--
                 Based on use & by_active the input is rendered with different validation
                 requirements to make sure the form can still be $valid without proper values here.
               -->
-              <input ng-if="iObjective.use && iObjective.by_active"
+              <input ng-if="moneyObjectives[item.id].use && moneyObjectives[item.id].by_active"
                      type="number"
                      name="moneyObjective{{ ::item.id }}by"
                      class="txbox __inline __s"
-                     ng-model="iObjective.by"
+                     ng-model="moneyObjectives[item.id].by"
                      required
                      min="0"
                      max="100">
-              <input ng-if="!iObjective.use || !iObjective.by_active"
+              <input ng-if="!moneyObjectives[item.id].use || !moneyObjectives[item.id].by_active"
                      type="number"
                      name="moneyObjective{{ ::item.id }}by"
                      class="txbox __inline __s"
-                     ng-model="iObjective.by"
+                     ng-model="moneyObjectives[item.id].by"
                      disabled>
               %
             </label>
@@ -457,8 +457,8 @@
               <input type="radio"
                      name="{{ ::item.id }}by_active"
                      ng-value="false"
-                     ng-disabled="!iObjective.use"
-                     ng-model="iObjective.by_active"
+                     ng-disabled="!moneyObjectives[item.id].use"
+                     ng-model="moneyObjectives[item.id].by_active"
                      required>
               to <
 
@@ -466,23 +466,23 @@
                 Based on use & by_active the input is rendered with different validation
                 requirements to make sure the form can still be $valid without proper values here.
               -->
-              <input ng-if="iObjective.use && !iObjective.by_active"
+              <input ng-if="moneyObjectives[item.id].use && !moneyObjectives[item.id].by_active"
                      type="number"
                      name="moneyObjective{{ ::item.id }}to"
                      class="txbox __inline __s"
-                     ng-model="iObjective.to"
+                     ng-model="moneyObjectives[item.id].to"
                      required
                      min="0">
-              <input ng-if="!iObjective.use || iObjective.by_active"
+              <input ng-if="!moneyObjectives[item.id].use || moneyObjectives[item.id].by_active"
                      type="number"
                      name="moneyObjective{{ ::item.id }}to"
                      class="txbox __inline __s"
-                     ng-model="iObjective.to"
+                     ng-model="moneyObjectives[item.id].to"
                      disabled>
             </label>
 
             <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}by.$error"
-                 ng-show="iObjective.use && iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$invalid"
+                 ng-show="moneyObjectives[item.id].use && moneyObjectives[item.id].by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}by.$invalid"
                  class="grid">
               <div class="error-hint 6" ng-message="required">Please provide a value</div>
               <div class="error-hint 6" ng-message="number">The value should be a number</div>
@@ -490,7 +490,7 @@
               <div class="error-hint 6" ng-message="max">The maximum value is 100</div>
             </div>
             <div ng-messages="state.OptimizationForm.moneyObjective{{ ::item.id }}to.$error"
-                 ng-show="iObjective.use && !iObjective.by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$invalid"
+                 ng-show="moneyObjectives[item.id].use && !moneyObjectives[item.id].by_active && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$touched && state.OptimizationForm.moneyObjective{{ ::item.id }}to.$invalid"
                  class="grid">
               <div class="error-hint 6" ng-message="required">Please provide a value</div>
               <div class="error-hint 6" ng-message="number">The value should be a number</div>
@@ -537,15 +537,15 @@
           <div><h2>Treatment eligibility</h2></div>
           <div>
             <label>
-              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="1">
+              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" ng-value="values.constraints.txelig[0]">
               All people living with HIV
             </label><br>
             <label>
-              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="2">
+              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" ng-value="values.constraints.txelig[1]">
               All people living with HIV with CD4 count < 500
             </label><br>
             <label>
-              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" value="3">
+              <input type="radio" name="eligibility" ng-model="params.constraints.txelig" ng-value="values.constraints.txelig[2]">
               All people living with HIV with CD4 count < 350
             </label>
           </div>
