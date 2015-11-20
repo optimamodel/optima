@@ -1,5 +1,5 @@
 from sqlalchemy.dialects.postgresql import JSON
-from webapp.dbconn import db
+from server.webapp.dbconn import db
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 

@@ -5,7 +5,7 @@ from signal import *
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from dataio import fromjson, tojson
-from webapp.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
+from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, WorkLogDb
 
 # Sentinel object used for async calculation
 sentinel = {

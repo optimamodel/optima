@@ -7,17 +7,18 @@ from dataio import upload_dir_user, TEMPLATEDIR, fullpath
 # from sim.updatedata import updatedata
 # TODO fix after v2
 # from sim.makeproject import makeproject, makeworkbook
-from webapp.utils import allowed_file, project_exists, delete_spreadsheet, load_project
-from webapp.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
-from webapp.utils import verify_admin_request
-from webapp.utils import load_model, save_model
+from server.webapp.utils import allowed_file, project_exists, delete_spreadsheet, load_project
+from server.webapp.utils import check_project_name, report_exception, model_as_bunch, model_as_dict
+from server.webapp.utils import verify_admin_request
+from server.webapp.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from webapp.dbconn import db
-from webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
 import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
+from optima.optima import Project
 
 # route prefix: /api/project
 project = Blueprint('project',  __name__, static_folder = '../static')

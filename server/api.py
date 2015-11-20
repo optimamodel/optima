@@ -1,7 +1,6 @@
 from flask import Flask, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
-import webapp.dbconn
 import os
 import sys
 import logging
@@ -13,13 +12,23 @@ app.config.from_object('config')
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-webapp.dbconn.db = SQLAlchemy(app)
+if __name__ == "__main__" and __package__ is None:
+    import sys
+    from os import path
+    sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+else:
+    print "__package__", __package__
 
-from webapp.scenarios import scenarios
-from webapp.model import model
-from webapp.user import user
-from webapp.project import project
-from webapp.optimization import optimization
+from optima.optima import Project
+
+import server.webapp.dbconn
+server.webapp.dbconn.db = SQLAlchemy(app)
+
+from server.webapp.scenarios import scenarios
+from server.webapp.model import model
+from server.webapp.user import user
+from server.webapp.project import project
+from server.webapp.optimization import optimization
 
 app.register_blueprint(user, url_prefix = '/api/user')
 app.register_blueprint(project, url_prefix = '/api/project')
@@ -40,7 +49,7 @@ def root():
     return 'Optima API v.1.0.0'
 
 def init_db():
-    webapp.dbconn.db.create_all()
+    server.webapp.dbconn.db.create_all()
 
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)

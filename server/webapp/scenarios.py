@@ -4,7 +4,7 @@ import traceback
 from dataio import tojson, fromjson
 # TODO fix after v2
 # from sim.scenarios import runscenarios
-from webapp.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project
+from server.webapp.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project
 from flask.ext.login import login_required # pylint: disable=E0611,F0401
 
 # route prefix: /api/analysis/scenarios
