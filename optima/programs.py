@@ -199,34 +199,42 @@ class Programset(object):
 
                 thisparam[tpt][tp] = {}
                 delta[tpt][tp] = {}
-                outcomes[tpt][tp] = self.covout[tpt][tp].ccopars['intercept']
                 thiscov[tp] = {}
-                
                 for prog in self.progs_by_targetpar(tpt)[tp]:
-                    x = budget[prog.name]
-                    thiscov[tp][prog.name] = prog.getcoverage(x=x,t=t,P=P,parsetname='default',proportion=True,total=False)[tp]
-                    delta[tpt][tp][prog.name] = self.covout[tpt][tp].ccopars[prog.name]
+
+                    if not self.covout[tpt][tp].ccopars[prog.name]:
+                        print('WARNING: no coverage-outcome function defined for optimizable program, setting coverage to None...')
+                        outcomes[tpt][tp] = None
+                    else:
+                        outcomes[tpt][tp] = self.covout[tpt][tp].getccopar(t=t)['intercept']
+
+                        x = budget[prog.name]
+                        thiscov[tp][prog.name] = prog.getcoverage(x=x,t=t,P=P,parsetname='default',proportion=True,total=False)[tp]
+                        delta[tpt][tp][prog.name] = self.covout[tpt][tp].getccopar(t=t)[prog.name]
                 
                 if interaction == 'additive':
                     # Outcome += c1*delta_out1 + c2*delta_out2
                     for prog in self.progs_by_targetpar(tpt)[tp]:
-                        outcomes[tpt][tp] += thiscov[tp][prog.name]*delta[tpt][tp][prog.name]
+                        if not self.covout[tpt][tp].ccopars[prog.name]:
+                            print('WARNING: no coverage-outcome function defined for optimizable program, setting coverage to None...')
+                            outcomes[tpt][tp] = None
+                        else: outcomes[tpt][tp] += thiscov[tp][prog.name]*delta[tpt][tp][prog.name]
                         
                 elif interaction == 'nested':
                     # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
-                    # The programs need to be sorted *at each time*
                     for yr in range(nyrs):
-                        cov = [j[yr,:] for j in thiscov[tp].values()]
-                        delt = [j[yr] for j in delta[tpt][tp].values()]
-
+                        cov,delt = [],[]
+                        for prog in thiscov[tp].keys():
+                            cov.append(thiscov[tp][prog][yr])
+                            delt.append(delta[tpt][tp][prog][yr])
                         cov_tuple = sorted(zip(cov,delt)) # A tuple storing the coverage and delta out, ordered by coverage
-                        for j in xrange(0,len(cov_tuple)): # For each entry in here
+                        for j in range(len(cov_tuple)): # For each entry in here
                             if j == 0:
                                 c1 = cov_tuple[j][0]
                             else:
                                 c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
-                            outcomes[pop][effect][i] += c1*numpy.max([x[1] for x in cov_tuple[j:]])                
-                    
+                            outcomes[tpt][tp][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
+            
                 elif interaction == 'random':
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
                     # Outcome += c1(1-c2-c3)* delta_out1 + c2(1-c1-c3)*delta_out2 + c3(1-c2-c3)*delta_out3 + c1c2c3* max(delta_out1,delta_out2,delta_out3)
@@ -266,7 +274,7 @@ class Programset(object):
                     raise Exception('Unknown reachability type "%s"',interaction)
 
         
-        return thiscov, thisparam, outcomes
+        return outcomes
 
 class Program(object):
     ''' Defines a single program. 
@@ -363,20 +371,20 @@ class Program(object):
         else: return targetpopsize
 
     def getcoverage(self,x,t,P,parsetname,targetpopprop=None,total=True,proportion=False):
-        '''Returns coverage in a given year for a given spending amount'''
-        from numpy import transpose
+        '''Returns coverage for a time/spending vector'''
+
         poptargeted = self.gettargetpopsize(t=t,P=P,parsetname=parsetname,total=False)
         totaltargeted = sum(poptargeted.values())
-        totalreached = self.costcovfn.evaluate(x,totaltargeted,t)
+        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t)
         
         popreached = {}
         if not total and not targetpopprop: # calculate targeting since it hasn't been provided
             targetpopprop = {}
             for targetpop in self.targetpops:
                 targetpopprop[targetpop] = poptargeted[targetpop]/totaltargeted
-                popreached[targetpop] = transpose(transpose(totalreached)*targetpopprop[targetpop]/transpose(totaltargeted)) # Obviously need to fix this
+                popreached[targetpop] = totalreached*targetpopprop[targetpop]/totaltargeted # Obviously need to fix this
 
-        if total: return transpose(transpose(totalreached)/totaltargeted) if proportion else totalreached
+        if total: return totalreached/totaltargeted if proportion else totalreached
         else: return popreached
         
 class CCOF(object):
@@ -468,6 +476,7 @@ class CCOF(object):
         return ccopar
 
     def evaluate(self,x,popsize,t,randseed=None,bounds=None):
+        if not len(x)==len(t): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
         ccopar = self.getccopar(t,randseed,bounds)
         return self.function(x,ccopar,popsize)
 
@@ -485,17 +494,11 @@ class Costcov(CCOF):
             
     def function(self,x,ccopar,popsize):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import exp, zeros, array
-        u = ccopar['unitcost']
-        s = ccopar['saturation']
-        if isinstance(x,(float,int)): typex, x = 'single',array([x])
+        from numpy import exp, array
+        u = array(ccopar['unitcost'])
+        s = array(ccopar['saturation'])
         if isinstance(popsize,(float,int)): popsize = array([popsize])
-        else: typex = 'multiple'
-        nyrs,npts = len(u),len(x)
-        y = zeros((nyrs,npts))
-        for yr in range(nyrs):
-            y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
-        return y if not typex=='single' else y[0]     
+        return (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
 
     def emptypars(self):
         ccopars = {}

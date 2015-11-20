@@ -190,9 +190,9 @@ if 'makeprograms' in tests:
 
         # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
         from numpy import linspace
-        HTC.getcoverage(x=linspace(0,1e6,11),t=[2013,2015],P=P,parsetname='default',total=False)
+        HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],P=P,parsetname='default',total=False)
         # If you want to evaluate it for a particular population size, can also do...
-        HTC.costcovfn.evaluate(x=1e6,popsize=1e5,t=2015)
+        HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015])
 
     print('Running make programs set test...')
     R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
@@ -224,9 +224,9 @@ if 'makeprograms' in tests:
     
         # 7. Get a vector of coverage levels corresponding to a vector of program allocations
         from numpy import array
-        budget={'HTC':array([2e5,3e5]),'SBCC':array([1e5,2e5]),'MGT':array([2e5,3e5])}
-        R.getprogcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
-        R.getpopcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
+        budget={'HTC':array([2e5,3e5,4e5]),'SBCC':array([1e5,2e5,1e5]),'MGT':array([2e5,3e5,3e5])}
+        R.getprogcoverage(budget=budget,t=[2015,2016,2020],P=P,parsetname='default')
+        R.getpopcoverage(budget=budget,t=[2015,2016,2020],P=P,parsetname='default')
 
         # 8. Add parameters for defining coverage-outcome function.
         R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3, 't': 2013.0, 'HTC': 0.6, 'SBCC':0.1})
@@ -244,7 +244,7 @@ if 'makeprograms' in tests:
         R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
         # 12. Get a set of parameter values corresponding to a vector of program allocations
-        R.getoutcomes(budget=budget,t=[2015,2016],P=P,parsetname='default',perturb=False)
+        R.getoutcomes(budget=budget,t=[2015,2016,2020],P=P,parsetname='default',interaction='nested',perturb=False)
 
     done(t)
 
