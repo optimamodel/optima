@@ -5,7 +5,7 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-from utils import getdate, today, uuid, printv
+from optima import printv, uuid, today, getdate
 from collections import defaultdict
 import abc
 
@@ -50,7 +50,7 @@ class Programset(object):
                 for x in prog.targetpars: self.targetpars.append(x)
 
     def gettargetpartypes(self):
-        '''Lists model parameters targeted by some program in the response'''
+        '''Lists model parameter types targeted by some program in the response'''
         self.targetpartypes = []
         if self.programs:
             for prog in self.programs.values():
@@ -152,7 +152,7 @@ class Programset(object):
 
     def getprogcoverage(self,budget,t,P,parsetname,perturb=False,verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''        
-        coverage = {}       
+        coverage = {}
         for prog in self.programs.keys():
             if self.programs[prog].optimizable():
                 if not self.programs[prog].costcovfn.ccopars:
@@ -179,12 +179,94 @@ class Programset(object):
             else: popcoverage[prog] = None
         return popcoverage
 
-    def getoutcomes(self,tvec,budget,perturb=False):
-        outcomes = dict()
+    def getoutcomes(self,budget,t,P,parsetname,interaction='random',perturb=False):
+        ''' Get the model parameters corresponding to a budget'''
+        from numpy import ones, max, prod, array
         
-        # First, disaggregate the coverage...
+        outcomes = {}
+        nyrs = len(t)
         
-        return outcomes
+        thiscov, thisparam, delta = {}, {}, {}
+        
+        # First get the coverage and parameter values...
+        for tpt in self.targetpartypes:
+
+            thisparam[tpt] = {}
+            outcomes[tpt] = {}
+            delta[tpt] = {}
+
+            for tp in self.progs_by_targetpar(tpt).keys():
+
+                thisparam[tpt][tp] = {}
+                delta[tpt][tp] = {}
+                outcomes[tpt][tp] = self.covout[tpt][tp].ccopars['intercept']
+                thiscov[tp] = {}
+                
+                for prog in self.progs_by_targetpar(tpt)[tp]:
+                    x = budget[prog.name]
+                    thiscov[tp][prog.name] = prog.getcoverage(x=x,t=t,P=P,parsetname='default',proportion=True,total=False)[tp]
+                    delta[tpt][tp][prog.name] = self.covout[tpt][tp].ccopars[prog.name]
+                
+                if interaction == 'additive':
+                    # Outcome += c1*delta_out1 + c2*delta_out2
+                    for prog in self.progs_by_targetpar(tpt)[tp]:
+                        outcomes[tpt][tp] += thiscov[tp][prog.name]*delta[tpt][tp][prog.name]
+                        
+                elif interaction == 'nested':
+                    # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
+                    # The programs need to be sorted *at each time*
+                    for yr in range(nyrs):
+                        cov = [j[yr,:] for j in thiscov[tp].values()]
+                        delt = [j[yr] for j in delta[tpt][tp].values()]
+
+                        cov_tuple = sorted(zip(cov,delt)) # A tuple storing the coverage and delta out, ordered by coverage
+                        for j in xrange(0,len(cov_tuple)): # For each entry in here
+                            if j == 0:
+                                c1 = cov_tuple[j][0]
+                            else:
+                                c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
+                            outcomes[pop][effect][i] += c1*numpy.max([x[1] for x in cov_tuple[j:]])                
+                    
+                elif interaction == 'random':
+                    # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
+                    # Outcome += c1(1-c2-c3)* delta_out1 + c2(1-c1-c3)*delta_out2 + c3(1-c2-c3)*delta_out3 + c1c2c3* max(delta_out1,delta_out2,delta_out3)
+                
+                    covprod = prod(array(thiscov[tp].values()),axis=0)
+                    outcomes[tpt][tp] += covprod*[max([c[j] for c in delta[tpt][tp].values()]) for j in range(nyrs)]
+                
+                    for prog1 in thiscov[tp].keys():
+                    # Programs in isolation
+                        product = ones(thiscov[tp][prog1.name].shape)
+                        
+                        for prog2 in thiscov[tp].keys():
+                            if prog != prog2:
+                                product *= (1-thiscov[tp][prog2.name])
+        
+                        outcomes[tpt][tp] += self.covout[tpt][tp].ccopars[prog.name]*thiscov[tp][prog.name]*product 
+
+                    # Recursion over overlap levels
+                    def overlap_calc(indexes,target_depth):
+                        if len(indexes) < target_depth:
+                            accum = 0
+                            for j in xrange(indexes[-1]+1,len(thiscov[tp].keys())):
+                                accum += overlap_calc(indexes+[j],target_depth)
+                            return thiscov[tp].values()[indexes[-1]]*accum
+                        else:
+                            return thiscov[tp].values()[indexes[-1]]*max([self.covout[tpt][tp].ccopars.values()[x] for x in indexes],0) # Innermost part
+
+                    # Iterate over overlap levels
+                    for i in xrange(2,len(thiscov[tp].keys())): # Iterate over numbers of overlapping programs
+                        for j in xrange(0,len(thiscov[tp].keys())-1): # Iterate over the index of the first program in the sum
+                            outcomes[tpt][tp] += overlap_calc([j],i)
+
+                    # All programs together
+                    outcomes[tpt][tp] += prod(thiscov[tp],0)*max(thisparam[tpt][tp],0)
+
+                else:
+                    raise Exception('Unknown reachability type "%s"',interaction)
+
+        
+        return thiscov, thisparam, outcomes
 
 class Program(object):
     ''' Defines a single program. 

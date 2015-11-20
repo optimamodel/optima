@@ -174,6 +174,7 @@ if 'makeprograms' in tests:
         HTC.costcovfn.addccopar({'saturation': 0.8, 't': 2013.0, 'unitcost': 30})
         HTC.costcovfn.addccopar({'t': 2016.0, 'unitcost': 30})
         HTC.costcovfn.addccopar({'t': 2017.0, 'unitcost': 30})
+        SBCC.costcovfn.addccopar({'saturation': 0.4, 't': 2013.0, 'unitcost': 10})
     
         # 7. Overwrite parameters for defining cost-coverage function.
         HTC.costcovfn.addccopar({'t': 2016.0, 'unitcost': 25},overwrite=True)
@@ -194,7 +195,7 @@ if 'makeprograms' in tests:
         HTC.costcovfn.evaluate(x=1e6,popsize=1e5,t=2015)
 
     print('Running make programs set test...')
-    R = Programset(programs={'HTC':HTC,'FSW programs':FSW,'MGT':MGT,'SBCC':SBCC})
+    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
 
     # Run additional tests if asked
     if runalltests:
@@ -223,7 +224,7 @@ if 'makeprograms' in tests:
     
         # 7. Get a vector of coverage levels corresponding to a vector of program allocations
         from numpy import array
-        budget={'HTC':array([2e5,3e5]),'FSW programs':array([1e5,2e5]),'MGT':array([2e5,3e5])}
+        budget={'HTC':array([2e5,3e5]),'SBCC':array([1e5,2e5]),'MGT':array([2e5,3e5])}
         R.getprogcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
         R.getpopcoverage(budget=budget,t=[2015,2016],P=P,parsetname='default')
 
@@ -243,7 +244,7 @@ if 'makeprograms' in tests:
         R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
         # 12. Get a set of parameter values corresponding to a vector of program allocations
-        R.getoutcomes(tvec=None,budget=None)
+        R.getoutcomes(budget=budget,t=[2015,2016],P=P,parsetname='default',perturb=False)
 
     done(t)
 
