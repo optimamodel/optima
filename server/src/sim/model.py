@@ -40,6 +40,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     S['injinci']  = zeros((npops, npts)) # Incidene through injecting
     S['inci']     = zeros((npops, npts)) # Total incidence
     S['births']   = zeros((1, npts))     # Number of births
+    S['birthselig']   = zeros((1, npts))     # Number of births eligible for PMTCT
     S['mtct']     = zeros((1, npts))     # Number of mother-to-child transmissions
     S['dx']       = zeros((npops, npts)) # Number diagnosed per timestep
     S['newtx1']   = zeros((npops, npts)) # Number initiating ART1 per timestep
@@ -281,12 +282,14 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
         # We have two ways to calculate number of births...
         if (asym<0).any(): # Method 1 -- children are being modelled directly
             S['births'][0,t] = 0
+            S['birthselig'][0,t] = 0
             for p1 in xrange(npops):
                 for p2 in xrange(npops):
                     transyears = asym[p1, p2] # Current transition rate
-                    if absolute(transyears) > 0: # Is the given rate non zero
+                    if transyears < 0: # Is the given rate non zero
                         transrate = 1/float(transyears) # Invert
                         S['births'][0,t] += sum(people[:, p1, t] * absolute(transrate) * dt)
+                        S['birthselig'][0,t] += sum(people[dx, p1, t] * absolute(transrate) * dt)
             S['mtct'][0,t] = 0
               
         else: # Method 2 -- children are not being modelled directly
@@ -313,6 +316,9 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
         numcirc = (people[sus, :, t] * male * propcirc[:, t]).flatten()
         
         mtctperpop = zeros((1, npops))     # Number of mother-to-child transmissions for this timestep, split by population groups.
+        
+#        qc_receivepmtct = 0  
+#        qc_birthselig = 0
         
         ## Asymmetric transitions - people move from one population to another
         for p1 in xrange(npops):
@@ -344,7 +350,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                         mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
                         birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
                         if numpmtct[t]>1: # It's greater than 1: assume it's a number
-                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(S['births'][0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
+                            receivepmtct = min(numpmtct[t]*dt*float(birthselig)/float(S['birthselig'][0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
                         else: # It's a proportion
                             receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
                         mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
@@ -356,7 +362,16 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                         
                         people[G['sus'], p2, t] += popbirths - popmtct
                         people[G['undx'][0], p2, t] += popmtct
+                        
+#                        qc_receivepmtct += receivepmtct
+#                        qc_birthselig += birthselig
+##                        if t>50 and t<70: print('%f, %f ... %f, %f' % (numpmtct[t]*float(birthselig)/float(S['birthselig'][0,t]),birthselig,float(S['birthselig'][0,t]),float(birthselig)/float(S['birthselig'][0,t])))
+#                        
+#        print('%i, numpmtct*dt: %f, birthselig: %f, receivepmtct: %f' % (t,numpmtct[t]*dt,qc_birthselig,qc_receivepmtct))
                             
+#        print(S['births'][0,t])
+#        print(S['mtct'][0,t])
+        
         ## Symmetric transitions - people swap between two populations
         for p1 in xrange(npops):
             for p2 in xrange(npops):
