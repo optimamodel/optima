@@ -11,7 +11,7 @@ Version: 2015nov02 by cliffk
 ## Header -- imports and version
 #######################################################################################################
 
-from optima import Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
+from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
 from numpy import array
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
@@ -59,10 +59,10 @@ class Project(object):
         ''' Initialize the project ''' 
 
         ## Define the structure sets
-        self.parsets = {}
-        self.respsets = {}
-        self.scens = {}
-        self.optims = {}
+        self.parsets = odict()
+        self.respsets = odict()
+        self.scens = odict()
+        self.optims = odict()
         
         ## Define other quantities
         self.name = name
