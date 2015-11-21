@@ -53,16 +53,61 @@ class odict(dict):
         dict_setitem(self, key, value)
 
     
+    #############################################################################################################
+    ## CK's modifications
+    #############################################################################################################
     def __getitem__(self, key):
+        ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         print('getitem')
         if type(key)==str:
             return dict.__getitem__(self,key)
         elif type(key)==int:
             return self.values()[key]
+        elif type(key)==slice:
+            out = []
+            print('hi!!!')
+            print(slice.start)
+            print(slice.stop)
+            print('biii!!!')
+            if type(key.start) is int: startind = key.start
+            elif type(key.start) is str: startind = self.keyind(key.start)
+            elif key.start is None: startind = 0
+            else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
+            if type(key.stop) is int: stopind = key.stop
+            elif type(key.stop) is str: stopind = self.keyind(key.stop)
+            elif key.stop is None: stopind = len(self.keys())-1
+            else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
+            if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
+            for i in range(startind,stopind+1): # +1 since otherwise confusing with names
+                out.append(self.values()[i])
+            return out
+        elif type(key)==list:
+            return [self.__getitem__(item) for item in key]
         else:
-            print('HLLOA')
+            try:
+                self.__getitem__(key.tolist()) # Try converting to a list
+            except:
+                raise Exception('Could not understand data type: not a str, int, slice, list, or array!')
     
+    def keyind(self, item):
+        ''' Return the index of a given key '''
+        return self.keys().index(item)
     
+    def valind(self, item):
+        ''' Return the index of a given value '''
+        return self.items().index(item)
+    
+  
+
+
+
+
+    #############################################################################################################
+    ## CK's modifications
+    #############################################################################################################
+
+
+  
     def __delitem__(self, key, PREV=0, NEXT=1, dict_delitem=dict.__delitem__):
         print('delitem')
         'od.__delitem__(y) <==> del od[y]'
