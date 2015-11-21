@@ -56,10 +56,10 @@ class odict(OrderedDict):
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             for valind,keyind in enumerate(range(startind,stopind+1)): # +1 since otherwise confusing with names
-                self.__setitem__(self, keyind, value[valind])
+                self.__setitem__(keyind, value[valind])
         elif type(key)==list:
             for valind,thiskey in enumerate(key): # +1 since otherwise confusing with names
-                self.__setitem__(self, thiskey, value[valind])
+                self.__setitem__(thiskey, value[valind])
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
@@ -89,3 +89,10 @@ class odict(OrderedDict):
         else: raise Exception('Key type not recognized: must be int or str')
         self.keys()[keyind] = newkey
         return None
+    
+    def sort(self):
+        ''' Return an alphabetically sorted copy of the dict '''
+        allkeys = sorted(self.keys())
+        out = odict()
+        for key in allkeys: out[key] = self[key]
+        return out
