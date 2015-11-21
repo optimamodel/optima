@@ -23,7 +23,6 @@ from copy import deepcopy as dcp
 from ballsd import *
 from colortools import *
 from utils import *
-from odict import *
 
 ## Load Optima functions and classes
 from settings import *
