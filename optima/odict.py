@@ -5,13 +5,13 @@ ODICT
 An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing,
 slicing, and appending.
 
+All works, that I can tell, except for self.update().
+
 Version: 2015nov21 by cliffk
 """
 
 
 from collections import OrderedDict
-from _abcoll import *
-
 
 class odict(OrderedDict):
     def __getitem__(self, key):
@@ -82,12 +82,22 @@ class odict(OrderedDict):
         self.__setitem__(keyname, item)
         return None
     
-    def setkey(self, oldkey, newkey):
-        ''' Change a key '''
-        if type(oldkey) in [int, float]: keyind = oldkey
-        elif type(oldkey) is str: keyind = self.keys().index(oldkey)
+    def rename(self, oldkey, newkey):
+        ''' Change a key name -- WARNING, very inefficient! '''
+        nkeys = len(self)
+        if type(oldkey) in [int, float]: 
+            keyind = oldkey
+            keystr = self.keys()[keyind]
+        elif type(oldkey) is str: 
+            keyind = self.keys().index(oldkey)
+            keystr = oldkey
         else: raise Exception('Key type not recognized: must be int or str')
-        self.keys()[keyind] = newkey
+        self.__setitem__(newkey, self.pop(keystr))
+        if keyind<nkeys-1:
+            for i in range(keyind+1, nkeys):
+                key = self.keys()[keyind]
+                value = self.pop(key)
+                self.__setitem__(key, value)
         return None
     
     def sort(self):
