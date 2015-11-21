@@ -16,10 +16,10 @@ class Programset(object):
         self.name = name
         self.id = uuid()
         self.programs = {program.name: program for program in programs.values()} if programs else {}
-        self.gettargetpops() if programs else []
-        self.gettargetpars() if programs else []
-        self.gettargetpartypes() if programs else []
-        self.initialize_covout() if programs else []
+        self.gettargetpops()
+        self.gettargetpars()
+        self.gettargetpartypes()
+        self.initialize_covout()
         self.created = today()
         self.modified = today()
 
