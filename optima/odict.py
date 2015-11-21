@@ -17,7 +17,7 @@ class odict(OrderedDict):
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str: # Treat like a normal dict
-            return dict.__getitem__(self,key)
+            return OrderedDict.__getitem__(self,key)
         elif type(key) in [int, float]: # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
@@ -34,31 +34,17 @@ class odict(OrderedDict):
         elif type(key)==list: # Iterate over items
             return [self.__getitem__(item) for item in key]
         else: # Try to convert to a list if it's an array or something
-            try:
-                self.__getitem__(key.tolist()) # Try converting to a list
-            except:
-                raise Exception('Could not understand data type: not a str, int, slice, list, or array!')
+            return OrderedDict.__getitem__(self, key)
 
-        
-        
-    def __origsetitem__(self, key, value, PREV=0, NEXT=1, dict_setitem=dict.__setitem__):
-        ''' The original OrderedDict setitem method '''
-        # Setting a new item creates a new link at the end of the linked list,
-        # and the inherited dictionary is updated with the new key/value pair.
-        if key not in self.keys():
-            root = self.__root
-            last = root[PREV]
-            last[NEXT] = root[PREV] = self.__map[key] = [last, root, key]
-        dict_setitem(self, key, value)
         
         
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str:
-            self.__origsetitem__(self, key, value)
+            OrderedDict.__setitem__(self, key, value)
         elif type(key) in [int, float]: # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            self.__origsetitem__(self, thiskey, value)
+            OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
             if type(key.start) is int: startind = key.start
             elif type(key.start) is str: startind = self.keyind(key.start)
@@ -75,10 +61,7 @@ class odict(OrderedDict):
             for valind,thiskey in enumerate(key): # +1 since otherwise confusing with names
                 self.__setitem__(self, thiskey, value[valind])
         else:
-            try:
-                self.__setitem__(key.tolist(), value) # Try converting to a list
-            except:
-                raise Exception('Could not understand data type: not a str, int, slice, list, or array!')
+            OrderedDict.__setitem__(self, key, value)
         return None
     
     def __repr__(self):
