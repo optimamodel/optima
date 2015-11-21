@@ -10,6 +10,7 @@ Version: 2015nov21 by cliffk
 
 
 from collections import OrderedDict
+from _abcoll import *
 
 
 class odict(OrderedDict):
@@ -37,14 +38,27 @@ class odict(OrderedDict):
                 self.__getitem__(key.tolist()) # Try converting to a list
             except:
                 raise Exception('Could not understand data type: not a str, int, slice, list, or array!')
-    
+
+        
+        
+    def __origsetitem__(self, key, value, PREV=0, NEXT=1, dict_setitem=dict.__setitem__):
+        ''' The original OrderedDict setitem method '''
+        # Setting a new item creates a new link at the end of the linked list,
+        # and the inherited dictionary is updated with the new key/value pair.
+        if key not in self.keys():
+            root = self.__root
+            last = root[PREV]
+            last[NEXT] = root[PREV] = self.__map[key] = [last, root, key]
+        dict_setitem(self, key, value)
+        
+        
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str:
-            dict.__setitem__(self, key, value)
+            self.__origsetitem__(self, key, value)
         elif type(key) in [int, float]: # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
-            dict.__setitem__(self, thiskey, value)
+            self.__origsetitem__(self, thiskey, value)
         elif type(key)==slice:
             if type(key.start) is int: startind = key.start
             elif type(key.start) is str: startind = self.keyind(key.start)
@@ -85,4 +99,10 @@ class odict(OrderedDict):
         self.__setitem__(keyname, item)
         return None
     
-    def setkey(self, item, key):
+    def setkey(self, oldkey, newkey):
+        ''' Change a key '''
+        if type(oldkey) in [int, float]: keyind = oldkey
+        elif type(oldkey) is str: keyind = self.keys().index(oldkey)
+        else: raise Exception('Key type not recognized: must be int or str')
+        self.keys()[keyind] = newkey
+        return None
