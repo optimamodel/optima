@@ -63,8 +63,9 @@ class odict(dict):
             return dict.__getitem__(self,key)
         elif type(key)==int:
             return self.values()[key]
+        elif type(key)==float: # Convert automatically from float...dangerous?
+            return self.values()[int(key)]
         elif type(key)==slice:
-            out = []
             print('hi!!!')
             print(slice.start)
             print(slice.stop)
@@ -78,9 +79,7 @@ class odict(dict):
             elif key.stop is None: stopind = len(self.keys())-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            for i in range(startind,stopind+1): # +1 since otherwise confusing with names
-                out.append(self.values()[i])
-            return out
+            return [self.__getitem__(i) for i in range(startind,stopind+1)] # +1 since otherwise confusing with names
         elif type(key)==list:
             return [self.__getitem__(item) for item in key]
         else:
