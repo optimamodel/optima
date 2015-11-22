@@ -16,14 +16,15 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     printv('Loading data from %s...' % filename, 1, verbose)
     
     
-    def forcebool(entry):
+    def forcebool(entry, location=''):
         """ Convert an entry to be Boolean """
         if entry in [1, 'TRUE', 'true', 'True', 't', 'T']:
             return 1
         elif entry in [0, 'FALSE', 'false', 'False', 'f', 'F']:
             return 0
         else:
-            raise Exception('Boolean data supposed to be entered, but not understood (%s)' % entry)
+            errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
+            raise Exception(errormsg)
         
     
     def validatedata(thesedata, sheetname, thispar, row, checkupper=True):
@@ -155,8 +156,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                     data['pops']['short'].append(thesedata[0])
                     data['pops']['long'].append(thesedata[1])
-                    data['pops']['male'].append(thesedata[2])
-                    data['pops']['female'].append(thesedata[3])
+                    data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
+                    data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
                     agestring = thesedata[4] # Pull out age string
                     try:
                         agestring = agestring.split('-') # Separate into lower and higher
