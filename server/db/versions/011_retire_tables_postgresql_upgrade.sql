@@ -17,8 +17,8 @@ CREATE TABLE projects (
     datastart integer,
     dataend integer,
     populations json,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    created timestamp with time zone,
+    updated timestamp with time zone,
     version text,
     settings bytea,
     data bytea
@@ -28,7 +28,7 @@ CREATE TABLE projects (
 CREATE TABLE project_data (
     id uuid PRIMARY KEY references projects(id),
     meta bytea,
-    updated_at timestamp with time zone
+    updated timestamp with time zone
 );
 
 CREATE TABLE working_projects (
@@ -43,8 +43,8 @@ CREATE TABLE work_log (
     id uuid PRIMARY KEY default uuid_generate_v1mc(),
     work_type text,
     project_id uuid references projects(id),
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    start_time timestamp with time zone,
+    stop_time timestamp with time zone,
     status work_status,
     error text
 );
@@ -53,8 +53,8 @@ CREATE TABLE parsets (
   id uuid PRIMARY KEY default uuid_generate_v1mc(),
   project_id uuid references projects(id),
   name text,
-  created_at timestamp with time zone,
-  updated_at timestamp with time zone,
+  created timestamp with time zone,
+  updated timestamp with time zone,
   pars bytea
 );
 
