@@ -3,7 +3,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     Loads the spreadsheet (i.e. reads its contents into the data sheetsure).
     This data sheetsure is used in the next step to update the corresponding model.
     
-    Version: 2015nov01
+    Version: 2015nov22
     """
     
     ###########################################################################
