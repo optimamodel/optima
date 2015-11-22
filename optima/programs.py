@@ -286,7 +286,7 @@ class Program(object):
         '''Initialize'''
         self.name = name
         self.id = uuid()
-        self.targetpars = targetpars if targetpars else []            
+        self.targetpars = targetpars if targetpars else []
         self.targetpops = targetpops if targetpops else []
         self.targetpartypes = list(set([x['param'] for x in targetpars])) if targetpars else []
         self.optimizable()
