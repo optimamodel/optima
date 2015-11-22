@@ -73,7 +73,6 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids'],
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
-                           ['fail'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effdis', 'effost', 'effpmtct', 'efftx', 'effprep'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutilaids','disutiltx']]
@@ -115,6 +114,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     data['pops'] = odict() # Initialize to empty list
     data['pops']['short'] = [] # Store short population/program names, e.g. "FSW"
     data['pops']['long'] = [] # Store long population/program names, e.g. "Female sex workers"
+    data['pops']['male'] = [] # Store whether or not population is male
+    data['pops']['female'] = [] # Store whether or not population is female
     data['pops']['age'] = [] # Store the age range for this population
     
     ## Initialize constants
@@ -154,7 +155,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                     data['pops']['short'].append(thesedata[0])
                     data['pops']['long'].append(thesedata[1])
-                    agestring = thesedata[2] # Pull out age string
+                    data['pops']['male'].append(thesedata[2])
+                    data['pops']['female'].append(thesedata[3])
+                    agestring = thesedata[4] # Pull out age string
                     try:
                         agestring = agestring.split('-') # Separate into lower and higher
                         data['pops']['age'].append([int(agestring[0]), int(agestring[1])]) # Convert to int and append
@@ -194,7 +197,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
 
 
                 # It's a matrix, append the data                                     
-                elif sheetname in ['Partnerships', 'Transitions']:
+                elif sheetname in ['Partnerships & transitions']:
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                     thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                     data[thispar].append(thesedata) # Store data
@@ -204,7 +207,11 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                 # It's a constant, create a new dictionary entry
                 elif sheetname in ['Constants']:
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=5)) # Data starts in 3rd column, finishes in 5th column
-                    subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
+                    try:
+                        subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
+                    except:
+                        errormsg = 'Failed to load constant subparameter from subparlist %i' % parcount
+                        raise Exception(errormsg)
                     data['const'][subpar] = thesedata # Store data
     
     
