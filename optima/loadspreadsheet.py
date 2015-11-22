@@ -10,7 +10,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ## Preliminaries
     ###########################################################################
     
-    from optima import printv, today
+    from optima import odict, printv, today
     from numpy import nan, isnan, array, logical_or, nonzero # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)
@@ -26,14 +26,16 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             raise Exception('Boolean data supposed to be entered, but not understood (%s)' % entry)
         
     
-    def validatedata(thesedata, sheetname, thispar, row):
-        ''' Do basic validation on the data: at least one point entered, between 0 and 1 '''
+    def validatedata(thesedata, sheetname, thispar, row, checkupper=True):
+        ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
         validdata = array(thesedata)[~isnan(thesedata)]
         if len(validdata):
             invalid = logical_or(array(validdata)>1, array(validdata)<0)
             if any(invalid):
                 column = nonzero(invalid)[0]
-                raise Exception('Invalid entry in spreadsheet "%s": parameter %s (row=%i, column(s)=%s, value=%f)' % (thispar, sheetname, row+1, column, thesedata[column[0]]))
+                errormsg = 'Invalid entry in spreadsheet "%s": parameter %s (row=%i, column(s)=%s, value=%f)\n' % (thispar, sheetname, row+1, column, thesedata[column[0]])
+                errormsg += 'Be sure that all values are >=0 and <=1'
+                raise Exception(errormsg)
 
     def blank2nan(thesedata):
         ''' Convert a blank entry to a nan '''
@@ -41,25 +43,11 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         
     
     
-    ###########################################################################
-    ## Define the workbook and parameter names
-    ###########################################################################
+    ##############################################################################
+    ## Define the workbook and parameter names -- should match makespreadsheet.py!
+    ##############################################################################
         
-    sheets = dict()
-    
-    # Define group names explicitly so as keep order -- defined here, just below, in test.xlsx, and in makespreadsheet()
-    sheetnames = [
-    'Populations',
-    'Population size',
-    'HIV prevalence',
-    'Other epidemiology',
-    'Optional indicators',
-    'Testing & treatment',
-    'Sexual behavior',
-    'Injecting behavior',
-    'Partnerships',
-    'Transitions',
-    'Constants']
+    sheets = odict()
     
     # Metadata -- population and program names -- array sizes are (# populations) and (# programs)
     sheets['Populations'] = ['pops']
@@ -72,14 +60,13 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optdeath', 'optnewtreat']
+    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numinject', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
-    sheets['Partnerships'] = ['partreg','partcas','partcom','partinj']
-    sheets['Transitions']  = ['transitasym','transitsym']
+    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','transit']
     
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
@@ -101,12 +88,15 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
 
     ## Basic setup
-    data = dict() # Create sheetsure for holding data
-    data['meta'] = dict()
+    data = odict() # Create sheetsure for holding data
+    data['meta'] = odict()
     data['meta']['date'] = today()
     data['meta']['sheets'] = sheets # Store parameter names
-    try: workbook = open_workbook(filename) # Open workbook
-    except: raise Exception('Failed to load spreadsheet: file "%s" not found or other problem' % filename)
+    try: 
+        workbook = open_workbook(filename) # Open workbook
+    except: 
+        errormsg = 'Failed to load spreadsheet: file "%s" not found or other problem' % filename
+        raise Exception(errormsg)
     
     
     ## Calculate columns for which data are entered, and store the year ranges
@@ -122,19 +112,13 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     assumptioncol = lastdatacol + 1 # Figure out which column the assumptions are in; the "OR" space is in between
     
     ## Initialize populations
-    data['pops'] = dict() # Initialize to empty list
+    data['pops'] = odict() # Initialize to empty list
     data['pops']['short'] = [] # Store short population/program names, e.g. "FSW"
     data['pops']['long'] = [] # Store long population/program names, e.g. "Female sex workers"
-    data['pops']['male'] = [] # Store whether or not this population is male
-    data['pops']['female'] = [] # Store whether or not this population is female
-    data['pops']['injects'] = [] # Store whether or not this population injects drugs
-    data['pops']['sexmen'] = [] # Store whether or not this population has sex with men
-    data['pops']['sexwomen'] = [] # Store whether or not this population has sex with women
-    data['pops']['sexworker'] = [] # Store whether or not this population is a sex worker
-    data['pops']['client'] = [] # Store whether or not this population is a client of sex workers
+    data['pops']['age'] = [] # Store the age range for this population
     
     ## Initialize constants
-    data['const'] = dict() # Initialize to empty list
+    data['const'] = odict() # Initialize to empty list
     
     
     ##################################################################
@@ -142,7 +126,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ##################################################################    
     
     ## Loop over each group of sheets
-    for sheetname in sheetnames: # Loop over each type of data, but treat constants differently
+    for sheetname in sheets.keys(): # Loop over each type of data, but treat constants differently
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
         parcount = -1 # Initialize the parameter count
@@ -170,13 +154,16 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
                     data['pops']['short'].append(thesedata[0])
                     data['pops']['long'].append(thesedata[1])
-                    data['pops']['male'].append(forcebool(thesedata[2]))
-                    data['pops']['female'].append(forcebool(thesedata[3]))
-                    data['pops']['injects'].append(forcebool(thesedata[4]))
-                    data['pops']['sexmen'].append(forcebool(thesedata[5]))
-                    data['pops']['sexwomen'].append(forcebool(thesedata[6]))
-                    data['pops']['sexworker'].append(forcebool(thesedata[7]))
-                    data['pops']['client'].append(forcebool(thesedata[8]))
+                    agestring = thesedata[2] # Pull out age string
+                    try:
+                        agestring = agestring.split('-') # Separate into lower and higher
+                        data['pops']['age'].append([int(agestring[0]), int(agestring[1])]) # Convert to int and append
+                    except:
+                        errormsg = 'Error loading spreadsheet %s\n' % sheetname
+                        errormsg += 'Could not convert "%s" into ages\n' % agestring
+                        errormsg += 'Please enter age range as e.g. "25-34"'
+                        raise Exception(errormsg)
+                    
 
                 
                 # It's key data, save both the values and uncertainties
@@ -221,7 +208,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     data['const'][subpar] = thesedata # Store data
     
     
-    
+ 
     
     printv('...done loading data.', 2, verbose)
     return data
