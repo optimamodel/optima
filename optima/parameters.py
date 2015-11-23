@@ -139,22 +139,21 @@ def makeparsfromdata(data, verbose=2):
         nrows = shape(data[parname])[0]
         
         # Check how many rows there are, handle special cases, and die if it doesn't match
-        if nrows==1: 
+        if parname=='birth':
+            keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['female'][i]]
+        elif parname=='circum':
+            keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['male'][i]]
+        elif nrows==1: 
             keys = totkey
         elif nrows==len(popkeys): 
             keys = popkeys
         else:
-            if parname=='birth':
-                keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['female'][i]]
-            elif parname=='circum':
-                keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['male'][i]]
-            else:
-                errormsg = 'Unable to figure out size of parameter "%s"\n' % parname
-                errormsg += '(number of rows = %i; number of populations = %i)' % (nrows, len(popkeys))
-                raise Exception(errormsg)
-            missingkeys = list(set(popkeys)-set(keys))
+            errormsg = 'Unable to figure out size of parameter "%s"\n' % parname
+            errormsg += '(number of rows = %i; number of populations = %i)' % (nrows, len(popkeys))
+            raise Exception(errormsg)
         pars[parname] = data2timepar(parname, data[parname], data, keys)
         if parname in ['birth', 'circum']: # For these two, have to expand to all populations
+            missingkeys = list(set(popkeys)-set(keys))
             for key in missingkeys:
                 pars[parname].y[key] = array([0])
                 pars[parname].t[key] = array([0])
