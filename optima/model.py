@@ -96,12 +96,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     sus  = settings.uninf  # Susceptible
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
-    tx1  = settings.treat  # Treatment -- 1st line
-    fail = settings.fail  # Failure
+    tx  = settings.treat  # Treatment -- 1st line
     
     # Concatenate all PLHIV, diagnosed and treated for ease
-    plhivind = concatenate([undx, dx, tx1]) # All PLHIV
-    dxind    = concatenate([dx, tx1])       # All people who have been diagnosed
+    plhivind = concatenate([undx, dx, tx]) # All PLHIV
+    dxind    = concatenate([dx, tx])       # All people who have been diagnosed
     
     # Population sizes
     popsize = dcp(simpars['popsize']) # Population sizes
@@ -132,8 +131,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     pships = dict() # TEMP
     for key in ['reg','cas','com']: pships[key] = simpars['part'+key]
     totalacts = simpars['totalacts']
-    sym       = simpars['transitsym']  # Symmetric transitions
-    asym      = simpars['transitasym'] # Asymmetric transitions
+    transit   = simpars['transit'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)
     condom   = simpars['condom']    # Condoms (P)
@@ -142,7 +140,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
 #    ost      = simpars['numost']    # OST (N)
     propcirc = simpars['circum']    # Proportion of men circumcised (P)
     tobecirc = simpars['numcircum'] # Number of men to be circumcised (N)
-    mtx1     = simpars['tx1']       # 1st line treatement (N) -- tx1 already used for index of people on treatment
+    mtx1     = simpars['tx']       # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     
@@ -188,7 +186,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, results.tvec[t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
-            efftx   = sum(txfactor * people[tx1,pop,t]) # ...and treated
+            efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): 
                 raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
@@ -290,21 +288,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## Calculate mother-to-child-transmission
         ###############################################################################
         
-        # We have two ways to calculate number of births...
-        if (asym<0).any(): # Method 1 -- children are being modelled directly
-            results.births[0,t] = 0
-            for p1 in range(npops):
-                for p2 in range(npops):
-                    transyears = asym[p1, p2] # Current transition rate
-                    if absolute(transyears) > 0: # Is the given rate non zero
-                        transrate = 1/float(transyears) # Invert
-                        results.births[0,t] += sum(people[:, p1, t] * absolute(transrate) * dt)
-            results.mtct[0,t] = 0
-              
-        else: # Method 2 -- children are not being modelled directly
-            birthrate = simpars['birth'][:,t] # Use birthrate parameter from input spreadsheet
+        birthrate = simpars['birth'][:,t] # Use birthrate parameter from input spreadsheet
         results.births[0,t] = sum(birthrate * allpeople[:,t])
-        mtcttx       = sum(birthrate * sum(people[tx1,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+        mtcttx       = sum(birthrate * sum(people[tx,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctuntx     = sum(birthrate * sum(people[undx,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
         if numpmtct[t]>1: # It's greater than 1: assume it's a number
@@ -326,53 +312,53 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         mtctperpop = zeros((1, npops))     # Number of mother-to-child transmissions for this timestep, split by population groups.
         
         ## Asymmetric transitions - people move from one population to another
-        for p1 in range(npops):
-            for p2 in range(npops):
-                transyears = asym[p1, p2] # Current transition rate
-                if absolute(transyears) > 0: # Is the given rate non zero
-                    transrate = 1/float(transyears) # Invert
-    
-                    # Take circumcised men away from pop1 and add to pop2
-                    if male[p1] and male[p2] and transrate > 0:
-                        circsmoving = numcirc[p1] * transrate * dt
-                        numcirc[p1] -= circsmoving
-                        numcirc[p2] += circsmoving
-                        # TEMP
-#                    elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
-#                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
-#                    elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
-#                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
-                        
-                    # Now actually do it for the people array
-                    peoplemoving = people[:, p1, t] * absolute(transrate) * dt
-                    if transrate > 0: # Normal situation, e.g. aging - people move from one pop to another
-                        people[:, p1, t] -= peoplemoving # Take away from pop1...
-                        people[:, p2, t] += peoplemoving # ... then add to pop2
-                    else: # Otherwise: it's births
-                        birthrate = absolute(transrate)
-                        
-                        popbirths    = sum(birthrate * dt * people[:,p1,t])
-                        mtcttx       = (birthrate * dt * sum(people[tx1,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
-                        mtctuntx     = (birthrate * dt * sum(people[undx,p1,t]+people[fail,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
-                        birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
-                        if numpmtct[t]>1: # It's greater than 1: assume it's a number
-                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(results.births[0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
-                        else: # It's a proportion
-                            receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
-                        mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-                        popmtct = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
-                        
-                        results.mtct[0,t] += popmtct                   
-                        mtctperpop[0,p2] += popmtct                        
-                        
-                        people[settings.sus, p2, t] += popbirths - popmtct
-                        people[settings.undx[0], p2, t] += popmtct
+#        for p1 in range(npops):
+#            for p2 in range(npops):
+#                transyears = asym[p1, p2] # Current transition rate
+#                if absolute(transyears) > 0: # Is the given rate non zero
+#                    transrate = 1/float(transyears) # Invert
+#    
+#                    # Take circumcised men away from pop1 and add to pop2
+#                    if male[p1] and male[p2] and transrate > 0:
+#                        circsmoving = numcirc[p1] * transrate * dt
+#                        numcirc[p1] -= circsmoving
+#                        numcirc[p2] += circsmoving
+#                        # TEMP
+##                    elif male[p1] and not male[p2] and transrate > 0: # Sanity check for males moving into female populations
+##                        raise Exception('Males are transitioning into a female population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
+##                    elif male[p2] and not male[p1] and transrate > 0: # Sanity check for females moving into male populations   
+##                        raise Exception('Females are transitioning into a male population! (%s->%s)' % (G['meta']['pops']['short'][p1], G['meta']['pops']['short'][p2]))
+#                        
+#                    # Now actually do it for the people array
+#                    peoplemoving = people[:, p1, t] * absolute(transrate) * dt
+#                    if transrate > 0: # Normal situation, e.g. aging - people move from one pop to another
+#                        people[:, p1, t] -= peoplemoving # Take away from pop1...
+#                        people[:, p2, t] += peoplemoving # ... then add to pop2
+#                    else: # Otherwise: it's births
+#                        birthrate = absolute(transrate)
+#                        
+#                        popbirths    = sum(birthrate * dt * people[:,p1,t])
+#                        mtcttx       = (birthrate * dt * sum(people[tx,p1,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
+#                        mtctuntx     = (birthrate * dt * sum(people[undx,p1,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
+#                        birthselig   = (birthrate * dt * sum(people[dx,p1,t])) # Births to diagnosed mothers eligible for PMTCT
+#                        if numpmtct[t]>1: # It's greater than 1: assume it's a number
+#                            receivepmtct = min(numpmtct[t]*float(popbirths)/float(results.births[0,t]), birthselig) # Births protected by PMTCT -- constrained by number eligible 
+#                        else: # It's a proportion
+#                            receivepmtct = numpmtct[t]*birthselig # Births protected by PMTCT -- constrained by number eligible 
+#                        mtctdx = (birthselig - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+#                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+#                        popmtct = mtctuntx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+#                        
+#                        results.mtct[0,t] += popmtct                   
+#                        mtctperpop[0,p2] += popmtct                        
+#                        
+#                        people[settings.sus, p2, t] += popbirths - popmtct
+#                        people[settings.undx[0], p2, t] += popmtct
                             
         ## Symmetric transitions - people swap between two populations
         for p1 in range(npops):
             for p2 in range(npops):
-                transyears = sym[p1, p2] # Current transition rate
+                transyears = transit[p1, p2] # Current transition rate
                 if transyears > 0: # Is the given rate greater than zero
                     transrate = 1/float(transyears) # Convert from years to rate
                 
@@ -436,11 +422,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         newinfections = forceinfvec * Fforce * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
     
         # Initalise / reset arrays
-        dU = []; dD = []; dT1 = []; # Reset differences
+        dU = []; dD = []; dT = []; # Reset differences
         testingrate  = [0] * ncd4
         newdiagnoses = [0] * ncd4
         newtreat1    = [0] * ncd4
-        background   = simpars['death'][:, t] # TODO make OST effect this death rates
+        background   = simpars['death'][:, t] # make OST effect this death rates
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
@@ -477,7 +463,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
-        newtreat1tot = mtx1[t] - people[tx1,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = mtx1[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -494,7 +480,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             inflows = progin + newdiagnoses[cd4]
             outflows = progout + hivdeaths + otherdeaths
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
-            newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx1[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+            newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dD.append(inflows - outflows - newtreat1[cd4])
             dD[cd4] = negativepeople('diagnosed', dD[cd4], people[dx[cd4],:,t], t)
             results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
@@ -503,17 +489,17 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## 1st-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
-                recovin = dt*recov[cd4-1]*people[tx1[cd4+1],:,t]
+                recovin = dt*recov[cd4-1]*people[tx[cd4+1],:,t]
             else: 
                 recovin = 0 # Cannot recover in to acute or AIDS stage
             if cd4>1: # CD4>1 stops people from moving back into acute
-                recovout = dt*recov[cd4-2]*people[tx1[cd4],:,t]
+                recovout = dt*recov[cd4-2]*people[tx[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            hivdeaths   = dt * people[tx1[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
-            otherdeaths = dt * people[tx1[cd4],:,t] * background
-            dT1.append(recovin - recovout + newtreat1[cd4] - hivdeaths - otherdeaths)
-            dT1[cd4] = negativepeople('treat1', dT1[cd4], people[tx1[cd4],:,t], t)
+            hivdeaths   = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
+            otherdeaths = dt * people[tx[cd4],:,t] * background
+            dT.append(recovin - recovout + newtreat1[cd4] - hivdeaths - otherdeaths)
+            dT[cd4] = negativepeople('treat', dT[cd4], people[tx[cd4],:,t], t)
             results.death[:,t] += hivdeaths/dt # Save annual HIV deaths 
         
 
@@ -526,10 +512,10 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         if t<npts-1:
             change = zeros((nstates, npops))
             change[sus,:] = dS
-            for cd4 in range(ncd4): # TODO: this could be made much more efficient
+            for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
-                change[tx1[cd4],:]  = dT1[cd4]
+                change[tx[cd4],:]  = dT[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
@@ -600,7 +586,6 @@ def equilibrate(settings, simpars, Finit, verbose=2):
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    failratio = 0.3 # Put fewer people than expected on failure because ART is relatively new...or something
     
     # Shorten key variables
     initpeople = zeros((settings.ncomparts,npops)) 
@@ -609,21 +594,17 @@ def equilibrate(settings, simpars, Finit, verbose=2):
     # Can calculate equilibrium for each population separately
     for p in range(npops):
         # Set up basic calculations
-        uninfected = simpars['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! # TODO -- should this have F['popsize'] involved?
+        uninfected = simpars['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
-        treatment1 = simpars['tx1'][0] * fractotal # Number of people on 1st-line treatment
-        treatfail = treatment1 * simpars['const']['fail'] * efftreatmentrate * failratio # Number of people with treatment failure -- # TODO: check
-        totaltreat = treatment1 + treatfail
-        if totaltreat > popinfected: # More people on treatment than ever infected, uh oh!
-            treatment1 *= popinfected/totaltreat
-            treatfail *= popinfected/totaltreat
-            totaltreat = popinfected
+        treatment = simpars['tx'][0] * fractotal # Number of people on 1st-line treatment
+        if treatment > popinfected: # More people on treatment than ever infected, uh oh!
+            treatment = popinfected
         
         # Diagnosed & undiagnosed
-        nevertreated = popinfected - totaltreat
+        nevertreated = popinfected - treatment
         assumedforceinf = Finit[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
@@ -632,22 +613,19 @@ def equilibrate(settings, simpars, Finit, verbose=2):
         # Set rates within
         progratios = hstack([simpars['prog'], simpars['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
-        recovratios = hstack([inf, simpars['recov'], efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here # TODO check
+        recovratios = hstack([inf, simpars['recov'], efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
         
         # Final calculations
         undiagnosed *= progratios
         diagnosed *= progratios
-        treatment1 *= recovratios
-        treatfail *= progratios
+        treatment *= recovratios
         
         # Populated equilibrated array
         initpeople[settings.uninf, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
-        initpeople[settings.treat, p] = treatment1
-#        initpeople[G['fail'], p] = treatfail
-#        initpeople[G['tx2'], p] = treatment2
+        initpeople[settings.treat, p] = treatment
     
         if not((initpeople>=0).all()):
             printv('Non-positive people found during epidemic initialization!', 4, verbose) # If not every element is a real number >0, throw an error

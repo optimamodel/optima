@@ -8,7 +8,7 @@ Version: 2015oct22 by cliffk
 
 
 from numpy import array, isnan, zeros, shape, mean
-from optima import printv, sanitize, uuid, today, getdate
+from optima import odict, printv, sanitize, uuid, today, getdate
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -91,7 +91,7 @@ def makeparsfromdata(data, verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    pars = dict()
+    pars = odict()
     
     ## Key parameters
     for parname in ['popsize', 'hivprev']:
@@ -111,11 +111,11 @@ def makeparsfromdata(data, verbose=2):
     
     
     ## WARNING, not sure what to do with these
-    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transitsym', 'transitasym']:
+    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars[parname] = data[parname]
     
-    pars['const'] = dict()
+    pars['const'] = odict()
     for parname in data['const'].keys():
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
@@ -304,7 +304,7 @@ class Parameterset(object):
         ## Testing parameters -- most are data
         M['hivtest'] = dpar2mpar(P['hivtest']) # HIV testing rates
         M['aidstest'] = dpar2mpar(P['aidstest'])[0] # AIDS testing rates
-        M['tx1'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+        M['tx'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
     
         ## MTCT parameters
         M['numpmtct'] = dpar2mpar(P['numpmtct'])[0]
@@ -337,7 +337,7 @@ class Parameterset(object):
         M['prep'] = dpar2mpar(P['prep'])
         
         ## Matrices can be used almost directly
-        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transitsym', 'transitasym']:
+        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
             M[parname] = array(P[parname])
         
         ## Constants...can be used directly
@@ -348,7 +348,7 @@ class Parameterset(object):
         
         ## Program parameters not related to data
         M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
-        M['txtotal'] = zeros(shape(M['tx1'])) # Initialize total number of people on treatment
+        M['txtotal'] = zeros(shape(M['tx'])) # Initialize total number of people on treatment
         
         
         printv('...done making model parameters.', 2, verbose)
