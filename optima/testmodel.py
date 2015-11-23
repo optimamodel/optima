@@ -63,7 +63,7 @@ if 'gui' in tests:
     
     from gui import gui
     from plotpeople import plotpeople
-#    gui(results)
+    gui(results)
     plotpeople(results)
 
     done(t)
