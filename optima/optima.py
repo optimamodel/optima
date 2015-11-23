@@ -32,4 +32,5 @@ from makespreadsheet import *
 from parameters import *
 from results import *
 from model import *
+from programs import *
 from project import *
