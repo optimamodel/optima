@@ -97,17 +97,16 @@ def makeparsfromdata(data, verbose=2):
     ###############################################################################
     
     pars = odict()
-    popkeys = [str(key).lower() for key in data['pops']['short']] # Convert to a normal string and to lower case...maybe not necessary
+    popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
     totkey = 'tot' # Define a key for when not separated by population
     
     ## Key parameters
-    bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy
+    bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
     pars['initprev'] = dataindex(data['hivprev'][bestindex], 0, popkeys) # Pull out first available HIV prevalence point
     pars['popsize'] = data2popsize(data['popsize'], data, popkeys)
     
     ## Parameters that can be converted automatically
     sheets = data['meta']['sheets']
-    
     for parname in sheets['Other epidemiology'] + sheets['Testing & treatment'] + sheets['Sexual behavior'] + sheets['Injecting behavior']:
         printv('Converting data parameter %s...' % parname, 3, verbose)
         nrows = shape(data[parname])[0]
