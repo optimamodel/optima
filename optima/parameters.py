@@ -7,11 +7,10 @@ Version: 2015oct22 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, shape, argmax, mean log, polyfit
+from numpy import array, isnan, zeros, shape, argmax, mean, log, polyfit, exp
 from optima import odict, printv, sanitize, uuid, today, getdate
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
-
 
 
 
@@ -44,21 +43,26 @@ def data2popsize(dataarray, data, keys):
         tdata = sanitizedt[key]-startyear
         ydata = log(sanitizedy[key])
         try:
-            par.p[key] = polyfit(tdata, ydata, 2)
+            fitpars = polyfit(tdata, log(ydata), 1)
+            par.p[key] = array([exp(fitpars[1]), fitpars[0]])
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
             raise Exception(errormsg)
     
+    # ...do weighting based on number of data points and/or population size?
     
-    
-    
-    
-    
-#    Get all population data
-#    Find populations that have at least 2 data points entered (return error if none)
-#    Fit 2-parameter exponential to largest one
-#    In order of decreasing size, fit 2-parameter exponentials, weighted based on population size and number of data points
-#    For populations with <2 data points entered, apply shape of existing fits
+    # Handle populations that have only a single data point
+    only1datapoint = list(set(keys)-set(atleast2datapoints))
+    for key in only1datapoint:
+        largestpars = par.p[largestpop] # Get the parameters from the largest population
+        if len(sanitizedt[key]) != 1:
+            errormsg = 'Error interpreting population size for population "%s"\n' % key
+            errormsg += 'Please ensure at least one time point is entered'
+            raise Exception(errormsg)
+        thisyear = sanitizedt[key][0]
+        thispopsize = sanitizedy[key][0]
+        largestthatyear = largestpars[0]*exp((thisyear-startyear)*largestpars[1])
+        par.p[key] = [largestpars[0]*thispopsize/largestthatyear, largestpars[0]]
     
     return par
 
@@ -326,7 +330,6 @@ class Parameterset(object):
         
         from utils import printv
         from numpy import zeros, array, arange, exp, shape
-        TEMPGROWTH = 0.0
     
     
     
@@ -353,14 +356,7 @@ class Parameterset(object):
             return output
         
         
-        def grow(popsizes, growth):
-            """ Define a special function for population growth, which is just an exponential growth curve """
-            npops = len(popsizes)        
-            output = zeros((npops,npts))
-            for pop in range(npops):
-                output[pop,:] = popsizes[pop]*exp(growth*(M['tvec']-M['tvec'][0])) # Special function for population growth
-                
-            return output
+        
         
         
         
