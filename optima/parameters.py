@@ -3,12 +3,12 @@ This module defines the Parameter and Parameterset classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, respetively.
 
-Version: 2015oct22 by cliffk
+Version: 2015nov23 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, shape, argmax, mean, log, polyfit, exp
-from optima import odict, printv, sanitize, uuid, today, getdate
+from numpy import array, isnan, zeros, shape, argmax, mean, log, polyfit, exp, arange
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -23,11 +23,8 @@ def data2popsize(dataarray, data, keys):
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
     for row,key in enumerate(keys):
-        try:
-            sanitizedy[key] = sanitize(dataarray[row]) # Store each extant value
-            sanitizedt[key] = array(data['years'])[~isnan(dataarray[row])] # Store each year
-        except:
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        sanitizedy[key] = sanitize(dataarray[row]) # Store each extant value
+        sanitizedt[key] = array(data['years'])[~isnan(dataarray[row])] # Store each year
 
     largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
     
@@ -65,7 +62,7 @@ def data2popsize(dataarray, data, keys):
             raise Exception(errormsg)
         thisyear = sanitizedt[key][0]
         thispopsize = sanitizedy[key][0]
-        largestthatyear = largestpars[0]*exp((thisyear-startyear)*largestpars[1])
+        largestthatyear = popgrow(largestpars, thisyear-startyear)
         par.p[key] = [largestpars[0]*thispopsize/largestthatyear, largestpars[0]]
     
     return par
@@ -80,7 +77,7 @@ def data2timepar(parname, dataarray, data, keys):
     par.m = 1 # Set metaparameter to 1
     par.y = odict() # Initialize array for holding parameters
     par.t = odict() # Initialize array for holding time points
-    for row,key in enumerate(keys): 
+    for row,key in enumerate(keys):
         validdata = ~isnan(dataarray[row])
         if sum(validdata): # There's at least one data point
             par.y[key] = sanitize(dataarray[row]) # Store each extant value
@@ -102,23 +99,6 @@ def dataindex(dataarray, index, keys):
     return par
 
 
-
-
-## Change sizes of circumcision and births
-def popexpand(origpar, popbool, data):
-    """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
-    newpar = Timepar()
-    newpar.y = [array([0]) for i in range(len(data['pops']['male']))]
-    newpar.t = [array([0]) for i in range(len(data['pops']['male']))]
-    count = -1
-    if hasattr(popbool,'__iter__'): # May or may not be a list
-        for i,tf in enumerate(popbool):
-            if tf:
-                count += 1
-                newpar.y[i] = origpar.y[count]
-                newpar.t[i] = origpar.t[count]
-    
-    return newpar
 
 
 
@@ -144,7 +124,7 @@ def makeparsfromdata(data, verbose=2):
     
     pars = odict()
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
-    totkey = 'tot' # Define a key for when not separated by population
+    totkey = ['tot'] # Define a key for when not separated by population
     
     ## Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
@@ -160,6 +140,10 @@ def makeparsfromdata(data, verbose=2):
             keys = totkey
         elif nrows==len(popkeys): 
             keys = popkeys
+        elif parname=='birth':
+            keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['female'][i]]
+        elif parname=='circum':
+            keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['male'][i]]
         else: 
             errormsg = 'Unable to figure out size of parameter "%s"\n' % parname
             errormsg += '(number of rows = %i; number of populations = %i)' % (nrows, len(popkeys))
@@ -167,11 +151,6 @@ def makeparsfromdata(data, verbose=2):
         pars[parname] = data2timepar(parname, data[parname], data, keys)
     
 
-    # Fix up ones of the wrong size
-    pars['birth']     = popexpand(pars['birth'],  array(data['pops']['female'])==1, data, keys)
-    pars['circum']    = popexpand(pars['circum'], array(data['pops']['male'])==1, data, keys)
-    
-    
     ## WARNING, not sure what to do with these
     for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
         printv('Converting data parameter %s...' % parname, 3, verbose)
@@ -191,22 +170,22 @@ def makeparsfromdata(data, verbose=2):
 
 
 
-def totalacts(M, npts):
+def totalacts(simpars, npts):
         totalacts = dict()
         
-        popsize = M['popsize']
+        popsize = simpars['popsize']
     
         for act in ['reg','cas','com','inj']:
-            npops = len(M['popsize'][:,0])
+            npops = len(simpars['popsize'][:,0])
             npop=len(popsize); # Number of populations
-            mixmatrix = M['part'+act]
+            mixmatrix = simpars['part'+act]
             symmetricmatrix=zeros((npop,npop));
             for pop1 in range(npop):
                 for pop2 in range(npop):
                     symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
     
             a = zeros((npops,npops,npts))
-            numacts = M['numacts'][act]
+            numacts = simpars['numacts'][act]
             for t in range(npts):
                 a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
     
@@ -241,7 +220,9 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 
 
 
-
+def popgrow(exppars, tvec):
+    ''' Return a time vector for a population growth '''
+    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
 
 
 
@@ -332,31 +313,29 @@ class Parameterset(object):
         
         P = self.pars[ind] # Shorten name of parameters thing
         
-        from utils import printv
-        from numpy import zeros, array, arange, shape
-    
-    
-    
         printv('Making model parameters...', 1, verbose)
         
-        M = dict()
-        M['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
-        npts = len(M['tvec']) # Number of time points # TODO probably shouldn't be repeated from model.m
+        simpars = odict()
+        simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+        npts = len(simpars['tvec']) # Number of time points
         
         
+        def popsize2mpar(par, smoothness=5*int(1/dt)):
+            """ Take population size and turn it into a model parameters """    
+            npops = len(par.p)
+            output = zeros((npops,npts))
+            for row,key in enumerate(par.keys()):
+                output[row,:] = popgrow(par.p[key], simpars['tvec']-start)
+            return output
+            
+            
         
         def dpar2mpar(datapar, smoothness=5*int(1/dt)):
-            """
-            Take parameters and turn them into model parameters
-            """
-            from utils import smoothinterp
-    
+            """ Take parameters and turn them into model parameters """
             npops = len(datapar.t)
-            
             output = zeros((npops,npts))
             for pop in range(npops):
-                output[pop,:] = smoothinterp(M['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
-            
+                output[pop,:] = smoothinterp(simpars['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
             return output
         
         
@@ -365,64 +344,64 @@ class Parameterset(object):
         
         
         ## Epidemilogy parameters -- most are data
-#        M['popsize'] = grow(P['popsize'], TEMPGROWTH) # Population size
-        M['hivprev'] = P['hivprev'] # Initial HIV prevalence
-        M['stiprev'] = dpar2mpar(P['stiprev']) # STI prevalence
-        M['death']  = dpar2mpar(P['death'])  # Death rates
-        M['tbprev'] = dpar2mpar(P['tbprev']) # TB prevalence
+        simpars['popsize'] = popsize2mpar(P['popsize']) # Population size
+        simpars['initprev'] = P['initprev'] # Initial HIV prevalence
+        simpars['stiprev'] = dpar2mpar(P['stiprev']) # STI prevalence
+        simpars['death']  = dpar2mpar(P['death'])  # Death rates
+        simpars['tbprev'] = dpar2mpar(P['tbprev']) # TB prevalence
         
         ## Testing parameters -- most are data
-        M['hivtest'] = dpar2mpar(P['hivtest']) # HIV testing rates
-        M['aidstest'] = dpar2mpar(P['aidstest'])[0] # AIDS testing rates
-        M['tx'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+        simpars['hivtest'] = dpar2mpar(P['hivtest']) # HIV testing rates
+        simpars['aidstest'] = dpar2mpar(P['aidstest'])[0] # AIDS testing rates
+        simpars['tx'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
     
         ## MTCT parameters
-        M['numpmtct'] = dpar2mpar(P['numpmtct'])[0]
-        M['birth']    = dpar2mpar(P['birth'])
-        M['breast']   = dpar2mpar(P['breast'])[0]  
+        simpars['numpmtct'] = dpar2mpar(P['numpmtct'])[0]
+        simpars['birth']    = dpar2mpar(P['birth'])
+        simpars['breast']   = dpar2mpar(P['breast'])[0]  
         
         ## Sexual behavior parameters -- all are parameters so can loop over all
-        M['numacts'] = dict()
-        M['condom']  = dict()
-        M['numacts']['reg'] = dpar2mpar(P['numactsreg']) # ...
-        M['numacts']['cas'] = dpar2mpar(P['numactscas']) # ...
-        M['numacts']['com'] = dpar2mpar(P['numactscom']) # ...
-        M['numacts']['inj'] = dpar2mpar(P['numinject']) # ..
-        M['condom']['reg']  = dpar2mpar(P['condomreg']) # ...
-        M['condom']['cas']  = dpar2mpar(P['condomcas']) # ...
-        M['condom']['com']  = dpar2mpar(P['condomcom']) # ...
+        simpars['numacts'] = dict()
+        simpars['condom']  = dict()
+        simpars['numacts']['reg'] = dpar2mpar(P['numactsreg']) # ...
+        simpars['numacts']['cas'] = dpar2mpar(P['numactscas']) # ...
+        simpars['numacts']['com'] = dpar2mpar(P['numactscom']) # ...
+        simpars['numacts']['inj'] = dpar2mpar(P['numinject']) # ..
+        simpars['condom']['reg']  = dpar2mpar(P['condomreg']) # ...
+        simpars['condom']['cas']  = dpar2mpar(P['condomcas']) # ...
+        simpars['condom']['com']  = dpar2mpar(P['condomcom']) # ...
         
         ## Circumcision parameters
-        M['circum']    = dpar2mpar(P['circum']) # Circumcision percentage
+        simpars['circum']    = dpar2mpar(P['circum']) # Circumcision percentage
         if  'numcircum' in P.keys():
-            M['numcircum'] = dpar2mpar(P['numcircum'])[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+            simpars['numcircum'] = dpar2mpar(P['numcircum'])[0] # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
         else:
-            M['numcircum'] = zeros(shape(M['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+            simpars['numcircum'] = zeros(shape(simpars['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
         
         ## Drug behavior parameters
-        M['numost'] = dpar2mpar(P['numost'])[0]
-        M['sharing'] = dpar2mpar(P['sharing'])
+        simpars['numost'] = dpar2mpar(P['numost'])[0]
+        simpars['sharing'] = dpar2mpar(P['sharing'])
         
         ## Other intervention parameters (proportion of the populations, not absolute numbers)
-        M['prep'] = dpar2mpar(P['prep'])
+        simpars['prep'] = dpar2mpar(P['prep'])
         
         ## Matrices can be used almost directly
         for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
-            M[parname] = array(P[parname])
+            simpars[parname] = array(P[parname])
         
         ## Constants...can be used directly
-        M['const'] = P['const']
+        simpars['const'] = P['const']
         
         ## Calculate total acts
-        M['totalacts'] = totalacts(M, npts)
+        simpars['totalacts'] = totalacts(simpars, npts)
         
         ## Program parameters not related to data
-        M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
-        M['txtotal'] = zeros(shape(M['tx'])) # Initialize total number of people on treatment
+        simpars['propaware'] = zeros(shape(simpars['hivtest'])) # Initialize proportion of PLHIV aware of their status
+        simpars['txtotal'] = zeros(shape(simpars['tx'])) # Initialize total number of people on treatment
         
         
         printv('...done making model parameters.', 2, verbose)
-        return M
+        return simpars
     
     
             
