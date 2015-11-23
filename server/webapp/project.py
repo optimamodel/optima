@@ -45,17 +45,10 @@ def get_predefined():
     """
     Gives back default populations and programs
     """
-    from sim.programs import programs, program_categories
-    from sim.populations import populations
-    programs = programs()
+    from optima.populations import populations
     populations = populations()
-    program_categories = program_categories()
     for p in populations: p['active']= False
-    for p in programs:
-        p['active'] = False
-        new_parameters = [dict([('value', parameter),('active',True)]) for parameter in p['parameters']]
-        if new_parameters: p['parameters'] = new_parameters
-    return jsonify({"programs":programs, "populations": populations, "categories":program_categories})
+    return jsonify({"populations": populations})
 
 
 def getPopsAndProgsFromModel(project_entry, trustInputMetadata): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
