@@ -14,7 +14,7 @@ def plotpeople(resultslist):
     statelabels = []
     statelabels.append('sus1')
     statelabels.append('sus2')
-    cd4s = ['a', '500', '350', '200', '50', '0']
+    cd4s = ['Acu', '500', '350', '200', '50', '0']
     types = ['ud', 'dx', 'tx']
     for t in types:
         for cd4 in cd4s:

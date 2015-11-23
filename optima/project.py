@@ -12,7 +12,6 @@ Version: 2015nov02 by cliffk
 #######################################################################################################
 
 from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
-from numpy import array
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 version = 2.0
@@ -249,8 +248,9 @@ class Project(object):
         simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         results = model(simpars, self.settings)
         results.derivedresults() # Generate derived results
-        results.pars = self.parsets[name]
-        results.simpars = simpars
+        results.pars = self.parsets[name] # Store parameters
+        results.simpars = simpars # ...and sim parameters
+        results.setting = self.settings # and settings
         results.projectinfo = str(self) # Store all the information about this project
         
         return results
