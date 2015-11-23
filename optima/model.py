@@ -137,6 +137,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     # Force of infection metaparameter
     Fforce = simpars['force']
+    print(Fforce)
     Finhomo = simpars['inhomo']
     
     # Proportion of PLHIV who are aware of their status

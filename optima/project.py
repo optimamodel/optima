@@ -192,6 +192,7 @@ class Project(object):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
+        
         structlist[new] = dcp(structlist[orig])
         print('Item "%s" copied to structure list "%s"' % (new, what))
         return None
