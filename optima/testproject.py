@@ -84,6 +84,7 @@ if 'saveload' in tests:
     print('Running save/load test...')
     
     from optima import Project, save, load
+    from os import remove
     filename = 'testproject.prj'
     
     print('  Checking saving...')
@@ -92,6 +93,9 @@ if 'saveload' in tests:
     
     print('  Checking loading...')
     Q = load(filename)
+    
+    print('Cleaning up...')
+    remove(filename)
     
     done(t)
 

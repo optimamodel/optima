@@ -243,15 +243,16 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name='default', start=None, end=None, dt=None):
+    def runsim(self, name='default', simpars=None, start=None, end=None, dt=None):
         ''' This function runs a single simulation '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
+        if simpars is None: # Optionally run with a precreated simpars instead
+            simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         results = model(simpars, self.settings)
         results.derivedresults() # Generate derived results
-        results.pars = self.parsets[name] # Store parameters
+        results.pars = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
         results.simpars = simpars # ...and sim parameters
         results.settings = self.settings # and settings
         results.projectinfo = str(self) # Store all the information about this project
@@ -268,9 +269,6 @@ class Project(object):
 #        return S
     
     
-    def calibrate(self):
-        print('Not implemented')
-        return None
     
     def autofit(self):
         print('Not implemented')
