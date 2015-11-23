@@ -186,7 +186,6 @@ class Programset(object):
     def getoutcomes(self,budget,t,parset,interaction='random',perturb=False):
         ''' Get the model parameters corresponding to a budget'''
         
-        
         outcomes = {}
         nyrs = len(t)
         
