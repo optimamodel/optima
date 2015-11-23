@@ -7,7 +7,7 @@ Version: 2015oct22 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, shape, mean
+from numpy import array, isnan, zeros, shape, argmax, mean log, polyfit
 from optima import odict, printv, sanitize, uuid, today, getdate
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
@@ -17,10 +17,48 @@ eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 def data2popsize(dataarray, data, keys):
     par = Popsizepar()
-    par.name = 'popsize'
-    par.m = 1
-#    for r,key in enumerate(keys): 
-        
+    par.name = 'popsize' # Store the name of the parameter
+    par.m = 1 # Set metaparameter to 1
+    
+    # Parse data into consistent form
+    sanitizedy = odict() # Initialize to be empty
+    sanitizedt = odict() # Initialize to be empty
+    for r,key in enumerate(keys): 
+        sanitizedy[key] = sanitize(dataarray[r]) # Store each extant value
+        sanitizedt[key] = array(data['years'])[~isnan(dataarray[r])] # Store each year
+    largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
+    
+    # Store a list of population sizes that have at least 2 data points
+    atleast2datapoints = [] 
+    for key in keys:
+        if len(sanitizedy[key])>=2:
+            atleast2datapoints.append(key)
+    if len(atleast2datapoints)==0:
+        errormsg = 'Not more than one data point entered for any population size\n'
+        errormsg += 'To estimate growth trends, at least one population must have at least 2 data points'
+        raise Exception(errormsg)
+    
+    # Perform 2-parameter exponential fit to data
+    startyear = data['years'][0]
+    for key in atleast2datapoints:
+        tdata = sanitizedt[key]-startyear
+        ydata = log(sanitizedy[key])
+        try:
+            par.p[key] = polyfit(tdata, ydata, 2)
+        except:
+            errormsg = 'Fitting population size data for population "%s" failed' % key
+            raise Exception(errormsg)
+    
+    
+    
+    
+    
+    
+#    Get all population data
+#    Find populations that have at least 2 data points entered (return error if none)
+#    Fit 2-parameter exponential to largest one
+#    In order of decreasing size, fit 2-parameter exponentials, weighted based on population size and number of data points
+#    For populations with <2 data points entered, apply shape of existing fits
     
     return par
 
@@ -85,7 +123,7 @@ def makeparsfromdata(data, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2015oct22 by cliffk
+    Version: 2015nov22 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
