@@ -17,8 +17,8 @@ tests = [
 #'makespreadsheet',
 #'makeproject',
 #'saveload',
-'loadspreadsheet',
-#'runsim',
+#'loadspreadsheet',
+'runsim',
 #'gui'
 ]
 

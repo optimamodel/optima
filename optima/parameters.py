@@ -22,9 +22,13 @@ def data2popsize(dataarray, data, keys):
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
-    for r,key in enumerate(keys): 
-        sanitizedy[key] = sanitize(dataarray[r]) # Store each extant value
-        sanitizedt[key] = array(data['years'])[~isnan(dataarray[r])] # Store each year
+    for row,key in enumerate(keys):
+        try:
+            sanitizedy[key] = sanitize(dataarray[row]) # Store each extant value
+            sanitizedt[key] = array(data['years'])[~isnan(dataarray[row])] # Store each year
+        except:
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
     largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
     
     # Store a list of population sizes that have at least 2 data points
@@ -76,11 +80,11 @@ def data2timepar(parname, dataarray, data, keys):
     par.m = 1 # Set metaparameter to 1
     par.y = odict() # Initialize array for holding parameters
     par.t = odict() # Initialize array for holding time points
-    for r,key in enumerate(keys): 
-        validdata = ~isnan(dataarray[r])
+    for row,key in enumerate(keys): 
+        validdata = ~isnan(dataarray[row])
         if sum(validdata): # There's at least one data point
-            par.y[key] = sanitize(dataarray[r]) # Store each extant value
-            par.t[key] = array(data['years'])[~isnan(dataarray[r])] # Store each year
+            par.y[key] = sanitize(dataarray[row]) # Store each extant value
+            par.t[key] = array(data['years'])[~isnan(dataarray[row])] # Store each year
         else: # Blank, assume zero
             par.y[key] = array([0])
             par.t[key] = array([0])
@@ -92,8 +96,8 @@ def data2timepar(parname, dataarray, data, keys):
 def dataindex(dataarray, index, keys):
     """ Take an array of data return either the first or last (...or some other) non-NaN entry """
     par = odict() # Create structure
-    for r,key in enumerate(keys):
-        par[key] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+    for row,key in enumerate(keys):
+        par[key] = sanitize(dataarray[row])[index] # Return the specified index -- usually either the first [0] or last [-1]
     
     return par
 
@@ -145,7 +149,7 @@ def makeparsfromdata(data, verbose=2):
     ## Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
     pars['initprev'] = dataindex(data['hivprev'][bestindex], 0, popkeys) # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize(data['popsize'], data, popkeys)
+    pars['popsize'] = data2popsize(data['popsize'][bestindex], data, popkeys)
     
     ## Parameters that can be converted automatically
     sheets = data['meta']['sheets']
@@ -329,7 +333,7 @@ class Parameterset(object):
         P = self.pars[ind] # Shorten name of parameters thing
         
         from utils import printv
-        from numpy import zeros, array, arange, exp, shape
+        from numpy import zeros, array, arange, shape
     
     
     
@@ -361,7 +365,7 @@ class Parameterset(object):
         
         
         ## Epidemilogy parameters -- most are data
-        M['popsize'] = grow(P['popsize'], TEMPGROWTH) # Population size
+#        M['popsize'] = grow(P['popsize'], TEMPGROWTH) # Population size
         M['hivprev'] = P['hivprev'] # Initial HIV prevalence
         M['stiprev'] = dpar2mpar(P['stiprev']) # STI prevalence
         M['death']  = dpar2mpar(P['death'])  # Death rates
