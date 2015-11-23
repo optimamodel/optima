@@ -14,12 +14,12 @@ Version: 2015nov23 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-#'makespreadsheet',
-#'makeproject',
-#'saveload',
-#'loadspreadsheet',
+'makespreadsheet',
+'makeproject',
+'saveload',
+'loadspreadsheet',
 'runsim',
-#'gui'
+'gui'
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values

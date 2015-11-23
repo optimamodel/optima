@@ -358,7 +358,7 @@ class Parameterset(object):
         ## Testing parameters -- most are data
         simpars['hivtest'] = datapar2simpar(P['hivtest'], popkeys) # HIV testing rates
         simpars['aidstest'] = datapar2simpar(P['aidstest'], tot) # AIDS testing rates
-        simpars['tx'] = datapar2simpar(P['numtx'], tot, smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+        simpars['tx'] = datapar2simpar(P['numtx'], tot, smoothness=int(1/dt)) # Number of people on first-line treatment -- 0 since overall not by population
     
         ## MTCT parameters
         simpars['numpmtct'] = datapar2simpar(P['numpmtct'], tot)

@@ -439,7 +439,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx is None: # No proportion diagnosed information, go with testing rate
-                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
             else: # It exists, use what's calculated before
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
