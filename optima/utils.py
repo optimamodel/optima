@@ -226,8 +226,16 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
     newx = array(newx)
     origx = array(origx)
     origy = array(origy)
+    
+    if not(newx.shape): raise Exception('To interpolate, must have at least one new x value to interpolate to')
+    if not(origx.shape): raise Exception('To interpolate, must have at least one original x value to interpolate to')
+    if not(origy.shape): raise Exception('To interpolate, must have at least one original y value to interpolate to')
+    if not(origx.shape==origy.shape): 
+        errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
+        raise Exception(errormsg)
     origy = origy[~isnan(origy)] 
     origx = origx[~isnan(origy)]
+
     
     # Make sure it's in the correct order
     correctorder = argsort(origx)
