@@ -241,11 +241,12 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name='default', start=2000, end=2030, dt=None):
+    def runsim(self, name='default', start=None, end=None, dt=None):
         ''' This function runs a single simulation '''
-        if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
+        if start is None: start=self.settings.start # Specify the start year
+        if end is None: end=self.settings.end # Specify the end year
+        if dt is None: dt=self.settings.dt # Specify the timestep
         simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
-        
         results = model(simpars, self.settings)
         results.derivedresults() # Generate derived results
         results.pars = self.parsets[name]

@@ -11,6 +11,8 @@ from numpy import arange, concatenate as cat
 class Settings():
     def __init__(self):
         self.dt = 0.2 # Timestep
+        self.start = 2000 # Default start year
+        self.end = 2030 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
         self.ncd4 = len(self.hivstates)
         
