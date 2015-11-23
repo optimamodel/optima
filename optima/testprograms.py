@@ -81,6 +81,8 @@ if 'makeprograms' in tests:
 
     # 3. Add historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,'cost':1e6,'coverage':3e5})
+    HTC.addcostcovdatum({'t':2014,'cost':4e7,'coverage':10e5})
+    HTC.addcostcovdatum({'t':2015,'cost':1e7,'coverage':4e5})
 
     # 4. Overwrite historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,'cost':2e6,'coverage':3e5}, overwrite=True)
@@ -110,7 +112,10 @@ if 'makeprograms' in tests:
     from numpy import linspace
     HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
     # If you want to evaluate it for a particular population size, can also do...
-    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015])
+    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
+
+    # 12. Plot cost-coverage function
+    HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
     print('Running make programs set test...')
     R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
@@ -163,11 +168,10 @@ if 'makeprograms' in tests:
     # 12. Get a set of parameter values corresponding to a vector of program allocations
     R.getoutcomes(budget=budget,t=[2015,2016,2020],parset=P.parsets['default'],interaction='nested',perturb=False)
 
+    # 12. Get a set of parameter values corresponding to a vector of program allocations
+    R.plotallcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
+
     done(t)
-
-
-
-
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))

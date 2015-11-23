@@ -6,11 +6,12 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds
 from collections import defaultdict
 import abc
-
+from pylab import figure
+from matplotlib.ticker import MaxNLocator
 
 class Programset(object):
 
@@ -275,9 +276,24 @@ class Programset(object):
 
                 else:
                     raise Exception('Unknown reachability type "%s"',interaction)
-
         
         return outcomes
+        
+        
+    def plotallcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
+        ''' Plot the cost-coverage curve for all programs'''
+    
+        cost_coverage_figures = {}
+        for thisprog in self.programs.keys():
+            if self.programs[thisprog].optimizable():
+                if not self.programs[thisprog].costcovfn.ccopars:
+                    printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
+                else:
+                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,targetpopprop=targetpopprop,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
+
+        return cost_coverage_figures
+        
+        
 
 class Program(object):
     ''' Defines a single program. 
@@ -373,22 +389,64 @@ class Program(object):
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
-    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False):
+    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False):
         '''Returns coverage for a time/spending vector'''
 
         poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
         totaltargeted = sum(poptargeted.values())
-        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t)
+        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,toplot=toplot)
         
         popreached = {}
         if not total and not targetpopprop: # calculate targeting since it hasn't been provided
             targetpopprop = {}
             for targetpop in self.targetpops:
                 targetpopprop[targetpop] = poptargeted[targetpop]/totaltargeted
-                popreached[targetpop] = totalreached*targetpopprop[targetpop]/totaltargeted # Obviously need to fix this
+                popreached[targetpop] = totalreached*targetpopprop[targetpop]
+                if proportion: popreached[targetpop] /= totaltargeted 
 
         if total: return totalreached/totaltargeted if proportion else totalreached
         else: return popreached
+        
+    def plotcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,randseed=None,bounds=None):
+        ''' Plot the cost-coverage curve for a single program'''
+        plotdata = {}
+        if xupperlim is None: xupperlim = 10e6
+        x = linspace(0,xupperlim,100)
+        plotdata['xlinedata'] = x
+        try:
+            y = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True)
+        except:
+            y = None
+        plotdata['ylinedata'] = y
+        plotdata['xlabel'] = 'USD'
+        plotdata['ylabel'] = 'Number covered'
+
+        cost_coverage_figure = existingFigure if existingFigure else figure()
+        cost_coverage_figure.hold(True)
+        axis = cost_coverage_figure.gca()
+
+        if y is not None:
+            for yr in range(y.shape[0]):
+                axis.plot(
+                    x,
+                    y[yr],
+                    linestyle='-',
+                    linewidth=2,
+                    color='#a6cee3')
+        axis.scatter(
+            self.costcovdata['cost'],
+            self.costcovdata['coverage'],
+            color='#666666')
+    
+        axis.set_xlim([0, xupperlim])
+        axis.set_ylim(bottom=0)
+        axis.tick_params(axis='both', which='major', labelsize=11)
+        axis.set_xlabel(plotdata['xlabel'], fontsize=11)
+        axis.set_ylabel(plotdata['ylabel'], fontsize=11)
+        axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
+        axis.set_title(self.name)
+    
+        return cost_coverage_figure
         
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
@@ -448,6 +506,8 @@ class CCOF(object):
         # Error checks
         if not self.ccopars:
             raise Exception('Need parameters for at least one year before function can be evaluated.')            
+        elif not self.ccopars['t']:
+            raise Exception('Need parameters for at least one year before function can be evaluated.')
         if randseed and bounds:
             raise Exception('Either select bounds or specify randseed')            
 
@@ -475,8 +535,8 @@ class CCOF(object):
         ccopar['t'] = t
         return ccopar
 
-    def evaluate(self,x,popsize,t,randseed=None,bounds=None):
-        if not len(x)==len(t): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
+    def evaluate(self,x,popsize,t,toplot,randseed=None,bounds=None):
+        if (not toplot) and (not len(x)==len(t)): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
         ccopar = self.getccopar(t,randseed,bounds)
         return self.function(x,ccopar,popsize)
 
@@ -493,7 +553,22 @@ class Costcov(CCOF):
     '''Cost-coverage objects'''
             
     def function(self,x,ccopar,popsize):
-        '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
+        '''Returns coverage in a given year for a given spending amount.'''
+        u = array(ccopar['unitcost'])
+        s = array(ccopar['saturation'])
+        if isinstance(popsize,(float,int)): popsize = array([popsize])
+                        
+        nyrs,npts = len(u),len(x)
+        if nyrs==npts: return (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
+        else:
+            y = zeros((nyrs,npts))        
+            for yr in range(nyrs):
+                y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
+            return y
+ 
+
+    def plot(self,x,ccopar,popsize):
+        '''Returns coverage in a given year.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
         if isinstance(popsize,(float,int)): popsize = array([popsize])
@@ -512,11 +587,6 @@ class Covout(CCOF):
     def function(self,x,ccopar,popsize):
         ''' Returns outcome given parameters'''
         
-
-
-
-
-
 
 #    def function(self,x,ccopar,popsize):
 #        '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
