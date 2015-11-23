@@ -85,7 +85,7 @@ if 'force' in tests:
     results1 = P.runsim('default')
     
     P.copyparset('default', 'forcetest')
-    P.parsets['forcetest'].pars[0]['force'][:] *= 2
+    P.parsets['forcetest'].pars[0]['force'][:] *= 3
     results2 = P.runsim('forcetest')
     
     from gui import gui

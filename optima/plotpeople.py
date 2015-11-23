@@ -6,7 +6,7 @@ Simple little code to visualize the people in the people array.
 """
 
 import matplotlib as mpl
-from pylab import hold, shape, subplot, figure, title, ylabel, plot
+from pylab import hold, shape, subplot, figure, title, ylabel, plot, maximum
 
 def plotpeople(resultslist, normalized=True):
     if type(resultslist) is not list: resultslist = [resultslist]
@@ -32,19 +32,20 @@ def plotpeople(resultslist, normalized=True):
     eps = 1e-9
     for s in range(nstates):
         for p in range(npops):
+            normalization = eps
             count += 1
             h = subplot(nstates, npops, count)
             hold(True)
             for z in range(len(resultslist)):
                 ppl = resultslist[z].people
                 if normalized:
-                    normalization = ppl[settings.allplhiv,p,:].max()+eps
+                    normalization = maximum(normalization, ppl[settings.allplhiv,p,:].max()*1.1)
                 else:
-                    normalization = ppl[s,p,:].max()+eps
-                plot(resultslist[z].tvec, ppl[s,p,:]/normalization) # Plot values normalized across everything
+                    normalization = maximum(normalization, ppl[s,p,:].max()*1.1)
+                plot(resultslist[z].tvec, ppl[s,p,:]) # Plot values normalized across everything
             if s!=nstates-1: h.set_xticks([])
             h.set_yticks([])
-            h.set_ylim((0, 1.1))
+            h.set_ylim((0, normalization))
             if s==0: title('Population %i' % p)
             if p==0: ylabel('%s' % statelabels[s])
             

@@ -638,9 +638,6 @@ class odict(OrderedDict):
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             enumerator = enumerate(range(startind,stopind+1))
-            print('HIIIIII')
-            print(range(startind,stopind+1))
-            print(value)
             try:
                 slicelen = len(range(startind,stopind+1))
                 if len(value)==slicelen:
@@ -655,6 +652,9 @@ class odict(OrderedDict):
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
+    
+    
+    
     
     def __repr__(self):
         ''' Print a meaningful representation of the odict '''

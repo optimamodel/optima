@@ -56,8 +56,8 @@ if 'odict' in tests:
     bar = foo.sort() # Sort the list
     assert(bar['boo'] == 4) # Show get item by value
     assert(bar[1] == 4) # Show get item by index
-    assert(bar[0:1] == [3,4]) # Show get item by slice
-    assert(bar['cough':'dill'] == [6,8]) # Show alternate slice notation
+    assert((bar[0:1] == [3,4]).all()) # Show get item by slice
+    assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
     assert(bar[[2,1]] == [6,4]) # Show get item by list
     bar[3] = [3,4,5] # Show assignment by item
     bar[0:1] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!

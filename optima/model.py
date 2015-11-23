@@ -137,7 +137,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     # Force of infection metaparameter
     Fforce = simpars['force']
-    print(Fforce)
     Finhomo = simpars['inhomo']
     
     # Proportion of PLHIV who are aware of their status
@@ -597,7 +596,7 @@ def equilibrate(settings, simpars, verbose=2):
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
-        assumedforceinf = simpars['force'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
