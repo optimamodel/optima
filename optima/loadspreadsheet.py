@@ -178,8 +178,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                 # It's pops-data, split into pieces
                 if sheetname=='Populations': 
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
-                    data['pops']['short'].append(thesedata[0])
-                    data['pops']['long'].append(thesedata[1])
+                    data['pops']['short'].append(str(thesedata[0]))
+                    data['pops']['long'].append(str(thesedata[1]))
                     data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
                     data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
                     agestring = thesedata[4] # Pull out age string

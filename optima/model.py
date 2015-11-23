@@ -1,9 +1,5 @@
-###############################################################################
-##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
-###############################################################################
-
- ## Imports
-from numpy import array, zeros, exp, maximum, minimum, concatenate, hstack, absolute, median
+## Imports
+from numpy import array, zeros, exp, maximum, minimum, hstack, median
 from optima import printv, tic, toc, dcp, Results
 from math import pow as mpow
 
@@ -22,16 +18,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ###############################################################################
     ## Setup
     ###############################################################################
-    npops = len(simpars['hivprev']) # WARNING TEMP
+    npops = len(simpars['initprev']) # WARNING TEMP
     
     simpars = dcp(simpars)
-    
-    F = {} # WARNING, should change
-    F['init']  = 1+zeros(npops)
-    F['popsize'] = 1e3+zeros(npops)
-    F['force'] = 1+zeros(npops)
-    F['inhomo'] = zeros(npops)
-    F['dx']  = 1+zeros(4)
 
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
@@ -84,27 +73,26 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
     
     # Set initial epidemic conditions 
-    people[:,:,0] = equilibrate(settings, simpars, array(F['init'])) # No it hasn't, so run equilibration
+    people[:,:,0] = equilibrate(settings, simpars) # No it hasn't, so run equilibration
     
     ## Metaparameters to get nice diagnosis fits
     # WARNING
-    dxtime  = fit2time(F['dx'],  results.tvec - 2015.0) # Subtraction to normalize F['dx'][2]
+#    dxtime  = fit2time(F['dx'],  results.tvec - 2015.0) # Subtraction to normalize F['dx'][2]
     
     ## Shorten variables and remove dict calls to make things faster...
     
     # Disease state indices
-    sus  = settings.uninf  # Susceptible
+    sus  = settings.uncirc  # Susceptible
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     tx  = settings.treat  # Treatment -- 1st line
     
     # Concatenate all PLHIV, diagnosed and treated for ease
-    plhivind = concatenate([undx, dx, tx]) # All PLHIV
-    dxind    = concatenate([dx, tx])       # All people who have been diagnosed
+    plhivind = settings.allplhiv # All PLHIV
+    dxind    = settings.alldiag       # All people who have been diagnosed
     
     # Population sizes
     popsize = dcp(simpars['popsize']) # Population sizes
-    for pop in range(npops): popsize[pop,:] *= float(F['popsize'][pop]) / simpars['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
     male = array(simpars['male']).astype(bool) # Male populations
@@ -145,8 +133,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     
     # Force of infection metaparameter
-    Fforce = array(F['force'])
-    Finhomo = array(F['inhomo'])
+    Fforce = simpars['force']
+    Finhomo = simpars['inhomo']
     
     # Proportion of PLHIV who are aware of their status
     propaware = simpars['propaware']
@@ -451,7 +439,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx is None: # No proportion diagnosed information, go with testing rate
-                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4] * dxtime[t]
+                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
             else: # It exists, use what's calculated before
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
@@ -566,22 +554,22 @@ def fit2time(pars, tvec):
     
     
     
-def equilibrate(settings, simpars, Finit, verbose=2):
+def equilibrate(settings, simpars, verbose=2):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
     rates for each of the health states.
     
     Usage:
-        G = general parameters
+        settings = general parameters
         simpars = model parameters
         Finit = fitted parameters for initial prevalence
         initpeople = nstates x npops array
     
-    Version: 2014nov26
+    Version: 2015nov22
     """
     from numpy import zeros, hstack, inf
     
-    npops = len(simpars['hivprev']) # WARNING len(simpars['hivprev']) is npops
+    npops = len(simpars['initprev']) # WARNING len(simpars['hivprev']) is npops
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
@@ -589,13 +577,13 @@ def equilibrate(settings, simpars, Finit, verbose=2):
     
     # Shorten key variables
     initpeople = zeros((settings.ncomparts,npops)) 
-    allinfected = simpars['popsize'][:,0] * Finit[:] # Set initial infected population
+    allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
     for p in range(npops):
         # Set up basic calculations
-        uninfected = simpars['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
+        uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
@@ -605,7 +593,7 @@ def equilibrate(settings, simpars, Finit, verbose=2):
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
-        assumedforceinf = Finit[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        assumedforceinf = simpars['force'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
@@ -622,7 +610,7 @@ def equilibrate(settings, simpars, Finit, verbose=2):
         treatment *= recovratios
         
         # Populated equilibrated array
-        initpeople[settings.uninf, p] = uninfected
+        initpeople[settings.uncirc, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
         initpeople[settings.treat, p] = treatment
