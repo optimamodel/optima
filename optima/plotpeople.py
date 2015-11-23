@@ -12,13 +12,16 @@ def plotpeople(resultslist):
     if type(resultslist) is not list: resultslist = [resultslist]
     ppl = resultslist[0].people
     statelabels = []
-    statelabels.append('sus')
+    statelabels.append('sus1')
+    statelabels.append('sus2')
     cd4s = ['a', '500', '350', '200', '50', '0']
     types = ['ud', 'dx', 'tx']
     for t in types:
         for cd4 in cd4s:
             statelabels.append(t+cd4)
-    nstates = len(statelabels) # shape(ppl)[0]
+    nstates = len(statelabels) # 
+    if nstates != shape(ppl)[0]:
+        raise Exception("Number of states don't match")
     npops = shape(ppl)[1]
     count = 0
     figh = figure(figsize=(24,16), facecolor='w')
@@ -31,9 +34,9 @@ def plotpeople(resultslist):
             count += 1
             h = subplot(nstates, npops, count)
             hold(True)
-            for s in range(len(resultslist)):
-                ppl = resultslist[s].people
-                plot(resultslist[s].tvec, ppl[s,p,:]/(ppl[s,p,:].max()+eps)) # Plot values normalized across everything
+            for z in range(len(resultslist)):
+                ppl = resultslist[z].people
+                plot(resultslist[z].tvec, ppl[s,p,:]/(ppl[s,p,:].max()+eps)) # Plot values normalized across everything
             h.set_xticks([])
             h.set_yticks([])
             h.set_ylim((0, 1.1))
