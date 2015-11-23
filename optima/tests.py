@@ -143,7 +143,9 @@ if 'gui' in tests:
     
     try:
         from gui import gui
+        from plotpeople import plotpeople
         gui(results)
+        plotpeople(results)
     except:
         print('Backend GUI failed to load -- not critical')
     
