@@ -8,7 +8,7 @@ Version: 2015oct22 by cliffk
 
 
 from numpy import array, isnan, zeros, shape, mean
-from optima import printv, sanitize, uuid, today, getdate
+from optima import odict, printv, sanitize, uuid, today, getdate
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -91,7 +91,7 @@ def makeparsfromdata(data, verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    pars = dict()
+    pars = odict()
     
     ## Key parameters
     for parname in ['popsize', 'hivprev']:
@@ -115,7 +115,7 @@ def makeparsfromdata(data, verbose=2):
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars[parname] = data[parname]
     
-    pars['const'] = dict()
+    pars['const'] = odict()
     for parname in data['const'].keys():
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
