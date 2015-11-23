@@ -14,7 +14,9 @@ Version: 2015nov23 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'gui',
+#'gui',
+'force',
+'treatment',
 ]
 
 
@@ -51,11 +53,11 @@ T = tic()
 
 
 
-## Project creation test
+## GUI test
 if 'gui' in tests:
     t = tic()
 
-    print('Running make programs test...')
+    print('Running GUI test...')
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
@@ -65,6 +67,31 @@ if 'gui' in tests:
     from plotpeople import plotpeople
     gui(results)
     plotpeople(results)
+
+    done(t)
+
+
+
+
+
+## Force-of-infection change test
+if 'force' in tests:
+    t = tic()
+
+    print('Running force-of-infection test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test.xlsx')
+    results1 = P.runsim('default')
+    
+    P.copyparset('default', 'force')
+    P.parsets['force'].pars[0]['force'][:] *= 10
+    results2 = P.runsim('force')
+    
+    from gui import gui
+    from plotpeople import plotpeople
+    gui([results1, results2])
+    plotpeople([results1, results2])
 
     done(t)
 
