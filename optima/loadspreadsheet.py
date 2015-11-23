@@ -26,17 +26,41 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
             raise Exception(errormsg)
         
+        
+        
     
-    def validatedata(thesedata, sheetname, thispar, row, checkupper=True):
+    def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checkblank=True):
         ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
+        
+        # Check that only numeric data have been entered
+        for column,datum in enumerate(thesedata):
+            if type(datum) not in [float, int]:
+                errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
+                errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
+                errormsg += 'Be sure all entries are numeric'
+                raise Exception(errormsg)
+        
+        # Now check integrity of data itself
         validdata = array(thesedata)[~isnan(thesedata)]
         if len(validdata):
-            invalid = logical_or(array(validdata)>1, array(validdata)<0)
+            if checkupper: invalid = logical_or(array(validdata)>1, array(validdata)<0)
+            else: invalid = array(validdata)<0
             if any(invalid):
                 column = nonzero(invalid)[0]
-                errormsg = 'Invalid entry in spreadsheet "%s": parameter %s (row=%i, column(s)=%s, value=%f)\n' % (thispar, sheetname, row+1, column, thesedata[column[0]])
-                errormsg += 'Be sure that all values are >=0 and <=1'
+                errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
+                errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
+                if checkupper: errormsg += 'Be sure that all values are >=0 and <=1'
+                else: errormsg += 'Be sure that all values are >=0'
                 raise Exception(errormsg)
+        
+        # No data entered
+        elif checkblank:
+            errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
+            raise Exception(errormsg)
+        
+        return None
+
+
 
     def blank2nan(thesedata):
         ''' Convert a blank entry to a nan '''
@@ -180,8 +204,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=False)
                     if thispar=='hivprev':
-                       validatedata(thesedata, sheetname, thispar, row)
+                       validatedata(thesedata, sheetname, thispar, row, checkupper=True, checkblank=False)
 
                     
                 
@@ -192,8 +217,10 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
+                    checkblank = False if sheetname=='Optional indicators' else True # Don't check optional indicators, check everything else
+                    validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank)
                     if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
-                        validatedata(thesedata, sheetname, thispar, row)                        
+                        validatedata(thesedata, sheetname, thispar, row, checkupper=True)                        
 
 
 
@@ -202,6 +229,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=sheetdata.ncols) # Data starts in 3rd column
                     thesedata = list(map(lambda val: 0 if val=='' else val, thesedata)) # Replace blanks with 0
                     data[thispar].append(thesedata) # Store data
+                    validatedata(thesedata, sheetname, thispar, row)
                 
                 
                 
@@ -213,6 +241,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     except:
                         errormsg = 'Failed to load constant subparameter from subparlist %i' % parcount
                         raise Exception(errormsg)
+                    validatedata(thesedata, sheetname, thispar, row)
                     data['const'][subpar] = thesedata # Store data
     
     
