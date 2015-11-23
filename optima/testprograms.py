@@ -213,6 +213,10 @@ if 'makeprograms' in tests:
                                                     'HTC': 0.4,
                                                     'SBCC':0.2})
 
+    R.covout['condomcas']['Females 15-49'].addccopar({'intercept': 0.3,
+                                                    't': 2015.0,
+                                                    'SBCC':0.15})
+                                                    
     # 9. Overwrite parameters for defining coverage-outcome function.
     R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.35,
                                                     't': 2015.0,
@@ -232,6 +236,8 @@ if 'makeprograms' in tests:
                   parset=P.parsets['default'],
                   interaction='nested',
                   perturb=False)
+    hivtest1 = odict(parset1['hivtest'])
+    condomcas1 = odict(parset1['condomcas'])
 
     # 13. Plot cost-coverage curves for all programs
     R.plotallcoverage(t=[2013,2015],
@@ -239,6 +245,9 @@ if 'makeprograms' in tests:
                       xupperlim=1e8)
 
     # 14. Try varying the budget & comparing the parameter values
+#    budget={'HTC':array([1e7,1.2e7,1.5e7]),
+#            'SBCC':array([1e6,1.2e6,1.5e6]),
+#            'MGT':array([2e5,3e5,3e5])}
     budget2 = {'HTC':array([2e7,2.4e7,3e7]),
                'SBCC':array([1e6,1.2e6,1.5e6]),
                'MGT':array([2e5,3e5,3e5])}
@@ -248,30 +257,30 @@ if 'makeprograms' in tests:
                   parset=P.parsets['default'],
                   interaction='nested',
                   perturb=False)
+    hivtest2 = odict(parset2['hivtest'])
+    condomcas2 = odict(parset2['condomcas'])
+
 
     P.parsets['progscen1'] = deepcopy(P.parsets['default'])
     P.parsets['progscen2'] = deepcopy(P.parsets['default'])
-
     newt = odict([('Males 15-49', array([ 2015., 2016., 2020.])),
                   ('Females 15-49', array([ 2015., 2016., 2020.]))])
-
-    hivtest1 = odict(parset1['hivtest'])
-    hivtest2 = odict(parset2['hivtest'])
-
-    condomcas1 = odict(parset1['condomcas'])
-    condomcas2 = odict(parset2['condomcas'])
 
     P.parsets['progscen1'].pars[0]['hivtest'].t = newt
     P.parsets['progscen2'].pars[0]['hivtest'].t = newt
     P.parsets['progscen1'].pars[0]['hivtest'].y = hivtest1
     P.parsets['progscen2'].pars[0]['hivtest'].y = hivtest2
-    P.parsets['progscen1'].pars[0]['condomcas'].y = condomcas1
-    P.parsets['progscen2'].pars[0]['condomcas'].y = condomcas2
+
+    P.parsets['progscen1'].pars[0]['condomcas'].t = newt
+    P.parsets['progscen2'].pars[0]['condomcas'].t = newt
+    P.parsets['progscen1'].pars[0]['condomcas'].y['Females 15-49'] = condomcas1['Females 15-49']
+    P.parsets['progscen2'].pars[0]['condomcas'].y['Females 15-49'] = condomcas2['Females 15-49']
     
+    results0 = P.runsim('default')
     results1 = P.runsim('progscen1')
     results2 = P.runsim('progscen2')
     from plotpeople import plotpeople
-    plotpeople([results1, results2])
+    plotpeople([results0, results1, results2])
 
     done(t)
 
