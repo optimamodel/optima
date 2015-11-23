@@ -1,8 +1,4 @@
-###############################################################################
-##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
-###############################################################################
-
- ## Imports
+## Imports
 from numpy import array, zeros, exp, maximum, minimum, hstack, median
 from optima import printv, tic, toc, dcp, Results
 from math import pow as mpow
@@ -77,11 +73,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
     
     # Set initial epidemic conditions 
-    people[:,:,0] = equilibrate(settings, simpars, array(F['init'])) # No it hasn't, so run equilibration
+    people[:,:,0] = equilibrate(settings, simpars) # No it hasn't, so run equilibration
     
     ## Metaparameters to get nice diagnosis fits
     # WARNING
-    dxtime  = fit2time(F['dx'],  results.tvec - 2015.0) # Subtraction to normalize F['dx'][2]
+#    dxtime  = fit2time(F['dx'],  results.tvec - 2015.0) # Subtraction to normalize F['dx'][2]
     
     ## Shorten variables and remove dict calls to make things faster...
     
@@ -97,7 +93,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     # Population sizes
     popsize = dcp(simpars['popsize']) # Population sizes
-    for pop in range(npops): popsize[pop,:] *= float(F['popsize'][pop]) / simpars['popsize'][pop][0] # Calculate adjusted population sizes -- WARNING, kind of ugly
     
     # Logical arrays for population types
     male = array(simpars['male']).astype(bool) # Male populations
@@ -138,8 +133,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     
     # Force of infection metaparameter
-    Fforce = array(F['force'])
-    Finhomo = array(F['inhomo'])
+    Fforce = simpars['force']
+    Finhomo = simpars['inhomo']
     
     # Proportion of PLHIV who are aware of their status
     propaware = simpars['propaware']
@@ -574,7 +569,7 @@ def equilibrate(settings, simpars, verbose=2):
     """
     from numpy import zeros, hstack, inf
     
-    npops = len(simpars['hivprev']) # WARNING len(simpars['hivprev']) is npops
+    npops = len(simpars['initprev']) # WARNING len(simpars['hivprev']) is npops
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
