@@ -14,11 +14,6 @@ Version: 2015nov23 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'makespreadsheet',
-'makeproject',
-'saveload',
-'loadspreadsheet',
-'runsim',
 'makeprograms',
 ]
 
