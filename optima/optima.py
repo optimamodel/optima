@@ -11,7 +11,7 @@ from optima import *
 NB: the GUI is not imported, since this requires PyQt4, which is both not likely to exist
 and slow to import.
 
-Version: 2015nov19
+Version: 2015nov21
 """
 
 ## Load general modules
@@ -19,7 +19,7 @@ from uuid import uuid4 as uuid
 from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
-## Load non-Optima-specific functions
+## Load non-Optima-specific custom functions
 from ballsd import *
 from colortools import *
 from utils import *

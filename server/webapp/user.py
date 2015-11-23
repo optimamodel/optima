@@ -11,9 +11,9 @@ User Module
 """
 from flask import request, jsonify, g, session, flash, abort, Blueprint, url_for, current_app
 from flask.ext.login import LoginManager, login_user, current_user, logout_user, redirect, login_required # pylint: disable=E0611,F0401
-from webapp.dbconn import db
-from webapp.dbmodels import UserDb
-from webapp.utils import verify_admin_request
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import UserDb
+from server.webapp.utils import verify_admin_request
 import traceback
 
 
@@ -146,7 +146,7 @@ def delete(user_id):
         return jsonify({'reason': 'User does not exist'}), 404
     else:
         user_email = the_user.email
-        from webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+        from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
         from sqlalchemy.orm import load_only
         #delete all corresponding projects and working projects as well
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()

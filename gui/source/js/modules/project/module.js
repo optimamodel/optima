@@ -32,9 +32,6 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            parametersResponse: function($http) {
-              return $http.get('/api/project/parameters');
-            },
             defaultsResponse: function($http) {
               return $http.get('/api/project/predefined')
             },

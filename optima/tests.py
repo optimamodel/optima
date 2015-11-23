@@ -7,7 +7,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015nov01 by cliffk
+Version: 2015nov23 by cliffk
 """
 
 
@@ -256,7 +256,9 @@ if 'gui' in tests:
     
     try:
         from gui import gui
+        from plotpeople import plotpeople
         gui(results)
+        plotpeople(results)
     except:
         print('Backend GUI failed to load -- not critical')
     

@@ -13,12 +13,12 @@ import json
 import traceback
 from flask import request, jsonify, Blueprint, current_app
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
-from webapp.dbconn import db
-from webapp.async_calculate import CalculatingThread, start_or_report_calculation
-from webapp.async_calculate import cancel_calculation, check_calculation
-from webapp.async_calculate import check_calculation_status, good_exit_status
-from webapp.utils import check_project_name, check_project_exists, load_model, save_model
-from webapp.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
+from server.webapp.dbconn import db
+from server.webapp.async_calculate import CalculatingThread, start_or_report_calculation
+from server.webapp.async_calculate import cancel_calculation, check_calculation
+from server.webapp.async_calculate import check_calculation_status, good_exit_status
+from server.webapp.utils import check_project_name, check_project_exists, load_model, save_model
+from server.webapp.utils import revert_working_model_to_default, save_working_model_as_default, report_exception
 # TODO fix after v2
 # from sim.optimize import optimize, saveoptimization, defaultoptimizations, defaultobjectives, defaultconstraints
 from dataio import fromjson, tojson

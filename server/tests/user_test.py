@@ -11,8 +11,8 @@ class UserTestCase(OptimaTestCase):
 
     """
     def create_admin_user(self):
-        from webapp.dbconn import db
-        from webapp.dbmodels import UserDb
+        from server.webapp.dbconn import db
+        from server.webapp.dbmodels import UserDb
         """ Helper method to create project and save it to the database """
         admin = UserDb("admin", self.admin_email, self.admin_password, True)
         db.session.add(admin)

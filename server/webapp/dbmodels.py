@@ -1,5 +1,5 @@
-from sqlalchemy.dialects.postgresql import JSON
-from webapp.dbconn import db
+from sqlalchemy.dialects.postgresql import JSON, UUID
+from server.webapp.dbconn import db
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
@@ -31,62 +31,88 @@ class UserDb(db.Model):
     def is_authenticated(self): # pylint: disable=R0201
         return True
 
-
 class ProjectDb(db.Model):
     __tablename__ = 'projects'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     name = db.Column(db.String(60))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     datastart = db.Column(db.Integer)
     dataend = db.Column(db.Integer)
-    programs = db.Column(JSON)
     populations = db.Column(JSON)
-    model = deferred(db.Column(JSON, server_default=text("'{}'")))
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    version = db.Column(db.Text)
+    settings = db.Column(db.LargeBinary)
+    data = db.Column(db.LargeBinary)
     working_project = db.relationship('WorkingProjectDb', backref='projects',
                                 uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='projects',
                                 uselist=False)
-    creation_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
-    updated_time = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    parsets = db.relationship('ParsetsDb', backref = 'projects')
+    results = db.relationship('ResultsDb', backref = 'results')
 
-    def __init__(self, name, user_id, datastart, dataend, programs, populations, model = None, creation_time = None): # pylint: disable=R0913
+    def __init__(self, name, user_id, datastart, dataend, populations, version, 
+        created = None, settings = None, data = None, parsets = None, results = None): # pylint: disable=R0913
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
         self.dataend = dataend
-        self.programs = programs
         self.populations = populations
-        self.model = model if model else {}
-        self.creation_time = creation_time
+        self.created = created
+        self.version = version
+        self.settings = settings
+        self.data = data
+        self.parsets = parsets
+        self.results = results
 
     def has_data(self):
-        result = False
-        if self.model is not None: #project can have data even if spreadsheet was not uploaded
-            result = 'data' in self.model and 'programs' in self.model
-        return result
+        return self.data is not None
 
     def has_model_parameters(self):
-        result = False
-        if self.model is not None:
-            result = 'M' in self.model
-        return result
+        return self.parsets is not None
 
     def data_upload_time(self):
-        return self.project_data.upload_time if self.project_data else None
+        return self.project_data.updated if self.project_data else None
 
+class ParsetsDb(db.Model):
+    __tablename__ = 'parsets'
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.Text)
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+
+    def __init__(self, project_id, name, created = None):
+        self.project_id = project_id
+        self.name = name
+        self.created = created
+
+class ResultsDb(db.Model):
+    __tablename__ = 'results'
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    calculation_type = db.Column(db.Text)
+    pars = db.Column(db.LargeBinary)
+
+    def __init__(self, parset_id, project_id, calculation_type, pars):
+        self.parset_id = parset_id
+        self.project_id = project_id
+        self.calculation_type = calculation_type
+        self.pars = pars
 
 
 class WorkingProjectDb(db.Model): # pylint: disable=R0903
     __tablename__ = 'working_projects'
-    id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
+    id = db.Column(UUID(True),db.ForeignKey('projects.id'), primary_key=True )
     is_working = db.Column(db.Boolean, unique=False, default=False)
     work_type = db.Column(db.String(32), default=None)
-    model = deferred(db.Column(JSON))
-    work_log_id = db.Column(db.Integer, default = None)
+    project = db.Column(db.LargeBinary)
+    work_log_id = db.Column(UUID(True), default = None)
 
-    def __init__(self, project_id, is_working=False, model = None, work_type = None, work_log_id = None): # pylint: disable=R0913
+    def __init__(self, project_id, is_working=False, project = None, work_type = None, work_log_id = None): # pylint: disable=R0913
         self.id = project_id
-        self.model = model if model else {}
+        self.project = project
         self.is_working = is_working
         self.work_type = work_type
         self.work_log_id = work_log_id
@@ -110,7 +136,7 @@ class WorkLogDb(db.Model): # pylint: disable=R0903
 
 class ProjectDataDb(db.Model): # pylint: disable=R0903
     __tablename__ = 'project_data'
-    id = db.Column(db.Integer,db.ForeignKey('projects.id'), primary_key=True )
+    id = db.Column(UUID(True),db.ForeignKey('projects.id'), primary_key=True )
     meta = deferred(db.Column(db.LargeBinary))
     upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 

@@ -4,8 +4,8 @@ from flask import helpers, current_app
 from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
 from flask import request, jsonify, abort
-from webapp.dbconn import db
-from webapp.dbmodels import ProjectDb, UserDb
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import ProjectDb, UserDb
 import traceback
 
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}
