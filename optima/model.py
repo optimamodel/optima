@@ -487,7 +487,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 recovout = dt*recov[cd4-2]*people[tx[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            print(t, cd4, recovin, recovout, sum(people[tx[cd4],:,t]))
             hivdeaths   = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths = dt * people[tx[cd4],:,t] * background
             dT.append(recovin - recovout + newtreat1[cd4] - hivdeaths - otherdeaths)

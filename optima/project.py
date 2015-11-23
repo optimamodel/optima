@@ -250,7 +250,7 @@ class Project(object):
         results.derivedresults() # Generate derived results
         results.pars = self.parsets[name] # Store parameters
         results.simpars = simpars # ...and sim parameters
-        results.setting = self.settings # and settings
+        results.settings = self.settings # and settings
         results.projectinfo = str(self) # Store all the information about this project
         
         return results
