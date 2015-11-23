@@ -19,7 +19,6 @@ tests = [
 'saveload',
 'loadspreadsheet',
 'runsim',
-'gui'
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values
@@ -121,7 +120,7 @@ if 'loadspreadsheet' in tests:
 
 
 ## Run simulation test
-if 'runsim' or 'gui' in tests:
+if 'runsim' in tests:
     t = tic()
     print('Running runsim test...')
     
@@ -131,22 +130,6 @@ if 'runsim' or 'gui' in tests:
     
     done(t)
 
-
-
-## Run the GUI
-if 'gui' in tests:
-    t = tic()
-    print('Running GUI test...')
-    
-    try:
-        from gui import gui
-        from plotpeople import plotpeople
-        gui(results)
-        plotpeople(results)
-    except:
-        print('Backend GUI failed to load -- not critical')
-    
-    done(t)
 
 
 
