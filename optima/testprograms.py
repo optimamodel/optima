@@ -267,6 +267,11 @@ if 'makeprograms' in tests:
     P.parsets['progscen2'].pars[0]['hivtest'].y = hivtest2
     P.parsets['progscen1'].pars[0]['condomcas'].y = condomcas1
     P.parsets['progscen2'].pars[0]['condomcas'].y = condomcas2
+    
+    results1 = P.runsim('progscen1')
+    results2 = P.runsim('progscen2')
+    from plotpeople import plotpeople
+    plotpeople([results1, results2])
 
     done(t)
 
