@@ -367,8 +367,12 @@ class Program(object):
         # Sum the target populations
         targetpopsize = {}
         allpops = getpopsizes(parset=parset,years=t,filter_pop=None)
-        for targetpop in self.targetpops:
-            targetpopsize[targetpop] = allpops[targetpop]
+        try:
+            for targetpop in self.targetpops:
+                targetpopsize[targetpop] = allpops[targetpop]
+        except:
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
@@ -544,7 +548,11 @@ def getpopsizes(parset, years, ind=0, filter_pop=None):
     if type(years) in [float, int]: years = array([[years]])
     elif type(years)==list: years = array([years])
     
-    popsizes = parset.interp(ind=0, tvec=years)['popsize']
+    initpopsizes = parset.interp(ind=0, tvec=years)['popsize']
+    popsizes = {}
+
+    for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
+        popsizes[pop] = initpopsizes[popnumber,:]
 
     if filter_pop: return {filter_pop: popsizes[filter_pop]}
     else: return popsizes
