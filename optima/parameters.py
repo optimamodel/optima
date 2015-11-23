@@ -304,7 +304,7 @@ class Parameterset(object):
         ## Testing parameters -- most are data
         M['hivtest'] = dpar2mpar(P['hivtest']) # HIV testing rates
         M['aidstest'] = dpar2mpar(P['aidstest'])[0] # AIDS testing rates
-        M['tx1'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
+        M['tx'] = dpar2mpar(P['numtx'], smoothness=int(1/dt))[0] # Number of people on first-line treatment -- 0 since overall not by population
     
         ## MTCT parameters
         M['numpmtct'] = dpar2mpar(P['numpmtct'])[0]
@@ -348,7 +348,7 @@ class Parameterset(object):
         
         ## Program parameters not related to data
         M['propaware'] = zeros(shape(M['hivtest'])) # Initialize proportion of PLHIV aware of their status
-        M['txtotal'] = zeros(shape(M['tx1'])) # Initialize total number of people on treatment
+        M['txtotal'] = zeros(shape(M['tx'])) # Initialize total number of people on treatment
         
         
         printv('...done making model parameters.', 2, verbose)
