@@ -15,7 +15,7 @@ Version: 2015nov23 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'gui',
-'force',
+#'force',
 'treatment',
 ]
 
@@ -97,6 +97,28 @@ if 'force' in tests:
 
 
 
+
+## Treatment change test
+if 'treatment' in tests:
+    t = tic()
+
+    print('Running force-of-infection test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test.xlsx')
+    results1 = P.runsim('default')
+    
+    P.copyparset('default', 'treatment')
+    treatpar = P.parsets['treatment'].pars[0]['numtx']
+    treatpar.y['tot'][:] *= 0
+    results2 = P.runsim('treatment')
+    
+    from gui import gui
+    from plotpeople import plotpeople
+    gui([results1, results2])
+    plotpeople([results1, results2])
+
+    done(t)
 
 
 
