@@ -551,7 +551,7 @@ def getpopsizes(P, parsetname, years, filter_pop=None):
     if isinstance(years,(float,int)): years = array([[years]])
     elif isinstance(years,list): years = array([years])
     
-    initpopsizes = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='popsize')
+    initpopsizes = P.parsets[parsetname].interp(start=min(years), end=max(years))['popsize']
     tvec = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='tvec') # TODO: calling this twice is stupid.
     popsizes = {}
 

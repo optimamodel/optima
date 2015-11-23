@@ -11,7 +11,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ###########################################################################
     
     from optima import odict, printv, today
-    from numpy import nan, isnan, array, logical_or, nonzero # For reading in empty values
+    from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)
     
@@ -169,7 +169,12 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                 
                 # It's anything other than the populations or constants sheet: create an empty list
                 if sheetname not in ['Populations', 'Constants']: 
-                    thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
+                    try:
+                        thispar = subparlist[parcount] # Get the name of this parameter, e.g. 'popsize'
+                    except:
+                        errormsg = 'Incorrect number of headings found for sheet "%s"\n' % sheetname
+                        errormsg += 'Check that there is no extra text in the first two columns'
+                        raise Exception(errormsg)
                     data[thispar] = [] # Initialize to empty list
             
             elif subparam != '': # The first column is blank: it's time for the data
@@ -245,7 +250,17 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     data['const'][subpar] = thesedata # Store data
     
     
- 
+    # Check that matrices have correct shape
+    data['npops'] = len(data['pops']['short'])
+    for key in sheets['Partnerships & transitions']:
+        thesedata = data[key]
+        matrixshape = shape(array(thesedata))
+        if matrixshape[0] != data['npops'] or matrixshape[1] != data['npops']:
+            errormsg = 'Matrix "%s" in partnerships & transitions sheet is not square\n' % key
+            errormsg += '(rows = %i, columns = %i, should be %i)\n' % (matrixshape[0], matrixshape[1], data['npops'])
+            errormsg += 'Check for missing rows or added text'
+            raise Exception(errormsg)
+    
     
     printv('...done loading data.', 2, verbose)
     return data
