@@ -19,19 +19,19 @@ tests = [
 'saveload',
 'loadspreadsheet',
 'runsim',
-'gui'
+#'gui'
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values
 doplot = True # Whether or not to show diagnostic plots
 
-
+runalltests=True
 
 ##############################################################################
 ## Initialization
 ##############################################################################
 
-from utils import tic, toc, blank, pd # analysis:ignore
+from optima import tic, toc, blank, pd # analysis:ignore
 
 def done(t=0):
     print('Done.')
@@ -131,8 +131,6 @@ if 'runsim' or 'gui' in tests:
     results = P.runsim('default')
     
     done(t)
-
-
 
 
 

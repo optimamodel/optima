@@ -317,13 +317,14 @@ class Parameterset(object):
 
 
 
-    def interp(self, ind=0, start=2000, end=2030, dt=0.2, verbose=2):
+    def interp(self, ind=0, start=2000, end=2030, dt=0.2, tvec=None, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
         P = self.pars[ind] # Shorten name of parameters thing
         simpars = odict() # Used to be called M
-        simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+        if tvec is not None: simpars['tvec'] = tvec
+        else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
         popkeys = dcp(P['popkeys'])
         tot = ['tot'] # WARNING, this is kludgy
         simpars['popkeys'] = popkeys
