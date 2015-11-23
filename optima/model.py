@@ -99,8 +99,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     tx  = settings.treat  # Treatment -- 1st line
     
     # Concatenate all PLHIV, diagnosed and treated for ease
-    plhivind = concatenate([undx, dx, tx]) # All PLHIV
-    dxind    = concatenate([dx, tx])       # All people who have been diagnosed
+    plhivind = settings.allplhiv # All PLHIV
+    dxind    = settings.alldiag       # All people who have been diagnosed
     
     # Population sizes
     popsize = dcp(simpars['popsize']) # Population sizes
