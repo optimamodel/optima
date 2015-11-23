@@ -153,7 +153,7 @@ class Programset(object):
         if filter_prog: return targetpars_by_prog[filter_prog]
         else: return targetpars_by_prog
 
-    def getprogcoverage(self,budget,t,P,parsetname,perturb=False,verbose=2):
+    def getprogcoverage(self,budget,t,parset,perturb=False,verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''        
         coverage = {}
         for prog in self.programs.keys():
@@ -163,11 +163,11 @@ class Programset(object):
                     coverage[prog] = None
                 else:
                     spending = budget[prog] # Get the amount of money spent on this program
-                    coverage[prog] = self.programs[prog].getcoverage(x=spending,t=t,P=P,parsetname='default') # Two equivalent ways to do this, probably redundant  
+                    coverage[prog] = self.programs[prog].getcoverage(x=spending,t=t,parset=parset) # Two equivalent ways to do this, probably redundant  
             else: coverage[prog] = None
         return coverage
         
-    def getpopcoverage(self,budget,t,P,parsetname,perturb=False,verbose=2):
+    def getpopcoverage(self,budget,t,parset,perturb=False,verbose=2):
         '''Get the number of people from each population covered by each program...'''
         popcoverage = {}
         
@@ -178,11 +178,11 @@ class Programset(object):
                     popcoverage[prog] = None
                 else:
                     spending = budget[prog] # Get the amount of money spent on this program
-                    popcoverage[prog] = self.programs[prog].getcoverage(x=spending,t=t,P=P,parsetname='default',total=False) # Two equivalent ways to do this, probably redundant  
+                    popcoverage[prog] = self.programs[prog].getcoverage(x=spending,t=t,parset=parset,total=False) # Two equivalent ways to do this, probably redundant  
             else: popcoverage[prog] = None
         return popcoverage
 
-    def getoutcomes(self,budget,t,P,parsetname,interaction='random',perturb=False):
+    def getoutcomes(self,budget,t,parset,interaction='random',perturb=False):
         ''' Get the model parameters corresponding to a budget'''
         
         
@@ -212,7 +212,7 @@ class Programset(object):
                         outcomes[tpt][tp] = self.covout[tpt][tp].getccopar(t=t)['intercept']
 
                         x = budget[prog.name]
-                        thiscov[tp][prog.name] = prog.getcoverage(x=x,t=t,P=P,parsetname='default',proportion=True,total=False)[tp]
+                        thiscov[tp][prog.name] = prog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[tp]
                         delta[tpt][tp][prog.name] = self.covout[tpt][tp].getccopar(t=t)[prog.name]
                 
                 if interaction == 'additive':
@@ -240,7 +240,7 @@ class Programset(object):
             
                 elif interaction == 'random':
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-                    # Outcome += c1(1-c2-c3)* delta_out1 + c2(1-c1-c3)*delta_out2 + c3(1-c2-c3)*delta_out3 + c1c2c3* max(delta_out1,delta_out2,delta_out3)
+                    # Outcome += c1(1-c2)(1-c3)* delta_out1 + c2(1-c1)(1-c3)*delta_out2 + c3(1-c1)(1-c2)*delta_out3 + c1c2* max(delta_out1,delta_out2) + c1c3* max(delta_out1,delta_out3) + c2c3* max(delta_out2,delta_out) + c1c2c3* max(delta_out1,delta_out2,delta_out3)
                 
                     covprod = prod(array(thiscov[tp].values()),axis=0)
                     outcomes[tpt][tp] += covprod*[max([c[j] for c in delta[tpt][tp].values()]) for j in range(nyrs)]
@@ -357,7 +357,7 @@ class Program(object):
         else:
             raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
 
-    def gettargetpopsize(self,t,P,parsetname,total=True):
+    def gettargetpopsize(self,t,parset,total=True):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
 
         # Figure out input data type, transform if necessary
@@ -366,16 +366,16 @@ class Program(object):
 
         # Sum the target populations
         targetpopsize = {}
-        allpops = getpopsizes(P.parsets[parsetname],years=t)
+        allpops = getpopsizes(parset=parset,years=t,filter_pop=None)
         for targetpop in self.targetpops:
             targetpopsize[targetpop] = allpops[targetpop]
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
-    def getcoverage(self,x,t,P,parsetname,targetpopprop=None,total=True,proportion=False):
+    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False):
         '''Returns coverage for a time/spending vector'''
 
-        poptargeted = self.gettargetpopsize(t=t,P=P,parsetname=parsetname,total=False)
+        poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t)
         
@@ -511,9 +511,6 @@ class Covout(CCOF):
     def function(self,x,ccopar,popsize):
         ''' Returns outcome given parameters'''
         
-
-
-
 
 
 
