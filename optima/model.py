@@ -55,12 +55,15 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     
     # Biological and failure parameters -- death etc
-    Mc = simpars['const']
-    prog = []; recov = []; death = []; cd4trans = []
-    for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']: prog.append(Mc[key])
-    for key in ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50']: recov.append(Mc[key])
-    for key in ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids']: death.append(Mc[key])
-    for key in ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids']: cd4trans.append(Mc[key])
+    C = simpars['const']
+    prog = []
+    recov = [0] # Recovery rate into acute stage is 0 
+    death = []
+    cd4trans = []
+    for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']: prog.append(C[key])
+    for key in ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50']: recov.append(C[key])
+    for key in ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids']: death.append(C[key])
+    for key in ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids']: cd4trans.append(C[key])
     deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
     simpars['prog'] = prog # for equilibrate()
     simpars['recov'] = recov    
