@@ -5,9 +5,12 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-from optima import printv, uuid, today, getdate
+
+from numpy import ones, max, prod, array, arange, zeros, exp
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds
 from collections import defaultdict
 import abc
+
 
 class Programset(object):
 
@@ -181,7 +184,7 @@ class Programset(object):
 
     def getoutcomes(self,budget,t,P,parsetname,interaction='random',perturb=False):
         ''' Get the model parameters corresponding to a budget'''
-        from numpy import ones, max, prod, array
+        
         
         outcomes = {}
         nyrs = len(t)
@@ -356,7 +359,6 @@ class Program(object):
 
     def gettargetpopsize(self,t,P,parsetname,total=True):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import array
 
         # Figure out input data type, transform if necessary
         if isinstance(t,(float,int)): t = 'singleyear'
@@ -364,7 +366,7 @@ class Program(object):
 
         # Sum the target populations
         targetpopsize = {}
-        allpops = getpopsizes(P=P,parsetname=parsetname,years=t)
+        allpops = getpopsizes(P.parsets[parsetname],years=t)
         for targetpop in self.targetpops:
             targetpopsize[targetpop] = allpops[targetpop]
         if total: return sum(targetpopsize.values())
@@ -441,9 +443,6 @@ class CCOF(object):
 
     def getccopar(self,t,randseed=None,bounds=None):
         '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
-        from utils import smoothinterp, findinds
-        from numpy import array, arange, zeros
-        from copy import deepcopy
         
         # Error checks
         if not self.ccopars:
@@ -455,7 +454,7 @@ class CCOF(object):
         ccopar = {}
         if isinstance(t,(float,int)): t = [t]
         nyrs = len(t)
-        ccopars_no_t = deepcopy(self.ccopars)
+        ccopars_no_t = dcp(self.ccopars)
         del ccopars_no_t['t']
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
@@ -494,7 +493,6 @@ class Costcov(CCOF):
             
     def function(self,x,ccopar,popsize):
         '''Returns coverage in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        from numpy import exp, array
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
         if isinstance(popsize,(float,int)): popsize = array([popsize])
@@ -543,22 +541,13 @@ class Covout(CCOF):
 # What needs to happen to get population sizes...
 #######################################################
 
-def getpopsizes(P, parsetname, years, filter_pop=None):
+def getpopsizes(parset, years, ind=0, filter_pop=None):
     '''Get population sizes in given years from a parset.'''
-    from utils import findinds
-    from numpy import array, zeros
     
-    if isinstance(years,(float,int)): years = array([[years]])
-    elif isinstance(years,list): years = array([years])
+    if type(years) in [float, int]: years = array([[years]])
+    elif type(years)==list: years = array([years])
     
-    initpopsizes = P.parsets[parsetname].interp(start=min(years), end=max(years))['popsize']
-    tvec = P.parsets[parsetname].interp(start=min(years), end=max(years), filter_param='tvec') # TODO: calling this twice is stupid.
-    popsizes = {}
-
-    for popnumber, pop in enumerate(P.data['pops']['short']):
-        popsizes[pop] = zeros(len(years))
-        for yrno, yr in enumerate(years):
-            popsizes[pop][yrno] = initpopsizes[popnumber,findinds(tvec,yr)[0]]
+    popsizes = parset.interp(ind=0, tvec=years)['popsize']
 
     if filter_pop: return {filter_pop: popsizes[filter_pop]}
     else: return popsizes
