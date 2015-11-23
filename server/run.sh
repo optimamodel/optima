@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! -f "webapp/config.py" ]; then
-  cp webapp/config.example.py webapp/config.py
+if [ ! -f "config.py" ]; then
+  cp config.example.py config.py
 fi
 
 if [ ! -d "./p-env/" ]; then

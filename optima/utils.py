@@ -512,6 +512,34 @@ def load(filename):
     return obj
 
 
+def saves(obj):
+    ''' Save an object to a string in gzip-compatible way'''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    from cStringIO import StringIO
+    from contextlib import closing
+    result = None
+    with closing(StringIO()) as output:
+        with GzipFile(fileobj = output, mode = 'wb') as fileobj: 
+            pickle.dump(obj, fileobj, protocol=2)
+        output.seek(0)
+        result = output.read()
+    return result
+
+
+def loads(source):
+    ''' Load an object from a string in gzip-compatible way'''
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
+    from gzip import GzipFile
+    from cStringIO import StringIO
+    from contextlib import closing
+    with closing(StringIO(source)) as output:
+        with GzipFile(fileobj = output, mode = 'rb') as fileobj: 
+            obj = pickle.load(fileobj)
+    return obj
+
 
 def getdate(obj, which='modified', fmt='str'):
         ''' Return either the date created or modified ("which") as either a str or int ("fmt") '''
