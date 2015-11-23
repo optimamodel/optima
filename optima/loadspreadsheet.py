@@ -99,7 +99,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],
-                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effdis', 'effost', 'effpmtct', 'efftx', 'effprep'],
+                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'efftx', 'effprep'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutilaids','disutiltx']]
     
 
