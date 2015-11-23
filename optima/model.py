@@ -566,18 +566,18 @@ def fit2time(pars, tvec):
     
     
     
-def equilibrate(settings, simpars, Finit, verbose=2):
+def equilibrate(settings, simpars, verbose=2):
     """
     Calculate the quilibrium point by estimating the ratio of input and output 
     rates for each of the health states.
     
     Usage:
-        G = general parameters
+        settings = general parameters
         simpars = model parameters
         Finit = fitted parameters for initial prevalence
         initpeople = nstates x npops array
     
-    Version: 2014nov26
+    Version: 2015nov22
     """
     from numpy import zeros, hstack, inf
     
@@ -589,13 +589,13 @@ def equilibrate(settings, simpars, Finit, verbose=2):
     
     # Shorten key variables
     initpeople = zeros((settings.ncomparts,npops)) 
-    allinfected = simpars['popsize'][:,0] * Finit[:] # Set initial infected population
+    allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
     for p in range(npops):
         # Set up basic calculations
-        uninfected = simpars['popsize'][p,0] * (1-Finit[p]) # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         popinfected = allinfected[p]
+        uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
@@ -605,7 +605,7 @@ def equilibrate(settings, simpars, Finit, verbose=2):
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
-        assumedforceinf = Finit[p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        assumedforceinf = simpars['force'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates

@@ -13,42 +13,47 @@ from optima import odict, printv, sanitize, uuid, today, getdate
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
-def data2par(parname, dataarray, data, usetime=True):
-    """ Take an array of data and turn it into default parameters -- here, just take the means """
-    nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
-    par = Parameter() # Create structure
-    par.name = parname # Store the name of the parameter
-    par.m = 1 # Set metaparameter to 1
-    par.y = [0]*nrows # Initialize array for holding population parameters
-    if usetime:
-        par.t = [0]*nrows # Initialize array for holding time parameters
-        for r in range(nrows): 
-            validdata = ~isnan(dataarray[r])
-            if sum(validdata): # There's at least one data point
-                par.y[r] = sanitize(dataarray[r]) # Store each extant value
-                par.t[r] = array(data['years'])[~isnan(dataarray[r])] # Store each year
-            else: # Blank, assume zero
-                par.y[r] = array([0])
-                par.t[r] = array([0])
 
-    else:
-        raise Exception('Not implemented')
-        for r in range(nrows): 
-            par['p'][r] = mean(sanitize(dataarray[r])) # Calculate mean for each population
-            print('TMP223')
+
+def data2popsize(dataarray, data, keys):
+    par = Popsizepar()
+    par.name = 'popsize'
+    par.m = 1
+#    for r,key in enumerate(keys): 
+        
     
     return par
 
 
 
-def dataindex(dataarray, index):
-    """ Take an array of data return either the first or last (...or some other) non-NaN entry """
-    nrows = shape(dataarray)[0] # See how many rows need to be filled (either npops, nprogs, or 1)
-    output = zeros(nrows) # Create structure
-    for r in range(nrows): 
-        output[r] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+
+def data2timepar(parname, dataarray, data, keys):
+    """ Take an array of data and turn it into default parameters -- here, just take the means """
+    par = Timepar() # Create structure
+    par.name = parname # Store the name of the parameter
+    par.m = 1 # Set metaparameter to 1
+    par.y = odict() # Initialize array for holding parameters
+    par.t = odict() # Initialize array for holding time points
+    for r,key in enumerate(keys): 
+        validdata = ~isnan(dataarray[r])
+        if sum(validdata): # There's at least one data point
+            par.y[key] = sanitize(dataarray[r]) # Store each extant value
+            par.t[key] = array(data['years'])[~isnan(dataarray[r])] # Store each year
+        else: # Blank, assume zero
+            par.y[key] = array([0])
+            par.t[key] = array([0])
     
-    return output
+    return par
+
+
+
+def dataindex(dataarray, index, keys):
+    """ Take an array of data return either the first or last (...or some other) non-NaN entry """
+    par = odict() # Create structure
+    for r,key in enumerate(keys):
+        par[key] = sanitize(dataarray[r])[index] # Return the specified index -- usually either the first [0] or last [-1]
+    
+    return par
 
 
 
@@ -56,7 +61,7 @@ def dataindex(dataarray, index):
 ## Change sizes of circumcision and births
 def popexpand(origpar, popbool, data):
     """ For variables that are only defined for certain populations, expand to the full array. WARNING, doesn't work for time """
-    newpar = Parameter()
+    newpar = Timepar()
     newpar.y = [array([0]) for i in range(len(data['pops']['male']))]
     newpar.t = [array([0]) for i in range(len(data['pops']['male']))]
     count = -1
@@ -92,22 +97,34 @@ def makeparsfromdata(data, verbose=2):
     ###############################################################################
     
     pars = odict()
+    popkeys = [str(key).lower() for key in data['pops']['short']] # Convert to a normal string and to lower case...maybe not necessary
+    totkey = 'tot' # Define a key for when not separated by population
     
     ## Key parameters
-    for parname in ['popsize', 'hivprev']:
-        pars[parname] = dataindex(data[parname][0], 0) # WARNING, will want to change
+    bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy
+    pars['initprev'] = dataindex(data['hivprev'][bestindex], 0, popkeys) # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize(data['popsize'], data, popkeys)
     
     ## Parameters that can be converted automatically
     sheets = data['meta']['sheets']
     
     for parname in sheets['Other epidemiology'] + sheets['Testing & treatment'] + sheets['Sexual behavior'] + sheets['Injecting behavior']:
         printv('Converting data parameter %s...' % parname, 3, verbose)
-        pars[parname] = data2par(parname, data[parname], data)
+        nrows = shape(data[parname])[0]
+        if nrows==1: 
+            keys = totkey
+        elif nrows==len(popkeys): 
+            keys = popkeys
+        else: 
+            errormsg = 'Unable to figure out size of parameter "%s"\n' % parname
+            errormsg += '(number of rows = %i; number of populations = %i)' % (nrows, len(popkeys))
+            raise Exception(errormsg)
+        pars[parname] = data2timepar(parname, data[parname], data, keys)
     
 
     # Fix up ones of the wrong size
-    pars['birth']     = popexpand(pars['birth'],  array(data['pops']['female'])==1, data)
-    pars['circum']    = popexpand(pars['circum'], array(data['pops']['male'])==1, data)
+    pars['birth']     = popexpand(pars['birth'],  array(data['pops']['female'])==1, data, keys)
+    pars['circum']    = popexpand(pars['circum'], array(data['pops']['male'])==1, data, keys)
     
     
     ## WARNING, not sure what to do with these
@@ -189,12 +206,12 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 
 
 
-class Parameter(object):
-    ''' The definition of a single parameter '''
+class Timepar(object):
+    ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
     def __init__(self, t=None, y=None, m=1):
-        if t is None: t = []
-        if y is None: y = []
+        if t is None: t = odict()
+        if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -207,6 +224,22 @@ class Parameter(object):
         output += ' Metaparameter: %s\n'    % self.m
         return output
 
+
+
+class Popsizepar(object):
+    ''' The definition of the population size parameter '''
+    
+    def __init__(self, p=None, m=1):
+        if p is None: p = odict()
+        self.p = p # Exponential fit parameters
+        self.m = m # Multiplicative metaparameter, e.g. 1
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = '\n'
+        output += 'Fit parameters: %s\n'    % self.p
+        output += ' Metaparameter: %s\n'    % self.m
+        return output
 
 
 
