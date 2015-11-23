@@ -300,22 +300,11 @@ class Parameterset(object):
 
 
     def interp(self, ind=0, start=2000, end=2030, dt=0.2, verbose=2):
-    
-        ###############################################################################
-        ##### 2.0 STATUS: still legacy!!! Just put in hacks to get it to work; search for TODO
-        ###############################################################################
-    
-        """
-        Prepares model parameters to run the simulation.
-        
-        Version: 2015sep04
-        """
-        
-        P = self.pars[ind] # Shorten name of parameters thing
-        
+        """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
-        simpars = odict()
+        P = self.pars[ind] # Shorten name of parameters thing
+        simpars = odict() # Used to be called M
         simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
         npts = len(simpars['tvec']) # Number of time points
         
@@ -324,7 +313,7 @@ class Parameterset(object):
             """ Take population size and turn it into a model parameters """    
             npops = len(par.p)
             output = zeros((npops,npts))
-            for row,key in enumerate(par.keys()):
+            for row,key in enumerate(par.p.keys()):
                 output[row,:] = popgrow(par.p[key], simpars['tvec']-start)
             return output
             

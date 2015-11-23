@@ -7,7 +7,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015nov01 by cliffk
+Version: 2015nov23 by cliffk
 """
 
 

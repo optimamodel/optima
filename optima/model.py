@@ -22,16 +22,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ###############################################################################
     ## Setup
     ###############################################################################
-    npops = len(simpars['hivprev']) # WARNING TEMP
+    npops = len(simpars['initprev']) # WARNING TEMP
     
     simpars = dcp(simpars)
-    
-    F = {} # WARNING, should change
-    F['init']  = 1+zeros(npops)
-    F['popsize'] = 1e3+zeros(npops)
-    F['force'] = 1+zeros(npops)
-    F['inhomo'] = zeros(npops)
-    F['dx']  = 1+zeros(4)
 
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     
