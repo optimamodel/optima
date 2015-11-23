@@ -22,7 +22,8 @@ tests = [
 ## Initialization
 ##############################################################################
 
-from optima import tic, toc, blank, pd # analysis:ignore
+from optima import tic, toc, blank, pd, odict # analysis:ignore
+from copy import deepcopy
 
 def done(t=0):
     print('Done.')
@@ -61,18 +62,31 @@ if 'makeprograms' in tests:
     P = Project(spreadsheet='test.xlsx')
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
-    HTC = Program(name='HTC', targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],targetpops=['Females 15-49'])
+    HTC = Program(name='HTC',
+                  targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],
+                  targetpops=['Females 15-49'])
 
-    # Run additional tests if asked
-    SBCC = Program(name='SBCC', targetpars=[{'param': 'condoms', 'pop': 'Females 15-49'}, {'param': 'hivtest', 'pop': 'Females 15-49'}], targetpops=['Females 15-49'])
-    FSW = Program(name='FSW programs', targetpars=[{'param': 'hivtest', 'pop': 'FSW'},{'param': 'condoms', 'pop': 'FSW'}], targetpops=['FSW'])
+    SBCC = Program(name='SBCC',
+                   targetpars=[{'param': 'condomcas', 'pop': 'Females 15-49'},
+                               {'param': 'hivtest', 'pop': 'Females 15-49'}],
+                   targetpops=['Females 15-49'])
+                   
+    FSW = Program(name='FSW programs',
+                  targetpars=[{'param': 'hivtest', 'pop': 'FSW'},
+                              {'param': 'condomcas', 'pop': 'FSW'}],
+                  targetpops=['FSW'])
+
     MGT = Program('MGT')
-    ART = Program(name='ART', targetpars=[{'param': 'numtx', 'pop': 'Total'}],targetpops=['Total'])
+
+    ART = Program(name='ART',
+                  targetpars=[{'param': 'numtx', 'pop': 'Total'}],
+                  targetpops=['Total'])
 
     # Testing methods of program class
     # 1. Adding a target parameter to a program
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'FSW'})
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'Males 15-49'})
+    
     ## NOTE that adding a targeted parameter does NOT automatically add a targeted population! Do this separately, e.g.
     HTC.targetpops.append('Males 15-49')
         
@@ -80,22 +94,44 @@ if 'makeprograms' in tests:
     HTC.rmtargetpar({'param': 'hivtest', 'pop': 'FSW'})
 
     # 3. Add historical cost-coverage data point
-    HTC.addcostcovdatum({'t':2013,'cost':1e6,'coverage':3e5})
+    HTC.addcostcovdatum({'t':2013,
+                         'cost':1e6,
+                         'coverage':3e5})
+    HTC.addcostcovdatum({'t':2014,
+                         'cost':4e7,
+                         'coverage':10e5})
+    HTC.addcostcovdatum({'t':2015,
+                         'cost':1e7,
+                         'coverage':4e5})
 
     # 4. Overwrite historical cost-coverage data point
-    HTC.addcostcovdatum({'t':2013,'cost':2e6,'coverage':3e5}, overwrite=True)
+    HTC.addcostcovdatum({'t':2013,
+                         'cost':2e6,
+                         'coverage':3e5},
+                         overwrite=True)
 
     # 5. Remove historical cost-coverage data point - specify year only
     HTC.rmcostcovdatum(2013)
 
     # 6. Add parameters for defining cost-coverage function.
-    HTC.costcovfn.addccopar({'saturation': 0.8, 't': 2013.0, 'unitcost': 30})
-    HTC.costcovfn.addccopar({'t': 2016.0, 'unitcost': 30})
-    HTC.costcovfn.addccopar({'t': 2017.0, 'unitcost': 30})
-    SBCC.costcovfn.addccopar({'saturation': 0.4, 't': 2013.0, 'unitcost': 10})
+    HTC.costcovfn.addccopar({'saturation': 0.8,
+                             't': 2013.0,
+                             'unitcost': 30})
+                             
+    HTC.costcovfn.addccopar({'t': 2016.0,
+                             'unitcost': 30})
+                             
+    HTC.costcovfn.addccopar({'t': 2017.0,
+                             'unitcost': 30})
+                             
+    SBCC.costcovfn.addccopar({'saturation': 0.4,
+                              't': 2013.0,
+                              'unitcost': 10})
 
     # 7. Overwrite parameters for defining cost-coverage function.
-    HTC.costcovfn.addccopar({'t': 2016.0, 'unitcost': 25},overwrite=True)
+    HTC.costcovfn.addccopar({'t': 2016.0,
+                             'unitcost': 25},
+                             overwrite=True)
 
     # 8. Remove parameters for defining cost-coverage function.
     HTC.costcovfn.rmccopar(2017)
@@ -109,8 +145,12 @@ if 'makeprograms' in tests:
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace
     HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
-    # If you want to evaluate it for a particular population size, can also do...
-    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015])
+
+    # NB, if you want to evaluate it for a particular population size, can also do...
+    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
+
+    # 12. Plot cost-coverage function
+    HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
     print('Running make programs set test...')
     R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
@@ -141,18 +181,48 @@ if 'makeprograms' in tests:
 
     # 7. Get a vector of coverage levels corresponding to a vector of program allocations
     from numpy import array
-    budget={'HTC':array([2e5,3e5,4e5]),'SBCC':array([1e5,2e5,1e5]),'MGT':array([2e5,3e5,3e5])}
-    R.getprogcoverage(budget=budget,t=[2015,2016,2020],parset=P.parsets['default'])
-    R.getpopcoverage(budget=budget,t=[2015,2016,2020],parset=P.parsets['default'])
+    budget={'HTC':array([1e7,1.2e7,1.5e7]),
+            'SBCC':array([1e6,1.2e6,1.5e6]),
+            'MGT':array([2e5,3e5,3e5])}
+            
+    R.getprogcoverage(budget=budget,
+                      t=[2015,2016,2020],
+                      parset=P.parsets['default'])
+                        
+    R.getpopcoverage(budget=budget,
+                     t=[2015,2016,2020],
+                     parset=P.parsets['default'])
 
     # 8. Add parameters for defining coverage-outcome function.
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3, 't': 2013.0, 'HTC': 0.6, 'SBCC':0.1})
-    R.covout['hivtest']['Males 15-49'].addccopar({'intercept': 0.3, 't': 2016.0, 'HTC': 0.65})
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3, 't': 2015.0, 'HTC': 0.5, 'SBCC':0.15})
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.4, 't': 2017.0, 'HTC': 0.4, 'SBCC':0.2})
+    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3,
+                                                    't': 2013.0,
+                                                    'HTC': 0.6,
+                                                    'SBCC':0.1})
+                                                    
+    R.covout['hivtest']['Males 15-49'].addccopar({'intercept': 0.3,
+                                                  't': 2016.0,
+                                                  'HTC': 0.65})
+                                                  
+    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3,
+                                                    't': 2015.0,
+                                                    'HTC': 0.5,
+                                                    'SBCC':0.15})
+                                                    
+    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.4,
+                                                    't': 2017.0,
+                                                    'HTC': 0.4,
+                                                    'SBCC':0.2})
 
+    R.covout['condomcas']['Females 15-49'].addccopar({'intercept': 0.3,
+                                                    't': 2015.0,
+                                                    'SBCC':0.15})
+                                                    
     # 9. Overwrite parameters for defining coverage-outcome function.
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.35, 't': 2015.0, 'HTC': 0.45, 'SBCC':0.15},overwrite=True)
+    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.35,
+                                                    't': 2015.0,
+                                                    'HTC': 0.45,
+                                                    'SBCC':0.15},
+                                                    overwrite=True)
 
     # 10. Remove parameters for defining coverage-outcome function.
     R.covout['hivtest']['Females 15-49'].rmccopar(2017)
@@ -161,13 +231,58 @@ if 'makeprograms' in tests:
     R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
     # 12. Get a set of parameter values corresponding to a vector of program allocations
-    R.getoutcomes(budget=budget,t=[2015,2016,2020],parset=P.parsets['default'],interaction='nested',perturb=False)
+    parset1 = R.getoutcomes(budget=budget,
+                  t=[2015,2016,2020],
+                  parset=P.parsets['default'],
+                  interaction='nested',
+                  perturb=False)
+    hivtest1 = odict(parset1['hivtest'])
+    condomcas1 = odict(parset1['condomcas'])
+
+    # 13. Plot cost-coverage curves for all programs
+    R.plotallcoverage(t=[2013,2015],
+                      parset=P.parsets['default'],
+                      xupperlim=1e8)
+
+    # 14. Try varying the budget & comparing the parameter values
+#    budget={'HTC':array([1e7,1.2e7,1.5e7]),
+#            'SBCC':array([1e6,1.2e6,1.5e6]),
+#            'MGT':array([2e5,3e5,3e5])}
+    budget2 = {'HTC':array([2e7,2.4e7,3e7]),
+               'SBCC':array([1e6,1.2e6,1.5e6]),
+               'MGT':array([2e5,3e5,3e5])}
+
+    parset2 = R.getoutcomes(budget=budget2,
+                  t=[2015,2016,2020],
+                  parset=P.parsets['default'],
+                  interaction='nested',
+                  perturb=False)
+    hivtest2 = odict(parset2['hivtest'])
+    condomcas2 = odict(parset2['condomcas'])
+
+
+    P.parsets['progscen1'] = deepcopy(P.parsets['default'])
+    P.parsets['progscen2'] = deepcopy(P.parsets['default'])
+    newt = odict([('Males 15-49', array([ 2015., 2016., 2020.])),
+                  ('Females 15-49', array([ 2015., 2016., 2020.]))])
+
+    P.parsets['progscen1'].pars[0]['hivtest'].t = newt
+    P.parsets['progscen2'].pars[0]['hivtest'].t = newt
+    P.parsets['progscen1'].pars[0]['hivtest'].y = hivtest1
+    P.parsets['progscen2'].pars[0]['hivtest'].y = hivtest2
+
+    P.parsets['progscen1'].pars[0]['condomcas'].t = newt
+    P.parsets['progscen2'].pars[0]['condomcas'].t = newt
+    P.parsets['progscen1'].pars[0]['condomcas'].y['Females 15-49'] = condomcas1['Females 15-49']
+    P.parsets['progscen2'].pars[0]['condomcas'].y['Females 15-49'] = condomcas2['Females 15-49']
+    
+    results0 = P.runsim('default')
+    results1 = P.runsim('progscen1')
+    results2 = P.runsim('progscen2')
+    from plotpeople import plotpeople
+    plotpeople([results0, results1, results2])
 
     done(t)
-
-
-
-
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
