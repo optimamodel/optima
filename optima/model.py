@@ -3,7 +3,7 @@
 ###############################################################################
 
  ## Imports
-from numpy import array, zeros, exp, maximum, minimum, concatenate, hstack, absolute, median
+from numpy import array, zeros, exp, maximum, minimum, hstack, median
 from optima import printv, tic, toc, dcp, Results
 from math import pow as mpow
 
@@ -93,7 +93,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ## Shorten variables and remove dict calls to make things faster...
     
     # Disease state indices
-    sus  = settings.uninf  # Susceptible
+    sus  = settings.uncirc  # Susceptible
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     tx  = settings.treat  # Treatment -- 1st line
@@ -622,7 +622,7 @@ def equilibrate(settings, simpars, Finit, verbose=2):
         treatment *= recovratios
         
         # Populated equilibrated array
-        initpeople[settings.uninf, p] = uninfected
+        initpeople[settings.uncirc, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
         initpeople[settings.treat, p] = treatment
