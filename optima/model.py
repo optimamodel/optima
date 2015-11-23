@@ -1,5 +1,5 @@
 ## Imports
-from numpy import array, zeros, exp, maximum, minimum, hstack, median
+from numpy import array, zeros, exp, maximum, minimum, median
 from optima import printv, tic, toc, dcp, Results
 from math import pow as mpow
 
@@ -23,6 +23,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     simpars = dcp(simpars)
 
     eps = 1e-3 # Define another small number to avoid divide-by-zero errors
+    cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
     results = Results()    # Sim output structure
@@ -55,22 +56,20 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     
     # Biological and failure parameters -- death etc
-    Mc = simpars['const']
-    prog = []; recov = []; death = []; cd4trans = []
-    for key in ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50']: prog.append(Mc[key])
-    for key in ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50']: recov.append(Mc[key])
-    for key in ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids']: death.append(Mc[key])
-    for key in ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids']: cd4trans.append(Mc[key])
+    C = simpars['const']
+    prog = C['progacute':'proggt50']
+    recov = C['recovgt500':'recovgt50']
+    death = C['deathacute':'deathaids']
+    cd4trans = C['cd4transacute':'cd4transaids']
     deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
     simpars['prog'] = prog # for equilibrate()
     simpars['recov'] = recov    
     
     # Calculate other things outside the loop
-    healthtime = 1 / hstack([prog, death[-1]]) # Calculate how long is spent in each health state, with death considered the time spent in CD4<50
-    cd4transnorm = sum(cd4trans * healthtime) / sum(healthtime)
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = simpars['const']['effdx'] * cd4trans # Include diagnosis efficacy
     txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
+
     
     # Set initial epidemic conditions 
     people[:,:,0] = equilibrate(settings, simpars) # No it hasn't, so run equilibration
@@ -593,7 +592,7 @@ def equilibrate(settings, simpars, verbose=2):
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
-        assumedforceinf = simpars['force'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates

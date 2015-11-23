@@ -19,7 +19,6 @@ tests = [
 'saveload',
 'loadspreadsheet',
 'runsim',
-#'gui'
 ]
 
 numericalassertions = True # Whether or not to actually run things and test their values
@@ -31,7 +30,7 @@ runalltests=True
 ## Initialization
 ##############################################################################
 
-from optima import tic, toc, blank, pd # analysis:ignore
+from optima import tic, toc, blank
 
 def done(t=0):
     print('Done.')
@@ -61,7 +60,7 @@ T = tic()
 if 'makespreadsheet' in tests:
     t = tic()
     print('Running make spreadsheet test...')
-    from makespreadsheet import makespreadsheet
+    from optima import makespreadsheet
     makespreadsheet()
     done(t)
 
@@ -71,7 +70,7 @@ if 'makespreadsheet' in tests:
 if 'makeproject' in tests:
     t = tic()
     print('Running make project test...')
-    from project import Project
+    from optima import Project
     P = Project()
     print(P)
     done(t)
@@ -84,8 +83,8 @@ if 'saveload' in tests:
     t = tic()
     print('Running save/load test...')
     
-    from utils import save, load
-    from project import Project
+    from optima import Project, save, load
+    from os import remove
     filename = 'testproject.prj'
     
     print('  Checking saving...')
@@ -94,6 +93,9 @@ if 'saveload' in tests:
     
     print('  Checking loading...')
     Q = load(filename)
+    
+    print('Cleaning up...')
+    remove(filename)
     
     done(t)
 
@@ -104,7 +106,7 @@ if 'saveload' in tests:
 if 'loadspreadsheet' in tests:
     t = tic()
     print('Running loadspreadsheet test...')
-    from project import Project
+    from optima import Project
     
     print('  Create a project from a spreadsheet')
     P = Project(spreadsheet='test.xlsx')
@@ -122,32 +124,16 @@ if 'loadspreadsheet' in tests:
 
 
 ## Run simulation test
-if 'runsim' or 'gui' in tests:
+if 'runsim' in tests:
     t = tic()
     print('Running runsim test...')
     
-    from project import Project
+    from optima import Project
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim('default')
     
     done(t)
 
-
-
-## Run the GUI
-if 'gui' in tests:
-    t = tic()
-    print('Running GUI test...')
-    
-    try:
-        from gui import gui
-        from plotpeople import plotpeople
-        gui(results)
-        plotpeople(results)
-    except:
-        print('Backend GUI failed to load -- not critical')
-    
-    done(t)
 
 
 

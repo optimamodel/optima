@@ -583,6 +583,8 @@ def setdate(obj):
 
 
 from collections import OrderedDict
+from numpy import array
+
 class odict(OrderedDict):
     """
     ODICT
@@ -610,7 +612,7 @@ class odict(OrderedDict):
             elif key.stop is None: stopind = len(self)-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            return [self.__getitem__(i) for i in range(startind,stopind+1)] # +1 since otherwise confusing with names
+            return array([self.__getitem__(i) for i in range(startind,stopind+1)]) # +1 since otherwise confusing with names
         elif type(key)==list: # Iterate over items
             return [self.__getitem__(item) for item in key]
         else: # Try to convert to a list if it's an array or something
@@ -635,14 +637,24 @@ class odict(OrderedDict):
             elif key.stop is None: stopind = len(self)-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            for valind,keyind in enumerate(range(startind,stopind+1)): # +1 since otherwise confusing with names
-                self.__setitem__(keyind, value[valind])
-        elif type(key)==list:
-            for valind,thiskey in enumerate(key): # +1 since otherwise confusing with names
-                self.__setitem__(thiskey, value[valind])
+            enumerator = enumerate(range(startind,stopind+1))
+            try:
+                slicelen = len(range(startind,stopind+1))
+                if len(value)==slicelen:
+                    for valind,keyind in enumerator: # +1 since otherwise confusing with names
+                        self.__setitem__(keyind, value[valind])
+                else: 
+                    for valind,keyind in enumerator: # +1 since otherwise confusing with names
+                        self.__setitem__(keyind, value)
+            except:
+                for valind,keyind in enumerator: # +1 since otherwise confusing with names
+                    self.__setitem__(keyind, value)
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
+    
+    
+    
     
     def __repr__(self):
         ''' Print a meaningful representation of the odict '''

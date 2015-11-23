@@ -25,8 +25,8 @@ global main
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow, results):
-        self.results = results
+    def setupUi(self, MainWindow, resultslist):
+        self.resultslist = resultslist
         
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
@@ -48,8 +48,8 @@ class Ui_MainWindow(object):
         
         self.checkboxes = {}
         count = -1;
-        for key in results.epikeys:
-            for subkey in results.episubkeys:
+        for key in resultslist[0].epikeys:
+            for subkey in resultslist[0].episubkeys:
                 count += 1
                 name = key+'-'+subkey
                 self.checkboxes[name] = QtGui.QCheckBox(self.centralwidget)
@@ -68,8 +68,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(translate("Optima Results GUI", "Optima Results GUI", None))
         self.pushButton.setText(translate("Optima Results GUI", "Plot", None))
-        for key in self.results.epikeys:
-            for subkey in self.results.episubkeys:
+        for key in self.resultslist[0].epikeys:
+            for subkey in self.resultslist[0].episubkeys:
                 self.checkboxes[key+'-'+subkey].setText(translate("Optima Results GUI", key+'-'+subkey, None))
         
         
@@ -77,14 +77,14 @@ class Ui_MainWindow(object):
 
         
 class Main(QtGui.QMainWindow, Ui_MainWindow):
-    def __init__(self, results):
+    def __init__(self, resultslist):
         super(Main, self).__init__()
-        self.setupUi(self, results)
+        self.setupUi(self, resultslist)
         self.fig_dict = {}
         self.pushButton.clicked.connect(self.changefig)
         fig = figure()
         self.addmpl(fig)
-        self.results = results
+        self.resultslist = resultslist
 
     def addmpl(self, fig):
         self.canvas = canvas(fig)
@@ -102,8 +102,8 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
     def changefig(self):
         ''' Main function that actually does plotting '''
         ischecked = []
-        for key in self.results.epikeys:
-            for subkey in self.results.episubkeys:
+        for key in self.resultslist[0].epikeys:
+            for subkey in self.resultslist[0].episubkeys:
                 if self.checkboxes[key+'-'+subkey].isChecked():
                     ischecked.append([key, subkey])
         
@@ -118,8 +118,9 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         for i in range(nplots):
             axes.append(f.add_subplot(int(nrows), int(ncols), i+1))
             this = ischecked[i]
-            thisdata = getattr(getattr(self.results,this[0]),this[1])[0]
-            axes[-1].plot(self.results.tvec, transpose(array(thisdata)))
+            for j in range(len(self.resultslist)):
+                thisdata = getattr(getattr(self.resultslist[j],this[0]),this[1])[0]
+                axes[-1].plot(self.resultslist[j].tvec, transpose(array(thisdata)), linestyle=self.resultslist[0].styles[j])
             axes[-1].set_ylabel(this[0]+' '+this[1])
             axes[-1].set_xlabel('Year')
         
@@ -129,14 +130,17 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
 
 
 
-def gui(results):
+def gui(resultslist):
     ''' Actual function to actually be used '''
     global app
     global main
-    results.epikeys = ['prev', 'numplhiv', 'numinci', 'numdeath', 'numdiag']
-    results.episubkeys = ['tot','pops']
+    
+    if type(resultslist) is not list: resultslist = [resultslist]
+    resultslist[0].epikeys = ['prev', 'numplhiv', 'numinci', 'numdeath', 'numdiag']
+    resultslist[0].episubkeys = ['tot','pops']
+    resultslist[0].styles = ['-', '--', '-.', ':'] # Line plot styles
     app = QtGui.QApplication(sys.argv)
-    main = Main(results)
+    main = Main(resultslist)
     main.show()
 
 
