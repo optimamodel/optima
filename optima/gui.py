@@ -120,7 +120,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
             this = ischecked[i]
             for j in range(len(self.resultslist)):
                 thisdata = getattr(getattr(self.resultslist[j],this[0]),this[1])[0]
-                axes[-1].plot(self.resultslist[j].tvec, transpose(array(thisdata)), marker=self.resultslist[0].styles[j])
+                axes[-1].plot(self.resultslist[j].tvec, transpose(array(thisdata)), linestyle=self.resultslist[0].styles[j])
             axes[-1].set_ylabel(this[0]+' '+this[1])
             axes[-1].set_xlabel('Year')
         
@@ -138,7 +138,7 @@ def gui(resultslist):
     if type(resultslist) is not list: resultslist = [resultslist]
     resultslist[0].epikeys = ['prev', 'numplhiv', 'numinci', 'numdeath', 'numdiag']
     resultslist[0].episubkeys = ['tot','pops']
-    resultslist[0].styles = ['o','s','x','+'] # Line plot styles
+    resultslist[0].styles = ['-', '--', '-.', ':'] # Line plot styles
     app = QtGui.QApplication(sys.argv)
     main = Main(resultslist)
     main.show()

@@ -110,7 +110,7 @@ if 'treatment' in tests:
     
     P.copyparset('default', 'treatment')
     treatpar = P.parsets['treatment'].pars[0]['numtx']
-    treatpar.y['tot'][:] *= 0
+    treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
     results2 = P.runsim('treatment')
     
     from gui import gui
