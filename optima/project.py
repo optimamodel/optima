@@ -175,6 +175,7 @@ class Project(object):
         structlist = self.getwhat(what)
         self.checkname(what, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
+        structlist[name].name = name # Make sure names are consistent
         print('Item "%s" added to structure list "%s"' % (name, what))
         return None
     
@@ -192,8 +193,8 @@ class Project(object):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
-        
         structlist[new] = dcp(structlist[orig])
+        structlist[new].name = new # Update name
         print('Item "%s" copied to structure list "%s"' % (new, what))
         return None
     
@@ -203,6 +204,7 @@ class Project(object):
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
+        structlist[new].name = new # Update name
         print('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what))
         return None
 

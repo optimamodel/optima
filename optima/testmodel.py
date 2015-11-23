@@ -84,9 +84,9 @@ if 'force' in tests:
     P = Project(spreadsheet='test.xlsx')
     results1 = P.runsim('default')
     
-    P.copyparset('default', 'force')
-    P.parsets['force'].pars[0]['force'][:] *= 10
-    results2 = P.runsim('force')
+    P.copyparset('default', 'forcetest')
+    P.parsets['forcetest'].pars[0]['force'][:] *= 2
+    results2 = P.runsim('forcetest')
     
     from gui import gui
     from plotpeople import plotpeople
