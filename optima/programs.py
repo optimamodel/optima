@@ -291,10 +291,8 @@ class Programset(object):
                 else:
                     cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,targetpopprop=targetpopprop,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
 
-        return cost_coverage_figures
+        return cost_coverage_figures   
         
-        
-
 class Program(object):
     ''' Defines a single program. 
     Can be initialized with:
