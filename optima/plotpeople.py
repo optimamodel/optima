@@ -6,7 +6,7 @@ Simple little code to visualize the people in the people array.
 """
 
 import matplotlib as mpl
-from pylab import *
+from pylab import hold, shape, subplot, figure, title, ylabel, plot
 
 def plotpeople(resultslist):
     if type(resultslist) is not list: resultslist = [resultslist]

@@ -44,7 +44,7 @@ def data2popsize(dataarray, data, keys):
         tdata = sanitizedt[key]-startyear
         ydata = log(sanitizedy[key])
         try:
-            fitpars = polyfit(tdata, log(ydata), 1)
+            fitpars = polyfit(tdata, ydata, 1)
             par.p[key] = array([exp(fitpars[1]), fitpars[0]])
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
@@ -175,6 +175,10 @@ def makeparsfromdata(data, verbose=2):
     for key in popkeys:
         pars['force'][key] = 1
         pars['inhomo'][key] = 0
+    
+    # Store male/female properties
+    pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
+    pars['female'] = array(data['pops']['female']).astype(bool) # Male populations
     
     printv('...done converting data to parameters.', 2, verbose)
     
@@ -404,10 +408,13 @@ class Parameterset(object):
         simpars['propaware'] = zeros(shape(simpars['hivtest'])) # Initialize proportion of PLHIV aware of their status
         simpars['txtotal'] = zeros(shape(simpars['tx'])) # Initialize total number of people on treatment
         
-        
         ## Metaparameters
         simpars['force'] = array(P['force'][:])
         simpars['inhomo'] = array(P['inhomo'][:])
+        
+        ## Other things that can be used directly as well
+        simpars['male'] = P['male']
+        simpars['female'] = P['female']
 
         printv('...done making model parameters.', 2, verbose)
         return simpars

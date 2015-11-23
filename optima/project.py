@@ -246,10 +246,10 @@ class Project(object):
         if dt is None: dt=self.settings.dt # Specify the timestep if none is specified, usually 0.1
         simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         
-        simpars['male'] = array(self.data['pops']['male']).astype(bool) # Male populations -- TEMP
         results = model(simpars, self.settings)
         results.derivedresults() # Generate derived results
         results.pars = self.parsets[name]
+        results.simpars = simpars
         results.projectinfo = str(self) # Store all the information about this project
         
         return results
