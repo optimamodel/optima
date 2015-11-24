@@ -538,8 +538,11 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
                     people[0,pop,t+1] += newpeople[pop]
  #                   people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t])
-                else: # People are leaving: they leave from each health state equally
-                    people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
+                else: # People are leaving: they leave from susceptible still
+                    if (people[0,pop,t+1] + newpeople[pop])>0: # Don't allow negative people
+                        people[0,pop,t+1] += newpeople[pop]
+                    else:
+                        people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in xrange(nstates): # Loop over all heath states
                     for errpop in xrange(npops): # Loop over all populations
