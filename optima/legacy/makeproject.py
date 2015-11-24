@@ -28,7 +28,7 @@ def makeproject(projectname='example', pops = default_pops, progs = default_prog
     
     # Initialize options
     from setoptions import setoptions
-    D['opt'] = setoptions(nsims=nsims)
+    D['opt'] = setoptions(nsims=nsims,parstartyear=datastart)
     
     # Set up "G" -- general parameters structure
     D['G'] = dict()

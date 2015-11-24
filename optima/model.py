@@ -508,8 +508,12 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 if newpeople[pop]>=0: # People are entering: they enter the susceptible population
                     people[0,pop,t+1] += newpeople[pop]
-                else: # People are leaving: they leave from each health state equally
-                    people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
+ #                   people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t])
+                else: # People are leaving: they leave from susceptible still
+                    if (people[0,pop,t+1] + newpeople[pop])>0: # Don't allow negative people
+                        people[0,pop,t+1] += newpeople[pop]
+                    else:
+                        people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
             if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
