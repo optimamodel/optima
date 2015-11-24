@@ -558,6 +558,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
                 raise Exception('Values too large')
                 
     # Append final people array to sim output
+    S['pops'] = G['meta']['pops']['short'] # Store population names
     S['people'] = people
 
 
