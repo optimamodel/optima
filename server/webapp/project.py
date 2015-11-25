@@ -123,10 +123,10 @@ def getPopsAndProgsFromModel(project_entry, trustInputMetadata): # pylint: disab
     project_entry.dataend = int(years[-1])
 
 
-@project.route('/create/<project_name>', methods=['POST'])
+@project.route('/create/', methods=['POST'])
 @login_required
 @report_exception()
-def create_project(project_name): # pylint: disable=too-many-locals
+def create_project(): # pylint: disable=too-many-locals
     """
     Creates the project with the given name and provided parameters.
     Result: on the backend, new project is stored,
@@ -140,12 +140,17 @@ def create_project(project_name): # pylint: disable=too-many-locals
     from optima.makespreadsheet import default_datastart, default_dataend, defaultpops, makespreadsheet
     from dataio import tojson, templatepath
     from optima.project import version
-    current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
+    data = raw_data.get('params') if raw_data else None
     # get current user
     user_id = current_user.id
 
-    data = raw_data.get('params') if raw_data else None
+    project_name = data.get('name')
+    if not project_name:
+        return jsonify({'reason':'Project name is missing'}), 400
+    project_name = secure_filename(project_name)
+    current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
+
     current_app.logger.debug("createProject data: %s" % data)
 
     makeproject_args = {"projectname":project_name, "savetofile":False}
@@ -168,7 +173,6 @@ def create_project(project_name): # pylint: disable=too-many-locals
     db.session.commit()
     new_project_template = project_name
 
-    # TODO sanitize file name
     path = templatepath(project_name)
     makespreadsheet(path, pops=makeproject_args['pops'], datastart=makeproject_args['datastart'], dataend=makeproject_args['dataend'])
 
@@ -383,10 +387,9 @@ def getProjectListAll():
                 'name': project_entry.name,
                 'dataStart': project_entry.datastart,
                 'dataEnd': project_entry.dataend,
-                'programs': project_entry.programs,
                 'populations': project_entry.populations,
-                'creation_time': project_entry.creation_time,
-                'updated_time': project_entry.updated_time,
+                'creation_time': project_entry.created,
+                'updated_time': project_entry.updated,
                 'data_upload_time': project_entry.data_upload_time(),
                 'user_id': project_entry.user_id
             }
@@ -418,10 +421,9 @@ def getProjectList():
                 'name': project_entry.name,
                 'dataStart': project_entry.datastart,
                 'dataEnd': project_entry.dataend,
-                'programs': project_entry.programs,
                 'populations': project_entry.populations,
-                'creation_time': project_entry.creation_time,
-                'updated_time': project_entry.updated_time,
+                'creation_time': project_entry.created,
+                'updated_time': project_entry.updated,
                 'data_upload_time': project_entry.data_upload_time()
             }
             projects_data.append(project_data)

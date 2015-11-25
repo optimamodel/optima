@@ -208,16 +208,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // since the confirm modal is async and doesn't wait for user's response
     var continueSubmitForm = function( selectedPopulations ) {
       var form = {};
-
-      var params = _($scope.projectParams).omit('name');
-      params.populations = selectedPopulations;
+      var params;
 
       if ($scope.editParams.isEdit) {
+        params = _($scope.projectParams).omit('name');
+        params.populations = selectedPopulations;
         form.action = '/api/project/update/' + $scope.projectParams.id; // TODO check if id is available
         form.data = {canUpdate: $scope.editParams.canUpdate, params: params};
         form.method = 'PUT';
       } else {
-        form.action = '/api/project/create/' + $scope.projectParams.name;
+        params = angular.copy($scope.projectParams);
+        params.populations = selectedPopulations;
+        form.action = '/api/project/create/';
         form.data = {params: params};
         form.method = 'POST';
       }
