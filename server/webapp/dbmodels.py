@@ -62,8 +62,8 @@ class ProjectDb(db.Model):
         self.version = version
         self.settings = settings
         self.data = data
-        self.parsets = parsets
-        self.results = results
+        self.parsets = parsets or []
+        self.results = results or []
 
     def has_data(self):
         return self.data is not None
@@ -138,9 +138,9 @@ class ProjectDataDb(db.Model): # pylint: disable=R0903
     __tablename__ = 'project_data'
     id = db.Column(UUID(True),db.ForeignKey('projects.id'), primary_key=True )
     meta = deferred(db.Column(db.LargeBinary))
-    upload_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
     def __init__(self, project_id, meta, upload_time = None):
         self.id = project_id
         self.meta = meta
-        self.upload_time = upload_time
+        self.updated = updated
