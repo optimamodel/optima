@@ -48,7 +48,7 @@ def runmodelalloc(D, optimparams, parindices, randseed, rerunfinancial=False, ve
         print('Attempt to calculate ART coverage failed for an unknown reason')
     
     newD['M'] = partialupdateM(D['M'], newM, parindices)
-    S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'], verbose=verbose)
+    S = model(newD['G'], newD['M'], newD['F'][0], newD['opt'])
     R = makeresults(D, allsims=[S], rerunfinancial=rerunfinancial, verbose=0)
     R['debug'] = dict()
     R['debug']['G'] = deepcopy(newD['G'])
@@ -214,7 +214,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             print('========== Initial optimization ==========')            
             tempD = deepcopy(D)
             tempD['data']['origalloc'] = optimparams
-            newD = optimize(tempD, objectives=None, constraints=constraints, maxiters=max(maxiters,20), timelimit=max(timelimit,100), verbose=5, name='tmp_minimizemoney', stoppingfunc = None, mmorigalloc = baseorigalloc) # Run default optimization
+            newD = optimize(tempD, objectives=None, constraints=constraints, maxiters=max(maxiters,20), timelimit=max(timelimit,1000), verbose=5, name='tmp_minimizemoney', stoppingfunc = None, mmorigalloc = baseorigalloc) # Run default optimization
             optimparams = newD['debugresult']['allocarr'][1][0]  # Copy optimization parameters out of newD
             print optimparams
             
@@ -242,7 +242,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             print('========== Extra optimization ==========')
             tempD = deepcopy(D)
             tempD['data']['origalloc'] = optparams
-            newD = optimize(tempD, objectives=None, constraints=constraints, maxiters=max(maxiters,20), timelimit=max(timelimit,100), verbose=5, name='tmp_minimizemoney', stoppingfunc = None, mmorigalloc = baseorigalloc) # Run default optimization
+            newD = optimize(tempD, objectives=None, constraints=constraints, maxiters=max(maxiters,20), timelimit=max(timelimit,1000), verbose=5, name='tmp_minimizemoney', stoppingfunc = None, mmorigalloc = baseorigalloc) # Run default optimization
             optimparams = newD['debugresult']['allocarr'][1][0]/fundingfactor  # Copy optimization parameters out of newD
 
 
@@ -251,13 +251,13 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             print('========== Homing in on solution ==========')
             upperlim = fundingfactor
             lowerlim = fundingfactor/2.
-            while (upperlim-lowerlim>0.1): # Keep looping until they converge to within 10% of the budget
+            while (upperlim-lowerlim>0.01): # Keep looping until they converge to within 10% of the budget
                 fundingfactor = (upperlim+lowerlim)/2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
                 print('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim))
                 if targetsmet: upperlim=fundingfactor
                 else: lowerlim=fundingfactor
-            if (upperlim-lowerlim<=0.1):    # Just to make sure that the optimal allocation returned is for the goals-meeting upperlim factor!
+            if (upperlim-lowerlim<=0.01):    # Just to make sure that the optimal allocation returned is for the goals-meeting upperlim factor!
                 targetsmet, optparams = objectivecalc(array(optimparams)*upperlim, options)
             
         
