@@ -135,8 +135,11 @@ def create_project(project_name): # pylint: disable=too-many-locals
     {"npops":6,"nprogs":8, "datastart":2000, "dataend":2015}
 
     """
-    from sim.makeproject import default_datastart, default_dataend, default_pops, default_progs
-    from dataio import tojson
+
+    # TODO deprecate project name from URI
+    from optima.makespreadsheet import default_datastart, default_dataend, defaultpops, makespreadsheet
+    from dataio import tojson, templatepath
+    from optima.project import version
     current_app.logger.debug("createProject %s for user %s" % (project_name, current_user.email))
     raw_data = json.loads(request.data)
     # get current user
@@ -148,25 +151,26 @@ def create_project(project_name): # pylint: disable=too-many-locals
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
-    makeproject_args['progs'] = data.get('programs', default_progs)
-    makeproject_args['pops'] = data.get('populations', default_pops)
+    makeproject_args['pops'] = data.get('populations', defaultpops)
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
     # create new project
     current_app.logger.debug("Creating new project %s by user %s:%s" % (project_name, user_id, current_user.email))
     project_entry = ProjectDb(project_name, user_id, makeproject_args['datastart'], \
         makeproject_args['dataend'], \
-        makeproject_args['progs'], makeproject_args['pops'])
+        makeproject_args['pops'],
+        version=version)
     current_app.logger.debug('Creating new project: %s' % project_entry.name)
-
-    D = makeproject(**makeproject_args) # makeproject is supposed to return the name of the existing file...
-    project_entry.model = tojson(D)
 
     # Save to db
     current_app.logger.debug("About to persist project %s for user %s" % (project_entry.name, project_entry.user_id))
     db.session.add(project_entry)
     db.session.commit()
-    new_project_template = D['G']['workbookname']
+    new_project_template = project_name
+
+    # TODO sanitize file name
+    path = templatepath(project_name)
+    makespreadsheet(path, pops=makeproject_args['pops'], datastart=makeproject_args['datastart'], dataend=makeproject_args['dataend'])
 
     current_app.logger.debug("new_project_template: %s" % new_project_template)
     (dirname, basename) = (upload_dir_user(TEMPLATEDIR), new_project_template)
@@ -344,10 +348,9 @@ def getProjectInformation():
             'name': project_entry.name,
             'dataStart': project_entry.datastart,
             'dataEnd': project_entry.dataend,
-            'programs': project_entry.programs,
             'populations': project_entry.populations,
-            'creation_time': project_entry.creation_time,
-            'updated_time': project_entry.updated_time,
+            'creation_time': project_entry.created,
+            'updated_time': project_entry.updated,
             'data_upload_time': project_entry.data_upload_time(),
             'has_data': project_entry.has_data()
         }

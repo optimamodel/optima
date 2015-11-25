@@ -44,14 +44,16 @@ defaultprogs = [
  {'value': {'pops': [''], 'signature': ['condom', 'cas']}}],
  }]
 
+default_datastart = 2000
+default_dataend = 2020
 
-def makespreadsheet(filename='default.xlsx', pops=defaultpops, progs=defaultprogs, datastart=2000, dataend=2020, verbose=2):
+def makespreadsheet(filename='default.xlsx', pops=defaultpops, progs=defaultprogs, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     printv('Generating spreadsheet: pops=%i, progs=%i, datastart=%s, dataend=%s''' % (len(pops), len(progs), datastart, dataend), 1, verbose)
     book = OptimaSpreadsheet(filename, pops, progs, datastart, dataend)
     book.create(filename)
-    
+
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
 
