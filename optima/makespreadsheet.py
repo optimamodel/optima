@@ -143,11 +143,10 @@ def make_years_range(name, params, data_start, data_end):
 def make_populations_range(name, items):
     """ 
     every populations item is a dictionary is expected to have the following fields:
-    short_name, name, male, female, injects, sexmen, sexwomen, sexworker, client
-    (3x str, 7x bool)
+    short_name, name, male, female, age_from, age_to
+    (3x str, 2x bool, 2x int)
     """
-    column_names = ['Short name','Long name','Male','Female','Injects','Has sex with men', \
-    'Has sex with women','Sex worker','Client']
+    column_names = ['Short name','Long name','Male','Female','AgeFrom', 'AgeTo']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
@@ -156,22 +155,16 @@ def make_populations_range(name, items):
             short_name = item.get('short_name', abbreviate(item_name))
             male = item.get('male', False)
             female = item.get('female', False)
-            injects = item.get('injects',False)
-            sexmen = item.get('sexmen',False) # WARNING need to update
-            sexwomen = item.get('sexwomen',False)
-            sexworker = item.get('sexworker',False)
-            client = item.get('client',False)      
+            age_from = item.get('age_from',15)
+            age_to = item.get('age_to',49) 
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
             short_name = abbreviate(item_name)
             male = False
             female = False
-            injects = False
-            sexmen = False
-            sexwomen = False
-            sexworker = False
-            client = False      
-        coded_params.append([short_name, item_name, male, female, injects, sexmen, sexwomen, sexworker, client])
+            age_from = 15
+            age_to = 49      
+        coded_params.append([short_name, item_name, male, female, age_from, age_to])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data, low_data, high_data):

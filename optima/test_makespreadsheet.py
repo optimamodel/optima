@@ -3,12 +3,12 @@ import unittest
 from makespreadsheet import OptimaSpreadsheet, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
 import xlsxwriter
 
-populations = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
-    {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
-    {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
-    {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-    {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-    {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
+populations = [{"name": "Female sex workers", "short_name": "FSW", "female": True, "male": False, "AgeFrom": 15, "AgeTo": 49}, \
+    {"name": "Clients of sex workers", "short_name": "Clients", "female": False, "male": True, "AgeFrom": 15, "AgeTo": 49}, \
+    {"name": "Men who have sex with men", "short_name": "MSM", "female": False, "male": True, "AgeFrom": 15, "AgeTo": 49}, \
+    {"name": "Males who inject drugs", "short_name": "Male PWID", "female": False, "male": True, "AgeFrom": 15, "AgeTo": 49}, \
+    {"name": "Other males [enter age]", "short_name": "Other males", "female": False, "male": True, "AgeFrom": 0, "AgeTo": 0}, \
+    {"name": "Other females [enter age]", "short_name": "Other females", "female": True, "male": False, "AgeFrom": 0, "AgeTo": 0}]
 programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP'}, \
     {'name':'Opiate substition therapy', 'short_name': 'OST'}, \
     {'name':'Programs for men who have sex with men', 'short_name': 'MSM programs'}]
