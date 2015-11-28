@@ -7,7 +7,7 @@ Version: 2015nov04 by robynstuart
 """
 
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict
 from collections import defaultdict
 import abc
 from pylab import figure
@@ -19,7 +19,14 @@ class Programset(object):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
-        self.programs = {program.name: program for program in programs.values()} if programs else {}
+        self.programs = odict({program.name: program for program in programs}) if programs else odict()
+        if programs is not None:
+            if type(programs) in (Program,list): # Handle a list
+                self.addprogram(programs)
+            if type(programs)==dict: # Handle a dict
+                for key in programs.keys():
+                    programs[key].name = key # Rename so the key name matches the key
+                    self.addprogram(programs)
         self.gettargetpops()
         self.gettargetpars()
         self.gettargetpartypes()
@@ -66,30 +73,35 @@ class Programset(object):
            Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
         self.gettargetpops()
-        self.covout = {}
+        self.covout = odict()
         for targetpartype in self.targetpartypes:
-            self.covout[targetpartype] = {}
+            self.covout[targetpartype] = odict()
             for thispop in self.progs_by_targetpar(targetpartype).keys():
                 targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]                
                 initccoparams = {k: [] for k in targetingprogs}
                 initccoparams['t'],initccoparams['intercept'] = [], []
                 self.covout[targetpartype][thispop] = Covout(initccoparams)                
 
-    def addprog(self,newprog):
-        if newprog not in self.programs.keys():
-            self.programs[newprog.keys()[0]] = newprog.values()[0]
-            self.gettargetpops()
-            self.gettargetpartypes()
-            self.initialize_covout()
-            print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprog.keys()[0], self.name, [p.name for p in self.programs.values()]))
-        else:
-            raise Exception('Program "%s" is already present in programset "%s".' % (newprog.name, self.name))
+    def addprograms(self,newprograms):
+        ''' Add new programs'''
+        if type(newprograms)==Program: newprograms = [newprograms]
+        for newprogram in newprograms: 
+            if newprogram not in self.programs.keys():
+                self.programs.append(newprogram)
+                self.gettargetpops()
+                self.gettargetpartypes()
+                self.initialize_covout()
+                print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
+            else:
+                raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
+            self.programs.append(newprogram)
+            
         
-    def rmprog(self,prog):
-        if prog not in self.programs.keys():
-            raise Exception('You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (prog.name, self.name, [p.name for p in self.programs.values()]))
+    def rmprogram(self,program):
+        if program not in self.programs:
+            raise Exception('You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (program.name, self.name, [p.name for p in self.programs]))
         else:
-            del self.programs[prog]
+            self.programs.pop(program)
             self.gettargetpops()
             self.gettargetpartypes()
             self.initialize_covout()

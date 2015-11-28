@@ -153,7 +153,8 @@ if 'makeprograms' in tests:
     HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
     print('Running make programs set test...')
-    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
+#    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
+    R = Programset(programs=[HTC,SBCC,MGT])
 
     # Run additional tests if asked
     # Testing methods of program class
@@ -276,11 +277,11 @@ if 'makeprograms' in tests:
     P.parsets['progscen1'].pars[0]['condomcas'].y['Females 15-49'] = condomcas1['Females 15-49']
     P.parsets['progscen2'].pars[0]['condomcas'].y['Females 15-49'] = condomcas2['Females 15-49']
     
-    results0 = P.runsim('default')
-    results1 = P.runsim('progscen1')
-    results2 = P.runsim('progscen2')
-    from plotpeople import plotpeople
-    plotpeople([results0, results1, results2])
+#    results0 = P.runsim('default')
+#    results1 = P.runsim('progscen1')
+#    results2 = P.runsim('progscen2')
+#    from plotpeople import plotpeople
+#    plotpeople([results0, results1, results2])
 
     done(t)
 
