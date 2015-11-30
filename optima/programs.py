@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict
 from collections import defaultdict
 from parameters import Timepar
@@ -221,7 +221,7 @@ class Programset(object):
                         outcomes[thispartype][thispop] = None
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
-                        x = x[thisprog.name]
+                        x = budget[thisprog.name]
                         thiscov[thispop][thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
                         delta[thispartype][thispop][thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
@@ -297,11 +297,12 @@ class Programset(object):
         progparset.modified = today() 
         for outcome in outcomes.keys():
             for p in outcomes[outcome].keys():
-                progparset.pars[0][outcome].t[p] = array(t)
-                progparset.pars[0][outcome].y[p] = array(outcomes[outcome][p])
+                progparset.pars[0][outcome].t[p] = append(progparset.pars[0][outcome].t[p], min(t)-1) # Include the year before the programs start...
+                progparset.pars[0][outcome].y[p] = append(progparset.pars[0][outcome].y[p], progparset.pars[0][outcome].y[p][0]) # Include the year before the programs start...
+                progparset.pars[0][outcome].t[p] = append(progparset.pars[0][outcome].t[p], array(t))
+                progparset.pars[0][outcome].y[p] = append(progparset.pars[0][outcome].y[p], array(outcomes[outcome][p]))
             
         return progparset
-        
         
     def plotallcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
