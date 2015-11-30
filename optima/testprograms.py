@@ -234,11 +234,12 @@ if 'makeprograms' in tests:
     R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
     # 12. Get a parset of parameter values corresponding to a vector of program allocations
-    progparset1 = R.getparset(budget=budget,
+    progparset1 = R.getparset(forwhat=budget,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
                   interaction='nested',
-                  newparsetname='progparset1')
+                  newparsetname='progparset1',
+                  forwhattype='budget')
 
     # 13. Plot cost-coverage curves for all programs
     R.plotallcoverage(t=[2013,2015],

@@ -197,15 +197,19 @@ class Programset(object):
                     popcoverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    popcoverage[thisprog] = self.programs[thisprog].getcoverage(x=spending,t=t,parset=parset,total=False) # Two equivalent ways to do this, probably redundant  
+                    popcoverage[thisprog] = self.programs[thisprog].getcoverage(x=spending,t=t,parset=parset,total=False) 
             else: popcoverage[thisprog] = None
         return popcoverage
 
-    def getoutcomes(self,budget,t,parset,forwhat='budget',interaction='random',perturb=False):
+    def getoutcomes(self,forwhat,t,parset,forwhattype='budget',interaction='random',perturb=False):
         ''' Get the model parameters corresponding to a budget'''
         
         nyrs = len(t)
         outcomes, thiscov, delta = odict(), odict(), odict()
+        if forwhat=='budget':
+            thiscov = odict()
+        elif forwhat=='coverage':
+            thiscov = self.getpopcoverage(self,forwhat,t,parset)
         
         for thispartype in self.targetpartypes: # Loop over parameter types
             outcomes[thispartype] = odict()
@@ -221,7 +225,7 @@ class Programset(object):
                         outcomes[thispartype][thispop] = None
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
-                        x = budget[thisprog.name]
+                        x = forwhat[thisprog.name]
                         thiscov[thispop][thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
                         delta[thispartype][thispop][thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
@@ -288,9 +292,9 @@ class Programset(object):
         
         return outcomes
         
-    def getparset(self,budget,t,parset,newparsetname='programpars',interaction='random',perturb=False):
+    def getparset(self,forwhat,t,parset,forwhattype='budget',newparsetname='programpars',interaction='random',perturb=False):
         ''' Make a parset'''
-        outcomes = self.getoutcomes(budget=budget,t=t,parset=parset,interaction=interaction,perturb=perturb)
+        outcomes = self.getoutcomes(forwhat=forwhat,t=t,parset=parset,interaction=interaction,perturb=perturb)
         progparset = dcp(parset)
         progparset.name = newparsetname
         progparset.created = today() 
