@@ -153,16 +153,18 @@ if 'makeprograms' in tests:
     HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
     print('Running make programs set test...')
-#    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
+    # Different ways to initialise
+    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
+    R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
 
     # Run additional tests if asked
     # Testing methods of program class
     # 1. Adding a program
-    R.addprog({'ART':ART})
+    R.addprograms({'ART':ART})
 
     # 2. Removing a program
-    R.rmprog('ART')
+    R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
     
     # 3. See which programs are optimizable
     R.optimizable()
@@ -231,57 +233,24 @@ if 'makeprograms' in tests:
     # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
     R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
-    # 12. Get a set of parameter values corresponding to a vector of program allocations
-    parset1 = R.getoutcomes(budget=budget,
+    # 12. Get a parset of parameter values corresponding to a vector of program allocations
+    progparset1 = R.getparset(budget=budget,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
                   interaction='nested',
-                  perturb=False)
-    hivtest1 = odict(parset1['hivtest'])
-    condomcas1 = odict(parset1['condomcas'])
+                  newparsetname='progparset1')
 
     # 13. Plot cost-coverage curves for all programs
     R.plotallcoverage(t=[2013,2015],
                       parset=P.parsets['default'],
                       xupperlim=1e8)
 
-    # 14. Try varying the budget & comparing the parameter values
-#    budget={'HTC':array([1e7,1.2e7,1.5e7]),
-#            'SBCC':array([1e6,1.2e6,1.5e6]),
-#            'MGT':array([2e5,3e5,3e5])}
-    budget2 = {'HTC':array([2e7,2.4e7,3e7]),
-               'SBCC':array([1e6,1.2e6,1.5e6]),
-               'MGT':array([2e5,3e5,3e5])}
-
-    parset2 = R.getoutcomes(budget=budget2,
-                  t=[2015,2016,2020],
-                  parset=P.parsets['default'],
-                  interaction='nested',
-                  perturb=False)
-    hivtest2 = odict(parset2['hivtest'])
-    condomcas2 = odict(parset2['condomcas'])
-
-
-    P.parsets['progscen1'] = deepcopy(P.parsets['default'])
-    P.parsets['progscen2'] = deepcopy(P.parsets['default'])
-    newt = odict([('Males 15-49', array([ 2015., 2016., 2020.])),
-                  ('Females 15-49', array([ 2015., 2016., 2020.]))])
-
-    P.parsets['progscen1'].pars[0]['hivtest'].t = newt
-    P.parsets['progscen2'].pars[0]['hivtest'].t = newt
-    P.parsets['progscen1'].pars[0]['hivtest'].y = hivtest1
-    P.parsets['progscen2'].pars[0]['hivtest'].y = hivtest2
-
-    P.parsets['progscen1'].pars[0]['condomcas'].t = newt
-    P.parsets['progscen2'].pars[0]['condomcas'].t = newt
-    P.parsets['progscen1'].pars[0]['condomcas'].y['Females 15-49'] = condomcas1['Females 15-49']
-    P.parsets['progscen2'].pars[0]['condomcas'].y['Females 15-49'] = condomcas2['Females 15-49']
-    
-#    results0 = P.runsim('default')
-#    results1 = P.runsim('progscen1')
-#    results2 = P.runsim('progscen2')
-#    from plotpeople import plotpeople
-#    plotpeople([results0, results1, results2])
+    # 14. Example use of program scenarios
+    P.parsets['progparset1'] = progparset1
+    results0 = P.runsim('default')
+    results1 = P.runsim('progparset1')
+    from plotpeople import plotpeople
+    plotpeople([results0, results1])
 
     done(t)
 
