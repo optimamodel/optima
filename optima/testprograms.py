@@ -237,7 +237,7 @@ if 'makeprograms' in tests:
     progparset1 = R.getparset(forwhat=budget,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
-                  interaction='nested',
+                  interaction='random',
                   newparsetname='progparset1',
                   forwhattype='budget')
 

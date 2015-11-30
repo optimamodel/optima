@@ -256,36 +256,33 @@ class Programset(object):
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
                     # Outcome += c1(1-c2)(1-c3)* delta_out1 + c2(1-c1)(1-c3)*delta_out2 + c3(1-c1)(1-c2)*delta_out3 + c1c2* max(delta_out1,delta_out2) + c1c3* max(delta_out1,delta_out3) + c2c3* max(delta_out2,delta_out) + c1c2c3* max(delta_out1,delta_out2,delta_out3)
                 
-                    covprod = prod(array(thiscov[thispop].values()),axis=0)
-                    outcomes[thispartype][thispop] += covprod*[max([c[j] for c in delta[thispartype][thispop].values()]) for j in range(nyrs)]
-                
                     for prog1 in thiscov[thispop].keys():
-                    # Programs in isolation
-                        product = ones(thiscov[thispop][prog1.name].shape)
-                        
+                        product = ones(thiscov[thispop][prog1].shape)
                         for prog2 in thiscov[thispop].keys():
                             if prog1 != prog2:
-                                product *= (1-thiscov[thispop][prog2.name])
+                                product *= (1-thiscov[thispop][prog2])
         
-                        outcomes[thispartype][thispop] += self.covout[thispartype][thispop].ccopars[prog1.name]*thiscov[thispop][prog1.name]*product 
+                        outcomes[thispartype][thispop] += delta[thispartype][thispop][prog1]*thiscov[thispop][prog1]*product 
 
                     # Recursion over overlap levels
                     def overlap_calc(indexes,target_depth):
                         if len(indexes) < target_depth:
                             accum = 0
-                            for j in xrange(indexes[-1]+1,len(thiscov[thispop].keys())):
+                            for j in range(indexes[-1]+1,len(thiscov[thispop])):
                                 accum += overlap_calc(indexes+[j],target_depth)
                             return thiscov[thispop].values()[indexes[-1]]*accum
                         else:
                             return thiscov[thispop].values()[indexes[-1]]*max([self.covout[thispartype][thispop].ccopars.values()[x] for x in indexes],0) # Innermost part
 
                     # Iterate over overlap levels
-                    for i in xrange(2,len(thiscov[thispop].keys())): # Iterate over numbers of overlapping programs
-                        for j in xrange(0,len(thiscov[thispop].keys())-1): # Iterate over the index of the first program in the sum
+                    for i in range(2,len(thiscov[thispop])): # Iterate over numbers of overlapping programs
+                        for j in range(0,len(thiscov[thispop])-1): # Iterate over the index of the first program in the sum
                             outcomes[thispartype][thispop] += overlap_calc([j],i)
 
                     # All programs together
-                    outcomes[thispartype][thispop] += prod(thiscov[thispop],0)*max(thisparam[thispartype][thispop],0)
+                    outcomes[thispartype][thispop] += prod(array(thiscov[thispop].values()),0)*[max([c[j] for c in delta[thispartype][thispop].values()]) for j in range(nyrs)]
+#                    outcomes[thispartype][thispop] += covprod*[max([c[j] for c in delta[thispartype][thispop].values()]) for j in range(nyrs)]
+                
 
                 else:
                     raise Exception('Unknown reachability type "%s"',interaction)
