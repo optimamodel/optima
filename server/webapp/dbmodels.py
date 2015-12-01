@@ -81,11 +81,13 @@ class ParsetsDb(db.Model):
     name = db.Column(db.Text)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    pars = db.Column(db.LargeBinary)
 
-    def __init__(self, project_id, name, created = None):
+    def __init__(self, project_id, name, created = None, pars = None):
         self.project_id = project_id
         self.name = name
         self.created = created
+        self.pars = pars
 
 class ResultsDb(db.Model):
     __tablename__ = 'results'
