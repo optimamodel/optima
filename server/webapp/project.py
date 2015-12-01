@@ -597,24 +597,34 @@ def uploadExcel(): # pylint: disable=too-many-locals
     project_entry = load_project(project_id)
     current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
     if project_entry is not None:
+        # for now, just save the project
+        # TODO later: load parsets, etc
+        from optima.utils import saves, loads
         # update and save model
-        D = model_as_bunch(project_entry.model)
+        new_project = Project()
+        new_project.uuid = project_entry.id
+        new_project.name = project_entry.name
+        new_project.created = project_entry.created
+        new_project.loadspreadsheet(server_filename)
+#        D = model_as_bunch(project_entry.model)
         #make sure we get project_entry name and relevant fields up-to-date
-        D['G']['projectname'] = project_entry.name
-        D['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
-        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
-        D['G']['inputprograms'] = deepcopy(project_entry.programs)
-        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
+#        D['G']['projectname'] = project_entry.name
+#        D['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
+#        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+#        D['G']['inputprograms'] = deepcopy(project_entry.programs)
+#        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
 
         # Is this the first time? if so then we have to run simulations
-        should_re_run = 'S' not in D
+#        should_re_run = 'S' not in D
 
         # TODO fix after v2
         # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
-        model = model_as_dict(D)
-        project_entry.model = model
+#        model = model_as_dict(D)
+#       now, update relevant project_entry fields
+        project_entry.settings = saves(new_project.settings)
+        project_entry.data = saves(new_project.data)
         #update the programs and populations based on the data
-        getPopsAndProgsFromModel(project_entry, trustInputMetadata = False)
+#        getPopsAndProgsFromModel(project_entry, trustInputMetadata = False)
 
         db.session.add(project_entry)
 

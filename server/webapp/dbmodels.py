@@ -140,7 +140,7 @@ class ProjectDataDb(db.Model): # pylint: disable=R0903
     meta = deferred(db.Column(db.LargeBinary))
     updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
-    def __init__(self, project_id, meta, upload_time = None):
+    def __init__(self, project_id, meta, updated = None):
         self.id = project_id
         self.meta = meta
         self.updated = updated
