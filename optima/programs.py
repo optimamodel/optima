@@ -9,7 +9,6 @@ Version: 2015nov04 by robynstuart
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict
 from collections import defaultdict
-from parameters import Timepar
 import abc
 from pylab import figure
 from matplotlib.ticker import MaxNLocator
@@ -560,13 +559,6 @@ class Costcov(CCOF):
                 y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
             return y
  
-#    def plot(self,x,ccopar,popsize):
-#        '''Returns coverage in a given year.'''
-#        u = array(ccopar['unitcost'])
-#        s = array(ccopar['saturation'])
-#        if isinstance(popsize,(float,int)): popsize = array([popsize])
-#        return (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
-
     def emptypars(self):
         ccopars = {}
         ccopars['saturation'] = None
