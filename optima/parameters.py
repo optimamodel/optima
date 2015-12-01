@@ -298,7 +298,7 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
     
-    def __repr__(self):
+    def __str__(self):
         ''' Print out useful information when called'''
         output = '\n'
         output += 'Parameter set name: %s\n'    % self.name

@@ -58,7 +58,7 @@ class ProjectDb(db.Model):
         self.datastart = datastart
         self.dataend = dataend
         self.populations = populations
-        self.created = created
+        if created: self.created = created
         self.version = version
         self.settings = settings
         self.data = data
@@ -86,7 +86,7 @@ class ParsetsDb(db.Model):
     def __init__(self, project_id, name, created = None, pars = None):
         self.project_id = project_id
         self.name = name
-        self.created = created
+        if created: self.created = created
         self.pars = pars
 
 class ResultsDb(db.Model):
