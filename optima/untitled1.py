@@ -10,42 +10,49 @@ import pickle
 
 ioff()
 
-tmpfig = figure()
+fig1 = figure()
 ax1 = subplot(111)
 x1 = linspace(0, 10)
 y1 = exp(x1)
 title('plot1')
 plt.plot(x1, y1)
-pickle.dump(ax1, file('plot1.fgg', 'w'))
-close(tmpfig)
+pickle.dump(fig1, file('plot1.fgg', 'w'))
+close(fig1)
 
-tmpfig = figure()
+fig2 = figure()
 ax2 = subplot(111)
 x2 = linspace(0, 10)
 y2 = x2**2
 title('plot2')
 plt.plot(x2, y2)
-pickle.dump(ax2, file('plot2.fgg', 'w'))
-close(tmpfig)
+pickle.dump(fig2, file('plot2.fgg', 'w'))
+close(fig2)
 
-ld1 = pickle.load(file('plot1.fgg'))
-ld2 = pickle.load(file('plot2.fgg'))
-close(ld1.get_figure())
-close(ld2.get_figure())
+fld1 = pickle.load(file('plot1.fgg'))
+fld2 = pickle.load(file('plot2.fgg'))
+close(fld1)
+close(fld2)
 
+ld1 = fld1.axes[0]
+ld2 = fld2.axes[0]
 
 
 realfig, (ax3, ax4) = subplots(1, 2, figsize=(10,5))
 
-ld1.set_subplotspec(ax3.get_subplotspec())
-ld2.set_subplotspec(ax4.get_subplotspec())
+
+
+ld1.set_figure(realfig)
+ld2.set_figure(realfig)
 
 realfig._axstack.remove(ax3)
 realfig._axstack.remove(ax4)
 realfig._axstack.add(realfig._make_key(ld1), ld1)
 realfig._axstack.add(realfig._make_key(ld2), ld2)
 
-ld1.change_geometry(2,1,1)
-ld2.change_geometry(2,1,2)
+ld1.set_subplotspec(ax3.get_subplotspec())
+ld2.set_subplotspec(ax4.get_subplotspec())
+
+#ld1.change_geometry(2,1,1)
+#ld2.change_geometry(2,1,2)
 
 show()
