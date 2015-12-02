@@ -15,32 +15,26 @@ fig2 = figure()
 ax2 = fig2.add_subplot(211)
 #pl1 = plot([3,4,7])
 
-properties = dir(ax1)
+properties = ax1.__dict__.keys()
 
 success = []
 failure = []
+pause(1)
 
 for prop in properties:
-    if prop[0:2]=='get':
-        pass
-    elif prop[0:2]=='set':
-        try:
-            ax2.set(prop,eval('ax1.get_'+prop+'()'))
-    
     tests = [
-        
-        
+        prop[0:3] != 'set',
+        prop[0:3] != 'get',
+        prop != '__dict__',
+        prop[0] == '_'
         ]
     
-    try:
-        setattr(ax2, prop, getattr(ax1, prop))
-        success.append(prop)
-        print('Success: %s' % prop)
-    except:
+    if prod(tests):
         try:
-            ax2.set(prop, getattr(ax1, prop))
+            ax2.__dict__[prop] = ax1.__dict__[prop]
             success.append(prop)
             print('Success: %s' % prop)
+#            pause(0.1)
         except:
             failure.append(prop)
             print('Failure: %s' % prop)
