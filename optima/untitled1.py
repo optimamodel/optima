@@ -8,18 +8,50 @@ Created on Wed Dec  2 14:59:41 2015
 from pylab import *
 import optima as op
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pickle
+
+plt.ioff()
+
 def plot_axes(ax, fig=None, geometry=(1,1,1)):
-    pause(5)
+    if fig is None: fig = figure()
     ax.change_geometry(*geometry)
-    ax = fig.axes.append(ax)
-    return None
+    fig.axes.append(ax)
+    return fig
 
 
-f = figure()
-ax = f.add_subplot(111)
-ax.plot([3,4,7])
-title('test')
-op.save('test.fgg',ax)
+
+
+
+
+tmpfig = figure()
+ax = plt.subplot(111)
+x = np.linspace(0, 10)
+y = np.exp(x)
+title('fishhy')
+plt.plot(x, y)
+pickle.dump(ax, file('myplot.pickle', 'w'))
+close(tmpfig)
+
+
+ax2 = pickle.load(file('myplot.pickle'))
+#close(ax2.get_figure())
+
+realfig = figure()
+frz = matplotlib.transforms.TransformNode.frozen
+fig = plot_axes(frz(ax2), fig=realfig, geometry=(2,1,1))
+
+#show()
+
+plt.ion()
+
+
+#f = figure()
+#ax = f.add_subplot(111)
+#ax.plot([3,4,7])
+#title('test')
+#op.save('test.fgg',ax)
 
 #z = op.load('test.fgg')
 
