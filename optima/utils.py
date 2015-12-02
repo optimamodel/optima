@@ -498,14 +498,16 @@ def run(command, printinput=False, printoutput=False):
 ##############################################################################
 
 
-def save(obj, filename=None):
+def save(filename, obj):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
     from gzip import GzipFile
-    
-    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    print('Object "%s" saved to "%s"' % (obj.name, filename))
+    try:
+        with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    except:
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    print('Object saved to "%s"' % filename)
     return None
 
 
