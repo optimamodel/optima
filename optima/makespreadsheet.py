@@ -1,7 +1,3 @@
-###############################################################################
-##### 2.0 STATUS: probably fine code-wise but need to update once spreadsheet changes decided
-###############################################################################
-
 """
 OptimaSpreadsheet and related classes
 Created by: SSQ
