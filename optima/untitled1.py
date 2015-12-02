@@ -11,8 +11,8 @@ import pickle
 ioff()
 
 def plot_axes(ax, fig=None, geometry=(1,1,1)):
-    if fig is None: fig = figure()
-    ax.change_geometry(*geometry)
+    ax.set_figure(fig)
+    ax.change_geometry(*geometry)    
     fig.axes.append(ax)
     return fig
 
@@ -42,10 +42,10 @@ ld2 = pickle.load(file('plot2.fgg'))
 
 
 realfig = figure()
-plot_axes(ax1, fig=realfig, geometry=(2,1,1))
-plot_axes(ax2, fig=realfig, geometry=(2,1,2))
-ax1.set_figure(realfig)
-ax2.set_figure(realfig)
+realfig.axes.append(ld1)
+realfig.axes.append(ld2)
+#plot_axes(ld1, fig=realfig, geometry=(2,1,1))
+#plot_axes(ld2, fig=realfig, geometry=(2,1,2))
 
 
 #close(fig)
