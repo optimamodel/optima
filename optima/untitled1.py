@@ -36,13 +36,14 @@ close(tmpfig)
 
 
 ax2 = pickle.load(file('myplot.pickle'))
-#close(ax2.get_figure())
+
 
 realfig = figure()
-frz = matplotlib.transforms.TransformNode.frozen
-fig = plot_axes(frz(ax2), fig=realfig, geometry=(2,1,1))
+fig = plot_axes(ax2, fig=realfig, geometry=(2,1,1))
 
-#show()
+close(fig)
+
+show()
 
 plt.ion()
 
