@@ -503,10 +503,8 @@ def save(filename, obj):
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
     from gzip import GzipFile
-    try:
-        with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    except:
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    
+    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
     print('Object saved to "%s"' % filename)
     return None
 

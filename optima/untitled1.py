@@ -9,31 +9,19 @@ from pylab import *
 import optima as op
 
 def plot_axes(ax, fig=None, geometry=(1,1,1)):
-    print('entering function')
-    pause(1)
+    pause(5)
     ax.change_geometry(*geometry)
-    print('entering function')
-    pause(1)
     ax = fig.axes.append(ax)
-    print('cmoplete')
     return None
 
-print('hi1'); pause(1)
-f = figure()
-print('hi2'); pause(1)
-ax = f.add_subplot(111)
-print('hi3'); pause(1)
-ax.plot([3,4,7])
-print('hi4'); pause(1)
-title('test')
-print('hi5'); pause(1)
-op.save('test.fgg',ax)
-print('hi6'); pause(1)
-#close(f)
-print('hi7'); pause(1)
 
-z = op.load('test.fgg')
-print('hi8'); pause(1)
+f = figure()
+ax = f.add_subplot(111)
+ax.plot([3,4,7])
+title('test')
+op.save('test.fgg',ax)
+
+#z = op.load('test.fgg')
 
 
 #ax1 = plt.gca()
@@ -41,11 +29,8 @@ print('hi8'); pause(1)
 #ax2 = plt.gca()
 #
 #
-fig1 = figure()
-print('hi9'); pause(1)
-plot_axes(z, fig=fig1, geometry=(2,1,1))
-print('hi10'); pause(1)
-
+#fig1 = figure()
+#plot_axes(z, fig=fig1, geometry=(2,1,1))
 #plot_axes(ax2, fig=fig1, geometry=(2,1,2))
 #
 #fig2 = figure()
