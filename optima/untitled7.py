@@ -21,6 +21,17 @@ success = []
 failure = []
 
 for prop in properties:
+    if prop[0:2]=='get':
+        pass
+    elif prop[0:2]=='set':
+        try:
+            ax2.set(prop,eval('ax1.get_'+prop+'()'))
+    
+    tests = [
+        
+        
+        ]
+    
     try:
         setattr(ax2, prop, getattr(ax1, prop))
         success.append(prop)
