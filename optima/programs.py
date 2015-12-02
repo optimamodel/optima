@@ -595,7 +595,7 @@ def getpopsizes(parset, years, ind=0, filter_pop=None):
     if type(years) in [float, int]: years = array([[years]])
     elif type(years)==list: years = array([years])
     
-    initpopsizes = parset.interp(ind=0, tvec=years)['popsize']
+    initpopsizes = parset.interp(ind=0, tvec=years, verbose=0)['popsize']
     popsizes = {}
 
     for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
