@@ -6,13 +6,9 @@ Created on Wed Dec  2 14:59:41 2015
 """
 
 from pylab import *
-import optima as op
-
-import matplotlib.pyplot as plt
-import numpy as np
 import pickle
 
-plt.ioff()
+ioff()
 
 def plot_axes(ax, fig=None, geometry=(1,1,1)):
     if fig is None: fig = figure()
@@ -22,30 +18,41 @@ def plot_axes(ax, fig=None, geometry=(1,1,1)):
 
 
 
-
-
+tmpfig = figure()
+ax1 = subplot(111)
+x1 = linspace(0, 10)
+y1 = exp(x1)
+title('plot1')
+plt.plot(x1, y1)
+pickle.dump(ax1, file('plot1.fgg', 'w'))
+close(tmpfig)
 
 tmpfig = figure()
-ax = plt.subplot(111)
-x = np.linspace(0, 10)
-y = np.exp(x)
-title('fishhy')
-plt.plot(x, y)
-pickle.dump(ax, file('myplot.pickle', 'w'))
+ax2 = subplot(111)
+x2 = linspace(0, 10)
+y2 = x2**2
+title('plot2')
+plt.plot(x2, y2)
+pickle.dump(ax2, file('plot2.fgg', 'w'))
 close(tmpfig)
 
 
-ax2 = pickle.load(file('myplot.pickle'))
+ld1 = pickle.load(file('plot1.fgg'))
+ld2 = pickle.load(file('plot2.fgg'))
 
 
 realfig = figure()
-fig = plot_axes(ax2, fig=realfig, geometry=(2,1,1))
+plot_axes(ax1, fig=realfig, geometry=(2,1,1))
+plot_axes(ax2, fig=realfig, geometry=(2,1,2))
+ax1.set_figure(realfig)
+ax2.set_figure(realfig)
 
-close(fig)
+
+#close(fig)
 
 show()
 
-plt.ion()
+ion()
 
 
 #f = figure()
