@@ -597,24 +597,28 @@ def uploadExcel(): # pylint: disable=too-many-locals
     project_entry = load_project(project_id)
     current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
     if project_entry is not None:
-        # update and save model
-        D = model_as_bunch(project_entry.model)
-        #make sure we get project_entry name and relevant fields up-to-date
-        D['G']['projectname'] = project_entry.name
-        D['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
-        D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
-        D['G']['inputprograms'] = deepcopy(project_entry.programs)
-        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
+        from optima.utils import saves, loads
+        from optima.parameters import Parameterset
+        from dbmodels import ParsetsDb
+        new_project = project_entry.hydrate()
+        new_project.loadspreadsheet(server_filename)
+        print("after spreadsheet uploading: %s\n parsets: %r" % (new_project, new_project.parsets["default"].pars))
+        #TODO: figure out whether we still have to do anything like that
+#        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
 
         # Is this the first time? if so then we have to run simulations
-        should_re_run = 'S' not in D
+#        should_re_run = 'S' not in D
 
-        # TODO fix after v2
+        # TODO call new_project.runsim instead
         # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
-        model = model_as_dict(D)
-        project_entry.model = model
-        #update the programs and populations based on the data
-        getPopsAndProgsFromModel(project_entry, trustInputMetadata = False)
+#       now, update relevant project_entry fields
+        project_entry.settings = saves(new_project.settings)
+        project_entry.data = saves(new_project.data)
+        project_entry.created = new_project.created
+        project_entry.updated = new_project.modified
+
+        #update the programs and populations based on the data TODO: yes or no?
+#        getPopsAndProgsFromModel(project_entry, trustInputMetadata = False)
 
         db.session.add(project_entry)
 
@@ -625,6 +629,15 @@ def uploadExcel(): # pylint: disable=too-many-locals
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project_entry.id)
 
+        # update parsets
+        parset_records_map = {record.id:record for record in project_entry.parsets} # may be SQLAlchemy can do stuff like this already?
+        for (parset_name, parset_entry) in new_project.parsets.iteritems():
+            parset_record = parset_records_map.get(parset_entry.uuid) 
+            if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name)
+            parset_record.pars = saves(parset_entry.pars)
+            db.session.add(parset_record)
+
+        # TODO: update results (after runsim is invoked)
         # update existing
         if projdata is not None:
             projdata.meta = filedata

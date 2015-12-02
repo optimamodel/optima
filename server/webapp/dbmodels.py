@@ -58,7 +58,7 @@ class ProjectDb(db.Model):
         self.datastart = datastart
         self.dataend = dataend
         self.populations = populations
-        self.created = created
+        if created: self.created = created
         self.version = version
         self.settings = settings
         self.data = data
@@ -74,6 +74,23 @@ class ProjectDb(db.Model):
     def data_upload_time(self):
         return self.project_data.updated if self.project_data else None
 
+    def hydrate(self):
+        from optima.project import Project
+        from optima.utils import loads
+        project_entry = Project()
+        project_entry.uuid = self.id
+        project_entry.name = self.name
+        project_entry.created = (self.created or datetime.now(dateutil.tz.tzutc()))
+        project_entry.modified = self.updated
+        if self.settings:
+            project_entry.settings = loads(self.settings)
+        if self.parsets:
+            for parset_record in self.parsets:
+                parset_entry = parset_record.hydrate()
+                project_entry.addparset(parset_entry.name, parset_entry)
+        return project_entry
+
+
 class ParsetsDb(db.Model):
     __tablename__ = 'parsets'
     id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
@@ -81,11 +98,25 @@ class ParsetsDb(db.Model):
     name = db.Column(db.Text)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    pars = db.Column(db.LargeBinary)
 
-    def __init__(self, project_id, name, created = None):
+    def __init__(self, project_id, name, created = None, pars = None):
         self.project_id = project_id
         self.name = name
-        self.created = created
+        if created: self.created = created
+        self.pars = pars
+
+    def hydrate(self):
+        from optima.parameters import Parameterset
+        from optima.utils import loads
+        parset_entry = Parameterset()
+        parset_entry.name = self.name
+        parset_entry.uuid = self.id
+        parset_entry.created = self.created
+        parset_entry.modified = self.updated
+        parset_entry.pars = loads(self.pars)
+        return parset_entry
+
 
 class ResultsDb(db.Model):
     __tablename__ = 'results'
@@ -140,7 +171,7 @@ class ProjectDataDb(db.Model): # pylint: disable=R0903
     meta = deferred(db.Column(db.LargeBinary))
     updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
-    def __init__(self, project_id, meta, upload_time = None):
+    def __init__(self, project_id, meta, updated = None):
         self.id = project_id
         self.meta = meta
         self.updated = updated

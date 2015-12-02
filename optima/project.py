@@ -89,7 +89,7 @@ class Project(object):
         return None
     
     
-    def __repr__(self):
+    def __str__(self):
         ''' Print out useful information when called '''
         output = '\n'
         output += '============================================================\n'
