@@ -17,6 +17,14 @@ fig3._axstack.remove( ax3)
 fig3._axstack.remove( ax4)
 ax1.set_subplotspec( ax3.get_subplotspec() )
 ax2.set_subplotspec( ax4.get_subplotspec() )
+
+
+#ax1.set_figure(fig3)
+#ax2.set_figure(fig3)
+
+ax1.set_axes_locator(ax3.get_axes_locator())
+
+
 fig3._axstack.add(fig1._make_key(ax1), ax1)
 fig3._axstack.add(fig2._make_key(ax2), ax2)
 ax1.set_xscale('log')
