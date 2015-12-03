@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict
 from collections import defaultdict
 import abc
@@ -559,6 +559,16 @@ class Costcov(CCOF):
                 y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
             return y
  
+    def inversefunction(self,y,ccopar,popsize):
+        '''Returns coverage in a given year for a given spending amount.'''
+        u = array(ccopar['unitcost'])
+        s = array(ccopar['saturation'])
+        if isinstance(popsize,(float,int)): popsize = array([popsize])
+                        
+        nyrs,npts = len(u),len(y)
+        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(y+s*popsize))
+        else: raise Exception('y should be the same length as params.')
+
     def emptypars(self):
         ccopars = {}
         ccopars['saturation'] = None
