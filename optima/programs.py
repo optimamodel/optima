@@ -170,6 +170,20 @@ class Programset(object):
             else: coverage[thisprog] = None
         return coverage
         
+    def getprogbudget(self,coverage,t,parset,proportion=False,perturb=False,verbose=2):
+        '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''        
+        budget = {}
+        for thisprog in self.programs.keys():
+            if self.programs[thisprog].optimizable():
+                if not self.programs[thisprog].costcovfn.ccopars:
+                    printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
+                    budget[thisprog] = None
+                else:
+                    cov = coverage[thisprog] # Get the amount of money spent on this program
+                    budget[thisprog] = self.programs[thisprog].getbudget(x=cov,t=t,parset=parset,proportion=proportion) 
+            else: budget[thisprog] = None
+        return budget
+        
     def getpopcoverage(self,budget,t,parset,perturb=False,verbose=2):
         '''Get the number of people from each population covered by each program...'''
         popcoverage = {}
@@ -189,6 +203,10 @@ class Programset(object):
         nyrs = len(t)
         outcomes = odict()
         
+        if forwhattype=='coverage':
+            budget = self.getprogbudget(coverage=forwhat,t=t,parset=parset)
+        else: budget = forwhat
+        
         for thispartype in self.targetpartypes: # Loop over parameter types
             outcomes[thispartype] = odict()
 
@@ -201,7 +219,7 @@ class Programset(object):
                         outcomes[thispartype][thispop] = None
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
-                        x = forwhat[thisprog.name]
+                        x = budget[thisprog.name]
                         thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
                         delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
@@ -400,6 +418,15 @@ class Program(object):
         if total: return totalreached/totaltargeted if proportion else totalreached
         else: return popreached
         
+    def getbudget(self,x,t,parset,proportion=False,toplot=False):
+        '''Returns budget for a coverage vector'''
+
+        poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
+        totaltargeted = sum(poptargeted.values())
+        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False)
+        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False)
+        return reqbudget
+                            
     def plotcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for a single program'''
         plotdata = {}
@@ -493,7 +520,7 @@ class CCOF(object):
                 raise Exception('You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars))            
         return None
 
-    def getccopar(self,t,randseed=None,bounds=None):
+    def getccopar(self,t,verbose=1,randseed=None,bounds=None):
         '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
         
         # Error checks
@@ -524,14 +551,17 @@ class CCOF(object):
                 ccopar[param][yr] = allparams[findinds(allt,t[yr])]
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
             j += 1
-
+        
+        # Finsh, return
         ccopar['t'] = t
+        printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self,x,popsize,t,toplot,randseed=None,bounds=None):
+    def evaluate(self,x,popsize,t,toplot,inverse=False,randseed=None,bounds=None):
         if (not toplot) and (not len(x)==len(t)): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
-        ccopar = self.getccopar(t,randseed,bounds)
-        return self.function(x,ccopar,popsize)
+        ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
+        if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
+        else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
 
     @abc.abstractmethod # This method must be defined by the derived class
     def emptypars(self):
@@ -539,6 +569,10 @@ class CCOF(object):
 
     @abc.abstractmethod # This method must be defined by the derived class
     def function(self,x,ccopar,popsize):
+        pass
+
+    @abc.abstractmethod # This method must be defined by the derived class
+    def inversefunction(self,x,ccopar,popsize):
         pass
 
 ######## SPECIFIC CCOF IMPLEMENTATIONS
@@ -559,15 +593,15 @@ class Costcov(CCOF):
                 y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
             return y
  
-    def inversefunction(self,y,ccopar,popsize):
+    def inversefunction(self,x,ccopar,popsize):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
         if isinstance(popsize,(float,int)): popsize = array([popsize])
                         
-        nyrs,npts = len(u),len(y)
-        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(y+s*popsize))
-        else: raise Exception('y should be the same length as params.')
+        nyrs,npts = len(u),len(x)
+        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(x/popsize+s)-1)
+        else: raise Exception('coverage vector should be the same length as params.')
 
     def emptypars(self):
         ccopars = {}
@@ -586,6 +620,9 @@ class Covout(CCOF):
         if isinstance(popsize,(float,int)): popsize = array([popsize])
         y = array([min(j,1) for j in (i + (x*g)/popsize)])
         return y
+        
+    def inversefunction(self,x,ccopar,popsize):
+        pass
       
     def emptypars(self):
         ccopars = {}
