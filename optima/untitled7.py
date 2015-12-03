@@ -23,7 +23,7 @@ failure = []
 pause(1)
 
 #for prop in properties:
-for prop in ['__class__','__dict__']:# properties:
+for prop in ['__dict__']:# properties:
     try:
         setattr(ax2,prop,getattr(ax1,prop))
         print('Success: %s' % prop)
