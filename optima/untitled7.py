@@ -15,29 +15,39 @@ fig2 = figure()
 ax2 = fig2.add_subplot(211)
 #pl1 = plot([3,4,7])
 
-properties = ax1.__dict__.keys()
+properties = dir(ax1)
+#properties = ax1.__dict__.keys()
 
 success = []
 failure = []
 pause(1)
 
-for prop in properties:
-    tests = [
-        prop[0:3] != 'set',
-        prop[0:3] != 'get',
-        prop != '__dict__',
-        prop[0] == '_'
-        ]
-    
-    if prod(tests):
-        try:
-            ax2.__dict__[prop] = ax1.__dict__[prop]
-            success.append(prop)
-            print('Success: %s' % prop)
-#            pause(0.1)
-        except:
-            failure.append(prop)
-            print('Failure: %s' % prop)
+#for prop in properties:
+for prop in ['__class__','__dict__']:# properties:
+    try:
+        setattr(ax2,prop,getattr(ax1,prop))
+        print('Success: %s' % prop)
+        pause(1)
+    except:
+        pass
+
+#for prop in properties:
+#    tests = [
+#        prop[0:3] != 'set',
+#        prop[0:3] != 'get',
+#        prop != '__dict__',
+#        prop[0] == '_'
+#        ]
+#    
+#    if prod(tests):
+#        try:
+#            ax2.__dict__[prop] = ax1.__dict__[prop]
+#            success.append(prop)
+#            print('Success: %s' % prop)
+##            pause(0.1)
+#        except:
+#            failure.append(prop)
+#            print('Failure: %s' % prop)
 
 
 #    adjustable = box
