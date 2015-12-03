@@ -154,8 +154,7 @@ if 'makeprograms' in tests:
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
 
-    # Run additional tests if asked
-    # Testing methods of program class
+    # Testing methods of programset class
     # 1. Adding a program
     R.addprograms({'ART':ART})
 
@@ -237,7 +236,7 @@ if 'makeprograms' in tests:
     # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
     R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
-    # 12. Get a dictionary of the affected parameter values corresponding to a vector of program allocations
+    # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
     outcomes_budget = R.getoutcomes(forwhat=budget,
                                 t=[2015,2016,2020],
                                 parset=P.parsets['default'],
@@ -247,6 +246,7 @@ if 'makeprograms' in tests:
                                 parset=P.parsets['default'],
                                 forwhattype='coverage')
 
+    # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
     progparset1 = R.getparset(forwhat=budget,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
@@ -254,12 +254,12 @@ if 'makeprograms' in tests:
                   newparsetname='progparset1',
                   forwhattype='budget')
 
-    # 13. Plot cost-coverage curves for all programs
+    # 14. Plot cost-coverage curves for all programs
     if doplot: R.plotallcoverage(t=[2013,2015],
                       parset=P.parsets['default'],
                       xupperlim=1e8)
 
-    # 14. Example use of program scenarios
+    # 15. Example use of program scenarios
     if doplot:
         P.parsets['progparset1'] = progparset1
         results0 = P.runsim('default')
