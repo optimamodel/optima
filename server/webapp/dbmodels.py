@@ -100,11 +100,12 @@ class ParsetsDb(db.Model):
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     pars = db.Column(db.LargeBinary)
 
-    def __init__(self, project_id, name, created = None, pars = None):
+    def __init__(self, project_id, name, created = None, pars = None, id = None):
         self.project_id = project_id
         self.name = name
         if created: self.created = created
         self.pars = pars
+        if id: self.id = id
 
     def hydrate(self):
         from optima.parameters import Parameterset
@@ -124,13 +125,14 @@ class ResultsDb(db.Model):
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     calculation_type = db.Column(db.Text)
-    pars = db.Column(db.LargeBinary)
+    blob = db.Column(db.LargeBinary)
 
-    def __init__(self, parset_id, project_id, calculation_type, pars):
+    def __init__(self, parset_id, project_id, calculation_type, blob, id = None):
         self.parset_id = parset_id
         self.project_id = project_id
         self.calculation_type = calculation_type
-        self.pars = pars
+        self.blob = blob
+        if id: self.id = id
 
 
 class WorkingProjectDb(db.Model): # pylint: disable=R0903

@@ -599,10 +599,10 @@ def uploadExcel(): # pylint: disable=too-many-locals
     if project_entry is not None:
         from optima.utils import saves, loads
         from optima.parameters import Parameterset
-        from dbmodels import ParsetsDb
+        from dbmodels import ParsetsDb, ResultsDb
         new_project = project_entry.hydrate()
         new_project.loadspreadsheet(server_filename)
-        print("after spreadsheet uploading: %s\n parsets: %r" % (new_project, new_project.parsets["default"].pars))
+        current_app.logger.info("after spreadsheet uploading: %s" % new_project)
         #TODO: figure out whether we still have to do anything like that
 #        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
 
@@ -610,6 +610,9 @@ def uploadExcel(): # pylint: disable=too-many-locals
 #        should_re_run = 'S' not in D
 
         # TODO call new_project.runsim instead
+        result = new_project.runsim()
+        current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
+
         # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
 #       now, update relevant project_entry fields
         project_entry.settings = saves(new_project.settings)
@@ -630,14 +633,26 @@ def uploadExcel(): # pylint: disable=too-many-locals
         projdata = ProjectDataDb.query.get(project_entry.id)
 
         # update parsets
+        result_parset_id = None
         parset_records_map = {record.id:record for record in project_entry.parsets} # may be SQLAlchemy can do stuff like this already?
         for (parset_name, parset_entry) in new_project.parsets.iteritems():
             parset_record = parset_records_map.get(parset_entry.uuid) 
-            if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name)
+            if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name, id = parset_entry.uuid)
+            if parset_record.name=="default": result_parset_id = parset_entry.uuid
             parset_record.pars = saves(parset_entry.pars)
             db.session.add(parset_record)
 
-        # TODO: update results (after runsim is invoked)
+        # update results (after runsim is invoked)
+        results_map = {(record.parset_id, record.calculation_type):record for record in project_entry.results}
+        result_record = results_map.get((result_parset_id, "simulation"))
+        if not result_record: result_record = ResultsDb(
+            parset_id = result_parset_id, 
+            project_id = project_entry.id,
+            calculation_type = "simulation",
+            blob = saves(result)
+            )
+        db.session.add(result_record)
+
         # update existing
         if projdata is not None:
             projdata.meta = filedata
