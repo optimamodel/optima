@@ -14,7 +14,7 @@ class Result(object):
         self.pops = None
         self.tot = None
         
-        
+
 
 class Results(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
@@ -103,3 +103,8 @@ class Results(object):
         alldx = array([self.dx])
         self.numdiag.pops = quantile(alldx, quantiles=quantiles)
         self.numdiag.tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+    
+    
+    def makeplots(self, verbose=2):
+        ''' Reder the plots and store them in the results '''
+        return plots
