@@ -59,7 +59,7 @@ class OptimaTestCase(unittest.TestCase):
 
     def create_project(self, name):
         """ Helper method to create project and save it to the database """
-        project = ProjectDb(name, 1, '2000', '2010', OptimaTestCase.default_pops, {})
+        project = ProjectDb(name, 1, '2000', '2010', OptimaTestCase.default_pops, '{}')
         db.session.add(project)
         db.session.flush()
         id = project.id
