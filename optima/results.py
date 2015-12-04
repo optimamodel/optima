@@ -105,6 +105,12 @@ class Results(object):
         self.numdiag.tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
     
     
-    def makeplots(self, verbose=2):
-        ''' Reder the plots and store them in the results '''
+    def makeplots(self, whichplots=None, verbose=2):
+        ''' Reder the plots requested and store them in a list '''
+        ioff() # Just in case, so we don't flood the user's screen with
+        plots = odict()
+        for j in range(len(whichplots):
+            thisdata = getattr(whichplots[j],this[0]),this[1])[0]
+            axes[-1].plot(self.resultslist[j].tvec, transpose(array(thisdata)), linestyle=self.resultslist[0].styles[j])
+
         return plots
