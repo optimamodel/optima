@@ -685,18 +685,18 @@ def getData(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id }
         return jsonify(reply), 500
     else:
-        data = project_entry.model
-        #make sure this exists
-        data['G']['inputprograms'] = project_entry.programs
-        data['G']['inputpopulations'] = project_entry.populations
+        new_project = project_entry.hydrate()
+
         # return result as a file
         loaddir =  upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
-        filename = project_entry.name + '.json'
+        filename = project_entry.name + '.prj'
         server_filename = os.path.join(loaddir, filename)
-        with open(server_filename, 'wb') as filedata:
-            json.dump(data, filedata)
+
+        from optima.utils import save
+        save(new_project, server_filename)
+
         return helpers.send_from_directory(loaddir, filename)
 
 @project.route('/data', methods=['POST'])
