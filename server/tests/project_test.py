@@ -43,14 +43,14 @@ class ProjectTestCase(OptimaTestCase):
         project_data = json.loads(response.data)
         self.assertEqual(project_data['name'], 'test')
 
-    # def test_retrieve_project_list(self):
-    #     project_id = self.create_project('test2')
+    def test_retrieve_project_list(self):
+        project_id = self.create_project('test2')
 
-    #     response = self.client.get('/api/project/list')
-    #     self.assertEqual(response.status_code, 200)
-    #     projects_data = json.loads(response.data)
-    #     self.assertEqual(projects_data['projects'][0]['name'], 'test2')
-    #     self.assertEqual(projects_data['projects'][0]['id'], project_id)
+        response = self.client.get('/api/project/list')
+        self.assertEqual(response.status_code, 200)
+        projects_data = json.loads(response.data)
+        self.assertEqual(projects_data['projects'][0]['name'], 'test2')
+        self.assertEqual(projects_data['projects'][0]['id'], str(project_id))
 
     # def test_project_parameters(self):
     #     from sim.parameters import parameter_name
