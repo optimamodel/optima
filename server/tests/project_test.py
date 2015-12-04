@@ -5,6 +5,8 @@ import unittest
 import json
 from api import app
 from flask import helpers
+from uuid import uuid4
+
 
 class ProjectTestCase(OptimaTestCase):
     """
@@ -14,18 +16,23 @@ class ProjectTestCase(OptimaTestCase):
 
     def setUp(self):
         super(ProjectTestCase, self).setUp()
-        response = self.create_user()
-        response = self.login()
+        self.create_user()
+        self.login()
 
     def test_create_project(self):
         response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
 
-    # def test_retrieve_project_info_fails(self):
-    #     headers = [('project', 'test'),('project-id','1')]
-    #     response = self.client.get('/api/project/info', headers=headers)
-    #     self.assertEqual(response.status_code, 500)
-    #     self.assertEqual(json.loads(response.data), {u'reason': u'Project 1 does not exist'})
+    def test_retrieve_project_info_fails(self):
+        project_id = '{}'.format(uuid4())
+        # It would probably be better to make sure the project id REALLY does not
+        # exist firt. But this is uuid, so the chances are quite slim
+        headers = [('project', 'test'), ('project-id', project_id)]
+        response = self.client.get('/api/project/info', headers=headers)
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(json.loads(response.data), {
+            u'reason': u'Project {} does not exist'.format(project_id)
+        })
 
     # def test_retrieve_project_info(self):
     #     project_id = self.create_project('test')
