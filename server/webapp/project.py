@@ -447,10 +447,10 @@ def deleteProject(project_id):
         user_id = project_entry.user_id
         project_name = project_entry.name
         #delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=project_entry.id).delete()
-        db.session.query(ProjectDataDb).filter_by(id=project_entry.id).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=project_entry.id).delete()
-        db.session.query(ProjectDb).filter_by(id=project_entry.id).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str(project_entry.id)).delete()
+        db.session.query(ProjectDataDb).filter_by(id=str(project_entry.id)).delete()
+        db.session.query(WorkingProjectDb).filter_by(id=str(project_entry.id)).delete()
+        db.session.query(ProjectDb).filter_by(id=str(project_entry.id)).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
     delete_spreadsheet(project_name)

@@ -141,7 +141,7 @@ def save_data_spreadsheet(name, folder=None):
 
 def delete_spreadsheet(name, user_id = None):
     spreadsheet_file = name
-    for parent_dir in [TEMPLATEDIR, app.config['UPLOAD_FOLDER']]:
+    for parent_dir in [TEMPLATEDIR, current_app.config['UPLOAD_FOLDER']]:
         user_dir = upload_dir_user(parent_dir, user_id)
         if not spreadsheet_file.startswith(user_dir):
             spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')
