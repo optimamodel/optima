@@ -7,7 +7,6 @@ Created on Wed Dec  2 14:59:41 2015
 
 from pylab import *
 import pickle
-import mpld3 as m3
 
 ion()
 
@@ -42,8 +41,8 @@ realfig, (ax3, ax4) = subplots(1, 2)
 realfig._axstack.remove(ax3)
 realfig._axstack.remove(ax4)
 
-ld1.set_figure(realfig)
-ld2.set_figure(realfig)
+#ld1.set_figure(realfig)
+#ld2.set_figure(realfig)
 
 #ld1.set_position(ax3.get_position())
 #ld2.set_position(ax4.get_position())
@@ -57,5 +56,3 @@ realfig._axstack.add(realfig._make_key(ld2), ld2)
 
 ld1.change_geometry(2,1,1)
 ld2.change_geometry(2,1,2)
-
-m3.show()
