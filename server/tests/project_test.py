@@ -34,14 +34,14 @@ class ProjectTestCase(OptimaTestCase):
             u'reason': u'Project {} does not exist'.format(project_id)
         })
 
-    # def test_retrieve_project_info(self):
-    #     project_id = self.create_project('test')
+    def test_retrieve_project_info(self):
+        project_id = self.create_project('test')
 
-    #     headers = [('project', 'test'),('project-id',str(project_id))]
-    #     response = self.client.get('/api/project/info', headers=headers)
-    #     self.assertEqual(response.status_code, 200)
-    #     project_data = json.loads(response.data)
-    #     self.assertEqual(project_data['name'], 'test')
+        headers = [('project', 'test'), ('project-id', str(project_id))]
+        response = self.client.get('/api/project/info', headers=headers)
+        self.assertEqual(response.status_code, 200)
+        project_data = json.loads(response.data)
+        self.assertEqual(project_data['name'], 'test')
 
     # def test_retrieve_project_list(self):
     #     project_id = self.create_project('test2')
