@@ -16,8 +16,6 @@ x1 = linspace(0, 10)
 y1 = exp(x1)
 title('plot1')
 plt.plot(x1, y1)
-pickle.dump(fig1, file('plot1.fgg', 'w'))
-close(fig1)
 
 fig2 = figure()
 ax2 = subplot(111)
@@ -25,11 +23,19 @@ x2 = linspace(0, 10)
 y2 = x2**2
 title('plot2')
 plt.plot(x2, y2)
-pickle.dump(fig2, file('plot2.fgg', 'w'))
+
+pickle.dump([fig1, fig2], file('plots.fgg', 'w'))
+
+close(fig1)
 close(fig2)
 
-fld1 = pickle.load(file('plot1.fgg'))
-fld2 = pickle.load(file('plot2.fgg'))
+
+flds = pickle.load(file('plots.fgg'))
+fld1 = flds[0]
+fld2 = flds[1]
+
+#fld1 = pickle.load(file('plot1.fgg'))
+#fld2 = pickle.load(file('plot2.fgg'))
 close(fld1)
 close(fld2)
 
@@ -57,3 +63,4 @@ ld2.change_geometry(2,1,2)
 
 
 ion()
+show()
