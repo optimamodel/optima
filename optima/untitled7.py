@@ -7,6 +7,8 @@ Created on Wed Dec  2 18:31:43 2015
 
 from pylab import *
 
+ioff()
+
 fig1 = figure()
 ax1 = fig1.add_subplot(111)
 pl1 = plot([3,4,7])

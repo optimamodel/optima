@@ -7,8 +7,9 @@ Created on Wed Dec  2 14:59:41 2015
 
 from pylab import *
 import pickle
+import mpld3 as m3
 
-ioff()
+ion()
 
 fig1 = figure()
 ax1 = subplot(111)
@@ -57,4 +58,4 @@ realfig._axstack.add(realfig._make_key(ld2), ld2)
 ld1.change_geometry(2,1,1)
 ld2.change_geometry(2,1,2)
 
-show()
+m3.show()
