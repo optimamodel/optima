@@ -93,11 +93,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.getData = function (name, id) {
       $http({url:'/api/project/data/'+ id,
             method:'GET',
-            headers: {'Content-type': 'application/json'},
-            responseType:'arraybuffer'})
+            headers: {'Content-type': 'application/octet-stream'},
+            responseType:'blob'})
         .success(function (response, status, headers, config) {
-          var blob = new Blob([response], { type: 'application/json' });
-          saveAs(blob, (name + '.json'));
+          var blob = new Blob([response], { type: 'application/octet-stream' });
+          saveAs(blob, (name + '.prj'));
         });
     };
 
