@@ -337,7 +337,7 @@ class Parameterset(object):
             npops = len(keys)
             output = zeros((npops,npts))
             for pop,key in enumerate(keys):
-                output[pop,:] = popgrow(par.p[key], simpars['tvec']-start)
+                output[pop,:] = par.m * popgrow(par.p[key], simpars['tvec']-start)
             return output
             
             
