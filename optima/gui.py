@@ -17,7 +17,7 @@ Version: 2015nov02 by cliffk
 from PyQt4 import QtCore, QtGui
 from matplotlib.figure import Figure as figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
-from pylab import ceil, sqrt, transpose, array, subplots
+from pylab import ceil, sqrt, subplots, array
 import sys
 translate =  QtGui.QApplication.translate
 global app
@@ -54,7 +54,7 @@ class Ui_MainWindow(object):
                 name = key+'-'+subkey
                 self.checkboxes[name] = QtGui.QCheckBox(self.centralwidget)
                 self.checkboxes[name].setObjectName(name)
-                self.checkboxes[name].setChecked(True)
+                self.checkboxes[name].setChecked(False) # Set whether boxes are checked or not by default
                 self.gridLayout.addWidget(self.checkboxes[name], count, 1, 1, 1)
         
         self.pushButton = QtGui.QPushButton(self.centralwidget)
@@ -109,19 +109,24 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         
         # Calculate rows and columns of subplots
         nplots = len(ischecked)
-        nrows = ceil(sqrt(nplots))
+        nrows = int(ceil(sqrt(nplots)))
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
         
         # Do plotting
-        fig, fakeaxes = subplots(int(ncols), int(nrows)) # Create figure with correct number of plots
-        for fa in fakeaxes: fig._axstack.remove(fakeaxes[fa]) # Remove placeholder axes
-        
-        # Actually create plots
-        plots = self.guidata.results.makeplots(ischecked)
+        if nplots>0: # Don't do anything if no plots
+            fig, fakeaxes = subplots(ncols, nrows) # Create figure with correct number of plots
+            if nplots==1: fakeaxes = array(fakeaxes) # Convert to array so iterable
+            for fa in fakeaxes.flatten(): fig._axstack.remove(fa) # Remove placeholder axes
             
-        for p,thisplot in enumerate(plots):
-            fig._axstack.add(fig._make_key(thisplot), thisplot)
-            thisplot.change_geometry(nrows,ncols,p+1)
+            # Actually create plots
+            plots = self.guidata.results.makeplots(ischecked)
+
+            for p in range(len(plots)):
+                thisplot = plots[p].axes[0]
+                fig._axstack.add(fig._make_key(thisplot), thisplot)
+                thisplot.change_geometry(nrows,ncols,p+1)
+        else:
+            fig = figure() # Blank figure
         
         self.fig = fig
         self.rmmpl()
