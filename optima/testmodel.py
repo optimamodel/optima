@@ -7,16 +7,16 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015nov23 by cliffk
+Version: 2015dec05 by cliffk
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-#'gui',
+'gui',
 #'force',
-'treatment',
+#'treatment',
 ]
 
 

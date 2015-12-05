@@ -4,15 +4,16 @@ This module defines the Results class, which stores the results of a single simu
 Version: 2015nov02 by cliffk
 """
 
-from optima import uuid, today, quantile, printv
-from numpy import array
+from optima import uuid, today, quantile, printv, odict
+from numpy import array, transpose
 
 
 class Result(object):
     ''' A tiny class just to hold overall and by-population results '''
-    def __init__(self, isnumber=True):
-        self.pops = None
-        self.tot = None
+    def __init__(self, name=None, isnumber=True, pops=None, tot=None):
+        self.pops = pops
+        self.tot = tot
+        self.name = name
         self.isnumber = isnumber
         
 
@@ -32,16 +33,16 @@ class Results(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['prev'] = Result(isnumber=False)
-        self.main['force'] = Result(isnumber=False)
-        self.main['numinci'] = Result()
-        self.main['numplhiv'] = Result()
-        self.main['dalys'] = Result()
-        self.main['numdeath'] = Result()
-        self.main['numtreat'] = Result()
-        self.main['numdiag'] = Result()
-        self.main['numnewtreat'] = Result()
-        self.main['numnewdiag'] = Result()
+        self.main['prev'] = Result('HIV prevalence', isnumber=False)
+        self.main['force'] = Result('Force-of-infection', isnumber=False)
+        self.main['numinci'] = Result('Number of new infections')
+        self.main['numplhiv'] = Result('Number of PLHIV')
+        self.main['dalys'] = Result('Number of DALYs')
+        self.main['numdeath'] = Result('Number of HIV-related deaths')
+        self.main['numtreat'] = Result('Number of people on treatment')
+        self.main['numdiag'] = Result('Number of people diagnosed')
+        self.main['numnewtreat'] = Result('Number of people newly treated')
+        self.main['numnewdiag'] = Result('Number of new diagnoses')
         
         # Other quantities
         self.births = Result()
@@ -111,16 +112,33 @@ class Results(object):
 
     
     
-    def makeplots(self, whichplots=None, verbose=2):
+    def makeplots(self, whichplots=None, uncertainty=False, verbose=2):
         ''' Reder the plots requested and store them in a list '''
+        from pylab import isinteractive, ioff, ion, figure, plot, xlabel, ylabel
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
         if type(whichplots)==str: whichplots = [whichplots] # Convert to list
         plots = odict()
         for pl in whichplots:
-            thisdata
-            thisdata = getattr(whichplots[j],this[0]),this[1])[0]
-            axes[-1].plot(self.resultslist[j].tvec, transpose(array(thisdata)), linestyle=self.resultslist[0].styles[j])
+            try:
+                datatype, poptype = pl.split('-')
+                if datatype not in self.main.keys(): 
+                    errormsg = 'Could not understand plot "%s"; ensure keys are one of:\n' % datatype
+                    errormsg += '%s' % self.main.keys()
+                    raise Exception(errormsg)
+                if poptype not in ['pops', 'tot']: 
+                    errormsg = 'Type "%s" should be either "pops" or "tot"'
+                    raise Exception(errormsg)
+            except:
+                errormsg = 'Could not parse plot "%s"\n' % pl
+                errormsg += 'Please ensure format is e.g. "numplhiv-tot"'
+                raise Exception(errormsg)
+            if not uncertainty: thisdata = getattr(self.main[datatype], poptype)[0] # Either 'tot' or 'pops'
+            else: raise Exception('WARNING, uncertainty in plots not implemented yet')
+            plots.append(figure())
+            plot(self.tvec, transpose(array(thisdata))) # Actually do the plot
+            xlabel('Year')
+            ylabel(self.main[datatype].name)
         
         if wasinteractive: ion() # Turn interactivity back on
         return plots
