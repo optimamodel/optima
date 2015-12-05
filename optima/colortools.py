@@ -1,12 +1,21 @@
-def gridcolormap(npts=10, limits=None, nsteps=10, doplot=False, asarray=False):
+def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False):
     """
     GRIDCOLORMAP
 
-    Create a qualitative colormap by assigning points according to the minimum pairwise distance.
+    Create a qualitative colormap by assigning points according to the maximum pairwise distance in the
+    color cube. Basically, the algorithm generates n points that are maximally uniformly spaced in the
+    [R, G, B] color cube.
+    
+    Arguments:
+        ncolors: the number of colors to create
+        limits: how close to the edges of the cube to make colors (to avoid white and black)
+        nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
+        asarray: whether to return the colors as an array instead of as a list of tuples
+        doplot: whether or not to plot the color cube itself
 
     Usage example:
     from matplotlib.pylab import *
-    from gridcolormap import gridcolormap
+    from colortools import gridcolormap
     ncolors = 10
     piedata = rand(ncolors)
     colors = gridcolormap(ncolors, doplot=True)
@@ -14,7 +23,7 @@ def gridcolormap(npts=10, limits=None, nsteps=10, doplot=False, asarray=False):
     pie(piedata, colors=colors)
     show()
 
-    Version: 1.0 (2015may13) by cliffk
+    Version: 1.1 (2015dec05) by cliffk
     """
 
     ## Imports
@@ -23,7 +32,7 @@ def gridcolormap(npts=10, limits=None, nsteps=10, doplot=False, asarray=False):
     
     ## Calculate sliding limits if none provided
     if limits is None:
-        colorrange = 1-1/float(npts**0.5)
+        colorrange = 1-1/float(ncolors**0.5)
         limits = [0.5-colorrange/2, 0.5+colorrange/2]
     
     ## Calculate primitives and dot locations
@@ -34,7 +43,7 @@ def gridcolormap(npts=10, limits=None, nsteps=10, doplot=False, asarray=False):
     indices = [0] # Initialize the array
     
     ## Calculate the distances
-    for pt in range(npts-1): # Loop over each point
+    for pt in range(ncolors-1): # Loop over each point
         totaldistances = inf+zeros(ndots) # Initialize distances
         for ind in indices: # Loop over each existing point
             rgbdistances = dots - dots[ind] # Calculate the distance in RGB space
@@ -129,7 +138,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
 def testalpinecolormap():
     from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel
     import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     
     maxheight = 3
     horizontalsize = 4;
