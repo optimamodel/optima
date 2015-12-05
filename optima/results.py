@@ -10,9 +10,10 @@ from numpy import array
 
 class Result(object):
     ''' A tiny class just to hold overall and by-population results '''
-    def __init__(self):
+    def __init__(self, isnumber=True):
         self.pops = None
         self.tot = None
+        self.isnumber = isnumber
         
 
 
@@ -29,15 +30,18 @@ class Results(object):
         self.tvec = None
         self.people = None
         
-        # Key results
-        self.prev = Result()
-        self.force = Result()
-        self.numinci = Result()
-        self.numplhiv = Result()
-#        self.dalys = Result()
-        self.numdeath = Result()
-        self.numtreat = Result()
-        self.numdiag = Result()
+        # Main results -- time series, by population
+        self.main = odict() # For storing main results
+        self.main['prev'] = Result(isnumber=False)
+        self.main['force'] = Result(isnumber=False)
+        self.main['numinci'] = Result()
+        self.main['numplhiv'] = Result()
+        self.main['dalys'] = Result()
+        self.main['numdeath'] = Result()
+        self.main['numtreat'] = Result()
+        self.main['numdiag'] = Result()
+        self.main['numnewtreat'] = Result()
+        self.main['numnewdiag'] = Result()
         
         # Other quantities
         self.births = Result()
