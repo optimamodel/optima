@@ -347,7 +347,7 @@ class Parameterset(object):
             npops = len(keys)
             output = zeros((npops,npts))
             for pop,key in enumerate(keys):
-                output[pop,:] = smoothinterp(simpars['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
+                output[pop,:] = datapar.m * smoothinterp(simpars['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
             if npops==1: return output[0] # Return 1D vector if only a single 'population'
             else: return output
         
