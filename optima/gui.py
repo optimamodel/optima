@@ -120,14 +120,10 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
             if wasinteractive: ioff()
             height = self.canvas.size().height()/DPI # Convert from pixels to inches
             width = self.canvas.size().width()/DPI
-            print('HIiiII')
-            print(height)
-            print(width)
             fig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
-            close(fig)
+            close(fig) # Close unneeded figure
             if wasinteractive: ion()
-            if nplots==1: fakeaxes = array(fakeaxes) # Convert to array so iterable
-            for fa in fakeaxes.flatten(): fig._axstack.remove(fa) # Remove placeholder axes
+            for fa in array(fakeaxes).flatten(): fig._axstack.remove(fa) # Remove placeholder axes
             
             # Actually create plots
             plots = self.guidata.results.makeplots(ischecked, figsize=(width, height))
