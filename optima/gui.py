@@ -113,7 +113,7 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
         
         # Do plotting
-        fig, fakeaxes = subplots(ncols, nrows) # Create figure with correct number of plots
+        fig, fakeaxes = subplots(int(ncols), int(nrows)) # Create figure with correct number of plots
         for fa in fakeaxes: fig._axstack.remove(fakeaxes[fa]) # Remove placeholder axes
         
         # Actually create plots
@@ -139,7 +139,7 @@ def gui(results):
     episubkeys = ['tot','pops'] # Would be best not to hard-code this...
     
     class GUIdata:
-        def __init__(self, results):
+        def __init__(self, results, epikeys, episubkeys):
             self.results = results
             self.epikeys = epikeys
             self.episubkeys = episubkeys
