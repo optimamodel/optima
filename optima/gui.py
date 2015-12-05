@@ -17,7 +17,7 @@ Version: 2015nov02 by cliffk
 from PyQt4 import QtCore, QtGui
 from matplotlib.figure import Figure as figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
-from pylab import ceil, sqrt, subplots, array
+from pylab import ceil, sqrt, subplots, close, isinteractive, ion, ioff, array
 import sys
 translate =  QtGui.QApplication.translate
 global app
@@ -114,7 +114,11 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         
         # Do plotting
         if nplots>0: # Don't do anything if no plots
-            fig, fakeaxes = subplots(ncols, nrows) # Create figure with correct number of plots
+            wasinteractive = isinteractive()
+            if wasinteractive: ioff()
+            fig, fakeaxes = subplots(ncols, nrows, sharex='all') # Create figure with correct number of plots
+            close(fig)
+            if wasinteractive: ion()
             if nplots==1: fakeaxes = array(fakeaxes) # Convert to array so iterable
             for fa in fakeaxes.flatten(): fig._axstack.remove(fa) # Remove placeholder axes
             
