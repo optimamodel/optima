@@ -112,7 +112,7 @@ class Results(object):
 
     
     
-    def makeplots(self, whichplots=None, uncertainty=False, verbose=2):
+    def makeplots(self, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6)):
         ''' Reder the plots requested and store them in a list '''
         from pylab import isinteractive, ioff, ion, figure, plot, xlabel, ylabel
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -135,7 +135,7 @@ class Results(object):
                 raise Exception(errormsg)
             if not uncertainty: thisdata = getattr(self.main[datatype], poptype)[0] # Either 'tot' or 'pops'
             else: raise Exception('WARNING, uncertainty in plots not implemented yet')
-            plots[pl] = figure()
+            plots[pl] = figure(figsize=figsize)
             plot(self.tvec, transpose(array(thisdata))) # Actually do the plot
             xlabel('Year')
             ylabel(self.main[datatype].name)

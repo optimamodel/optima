@@ -23,6 +23,8 @@ translate =  QtGui.QApplication.translate
 global app
 global main
 
+DPI = 80.0 # Specify global screen DPI
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow, guidata):
@@ -116,14 +118,19 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         if nplots>0: # Don't do anything if no plots
             wasinteractive = isinteractive()
             if wasinteractive: ioff()
-            fig, fakeaxes = subplots(ncols, nrows, sharex='all') # Create figure with correct number of plots
+            height = self.canvas.size().height()/DPI # Convert from pixels to inches
+            width = self.canvas.size().width()/DPI
+            print('HIiiII')
+            print(height)
+            print(width)
+            fig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
             close(fig)
             if wasinteractive: ion()
             if nplots==1: fakeaxes = array(fakeaxes) # Convert to array so iterable
             for fa in fakeaxes.flatten(): fig._axstack.remove(fa) # Remove placeholder axes
             
             # Actually create plots
-            plots = self.guidata.results.makeplots(ischecked)
+            plots = self.guidata.results.makeplots(ischecked, figsize=(width, height))
 
             for p in range(len(plots)):
                 thisplot = plots[p].axes[0]
@@ -148,6 +155,7 @@ def gui(results):
     episubkeys = ['tot','pops'] # Would be best not to hard-code this...
     
     class GUIdata:
+        ''' Store the keys and the data for plotting '''
         def __init__(self, results, epikeys, episubkeys):
             self.results = results
             self.epikeys = epikeys
