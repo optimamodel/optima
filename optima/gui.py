@@ -17,7 +17,7 @@ Version: 2015nov02 by cliffk
 from PyQt4 import QtCore, QtGui
 from matplotlib.figure import Figure as figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
-from pylab import ceil, sqrt, transpose, array
+from pylab import ceil, sqrt, transpose, array, subplots
 import sys
 translate =  QtGui.QApplication.translate
 global app
@@ -77,14 +77,14 @@ class Ui_MainWindow(object):
 
         
 class Main(QtGui.QMainWindow, Ui_MainWindow):
-    def __init__(self, resultslist):
+    def __init__(self, guidata):
         super(Main, self).__init__()
-        self.setupUi(self, resultslist)
+        self.setupUi(self, guidata)
         self.fig_dict = {}
         self.pushButton.clicked.connect(self.changefig)
         fig = figure()
         self.addmpl(fig)
-        self.resultslist = resultslist
+        self.guidata = guidata
 
     def addmpl(self, fig):
         self.canvas = canvas(fig)
@@ -102,10 +102,10 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
     def changefig(self):
         ''' Main function that actually does plotting '''
         ischecked = []
-        for key in self.resultslist[0].epikeys:
-            for subkey in self.resultslist[0].episubkeys:
+        for key in self.guidata.epikeys:
+            for subkey in self.guidata.episubkeys:
                 if self.checkboxes[key+'-'+subkey].isChecked():
-                    ischecked.append([key, subkey])
+                    ischecked.append(key+'-'+subkey)
         
         # Calculate rows and columns of subplots
         nplots = len(ischecked)
@@ -113,10 +113,14 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
         
         # Do plotting
-        f = figure()
-        axes = []
+        fig, fakeaxes = subplots(ncols, nrows) # Create figure with correct number of plots
+        for fa in fakeaxes: fig._axstack.remove(fakeaxes[fa]) # Remove placeholder axes
+        
+        plots = self.guidata.resultslist[0].makeplots(ischecked)
+            
         for i in range(nplots):
-            axes.append(f.add_subplot(int(nrows), int(ncols), i+1))
+            thisplot = self.guidata.resultslist[i]
+            fig._axstack.add(fig._make_key(thisplot), thisplot)
             this = ischecked[i]
             for j in range(len(self.resultslist)):
                 thisdata = getattr(getattr(self.resultslist[j],this[0]),this[1])[0]
@@ -136,11 +140,22 @@ def gui(resultslist):
     global main
     
     if type(resultslist) is not list: resultslist = [resultslist]
-    resultslist[0].epikeys = ['prev', 'numplhiv', 'numinci', 'numdeath', 'numdiag']
-    resultslist[0].episubkeys = ['tot','pops']
-    resultslist[0].styles = ['-', '--', '-.', ':'] # Line plot styles
+    
+    # Define options for selection
+    epikeys = resultslist[0].main.keys()
+    episubkeys = ['tot','pops'] # Would be best not to hard-code this...
+    
+    class GUIdata:
+        def __init__(self, resultslist):
+            self.resultslist = resultslist
+            self.epikeys = epikeys
+            self.episubkeys = episubkeys
+    
+    guidata = GUIdata(resultslist, epikeys, episubkeys)
+    
+    
     app = QtGui.QApplication(sys.argv)
-    main = Main(resultslist)
+    main = Main(guidata)
     main.show()
 
 

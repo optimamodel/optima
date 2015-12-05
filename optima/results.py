@@ -135,7 +135,7 @@ class Results(object):
                 raise Exception(errormsg)
             if not uncertainty: thisdata = getattr(self.main[datatype], poptype)[0] # Either 'tot' or 'pops'
             else: raise Exception('WARNING, uncertainty in plots not implemented yet')
-            plots.append(figure())
+            plots[pl] = figure()
             plot(self.tvec, transpose(array(thisdata))) # Actually do the plot
             xlabel('Year')
             ylabel(self.main[datatype].name)

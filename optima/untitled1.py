@@ -43,9 +43,9 @@ ld1 = fld1.axes[0]
 ld2 = fld2.axes[0]
 
 
-realfig, (ax3, ax4) = subplots(1, 2)
-realfig._axstack.remove(ax3)
-realfig._axstack.remove(ax4)
+realfig, fakeaxes = subplots(1, 2)
+realfig._axstack.remove(fakeaxes[0])
+realfig._axstack.remove(fakeaxes[1])
 
 #ld1.set_figure(realfig)
 #ld2.set_figure(realfig)
