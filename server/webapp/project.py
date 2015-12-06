@@ -602,6 +602,7 @@ def uploadExcel(): # pylint: disable=too-many-locals
         from dbmodels import ParsetsDb, ResultsDb
         new_project = project_entry.hydrate()
         new_project.loadspreadsheet(server_filename)
+        new_project.modified = datetime.now(dateutil.tz.tzutc())
         current_app.logger.info("after spreadsheet uploading: %s" % new_project)
         #TODO: figure out whether we still have to do anything like that
 #        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
