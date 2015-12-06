@@ -22,7 +22,6 @@ def runscenarios(P, parset, scenlist=None, verbose=2, debug=False):
     for scenno, scen in enumerate(scenparsets):
         P.addparset(name=scen,parset=scenparsets[scen])
         allresults.append(P.runsim(scen))
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         printv('Scenario: %i/%i' % (scenno+1, nscenarios), 2, verbose)
     
     printv('...done running scenarios.', 2, verbose)
@@ -79,7 +78,7 @@ def getparvalues(parset, par, dt=.2):
     npops = len(parset.pars[0]['popkeys'])
     simpars = parset.interp(start=par['startyear'], end=par['endyear'], dt=dt)
 
-    if par['names'][0]=='condom': original = simpars[par['names'][0]][par['names'][1]]
+    if par['names'][0] in ['condom','numacts']: original = simpars[par['names'][0]][par['names'][1]]
     else: original = simpars[par['names'][0]]
     
     if par['pops'] < npops: # It's for a specific population, get the value
