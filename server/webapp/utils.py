@@ -243,15 +243,15 @@ def update_or_create_parset(project_id, parset):
 
     from datetime import datetime
     import dateutil
-    from server.dbmodels import ParsetDb
+    from server.webapp.dbmodels import ParsetsDb
     from optima.utils import saves
 
-    parset_record = ParsetDb.query \
+    parset_record = ParsetsDb.query \
         .filter_by(id=parset.uuid, project_id=project_id) \
         .first()
 
     if parset_record is None:
-        parset_record = ParsetDb(
+        parset_record = ParsetsDb(
             project_id=project_id,
             name=parset.name,
             created=parset.created,
