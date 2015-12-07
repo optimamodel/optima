@@ -100,6 +100,31 @@ define([
             ]
           },
           {
+            title: 'Create/manage responses',
+            id: 'manage-responses',
+            matchingState: 'model',
+            subitems: [
+              {
+                title: 'Define programs',
+                click: function() {
+                  ifActiveProject($state, 'model.manageResponses', activeProject);
+                },
+                state: {
+                  name: 'model.view'
+                }
+              },
+              {
+                title: 'Define cost and outcome functions',
+                click: function() {
+                  ifActiveProject($state, 'model.define-cost-coverage-outcome', activeProject);
+                },
+                state:{
+                  name: 'model.define-cost-coverage-outcome'
+                }
+              }
+            ]
+          },
+          {
             title: 'Analysis',
             matchingState: 'analysis',
             subitems: [

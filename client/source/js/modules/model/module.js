@@ -46,6 +46,11 @@ define([
             }
           }
         })
+        .state('model.manageResponses', {
+          url: '/view',
+          templateUrl: 'js/modules/model/programs/programs.html',
+          controller: 'ProgramsController'
+        })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController',
