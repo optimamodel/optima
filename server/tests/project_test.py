@@ -3,7 +3,7 @@
 from optima_test_base import OptimaTestCase
 import unittest
 import json
-from api import app
+from server.api import app
 from flask import helpers
 from uuid import uuid4
 
@@ -75,7 +75,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         project_id = str(response.headers['x-project-id'])
         # upload data
-        example_excel_file_name = 'example.xlsx'
+        example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
         headers = [('project', 'test'), ('project-id', str(project_id))]
@@ -107,7 +107,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         project_id = str(response.headers['x-project-id'])
         # upload data so that we can check the existence of data in the copied project
-        example_excel_file_name = 'example.xlsx'
+        example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
         headers = [('project', 'test'), ('project-id', str(project_id))]
@@ -135,7 +135,6 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(old_info['populations'], new_info['populations'])
         self.assertEqual(old_info['dataStart'], new_info['dataStart'])
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
-
 
 if __name__ == '__main__':
     unittest.main()

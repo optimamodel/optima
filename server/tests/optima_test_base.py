@@ -1,8 +1,8 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
-from api import app, init_db
+from server.api import app, init_db
+print "test package", __package__
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb
 import unittest
 import hashlib
 import json
@@ -58,6 +58,7 @@ class OptimaTestCase(unittest.TestCase):
         return response
 
     def create_project(self, name):
+        from server.webapp.dbmodels import ProjectDb
         """ Helper method to create project and save it to the database """
         project = ProjectDb(name, 1, '2000', '2010', OptimaTestCase.default_pops, '{}')
         db.session.add(project)
@@ -80,6 +81,7 @@ class OptimaTestCase(unittest.TestCase):
         return response
 
     def list_projects(self, user_id):
+        from server.webapp.dbmodels import ProjectDb
         """ Helper method to list projects for the given user id"""
         projects = ProjectDb.query.filter_by(user_id=user_id).all()
         return [project for project in projects]
@@ -99,7 +101,7 @@ class OptimaTestCase(unittest.TestCase):
         app.config['TESTING'] = True
         print "app created %s" % app
         init_db()
-        print "db created"
+        print("db created. db: %s" % db)
         self.client = app.test_client()
 
     def _db_DropEverything(self, db):
@@ -145,5 +147,6 @@ class OptimaTestCase(unittest.TestCase):
         self.logout()
         db.session.remove()
         self._db_DropEverything(db)
+        db.drop_all()
         db.get_engine(app).dispose()
         print "db dropped"

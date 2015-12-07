@@ -7,19 +7,18 @@ import logging
 from logging.handlers import SysLogHandler
 
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_pyfile('config.py')
 
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-if __name__ == "__main__" and __package__ is None:
+if __package__ is None:
     import sys
     from os import path
     sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
 else:
-    print "__package__", __package__
-
-from optima.optima import Project
+    from os import path
+    print "__package__", __package__, "__name__", __name__,  path.abspath(__file__)
 
 import server.webapp.dbconn
 server.webapp.dbconn.db = SQLAlchemy(app)

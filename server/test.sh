@@ -16,5 +16,7 @@ then
 fi
 
 mkdir -p /tmp/uploads
-cp src/sim/example.xlsx /tmp/uploads
+cp ../optima/test.xlsx /tmp/uploads
+mkdir -p static
+cp ../optima/test.xlsx static
 NOSE_NOCAPTURE=1 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests $@

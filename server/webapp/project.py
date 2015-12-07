@@ -18,7 +18,7 @@ import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
-from optima.optima import Project
+from optima.project import Project
 
 
 # route prefix: /api/project
