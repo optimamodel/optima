@@ -34,5 +34,26 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
       modalService.editResponse($scope.state.activeResponse.name, edit.bind(this) , $scope.state.responses);
     };
+
+    $scope.deleteResponse = function ($event) {
+      var remove = function() {
+        $scope.state.responses = _.filter($scope.state.responses, function(response) {
+          return response.name !== $scope.state.activeResponse.name;
+        });
+        $scope.state.activeResponse = $scope.state.responses ? $scope.state.responses[0] : void 0;
+      };
+      modalService.confirm(
+          function () {
+            remove();
+          },
+          function () {
+          },
+          'Yes, remove this response',
+          'No',
+          'Are you sure you want to permanently remove response "' + $scope.state.activeResponse.name + '"?',
+          'Remove response'
+      );
+    };
+
   });
 });
