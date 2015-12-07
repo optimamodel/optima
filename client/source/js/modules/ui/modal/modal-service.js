@@ -128,7 +128,7 @@ define([
 
         /**
          * This function opens a modal that will ask the user to provide a name
-         * for a new optimization.
+         * for a new response.
          */
         addResponse: function (callback, responses) {
 
@@ -151,6 +151,46 @@ define([
                   return item.name == name;
                 }) && name !== $scope.addedResponseName;
                 addResponseForm.responseName.$setValidity("responsesExists", !exists);
+                return exists;
+              };
+
+              $document.on('keydown', onModalKeyDown); // observe
+              $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
+
+            }]
+          });
+
+          return modalInstance;
+        },
+
+        /**
+         * This function opens a modal that will ask the user to provide a name
+         * to edit an existing response.
+         */
+        editResponse: function (responseName, callback, responses) {
+
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+          };
+
+          var modalInstance = $modal.open({
+            templateUrl: 'js/modules/ui/modal/modal-edit-response.html',
+            controller: ['$scope', '$document', function ($scope, $document) {
+
+              $scope.name = responseName;
+
+              $scope.updateResponse = function (name) {
+                $scope.updatedResponseName = name;
+                callback(name);
+                modalInstance.close();
+              };
+
+              $scope.isUniqueName = function (name, editResponseForm) {
+                var exists = _(responses).some(function(item) {
+                      return item.name == name;
+                    }) && name !== responseName && name !== $scope.updatedResponseName;
+                editResponseForm.responseName.$setValidity("responsesExists", !exists);
+                editResponseForm.responseName.$setValidity("responsesUpdated", name !== responseName);
                 return exists;
               };
 

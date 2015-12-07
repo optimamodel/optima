@@ -8,7 +8,7 @@
             ng-change=""
             style="width: 20%;">
       <option ng-repeat="res in state.responses"
-              ng-selected="{{res.name === state.activeResponseName}}"
+              ng-selected="{{res.name === state.activeResponse.name}}"
               value="{{::res.name}}">{{::res.name}}</option>
     </select>
     <button ng-click="addResponse()" type="button" class="btn" style="margin-left:2%">New Response</button>
