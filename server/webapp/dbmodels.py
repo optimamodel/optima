@@ -102,8 +102,8 @@ class ProjectDb(db.Model):
         self.settings = saves(project.settings)
         if project.parsets:
             from server.webapp.utils import update_or_create_parset
-            for parset in project.parsets:
-                update_or_create_parset(self.id, parset)
+            for name, parset in project.parsets.iteritems():
+                update_or_create_parset(self.id, name, parset)
 
 
 class ParsetsDb(db.Model):

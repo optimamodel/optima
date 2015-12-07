@@ -143,6 +143,14 @@ class ProjectTestCase(OptimaTestCase):
 
         project_id = self.create_project('test')
 
+        # create a parset for the project
+        example_excel_file_name = 'test.xlsx'
+        file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+        example_excel = open(file_path)
+        headers = [('project', 'test'), ('project-id', str(project_id))]
+        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        example_excel.close()
+        
         response = self.client.get('/api/project/data/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
 

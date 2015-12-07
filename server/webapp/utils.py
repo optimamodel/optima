@@ -239,7 +239,7 @@ def for_fe(item): #only for json
         return item
 
 
-def update_or_create_parset(project_id, parset):
+def update_or_create_parset(project_id, name, parset):
 
     from datetime import datetime
     import dateutil
@@ -253,8 +253,8 @@ def update_or_create_parset(project_id, parset):
     if parset_record is None:
         parset_record = ParsetsDb(
             project_id=project_id,
-            name=parset.name,
-            created=parset.created,
+            name=name,
+            created=parset.created or datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
             pars=saves(parset.pars)
         )
