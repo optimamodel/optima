@@ -90,6 +90,21 @@ class ProjectDb(db.Model):
                 project_entry.addparset(parset_entry.name, parset_entry)
         return project_entry
 
+    def restore(self, project):
+
+        from datetime import datetime
+        import dateutil
+        from optima.utils import saves
+
+        self.name = project.name
+        self.created = project.created
+        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.settings = saves(project.settings)
+        if project.parsets:
+            from server.webapp.utils import update_or_create_parset
+            for parset in project.parsets:
+                update_or_create_parset(self.id, parset)
+
 
 class ParsetsDb(db.Model):
     __tablename__ = 'parsets'

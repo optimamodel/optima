@@ -8,7 +8,8 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, UserDb
 import traceback
 
-ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json'}
+# json should probably removed from here since we are now using prj for up/download
+ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj'}
 
 def check_project_name(api_call):
     @wraps(api_call)
@@ -236,3 +237,26 @@ def for_fe(item): #only for json
         return None
     else:
         return item
+
+
+def update_or_create_parset(project_id, parset):
+
+    from datetime import datetime
+    import dateutil
+    from server.dbmodels import ParsetDb
+    from optima.utils import saves
+
+    parset_record = ParsetDb.query.filter_by(id=parset.uuid, project_id=project_id)
+    if parset_record is None:
+        parset_record = ParsetDb(
+            project_id=project_id,
+            name=parset.name,
+            created=parset.created,
+            updated=datetime.now(dateutil.tz.tzutc()),
+            pars=saves(parset.pars)
+        )
+
+        db.session.add(parset_record)
+    else:
+        parset_record.updated = datetime.now(dateutil.tz.tzutc())
+        parset_record.pars = saves(parset.pars)

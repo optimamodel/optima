@@ -509,13 +509,23 @@ def save(obj, filename=None):
     return None
 
 
-
 def load(filename):
     ''' Load a saved file '''
-    try: import cPickle as pickle # For Python 2 compatibility
-    except: import pickle
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
+    except:
+        import pickle
     from gzip import GzipFile
-    with GzipFile(filename, 'rb') as fileobj: obj = pickle.load(fileobj)
+    from werkzeug.datastructures import FileStorage
+
+    kwargs = {'mode': 'rb', }
+    if isinstance(filename, FileStorage):
+        kwargs['fileobj'] = filename
+    else:
+        kwargs['filename'] = filename
+
+    with GzipFile(**kwargs) as fileobj:
+        obj = pickle.load(fileobj)
     print('Object loaded from "%s"' % filename)
     return obj
 

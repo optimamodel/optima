@@ -792,19 +792,18 @@ def setData(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id}
         return jsonify(reply), 500
 
-    data = json.load(uploaded_file)
-    data['G']['projectfilename'] = project_entry.model['G']['projectfilename']
-    data['G']['workbookname'] = project_entry.model['G']['workbookname']
-    data['G']['projectname'] = project_entry.model['G']['projectname']
-    project_entry.model = data
-    project_name = project_entry.name
-    getPopsAndProgsFromModel(project_entry, trustInputMetadata = True)
+    from optima.utils import load
+    data = load(uploaded_file)
+    project_entry.restore(data)
 
-    db.session.add(project_entry)
     db.session.commit()
 
-    reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
+    reply = {
+        'file': source_filename,
+        'result': 'Project %s is updated' % project_entry.name,
+    }
     return jsonify(reply)
+
 
 @project.route('/data/migrate', methods=['POST'])
 @verify_admin_request
