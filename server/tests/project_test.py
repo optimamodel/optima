@@ -136,5 +136,32 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(old_info['dataStart'], new_info['dataStart'])
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
 
+    def test_download_upload_project(self):
+        from io import BytesIO
+        from server.webapp.dbmodels import ProjectDb
+        from server.webapp.dbconn import db
+
+        project_id = self.create_project('test')
+
+        response = self.client.get('/api/project/data/{}'.format(project_id))
+        self.assertEqual(response.status_code, 200)
+
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(project.name, 'test')  # just making sure
+        project.name = 'Not test'
+        db.session.commit()
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertNotEqual(project.name, 'test')  # still just making sure
+
+        upload_response = self.client.post(
+            '/api/project/data/{}'.format(project_id),
+            data={
+                'file': (BytesIO(response.data), 'project.prj'),
+            }
+        )
+        self.assertEqual(upload_response.status_code, 200)
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(project.name, 'test')
+
 if __name__ == '__main__':
     unittest.main()
