@@ -155,9 +155,9 @@ class WorkLogDb(db.Model): # pylint: disable=R0903
 
     work_status = db.Enum('started', 'completed', 'cancelled', 'error' , name='work_status')
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(UUID(True), primary_key=True)
     work_type = db.Column(db.String(32), default = None)
-    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), index = True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default = None)
     status = db.Column(work_status, default='started')

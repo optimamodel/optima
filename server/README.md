@@ -55,6 +55,21 @@ In order to run a single test file and activate logging you can use:
 
 Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
+If you had been using Optima 1.0, you might need to drop and recreate test database.
+
+```
+$ dropdb optima_test
+$ createdb optima_test
+```
+
+After that, enable UUID_OSSP extension:
+
+```
+psql -d optima_test
+
+psql> CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```
+
 User API
 ------------
 
