@@ -12,10 +12,12 @@ app.config.from_object('config')
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-if __name__ == "__main__" and __package__ is None:
+if __package__ is None:
     import sys
     from os import path
-    sys.path.append( path.dirname( path.dirname( path.abspath(__file__) ) ) )
+    new_path = path.dirname( path.dirname( path.abspath(__file__) ) ) 
+    print "appending to sys.path: %s" % new_path
+    sys.path.append( new_path)
 else:
     print "__package__", __package__
 
