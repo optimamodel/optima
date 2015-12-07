@@ -11,9 +11,45 @@
               ng-selected="{{res.name === state.activeResponse.name}}"
               value="{{::res.name}}">{{::res.name}}</option>
     </select>
-    <button ng-click="addResponse()" type="button" class="btn" style="margin-left:2%">New Response</button>
-    <button ng-click="editResponse()" type="button" class="btn" style="margin-left:2%">Edit Response</button>
-    <button ng-click="deleteResponse()" type="button" class="btn" style="margin-left:2%">Delete Response</button>
-    <button ng-click="copyResponse()" type="button" class="btn" style="margin-left:2%">Copy Response</button>
+    <button ng-click="addResponse()" type="button" class="btn" style="margin-left:2%">New response</button>
+    <button ng-click="editResponse()" type="button" class="btn" style="margin-left:2%">Edit response</button>
+    <button ng-click="deleteResponse()" type="button" class="btn" style="margin-left:2%">Delete response</button>
+    <button ng-click="copyResponse()" type="button" class="btn" style="margin-left:2%">Copy response</button>
+  </div>
+  <div class="6">
+    <h1>Manage programs</h1>
+
+    <div class="section" ng-repeat="category in categories">
+      <table class="section table table-bordered">
+        <tr>
+          <td colspan="5"><b>{{category.category}}</b></td>
+        </tr>
+        <tr>
+          <td><b>Active</b></td>
+          <td><b>Name</b></td>
+          <td><b>Short name</b></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr ng-show="programs.length" ng-repeat="program in programs" ng-if="program.category==category.category">
+          <td class="text-center" style="width: 50px" update-checkbox-on-click>
+            <input type="checkbox" ng-model="program.active">
+          </td>
+          <td style="width: 300px">{{ program.name }}</td>
+          <td style="width: 150px">{{ program.short_name }}</td>
+          <td>
+            <button type="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+          </td>
+          <td>
+            <button type="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+          </td>
+        </tr>
+        <tr ng-show="!programs.length">
+          <td class="text-center" colspan="5">No programs set yet</td>
+        </tr>
+      </table>
+      </td>
+    </div>
+    <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
   </div>
 </div>

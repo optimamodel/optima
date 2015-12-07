@@ -167,7 +167,7 @@ define([
          * This function opens a modal that will ask the user to provide a name
          * to edit an existing response.
          */
-        editResponse: function (responseName, callback, responses) {
+        editResponse: function (responseName, callback, responses, title) {
 
           var onModalKeyDown = function (event) {
             if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -176,6 +176,8 @@ define([
           var modalInstance = $modal.open({
             templateUrl: 'js/modules/ui/modal/modal-edit-response.html',
             controller: ['$scope', '$document', function ($scope, $document) {
+
+              $scope.title = title || 'Edit Response';
 
               $scope.name = responseName;
 
@@ -201,6 +203,14 @@ define([
           });
 
           return modalInstance;
+        },
+
+        /**
+         * This function opens a modal that will ask the user to provide a new name
+         * for the copied response.
+         */
+        copyResponse: function (responseName, callback, responses) {
+          this.editResponse(responseName, callback, responses, 'Copy Response');
         },
 
         /**
