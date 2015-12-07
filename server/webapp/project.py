@@ -18,7 +18,8 @@ import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
-from optima.optima import Project
+from optima.project import Project
+
 
 # route prefix: /api/project
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -479,22 +480,50 @@ def copyProject(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id}
         return jsonify(reply), 500
     project_user_id = project_entry.user_id
-    project_data_exists = project_entry.project_data #force loading it
+
+    # force load the existing data, parset and result
+    project_data_exists = project_entry.project_data
+    project_parset_exists = project_entry.parsets
+    project_result_exists = project_entry.results
+
     db.session.expunge(project_entry)
     make_transient(project_entry)
+
     project_entry.id = None
     project_entry.name = new_project_name
-    #also change all the relevant metadata
-    project_entry.model['G']['projectname'] = project_entry.name
-    project_entry.model['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
-    project_entry.model['G']['workbookname'] = project_entry.name + '.xlsx'
+
+    #change the creation and update time
+    project_entry.created = datetime.now(dateutil.tz.tzutc())
+    project_entry.updated = datetime.now(dateutil.tz.tzutc())
+    # Question, why not use datetime.utcnow() instead of dateutil.tz.tzutc()?
+    # it's the same, without the need to import more
     db.session.add(project_entry)
-    db.session.flush() #this updates the project ID to the new value
+    db.session.flush()  # this updates the project ID to the new value
     new_project_id = project_entry.id
+
     if project_data_exists:
-        db.session.expunge(project_entry.project_data) # it should have worked without that black magic. but it didn't.
+        # copy the project data
+        db.session.expunge(project_entry.project_data)
         make_transient(project_entry.project_data)
         db.session.add(project_entry.project_data)
+
+    if project_parset_exists:
+        # copy each parset
+        for parset in project_entry.parsets:
+            db.session.expunge(parset)
+            make_transient(parset)
+            # set the id to None to ensure no duplicate ID
+            parset.id = None
+            db.session.add(parset)
+
+    if project_result_exists:
+        # copy each result
+        for result in project_entry.results:
+            db.session.expunge(result)
+            make_transient(result)
+            # set the id to None to ensure no duplicate ID
+            result.id = None
+            db.session.add(result)
     db.session.commit()
     # let's not copy working project, it should be either saved or discarded
     return jsonify({'project':project_id, 'user':project_user_id, 'copy_id':new_project_id})
@@ -597,13 +626,14 @@ def uploadExcel(): # pylint: disable=too-many-locals
     project_entry = load_project(project_id)
     current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
     if project_entry is not None:
-        from optima.utils import saves, loads
-        from optima.parameters import Parameterset
+        from optima.utils import saves  # , loads
+        # from optima.parameters import Parameterset
         from dbmodels import ParsetsDb, ResultsDb
         new_project = project_entry.hydrate()
         new_project.loadspreadsheet(server_filename)
+        new_project.modified = datetime.now(dateutil.tz.tzutc())
         current_app.logger.info("after spreadsheet uploading: %s" % new_project)
-        #TODO: figure out whether we still have to do anything like that
+        # TODO: figure out whether we still have to do anything like that
 #        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
 
         # Is this the first time? if so then we have to run simulations
@@ -636,7 +666,7 @@ def uploadExcel(): # pylint: disable=too-many-locals
         result_parset_id = None
         parset_records_map = {record.id:record for record in project_entry.parsets} # may be SQLAlchemy can do stuff like this already?
         for (parset_name, parset_entry) in new_project.parsets.iteritems():
-            parset_record = parset_records_map.get(parset_entry.uuid) 
+            parset_record = parset_records_map.get(parset_entry.uuid)
             if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name, id = parset_entry.uuid)
             if parset_record.name=="default": result_parset_id = parset_entry.uuid
             parset_record.pars = saves(parset_entry.pars)
@@ -646,7 +676,7 @@ def uploadExcel(): # pylint: disable=too-many-locals
         results_map = {(record.parset_id, record.calculation_type):record for record in project_entry.results}
         result_record = results_map.get((result_parset_id, "simulation"))
         if not result_record: result_record = ResultsDb(
-            parset_id = result_parset_id, 
+            parset_id = result_parset_id,
             project_id = project_entry.id,
             calculation_type = "simulation",
             blob = saves(result)

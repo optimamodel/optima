@@ -123,8 +123,8 @@ def load_project(project_id, all_data = False):
         query = ProjectDb.query.filter_by(id=project_id, user_id=cu.id)
     if all_data:
         query = query.options( \
-            undefer('model'), \
-            defaultload(ProjectDb.working_project).undefer('model'), \
+            # undefer('model'), \
+            # defaultload(ProjectDb.working_project).undefer('model'), \
             defaultload(ProjectDb.project_data).undefer('meta'))
     project = query.first()
     if project is None:
