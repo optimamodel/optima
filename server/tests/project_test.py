@@ -101,37 +101,39 @@ class ProjectTestCase(OptimaTestCase):
         self.assertTrue(result)
         os.remove(output_path)
 
+    # This feature does not work for now so leaving the test commented out
+
     # def test_copy_project(self):
     #     # create project
     #     response = self.api_create_project()
     #     self.assertEqual(response.status_code, 200)
-    #     project_id = int(response.headers['x-project-id'])
+    #     project_id = str(response.headers['x-project-id'])
     #     # upload data so that we can check the existence of data in the copied project
     #     example_excel_file_name = 'example.xlsx'
     #     file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
     #     example_excel = open(file_path)
-    #     headers = [('project', 'test'),('project-id',str(project_id))]
+    #     headers = [('project', 'test'), ('project-id', str(project_id))]
     #     response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
     #     example_excel.close()
-    #     #get the info for the existing project
+    #     # get the info for the existing project
     #     response = self.client.get('/api/project/info', headers=headers)
     #     self.assertEqual(response.status_code, 200)
-    #     old_info=json.loads(response.data)
+    #     old_info = json.loads(response.data)
     #     self.assertEqual(old_info['has_data'], True)
     #     response = self.client.post('/api/project/copy/%s?to=test_copy' % project_id, headers=headers)
     #     self.assertEqual(response.status_code, 200)
     #     copy_info = json.loads(response.data)
-    #     new_project_id=copy_info['copy_id']
-    #     #open the copy of the project
+    #     new_project_id = copy_info['copy_id']
+    #     # open the copy of the project
     #     response = self.client.get('/api/project/open/%s' % new_project_id, headers=headers)
     #     self.assertEqual(response.status_code, 200)
-    #     #get info for the copy of the project
-    #     headers = [('project', 'test_copy'),('project-id',str(new_project_id))]
+    #     # get info for the copy of the project
+    #     headers = [('project', 'test_copy'), ('project-id', str(new_project_id))]
     #     response = self.client.get('/api/project/info', headers=headers)
     #     self.assertEqual(response.status_code, 200)
     #     new_info = json.loads(response.data)
     #     self.assertEqual(old_info['has_data'], True)
-    #     #compare some elements
+    #     # compare some elements
     #     self.assertEqual(old_info['populations'], new_info['populations'])
     #     self.assertEqual(old_info['programs'], new_info['programs'])
 
