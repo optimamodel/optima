@@ -18,7 +18,7 @@ import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
-from optima.optima import Project, today
+from optima.optima import Project
 
 
 # route prefix: /api/project
@@ -485,28 +485,28 @@ def copyProject(project_id):
     project_data_exists = project_entry.project_data
     project_parset_exists = project_entry.parsets
     project_result_exists = project_entry.results
-    
+
     db.session.expunge(project_entry)
     make_transient(project_entry)
-    
+
     project_entry.id = None
     project_entry.name = new_project_name
 
     #change the creation and update time
-    project_entry.created = datetime.now(dateutil.tz.tzutc()) 
+    project_entry.created = datetime.now(dateutil.tz.tzutc())
     project_entry.updated = datetime.now(dateutil.tz.tzutc())
     # Question, why not use datetime.utcnow() instead of dateutil.tz.tzutc()?
     # it's the same, without the need to import more
     db.session.add(project_entry)
     db.session.flush()  # this updates the project ID to the new value
     new_project_id = project_entry.id
-    
+
     if project_data_exists:
         # copy the project data
         db.session.expunge(project_entry.project_data)
         make_transient(project_entry.project_data)
         db.session.add(project_entry.project_data)
-    
+
     if project_parset_exists:
         # copy each parset
         for parset in project_entry.parsets:
@@ -515,7 +515,7 @@ def copyProject(project_id):
             # set the id to None to ensure no duplicate ID
             parset.id = None
             db.session.add(parset)
-    
+
     if project_result_exists:
         # copy each result
         for result in project_entry.results:
@@ -630,7 +630,6 @@ def uploadExcel(): # pylint: disable=too-many-locals
         # from optima.parameters import Parameterset
         from dbmodels import ParsetsDb, ResultsDb
         new_project = project_entry.hydrate()
-        new_project.modified = today()
         new_project.loadspreadsheet(server_filename)
         new_project.modified = datetime.now(dateutil.tz.tzutc())
         current_app.logger.info("after spreadsheet uploading: %s" % new_project)
@@ -667,7 +666,7 @@ def uploadExcel(): # pylint: disable=too-many-locals
         result_parset_id = None
         parset_records_map = {record.id:record for record in project_entry.parsets} # may be SQLAlchemy can do stuff like this already?
         for (parset_name, parset_entry) in new_project.parsets.iteritems():
-            parset_record = parset_records_map.get(parset_entry.uuid) 
+            parset_record = parset_records_map.get(parset_entry.uuid)
             if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name, id = parset_entry.uuid)
             if parset_record.name=="default": result_parset_id = parset_entry.uuid
             parset_record.pars = saves(parset_entry.pars)
@@ -677,7 +676,7 @@ def uploadExcel(): # pylint: disable=too-many-locals
         results_map = {(record.parset_id, record.calculation_type):record for record in project_entry.results}
         result_record = results_map.get((result_parset_id, "simulation"))
         if not result_record: result_record = ResultsDb(
-            parset_id = result_parset_id, 
+            parset_id = result_parset_id,
             project_id = project_entry.id,
             calculation_type = "simulation",
             blob = saves(result)
