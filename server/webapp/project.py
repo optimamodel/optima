@@ -18,7 +18,8 @@ import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
-from optima.optima import Project
+from optima.optima import Project, today
+
 
 # route prefix: /api/project
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -625,14 +626,15 @@ def uploadExcel(): # pylint: disable=too-many-locals
     project_entry = load_project(project_id)
     current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
     if project_entry is not None:
-        from optima.utils import saves, loads
-        from optima.parameters import Parameterset
+        from optima.utils import saves  # , loads
+        # from optima.parameters import Parameterset
         from dbmodels import ParsetsDb, ResultsDb
         new_project = project_entry.hydrate()
+        new_project.modified = today()
         new_project.loadspreadsheet(server_filename)
         new_project.modified = datetime.now(dateutil.tz.tzutc())
         current_app.logger.info("after spreadsheet uploading: %s" % new_project)
-        #TODO: figure out whether we still have to do anything like that
+        # TODO: figure out whether we still have to do anything like that
 #        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
 
         # Is this the first time? if so then we have to run simulations
