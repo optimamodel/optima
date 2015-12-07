@@ -150,7 +150,7 @@ class ProjectTestCase(OptimaTestCase):
         headers = [('project', 'test'), ('project-id', str(project_id))]
         response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
         example_excel.close()
-        
+
         response = self.client.get('/api/project/data/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
 
