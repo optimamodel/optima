@@ -217,6 +217,43 @@ define([
          * This function opens a modal that will ask the user to provide a name
          * for a new optimization.
          */
+        addResponse: function (callback, responses) {
+
+          var onModalKeyDown = function (event) {
+            if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+          };
+
+          var modalInstance = $modal.open({
+            templateUrl: 'js/modules/ui/modal/modal-add-response.html',
+            controller: ['$scope', '$document', function ($scope, $document) {
+
+              $scope.createResponse = function (name) {
+                $scope.addedResponseName = name;
+                callback(name);
+                modalInstance.close();
+              };
+
+              $scope.isUniqueName = function (name, addResponseForm) {
+                var exists = _(responses).some(function(item) {
+                  return item.name == name;
+                }) && name !== $scope.addedResponseName;
+                addResponseForm.responseName.$setValidity("responsesExists", !exists);
+                return exists;
+              };
+
+              $document.on('keydown', onModalKeyDown); // observe
+              $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
+
+            }]
+          });
+
+          return modalInstance;
+        },
+
+        /**
+         * This function opens a modal that will ask the user to provide a name
+         * for a new optimization.
+         */
         addOptimization: function (callback, optimizations) {
 
           var onModalKeyDown = function (event) {
