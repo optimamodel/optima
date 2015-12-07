@@ -94,7 +94,7 @@ class ProjectDb(db.Model):
 class ParsetsDb(db.Model):
     __tablename__ = 'parsets'
     id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
-    project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='CASCADE'))
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.Text)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
@@ -122,8 +122,8 @@ class ParsetsDb(db.Model):
 class ResultsDb(db.Model):
     __tablename__ = 'results'
     id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
-    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id', ondelete='CASCADE'))
-    project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='CASCADE'))
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     calculation_type = db.Column(db.Text)
     blob = db.Column(db.LargeBinary)
 
