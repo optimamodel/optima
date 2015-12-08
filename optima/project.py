@@ -14,7 +14,7 @@ class Project(object):
     
     An Optima project is based around 4 major lists:
         1. parset -- a list of parameter structures
-        2. responses -- a list of response structures
+        2. progset -- a list of response structures
         3. scens -- a list of scenario structures
         4. optims -- a list of optimization structures
     
@@ -44,7 +44,7 @@ class Project(object):
 
         ## Define the structure sets
         self.parsets = odict()
-        self.respsets = odict()
+        self.progsets = odict()
         self.scens = odict()
         self.optims = odict()
         
@@ -81,7 +81,7 @@ class Project(object):
         output += '      Project name: %s\n'    % self.name
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
-        output += '     Response sets: %i\n'    % len(self.respsets)
+        output += '     Response sets: %i\n'    % len(self.progsets)
         output += '     Scenario sets: %i\n'    % len(self.scens)
         output += ' Optimization sets: %i\n'    % len(self.optims)
         output += '\n'
@@ -136,7 +136,7 @@ class Project(object):
         '''
         if what is None: raise Exception('No structure list provided')
         elif what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
-        elif what in ['r', 'resp', 'response', 'responses']: structlist = self.resps # WARNING, inconsistent terminology!
+        elif what in ['r', 'pr', 'progs', 'progset', 'progsets']: structlist = self.progsets # WARNING, inconsistent terminology!
         elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
         elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
         else: raise Exception('Structure list "%s" not understood' % what)
@@ -200,22 +200,22 @@ class Project(object):
     #######################################################################################################
     
     def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset, overwrite=overwrite)
-    def addresponse(self, name='default', response=None, overwrite=False): self.add(what='response', name=name, item=response, overwrite=overwrite)
+    def addprogset(self,  name='default', progset=None, overwrite=False): self.add(what='progset',   name=name, item=progset, overwrite=overwrite)
     def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen, overwrite=overwrite)
     def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim, overwrite=overwrite)
  
     def rmparset(self,   name): self.remove(what='parset',   name=name)
-    def rmresponse(self, name): self.remove(what='response', name=name)
+    def rmprogset(self, name):  self.remove(what='progset', name=name)
     def rmscen(self,     name): self.remove(what='scen',     name=name)
     def rmoptim(self,    name): self.remove(what='optim',    name=name)
     
     def copyparset(self,   orig='default', new='new', overwrite=False): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyresponse(self, orig='default', new='new', overwrite=False): self.copy(what='response', orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self,  orig='default', new='new', overwrite=False): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
     def copyscen(self,     orig='default', new='new', overwrite=False): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def copyoptim(self,    orig='default', new='new', overwrite=False): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
         
     def renameparset(self,   orig='default', new='new', overwrite=False): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def renameresponse(self, orig='default', new='new', overwrite=False): self.rename(what='response', orig=orig, new=new, overwrite=overwrite)
+    def renameprogset(self,  orig='default', new='new', overwrite=False): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
