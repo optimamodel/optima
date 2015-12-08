@@ -734,6 +734,7 @@ def getData(project_id):
 @report_exception('Unable to copy uploaded data')
 def createProjectAndSetData():
     """ Creates a project & uploads data file to update project model. """
+    from optima.project import version
     user_id = current_user.id
     project_name = request.values.get('name')
     if not project_name:
@@ -751,13 +752,34 @@ def createProjectAndSetData():
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
         return jsonify(reply), 500
 
-    data = json.load(uploaded_file)
+    from optima.utils import load
+    new_project = load(uploaded_file)
 
-    project_entry = ProjectDb(project_name, user_id, data['G']['datastart'], \
-        data['G']['dataend'], \
-        data['G']['inputprograms'], data['G']['inputpopulations'])
-    project_entry.model = data
-    getPopsAndProgsFromModel(project_entry, trustInputMetadata = True)
+    if new_project.data:
+        datastart = int(new_project.data['years'][0])
+        dataend = int(new_project.data['years'][-1])
+        pops = []
+        project_pops = new_project.data['pops']
+        print "pops", project_pops
+        for i in range(len(project_pops['short'])):
+            print "i", i
+            new_pop = {'name': project_pops['long'][i], 'short_name': project_pops['short'][i], 
+            'female': project_pops['female'][i], 'male':project_pops['male'][i], 
+            'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])}
+            pops.append(new_pop)
+    else:
+        from optima.makespreadsheet import default_datastart, default_dataend
+        datastart = default_datastart
+        dataend = default_dataend
+        pops = {}
+
+    project_entry = ProjectDb(project_name, user_id, datastart,
+        dataend,
+        pops,
+        version=version)
+
+    project_entry.restore(new_project)
+    project_entry.name = project_name
 
     db.session.add(project_entry)
     db.session.commit()
@@ -793,8 +815,9 @@ def setData(project_id):
         return jsonify(reply), 500
 
     from optima.utils import load
-    data = load(uploaded_file)
-    project_entry.restore(data)
+    new_project = load(uploaded_file)
+    project_entry.restore(new_project)
+    db.session.add(project_entry)
 
     db.session.commit()
 
