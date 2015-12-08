@@ -698,11 +698,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var modalService = $injector.get('modalService');
               var message = 'Something went wrong. Please try again or contact the support team.';
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
+              $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
             }
             $scope.errorText = data.exception;
             stopTimer();
           } else {
             if (data.status == 'Done') {
+              if($scope.optimizationInProgress === true) {
+                $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
+              }
               stopTimer();
             } else {
               if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
@@ -710,7 +714,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.initTimer($scope.state.optimizationStatus);
             }
             $scope.state.isDirty = data.dirty;
-            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
           }
         })
         .error( function (data, status, headers, config) {
