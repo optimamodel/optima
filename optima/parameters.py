@@ -298,9 +298,10 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
     
-    def __str__(self):
+    def __repr__(self):
         ''' Print out useful information when called'''
-        output = '\n'
+        output = '<%s.%s at %s>' % (self.__class__.__module__, self.__class__.__name__, hex(id(self)))
+        output += '\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)

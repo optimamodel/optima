@@ -138,7 +138,7 @@ def create_project(): # pylint: disable=too-many-locals
     """
 
     # TODO deprecate project name from URI
-    from optima.makespreadsheet import default_datastart, default_dataend, defaultpops, makespreadsheet
+    from optima.makespreadsheet import default_datastart, default_dataend, makespreadsheet
     from dataio import tojson, templatepath
     from optima.project import version
     raw_data = json.loads(request.data)
@@ -157,7 +157,7 @@ def create_project(): # pylint: disable=too-many-locals
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
-    makeproject_args['pops'] = data.get('populations', defaultpops)
+    makeproject_args['pops'] = data.get('populations')
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
     # create new project
