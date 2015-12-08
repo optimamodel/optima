@@ -516,13 +516,11 @@ def load(filename):
     except:
         import pickle
     from gzip import GzipFile
-    from werkzeug.datastructures import FileStorage
 
-    kwargs = {'mode': 'rb', }
-    if isinstance(filename, FileStorage):
-        kwargs['fileobj'] = filename
-    else:
-        kwargs['filename'] = filename
+    argtype = 'filename'
+    if not isinstance(filename, basestring):
+        argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
 
     with GzipFile(**kwargs) as fileobj:
         obj = pickle.load(fileobj)
