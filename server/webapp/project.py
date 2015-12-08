@@ -18,7 +18,8 @@ import datetime
 import dateutil.tz
 from datetime import datetime
 from copy import deepcopy
-from optima.optima import Project
+from optima.project import Project
+
 
 # route prefix: /api/project
 project = Blueprint('project',  __name__, static_folder = '../static')
@@ -137,7 +138,7 @@ def create_project(): # pylint: disable=too-many-locals
     """
 
     # TODO deprecate project name from URI
-    from optima.makespreadsheet import default_datastart, default_dataend, defaultpops, makespreadsheet
+    from optima.makespreadsheet import default_datastart, default_dataend, makespreadsheet
     from dataio import tojson, templatepath
     from optima.project import version
     raw_data = json.loads(request.data)
@@ -156,7 +157,7 @@ def create_project(): # pylint: disable=too-many-locals
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
-    makeproject_args['pops'] = data.get('populations', defaultpops)
+    makeproject_args['pops'] = data.get('populations')
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
     # create new project
@@ -447,10 +448,10 @@ def deleteProject(project_id):
         user_id = project_entry.user_id
         project_name = project_entry.name
         #delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=project_entry.id).delete()
-        db.session.query(ProjectDataDb).filter_by(id=project_entry.id).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=project_entry.id).delete()
-        db.session.query(ProjectDb).filter_by(id=project_entry.id).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str(project_entry.id)).delete()
+        db.session.query(ProjectDataDb).filter_by(id=str(project_entry.id)).delete()
+        db.session.query(WorkingProjectDb).filter_by(id=str(project_entry.id)).delete()
+        db.session.query(ProjectDb).filter_by(id=str(project_entry.id)).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
     delete_spreadsheet(project_name)
@@ -479,22 +480,50 @@ def copyProject(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id}
         return jsonify(reply), 500
     project_user_id = project_entry.user_id
-    project_data_exists = project_entry.project_data #force loading it
+
+    # force load the existing data, parset and result
+    project_data_exists = project_entry.project_data
+    project_parset_exists = project_entry.parsets
+    project_result_exists = project_entry.results
+
     db.session.expunge(project_entry)
     make_transient(project_entry)
+
     project_entry.id = None
     project_entry.name = new_project_name
-    #also change all the relevant metadata
-    project_entry.model['G']['projectname'] = project_entry.name
-    project_entry.model['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
-    project_entry.model['G']['workbookname'] = project_entry.name + '.xlsx'
+
+    #change the creation and update time
+    project_entry.created = datetime.now(dateutil.tz.tzutc())
+    project_entry.updated = datetime.now(dateutil.tz.tzutc())
+    # Question, why not use datetime.utcnow() instead of dateutil.tz.tzutc()?
+    # it's the same, without the need to import more
     db.session.add(project_entry)
-    db.session.flush() #this updates the project ID to the new value
+    db.session.flush()  # this updates the project ID to the new value
     new_project_id = project_entry.id
+
     if project_data_exists:
-        db.session.expunge(project_entry.project_data) # it should have worked without that black magic. but it didn't.
+        # copy the project data
+        db.session.expunge(project_entry.project_data)
         make_transient(project_entry.project_data)
         db.session.add(project_entry.project_data)
+
+    if project_parset_exists:
+        # copy each parset
+        for parset in project_entry.parsets:
+            db.session.expunge(parset)
+            make_transient(parset)
+            # set the id to None to ensure no duplicate ID
+            parset.id = None
+            db.session.add(parset)
+
+    if project_result_exists:
+        # copy each result
+        for result in project_entry.results:
+            db.session.expunge(result)
+            make_transient(result)
+            # set the id to None to ensure no duplicate ID
+            result.id = None
+            db.session.add(result)
     db.session.commit()
     # let's not copy working project, it should be either saved or discarded
     return jsonify({'project':project_id, 'user':project_user_id, 'copy_id':new_project_id})
@@ -597,19 +626,23 @@ def uploadExcel(): # pylint: disable=too-many-locals
     project_entry = load_project(project_id)
     current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
     if project_entry is not None:
-        from optima.utils import saves, loads
-        from optima.parameters import Parameterset
-        from dbmodels import ParsetsDb
+        from optima.utils import saves  # , loads
+        # from optima.parameters import Parameterset
+        from dbmodels import ParsetsDb, ResultsDb
         new_project = project_entry.hydrate()
         new_project.loadspreadsheet(server_filename)
-        print("after spreadsheet uploading: %s\n parsets: %r" % (new_project, new_project.parsets["default"].pars))
-        #TODO: figure out whether we still have to do anything like that
+        new_project.modified = datetime.now(dateutil.tz.tzutc())
+        current_app.logger.info("after spreadsheet uploading: %s" % new_project)
+        # TODO: figure out whether we still have to do anything like that
 #        D['G']['inputpopulations'] = deepcopy(project_entry.populations)
 
         # Is this the first time? if so then we have to run simulations
 #        should_re_run = 'S' not in D
 
         # TODO call new_project.runsim instead
+        result = new_project.runsim()
+        current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
+
         # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
 #       now, update relevant project_entry fields
         project_entry.settings = saves(new_project.settings)
@@ -630,14 +663,26 @@ def uploadExcel(): # pylint: disable=too-many-locals
         projdata = ProjectDataDb.query.get(project_entry.id)
 
         # update parsets
+        result_parset_id = None
         parset_records_map = {record.id:record for record in project_entry.parsets} # may be SQLAlchemy can do stuff like this already?
         for (parset_name, parset_entry) in new_project.parsets.iteritems():
-            parset_record = parset_records_map.get(parset_entry.uuid) 
-            if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name)
+            parset_record = parset_records_map.get(parset_entry.uuid)
+            if not parset_record: parset_record = ParsetsDb(project_id=project_entry.id, name = parset_name, id = parset_entry.uuid)
+            if parset_record.name=="default": result_parset_id = parset_entry.uuid
             parset_record.pars = saves(parset_entry.pars)
             db.session.add(parset_record)
 
-        # TODO: update results (after runsim is invoked)
+        # update results (after runsim is invoked)
+        results_map = {(record.parset_id, record.calculation_type):record for record in project_entry.results}
+        result_record = results_map.get((result_parset_id, "simulation"))
+        if not result_record: result_record = ResultsDb(
+            parset_id = result_parset_id,
+            project_id = project_entry.id,
+            calculation_type = "simulation",
+            blob = saves(result)
+            )
+        db.session.add(result_record)
+
         # update existing
         if projdata is not None:
             projdata.meta = filedata
@@ -670,18 +715,18 @@ def getData(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id }
         return jsonify(reply), 500
     else:
-        data = project_entry.model
-        #make sure this exists
-        data['G']['inputprograms'] = project_entry.programs
-        data['G']['inputpopulations'] = project_entry.populations
+        new_project = project_entry.hydrate()
+
         # return result as a file
         loaddir =  upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
-        filename = project_entry.name + '.json'
+        filename = project_entry.name + '.prj'
         server_filename = os.path.join(loaddir, filename)
-        with open(server_filename, 'wb') as filedata:
-            json.dump(data, filedata)
+
+        from optima.utils import save
+        save(new_project, server_filename)
+
         return helpers.send_from_directory(loaddir, filename)
 
 @project.route('/data', methods=['POST'])
@@ -689,6 +734,7 @@ def getData(project_id):
 @report_exception('Unable to copy uploaded data')
 def createProjectAndSetData():
     """ Creates a project & uploads data file to update project model. """
+    from optima.project import version
     user_id = current_user.id
     project_name = request.values.get('name')
     if not project_name:
@@ -706,13 +752,34 @@ def createProjectAndSetData():
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
         return jsonify(reply), 500
 
-    data = json.load(uploaded_file)
+    from optima.utils import load
+    new_project = load(uploaded_file)
 
-    project_entry = ProjectDb(project_name, user_id, data['G']['datastart'], \
-        data['G']['dataend'], \
-        data['G']['inputprograms'], data['G']['inputpopulations'])
-    project_entry.model = data
-    getPopsAndProgsFromModel(project_entry, trustInputMetadata = True)
+    if new_project.data:
+        datastart = int(new_project.data['years'][0])
+        dataend = int(new_project.data['years'][-1])
+        pops = []
+        project_pops = new_project.data['pops']
+        print "pops", project_pops
+        for i in range(len(project_pops['short'])):
+            print "i", i
+            new_pop = {'name': project_pops['long'][i], 'short_name': project_pops['short'][i], 
+            'female': project_pops['female'][i], 'male':project_pops['male'][i], 
+            'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])}
+            pops.append(new_pop)
+    else:
+        from optima.makespreadsheet import default_datastart, default_dataend
+        datastart = default_datastart
+        dataend = default_dataend
+        pops = {}
+
+    project_entry = ProjectDb(project_name, user_id, datastart,
+        dataend,
+        pops,
+        version=version)
+
+    project_entry.restore(new_project)
+    project_entry.name = project_name
 
     db.session.add(project_entry)
     db.session.commit()
@@ -747,19 +814,19 @@ def setData(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id}
         return jsonify(reply), 500
 
-    data = json.load(uploaded_file)
-    data['G']['projectfilename'] = project_entry.model['G']['projectfilename']
-    data['G']['workbookname'] = project_entry.model['G']['workbookname']
-    data['G']['projectname'] = project_entry.model['G']['projectname']
-    project_entry.model = data
-    project_name = project_entry.name
-    getPopsAndProgsFromModel(project_entry, trustInputMetadata = True)
-
+    from optima.utils import load
+    new_project = load(uploaded_file)
+    project_entry.restore(new_project)
     db.session.add(project_entry)
+
     db.session.commit()
 
-    reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
+    reply = {
+        'file': source_filename,
+        'result': 'Project %s is updated' % project_entry.name,
+    }
     return jsonify(reply)
+
 
 @project.route('/data/migrate', methods=['POST'])
 @verify_admin_request

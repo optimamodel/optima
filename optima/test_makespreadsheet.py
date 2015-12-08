@@ -3,12 +3,12 @@ import unittest
 from makespreadsheet import OptimaSpreadsheet, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
 import xlsxwriter
 
-populations = [{"name": "Female sex workers", "short": "FSW", "female": True, "male": False, "agefrom": 15, "ageto": 49}, \
-    {"name": "Clients of sex workers", "short": "Clients", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Men who have sex with men", "short": "MSM", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Males who inject drugs", "short": "MWID", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Other males 15-49", "short": "Other males", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Other females 15-49", "short": "Other females", "female": True, "male": False, "agefrom": 15, "ageto": 49}]
+populations = [{"name": "Female sex workers", "short_name": "FSW", "female": True, "male": False, "are_from": 15, "age_to": 49}, \
+    {"name": "Clients of sex workers", "short_name": "Clients", "female": False, "male": True, "are_from": 15, "age_to": 49}, \
+    {"name": "Men who have sex with men", "short_name": "MSM", "female": False, "male": True, "are_from": 15, "age_to": 49}, \
+    {"name": "Males who inject drugs", "short_name": "Male PWID", "female": False, "male": True, "are_from": 15, "age_to": 49}, \
+    {"name": "Other males [enter age]", "short_name": "Other males", "female": False, "male": True, "are_from": 0, "age_to": 0}, \
+    {"name": "Other females [enter age]", "short_name": "Other females", "female": True, "male": False, "are_from": 0, "age_to": 0}]
 
 class TestOptimaSpreadsheet(unittest.TestCase):
 
@@ -41,7 +41,7 @@ class TestOptimaSpreadsheet(unittest.TestCase):
         test_sheet = book.add_worksheet('Test Sheet')
         content = make_populations_range('Populations', populations)
         content_range = TitledRange(test_sheet, 0, content)
-        make_ref_years_range('Coverage', content_range, 2000, 2015)
+        ref_content = make_ref_years_range('Coverage', content_range, 2000, 2015)
 
 class TestOptimaGraphTable(unittest.TestCase):
 

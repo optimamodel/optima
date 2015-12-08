@@ -3,8 +3,10 @@
 from optima_test_base import OptimaTestCase
 import unittest
 import json
-from api import app
+from server.api import app
 from flask import helpers
+from uuid import uuid4
+
 
 class ProjectTestCase(OptimaTestCase):
     """
@@ -14,23 +16,28 @@ class ProjectTestCase(OptimaTestCase):
 
     def setUp(self):
         super(ProjectTestCase, self).setUp()
-        response = self.create_user()
-        response = self.login()
+        self.create_user()
+        self.login()
 
     def test_create_project(self):
         response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
 
     def test_retrieve_project_info_fails(self):
-        headers = [('project', 'test'),('project-id','1')]
+        project_id = '{}'.format(uuid4())
+        # It would probably be better to make sure the project id REALLY does not
+        # exist firt. But this is uuid, so the chances are quite slim
+        headers = [('project', 'test'), ('project-id', project_id)]
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(json.loads(response.data), {u'reason': u'Project 1 does not exist'})
+        self.assertEqual(json.loads(response.data), {
+            u'reason': u'Project {} does not exist'.format(project_id)
+        })
 
     def test_retrieve_project_info(self):
         project_id = self.create_project('test')
 
-        headers = [('project', 'test'),('project-id',str(project_id))]
+        headers = [('project', 'test'), ('project-id', str(project_id))]
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 200)
         project_data = json.loads(response.data)
@@ -43,18 +50,21 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         projects_data = json.loads(response.data)
         self.assertEqual(projects_data['projects'][0]['name'], 'test2')
-        self.assertEqual(projects_data['projects'][0]['id'], project_id)
+        self.assertEqual(projects_data['projects'][0]['id'], str(project_id))
 
-    def test_project_parameters(self):
-        from sim.parameters import parameter_name
-        response = self.client.get('/api/project/parameters')
-        print(response)
-        self.assertEqual(response.status_code, 200)
-        parameters = json.loads(response.data)['parameters']
-        self.assertTrue(len(parameters)>0)
-        self.assertTrue(set(parameters[0].keys())== \
-            set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
-        self.assertTrue(parameter_name(['condom','reg']) == 'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
+    # sim is in optima.legacy
+    # This test is probably obsolete
+
+    # def test_project_parameters(self):
+    #     from sim.parameters import parameter_name
+    #     response = self.client.get('/api/project/parameters')
+    #     print(response)
+    #     self.assertEqual(response.status_code, 200)
+    #     parameters = json.loads(response.data)['parameters']
+    #     self.assertTrue(len(parameters)>0)
+    #     self.assertTrue(set(parameters[0].keys())== \
+    #         set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
+    #     self.assertTrue(parameter_name(['condom','reg']) == 'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
 
     def test_upload_data(self):
         import re
@@ -63,25 +73,26 @@ class ProjectTestCase(OptimaTestCase):
         # create project
         response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
-        project_id = int(response.headers['x-project-id'])
+        project_id = str(response.headers['x-project-id'])
         # upload data
-        example_excel_file_name = 'example.xlsx'
+        example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        headers = [('project', 'test'),('project-id',str(project_id))]
+        headers = [('project', 'test'), ('project-id', str(project_id))]
         response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
         example_excel.close()
         self.assertEqual(response.status_code, 200)
         # get data back and save the received file
         response = self.client.get('/api/project/workbook/%s' % project_id)
         content_disposition = response.headers.get('Content-Disposition')
-        self.assertTrue(len(content_disposition)>0)
+        self.assertTrue(len(content_disposition) > 0)
         file_name_info = re.search('filename=\s*(\S*)', content_disposition)
-        self.assertTrue(len(file_name_info.groups())>0)
+        self.assertTrue(len(file_name_info.groups()) > 0)
         file_name = file_name_info.group(1)
-        self.assertEqual(file_name,'test.xlsx')
+        self.assertEqual(file_name, 'test.xlsx')
         output_path = '/tmp/project_test.xlsx'
-        if os.path.exists(output_path):os.remove(output_path)
+        if os.path.exists(output_path):
+            os.remove(output_path)
         f = open(output_path, 'wb')
         f.write(response.data)
         f.close()
@@ -94,36 +105,71 @@ class ProjectTestCase(OptimaTestCase):
         # create project
         response = self.api_create_project()
         self.assertEqual(response.status_code, 200)
-        project_id = int(response.headers['x-project-id'])
+        project_id = str(response.headers['x-project-id'])
         # upload data so that we can check the existence of data in the copied project
-        example_excel_file_name = 'example.xlsx'
+        example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        headers = [('project', 'test'),('project-id',str(project_id))]
+        headers = [('project', 'test'), ('project-id', str(project_id))]
         response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
         example_excel.close()
-        #get the info for the existing project
+        # get the info for the existing project
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 200)
-        old_info=json.loads(response.data)
+        old_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
         response = self.client.post('/api/project/copy/%s?to=test_copy' % project_id, headers=headers)
         self.assertEqual(response.status_code, 200)
         copy_info = json.loads(response.data)
-        new_project_id=copy_info['copy_id']
-        #open the copy of the project
+        new_project_id = copy_info['copy_id']
+        # open the copy of the project
         response = self.client.get('/api/project/open/%s' % new_project_id, headers=headers)
         self.assertEqual(response.status_code, 200)
-        #get info for the copy of the project
-        headers = [('project', 'test_copy'),('project-id',str(new_project_id))]
+        # get info for the copy of the project
+        headers = [('project', 'test_copy'), ('project-id', str(new_project_id))]
         response = self.client.get('/api/project/info', headers=headers)
         self.assertEqual(response.status_code, 200)
         new_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
-        #compare some elements
+        # compare some elements
         self.assertEqual(old_info['populations'], new_info['populations'])
-        self.assertEqual(old_info['programs'], new_info['programs'])
+        self.assertEqual(old_info['dataStart'], new_info['dataStart'])
+        self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
 
+    def test_download_upload_project(self):
+        from io import BytesIO
+        from server.webapp.dbmodels import ProjectDb
+        from server.webapp.dbconn import db
+
+        project_id = self.create_project('test')
+
+        # create a parset for the project
+        example_excel_file_name = 'test.xlsx'
+        file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+        example_excel = open(file_path)
+        headers = [('project', 'test'), ('project-id', str(project_id))]
+        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        example_excel.close()
+        
+        response = self.client.get('/api/project/data/{}'.format(project_id))
+        self.assertEqual(response.status_code, 200)
+
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(project.name, 'test')  # just making sure
+        project.name = 'Not test'
+        db.session.commit()
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertNotEqual(project.name, 'test')  # still just making sure
+
+        upload_response = self.client.post(
+            '/api/project/data/{}'.format(project_id),
+            data={
+                'file': (BytesIO(response.data), 'project.prj'),
+            }
+        )
+        self.assertEqual(upload_response.status_code, 200)
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(project.name, 'test')
 
 if __name__ == '__main__':
     unittest.main()

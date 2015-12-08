@@ -1,8 +1,12 @@
+###############################################################################
+##### 2.0 STATUS: probably fine code-wise but need to update once spreadsheet changes decided
+###############################################################################
+
 """
 OptimaSpreadsheet and related classes
 Created by: SSQ
 
-Version: 2015dec02 by cliffk
+Version: 2015dec08 by anachesa
 """
 
 import xlsxwriter
@@ -10,16 +14,14 @@ from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
 from utils import printv
 
-defaultpops = [{"name": "Female sex workers", "short": "FSW", "female": True, "male": False, "agefrom": 15, "ageto": 49}, \
-    {"name": "Clients of sex workers", "short": "Clients", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Men who have sex with men", "short": "MSM", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Males who inject drugs", "short": "MWID", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Other males 15-49", "short": "Other males", "female": False, "male": True, "agefrom": 15, "ageto": 49}, \
-    {"name": "Other females 15-49", "short": "Other females", "female": True, "male": False, "agefrom": 15, "ageto": 49}]
+default_datastart = 2000
+default_dataend = 2020
 
-
-
-def makespreadsheet(filename='default.xlsx', pops=defaultpops, datastart=2000, dataend=2020, verbose=2):
+def makespreadsheet(filename, 
+    pops, 
+    datastart=default_datastart, 
+    dataend=default_dataend, 
+    verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s''' % (
@@ -58,8 +60,26 @@ class OptimaContent:
         self.row_formats = None
         self.assumption_properties = {'title':None, 'connector':'OR', 'columns':['Assumption']}
 
+    def set_row_format(self, row_format):
+        self.row_format = row_format
+
     def has_data(self):
         return self.data != None
+
+    def add_assumption(self):
+        self.assumption = True
+
+    def has_assumption(self):
+        return self.assumption
+
+    def set_assumption_properties(self, assumption_properties):
+        self.assumption_properties = assumption_properties
+
+    def set_row_levels(self, row_levels): # right now assume the row levels are hard coded, as it is only needed once
+        self.row_levels = row_levels
+
+    def set_row_formats(self, row_formats):
+        self.row_formats = row_formats
 
     def has_row_formats(self):
         return self.row_formats != None
@@ -93,7 +113,7 @@ def make_years_range(name, params, data_start, data_end):
 def make_populations_range(name, items):
     """ 
     every populations item is a dictionary is expected to have the following fields:
-    short, name, male, female, agefrom, ageto
+    short_name, name, male, female, age_from, age_to
     (3x str, 2x bool, 2x int)
     """
     column_names = ['Short name','Long name','Male','Female','Age from', 'Age to']
@@ -102,19 +122,19 @@ def make_populations_range(name, items):
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            short = item.get('short', abbreviate(item_name))
+            short_name = item.get('short_name', abbreviate(item_name))
             male = item.get('male', False)
             female = item.get('female', False)
-            agefrom = item.get('agefrom',15)
-            ageto = item.get('ageto',49)
+            age_from = item.get('age_from',15)
+            age_to = item.get('age_to',49)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            short = abbreviate(item_name)
+            short_name = abbreviate(item_name)
             male = False
             female = False
-            agefrom = 15
-            ageto = 49
-        coded_params.append([short, item_name, male, female, agefrom, ageto])
+            age_from = 15
+            age_to = 49
+        coded_params.append([short_name, item_name, male, female, age_from, age_to])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data, low_data, high_data):
@@ -262,13 +282,13 @@ class TitledRange:
         #top-top headers
         formats.write_block_name(self.sheet, self.content.name, self.first_row)
 
-        if self.content.assumption and  self.first_row==0 and self.content.assumption_properties['title'] is not None:
+        if self.content.has_assumption() and  self.first_row==0 and self.content.assumption_properties['title'] is not None:
             formats.write_rowcol_name(self.sheet, self.first_row, self.data_range.last_col+2, self.content.assumption_properties['title'])
 
         #headers
         for i, name in enumerate(self.content.column_names):
             formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.first_col+i,name, rc_title_align)
-        if self.content.assumption:
+        if self.content.has_assumption():
             for index, col_name in enumerate(self.content.assumption_properties['columns']):
                 formats.write_rowcol_name(self.sheet, self.first_row+1, self.data_range.last_col+2+index, col_name)
 
@@ -292,7 +312,7 @@ class TitledRange:
                 for j in range(self.data_range.num_cols):
                     formats.write_empty_unlocked(self.sheet, current_row, self.data_range.first_col+j, row_format)
             #emit assumption
-            if self.content.assumption:
+            if self.content.has_assumption():
                 formats.write_option(self.sheet, current_row, self.data_range.last_col+1, \
                     name = self.content.assumption_properties['connector'])
                 for index, col_name in enumerate(self.content.assumption_properties['columns']):
@@ -339,13 +359,13 @@ class OptimaSpreadsheet:
         row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None,
         assumption_properties = None):
         content = OptimaContent(name, row_names, column_names, data)
-        content.row_format = row_format
+        content.set_row_format(row_format)
         if assumption:
-            content.assumption = True
+            content.add_assumption()
         if assumption_properties:
-            content.assumption_properties = assumption_properties
+            content.set_assumption_properties(assumption_properties)
         if row_levels is not None:
-            content.row_levels = row_levels
+            content.set_row_levels(row_levels)
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row
@@ -362,7 +382,7 @@ class OptimaSpreadsheet:
     def emit_constants_block(self, name, current_row, row_names, best_data, low_data, high_data, 
         row_format = OptimaFormats.GENERAL):
         content = make_constant_range(name, row_names, best_data, low_data, high_data)
-        content.row_format = row_format
+        content.set_row_format(row_format)
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats, rc_row_align = 'left')
         return current_row
@@ -370,13 +390,13 @@ class OptimaSpreadsheet:
     def emit_years_block(self, name, current_row, row_names, row_format = OptimaFormats.GENERAL,
         assumption = False, row_levels = None, row_formats = None):
         content = make_years_range(name, row_names, self.data_start, self.data_end)
-        content.row_format = row_format
+        content.set_row_format(row_format)
         if assumption:
-            content.assumption = True
+            content.add_assumption()
         if row_levels is not None:
-            content.row_levels = row_levels
+            content.set_row_levels(row_levels)
         if row_formats is not None:
-            content.row_formats = row_formats
+            content.set_row_formats(row_formats)
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row
@@ -384,13 +404,13 @@ class OptimaSpreadsheet:
     def emit_ref_years_block(self, name, current_row, ref_range, row_format = OptimaFormats.GENERAL,
         assumption = None, row_levels = None, row_formats = None):
         content = make_ref_years_range(name, ref_range, self.data_start, self.data_end)
-        content.row_format = row_format
+        content.set_row_format(row_format)
         if assumption:
-            content.assumption = True
+            content.add_assumption()
         if row_levels is not None:
-            content.row_levels = row_levels
+            content.set_row_levels(row_levels)
         if row_formats is not None:
-            content.row_formats = row_formats
+            content.set_row_formats(row_formats)
         the_range = TitledRange(self.current_sheet, current_row, content)
         current_row = the_range.emit(self.formats)
         return current_row

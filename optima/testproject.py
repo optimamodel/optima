@@ -14,7 +14,6 @@ Version: 2015nov23 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'makespreadsheet',
 'makeproject',
 'saveload',
 'loadspreadsheet',
@@ -54,16 +53,6 @@ blank()
 ##############################################################################
 
 T = tic()
-
-
-## Spreadsheet creation test
-if 'makespreadsheet' in tests:
-    t = tic()
-    print('Running make spreadsheet test...')
-    from optima import makespreadsheet
-    makespreadsheet()
-    done(t)
-
 
 
 ## Project creation test
