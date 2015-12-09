@@ -111,11 +111,10 @@ def makeparsfromdata(data, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2015nov22 by cliffk
+    Version: 2015dec08 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
-    
     
     
     ###############################################################################

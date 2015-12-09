@@ -122,7 +122,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     transit   = simpars['transit'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)
-    condom   = simpars['condom']    # Condoms (P)
+    condom = dict()
+    for key in ['reg','cas','com']: condom[key] = simpars['condom'+key]
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
     numpmtct = simpars['numpmtct']  # PMTCT (N)
 #    ost      = simpars['numost']    # OST (N)
