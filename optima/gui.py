@@ -1,116 +1,51 @@
-'''
-GUI
-
-A "quick" Python GUI for plotting the results.
-
-Usage:
-
-results = P.runsim()
-from gui import gui # put this in P?
-gui(results)
-
-Version: 2015nov02 by cliffk
-'''
 
 
-## Imports
-from PyQt4 import QtCore, QtGui
-from matplotlib.figure import Figure as figure
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as canvas, NavigationToolbar2QT as toolbar
-from pylab import ceil, sqrt, subplots, close, isinteractive, ion, ioff, array
-import sys
-translate =  QtGui.QApplication.translate
-global app
-global main
-
-DPI = 80.0 # Specify global screen DPI
 
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow, guidata):
-        self.guidata = guidata
-        
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
-        self.centralwidget = QtGui.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.gridLayout = QtGui.QGridLayout(self.centralwidget)
-        self.gridLayout.setObjectName("gridLayout")
-        self.mplwindow = QtGui.QWidget(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.mplwindow.sizePolicy().hasHeightForWidth())
-        self.mplwindow.setSizePolicy(sizePolicy)
-        self.mplwindow.setObjectName("mplwindow")
-        self.mplvl = QtGui.QVBoxLayout(self.mplwindow)
-        self.mplvl.setMargin(0)
-        self.mplvl.setObjectName("mplvl")
-        self.gridLayout.addWidget(self.mplwindow, 0, 0, -1, 1)
-        
-        self.checkboxes = {}
-        count = -1;
-        for key in guidata.epikeys:
-            for subkey in guidata.episubkeys:
-                count += 1
-                name = key+'-'+subkey
-                self.checkboxes[name] = QtGui.QCheckBox(self.centralwidget)
-                self.checkboxes[name].setObjectName(name)
-                self.checkboxes[name].setChecked(False) # Set whether boxes are checked or not by default
-                self.gridLayout.addWidget(self.checkboxes[name], count, 1, 1, 1)
-        
-        self.pushButton = QtGui.QPushButton(self.centralwidget)
-        self.pushButton.setObjectName("Plot")
-        self.gridLayout.addWidget(self.pushButton, count+1, 1, 1, 1)        
-        
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
-    def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(translate("Optima Results GUI", "Optima Results GUI", None))
-        self.pushButton.setText(translate("Optima Results GUI", "Plot", None))
-        for key in self.guidata.epikeys:
-            for subkey in self.guidata.episubkeys:
-                self.checkboxes[key+'-'+subkey].setText(translate("Optima Results GUI", key+'-'+subkey, None))
-        
-        
-        
-
-        
-class Main(QtGui.QMainWindow, Ui_MainWindow):
-    def __init__(self, guidata):
-        super(Main, self).__init__()
-        self.setupUi(self, guidata)
-        self.fig_dict = {}
-        self.pushButton.clicked.connect(self.changefig)
-        fig = figure()
-        self.addmpl(fig)
-        self.guidata = guidata
-
-    def addmpl(self, fig):
-        self.canvas = canvas(fig)
-        self.mplvl.addWidget(self.canvas)
-        self.canvas.draw()
-        self.toolbar = toolbar(self.canvas, self.mplwindow, coordinates=True)
-        self.mplvl.addWidget(self.toolbar)
-
-    def rmmpl(self):
-        self.mplvl.removeWidget(self.canvas)
-        self.canvas.close()
-        self.mplvl.removeWidget(self.toolbar)
-        self.toolbar.close()
-
-    def changefig(self):
-        ''' Main function that actually does plotting '''
+def gui(results):
+    '''
+    GUI
+    
+    Make a Python GUI for plotting results. Opens up a control window and a plotting window,
+    and when "Update" is clicked, will clear the contents of the plotting window and replot.
+    
+    Usage:
+    
+    gui(results)
+    
+    Version: 2015dec08 by cliffk
+    '''
+    from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
+    from matplotlib.widgets import CheckButtons, Button
+    global plotfig; plotfig = None
+    
+    
+    def getchecked(check):
+        ''' Return a list of whether or not each check box is checked or not '''
         ischecked = []
-        for key in self.guidata.epikeys:
-            for subkey in self.guidata.episubkeys:
-                if self.checkboxes[key+'-'+subkey].isChecked():
-                    ischecked.append(key+'-'+subkey)
+        for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
+        return ischecked
+    
+    
+    def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
+        ''' Add a plot to an existing figure '''
+        plotfig._axstack.add(plotfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+        thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+        return None
         
-        # Calculate rows and columns of subplots
-        nplots = len(ischecked)
+    
+    def update(event):
+        ''' Close current window if it exists and open a new one based on user selections '''
+        global plotfig
+        
+        # If figure exists, get size, then close it
+        try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
+        except: width,height = 8,6 # No figure: use defaults
+        
+        # Get user selections
+        ischecked = getchecked(check)
+        toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
+        nplots = sum(ischecked) # Calculate rows and columns of subplots
         nrows = int(ceil(sqrt(nplots)))
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
         
@@ -118,50 +53,29 @@ class Main(QtGui.QMainWindow, Ui_MainWindow):
         if nplots>0: # Don't do anything if no plots
             wasinteractive = isinteractive()
             if wasinteractive: ioff()
-            height = self.canvas.size().height()/DPI # Convert from pixels to inches
-            width = self.canvas.size().width()/DPI
-            fig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
-            close(fig) # Close unneeded figure
-            if wasinteractive: ion()
-            for fa in array(fakeaxes).flatten(): fig._axstack.remove(fa) # Remove placeholder axes
+            plotfig = figure(figsize=(width, height)) # Create figure with correct number of plots
             
             # Actually create plots
-            plots = self.guidata.results.makeplots(ischecked, figsize=(width, height))
-
-            for p in range(len(plots)):
-                thisplot = plots[p].axes[0]
-                fig._axstack.add(fig._make_key(thisplot), thisplot)
-                thisplot.change_geometry(nrows,ncols,p+1)
-        else:
-            fig = figure() # Blank figure
-        
-        self.fig = fig
-        self.rmmpl()
-        self.addmpl(self.fig)
-
-
-
-def gui(results):
-    ''' Actual function to actually be used '''
-    global app
-    global main
+            plots = results.makeplots(toplot, figsize=(width, height))
+            for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
+            if wasinteractive: ion()
+            show()
     
-    # Define options for selection
+    
+    ## Define options for selection
     epikeys = results.main.keys()
     episubkeys = ['tot','pops'] # Would be best not to hard-code this...
+    checkboxes = []
+    for key in epikeys:
+        for subkey in episubkeys:
+            checkboxes.append(key+'-'+subkey)
+    nboxes = len(checkboxes)
     
-    class GUIdata:
-        ''' Store the keys and the data for plotting '''
-        def __init__(self, results, epikeys, episubkeys):
-            self.results = results
-            self.epikeys = epikeys
-            self.episubkeys = episubkeys
-    
-    guidata = GUIdata(results, epikeys, episubkeys)
-    
-    
-    app = QtGui.QApplication(sys.argv)
-    main = Main(guidata)
-    main.show()
-
-
+    ## Set up control panel
+    controlfig = figure(figsize=(4,8))
+    checkboxaxes = controlfig.add_axes([0.1, 0.15, 0.8, 0.8])
+    buttonaxes = controlfig.add_axes([0.1, 0.05, 0.8, 0.08])
+    check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
+    button = Button(buttonaxes, 'Update') 
+    button.on_clicked(update) # Update figure if button is clicked
+    return plotfig
