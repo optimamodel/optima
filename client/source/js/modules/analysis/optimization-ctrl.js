@@ -703,6 +703,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             stopTimer();
           } else {
             if (data.status == 'Done') {
+              if($scope.optimizationInProgress === true) {
+                $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
+              }
               stopTimer();
             } else {
               if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
@@ -710,7 +713,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.initTimer($scope.state.optimizationStatus);
             }
             $scope.state.isDirty = data.dirty;
-            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
           }
         })
         .error( function (data, status, headers, config) {
@@ -783,6 +785,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
       };
 
+      if (optimizations && optimizations.data) {
+        $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
+      }
       modalService.addOptimization(function (name) { create(name); }, $scope.state.optimizations);
     };
 
