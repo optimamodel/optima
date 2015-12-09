@@ -1,6 +1,6 @@
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-global controlfig, plotfig, check, button
+global check, button
 plotfig = None
 
 def gui(results):
@@ -16,7 +16,7 @@ def gui(results):
     
     Version: 2015dec08 by cliffk
     '''
-    global controlfig, plotfig, check, button
+    global check, button
     
     
     def getchecked(check):
@@ -71,7 +71,7 @@ def gui(results):
     nboxes = len(checkboxes)
     
     ## Set up control panel
-    controlfig = figure(figsize=(4,8))
+    figure(figsize=(4,8))
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
     buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
     check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
