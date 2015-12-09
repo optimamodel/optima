@@ -116,8 +116,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     # Partnerships, acts and transitions
     pshipsinj = simpars['partinj']
     pships = dict() # TEMP
+    totalacts = dict()
     for key in ['reg','cas','com']: pships[key] = simpars['part'+key]
-    totalacts = simpars['totalacts']
+    for key in ['reg','cas','com','inj']: totalacts[key] = simpars['totalacts'+key]
     transit   = simpars['transit'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)

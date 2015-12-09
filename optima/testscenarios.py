@@ -50,7 +50,7 @@ if 'standardscen' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-        
+    
     ## Define scenarios
     scenlist = [
         {'name': 'Current conditions', 'pars': []},
@@ -68,10 +68,10 @@ if 'standardscen' in tests:
             'pops': 11,
             'startval': 0.01,
             'startyear': 2005}]},
-         {'name': 'More casual acts, men',
+         {'name': 'More casual acts',
           'pars': [{'endval': 100.,
             'endyear': 2015,
-            'name': 'numactscas',
+            'name': 'totalactscas',
             'pops': 0,
             'startval': 100.,
             'startyear': 2005}]},
