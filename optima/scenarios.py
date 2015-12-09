@@ -1,6 +1,5 @@
 ## Imports
-
-from numpy import append, mean # array, isnan, zeros, shape, argmax, log, polyfit, exp, arange
+from numpy import append # array, isnan, zeros, shape, argmax, log, polyfit, exp, arange
 from optima import dcp, today, odict, printv, findinds #, sanitize, uuid, getdate, smoothinterp
 
 def runscenarios(P, parset, scenlist=None, verbose=2, debug=False):
@@ -35,23 +34,23 @@ def makescenarios(parset,scenlist,verbose=2):
     for scenno, scen in enumerate(scenlist):
         
         thisparset = dcp(parset)
-        thisparset.created = today()
         thisparset.modified = today()
         thisparset.name = scen['name']
         npops = len(parset.pars[0]['popkeys'])
         
-        for par in scenlist[scenno]['pars']:
-            parname = "".join(par['names'])
-            pops = range(npops) if par['pops'] > npops else [par['pops']]
-            for pop in pops:
-                if par['startyear'] < max(thisparset.pars[0][parname].t[pop]):
-                    thisparset.pars[0][parname].t[pop] = thisparset.pars[0][parname].t[pop][thisparset.pars[0][parname].t[pop] < par['startyear']]
-                    thisparset.pars[0][parname].y[pop] = thisparset.pars[0][parname].y[pop][thisparset.pars[0][parname].t[pop] < par['startyear']]
-                thisparset.pars[0][parname].t[pop] = append(thisparset.pars[0][parname].t[pop], par['startyear'])
-                thisparset.pars[0][parname].y[pop] = append(thisparset.pars[0][parname].y[pop], par['startval']) 
-                if par['endyear']: # Add end year values if supplied
-                    thisparset.pars[0][parname].t[pop] = append(thisparset.pars[0][parname].t[pop], par['endyear'])
-                    thisparset.pars[0][parname].y[pop] = append(thisparset.pars[0][parname].y[pop], par['endval'])
+        for sc in range(len(parset.pars)): # Loop over all parameter sets
+            for par in scenlist[scenno]['pars']: # Loop over all parameters being changed
+                thispar = thisparset.pars[sc][par['name']]
+                pops = range(npops) if par['pops'] > npops else [par['pops']]
+                for pop in pops:
+                    if par['startyear'] < max(thispar.t[pop]):
+                        thispar.t[pop] = thispar.t[pop][thispar.t[pop] < par['startyear']]
+                        thispar.y[pop] = thispar.y[pop][thispar.t[pop] < par['startyear']]
+                    thispar.t[pop] = append(thispar.t[pop], par['startyear'])
+                    thispar.y[pop] = append(thispar.y[pop], par['startval']) 
+                    if par['endyear']: # Add end year values if supplied
+                        thispar.t[pop] = append(thispar.t[pop], par['endyear'])
+                        thispar.y[pop] = append(thispar.y[pop], par['endval'])
 
         scenparsets[scen['name']] = thisparset
 
@@ -78,8 +77,7 @@ def getparvalues(parset, par, dt=.2):
     npops = len(parset.pars[0]['popkeys'])
     simpars = parset.interp(start=par['startyear'], end=par['endyear'], dt=dt)
 
-    if par['names'][0] in ['condom','numacts']: original = simpars[par['names'][0]][par['names'][1]]
-    else: original = simpars[par['names'][0]]
+    original = simpars[par['names'][0]]
     
     if par['pops'] < npops: # It's for a specific population, get the value
         original = original[par['pops'],:]
@@ -88,7 +86,7 @@ def getparvalues(parset, par, dt=.2):
     initialindex = findinds(simpars['tvec'],par['startyear'])
     finalindex = findinds(simpars['tvec'],par['endyear'])
 
-    startval = original[initialindex].tolist()[0]
-    endval = original[finalindex].tolist()[0]
+    startval = original[initialindex][0]
+    endval = original[finalindex][0]
     return [startval, endval]
         
