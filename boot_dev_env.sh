@@ -14,7 +14,7 @@ osascript 2>/dev/null <<EOF
     end
     tell application "Terminal"
         activate
-        do script with command "cd \"$PWD/gui\"; $*" in window 0
+        do script with command "cd \"$PWD/client\"; $*" in window 0
         do script with command "./clean_dev_build.sh" in window 0
     end
     tell application "System Events"
