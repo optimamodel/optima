@@ -74,7 +74,7 @@ def update(event):
         tmpfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
 #        close(tmpfig) # Close unneeded figure
         
-#        for fa in array(fakeaxes).flatten(): fig._axstack.remove(fa) # Remove placeholder axes
+        for fa in array(fakeaxes).flatten(): tmpfig._axstack.remove(fa) # Remove placeholder axes
         
         # Actually create plots
         plots = results.makeplots(toplot, figsize=(width, height))

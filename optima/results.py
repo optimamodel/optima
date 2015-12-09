@@ -114,7 +114,7 @@ class Results(object):
     
     def makeplots(self, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6)):
         ''' Reder the plots requested and store them in a list '''
-        from pylab import isinteractive, ioff, ion, figure, plot, xlabel, ylabel
+        from pylab import isinteractive, ioff, ion, figure, plot, xlabel, ylabel, close
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
         if type(whichplots)==str: whichplots = [whichplots] # Convert to list
@@ -139,6 +139,7 @@ class Results(object):
             plot(self.tvec, transpose(array(thisdata))) # Actually do the plot
             xlabel('Year')
             ylabel(self.main[datatype].name)
+            close(plots[pl])
         
         if wasinteractive: ion() # Turn interactivity back on
         return plots
