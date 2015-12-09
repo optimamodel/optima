@@ -53,10 +53,10 @@ def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False
     
     ## Wrap up: optionally turn into a list of tuples
     if asarray:
+        colors = dots[indices,:]
+    else:
         colors = []
         for i in indices: colors.append(tuple(dots[i,:])) # Gather output
-    else:
-        colors = dots[indices,:]
     
     ## For plotting
     if doplot:
