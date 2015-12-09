@@ -16,6 +16,10 @@ def blank(n=3):
     print('\n'*n)
 
 
+def objectid(obj):
+    ''' Return the object ID as per the default Python __repr__ method '''
+    return '<%s.%s at %s>' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+
 
 def printarr(arr, arrformat='%0.2f  '):
     """ 

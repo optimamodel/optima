@@ -1,11 +1,11 @@
 """
-This module defines the Results class, which stores the results of a single simulation run.
+This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015nov02 by cliffk
+Version: 2015dec09 by cliffk
 """
 
-from optima import uuid, today, quantile, printv, odict
-from numpy import array, transpose
+from optima import uuid, today, getdate, quantile, printv, odict, objectid
+from numpy import array
 
 
 class Result(object):
@@ -24,7 +24,7 @@ class Results(object):
         # Basic info
         self.uuid = uuid()
         self.created = today()
-        self.projectinfo = None
+        self.project = None
         self.pars = None
         
         # Fundamental quantities
@@ -53,11 +53,16 @@ class Results(object):
         self.reqcircum = Result()
         self.sexinci = Result()
     
-#    def __repr__(self):
-#        ''' This will eventually include information that's useful... '''
     
     
-#    def plot():
+    def __repr__(self):
+        ''' Print out useful information when called '''
+        output = objectid(self)
+        output += '\n'
+        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else 'N/A')
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '              UUID: %s\n'    % self.uuid
+        return output
     
     
     
@@ -108,7 +113,8 @@ class Results(object):
 #        self.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
 #        self.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
         
-    
+        return None # derivedresults()
+        
 
     
     
