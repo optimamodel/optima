@@ -8,10 +8,7 @@ import optima as op
 or
 from optima import *
 
-NB: the GUI is not imported, since this requires PyQt4, which is both not likely to exist
-and slow to import.
-
-Version: 2015nov21
+Version: 2015dec09
 """
 
 ## Load general modules
@@ -34,3 +31,5 @@ from results import *
 from model import *
 from programs import *
 from project import *
+from makeplots import *
+from gui import *

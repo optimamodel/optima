@@ -57,7 +57,7 @@ def gui(results):
             plotfig = figure(figsize=(width, height)) # Create figure with correct number of plots
             
             # Actually create plots
-            plots = results.makeplots(toplot, figsize=(width, height))
+            plots = epiplot(results, toplot, figsize=(width, height))
             for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
             if wasinteractive: ion()
             show()
