@@ -40,7 +40,7 @@ check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
 button = Button(buttonaxes, 'Update') 
 
 # Set up results panel
-plotfig = figure()
+#plotfig = figure()
 currentaxes = []
 
 
@@ -53,7 +53,7 @@ def getchecked(check):
 
 
 def update(event):
-    plotfig.clear() # Clear figure
+#    plotfig.clear() # Clear figure
     currentaxes = []
     
     ischecked = getchecked(check)
@@ -68,8 +68,10 @@ def update(event):
     if nplots>0: # Don't do anything if no plots
         wasinteractive = isinteractive()
         if wasinteractive: ioff()
-        width,height = plotfig.get_size_inches()
-#        tmpfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
+#        width,height = plotfig.get_size_inches()
+        width = 8
+        height = 6
+        tmpfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
 #        close(tmpfig) # Close unneeded figure
         
 #        for fa in array(fakeaxes).flatten(): fig._axstack.remove(fa) # Remove placeholder axes
@@ -77,11 +79,11 @@ def update(event):
         # Actually create plots
         plots = results.makeplots(toplot, figsize=(width, height))
 
-#        for p in range(len(plots)):
-#            thisplot = plots[p].axes[0]
-#            plotfig._axstack.add(plotfig._make_key(thisplot), thisplot)
-#            thisplot.change_geometry(nrows,ncols,p+1)
-#            currentaxes.append(thisplot)
+        for p in range(len(plots)):
+            thisplot = plots[p].axes[0]
+            tmpfig._axstack.add(tmpfig._make_key(thisplot), thisplot)
+            thisplot.change_geometry(nrows,ncols,p+1)
+            currentaxes.append(thisplot)
         if wasinteractive: ion()
         show()
 
