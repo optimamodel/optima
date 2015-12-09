@@ -8,7 +8,7 @@ Version: 2015nov23 by cliffk
 
 
 from numpy import array, isnan, zeros, shape, argmax, mean, log, polyfit, exp, arange
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -300,8 +300,7 @@ class Parameterset(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = '<%s.%s at %s>' % (self.__class__.__module__, self.__class__.__name__, hex(id(self)))
-        output += '\n'
+        output = objectid(self)
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
@@ -337,7 +336,7 @@ class Parameterset(object):
             npops = len(keys)
             output = zeros((npops,npts))
             for pop,key in enumerate(keys):
-                output[pop,:] = popgrow(par.p[key], simpars['tvec']-start)
+                output[pop,:] = par.m * popgrow(par.p[key], simpars['tvec']-start)
             return output
             
             
@@ -347,7 +346,7 @@ class Parameterset(object):
             npops = len(keys)
             output = zeros((npops,npts))
             for pop,key in enumerate(keys):
-                output[pop,:] = smoothinterp(simpars['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
+                output[pop,:] = datapar.m * smoothinterp(simpars['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
             if npops==1: return output[0] # Return 1D vector if only a single 'population'
             else: return output
         
