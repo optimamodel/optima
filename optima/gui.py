@@ -1,6 +1,6 @@
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-global check, button
+global plotfig, check, button
 plotfig = None
 
 def gui(results):
@@ -36,7 +36,7 @@ def gui(results):
     def update(event):
         ''' Close current window if it exists and open a new one based on user selections '''
         global plotfig
-        
+
         # If figure exists, get size, then close it
         try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
         except: width,height = 8,6 # No figure: use defaults
