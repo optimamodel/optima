@@ -46,10 +46,15 @@ define([
             }
           }
         })
-        .state('model.manageResponses', {
+        .state('model.manageProjectSet', {
           url: '/programs',
           templateUrl: 'js/modules/model/project-set/project-set.html',
-          controller: 'ProjectSetController'
+          controller: 'ProjectSetController',
+          resolve: {
+            predefined: function(Project) {
+              return Project.predefined().$promise;
+            }
+          }
         })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',

@@ -107,7 +107,7 @@ define([
               {
                 title: 'Define programs',
                 click: function() {
-                  ifActiveProject($state, 'model.manageResponses', activeProject);
+                  ifActiveProject($state, 'model.manageProjectSet', activeProject);
                 },
                 state: {
                   name: 'model.view'
