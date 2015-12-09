@@ -70,9 +70,9 @@ def data2popsize(dataarray, data, keys):
 
 
 
-def data2timepar(parname, dataarray, data, keys):
+def data2timepar(parname, dataarray, data, keys, by=None):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=parname, m=1, y=odict(), t=odict()) # Create structure
+    par = Timepar(name=parname, m=1, y=odict(), t=odict(), by=None) # Create structure
     par.name = parname # Store the name of the parameter
     par.m = 1 # Set metaparameter to 1
     par.y = odict() # Initialize array for holding parameters
@@ -189,7 +189,8 @@ def makeparsfromdata(data, verbose=2):
             keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['female'][i]]
         elif parname=='circum':
             keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['male'][i]]
-        elif nrows==1: 
+        elif nrows==1:
+            print('WARNING, should change this')
             keys = totkey
         elif nrows==len(popkeys): 
             keys = popkeys
@@ -203,6 +204,7 @@ def makeparsfromdata(data, verbose=2):
             for key in missingkeys:
                 pars[parname].y[key] = array([0])
                 pars[parname].t[key] = array([0])
+    
     
 
     ## WARNING, not sure what to do with these
@@ -253,13 +255,14 @@ def popgrow(exppars, tvec):
 class Timepar(object):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, t=None, y=None, m=1):
+    def __init__(self, name=None, t=None, y=None, m=1, by=None):
         if t is None: t = odict()
         if y is None: y = odict()
         self.name = name
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
+        self.by = by # Whether it's total, by pop, or by partnership
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -299,6 +302,7 @@ class Parameterset(object):
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.popkeys = [] # List of populations
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -314,6 +318,7 @@ class Parameterset(object):
     
     def makeparsfromdata(self, data, verbose=2):
         self.pars.append(makeparsfromdata(data, verbose=verbose))
+        self.popkeys = dcp(self.pars[-1].popkeys) # Store population keys
         return None
 
 
@@ -327,7 +332,7 @@ class Parameterset(object):
         simpars = odict() # Used to be called M
         if tvec is not None: simpars['tvec'] = tvec
         else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
-        popkeys = dcp(pars['popkeys'])
+        popkeys = dcp(self.popkeys)
         tot = ['tot'] # WARNING, this is kludgy
         simpars['popkeys'] = popkeys
         npts = len(simpars['tvec']) # Number of time points
