@@ -5,7 +5,7 @@ from sqlalchemy.orm import deferred
 
 class UserDb(db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
@@ -35,7 +35,7 @@ class ProjectDb(db.Model):
     __tablename__ = 'projects'
     id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     name = db.Column(db.String(60))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     datastart = db.Column(db.Integer)
     dataend = db.Column(db.Integer)
     populations = db.Column(JSON)
