@@ -1,7 +1,7 @@
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-global plotfig, check, button
-plotfig = None
+global plotfig, check, button # Without these, interactivity doesn't work
+plotfig = None # Initialize plot figure
 
 def gui(results):
     '''
@@ -11,8 +11,10 @@ def gui(results):
     and when "Update" is clicked, will clear the contents of the plotting window and replot.
     
     Usage:
+        gui(results)
     
-    gui(results)
+    Warning: the plots won't resize automatically if the figure is resized, but if you click
+    "Update", then they will.    
     
     Version: 2015dec08 by cliffk
     '''
@@ -71,9 +73,11 @@ def gui(results):
     nboxes = len(checkboxes)
     
     ## Set up control panel
-    figure(figsize=(4,8))
+    figure(figsize=(5,8))
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
     buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
-    check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
+    defaultchecks = [True]+[False]*(nboxes-1)
+    check = CheckButtons(checkboxaxes, checkboxes, defaultchecks)
     button = Button(buttonaxes, 'Update') 
     button.on_clicked(update) # Update figure if button is clicked
+    update(None) # Plot initially
