@@ -1,62 +1,62 @@
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ResponseController', function ($scope, $http, modalService, $timeout) {
+  module.controller('ProjectSetController', function ($scope, $http, projectSetModalService, $timeout, modalService) {
 
-    const defaultResponse = {name:'Default'};
+    const defaultProjectSet = {name:'Default'};
     $scope.state = {
-      responses: [defaultResponse],
-      activeResponse: defaultResponse
+      projectSetList: [defaultProjectSet],
+      activeProjectSet: defaultProjectSet
     };
 
-    $scope.addResponse = function () {
+    $scope.addProjectSet = function () {
       var add = function (name) {
-        const addedResponse = {name:name};
-        $scope.state.responses[$scope.state.responses.length] = addedResponse;
-        $scope.state.activeResponse = addedResponse;
+        const addedProjectSet = {name:name};
+        $scope.state.projectSetList[$scope.state.projectSetList.length] = addedProjectSet;
+        $scope.state.activeProjectSet = addedProjectSet;
       };
 
-      modalService.addResponse( add , $scope.state.responses);
+      projectSetModalService.addProjectSet( add , $scope.state.projectSetList);
     };
 
-    $scope.editResponse = function () {
-      // This removing existing enter from array of responses and re-adding it with updated name was needed,
+    $scope.editProjectSet = function () {
+      // This removing existing enter from array of projectSetList and re-adding it with updated name was needed,
       // coz it turns out that angular does not refreshes the select unless there is change in its size.
       // https://github.com/angular/angular.js/issues/10939
       var edit = function (name) {
-        $scope.state.responses = _.filter($scope.state.responses, function(response) {
-          return response.name !== $scope.state.activeResponse.name;
+        $scope.state.projectSetList = _.filter($scope.state.projectSetList, function(projectSet) {
+          return projectSet.name !== $scope.state.activeProjectSet.name;
         });
         $timeout(function(){
-          $scope.state.activeResponse.name = name;
-          $scope.state.responses[$scope.state.responses.length] = $scope.state.activeResponse;
+          $scope.state.activeProjectSet.name = name;
+          $scope.state.projectSetList[$scope.state.projectSetList.length] = $scope.state.activeProjectSet;
         });
       };
-      modalService.editResponse($scope.state.activeResponse.name, edit , $scope.state.responses);
+      projectSetModalService.editProjectSet($scope.state.activeProjectSet.name, edit , $scope.state.projectSetList);
     };
 
-    $scope.deleteResponse = function () {
+    $scope.deleteProjectSet = function () {
       var remove = function() {
-        $scope.state.responses = _.filter($scope.state.responses, function(response) {
-          return response.name !== $scope.state.activeResponse.name;
+        $scope.state.projectSetList = _.filter($scope.state.projectSetList, function(projectSet) {
+          return projectSet.name !== $scope.state.activeProjectSet.name;
         });
-        $scope.state.activeResponse = $scope.state.responses ? $scope.state.responses[0] : void 0;
+        $scope.state.activeProjectSet = $scope.state.projectSetList ? $scope.state.projectSetList[0] : void 0;
       };
       modalService.confirm(
-        function(){remove()}, function(){}, 'Yes, remove this response', 'No',
-        'Are you sure you want to permanently remove response "' + $scope.state.activeResponse.name + '"?',
-        'Remove response'
+        function(){remove()}, function(){}, 'Yes, remove this projectSet', 'No',
+        'Are you sure you want to permanently remove projectSet "' + $scope.state.activeProjectSet.name + '"?',
+        'Remove projectSet'
       );
     };
 
-    $scope.copyResponse = function () {
+    $scope.copyProjectSet = function () {
       // TODO: program details to also be copied
       var copy = function (name) {
-        const copiedResponse = {name:name};
-        $scope.state.responses[$scope.state.responses.length] = copiedResponse;
-        $scope.state.activeResponse = copiedResponse;
+        const copiedProjectSet = {name:name};
+        $scope.state.projectSetList[$scope.state.projectSetList.length] = copiedProjectSet;
+        $scope.state.activeProjectSet = copiedProjectSet;
       };
-      modalService.copyResponse($scope.state.activeResponse.name, copy.bind(this) , $scope.state.responses);
+      projectSetModalService.copyProjectSet($scope.state.activeProjectSet.name, copy.bind(this) , $scope.state.projectSetList);
     };
 
     $scope.categories = categories;

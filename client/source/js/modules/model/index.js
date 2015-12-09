@@ -1,5 +1,5 @@
 define([
-  './response-ctrl',
+  './project-set/index',
   './calibration-ctrl',
   './calibration-service',
   './cost-coverage-ctrl',

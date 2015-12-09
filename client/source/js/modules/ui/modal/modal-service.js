@@ -137,7 +137,7 @@ define([
           };
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-add-response.html',
+            templateUrl: 'js/modules/ui/modal/modal-add-project-set.html',
             controller: ['$scope', '$document', function ($scope, $document) {
 
               $scope.createResponse = function (name) {
@@ -174,7 +174,7 @@ define([
           };
 
           var modalInstance = $modal.open({
-            templateUrl: 'js/modules/ui/modal/modal-edit-response.html',
+            templateUrl: 'js/modules/ui/modal/modal-edit-project-set.html',
             controller: ['$scope', '$document', function ($scope, $document) {
 
               $scope.title = title || 'Edit Response';

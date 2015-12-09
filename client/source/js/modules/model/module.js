@@ -48,8 +48,8 @@ define([
         })
         .state('model.manageResponses', {
           url: '/programs',
-          templateUrl: 'js/modules/model/response.html',
-          controller: 'ResponseController'
+          templateUrl: 'js/modules/model/project-set/project-set.html',
+          controller: 'ProjectSetController'
         })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',

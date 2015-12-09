@@ -1,0 +1,22 @@
+<form name="addProjectSetForm" ng-submit="createProjectSet(name)" >
+  <div class="modal-header">
+    <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
+    <h4 class="modal-title">Create project set</h4>
+  </div>
+  <div class="modal-body grid" style="margin-bottom: 20px">
+
+    <div class="++3 6">
+      <p style="margin-top: 0">Please choose a name for the new project set.</p>
+    </div>
+
+    <div class="++3 6" style="padding-bottom: 20px">
+      <label for="prompt-input">Project set name</label>
+      <input class="txbox" id="prompt-input" name="projectSetName" ng-model="name" required style="margin-top: 6px">
+      <div class="error-hint" ng-show="isUniqueName(name, addProjectSetForm)"> A project set with this name already exists, please choose a different one. </div>
+    </div>
+  </div>
+  <div class="modal-footer text-center">
+    <button type="button" class="btn __white" ng-click="$close()">Cancel</button>
+    <button type="submit" class="btn" ng-disabled="addProjectSetForm.$invalid">Save</button>
+  </div>
+</form>

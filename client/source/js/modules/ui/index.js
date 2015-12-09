@@ -100,7 +100,7 @@ define([
             ]
           },
           {
-            title: 'Create/manage responses',
+            title: 'Create/manage project set',
             id: 'manage-responses',
             matchingState: 'model',
             subitems: [

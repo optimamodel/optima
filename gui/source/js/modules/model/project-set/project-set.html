@@ -1,20 +1,20 @@
 <div class="grid">
   <div class="3">
-    <label for="response-selection">Select a saved response:</label>
+    <label for="projectSet-selection">Select a saved project set:</label>
   </div>
   <div style="display: flex;justify-content: flex-start;">
-    <select id="response-selection" name="response-selection" class="txbox"
-            ng-model="state.activeResponseName"
+    <select id="projectSet-selection" name="projectSet-selection" class="txbox"
+            ng-model="state.activeProjectSetName"
             ng-change=""
             style="width: 20%;">
-      <option ng-repeat="res in state.responses"
-              ng-selected="{{res.name === state.activeResponse.name}}"
+      <option ng-repeat="res in state.projectSetList"
+              ng-selected="{{res.name === state.activeProjectSet.name}}"
               value="{{::res.name}}">{{::res.name}}</option>
     </select>
-    <button ng-click="addResponse()" type="button" class="btn" style="margin-left:2%">New response</button>
-    <button ng-click="editResponse()" type="button" class="btn" style="margin-left:2%">Edit response</button>
-    <button ng-click="deleteResponse()" type="button" class="btn" style="margin-left:2%">Delete response</button>
-    <button ng-click="copyResponse()" type="button" class="btn" style="margin-left:2%">Copy response</button>
+    <button ng-click="addProjectSet()" type="button" class="btn" style="margin-left:2%">New project set</button>
+    <button ng-click="editProjectSet()" type="button" class="btn" style="margin-left:2%">Edit project set</button>
+    <button ng-click="deleteProjectSet()" type="button" class="btn" style="margin-left:2%">Delete project set</button>
+    <button ng-click="copyProjectSet()" type="button" class="btn" style="margin-left:2%">Copy project set</button>
   </div>
   <div class="6">
     <h1>Manage programs</h1>
