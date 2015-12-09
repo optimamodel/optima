@@ -1,7 +1,17 @@
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-global controlfig, plotfig
-controlfig, plotfig = None, None
+#global controlfig, plotfig
+#controlfig, plotfig = None, None
+controlfig = None
+plotfig = None
+
+
+
+print('Running GUI test...')
+from optima import Project
+
+P = Project(spreadsheet='test.xlsx')
+results = P.runsim('default')
 
 #def gui(results):
 if 1:
@@ -17,7 +27,7 @@ if 1:
     
     Version: 2015dec08 by cliffk
     '''
-    global controlfig, plotfig
+#    global controlfig, plotfig
     
     
     def getchecked(check):
@@ -29,7 +39,7 @@ if 1:
     
     def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
         ''' Add a plot to an existing figure '''
-        plotfig._axstack.add(plotfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+        thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
         thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
         return None
         
