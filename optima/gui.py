@@ -1,6 +1,6 @@
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-#global controlfig, plotfig
+global controlfig, plotfig
 #controlfig, plotfig = None, None
 controlfig = None
 plotfig = None
@@ -13,8 +13,8 @@ from optima import Project
 P = Project(spreadsheet='test.xlsx')
 results = P.runsim('default')
 
-#def gui(results):
-if 1:
+def gui(results):
+#if 1:
     '''
     GUI
     
@@ -88,3 +88,5 @@ if 1:
     check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
     button = Button(buttonaxes, 'Update') 
     button.on_clicked(update) # Update figure if button is clicked
+
+gui(results)
