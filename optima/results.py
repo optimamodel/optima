@@ -58,7 +58,6 @@ class Results(object):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = objectid(self)
-        output += '\n'
         output += '      Project name: %s\n'    % (self.project.name if self.project is not None else 'N/A')
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '              UUID: %s\n'    % self.uuid

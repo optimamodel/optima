@@ -301,7 +301,6 @@ class Parameterset(object):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
-        output += '\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)

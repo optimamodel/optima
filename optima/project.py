@@ -77,7 +77,6 @@ class Project(object):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = objectid(self)
-        output += '\n'
         output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
         output += '\n'

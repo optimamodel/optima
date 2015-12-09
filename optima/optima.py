@@ -19,17 +19,17 @@ from copy import deepcopy as dcp
 ## Load non-Optima-specific custom functions
 from ballsd import *
 from colortools import *
-from utils import *
+from utils import * # odict class
 
 ## Load Optima functions and classes
 from settings import *
 from loadspreadsheet import *
 from makesimpars import *
 from makespreadsheet import *
-from parameters import *
-from results import *
+from parameters import * # Parameter and Parameterset classes
+from results import * # Result and Results classes
 from model import *
 from programs import *
-from project import *
+from project import * # Project class
 from makeplots import *
 from gui import *
