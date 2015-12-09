@@ -629,7 +629,7 @@ class odict(OrderedDict):
             else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
             if type(key.stop) is int: stopind = key.stop
             elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
-            elif key.stop is None: stopind = len(self)-1
+            elif key.stop is None: stopind = len(self)
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             return array([self.__getitem__(i) for i in range(startind,stopind)])
@@ -654,7 +654,7 @@ class odict(OrderedDict):
             else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
             if type(key.stop) is int: stopind = key.stop
             elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
-            elif key.stop is None: stopind = len(self)-1
+            elif key.stop is None: stopind = len(self)
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             enumerator = enumerate(range(startind,stopind))

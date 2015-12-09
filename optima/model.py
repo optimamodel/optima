@@ -134,8 +134,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     
     # Force of infection metaparameter
-    Fforce = simpars['force']
-    Finhomo = simpars['inhomo']
+    force = simpars['force']
+    inhomopar = simpars['inhomo'] # WARNING, name is not consistent -- should be "inhomo"
     
     # Proportion of PLHIV who are aware of their status
     propaware = simpars['propaware']
@@ -182,7 +182,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
-            c = Finhomo[pop]
+            c = inhomopar[pop]
             thisprev = sum(people[1:,pop,t]) / allpeople[pop,t] # Probably a better way of doing this
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
@@ -408,7 +408,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * Fforce * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
+        newinfections = forceinfvec * force * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
     
         # Initalise / reset arrays
         dU = []; dD = []; dT = []; # Reset differences
