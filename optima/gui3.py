@@ -20,7 +20,7 @@ results = P.runsim('default')
 
 
 #def gui(results):
-from pylab import subplots, subplots_adjust, axes, ceil, sqrt, array, figure
+from pylab import subplots, subplots_adjust, axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close
 from matplotlib.widgets import CheckButtons, Button
 
 # Define options for selection
@@ -41,6 +41,7 @@ button = Button(buttonaxes, 'Update')
 
 # Set up results panel
 plotfig = figure()
+currentaxes = []
 
 
 def getchecked(check):
@@ -53,6 +54,7 @@ def getchecked(check):
 
 def update(event):
     plotfig.clear() # Clear figure
+    currentaxes = []
     
     ischecked = getchecked(check)
     toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
@@ -64,20 +66,24 @@ def update(event):
     
     # Do plotting
     if nplots>0: # Don't do anything if no plots
+        wasinteractive = isinteractive()
+        if wasinteractive: ioff()
         width,height = plotfig.get_size_inches()
-        tmpfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
-        close(tmpfig) # Close unneeded figure
-        if wasinteractive: ion()
+#        tmpfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
+#        close(tmpfig) # Close unneeded figure
+        
 #        for fa in array(fakeaxes).flatten(): fig._axstack.remove(fa) # Remove placeholder axes
         
         # Actually create plots
         plots = results.makeplots(toplot, figsize=(width, height))
 
-        for p in range(len(plots)):
-            thisplot = plots[p].axes[0]
-            plotfig._axstack.add(plotfig._make_key(thisplot), thisplot)
-            thisplot.change_geometry(nrows,ncols,p+1)
+#        for p in range(len(plots)):
+#            thisplot = plots[p].axes[0]
+#            plotfig._axstack.add(plotfig._make_key(thisplot), thisplot)
+#            thisplot.change_geometry(nrows,ncols,p+1)
 #            currentaxes.append(thisplot)
+        if wasinteractive: ion()
+        show()
 
 # Update figure if button is clicked
 button.on_clicked(update)
