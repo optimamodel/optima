@@ -23,23 +23,18 @@ tests = [
 ##############################################################################
 
 from optima import tic, toc, blank, pd, odict # analysis:ignore
-from copy import deepcopy
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
     
-
-
-
-
-
 blank()
 print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
+doplot = False
 
 
 ##############################################################################
@@ -145,12 +140,13 @@ if 'makeprograms' in tests:
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace
     HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
+    HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
 
     # NB, if you want to evaluate it for a particular population size, can also do...
     HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
 
     # 12. Plot cost-coverage function
-    HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
+    if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
     print('Running make programs set test...')
     # Different ways to initialise
@@ -158,8 +154,7 @@ if 'makeprograms' in tests:
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
 
-    # Run additional tests if asked
-    # Testing methods of program class
+    # Testing methods of programset class
     # 1. Adding a program
     R.addprograms({'ART':ART})
 
@@ -188,7 +183,15 @@ if 'makeprograms' in tests:
             'SBCC':array([1e6,1.2e6,1.5e6]),
             'MGT':array([2e5,3e5,3e5])}
             
+    coverage={'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
+              'MGT': None,
+              'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])}
+            
     R.getprogcoverage(budget=budget,
+                      t=[2015,2016,2020],
+                      parset=P.parsets['default'])
+                        
+    R.getprogbudget(coverage=coverage,
                       t=[2015,2016,2020],
                       parset=P.parsets['default'])
                         
@@ -233,7 +236,17 @@ if 'makeprograms' in tests:
     # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
     R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
-    # 12. Get a parset of parameter values corresponding to a vector of program allocations
+    # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
+    outcomes_budget = R.getoutcomes(forwhat=budget,
+                                t=[2015,2016,2020],
+                                parset=P.parsets['default'],
+                                forwhattype='budget')
+    outcomes_coverage = R.getoutcomes(forwhat=coverage,
+                                t=[2015,2016,2020],
+                                parset=P.parsets['default'],
+                                forwhattype='coverage')
+
+    # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
     progparset1 = R.getparset(forwhat=budget,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
@@ -241,17 +254,18 @@ if 'makeprograms' in tests:
                   newparsetname='progparset1',
                   forwhattype='budget')
 
-    # 13. Plot cost-coverage curves for all programs
-    R.plotallcoverage(t=[2013,2015],
+    # 14. Plot cost-coverage curves for all programs
+    if doplot: R.plotallcoverage(t=[2013,2015],
                       parset=P.parsets['default'],
                       xupperlim=1e8)
 
-    # 14. Example use of program scenarios
-    P.parsets['progparset1'] = progparset1
-    results0 = P.runsim('default')
-    results1 = P.runsim('progparset1')
-    from plotpeople import plotpeople
-    plotpeople([results0, results1])
+    # 15. Example use of program scenarios
+    if doplot:
+        P.parsets['progparset1'] = progparset1
+        results0 = P.runsim('default')
+        results1 = P.runsim('progparset1')
+        from plotpeople import plotpeople
+        plotpeople([results0, results1])
 
     done(t)
 

@@ -50,57 +50,47 @@ if 'standardscen' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results1 = P.runsim('default')
-    
     
     ## Define scenarios
     scenlist = [
         {'name': 'Current conditions', 'pars': []},
-         {'name': 'less fsw condom',
+        {'name': 'Less casual condom use in men',
           'pars': [{'endval': 0.1,
             'endyear': 2015,
-            'names': ['condom', 'com'],
+            'name': 'condomcas',
             'pops': 0,
             'startval': 0.1,
             'startyear': 2005}]},
-         {'name': 'less reg cond',
+         {'name': 'Less regular condom use',
           'pars': [{'endval': 0.01,
             'endyear': 2015,
-            'names': ['condom', 'reg'],
+            'name': 'condomreg',
             'pops': 11,
             'startval': 0.01,
             'startyear': 2005}]},
-         {'name': 'more comm acts',
-          'pars': [{'endval': 1000.0000000000001,
-            'endyear': 2015,
-            'names': ['numacts', 'com'],
-            'pops': 0,
-            'startval': 1000.0000000000001,
-            'startyear': 2005}]},
-         {'name': 'reg acts',
-          'pars': [{'endval': 0,
-            'endyear': 2015,
-            'names': ['numacts', 'reg'],
-            'pops': 11,
-            'startval': 200,
-            'startyear': 2005}]},
-         {'name': 'discharge-all',
+#         {'name': 'More casual acts',
+#          'pars': [{'endval': 100.,
+#            'endyear': 2015,
+#            'name': 'totalactscas',
+#            'pops': 0,
+#            'startval': 100.,
+#            'startyear': 2005}]},
+         {'name': 'Increased STI prevalence in women',
           'pars': [{'endval': 0.5,
             'endyear': 2015,
-            'names': ['stiprevdis'],
-            'pops': 11,
+            'name': 'stiprev',
+            'pops': 1,
             'startval': 0.5,
             'startyear': 2005}]}
         ]
     
-    
-    
     P.copyparset('default', 'scentest')
-    results2 = P.runsim('scentest')
-    
-    from gui import gui
+    from scenarios import runscenarios
+    allresults = runscenarios(P, P.parsets['default'], scenlist=scenlist)
+     
+#    from gui import gui
+#    gui([results1, results2])
     from plotpeople import plotpeople
-    gui([results1, results2])
-    plotpeople([results1, results2])
+    plotpeople(allresults)
 
     done(t)

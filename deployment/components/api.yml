@@ -10,7 +10,7 @@
       - update
 
   - name: API | Copy API configuration
-    template: src={{root_dir}}/components/templates/api-config.py.j2 dest={{install_dir_api}}/src/config.py backup=yes
+    template: src={{root_dir}}/components/templates/api-config.py.j2 dest={{install_dir_api}}/config.py backup=yes
     tags:
       - api
       - update
