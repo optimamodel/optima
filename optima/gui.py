@@ -8,11 +8,11 @@ plotfig = None
 ion()
 
 
-print('Running GUI test...')
-from optima import Project
-
-P = Project(spreadsheet='test.xlsx')
-results = P.runsim('default')
+#print('Running GUI test...')
+#from optima import Project
+#
+#P = Project(spreadsheet='test.xlsx')
+#results = P.runsim('default')
 
 def gui(results):
     
@@ -91,4 +91,4 @@ def gui(results):
     button = Button(buttonaxes, 'Update') 
     button.on_clicked(update) # Update figure if button is clicked
 
-gui(results)
+#gui(results)
