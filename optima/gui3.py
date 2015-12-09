@@ -20,8 +20,9 @@ results = P.runsim('default')
 
 
 #def gui(results):
-from pylab import subplots, subplots_adjust, axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close
+from pylab import subplots, subplots_adjust, axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
+global plotfig
 
 # Define options for selection
 epikeys = results.main.keys()
@@ -40,8 +41,7 @@ check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
 button = Button(buttonaxes, 'Update') 
 
 # Set up results panel
-#plotfig = figure()
-currentaxes = []
+plotfig = None
 
 
 def getchecked(check):
@@ -53,8 +53,14 @@ def getchecked(check):
 
 
 def update(event):
-#    plotfig.clear() # Clear figure
-    currentaxes = []
+    global plotfig
+    
+    # If figure exists, get size, then close it
+    try:
+        width,height = plotfig.get_size_inches()
+        close(plotfig)
+    except:
+        width,height = 8,6
     
     ischecked = getchecked(check)
     toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
@@ -68,22 +74,19 @@ def update(event):
     if nplots>0: # Don't do anything if no plots
         wasinteractive = isinteractive()
         if wasinteractive: ioff()
-#        width,height = plotfig.get_size_inches()
-        width = 8
-        height = 6
-        tmpfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(height, width)) # Create figure with correct number of plots
-#        close(tmpfig) # Close unneeded figure
+        plotfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(width, height)) # Create figure with correct number of plots
+#        close(plotfig) # Close unneeded figure
         
-        for fa in array(fakeaxes).flatten(): tmpfig._axstack.remove(fa) # Remove placeholder axes
+        for fa in array(fakeaxes).flatten(): plotfig._axstack.remove(fa) # Remove placeholder axes
         
         # Actually create plots
         plots = results.makeplots(toplot, figsize=(width, height))
 
         for p in range(len(plots)):
             thisplot = plots[p].axes[0]
-            tmpfig._axstack.add(tmpfig._make_key(thisplot), thisplot)
+            plotfig._axstack.add(plotfig._make_key(thisplot), thisplot)
             thisplot.change_geometry(nrows,ncols,p+1)
-            currentaxes.append(thisplot)
+#            currentaxes.append(thisplot)
         if wasinteractive: ion()
         show()
 
