@@ -66,19 +66,28 @@ def gui(results):
     
     ## Define options for selection
     epikeys = results.main.keys()
+    epinames = [thing.name for thing in results.main.values()]
     episubkeys = ['tot','pops'] # Would be best not to hard-code this...
+    episubnames = ['total', 'by population']
     checkboxes = []
+    checkboxnames = []
     for key in epikeys:
         for subkey in episubkeys:
             checkboxes.append(key+'-'+subkey)
+    for name in epinames:
+        for subname in episubnames:
+            checkboxnames.append(name+' -- '+subname)
     nboxes = len(checkboxes)
     
     ## Set up control panel
-    figure(figsize=(5,8))
+    figure(figsize=(7,8))
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
     buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
     defaultchecks = [True]+[False]*(nboxes-1)
-    check = CheckButtons(checkboxaxes, checkboxes, defaultchecks)
+    check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks)
+    for label in check.labels:
+        thispos = label.get_position()
+        label.set_position((thispos[0]*0.5,thispos[1]))
     button = Button(buttonaxes, 'Update') 
     button.on_clicked(update) # Update figure if button is clicked
     update(None) # Plot initially
