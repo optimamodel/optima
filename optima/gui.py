@@ -5,6 +5,7 @@ global controlfig, plotfig
 controlfig = None
 plotfig = None
 
+ion()
 
 
 print('Running GUI test...')
@@ -14,6 +15,7 @@ P = Project(spreadsheet='test.xlsx')
 results = P.runsim('default')
 
 def gui(results):
+    
 #if 1:
     '''
     GUI
