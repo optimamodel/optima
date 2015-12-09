@@ -13,7 +13,8 @@ from server.webapp.utils import verify_admin_request
 from server.webapp.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+from server.webapp.dbmodels import (ProjectDb, WorkingProjectDb, ProjectDataDb, 
+    WorkLogDb, ResultsDb, ParsetsDb)
 import datetime
 import dateutil.tz
 from datetime import datetime
@@ -138,7 +139,7 @@ def create_project(): # pylint: disable=too-many-locals
     """
 
     # TODO deprecate project name from URI
-    from optima.makespreadsheet import default_datastart, default_dataend, defaultpops, makespreadsheet
+    from optima.makespreadsheet import default_datastart, default_dataend, makespreadsheet
     from dataio import tojson, templatepath
     from optima.project import version
     raw_data = json.loads(request.data)
@@ -157,7 +158,7 @@ def create_project(): # pylint: disable=too-many-locals
     makeproject_args = {"projectname":project_name, "savetofile":False}
     makeproject_args['datastart'] = data.get('datastart', default_datastart)
     makeproject_args['dataend'] = data.get('dataend', default_dataend)
-    makeproject_args['pops'] = data.get('populations', defaultpops)
+    makeproject_args['pops'] = data.get('populations')
     current_app.logger.debug("createProject(%s)" % makeproject_args)
 
     # create new project
@@ -447,11 +448,14 @@ def deleteProject(project_id):
     if project_entry is not None:
         user_id = project_entry.user_id
         project_name = project_entry.name
+        str_project_id = str(project_entry.id)
         #delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=str(project_entry.id)).delete()
-        db.session.query(ProjectDataDb).filter_by(id=str(project_entry.id)).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=str(project_entry.id)).delete()
-        db.session.query(ProjectDb).filter_by(id=str(project_entry.id)).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete()
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
     delete_spreadsheet(project_name)
@@ -734,6 +738,7 @@ def getData(project_id):
 @report_exception('Unable to copy uploaded data')
 def createProjectAndSetData():
     """ Creates a project & uploads data file to update project model. """
+    from optima.project import version
     user_id = current_user.id
     project_name = request.values.get('name')
     if not project_name:
@@ -751,13 +756,34 @@ def createProjectAndSetData():
         reply = {'reason': 'File type of %s is not accepted!' % source_filename}
         return jsonify(reply), 500
 
-    data = json.load(uploaded_file)
+    from optima.utils import load
+    new_project = load(uploaded_file)
 
-    project_entry = ProjectDb(project_name, user_id, data['G']['datastart'], \
-        data['G']['dataend'], \
-        data['G']['inputprograms'], data['G']['inputpopulations'])
-    project_entry.model = data
-    getPopsAndProgsFromModel(project_entry, trustInputMetadata = True)
+    if new_project.data:
+        datastart = int(new_project.data['years'][0])
+        dataend = int(new_project.data['years'][-1])
+        pops = []
+        project_pops = new_project.data['pops']
+        print "pops", project_pops
+        for i in range(len(project_pops['short'])):
+            print "i", i
+            new_pop = {'name': project_pops['long'][i], 'short_name': project_pops['short'][i], 
+            'female': project_pops['female'][i], 'male':project_pops['male'][i], 
+            'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])}
+            pops.append(new_pop)
+    else:
+        from optima.makespreadsheet import default_datastart, default_dataend
+        datastart = default_datastart
+        dataend = default_dataend
+        pops = {}
+
+    project_entry = ProjectDb(project_name, user_id, datastart,
+        dataend,
+        pops,
+        version=version)
+
+    project_entry.restore(new_project)
+    project_entry.name = project_name
 
     db.session.add(project_entry)
     db.session.commit()
@@ -792,19 +818,19 @@ def setData(project_id):
         reply = {'reason': 'Project %s does not exist.' % project_id}
         return jsonify(reply), 500
 
-    data = json.load(uploaded_file)
-    data['G']['projectfilename'] = project_entry.model['G']['projectfilename']
-    data['G']['workbookname'] = project_entry.model['G']['workbookname']
-    data['G']['projectname'] = project_entry.model['G']['projectname']
-    project_entry.model = data
-    project_name = project_entry.name
-    getPopsAndProgsFromModel(project_entry, trustInputMetadata = True)
-
+    from optima.utils import load
+    new_project = load(uploaded_file)
+    project_entry.restore(new_project)
     db.session.add(project_entry)
+
     db.session.commit()
 
-    reply = {'file': source_filename, 'result': 'Project %s is updated' % project_name}
+    reply = {
+        'file': source_filename,
+        'result': 'Project %s is updated' % project_entry.name,
+    }
     return jsonify(reply)
+
 
 @project.route('/data/migrate', methods=['POST'])
 @verify_admin_request

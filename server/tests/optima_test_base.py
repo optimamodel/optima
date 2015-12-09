@@ -57,10 +57,20 @@ class OptimaTestCase(unittest.TestCase):
         response = self.client.post('/api/user/create', data = create_data)
         return response
 
+    def get_any_user_id(self,admin=False):
+        from server.webapp.dbmodels import UserDb
+        user = UserDb.query.filter(UserDb.is_admin == admin).first()
+        return str(user.id)
+
+    def get_user_id_by_email(self, email):
+        from server.webapp.dbmodels import UserDb
+        user = UserDb.query.filter(UserDb.email == email).first()
+        return str(user.id)
+
     def create_project(self, name):
         from server.webapp.dbmodels import ProjectDb
         """ Helper method to create project and save it to the database """
-        project = ProjectDb(name, 1, '2000', '2010', OptimaTestCase.default_pops, '{}')
+        project = ProjectDb(name, self.get_any_user_id(), '2000', '2010', OptimaTestCase.default_pops, '{}')
         db.session.add(project)
         db.session.flush()
         id = project.id

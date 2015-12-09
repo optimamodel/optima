@@ -89,9 +89,10 @@ class Project(object):
         return None
     
     
-    def __str__(self):
+    def __repr__(self):
         ''' Print out useful information when called '''
-        output = '\n'
+        output = '<%s.%s at %s>' % (self.__class__.__module__, self.__class__.__name__, hex(id(self)))
+        output += '\n'
         output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
         output += '\n'

@@ -12,15 +12,13 @@ app.config.from_pyfile('config.py')
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-if __package__ is None:
-    import sys
-    from os import path
-    new_path = path.dirname( path.dirname( path.abspath(__file__) ) ) 
+import sys
+from os import path
+new_path = path.dirname( path.dirname( path.abspath(__file__) ) ) 
+
+if new_path not in sys.path:
     print "appending to sys.path: %s" % new_path
-    sys.path.append( new_path)
-else:
-    from os import path
-    print "__package__", __package__, "__name__", __name__,  path.abspath(__file__)
+    sys.path.append(new_path)
 
 import server.webapp.dbconn
 server.webapp.dbconn.db = SQLAlchemy(app)

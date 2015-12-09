@@ -6,7 +6,7 @@
 OptimaSpreadsheet and related classes
 Created by: SSQ
 
-Version: 2015sep04 by cliffk
+Version: 2015dec08 by anachesa
 """
 
 import xlsxwriter
@@ -14,41 +14,11 @@ from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
 from utils import printv
 
-defaultpops = [
- {'name': 'Female sex workers',
-  'short_name': 'FSW',
-  'client': False,
-  'female': True,
-  'injects': False,
-  'male': False,
-  'sexmen': True,
-  'sexwomen': False,
-  'sexworker': True,
-  },
- {'name': 'Clients of sex workers',
-  'short_name': 'Clients',
-  'client': True,
-  'female': False,
-  'injects': False,
-  'male': True,
-  'sexmen': False,
-  'sexwomen': True,
-  'sexworker': False,
-  }]
-
-defaultprogs = [
-{'name': 'Condom promotion and distribution',
-'short_name': 'Condoms',
-'category': 'Prevention',
- 'parameters': [{'value': {'pops': [''], 'signature': ['condom', 'reg']}},
- {'value': {'pops': [''], 'signature': ['condom', 'cas']}}],
- }]
-
 default_datastart = 2000
 default_dataend = 2020
 
-def makespreadsheet(filename='default.xlsx', 
-    pops=defaultpops, 
+def makespreadsheet(filename, 
+    pops, 
     datastart=default_datastart, 
     dataend=default_dataend, 
     verbose=2):
@@ -146,7 +116,7 @@ def make_populations_range(name, items):
     short_name, name, male, female, age_from, age_to
     (3x str, 2x bool, 2x int)
     """
-    column_names = ['Short name','Long name','Male','Female','AgeFrom', 'AgeTo']
+    column_names = ['Short name','Long name','Male','Female','Age from', 'Age to']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:

@@ -18,8 +18,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         } else {
           var fileName = $scope.projectParams.file.name;
           var fileExt = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
-          if (fileExt !== 'json') {
-            modalService.informError([{message: 'Please upload an Optima project file. This should have the file extension .json. ' +
+          if (fileExt !== 'prj') {
+            modalService.informError([{message: 'Please upload an Optima project file. This should have the file extension .prj. ' +
             'If you are trying to upload a spreadsheet, use the "Upload Optima spreadsheet" option instead.'}]);
             return false;
           } else {

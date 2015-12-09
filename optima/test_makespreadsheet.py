@@ -3,15 +3,12 @@ import unittest
 from makespreadsheet import OptimaSpreadsheet, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
 import xlsxwriter
 
-populations = [{"name": "Female sex workers", "short_name": "FSW", "female": True, "male": False, "AgeFrom": 15, "AgeTo": 49}, \
-    {"name": "Clients of sex workers", "short_name": "Clients", "female": False, "male": True, "AgeFrom": 15, "AgeTo": 49}, \
-    {"name": "Men who have sex with men", "short_name": "MSM", "female": False, "male": True, "AgeFrom": 15, "AgeTo": 49}, \
-    {"name": "Males who inject drugs", "short_name": "Male PWID", "female": False, "male": True, "AgeFrom": 15, "AgeTo": 49}, \
-    {"name": "Other males [enter age]", "short_name": "Other males", "female": False, "male": True, "AgeFrom": 0, "AgeTo": 0}, \
-    {"name": "Other females [enter age]", "short_name": "Other females", "female": True, "male": False, "AgeFrom": 0, "AgeTo": 0}]
-programs = [{'name':'Needle-syringe programs', 'short_name': 'NSP'}, \
-    {'name':'Opiate substition therapy', 'short_name': 'OST'}, \
-    {'name':'Programs for men who have sex with men', 'short_name': 'MSM programs'}]
+populations = [{"name": "Female sex workers", "short_name": "FSW", "female": True, "male": False, "are_from": 15, "age_to": 49}, \
+    {"name": "Clients of sex workers", "short_name": "Clients", "female": False, "male": True, "are_from": 15, "age_to": 49}, \
+    {"name": "Men who have sex with men", "short_name": "MSM", "female": False, "male": True, "are_from": 15, "age_to": 49}, \
+    {"name": "Males who inject drugs", "short_name": "Male PWID", "female": False, "male": True, "are_from": 15, "age_to": 49}, \
+    {"name": "Other males [enter age]", "short_name": "Other males", "female": False, "male": True, "are_from": 0, "age_to": 0}, \
+    {"name": "Other females [enter age]", "short_name": "Other females", "female": True, "male": False, "are_from": 0, "age_to": 0}]
 
 class TestOptimaSpreadsheet(unittest.TestCase):
 
