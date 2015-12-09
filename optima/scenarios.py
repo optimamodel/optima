@@ -43,16 +43,14 @@ def makescenarios(parset,scenlist,verbose=2):
                 thispar = thisparset.pars[sc][par['name']]
                 pops = range(npops) if par['pops'] > npops else [par['pops']]
                 for pop in pops:
-                    thist = thispar.t[pop]
-                    thisy = thispar.y[pop]
-                    if par['startyear'] < max(thist):
-                        thist = thist[thist < par['startyear']]
-                        thisy = thisy[thist < par['startyear']]
-                    thist = append(thist, par['startyear'])
-                    thisy = append(thisy, par['startval']) 
+                    if par['startyear'] < max(thispar.t[pop]):
+                        thispar.t[pop] = thispar.t[pop][thispar.t[pop] < par['startyear']]
+                        thispar.y[pop] = thispar.y[pop][thispar.t[pop] < par['startyear']]
+                    thispar.t[pop] = append(thispar.t[pop], par['startyear'])
+                    thispar.y[pop] = append(thispar.y[pop], par['startval']) 
                     if par['endyear']: # Add end year values if supplied
-                        thist = append(thist, par['endyear'])
-                        thisy = append(thisy, par['endval'])
+                        thispar.t[pop] = append(thispar.t[pop], par['endyear'])
+                        thispar.y[pop] = append(thispar.y[pop], par['endval'])
 
         scenparsets[scen['name']] = thisparset
 
