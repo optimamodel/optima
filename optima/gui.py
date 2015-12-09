@@ -72,9 +72,9 @@ def gui(results):
     nboxes = len(checkboxes)
     
     ## Set up control panel
-    controlfig = figure(figsize=(4,8))
-    checkboxaxes = controlfig.add_axes([0.1, 0.15, 0.8, 0.8])
-    buttonaxes = controlfig.add_axes([0.1, 0.05, 0.8, 0.08])
+    figure(figsize=(4,8))
+    checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
+    buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
     check = CheckButtons(checkboxaxes, checkboxes, [False]*nboxes)
     button = Button(buttonaxes, 'Update') 
     button.on_clicked(update) # Update figure if button is clicked
