@@ -72,7 +72,7 @@ def data2popsize(dataarray, data, keys):
 
 def data2timepar(parname, dataarray, data, keys):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar() # Create structure
+    par = Timepar(name=parname, m=1, y=odict(), t=odict()) # Create structure
     par.name = parname # Store the name of the parameter
     par.m = 1 # Set metaparameter to 1
     par.y = odict() # Initialize array for holding parameters
@@ -101,6 +101,53 @@ def dataindex(dataarray, index, keys):
 
 
 
+def gettotalacts(simpars, npts):
+        totalacts = dict()
+        
+        popsize = simpars['popsize']
+    
+        for act in ['reg', 'cas', 'com', 'inj']:
+            npops = len(simpars['popsize'][:,0]) # WARNING, what is this?
+            npop=len(popsize); # Number of populations
+            mixmatrix = simpars['part'+act]
+            symmetricmatrix=zeros((npop,npop));
+            for pop1 in range(npop):
+                for pop2 in range(npop):
+                    symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+    
+            a = zeros((npops,npops,npts))
+            numacts = simpars['numacts'+act]
+            for t in range(npts):
+                a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
+    
+            totalacts[act] = a
+        
+        return totalacts
+    
+    
+def reconcileacts(symmetricmatrix,popsize,popacts):
+
+    # Make sure the dimensions all agree
+    npop=len(popsize); # Number of populations
+    
+    for pop1 in range(npop):
+        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
+    
+    # Divide by the sum of the column to normalize the probability, then
+    # multiply by the number of acts and population size to get total number of
+    # acts
+    for pop1 in range(npop):
+        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
+    
+    # Reconcile different estimates of number of acts, which must balance
+    pshipacts=zeros((npop,npop));
+    for pop1 in range(npop):
+        for pop2 in range(npop):
+            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
+            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
+
+    return pshipacts
 
 
 
@@ -187,53 +234,7 @@ def makeparsfromdata(data, verbose=2):
 
 
 
-def gettotalacts(simpars, npts):
-        totalacts = dict()
-        
-        popsize = simpars['popsize']
-    
-        for act in ['reg', 'cas', 'com', 'inj']:
-            npops = len(simpars['popsize'][:,0]) # WARNING, what is this?
-            npop=len(popsize); # Number of populations
-            mixmatrix = simpars['part'+act]
-            symmetricmatrix=zeros((npop,npop));
-            for pop1 in range(npop):
-                for pop2 in range(npop):
-                    symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
-    
-            a = zeros((npops,npops,npts))
-            numacts = simpars['numacts'+act]
-            for t in range(npts):
-                a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
-    
-            totalacts[act] = a
-        
-        return totalacts
-    
-    
-def reconcileacts(symmetricmatrix,popsize,popacts):
 
-    # Make sure the dimensions all agree
-    npop=len(popsize); # Number of populations
-    
-    for pop1 in range(npop):
-        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
-    
-    # Divide by the sum of the column to normalize the probability, then
-    # multiply by the number of acts and population size to get total number of
-    # acts
-    for pop1 in range(npop):
-        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
-    
-    # Reconcile different estimates of number of acts, which must balance
-    pshipacts=zeros((npop,npop));
-    for pop1 in range(npop):
-        for pop2 in range(npop):
-            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
-            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
-
-    return pshipacts
 
 
 
@@ -252,9 +253,10 @@ def popgrow(exppars, tvec):
 class Timepar(object):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, t=None, y=None, m=1):
+    def __init__(self, name=None, t=None, y=None, m=1):
         if t is None: t = odict()
         if y is None: y = odict()
+        self.name = name
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -272,8 +274,9 @@ class Timepar(object):
 class Popsizepar(object):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, p=None, m=1):
+    def __init__(self, name=None, p=None, m=1):
         if p is None: p = odict()
+        self.name = name
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
     

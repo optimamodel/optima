@@ -624,11 +624,11 @@ class odict(OrderedDict):
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
             if type(key.start) is int: startind = key.start
-            elif type(key.start) is str: startind = self.keyind(key.start)
+            elif type(key.start) is str: startind = self.index(key.start)
             elif key.start is None: startind = 0
             else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
             if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.keyind(key.stop)
+            elif type(key.stop) is str: stopind = self.index(key.stop)
             elif key.stop is None: stopind = len(self)-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
@@ -649,11 +649,11 @@ class odict(OrderedDict):
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
             if type(key.start) is int: startind = key.start
-            elif type(key.start) is str: startind = self.keyind(key.start)
+            elif type(key.start) is str: startind = self.index(key.start)
             elif key.start is None: startind = 0
             else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
             if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.keyind(key.stop)
+            elif type(key.stop) is str: stopind = self.index(key.stop)
             elif key.stop is None: stopind = len(self)-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
@@ -661,14 +661,14 @@ class odict(OrderedDict):
             try:
                 slicelen = len(range(startind,stopind+1))
                 if len(value)==slicelen:
-                    for valind,keyind in enumerator: # +1 since otherwise confusing with names
-                        self.__setitem__(keyind, value[valind])
+                    for valind,index in enumerator: # +1 since otherwise confusing with names
+                        self.__setitem__(index, value[valind])
                 else: 
-                    for valind,keyind in enumerator: # +1 since otherwise confusing with names
-                        self.__setitem__(keyind, value)
+                    for valind,index in enumerator: # +1 since otherwise confusing with names
+                        self.__setitem__(index, value)
             except:
-                for valind,keyind in enumerator: # +1 since otherwise confusing with names
-                    self.__setitem__(keyind, value)
+                for valind,index in enumerator: # +1 since otherwise confusing with names
+                    self.__setitem__(index, value)
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
@@ -680,7 +680,7 @@ class odict(OrderedDict):
         ''' Print a meaningful representation of the odict '''
         return '\n'.join(["#%i: '%s': %s" % (i, self.keys()[i], self.values()[i]) for i in range(len(self))])
     
-    def keyind(self, item):
+    def index(self, item):
         ''' Return the index of a given key '''
         return self.keys().index(item)
     
@@ -698,16 +698,16 @@ class odict(OrderedDict):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
         if type(oldkey) in [int, float]: 
-            keyind = oldkey
-            keystr = self.keys()[keyind]
+            index = oldkey
+            keystr = self.keys()[index]
         elif type(oldkey) is str: 
-            keyind = self.keys().index(oldkey)
+            index = self.keys().index(oldkey)
             keystr = oldkey
         else: raise Exception('Key type not recognized: must be int or str')
         self.__setitem__(newkey, self.pop(keystr))
-        if keyind<nkeys-1:
-            for i in range(keyind+1, nkeys):
-                key = self.keys()[keyind]
+        if index<nkeys-1:
+            for i in range(index+1, nkeys):
+                key = self.keys()[index]
                 value = self.pop(key)
                 self.__setitem__(key, value)
         return None
