@@ -75,7 +75,6 @@ def update(event):
         wasinteractive = isinteractive()
         if wasinteractive: ioff()
         plotfig, fakeaxes = subplots(ncols, nrows, sharex='all', figsize=(width, height)) # Create figure with correct number of plots
-#        close(plotfig) # Close unneeded figure
         
         for fa in array(fakeaxes).flatten(): plotfig._axstack.remove(fa) # Remove placeholder axes
         
@@ -86,7 +85,6 @@ def update(event):
             thisplot = plots[p].axes[0]
             plotfig._axstack.add(plotfig._make_key(thisplot), thisplot)
             thisplot.change_geometry(nrows,ncols,p+1)
-#            currentaxes.append(thisplot)
         if wasinteractive: ion()
         show()
 
