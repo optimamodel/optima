@@ -729,7 +729,7 @@ def getData(project_id):
         server_filename = os.path.join(loaddir, filename)
 
         from optima.utils import save
-        save(new_project, server_filename)
+        save(server_filename, new_project)
 
         return helpers.send_from_directory(loaddir, filename)
 
