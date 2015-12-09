@@ -1,20 +1,5 @@
-'''
-This module defines the Project class, which is the main class used in Optima.
-The only other thing it contains is a loadprj() function, since that doesn't
-need to be in the class.
-
-Version: 2015nov02 by cliffk
-'''
-
-
-#######################################################################################################
-## Header -- imports and version
-#######################################################################################################
-
-from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
-
-## Specify the version, for the purposes of figuring out which version was used to create a project
-version = 2.0
+from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp, objectid
+version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
 #######################################################################################################
@@ -45,7 +30,7 @@ class Project(object):
         4. rename -- rename a structure in the list
         5. show -- show information on all items in the list(s)
     
-    Version: 2015nov19 by cliffk
+    Version: 2015dec09 by cliffk
     """
     
     
@@ -91,8 +76,7 @@ class Project(object):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = '<%s.%s at %s>' % (self.__class__.__module__, self.__class__.__name__, hex(id(self)))
-        output += '\n'
+        output = objectid(self)
         output += '============================================================\n'
         output += '      Project name: %s\n'    % self.name
         output += '\n'
@@ -255,11 +239,9 @@ class Project(object):
         results.derivedresults() # Generate derived results
         results.pars = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
         results.simpars = simpars # ...and sim parameters
-        results.settings = self.settings # and settings
-        results.projectinfo = str(self) # Store all the information about this project
+        results.project = dcp(self) # ...and just copy the whole project
         
         return results
-        
     
     
 #    def runscen(self, name='default', start=2000, end=2030):

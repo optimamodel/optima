@@ -11,7 +11,7 @@ from pylab import hold, shape, subplot, figure, title, ylabel, plot, maximum
 def plotpeople(resultslist, normalized=True):
     if type(resultslist) is not list: resultslist = [resultslist]
     ppl = resultslist[0].people
-    settings = resultslist[0].settings
+    settings = resultslist[0].project.settings
     statelabels = []
     statelabels.append('sus1')
     statelabels.append('sus2')

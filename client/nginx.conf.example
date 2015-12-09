@@ -21,7 +21,7 @@ server {
   client_max_body_size 0;
 
   # @FIXME update this path with yours
-  set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/gui";
+  set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/client";
 
   # Path for static files
   root $host_path/$root_folder;
