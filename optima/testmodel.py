@@ -63,9 +63,10 @@ if 'gui' in tests:
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim('default')
     
-    from gui import gui
+    import gui
+#    from gui import gui
     from plotpeople import plotpeople
-    gui(results)
+#    gui(results)
 #    plotpeople(results)
 
     done(t)

@@ -3,7 +3,8 @@ from matplotlib.widgets import CheckButtons, Button
 global controlfig, plotfig
 controlfig, plotfig = None, None
 
-def gui(results):
+#def gui(results):
+if 1:
     '''
     GUI
     
