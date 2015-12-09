@@ -698,7 +698,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var modalService = $injector.get('modalService');
               var message = 'Something went wrong. Please try again or contact the support team.';
               modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
-              $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
             }
             $scope.errorText = data.exception;
             stopTimer();
@@ -786,6 +785,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
       };
 
+      if (optimizations && optimizations.data) {
+        $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
+      }
       modalService.addOptimization(function (name) { create(name); }, $scope.state.optimizations);
     };
 
