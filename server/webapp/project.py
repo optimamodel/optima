@@ -13,7 +13,8 @@ from server.webapp.utils import verify_admin_request
 from server.webapp.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+from server.webapp.dbmodels import (ProjectDb, WorkingProjectDb, ProjectDataDb, 
+    WorkLogDb, ResultsDb, ParsetsDb)
 import datetime
 import dateutil.tz
 from datetime import datetime
@@ -447,11 +448,14 @@ def deleteProject(project_id):
     if project_entry is not None:
         user_id = project_entry.user_id
         project_name = project_entry.name
+        str_project_id = str(project_entry.id)
         #delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=str(project_entry.id)).delete()
-        db.session.query(ProjectDataDb).filter_by(id=str(project_entry.id)).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=str(project_entry.id)).delete()
-        db.session.query(ProjectDb).filter_by(id=str(project_entry.id)).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete()
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
     delete_spreadsheet(project_name)
