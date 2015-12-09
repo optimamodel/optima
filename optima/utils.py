@@ -628,11 +628,11 @@ class odict(OrderedDict):
             elif key.start is None: startind = 0
             else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
             if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.index(key.stop)
+            elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
             elif key.stop is None: stopind = len(self)-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            return array([self.__getitem__(i) for i in range(startind,stopind+1)]) # +1 since otherwise confusing with names
+            return array([self.__getitem__(i) for i in range(startind,stopind)])
         elif type(key)==list: # Iterate over items
             return [self.__getitem__(item) for item in key]
         else: # Try to convert to a list if it's an array or something
@@ -653,18 +653,18 @@ class odict(OrderedDict):
             elif key.start is None: startind = 0
             else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
             if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.index(key.stop)
+            elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
             elif key.stop is None: stopind = len(self)-1
             else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            enumerator = enumerate(range(startind,stopind+1))
+            enumerator = enumerate(range(startind,stopind))
             try:
                 slicelen = len(range(startind,stopind+1))
                 if len(value)==slicelen:
-                    for valind,index in enumerator: # +1 since otherwise confusing with names
+                    for valind,index in enumerator: 
                         self.__setitem__(index, value[valind])
                 else: 
-                    for valind,index in enumerator: # +1 since otherwise confusing with names
+                    for valind,index in enumerator:
                         self.__setitem__(index, value)
             except:
                 for valind,index in enumerator: # +1 since otherwise confusing with names
