@@ -175,8 +175,8 @@ def makeparsfromdata(data, verbose=2):
     
     ## Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = dataindex(data['hivprev'][bestindex], 0, popkeys) # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize(data['popsize'][bestindex], data, popkeys)
+    pars['initprev'] = dataindex(data['hivprev'], bestindex, popkeys) # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize(data['popsize'], data, popkeys)
     
     ## Parameters that can be converted automatically
     sheets = data['meta']['sheets']
