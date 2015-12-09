@@ -1,20 +1,5 @@
-'''
-This module defines the Project class, which is the main class used in Optima.
-The only other thing it contains is a loadprj() function, since that doesn't
-need to be in the class.
-
-Version: 2015nov02 by cliffk
-'''
-
-
-#######################################################################################################
-## Header -- imports and version
-#######################################################################################################
-
-from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp
-
-## Specify the version, for the purposes of figuring out which version was used to create a project
-version = 2.0
+from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp, makeplots
+version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
 #######################################################################################################
@@ -45,7 +30,7 @@ class Project(object):
         4. rename -- rename a structure in the list
         5. show -- show information on all items in the list(s)
     
-    Version: 2015nov19 by cliffk
+    Version: 2015dec09 by cliffk
     """
     
     
@@ -259,7 +244,10 @@ class Project(object):
         results.projectinfo = str(self) # Store all the information about this project
         
         return results
+    
+    def plot(self, result=None):
         
+        return plots
     
     
 #    def runscen(self, name='default', start=2000, end=2030):
