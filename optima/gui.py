@@ -87,7 +87,7 @@ def gui(results):
     check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks)
     for label in check.labels:
         thispos = label.get_position()
-        label.set_position((thispos[0]*0.5,thispos[1]))
+        label.set_position((thispos[0]*0.5,thispos[1])) # not sure why by default the check boxes are so far away
     button = Button(buttonaxes, 'Update') 
     button.on_clicked(update) # Update figure if button is clicked
     update(None) # Plot initially
