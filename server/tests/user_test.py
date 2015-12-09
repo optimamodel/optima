@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from optima_test_base import OptimaTestCase
 import unittest
-from api import app
+from server.api import app
 import json
 
 class UserTestCase(OptimaTestCase):
@@ -10,13 +10,21 @@ class UserTestCase(OptimaTestCase):
     Test class for the user blueprint covering all /api/user endpoints.
 
     """
+
+    def setUp(self):
+        import hashlib
+        self.admin_email = "admin@test.com"
+        self.admin_password = hashlib.sha224("admin").hexdigest()
+        OptimaTestCase.setUp(self)
+
     def create_admin_user(self):
         from server.webapp.dbconn import db
         from server.webapp.dbmodels import UserDb
-        """ Helper method to create project and save it to the database """
+        ''' Helper method to create project and save it to the database '''
         admin = UserDb("admin", self.admin_email, self.admin_password, True)
         db.session.add(admin)
         db.session.commit()
+        return str(admin.id)
 
     def list_users(self):
         return self.client.get('/api/user/list?secret=%s' % self.admin_password)
@@ -24,7 +32,6 @@ class UserTestCase(OptimaTestCase):
     def test_current_no_login(self):
         response = self.client.get('/api/user/current', follow_redirects=True)
         assert(response.status_code==401)
-
 
     def test_current_with_login(self):
         response = self.create_user()
@@ -58,7 +65,7 @@ class UserTestCase(OptimaTestCase):
         assert(users is not None)
         assert(len(users)==2)
         test_user = users[1]
-        assert(test_user['id']==2)
+        assert(test_user['id']==self.get_user_id_by_email(self.default_email))
         assert(test_user['email']=="test@test.com")
         assert(test_user['name'] == "test")
         assert('password' not in test_user)
@@ -73,20 +80,22 @@ class UserTestCase(OptimaTestCase):
         assert(users is not None)
         assert(len(users)==2)
         test_user = users[1]
-        assert(test_user['id']==2)
+        assert(test_user['id']==self.get_user_id_by_email(self.default_email))
         assert(test_user['email']=="test@test.com")
         assert(test_user['name'] == "test")
         assert('password' not in test_user)
 
     def test_list_all_projects(self):
         other_email = 'test2@test.com'
-        self.create_admin_user()
+        admin_id=self.create_admin_user()
         #create two users
         response = self.create_user()
+        default_id = self.get_user_id_by_email(self.default_email)
         response = self.api_create_project()
         response = self.logout()
         #log in as second user and create a project
         response = self.create_user(name='test2', email=other_email)
+        other_user = self.get_user_id_by_email(other_email)
         response = self.api_create_project()
         response = self.logout()
         response = self.login(self.admin_email, self.admin_password)
@@ -98,7 +107,7 @@ class UserTestCase(OptimaTestCase):
         assert(len(projects)==2)
         assert('user_id' in projects[0] and 'user_id' in projects[1])
         user_ids = [p['user_id'] for p in projects]
-        assert(set(user_ids)==set([2,3]))
+        assert(set(user_ids)==set([default_id,other_user]))
 
     def test_admin_list_own_projects(self):
         other_email = 'test2@test.com'
@@ -120,7 +129,6 @@ class UserTestCase(OptimaTestCase):
         assert(projects is not None)
         assert(len(projects)==1)
         assert('user_id' not in projects[0])
-        assert(projects[0]['id']==1)
 
     def test_delete_user(self):
         other_email = 'test2@test.com'
@@ -137,13 +145,14 @@ class UserTestCase(OptimaTestCase):
         users = json.loads(response.data).get('users')
         assert(len(users)==3)
         #list projects for the second user, verify we have 1
-        projects = self.list_projects(3)
+        test_id = self.get_user_id_by_email(other_email)
+        projects = self.list_projects(test_id)
         assert(len(projects)==1)
         #delete second user
-        response = self.client.delete('/api/user/delete/3?secret=%s' % self.admin_password)
+        response = self.client.delete('/api/user/delete/%s?secret=%s' % (test_id, self.admin_password))
         assert(response.status_code==200)
         data = json.loads(response.data)
-        assert(data.get('deleted')=='3')
+        assert(data.get('deleted')==test_id)
         #list users again, verify we have 1 and it's the first one
         response = self.list_users()
         users = json.loads(response.data).get('users')
@@ -152,20 +161,20 @@ class UserTestCase(OptimaTestCase):
         emails = set([user['email'] for user in users])
         assert('test2@test.com' not in emails)
         #list projects for the second user and verify that they are gone
-        projects = self.list_projects(2)
+        projects = self.list_projects(self.get_any_user_id(admin=True))
         assert(len(projects)==0)
 
     def test_modify_user(self):
         import hashlib
-        self.create_admin_user()
+        admin_id = self.create_admin_user()
         response = self.create_user()
         new_password = hashlib.sha224("test1").hexdigest()
         new_email = 'test1@test.com'
-        response = self.client.put('/api/user/modify/2?secret=%s&email=%s&password=%s' \
-            % (self.admin_password, new_email, new_password))
+        response = self.client.put('/api/user/modify/%s?secret=%s&email=%s&password=%s' \
+            % (admin_id, self.admin_password, new_email, new_password))
         assert(response.status_code==200)
         data = json.loads(response.data)
-        assert(data.get('modified')=='2')
+        assert(data.get('modified')==admin_id)
         response = self.login(email=new_email, password = new_password)
         response = self.api_create_project()
         assert(response.status_code==200)
@@ -179,12 +188,6 @@ class UserTestCase(OptimaTestCase):
         response = self.client.put('/api/user/modify/1?secret=%s&email=%s&password=%s' \
             % (self.test_password, new_email, new_password))
         assert(response.status_code==404)
-
-    def setUp(self):
-        import hashlib
-        self.admin_email = "admin@test.com"
-        self.admin_password = hashlib.sha224("admin").hexdigest()
-        OptimaTestCase.setUp(self)
 
 if __name__ == '__main__':
     unittest.main()

@@ -16,6 +16,10 @@ def blank(n=3):
     print('\n'*n)
 
 
+def objectid(obj):
+    ''' Return the object ID as per the default Python __repr__ method '''
+    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+
 
 def printarr(arr, arrformat='%0.2f  '):
     """ 
@@ -498,24 +502,32 @@ def run(command, printinput=False, printoutput=False):
 ##############################################################################
 
 
-def save(obj, filename=None):
+def save(filename, obj):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
     from gzip import GzipFile
     
     with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    print('Object "%s" saved to "%s"' % (obj.name, filename))
+    print('Object saved to "%s"' % filename)
     return None
-
 
 
 def load(filename):
     ''' Load a saved file '''
-    try: import cPickle as pickle # For Python 2 compatibility
-    except: import pickle
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
+    except:
+        import pickle
     from gzip import GzipFile
-    with GzipFile(filename, 'rb') as fileobj: obj = pickle.load(fileobj)
+
+    argtype = 'filename'
+    if not isinstance(filename, basestring):
+        argtype = 'fileobj'
+    kwargs = {'mode': 'rb', argtype: filename}
+
+    with GzipFile(**kwargs) as fileobj:
+        obj = pickle.load(fileobj)
     print('Object loaded from "%s"' % filename)
     return obj
 

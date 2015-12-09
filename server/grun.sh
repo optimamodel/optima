@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ ! -f "src/config.py" ]; then
-  cp src/config.example.py src/config.py
+  cp config.example.py config.py
 fi
 
 if [ ! -d "./p-env/" ]; then
@@ -19,5 +19,5 @@ then
   pip install -r ./requirements.txt
 fi
 pip install gunicorn
-cd src
+
 gunicorn --workers 2 --error-logfile=- --log-file=- --bind 127.0.0.1:5000 --log-level debug api:app
