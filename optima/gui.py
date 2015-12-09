@@ -1,6 +1,6 @@
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-global controlfig, plotfig
+global controlfig, plotfig, check, button
 #controlfig, plotfig = None, None
 controlfig = None
 plotfig = None
@@ -29,7 +29,7 @@ def gui(results):
     
     Version: 2015dec08 by cliffk
     '''
-#    global controlfig, plotfig
+    global controlfig, plotfig, check, button
     
     
     def getchecked(check):
