@@ -50,8 +50,9 @@ class ProjectDb(db.Model):
                                 uselist=False)
     parsets = db.relationship('ParsetsDb', backref = 'projects')
     results = db.relationship('ResultsDb', backref = 'results')
+    progsets = db.relationship('ProgsetsDb', backref = 'progsets')
 
-    def __init__(self, name, user_id, datastart, dataend, populations, version, 
+    def __init__(self, name, user_id, datastart, dataend, populations, version,
         created = None, updated = None, settings = None, data = None, parsets = None, results = None): # pylint: disable=R0913
         self.name = name
         self.user_id = user_id
@@ -197,3 +198,51 @@ class ProjectDataDb(db.Model): # pylint: disable=R0903
         self.id = project_id
         self.meta = meta
         self.updated = updated
+
+
+class ProgsetsDb(db.Model):
+
+    __tablename__ = 'progsets'
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.Text)
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    programs = db.relationship('ProgramsDb', backref='programs', lazy='joined')
+
+    def __init__(self, project_id, name, created=None, updated=None, id=None):
+        self.project_id = project_id
+        self.name = name
+        if created:
+            self.created = created
+        if updated:
+            self.updated = updated
+        if id:
+            self.id = id
+
+
+class ProgramsDb(db.Model):
+
+    __tablename__ = 'programs'
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    name = db.Column(db.Text)
+    short_name = db.Column(db.Text)
+    active = db.Column(db.Boolean)
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+
+    def __init__(self, progset_id, name, short_name, active=False, created=None, updated=None, id=None):
+        self.progset_id = progset_id
+        self.name = name
+        self.short_name = short_name
+        self.active = active
+        if created:
+            self.created = created
+        if updated:
+            self.updated = updated
+        if id:
+            self.id = id
+
