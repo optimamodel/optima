@@ -236,12 +236,14 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, progset_id, name, short_name, categry, active=False, pars=None, created=None, updated=None, id=None):
+    def __init__(self, progset_id, name, short_name, category, active=False, pars=None, created=None, updated=None, id=None):
+        from optima.utils import saves
+
         self.progset_id = progset_id
         self.name = name
         self.short_name = short_name
         self.category = category
-        self.pars = loads(pars)
+        self.pars = saves(pars)
         self.active = active
         if created:
             self.created = created
@@ -250,3 +252,6 @@ class ProgramsDb(db.Model):
         if id:
             self.id = id
 
+    def get_parameters(self):
+        from optima.utils import loads
+        return loads(self.pars)

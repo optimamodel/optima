@@ -862,7 +862,7 @@ def _progset_to_dict(progset):
                 'short_name': program.short_name,
                 'category': program.category,
                 'active': program.active,
-                'parameters': program.pars
+                'parameters': program.get_parameters()
             } for program in progset.programs
         ],
     }
@@ -907,7 +907,6 @@ def createProgsets(project_id):
         return jsonify(reply), 500
     else:
         data = json.loads(request.data)
-        print data
         if not data:
             reply = {'reason': 'No data received', }
             return jsonify(reply), 500
@@ -960,7 +959,7 @@ def getProgset(project_id, progset_id):
         return jsonify(_progset_to_dict(progset_entry))
 
 
-@project.route('/progsets/<project_id>/<progset_id>', methods=['delete'])
+@project.route('/progsets/<project_id>/<progset_id>', methods=['DELETE'])
 @login_required
 @report_exception()
 def deleteProgset(project_id, progset_id):
@@ -984,3 +983,52 @@ def deleteProgset(project_id, progset_id):
         db.session.delete(progset_entry)
         db.session.commit()
         return jsonify({'result': 'Progset %s deleted.' % progset_name})
+
+
+@project.route('/progsets/<project_id>/<progset_id>', methods=['PUT'])
+@login_required
+@report_exception()
+def updateProgset(project_id, progset_id):
+    """
+    Download progset with the given id.
+    if progset exists, returns it
+    if progset does not exist, returns an error.
+
+    """
+    current_app.logger.debug("/api/project/progsets/%s/%s" % (project_id, progset_id))
+    progset_entry = db.session.query(ProgsetsDb).get(progset_id)
+    if progset_entry is None:
+        reply = {'reason': 'Progset %s does not exist.' % progset_id, }
+        return jsonify(reply), 404
+    if str(progset_entry.project_id) != project_id:
+        reply = {'reason': 'Progset %s does not exist for project %s.' % (progset_id, project_id), }
+        return jsonify(reply), 404
+    else:
+        data = json.loads(request.data)
+        if not data:
+            reply = {'reason': 'No data received', }
+            return jsonify(reply), 500
+        if 'name' not in data:
+            reply = {'resaon': 'name is required'}
+            return jsonify(reply), 500
+        progset_entry.name = data['name']
+        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
+        for program in data.get('programs', []):
+            kwargs = {}
+            for field in ['name', 'short_name', 'category']:
+                if field not in program:
+                    db.session.rollback()
+                    reply = {'reason': 'program.%s is required' % field}
+                kwargs[field] = program[field]
+
+            program_entry = ProgramsDb(
+                progset_entry.id,
+                active=program.get('active', False),
+                pars=program.get('parameters', None),
+                **kwargs
+            )
+            db.session.add(program_entry)
+
+        db.session.commit()
+
+        return 'OK'
