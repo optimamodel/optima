@@ -6,6 +6,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.state = {};
 
+    $scope.categories = predefined.categories;
+    $scope.programs = predefined.programs;
+
     const openProjectStr = activeProject.getProjectFor(UserManager.data);
     const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
 
@@ -19,7 +22,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       .success(function (response) {
         $scope.state.programSetList = response.progsets || [];
         if(response.progsets && response.progsets.length > 0) {
-          $scope.state.activeProgramSet = response.progsets[0]
+          $scope.state.activeProgramSet = response.progsets[0];
+          //console.log('response.progsets[0].programs', response.progsets[0].programs);
+          //$scope.programs = response.progsets[0].programs;
         }
       });
 
@@ -85,9 +90,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         programSetModalService.copyProgramSet($scope.state.activeProgramSet.name, copy.bind(this), $scope.state.programSetList);
       }
     };
-
-    $scope.categories = predefined.categories;
-    $scope.programs = predefined.programs;
 
     /*
      * Opens a modal for editing an existing program.
