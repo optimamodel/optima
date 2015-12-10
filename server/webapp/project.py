@@ -13,7 +13,7 @@ from server.webapp.utils import verify_admin_request
 from server.webapp.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import (ProjectDb, WorkingProjectDb, ProjectDataDb, 
+from server.webapp.dbmodels import (ProjectDb, WorkingProjectDb, ProjectDataDb,
     WorkLogDb, ResultsDb, ParsetsDb)
 import datetime
 import dateutil.tz
@@ -37,7 +37,7 @@ def get_project_parameters():
     """
     Gives back project parameters (modifiable)
     """
-    from sim.parameters import parameters
+    from parameters import parameters
     project_parameters = [p for p in parameters() if 'modifiable' in p and p['modifiable']]
     return jsonify({"parameters":project_parameters})
 
@@ -767,8 +767,8 @@ def createProjectAndSetData():
         print "pops", project_pops
         for i in range(len(project_pops['short'])):
             print "i", i
-            new_pop = {'name': project_pops['long'][i], 'short_name': project_pops['short'][i], 
-            'female': project_pops['female'][i], 'male':project_pops['male'][i], 
+            new_pop = {'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
+            'female': project_pops['female'][i], 'male':project_pops['male'][i],
             'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])}
             pops.append(new_pop)
     else:
