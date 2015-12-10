@@ -206,7 +206,7 @@ class ProgsetsDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
-    name = db.Column(db.Text)
+    name = db.Column(db.String)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     programs = db.relationship('ProgramsDb', backref='programs', lazy='joined')
@@ -228,16 +228,20 @@ class ProgramsDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
-    name = db.Column(db.Text)
-    short_name = db.Column(db.Text)
+    category = db.Column(db.String)
+    name = db.Column(db.String)
+    short_name = db.Column(db.String)
+    pars = db.Column(db.LargeBinary)
     active = db.Column(db.Boolean)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, progset_id, name, short_name, active=False, created=None, updated=None, id=None):
+    def __init__(self, progset_id, name, short_name, categry, active=False, pars=None, created=None, updated=None, id=None):
         self.progset_id = progset_id
         self.name = name
         self.short_name = short_name
+        self.category = category
+        self.pars = loads(pars)
         self.active = active
         if created:
             self.created = created

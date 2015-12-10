@@ -860,7 +860,9 @@ def _progset_to_dict(progset):
                 'id': program.id,
                 'name': program.name,
                 'short_name': program.short_name,
+                'category': program.category,
                 'active': program.active,
+                'parameters': program.pars
             } for program in progset.programs
         ],
     }
@@ -883,7 +885,7 @@ def getProgsets(project_id):
         return jsonify(reply), 500
     else:
         reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id)
-        return jsonify({ 'progsets': [
+        return jsonify({'progsets': [
             _progset_to_dict(progset) for progset in reply
         ]})
 
@@ -916,16 +918,18 @@ def createProgsets(project_id):
         db.session.add(progset_entry)
         db.session.flush()
         for program in data.get('programs', []):
-            for field in ['name', 'short_name']:
+            kwargs = {}
+            for field in ['name', 'short_name', 'category']:
                 if field not in program:
                     db.session.rollback()
                     reply = {'reason': 'program.%s is required' % field}
+                kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
                 progset_entry.id,
-                program['name'],
-                program['short_name'],
-                program.get('active', False)
+                active=program.get('active', False),
+                pars=program.get('parameters', None),
+                **kwargs
             )
             db.session.add(program_entry)
 
