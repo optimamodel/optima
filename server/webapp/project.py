@@ -859,7 +859,7 @@ def _progset_to_dict(progset):
             {
                 'id': program.id,
                 'name': program.name,
-                'shortName': program.short_name,
+                'short_name': program.short_name,
                 'active': program.active,
             } for program in progset.programs
         ],
@@ -916,7 +916,7 @@ def createProgsets(project_id):
         db.session.add(progset_entry)
         db.session.flush()
         for program in data.get('programs', []):
-            for field in ['name', 'shortName']:
+            for field in ['name', 'short_name']:
                 if field not in program:
                     db.session.rollback()
                     reply = {'reason': 'program.%s is required' % field}
@@ -924,7 +924,7 @@ def createProgsets(project_id):
             program_entry = ProgramsDb(
                 progset_entry.id,
                 program['name'],
-                program['shortName'],
+                program['short_name'],
                 program.get('active', False)
             )
             db.session.add(program_entry)
