@@ -4,12 +4,21 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
     $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
 
-    const openProject = activeProject.getProjectFor(UserManager.data);
+    const openProjectStr = activeProject.getProjectFor(UserManager.data);
+    const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
+
     if(!openProject) {
       modalService.informError([{message: 'There is no project open currently.'}]);
     }
 
     const defaultProgramSet = {name:'Default'};
+    console.log('---openProject---', openProject.id);
+    $http({
+      url: '/project/progsets/' + openProject.id,
+      method: 'GET'})
+      .success(function (response) {
+        console.log('response', response);
+      });
 
     $scope.state = {
       programSetList: [defaultProgramSet],
