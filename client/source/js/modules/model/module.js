@@ -48,9 +48,321 @@ define([
         })
         .state('model.manageProjectSet', {
           url: '/programs',
-          templateUrl: 'js/modules/model/project-set/project-set.html',
+          templateUrl: 'js/modules/model/program-set/program-set.html',
           controller: 'ProjectSetController',
           resolve: {
+            availableParameters: function($http) {
+              return [
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "condomcom"
+                    ],
+                    "keys": [
+                      "condom",
+                      "com"
+                    ],
+                    "modifiable": true,
+                    "name": "Condoms | Proportion of sexual acts in which condoms are used with commercial partners",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "condomcas"
+                    ],
+                    "keys": [
+                      "condom",
+                      "cas"
+                    ],
+                    "modifiable": true,
+                    "name": "Condoms | Proportion of sexual acts in which condoms are used with casual partners",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "condomreg"
+                    ],
+                    "keys": [
+                      "condom",
+                      "reg"
+                    ],
+                    "modifiable": true,
+                    "name": "Condoms | Proportion of sexual acts in which condoms are used with regular partners",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "numactscas"
+                    ],
+                    "keys": [
+                      "numacts",
+                      "cas"
+                    ],
+                    "modifiable": true,
+                    "name": "Acts | Number of sexual acts per person per year with casual partners",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "numactscom"
+                    ],
+                    "keys": [
+                      "numacts",
+                      "com"
+                    ],
+                    "modifiable": true,
+                    "name": "Acts | Number of sexual acts per person per year with commercial partners",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "numactsreg"
+                    ],
+                    "keys": [
+                      "numacts",
+                      "reg"
+                    ],
+                    "modifiable": true,
+                    "name": "Acts | Number of sexual acts per person per year with regular partners",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "circum"
+                    ],
+                    "keys": [
+                      "circum"
+                    ],
+                    "modifiable": true,
+                    "name": "Circumcision | Proportion of males who are circumcised",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "numcircum"
+                    ],
+                    "keys": [
+                      "numcircum"
+                    ],
+                    "modifiable": true,
+                    "name": "Circumcision | Number of medical male circumcisions performed per year",
+                    "page": "sex"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "stiprevulc"
+                    ],
+                    "keys": [
+                      "stiprevulc"
+                    ],
+                    "modifiable": true,
+                    "name": "STI | Prevalence of ulcerative STIs",
+                    "page": "epi"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "stiprevdis"
+                    ],
+                    "keys": [
+                      "stiprevdis"
+                    ],
+                    "modifiable": true,
+                    "name": "STI | Prevalence of discharging STIs",
+                    "page": "epi"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "hivtest"
+                    ],
+                    "keys": [
+                      "hivtest"
+                    ],
+                    "modifiable": true,
+                    "name": "Testing | Proportion of people who are tested for HIV each year",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "hivtest"
+                    ],
+                    "keys": [
+                      "propaware"
+                    ],
+                    "modifiable": true,
+                    "name": "Testing | Proportion of PLHIV aware of their HIV status",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "numfirstline"
+                    ],
+                    "keys": [
+                      "txtotal"
+                    ],
+                    "modifiable": true,
+                    "name": "Treatment | Number of PLHIV on ART",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "numfirstline"
+                    ],
+                    "keys": [
+                      "txtotal"
+                    ],
+                    "modifiable": true,
+                    "name": "Treatment | Proportion of PLHIV on ART",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "txelig"
+                    ],
+                    "keys": [
+                      "txelig"
+                    ],
+                    "modifiable": true,
+                    "name": "Treatment | CD4-based ART eligibility criterion",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "prep"
+                    ],
+                    "keys": [
+                      "prep"
+                    ],
+                    "modifiable": true,
+                    "name": "PrEP | Proportion of risk encounters covered by PrEP",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 1,
+                    "input_keys": [
+                      "numinject"
+                    ],
+                    "keys": [
+                      "numacts",
+                      "inj"
+                    ],
+                    "modifiable": true,
+                    "name": "Injecting drug use | Number of injections per person per year",
+                    "page": "inj"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 2,
+                    "input_keys": [
+                      "sharing"
+                    ],
+                    "keys": [
+                      "sharing"
+                    ],
+                    "modifiable": true,
+                    "name": "Injecting drug use | Proportion of injections using receptively shared needle-syringes",
+                    "page": "inj"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "numost"
+                    ],
+                    "keys": [
+                      "numost"
+                    ],
+                    "modifiable": true,
+                    "name": "Injecting drug use | Proportion of people on OST",
+                    "page": "inj"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "numost"
+                    ],
+                    "keys": [
+                      "numost"
+                    ],
+                    "modifiable": true,
+                    "name": "Injecting drug use | Number of people on OST",
+                    "page": "inj"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "numpmtct"
+                    ],
+                    "keys": [
+                      "numpmtct"
+                    ],
+                    "modifiable": true,
+                    "name": "PMTCT | Proportion of pregnant women receiving Option B/B+",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "numpmtct"
+                    ],
+                    "keys": [
+                      "numpmtct"
+                    ],
+                    "modifiable": true,
+                    "name": "PMTCT | Number of pregnant women receiving Option B/B+",
+                    "page": "txrx"
+                  },
+                  {
+                    "calibration": false,
+                    "dim": 0,
+                    "input_keys": [
+                      "breast"
+                    ],
+                    "keys": [
+                      "breast"
+                    ],
+                    "modifiable": true,
+                    "name": "PMTCT | Proportion of mothers who breastfeed",
+                    "page": "txrx"
+                  }
+                ];
+
+              // return $http.get('/api/project/parameters');
+            },
             predefined: function(Project) {
               return Project.predefined().$promise;
             }
