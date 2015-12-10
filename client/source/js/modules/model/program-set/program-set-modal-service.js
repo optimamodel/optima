@@ -30,17 +30,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       /**
        * This function opens a modal that will ask the user to provide a name
-       * for a new programSet.
-       */
-      addProgramSet: function (callback, programSetList) {
-        this.editProgramSet(undefined, callback, programSetList, 'Add program set');
-      },
-
-      /**
-       * This function opens a modal that will ask the user to provide a name
        * to edit an existing programSet.
        */
-      editProgramSet: function (programSetName, callback, programSetList, title, isEdit) {
+      openProgramSetModal: function (programSetName, callback, programSetList, title, isAdd) {
 
         var onModalKeyDown = function (event) {
           if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -67,7 +59,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
                     return item.name == name;
                   }) && name !== programSetName && name !== $scope.newProgramSetName;
               editProgramSetForm.programSetName.$setValidity("programSetListExists", !exists);
-              isEdit && editProgramSetForm.programSetName.$setValidity("programSetListUpdated", name !== programSetName);
+              !isAdd && editProgramSetForm.programSetName.$setValidity("programSetListUpdated", name !== programSetName);
               return exists;
             };
 
@@ -78,14 +70,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         });
 
         return modalInstance;
-      },
-
-      /**
-       * This function opens a modal that will ask the user to provide a new name
-       * for copying programSet.
-       */
-      copyProgramSet: function (programSetName, callback, programSetList) {
-        this.editProgramSet(programSetName, callback, programSetList, 'Copy program set');
       },
 
       openProgramModal: function (program, predefined, availableParameters) {

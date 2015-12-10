@@ -5,7 +5,7 @@
   <div style="display: flex;justify-content: flex-start;">
     <select id="programSet-selection" name="programSet-selection" class="txbox"
             ng-model="state.activeProgramSetName"
-            ng-change=""
+            ng-change="setActivePrograms(state.activeProgramSet)"
             style="width: 20%;">
       <option ng-repeat="res in state.programSetList"
               ng-selected="{{res.name === state.activeProgramSet.name}}"
