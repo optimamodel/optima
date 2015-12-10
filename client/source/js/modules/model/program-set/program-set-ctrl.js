@@ -2,9 +2,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    $timeout, modalService, predefined, availableParameters) {
+    $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
+
+    const openProject = activeProject.getProjectFor(UserManager.data);
+    if(!openProject) {
+      modalService.informError([{message: 'There is no project open currently.'}]);
+    }
 
     const defaultProgramSet = {name:'Default'};
+
     $scope.state = {
       programSetList: [defaultProgramSet],
       activeProgramSet: defaultProgramSet
@@ -129,6 +135,23 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }
       );
     };
+
+    $scope.saveProgramSet = function() {
+      if (!openProject) {
+        modalService.informError([{message: 'Open project before proceeding.'}]);
+      } else {
+
+        $http({
+          url: '/project/progsets/' + openProject.id,
+          method: 'POST',
+          data: {
+            name: $scope.state.activeProgramSet.name,
+            programs: $scope.programs
+          }})
+         .success(function (response) {
+         });
+      }
+    }
 
   });
 });
