@@ -35,10 +35,6 @@ HTC_hometest = Program(name='HTC_hometest',
               targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],
               targetpops=['Females 15-49'])
 
-# What's the target population size for these programs?
-targetpopsize = HTC_outreach.gettargetpopsize(t=[2013],
-                                              parset=P.parsets['default'])
-
 # Add cost-coverage function parameters to each program
 HTC_clinics.costcovfn.addccopar({'t': 2013.0,
                                  'saturation':0.4,
@@ -50,7 +46,7 @@ HTC_outreach.costcovfn.addccopar({'t': 2013.0,
                          
 HTC_hometest.costcovfn.addccopar({'t': 2013.0,
                                  'saturation':0.4,
-                                  'unitcost': 20})
+                                  'unitcost': 10})
 
 # Combine the 3 program together in a program set
 R = Programset(programs=[HTC_clinics,HTC_outreach,HTC_hometest])
@@ -228,3 +224,34 @@ def summary_scaleup():
 summary_scaleup()
 
 
+
+initialparset = R.getparset(forwhat=budget,t=[2013], parset=P.parsets['default'], forwhattype='budget')
+outreachparset = R.getparset(forwhat=budget_outreachscaleup,t=[2013], parset=P.parsets['default'], forwhattype='budget')
+hometestparset = R.getparset(forwhat=budget_hometestscaleup,t=[2013], parset=P.parsets['default'], forwhattype='budget')
+
+P.addparset(name='initial',parset=initialparset)
+P.addparset(name='outreach',parset=outreachparset)
+P.addparset(name='hometest',parset=hometestparset)
+
+epiresults_initial = P.runsim(name='initial')
+epiresults_outreach = P.runsim(name='outreach')
+epiresults_hometest = P.runsim(name='hometest')
+
+
+e1 = epiresults_initial.main['numdiag'].pops[0,1,75:].sum(axis=0)
+e2 = epiresults_outreach.main['numdiag'].pops[0,1,75:].sum(axis=0)
+e3 = epiresults_hometest.main['numdiag'].pops[0,1,75:].sum(axis=0)
+
+
+def summary_scaleup2():
+    ''' Print out useful information'''
+    output = '\n'
+    output += '===================================\n'
+    output += 'Diagnoses in Females 15-40 2015-2030:\n'
+    output += '             Initial: %s\n'    % e1
+    output += '   Outreach scale-up: %s\n'    % e2
+    output += '  Home-test scale-up: %s\n'    % e3
+    output += '===================================\n'
+    print output
+
+summary_scaleup2()
