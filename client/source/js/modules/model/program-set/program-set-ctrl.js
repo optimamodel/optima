@@ -4,6 +4,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
     $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
 
+    $scope.state = {};
+
     const openProjectStr = activeProject.getProjectFor(UserManager.data);
     const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
 
@@ -11,19 +13,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       modalService.informError([{message: 'There is no project open currently.'}]);
     }
 
-    const defaultProgramSet = {name:'Default'};
-    console.log('---openProject---', openProject.id);
     $http({
-      url: '/project/progsets/' + openProject.id,
+      url: '/api/project/progsets/' + openProject.id,
       method: 'GET'})
       .success(function (response) {
-        console.log('response', response);
+        $scope.state.programSetList = response.progsets || [];
+        if(response.progsets && response.progsets.length > 0) {
+          $scope.state.activeProgramSet = response.progsets[0]
+        }
       });
-
-    $scope.state = {
-      programSetList: [defaultProgramSet],
-      activeProgramSet: defaultProgramSet
-    };
 
     $scope.addProgramSet = function () {
       var add = function (name) {
@@ -31,7 +29,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.programSetList[$scope.state.programSetList.length] = addedProgramSet;
         $scope.state.activeProgramSet = addedProgramSet;
       };
-
       programSetModalService.addProgramSet( add , $scope.state.programSetList);
     };
 
@@ -151,7 +148,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
 
         $http({
-          url: '/project/progsets/' + openProject.id,
+          url: 'api/project/progsets/' + openProject.id,
           method: 'POST',
           data: {
             name: $scope.state.activeProgramSet.name,
