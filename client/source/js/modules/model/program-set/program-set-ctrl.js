@@ -1,63 +1,63 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProjectSetController', function ($scope, $http, programSetModalService,
+  module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
     $timeout, modalService, predefined, availableParameters) {
 
-    const defaultProjectSet = {name:'Default'};
+    const defaultProgramSet = {name:'Default'};
     $scope.state = {
-      projectSetList: [defaultProjectSet],
-      activeProjectSet: defaultProjectSet
+      programSetList: [defaultProgramSet],
+      activeProgramSet: defaultProgramSet
     };
 
-    $scope.addProjectSet = function () {
+    $scope.addProgramSet = function () {
       var add = function (name) {
-        const addedProjectSet = {name:name};
-        $scope.state.projectSetList[$scope.state.projectSetList.length] = addedProjectSet;
-        $scope.state.activeProjectSet = addedProjectSet;
+        const addedProgramSet = {name:name};
+        $scope.state.programSetList[$scope.state.programSetList.length] = addedProgramSet;
+        $scope.state.activeProgramSet = addedProgramSet;
       };
 
-      programSetModalService.addProjectSet( add , $scope.state.projectSetList);
+      programSetModalService.addProgramSet( add , $scope.state.programSetList);
     };
 
-    $scope.editProjectSet = function () {
-      // This removing existing enter from array of projectSetList and re-adding it with updated name was needed,
+    $scope.editProgramSet = function () {
+      // This removing existing enter from array of programSetList and re-adding it with updated name was needed,
       // coz it turns out that angular does not refreshes the select unless there is change in its size.
       // https://github.com/angular/angular.js/issues/10939
       var edit = function (name) {
-        $scope.state.projectSetList = _.filter($scope.state.projectSetList, function(projectSet) {
-          return projectSet.name !== $scope.state.activeProjectSet.name;
+        $scope.state.programSetList = _.filter($scope.state.programSetList, function(programSet) {
+          return programSet.name !== $scope.state.activeProgramSet.name;
         });
         $timeout(function(){
-          $scope.state.activeProjectSet.name = name;
-          $scope.state.projectSetList[$scope.state.projectSetList.length] = $scope.state.activeProjectSet;
+          $scope.state.activeProgramSet.name = name;
+          $scope.state.programSetList[$scope.state.programSetList.length] = $scope.state.activeProgramSet;
         });
       };
-      programSetModalService.editProjectSet($scope.state.activeProjectSet.name, edit , $scope.state.projectSetList, 'Edit program set', true);
+      programSetModalService.editProgramSet($scope.state.activeProgramSet.name, edit , $scope.state.programSetList, 'Edit program set', true);
     };
 
-    $scope.deleteProjectSet = function () {
+    $scope.deleteProgramSet = function () {
       var remove = function() {
-        $scope.state.projectSetList = _.filter($scope.state.projectSetList, function(projectSet) {
-          return projectSet.name !== $scope.state.activeProjectSet.name;
+        $scope.state.programSetList = _.filter($scope.state.programSetList, function(programSet) {
+          return programSet.name !== $scope.state.activeProgramSet.name;
         });
-        $scope.state.activeProjectSet = $scope.state.projectSetList ? $scope.state.projectSetList[0] : void 0;
+        $scope.state.activeProgramSet = $scope.state.programSetList ? $scope.state.programSetList[0] : void 0;
       };
       modalService.confirm(
-        function(){remove()}, function(){}, 'Yes, remove this projectSet', 'No',
-        'Are you sure you want to permanently remove projectSet "' + $scope.state.activeProjectSet.name + '"?',
-        'Remove projectSet'
+        function(){remove()}, function(){}, 'Yes, remove this program set', 'No',
+        'Are you sure you want to permanently remove program set "' + $scope.state.activeProgramSet.name + '"?',
+        'Delete program set'
       );
     };
 
-    $scope.copyProjectSet = function () {
+    $scope.copyProgramSet = function () {
       // TODO: program details to also be copied
       var copy = function (name) {
-        const copiedProjectSet = {name:name};
-        $scope.state.projectSetList[$scope.state.projectSetList.length] = copiedProjectSet;
-        $scope.state.activeProjectSet = copiedProjectSet;
+        const copiedProgramSet = {name:name};
+        $scope.state.programSetList[$scope.state.programSetList.length] = copiedProgramSet;
+        $scope.state.activeProgramSet = copiedProgramSet;
       };
-      programSetModalService.copyProjectSet($scope.state.activeProjectSet.name, copy.bind(this) , $scope.state.projectSetList);
+      programSetModalService.copyProgramSet($scope.state.activeProgramSet.name, copy.bind(this) , $scope.state.programSetList);
     };
 
     $scope.categories = predefined.categories;

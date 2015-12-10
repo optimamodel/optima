@@ -30,17 +30,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       /**
        * This function opens a modal that will ask the user to provide a name
-       * for a new projectSet.
+       * for a new programSet.
        */
-      addProjectSet: function (callback, projectSetList) {
-        this.editProjectSet(undefined, callback, projectSetList, 'Add program set');
+      addProgramSet: function (callback, programSetList) {
+        this.editProgramSet(undefined, callback, programSetList, 'Add program set');
       },
 
       /**
        * This function opens a modal that will ask the user to provide a name
-       * to edit an existing projectSet.
+       * to edit an existing programSet.
        */
-      editProjectSet: function (projectSetName, callback, projectSetList, title, isEdit) {
+      editProgramSet: function (programSetName, callback, programSetList, title, isEdit) {
 
         var onModalKeyDown = function (event) {
           if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -54,20 +54,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
             $scope.title = title;
 
-            $scope.name = projectSetName;
+            $scope.name = programSetName;
 
-            $scope.updateProjectSet = function (name) {
-              $scope.newProjectSetName = name;
+            $scope.updateProgramSet = function (name) {
+              $scope.newProgramSetName = name;
               callback(name);
               modalInstance.close();
             };
 
-            $scope.isUniqueName = function (name, editProjectSetForm) {
-              var exists = _(projectSetList).some(function(item) {
+            $scope.isUniqueName = function (name, editProgramSetForm) {
+              var exists = _(programSetList).some(function(item) {
                     return item.name == name;
-                  }) && name !== projectSetName && name !== $scope.newProjectSetName;
-              editProjectSetForm.projectSetName.$setValidity("projectSetListExists", !exists);
-              isEdit && editProjectSetForm.projectSetName.$setValidity("projectSetListUpdated", name !== projectSetName);
+                  }) && name !== programSetName && name !== $scope.newProgramSetName;
+              editProgramSetForm.programSetName.$setValidity("programSetListExists", !exists);
+              isEdit && editProgramSetForm.programSetName.$setValidity("programSetListUpdated", name !== programSetName);
               return exists;
             };
 
@@ -82,10 +82,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       /**
        * This function opens a modal that will ask the user to provide a new name
-       * for copying projectSet.
+       * for copying programSet.
        */
-      copyProjectSet: function (projectSetName, callback, projectSetList) {
-        this.editProjectSet(projectSetName, callback, projectSetList, 'Copy ProjectSet');
+      copyProgramSet: function (programSetName, callback, programSetList) {
+        this.editProgramSet(programSetName, callback, programSetList, 'Copy program set');
       },
 
       openProgramModal: function (program, predefined, availableParameters) {

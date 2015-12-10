@@ -1,4 +1,4 @@
-<form name="projectSetForm" ng-submit="updateProjectSet(name)" >
+<form name="programSetForm" ng-submit="updateProgramSet(name)" >
   <div class="modal-header">
     <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
     <h4 class="modal-title">{{ ::title }}</h4>
@@ -6,17 +6,17 @@
   <div class="modal-body grid" style="margin-bottom: 20px">
 
     <div class="++3 6">
-      <p style="margin-top: 0">{{ :: isEdit ? 'Please choose a new name for the project set.' : 'Please choose a name for the new project set.' }}</p>
+      <p style="margin-top: 0">{{ :: isEdit ? 'Please choose a new name for the program set.' : 'Please choose a name for the new program set.' }}</p>
     </div>
 
     <div class="++3 6" style="padding-bottom: 20px">
-      <label for="prompt-input">Project set name</label>
-      <input class="txbox" id="prompt-input" name="projectSetName" ng-model="name" required style="margin-top: 6px" ng-change="isUniqueName(name, projectSetForm)">
-      <div class="error-hint" ng-show="isUniqueName(name, projectSetForm)"> A project set with this name already exists, please choose a different one. </div>
+      <label for="prompt-input">Program set name</label>
+      <input class="txbox" id="prompt-input" name="programSetName" ng-model="name" required style="margin-top: 6px" ng-change="isUniqueName(name, programSetForm)">
+      <div class="error-hint" ng-show="isUniqueName(name, programSetForm)"> A program set with this name already exists, please choose a different one. </div>
     </div>
   </div>
   <div class="modal-footer text-center">
     <button type="button" class="btn __white" ng-click="$close()">Cancel</button>
-    <button type="submit" class="btn" ng-disabled="projectSetForm.$invalid">Save</button>
+    <button type="submit" class="btn" ng-disabled="programSetForm.$invalid">Save</button>
   </div>
 </form>

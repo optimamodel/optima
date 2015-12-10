@@ -46,10 +46,10 @@ define([
             }
           }
         })
-        .state('model.manageProjectSet', {
+        .state('model.manageProgramSet', {
           url: '/programs',
           templateUrl: 'js/modules/model/program-set/program-set.html',
-          controller: 'ProjectSetController',
+          controller: 'ProgramSetController',
           resolve: {
             availableParameters: function($http) {
               return [
