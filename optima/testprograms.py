@@ -150,13 +150,14 @@ if 'makeprograms' in tests:
 
     print('Running make programs set test...')
     # Different ways to initialise
-    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
+#    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
 
     # Testing methods of programset class
     # 1. Adding a program
-    R.addprograms({'ART':ART})
+#    R.addprograms({'ART':ART})
+    R.addprograms(ART)
 
     # 2. Removing a program
     R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')

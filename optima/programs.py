@@ -69,11 +69,22 @@ class Programset(object):
         self.gettargetpops()
         self.covout = odict()
         for targetpartype in self.targetpartypes:
-            self.covout[targetpartype] = odict()
+            self.covout[targetpartype] = {}
             for thispop in self.progs_by_targetpar(targetpartype).keys():
-                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]                
-                initccoparams = {k: [] for k in targetingprogs}
-                initccoparams['t'],initccoparams['intercept'] = [], []
+                initccoparams = {}
+                for thisprog in self.progs_by_targetpar(targetpartype)[thispop]:
+                    index = [(tp['param'],tp['pop']) for tp in thisprog.targetpars].index((targetpartype,thispop))
+                    thiseffect = thisprog.targetpars[index]['effect']
+                    thistime = thisprog.targetpars[index]['t']
+                    thiseffectname = thisprog.name
+                    initccoparams[thiseffectname] = thiseffect
+                    initccoparams['t'] = thistime
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
+#                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]
+#                initccoparams = {k: [] for k in targetingprogs}
+
+                initccoparams['intercept'] = []
                 self.covout[targetpartype][thispop] = Covout(initccoparams)                
 
     def addprograms(self,newprograms):
@@ -307,16 +318,23 @@ class Programset(object):
         return cost_coverage_figures   
         
 class Program(object):
-    ''' Defines a single program. 
+    '''
+    Defines a single program. 
     Can be initialized with:
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
-    modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
+    targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
+    targetpops, e.g. ['FSW','MSM']
+    '''
 
     def __init__(self,name,targetpars=None,targetpops=None,ccopars=None,costcovdata=None,nonhivdalys=0):
         '''Initialize'''
         self.name = name
         self.id = uuid()
-        self.targetpars = targetpars if targetpars else []
+        if targetpars:
+            for targetpar in targetpars:
+                if not targetpar.get('effect'): targetpar['effect'], targetpar['t'] = [], []
+            self.targetpars = targetpars
+        else: self.targetpars = []
         self.targetpops = targetpops if targetpops else []
         self.targetpartypes = list(set([thispar['param'] for thispar in targetpars])) if targetpars else []
         self.optimizable()
@@ -337,20 +355,23 @@ class Program(object):
 
     def addtargetpar(self,targetpar):
         '''Add a model parameter to be targeted by this program'''
-        if targetpar not in self.targetpars:
+        if not targetpar.get('effect'): targetpar['effect'], targetpar['t'] = [], []
+        if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             self.targetpars.append(targetpar)
-            self.optimizable
             print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         else:
-            raise Exception('The target parameter you are trying to add is already present in the list of target parameters affected by this program:%s.' % self.targetpars)
+            index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
+            self.targetpars[index] = targetpar # overwrite
+        self.optimizable
         return None
         
     def rmtargetpar(self,targetpar):
         '''Remove a model parameter from those targeted by this program'''
-        if targetpar not in self.targetpars:
+        if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             raise Exception('The target parameter you have selected for removal is not in the list of target parameters affected by this program:%s.' % self.targetpars)
         else:
-            self.targetpars.pop(self.targetpars.index(targetpar))
+            index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
+            self.targetpars.pop(index)
             self.optimizable
             print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         return None
@@ -486,7 +507,6 @@ class CCOF(object):
         ''' Add or replace parameters for cost-coverage functions'''
 
         if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.
-
         if self.ccopars is None:
             self.ccopars = {}
             for ccopartype in ccopar.keys():
