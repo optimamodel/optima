@@ -14,7 +14,7 @@ from server.webapp.utils import load_model, save_model
 from flask.ext.login import login_required, current_user # pylint: disable=E0611,F0401
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import (ProjectDb, WorkingProjectDb, ProjectDataDb,
-    WorkLogDb, ResultsDb, ParsetsDb)
+    WorkLogDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb)
 import datetime
 import dateutil.tz
 from datetime import datetime
@@ -849,3 +849,134 @@ def migrateData():
         model = versioning.run_migrations(model)
         if model is not None: save_model(project_id, model)
     return 'OK'
+
+
+def _progset_to_dict(progset):
+    return {
+        'id': progset.id,
+        'name': progset.name,
+        'programs': [
+            {
+                'id': program.id,
+                'name': program.name,
+                'shortName': program.short_name,
+                'active': program.active,
+            } for program in progset.programs
+        ],
+    }
+
+
+@project.route('/progsets/<project_id>')
+@login_required
+@report_exception()
+def getProgsets(project_id):
+    """
+    Download progsets for the project with the given id.
+    if project exists, returns progsets for it
+    if project does not exist, returns an error.
+
+    """
+    current_app.logger.debug("/api/project/progsets/%s" % project_id)
+    project_entry = load_project(project_id)
+    if project_entry is None:
+        reply = {'reason': 'Project %s does not exist.' % project_id, }
+        return jsonify(reply), 500
+    else:
+        reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id)
+        return jsonify({ 'progsets': [
+            _progset_to_dict(progset) for progset in reply
+        ]})
+
+
+@project.route('/progsets/<project_id>', methods=['POST'])
+@login_required
+@report_exception()
+def createProgsets(project_id):
+    """
+    Create a progset for the project with the given id.
+    if project exists, creates the progset and returns 'OK'
+    if project does not exist, returns an error.
+
+    """
+    current_app.logger.debug("/api/project/progsets/%s" % project_id)
+    project_entry = load_project(project_id)
+    if project_entry is None:
+        reply = {'reason': 'Project %s does not exist.' % project_id, }
+        return jsonify(reply), 500
+    else:
+        data = json.loads(request.data)
+        print data
+        if not data:
+            reply = {'reason': 'No data received', }
+            return jsonify(reply), 500
+        if 'name' not in data:
+            reply = {'resaon': 'name is required'}
+            return jsonify(reply), 500
+        progset_entry = ProgsetsDb(project_id, data['name'])
+        db.session.add(progset_entry)
+        db.session.flush()
+        for program in data.get('programs', []):
+            for field in ['name', 'shortName']:
+                if field not in program:
+                    db.session.rollback()
+                    reply = {'reason': 'program.%s is required' % field}
+
+            program_entry = ProgramsDb(
+                progset_entry.id,
+                program['name'],
+                program['shortName'],
+                program.get('active', False)
+            )
+            db.session.add(program_entry)
+
+        db.session.commit()
+
+        return jsonify({'id': progset_entry.id})
+
+
+@project.route('/progsets/<project_id>/<progset_id>')
+@login_required
+@report_exception()
+def getProgset(project_id, progset_id):
+    """
+    Download progset with the given id.
+    if progset exists, returns it
+    if progset does not exist, returns an error.
+
+    """
+    current_app.logger.debug("/api/project/progsets/%s/%s" % (project_id, progset_id))
+    progset_entry = db.session.query(ProgsetsDb).get(progset_id)
+    if progset_entry is None:
+        reply = {'reason': 'Progset %s does not exist.' % progset_id, }
+        return jsonify(reply), 404
+    if str(progset_entry.project_id) != project_id:
+        reply = {'reason': 'Progset %s does not exist for project %s.' % (progset_id, project_id), }
+        return jsonify(reply), 404
+    else:
+        return jsonify(_progset_to_dict(progset_entry))
+
+
+@project.route('/progsets/<project_id>/<progset_id>', methods=['delete'])
+@login_required
+@report_exception()
+def deleteProgset(project_id, progset_id):
+    """
+    Delete progset with the given id.
+    if progset exists, returns it
+    if progset does not exist, returns an error.
+
+    """
+    current_app.logger.debug("/api/project/progsets/%s/%s" % (project_id, progset_id))
+    progset_entry = db.session.query(ProgsetsDb).get(progset_id)
+    if progset_entry is None:
+        reply = {'reason': 'Progset %s does not exist.' % progset_id, }
+        return jsonify(reply), 404
+    if str(progset_entry.project_id) != project_id:
+        reply = {'reason': 'Progset %s does not exist for project %s.' % (progset_id, project_id), }
+        return jsonify(reply), 404
+    else:
+        progset_name = progset_entry.name
+        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
+        db.session.delete(progset_entry)
+        db.session.commit()
+        return jsonify({'result': 'Progset %s deleted.' % progset_name})
