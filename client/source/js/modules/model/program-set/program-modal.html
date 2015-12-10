@@ -4,13 +4,14 @@
     <h4 class="modal-title">{{ isNew ? 'Create' : 'Edit'}} program</h4>
   </div>
 
-  <form class="modal-body" name="PopulationForm" novalidate="novalidate" ng-submit="submit(PopulationForm)">
+  <form class="modal-body" name="programForm" novalidate="novalidate" ng-submit="submit(programForm)">
     <div class="section grid">
       <div class="++1 2">
         Name
       </div>
       <div class="8 1++">
         <input class="txbox __block" ng-model="program.name" required autofocus>
+        <div class="error-hint" ng-show="isUniqueName(program.name, programForm)"> A program set with this name already exists, please choose a different one. </div>
       </div>
     </div>
 
@@ -87,7 +88,7 @@
 
     <div class="section text-center">
       <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>
-      <button type="submit" class="btn">Save</button>
+      <button type="submit" class="btn" ng-disabled="programForm.$invalid">Save</button>
     </div>
   </form>
 </div>
