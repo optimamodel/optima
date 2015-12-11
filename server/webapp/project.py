@@ -455,6 +455,9 @@ def deleteProject(project_id):
         db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+        programs = db.session.query(ProgramsDb.id, ProgsetsDb).join(ProgsetsDb).filter_by(project_id=str_project_id)
+        db.session.query(ProgramsDb).filter(ProgramsDb.id.in_([str(x[0]) for x in programs])).delete(synchronize_session='fetch')
+        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
     db.session.commit()
     current_app.logger.debug("project %s is deleted by user %s" % (project_id, current_user.id))
@@ -890,6 +893,25 @@ def getProgsets(project_id):
         ]})
 
 
+def _create_programs_for_progset(progset_id, programs):
+
+    for program in programs:
+        kwargs = {}
+        for field in ['name', 'short_name', 'category']:
+            if field not in program:
+                db.session.rollback()
+                reply = {'reason': 'program.%s is required' % field}
+            kwargs[field] = program[field]
+
+        program_entry = ProgramsDb(
+            progset_id,
+            active=program.get('active', False),
+            pars=program.get('parameters', None),
+            **kwargs
+        )
+        db.session.add(program_entry)
+
+
 @project.route('/progsets/<project_id>', methods=['POST'])
 @login_required
 @report_exception()
@@ -916,21 +938,8 @@ def createProgsets(project_id):
         progset_entry = ProgsetsDb(project_id, data['name'])
         db.session.add(progset_entry)
         db.session.flush()
-        for program in data.get('programs', []):
-            kwargs = {}
-            for field in ['name', 'short_name', 'category']:
-                if field not in program:
-                    db.session.rollback()
-                    reply = {'reason': 'program.%s is required' % field}
-                kwargs[field] = program[field]
 
-            program_entry = ProgramsDb(
-                progset_entry.id,
-                active=program.get('active', False),
-                pars=program.get('parameters', None),
-                **kwargs
-            )
-            db.session.add(program_entry)
+        _create_programs_for_progset(progset_entry.id, data.get('programs', []))
 
         db.session.commit()
 
@@ -1013,21 +1022,8 @@ def updateProgset(project_id, progset_id):
             return jsonify(reply), 500
         progset_entry.name = data['name']
         db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-        for program in data.get('programs', []):
-            kwargs = {}
-            for field in ['name', 'short_name', 'category']:
-                if field not in program:
-                    db.session.rollback()
-                    reply = {'reason': 'program.%s is required' % field}
-                kwargs[field] = program[field]
 
-            program_entry = ProgramsDb(
-                progset_entry.id,
-                active=program.get('active', False),
-                pars=program.get('parameters', None),
-                **kwargs
-            )
-            db.session.add(program_entry)
+        _create_programs_for_progset(progset_entry.id, data.get('programs', []))
 
         db.session.commit()
 

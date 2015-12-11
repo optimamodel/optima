@@ -184,5 +184,60 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.delete('api/project/delete/{}'.format(project_id), headers=headers)
         self.assertEqual(response.status_code, 200)
 
+    def test_create_and_retrieve_progset(self):
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        response = self.client.get('/api/project/progsets/{}/{}'.format(
+            project_id,
+            progset_id
+        ))
+        self.assertEqual(response.status_code, 200)
+
+    def test_update_progset(self):
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        data = self.progset_test_data.copy()
+        data['name'] = 'Edited progset'
+        data['programs'][0]['active'] = False
+        program_name = data['programs'][0]['name']
+
+        response = self.client.put(
+            '/api/project/progsets/{}/{}'.format(project_id, progset_id),
+            data=json.dumps(data)
+        )
+        self.assertEqual(response.status_code, 200)
+
+        progset = ProgsetsDb.query.get(progset_id)
+        self.assertEqual(progset.name, 'Edited progset')
+        # looping around all programs to make sure no ancient data is left over
+        for program in ProgramsDb.query.filter_by(progset_id=progset_id, name=program_name):
+            self.assertEqual(program.active, False)
+
+    def test_delete_progset(self):
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        response = self.client.delete('/api/project/progsets/{}/{}'.format(project_id, progset_id))
+        self.assertEqual(response.status_code, 200)
+
+        progset = ProgsetsDb.query.get(progset_id)
+        self.assertIsNone(progset)
+
+        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
+        self.assertEqual(program_count, 0)
+
+    def test_delete_project_with_progset(self):
+        project_id = self.create_project('test_progset')
+        self.api_create_progset(project_id)
+
+        response = self.client.delete('/api/project/delete/{}'.format(project_id))
+        self.assertEqual(response.status_code, 200)
+
 if __name__ == '__main__':
     unittest.main()
