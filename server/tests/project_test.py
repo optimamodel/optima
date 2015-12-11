@@ -239,5 +239,18 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.delete('/api/project/delete/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
 
+    def test_retrieve_list_of_progsets(self):
+        project_id = self.create_project('test_progset')
+        self.api_create_progset(project_id)
+        self.api_create_progset(project_id)
+        self.api_create_progset(project_id)
+
+        response = self.client.get('/api/project/progsets/{}'.format(project_id))
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.data)
+        self.assertTrue('progsets' in data)
+        self.assertEqual(len(data['progsets']), 3)
+
 if __name__ == '__main__':
     unittest.main()
