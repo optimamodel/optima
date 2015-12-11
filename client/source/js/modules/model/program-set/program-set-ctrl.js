@@ -11,24 +11,22 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       modalService.informError([{message: 'There is no project open currently.'}]);
     }
 
-    // Initialize state
-    $scope.state = {
-      activeProgramSet: {},
-      categories: predefined.categories,
-      programs: predefined.programs
-    };
+    // Initialize scope params
+    $scope.activeProgramSet = {};
+    $scope.categories = predefined.categories;
+    $scope.programs = predefined.programs;
 
     // Reset programs to defaults
     const resetPrograms = function() {
-      $scope.state.programs = predefined.programs;
+      $scope.programs = predefined.programs;
     };
     resetPrograms();
 
     // The function sets the current active program to the program passed
     $scope.setActiveProgramSet = function(program) {
-      $scope.state.activeProgramSet = program;
+      $scope.activeProgramSet = program;
       if (program.programs) {
-        $scope.state.programs = program.programs;
+        $scope.programs = program.programs;
       } else {
         resetPrograms();
       }
@@ -39,7 +37,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       url: '/api/project/progsets/' + openProject.id,
       method: 'GET'})
       .success(function (response) {
-        $scope.state.programSetList = response.progsets || [];
+        $scope.programSetList = response.progsets || [];
         if(response.progsets && response.progsets.length > 0) {
           $scope.setActiveProgramSet(response.progsets[0]);
         }
@@ -49,47 +47,47 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.addProgramSet = function () {
       var add = function (name) {
         const addedProgramSet = {name:name};
-        $scope.state.programSetList[$scope.state.programSetList.length] = addedProgramSet;
+        $scope.programSetList[$scope.programSetList.length] = addedProgramSet;
         $scope.setActiveProgramSet(addedProgramSet);
       };
-      programSetModalService.openProgramSetModal(null, add, $scope.state.programSetList, 'Add program set', true);
+      programSetModalService.openProgramSetModal(null, add, $scope.programSetList, 'Add program set', true);
     };
 
     // Open pop-up to edit progSet name
     $scope.editProgramSet = function () {
-      if (!$scope.state.activeProgramSet) {
+      if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var edit = function (name) {
-          $scope.state.activeProgramSet.name = name;
+          $scope.activeProgramSet.name = name;
         };
-        programSetModalService.openProgramSetModal($scope.state.activeProgramSet.name, edit, $scope.state.programSetList, 'Edit program set');
+        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, edit, $scope.programSetList, 'Edit program set');
       }
     };
 
-    // Delete a progSet from $scope.state.programSetList and also DB.
+    // Delete a progSet from $scope.programSetList and also DB.
     $scope.deleteProgramSet = function () {
-      if (!$scope.state.activeProgramSet) {
+      if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var remove = function () {
-          if ($scope.state.activeProgramSet.id) {
+          if ($scope.activeProgramSet.id) {
             $http({
-              url: 'api/project/progsets/' + openProject.id + '/' + $scope.state.activeProgramSet.id,
+              url: 'api/project/progsets/' + openProject.id + '/' + $scope.activeProgramSet.id,
               method: 'DELETE'
             });
           }
-          $scope.state.programSetList = _.filter($scope.state.programSetList, function (programSet) {
-            return programSet.name !== $scope.state.activeProgramSet.name;
+          $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
+            return programSet.name !== $scope.activeProgramSet.name;
           });
-          $scope.state.programSetList ? $scope.setActiveProgramSet($scope.state.programSetList[0]) : void 0;
+          $scope.programSetList ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
         };
         modalService.confirm(
           function () {
             remove()
           }, function () {
           }, 'Yes, remove this program set', 'No',
-          'Are you sure you want to permanently remove program set "' + $scope.state.activeProgramSet.name + '"?',
+          'Are you sure you want to permanently remove program set "' + $scope.activeProgramSet.name + '"?',
           'Delete program set'
         );
       }
@@ -97,15 +95,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Copy a progSet
     $scope.copyProgramSet = function () {
-      if (!$scope.state.activeProgramSet) {
+      if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var copy = function (name) {
-          const copiedProgramSet = {name: name};
-          $scope.state.programSetList[$scope.state.programSetList.length] = copiedProgramSet;
+          const copiedProgramSet = {name: name, programs: $scope.activeProgramSet.programs};
+          $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.setActiveProgramSet(copiedProgramSet);
         };
-        programSetModalService.openProgramSetModal($scope.state.activeProgramSet.name, copy, $scope.state.programSetList, 'Copy program set');
+        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, copy, $scope.programSetList, 'Copy program set');
       }
     };
 
@@ -115,15 +113,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'Open project before proceeding.'}]);
       } else {
         $http({
-          url: 'api/project/progsets/' + openProject.id + ($scope.state.activeProgramSet.id ? '/' + $scope.state.activeProgramSet.id : ''),
-          method: ($scope.state.activeProgramSet.id ? 'PUT' : 'POST'),
+          url: 'api/project/progsets/' + openProject.id + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
+          method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
           data: {
-            name: $scope.state.activeProgramSet.name,
-            programs: $scope.state.programs
+            name: $scope.activeProgramSet.name,
+            programs: $scope.programs
           }})
           .success(function (response) {
             if(response.id) {
-              $scope.state.activeProgramSet.id = response.id;
+              $scope.activeProgramSet.id = response.id;
             }
           });
       }
@@ -156,7 +154,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       return programSetModalService.openProgramModal(program, predefined, availableParameters.data.parameters).result.then(
         function (newProgram) {
-          $scope.state.programs.push(newProgram);
+          $scope.programs.push(newProgram);
         }
       );
     };
@@ -175,7 +173,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       return programSetModalService.openProgramModal(program, predefined, availableParameters).result.then(
         function (newProgram) {
-          $scope.state.programs.push(newProgram);
+          $scope.programs.push(newProgram);
         }
       );
     };
