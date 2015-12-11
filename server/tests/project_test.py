@@ -252,5 +252,16 @@ class ProjectTestCase(OptimaTestCase):
         self.assertTrue('progsets' in data)
         self.assertEqual(len(data['progsets']), 3)
 
+    def test_progset_can_hydrate(self):
+        from server.webapp.dbmodels import ProgsetsDb
+
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        progset = ProgsetsDb.query.get(progset_id)
+        programset = progset.hydrate()
+
+        self.assertIsNotNone(programset)
+
 if __name__ == '__main__':
     unittest.main()

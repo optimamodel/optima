@@ -221,6 +221,16 @@ class ProgsetsDb(db.Model):
         if id:
             self.id = id
 
+    def hydrate(self):
+        from optima.programs import Programset
+        progset_entry = Programset(
+            name=self.name,
+            programs=None,
+            id=self.id
+        )
+
+        return progset_entry
+
 
 class ProgramsDb(db.Model):
 
