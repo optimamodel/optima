@@ -13,12 +13,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Initialize scope params
     $scope.activeProgramSet = {};
-    $scope.categories = predefined.categories;
-    $scope.programs = predefined.programs;
+    $scope.categories = angular.copy(predefined.categories);
+    $scope.programs = angular.copy(predefined.programs);
 
     // Reset programs to defaults
     const resetPrograms = function() {
-      $scope.programs = predefined.programs;
+      $scope.programs = angular.copy(predefined.programs);
     };
     resetPrograms();
 
