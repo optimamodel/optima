@@ -29,8 +29,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     return {
 
       /**
-       * This function opens a modal that will ask the user to provide a name
-       * to edit an existing programSet.
+       * This function opens a modal for creating, editing and copying a programSet.
        */
       openProgramSetModal: function (programSetName, callback, programSetList, title, isAdd) {
 
@@ -72,6 +71,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         return modalInstance;
       },
 
+      /**
+       * This function opens a modal for creating, editing and copying a program.
+       */
       openProgramModal: function (program, predefined, availableParameters) {
         return $modal.open({
           templateUrl: 'js/modules/model/program-set/program-modal.html',

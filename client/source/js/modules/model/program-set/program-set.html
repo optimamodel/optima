@@ -4,12 +4,10 @@
   </div>
   <div style="display: flex;justify-content: flex-start;">
     <select id="programSet-selection" name="programSet-selection" class="txbox"
-            ng-model="state.activeProgramSetName"
-            ng-change="setActivePrograms(state.activeProgramSet)"
+            ng-model="state.activeProgramSet"
+            ng-change="setActiveProgramSet(state.activeProgramSet)"
+            ng-options="res.name for res in state.programSetList"
             style="width: 20%;">
-      <option ng-repeat="res in state.programSetList"
-              ng-selected="{{res.name === state.activeProgramSet.name}}"
-              value="{{::res.name}}">{{::res.name}}</option>
     </select>
     <button ng-click="addProgramSet()" type="button" class="btn" style="margin-left:2%">New program set</button>
     <button ng-click="editProgramSet()" type="button" class="btn" style="margin-left:2%">Edit program set</button>
@@ -19,7 +17,7 @@
   <div class="6">
     <h1>Manage programs</h1>
 
-    <div class="section" ng-repeat="category in categories">
+    <div class="section" ng-repeat="category in state.categories">
       <table class="section table table-bordered">
         <tr>
           <td colspan="5"><b>{{category.category}}</b></td>
@@ -31,7 +29,7 @@
           <td>&nbsp;</td>
           <td>&nbsp;</td>
         </tr>
-        <tr ng-show="programs.length" ng-repeat="program in programs" ng-if="program.category==category.category">
+        <tr ng-show="programs.length" ng-repeat="program in state.programs" ng-if="program.category==category.category">
           <td class="text-center" style="width: 50px" update-checkbox-on-click>
             <input type="checkbox" ng-model="program.active">
           </td>

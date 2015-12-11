@@ -4,73 +4,70 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
     $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
 
-    $scope.state = {};
-
-    const resetPrograms = function() {
-      $scope.categories = predefined.categories;
-      $scope.programs = predefined.programs;
-    };
-    resetPrograms();
-
-    $scope.setActivePrograms = function(program) {
-      if (program) {
-        $scope.state.activeProgramSet = program;
-        if (program.programs) {
-          $scope.programs = angular.copy(program.programs);
-        } else {
-          resetPrograms();
-        }
-      }
-    };
-    resetPrograms();
-
+    // Check if come project is currently open, else show error message
     const openProjectStr = activeProject.getProjectFor(UserManager.data);
     const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
-
     if(!openProject) {
       modalService.informError([{message: 'There is no project open currently.'}]);
     }
 
+    // Initialize state
+    $scope.state = {
+      activeProgramSet: {},
+      categories: predefined.categories,
+      programs: predefined.programs
+    };
+
+    // Reset programs to defaults
+    const resetPrograms = function() {
+      $scope.state.programs = predefined.programs;
+    };
+    resetPrograms();
+
+    // The function sets the current active program to the program passed
+    $scope.setActiveProgramSet = function(program) {
+      $scope.state.activeProgramSet = program;
+      if (program.programs) {
+        $scope.state.programs = program.programs;
+      } else {
+        resetPrograms();
+      }
+    };
+
+    // Get the list of saved programs from DB and set the first one as active
     $http({
       url: '/api/project/progsets/' + openProject.id,
       method: 'GET'})
       .success(function (response) {
         $scope.state.programSetList = response.progsets || [];
         if(response.progsets && response.progsets.length > 0) {
-          $scope.setActivePrograms(response.progsets[0]);
+          $scope.setActiveProgramSet(response.progsets[0]);
         }
       });
 
+    // Open pop-up to add new programSet name, it will also reset programs
     $scope.addProgramSet = function () {
       var add = function (name) {
         const addedProgramSet = {name:name};
         $scope.state.programSetList[$scope.state.programSetList.length] = addedProgramSet;
-        $scope.state.activeProgramSet = addedProgramSet;
-        resetPrograms();
+        $scope.setActiveProgramSet(addedProgramSet);
       };
       programSetModalService.openProgramSetModal(null, add, $scope.state.programSetList, 'Add program set', true);
     };
 
+    // Open pop-up to edit progSet name
     $scope.editProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
-        // This removing existing enter from array of programSetList and re-adding it with updated name was needed,
-        // coz it turns out that angular does not refreshes the select unless there is change in its size.
-        // https://github.com/angular/angular.js/issues/10939
         var edit = function (name) {
-          $scope.state.programSetList = _.filter($scope.state.programSetList, function (programSet) {
-            return programSet.name !== $scope.state.activeProgramSet.name;
-          });
-          $timeout(function () {
-            $scope.state.activeProgramSet.name = name;
-            $scope.state.programSetList[$scope.state.programSetList.length] = $scope.state.activeProgramSet;
-          });
+          $scope.state.activeProgramSet.name = name;
         };
         programSetModalService.openProgramSetModal($scope.state.activeProgramSet.name, edit, $scope.state.programSetList, 'Edit program set');
       }
     };
 
+    // Delete a progSet from $scope.state.programSetList and also DB.
     $scope.deleteProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
@@ -85,8 +82,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.programSetList = _.filter($scope.state.programSetList, function (programSet) {
             return programSet.name !== $scope.state.activeProgramSet.name;
           });
-          $scope.state.programSetList ? $scope.setActivePrograms($scope.state.programSetList[0]) : void 0;
-          $scope.state.programSetList = angular.copy($scope.state.programSetList);
+          $scope.state.programSetList ? $scope.setActiveProgramSet($scope.state.programSetList[0]) : void 0;
         };
         modalService.confirm(
           function () {
@@ -99,6 +95,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
+    // Copy a progSet
     $scope.copyProgramSet = function () {
       if (!$scope.state.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
@@ -106,15 +103,33 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         var copy = function (name) {
           const copiedProgramSet = {name: name};
           $scope.state.programSetList[$scope.state.programSetList.length] = copiedProgramSet;
-          $scope.state.activeProgramSet = copiedProgramSet;
+          $scope.setActiveProgramSet(copiedProgramSet);
         };
         programSetModalService.openProgramSetModal($scope.state.activeProgramSet.name, copy, $scope.state.programSetList, 'Copy program set');
       }
     };
 
-    /*
-     * Opens a modal for editing an existing program.
-     */
+    // Save a programSet to DB
+    $scope.saveProgramSet = function() {
+      if (!openProject) {
+        modalService.informError([{message: 'Open project before proceeding.'}]);
+      } else {
+        $http({
+          url: 'api/project/progsets/' + openProject.id + ($scope.state.activeProgramSet.id ? '/' + $scope.state.activeProgramSet.id : ''),
+          method: ($scope.state.activeProgramSet.id ? 'PUT' : 'POST'),
+          data: {
+            name: $scope.state.activeProgramSet.name,
+            programs: $scope.state.programs
+          }})
+          .success(function (response) {
+            if(response.id) {
+              $scope.state.activeProgramSet.id = response.id;
+            }
+          });
+      }
+    };
+
+    // Opens a modal for editing an existing program.
     $scope.openEditProgramModal = function ($event, program) {
       if ($event) {
         $event.preventDefault();
@@ -141,7 +156,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       return programSetModalService.openProgramModal(program, predefined, availableParameters.data.parameters).result.then(
         function (newProgram) {
-          $scope.programs.push(newProgram);
+          $scope.state.programs.push(newProgram);
         }
       );
     };
@@ -160,30 +175,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       return programSetModalService.openProgramModal(program, predefined, availableParameters).result.then(
         function (newProgram) {
-          $scope.programs.push(newProgram);
+          $scope.state.programs.push(newProgram);
         }
       );
     };
-
-    $scope.saveProgramSet = function() {
-      if (!openProject) {
-        modalService.informError([{message: 'Open project before proceeding.'}]);
-      } else {
-        $http({
-          url: 'api/project/progsets/' + openProject.id + ($scope.state.activeProgramSet.id ? '/' + $scope.state.activeProgramSet.id : ''),
-          method: ($scope.state.activeProgramSet.id ? 'PUT' : 'POST'),
-          data: {
-            name: $scope.state.activeProgramSet.name,
-            programs: $scope.programs
-          }})
-         .success(function (response) {
-           if(response.id) {
-             $scope.state.activeProgramSet.id = response.id;
-             console.log('$scope.programs', $scope.state.programSetList);
-           }
-         });
-      }
-    }
 
   });
 });
