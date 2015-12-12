@@ -27,7 +27,7 @@ class UserTestCase(OptimaTestCase):
         return str(admin.id)
 
     def list_users(self):
-        return self.client.get('/api/user/list?secret=%s' % self.admin_password)
+        return self.client.get('/api/user?secret=%s' % self.admin_password)
 
     def test_current_no_login(self):
         response = self.client.get('/api/user/current', follow_redirects=True)
@@ -58,12 +58,12 @@ class UserTestCase(OptimaTestCase):
         response = self.create_user()
         response = self.logout()
         response = self.login(self.admin_email, self.admin_password)
-        response = self.client.get('/api/user/list')
+        response = self.client.get('/api/user')
         assert(response.status_code==200)
         data = json.loads(response.data)
         users = data.get('users', None)
         assert(users is not None)
-        assert(len(users)==2)
+        assert(len(users)==2, users)
         test_user = users[1]
         assert(test_user['id']==self.get_user_id_by_email(self.default_email))
         assert(test_user['email']=="test@test.com")
@@ -91,20 +91,22 @@ class UserTestCase(OptimaTestCase):
         #create two users
         response = self.create_user()
         default_id = self.get_user_id_by_email(self.default_email)
+        response = self.login(self.default_email, self.test_password)
         response = self.api_create_project()
         response = self.logout()
         #log in as second user and create a project
         response = self.create_user(name='test2', email=other_email)
         other_user = self.get_user_id_by_email(other_email)
+        response = self.login(other_email, self.test_password)
         response = self.api_create_project()
         response = self.logout()
         response = self.login(self.admin_email, self.admin_password)
         response = self.client.get('/api/project/list/all')
-        assert(response.status_code==200)
+        self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         projects = data.get('projects')
-        assert(projects is not None)
-        assert(len(projects)==2)
+        self.assertIsNotNone(projects, data)
+        self.assertEqual(len(projects), 2, projects)
         assert('user_id' in projects[0] and 'user_id' in projects[1])
         user_ids = [p['user_id'] for p in projects]
         assert(set(user_ids)==set([default_id,other_user]))
@@ -149,10 +151,8 @@ class UserTestCase(OptimaTestCase):
         projects = self.list_projects(test_id)
         assert(len(projects)==1)
         #delete second user
-        response = self.client.delete('/api/user/delete/%s?secret=%s' % (test_id, self.admin_password))
-        assert(response.status_code==200)
-        data = json.loads(response.data)
-        assert(data.get('deleted')==test_id)
+        response = self.client.delete('/api/user/%s?secret=%s' % (test_id, self.admin_password))
+        self.assertEqual(response.status_code, 204)
         #list users again, verify we have 1 and it's the first one
         response = self.list_users()
         users = json.loads(response.data).get('users')
@@ -170,11 +170,11 @@ class UserTestCase(OptimaTestCase):
         response = self.create_user()
         new_password = hashlib.sha224("test1").hexdigest()
         new_email = 'test1@test.com'
-        response = self.client.put('/api/user/modify/%s?secret=%s&email=%s&password=%s' \
+        response = self.client.put('/api/user/%s?secret=%s&email=%s&password=%s' \
             % (admin_id, self.admin_password, new_email, new_password))
         assert(response.status_code==200)
         data = json.loads(response.data)
-        assert(data.get('modified')==admin_id)
+        assert(data.get('id')==admin_id)
         response = self.login(email=new_email, password = new_password)
         response = self.api_create_project()
         assert(response.status_code==200)

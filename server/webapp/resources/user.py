@@ -37,6 +37,7 @@ class User(Resource):
         summary='List users'
     )
     @marshal_with(UserDb.resource_fields, envelope='users')
+    @verify_admin_request
     def get(self):
         current_app.logger.debug('/api/user/list {}'.format(request.args))
         return UserDb.query.all()

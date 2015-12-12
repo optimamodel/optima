@@ -50,11 +50,14 @@ class OptimaTestCase(unittest.TestCase):
         {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
         {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
 
-    def create_user(self, name = default_name, email = default_email):
-        headers = {'Content-Type' : 'application/json'}
-        create_data = '{"email":"%s","password":"%s","name":"%s"}' % (email, self.test_password, name)
+    def create_user(self, name=default_name, email=default_email):
+        create_data = {
+            'email': email,
+            'password': self.test_password,
+            'name': name,
+        }
         print ("create_user data: %s" % create_data)
-        response = self.client.post('/api/user/create', data = create_data)
+        response = self.client.post('/api/user', data=create_data)
         return response
 
     def get_any_user_id(self,admin=False):
