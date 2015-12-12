@@ -18,10 +18,7 @@ class Programset(object):
     def __init__(self, name='default', programs=None, id=None):
         ''' Initialize '''
         self.name = name
-        if id is None:
-            self.id = uuid()
-        else:
-            self.id = id
+        self.id = uuid()
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
         self.gettargetpops()

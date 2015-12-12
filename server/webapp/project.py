@@ -872,7 +872,7 @@ def _progset_to_dict(progset):
                 'short_name': program.short_name,
                 'category': program.category,
                 'active': program.active,
-                'parameters': program.get_parameters()
+                'parameters': program.pars
             } for program in progset.programs
         ],
     }

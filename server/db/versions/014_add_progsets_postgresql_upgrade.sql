@@ -14,7 +14,7 @@ CREATE TABLE programs (
     category VARCHAR,
     name VARCHAR,
     short_name VARCHAR,
-    pars BYTEA,
+    pars JSON,
     active BOOLEAN,
     created TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated TIMESTAMP WITH TIME ZONE,

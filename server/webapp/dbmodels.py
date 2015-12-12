@@ -225,8 +225,7 @@ class ProgsetsDb(db.Model):
         from optima.programs import Programset
         progset_entry = Programset(
             name=self.name,
-            programs=None,
-            id=self.id
+            programs=None
         )
 
         return progset_entry
@@ -241,7 +240,7 @@ class ProgramsDb(db.Model):
     category = db.Column(db.String)
     name = db.Column(db.String)
     short_name = db.Column(db.String)
-    pars = db.Column(db.LargeBinary)
+    pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
@@ -253,7 +252,7 @@ class ProgramsDb(db.Model):
         self.name = name
         self.short_name = short_name
         self.category = category
-        self.pars = saves(pars)
+        self.pars = pars
         self.active = active
         if created:
             self.created = created
@@ -262,6 +261,3 @@ class ProgramsDb(db.Model):
         if id:
             self.id = id
 
-    def get_parameters(self):
-        from optima.utils import loads
-        return loads(self.pars)
