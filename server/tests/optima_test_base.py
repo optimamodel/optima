@@ -50,11 +50,14 @@ class OptimaTestCase(unittest.TestCase):
         {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
         {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
 
-    def create_user(self, name=default_name, email=default_email):
-        UserFactory._meta.sqlalchemy_session = db.session
-        rv = UserFactory.create(name=name, email=email)
+    def create_record_with(self, factory_class, **kwargs):
+        factory_class._meta.sqlalchemy_session = db.session
+        rv = factory_class.create(**kwargs)
         db.session.commit()
         return rv
+
+    def create_user(self, name=default_name, email=default_email):
+        return self.create_record_with(UserFactory, name=name, email=email)
 
     def get_any_user_id(self, admin=False):
         from server.webapp.dbmodels import UserDb
