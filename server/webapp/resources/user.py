@@ -1,6 +1,6 @@
 import traceback
 
-from flask import request, current_app, abort, session, flash, redirect, url_for
+from flask import request, current_app, session, flash, redirect, url_for
 
 from flask_restful import Resource, marshal_with
 from flask.ext.login import login_user, current_user, logout_user, login_required
@@ -10,7 +10,7 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 
 from server.webapp.inputs import email, hashed_password
-from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist
+from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist, InvalidCredentials
 from server.webapp.utils import verify_admin_request, RequestParser
 
 
@@ -24,6 +24,11 @@ user_update_parser = RequestParser()
 user_update_parser.add_argument('email', type=email)
 user_update_parser.add_argument('name')
 user_update_parser.add_argument('password', type=hashed_password)
+
+
+class UserDoesNotExist(RecordDoesNotExist):
+
+    _model = 'user'
 
 
 class User(Resource):
@@ -49,7 +54,7 @@ class User(Resource):
         same_user_count = UserDb.query.filter_by(email=args.email).count()
 
         if same_user_count > 0:
-            raise UserAlreadyExists('This email is already in use')
+            raise UserAlreadyExists(args.email)
 
         user = UserDb(args.name, args.email, args.password)
         db.session.add(user)
@@ -62,14 +67,15 @@ class UserDetail(Resource):
     method_decorators = [verify_admin_request]
 
     @swagger.operation(
-        summary='Delete a user'
+        summary='Delete a user',
+        notes='Requires admin privileges'
     )
     def delete(self, user_id):
         current_app.logger.debug('/api/user/delete/{}'.format(user_id))
         user = UserDb.query.get(user_id)
 
         if user is None:
-            raise RecordDoesNotExist(user_id)
+            raise UserDoesNotExist(user_id)
 
         user_email = user.email
         from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
@@ -94,7 +100,8 @@ class UserDetail(Resource):
     @swagger.operation(
         responseClass=UserDb.__name__,
         summary='Update a user',
-        parameters=user_update_parser.swagger_parameters()
+        notes='Requires admin privileges',
+        parameters=user_update_parser.swagger_parameters(),
     )
     @marshal_with(UserDb.resource_fields)
     def put(self, user_id):
@@ -102,7 +109,7 @@ class UserDetail(Resource):
 
         user = UserDb.query.get(user_id)
         if user is None:
-            raise RecordDoesNotExist(user_id)
+            raise UserDoesNotExist(user_id)
 
         args = user_update_parser.parse_args()
         for key, value in args.iteritems():
@@ -164,7 +171,7 @@ class UserLogin(Resource):
                 var = traceback.format_exc()
                 print("Exception when logging user {}: \n{}".format(args['email'], var))
 
-            abort(401)
+            raise InvalidCredentials
 
         else:
             return current_user

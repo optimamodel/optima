@@ -18,7 +18,6 @@ if new_path not in sys.path:
 
 import server.webapp.dbconn
 
-
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
