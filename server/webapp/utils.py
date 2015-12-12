@@ -7,6 +7,7 @@ from flask import request, jsonify, abort
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, UserDb
 import traceback
+from flask_restful.reqparse import RequestParser as OrigReqParser
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj'}
@@ -293,3 +294,17 @@ def init_login_manager(login_manager):
     @login_manager.unauthorized_handler
     def unauthorized_handler():
         abort(401)
+
+
+class RequestParser(OrigReqParser):
+
+    def swagger_parameters(self):
+        return [
+            {
+                'name': arg.name,
+                'dataType': arg.type.__name__ if callable(arg.type) else arg.type,
+                'required': arg.required,
+                'description': arg.help,
+            }
+            for arg in self.args
+        ]

@@ -2,46 +2,46 @@ import traceback
 
 from flask import request, current_app, abort, session, flash, redirect, url_for
 
-from flask_restful import Resource, fields, marshal_with, reqparse
+from flask_restful import Resource, marshal_with
 from flask.ext.login import login_user, current_user, logout_user, login_required
+from flask_restful_swagger import swagger
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 
-from server.webapp.fields import Uuid
 from server.webapp.inputs import email, hashed_password
 from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist
-from server.webapp.utils import verify_admin_request
+from server.webapp.utils import verify_admin_request, RequestParser
 
 
-user_fields = {
-    'id': Uuid,
-    'name': fields.String,
-    'email': fields.String,
-    'is_admin': fields.Boolean,
-}
-
-
-user_parser = reqparse.RequestParser()
+user_parser = RequestParser()
 user_parser.add_argument('email', type=email, required=True)
-user_parser.add_argument('name', required=True)
+user_parser.add_argument('name', required=True, help='A valid e-mail address')
 user_parser.add_argument('password', type=hashed_password, required=True)
 
 
-user_update_parser = reqparse.RequestParser()
+user_update_parser = RequestParser()
 user_update_parser.add_argument('email', type=email)
 user_update_parser.add_argument('name')
 user_update_parser.add_argument('password', type=hashed_password)
 
 
 class User(Resource):
-
-    @marshal_with(user_fields, envelope='users')
+    @swagger.operation(
+        responseClass=UserDb.__name__,
+        summary='List users'
+    )
+    @marshal_with(UserDb.resource_fields, envelope='users')
     def get(self):
         current_app.logger.debug('/api/user/list {}'.format(request.args))
         return UserDb.query.all()
 
-    @marshal_with(user_fields)
+    @swagger.operation(
+        responseClass=UserDb.__name__,
+        summary='Create a user',
+        parameters=user_parser.swagger_parameters()
+    )
+    @marshal_with(UserDb.resource_fields)
     def post(self):
         current_app.logger.info("create request: {} {}".format(request, request.data))
         args = user_parser.parse_args()
@@ -61,6 +61,9 @@ class User(Resource):
 class UserDetail(Resource):
     method_decorators = [verify_admin_request]
 
+    @swagger.operation(
+        summary='Delete a user'
+    )
     def delete(self, user_id):
         current_app.logger.debug('/api/user/delete/{}'.format(user_id))
         user = UserDb.query.get(user_id)
@@ -88,7 +91,12 @@ class UserDetail(Resource):
 
         return '', 204
 
-    @marshal_with(user_fields)
+    @swagger.operation(
+        responseClass=UserDb.__name__,
+        summary='Update a user',
+        parameters=user_update_parser.swagger_parameters()
+    )
+    @marshal_with(UserDb.resource_fields)
     def put(self, user_id):
         current_app.logger.debug('/api/user/{}'.format(user_id))
 
@@ -111,7 +119,7 @@ class UserDetail(Resource):
 # Authentication
 
 
-user_login_parser = reqparse.RequestParser()
+user_login_parser = RequestParser()
 user_login_parser.add_argument('email', type=email, required=True)
 user_login_parser.add_argument('password', type=hashed_password, required=True)
 
@@ -119,14 +127,23 @@ user_login_parser.add_argument('password', type=hashed_password, required=True)
 class CurrentUser(Resource):
     method_decorators = [login_required, ]
 
-    @marshal_with(user_fields)
+    @swagger.operation(
+        responseClass=UserDb.__name__,
+        summary='Return the current user'
+    )
+    @marshal_with(UserDb.resource_fields)
     def get(self):
         return current_user
 
 
 class UserLogin(Resource):
 
-    @marshal_with(user_fields)
+    @swagger.operation(
+        responseClass=UserDb.__name__,
+        summary='Try to log a user in',
+        parameters=user_login_parser.swagger_parameters()
+    )
+    @marshal_with(UserDb.resource_fields)
     def post(self):
         current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
 
@@ -156,6 +173,9 @@ class UserLogin(Resource):
 class UserLogout(Resource):
     method_decorators = [login_required, ]
 
+    @swagger.operation(
+        summary='Log the current user out'
+    )
     def get(self):
         current_app.logger.debug("logging out user {}".format(
             current_user.name

@@ -3,9 +3,11 @@ import sys
 import logging
 
 from flask import Flask, redirect, Blueprint, g, session
+
 from flask_restful import Api
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+from flask_restful_swagger import swagger
 
 
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +26,7 @@ if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
 api_bp = Blueprint('api', __name__, static_folder='static')
-api = Api(api_bp)
+api = swagger.docs(Api(api_bp), apiVersion='2.0')
 
 server.webapp.dbconn.db = SQLAlchemy(app)
 
@@ -58,12 +60,12 @@ app.register_blueprint(model, url_prefix='/api/model')
 app.register_blueprint(scenarios, url_prefix='/api/analysis/scenarios')
 app.register_blueprint(optimization, url_prefix='/api/analysis/optimization')
 
+api.add_resource(User, '/api/user')
+api.add_resource(UserDetail, '/api/user/<user_id>')
 api.add_resource(CurrentUser, '/api/user/current')
 api.add_resource(UserLogin, '/api/user/login')
 api.add_resource(UserLogout, '/api/user/logout')
-api.add_resource(UserDetail, '/api/user/<user_id>')
-api.add_resource(User, '/api/user')
-app.register_blueprint(api_bp)
+app.register_blueprint(api_bp, url_prefix='')
 
 
 @app.route('/')

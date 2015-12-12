@@ -1,11 +1,26 @@
+from flask_restful_swagger import swagger
+from flask_restful import fields
+
 from sqlalchemy.dialects.postgresql import JSON, UUID
-from server.webapp.dbconn import db
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
+from server.webapp.dbconn import db
+from server.webapp.fields import Uuid
 
+
+@swagger.model
 class UserDb(db.Model):
+
     __tablename__ = 'users'
+
+    resource_fields = {
+        'id': Uuid,
+        'name': fields.String,
+        'email': fields.String,
+        'is_admin': fields.Boolean,
+    }
+
     id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
