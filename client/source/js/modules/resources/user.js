@@ -21,7 +21,7 @@ define([
             method: 'POST',
             isArray: false,
             params: {
-              path: 'create'
+              path: ''
             }
           },
           login: {
