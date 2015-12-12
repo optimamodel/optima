@@ -24,7 +24,7 @@ More often in development environment at-least we use nginx as web server. Confi
 
   - on Ubuntu:
 
-      `sudo install nginx`
+      `sudo apt-get install nginx`
 
   - on CentOS:
 
