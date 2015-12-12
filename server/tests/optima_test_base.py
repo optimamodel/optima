@@ -14,7 +14,7 @@ from sqlalchemy.schema import (
         ForeignKeyConstraint,
         DropConstraint,
     )
-
+from server.tests.factories import UserFactory
 
 
 class OptimaTestCase(unittest.TestCase):
@@ -82,16 +82,20 @@ class OptimaTestCase(unittest.TestCase):
       ],
     }
 
-    def create_user(self, name = default_name, email = default_email):
-        headers = {'Content-Type' : 'application/json'}
-        create_data = '{"email":"%s","password":"%s","name":"%s"}' % (email, self.test_password, name)
-        print ("create_user data: %s" % create_data)
-        response = self.client.post('/api/user/create', data = create_data)
-        return response
+    def create_record_with(self, factory_class, **kwargs):
+        factory_class._meta.sqlalchemy_session = db.session
+        rv = factory_class.create(**kwargs)
+        db.session.commit()
+        return rv
 
-    def get_any_user_id(self,admin=False):
+    def create_user(self, name=default_name, email=default_email):
+        return self.create_record_with(UserFactory, name=name, email=email)
+
+    def get_any_user_id(self, admin=False):
         from server.webapp.dbmodels import UserDb
         user = UserDb.query.filter(UserDb.is_admin == admin).first()
+        if user is None:
+            return None
         return str(user.id)
 
     def get_user_id_by_email(self, email):
