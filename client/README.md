@@ -12,7 +12,7 @@ Installation
        1. npm install
        2. npm -g install bower (if you do not have bower already globally installed)
        3. npm -g install gulp (if you do not have gulp already globally installed)
-       4. Create file client/js/version.js and add this content to it "define([], function () { return 'last_commit_short_hash'; });"
+       4. Create file client/source/js/version.js and add this content to it "define([], function () { return 'last_commit_short_hash'; });"
           (Where last_commit_short_hash is short hash for the last commit).
 
 
