@@ -3,6 +3,7 @@ from server.webapp.dbconn import db
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
+
 class UserDb(db.Model):
     __tablename__ = 'users'
     id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
