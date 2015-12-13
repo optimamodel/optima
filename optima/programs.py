@@ -21,7 +21,6 @@ class Programset(object):
         self.id = uuid()
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
-#        self.initialize_covout()
         self.created = today()
         self.modified = today()
 
@@ -98,14 +97,7 @@ class Programset(object):
         if type(newprograms)==Program: newprograms = [newprograms]
         if type(newprograms)==list:
             for newprogram in newprograms: 
-                if newprogram not in self.programs:
-                    self.programs[newprogram.name] = newprogram
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
-                else:
-                    raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
-        elif type(newprograms)==dict:
-            for newprogram in newprograms.values(): 
-                if newprogram not in self.programs:
+                if newprogram not in self.programs.values():
                     self.programs[newprogram.name] = newprogram
                     print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
                 else:
@@ -377,7 +369,7 @@ class Program(object):
             print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         return None
         
-    def addcostcovdatum(self,costcovdatum,overwrite=False):
+    def addcostcovdatum(self,costcovdatum,overwrite=True):
         '''Add cost-coverage data point'''
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
@@ -506,7 +498,7 @@ class CCOF(object):
         output += '\n'
         return output
 
-    def addccopar(self,ccopar,overwrite=False):
+    def addccopar(self,ccopar,overwrite=True):
         ''' Add or replace parameters for cost-coverage functions'''
 
         if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.

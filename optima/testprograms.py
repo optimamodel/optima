@@ -149,14 +149,12 @@ if 'makeprograms' in tests:
     if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
     print('Running make programs set test...')
-    # Different ways to initialise
-#    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
+    # Initialise with or without programs
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
 
     # Testing methods of programset class
     # 1. Adding a program
-#    R.addprograms({'ART':ART})
     R.addprograms(ART)
 
     # 2. Removing a program
