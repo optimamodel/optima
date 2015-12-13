@@ -1,15 +1,10 @@
 from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful import marshal_with
-from flask_restful_swagger import swagger
 from server.webapp.resources.project.fields import predefined_fields
 
 
 class Predefined(Resource):
-    @swagger.operation(
-        responseClass=None,
-        summary='Gives back default populations and programs'
-    )
     @marshal_with(predefined_fields)
     @login_required
     def get(self):

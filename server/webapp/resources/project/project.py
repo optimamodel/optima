@@ -38,7 +38,7 @@ class Project(Resource):
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
-        summary='Open all user;s project Project'
+        summary="Open all user's project"
     )
     @marshal_with(result_fields)
     @login_required
