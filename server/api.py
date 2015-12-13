@@ -52,7 +52,7 @@ from server.webapp.project import project
 from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,
     UserLogin, UserLogout)
-from server.webapp.resources.project import (Project, ProjectItem, ProjectInfo)
+from server.webapp.resources.project import (Project, ProjectItem, ProjectInfo, Paramaters, Predefined, ProjectAll, ProjectCopy)
 
 app.register_blueprint(model, url_prefix='/api/model')
 app.register_blueprint(scenarios, url_prefix='/api/analysis/scenarios')
@@ -64,8 +64,12 @@ api.add_resource(CurrentUser, '/api/user/current')
 api.add_resource(UserLogin, '/api/user/login')
 api.add_resource(UserLogout, '/api/user/logout')
 api.add_resource(Project, '/api/project')
+api.add_resource(ProjectAll, '/api/project/all')
 api.add_resource(ProjectItem, '/api/project/<string:project_id>')
 api.add_resource(ProjectInfo, '/api/project/<string:project_id>/info')
+api.add_resource(Paramaters, '/api/project/paramaters')
+api.add_resource(Predefined, '/api/project/predefined')
+api.add_resource(ProjectCopy, '/api/project/<string:project_id>/copy')
 app.register_blueprint(api_bp, url_prefix='')
 
 
