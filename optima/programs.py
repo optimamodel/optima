@@ -21,10 +21,7 @@ class Programset(object):
         self.id = uuid()
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
-        self.gettargetpops()
-        self.gettargetpars()
-        self.gettargetpartypes()
-        self.initialize_covout()
+#        self.initialize_covout()
         self.created = today()
         self.modified = today()
 
@@ -63,29 +60,38 @@ class Programset(object):
             self.targetpartypes = list(set(self.targetpartypes))
 
     def initialize_covout(self):
-        '''Initializes the required coverage-outcome curves.
+        '''Sets up the required coverage-outcome curves.
            Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
-        self.gettargetpops()
-        self.covout = odict()
-        for targetpartype in self.targetpartypes:
-            self.covout[targetpartype] = {}
-            for thispop in self.progs_by_targetpar(targetpartype).keys():
-                initccoparams = {}
-                for thisprog in self.progs_by_targetpar(targetpartype)[thispop]:
-                    index = [(tp['param'],tp['pop']) for tp in thisprog.targetpars].index((targetpartype,thispop))
-                    thiseffect = thisprog.targetpars[index]['effect']
-                    thistime = thisprog.targetpars[index]['t']
-                    thiseffectname = thisprog.name
-                    initccoparams[thiseffectname] = thiseffect
-                    initccoparams['t'] = thistime
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        if not self.__dict__.get('covout'): self.covout = odict()
 
-#                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]
-#                initccoparams = {k: [] for k in targetingprogs}
+        for targetpartype in self.targetpartypes: # Loop over parameter types
+            if not self.covout.get(targetpartype): self.covout[targetpartype] = {} # Initialize if it's not there already
+            for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
+                if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
+                    ccopars = self.covout[targetpartype][thispop].ccopars 
+                else: # ... or if not, set it up
+                    ccopars = {}
+                    ccopars['intercept'] = []
+                    ccopars['t'] = []
+                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]
+                for tp in targetingprogs:
+                    if not ccopars.get(tp): ccopars[tp] = []
+                
+                # Delete any stored programs that are no longer needed (if removing a program)
+                progccopars = dcp(ccopars)
+                del progccopars['t'], progccopars['intercept']
+                for prog in progccopars.keys(): 
+                    if prog not in targetingprogs: del ccopars[prog]
 
-                initccoparams['intercept'] = []
-                self.covout[targetpartype][thispop] = Covout(initccoparams)                
+                self.covout[targetpartype][thispop] = Covout(ccopars)
+
+        # Delete any stored effects that aren't needed (if removing a program)
+        for tpt in self.covout.keys():
+            if tpt not in self.targetpartypes: del self.covout[tpt]
+            else: 
+                for tp in self.covout[tpt].keys():
+                    if tp not in self.targetpops: del self.covout[tpt][tp]
 
     def addprograms(self,newprograms):
         ''' Add new programs'''
@@ -94,9 +100,6 @@ class Programset(object):
             for newprogram in newprograms: 
                 if newprogram not in self.programs:
                     self.programs[newprogram.name] = newprogram
-                    self.gettargetpops()
-                    self.gettargetpartypes()
-                    self.initialize_covout()
                     print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
                 else:
                     raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
@@ -104,12 +107,14 @@ class Programset(object):
             for newprogram in newprograms.values(): 
                 if newprogram not in self.programs:
                     self.programs[newprogram.name] = newprogram
-                    self.gettargetpops()
-                    self.gettargetpartypes()
-                    self.initialize_covout()
                     print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
                 else:
                     raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
+        self.gettargetpars()
+        self.gettargetpartypes()
+        self.gettargetpops()
+        self.initialize_covout()
+
                    
     def rmprogram(self,program):
         ''' Remove a program. Expects type(program) in [Program,str]'''
@@ -331,8 +336,6 @@ class Program(object):
         self.name = name
         self.id = uuid()
         if targetpars:
-            for targetpar in targetpars:
-                if not targetpar.get('effect'): targetpar['effect'], targetpar['t'] = [], []
             self.targetpars = targetpars
         else: self.targetpars = []
         self.targetpops = targetpops if targetpops else []
@@ -355,7 +358,6 @@ class Program(object):
 
     def addtargetpar(self,targetpar):
         '''Add a model parameter to be targeted by this program'''
-        if not targetpar.get('effect'): targetpar['effect'], targetpar['t'] = [], []
         if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             self.targetpars.append(targetpar)
             print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
@@ -647,10 +649,8 @@ class Covout(CCOF):
     def emptypars(self):
         ccopars = {}
         ccopars['intercept'] = None
-        ccopars['gradient'] = None
         ccopars['t'] = None
         return ccopars                        
-
 
 #######################################################
 # What needs to happen to get population sizes...

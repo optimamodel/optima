@@ -221,11 +221,11 @@ if 'makeprograms' in tests:
                                                     'SBCC':0.2})
 
     R.covout['condomcas']['Females 15-49'].addccopar({'intercept': 0.3,
-                                                    't': 2015.0,
+                                                    't': 2011.0,
                                                     'SBCC':0.15})
                                                     
     # 9. Overwrite parameters for defining coverage-outcome function.
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.35,
+    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3,
                                                     't': 2015.0,
                                                     'HTC': 0.45,
                                                     'SBCC':0.15},
