@@ -14,7 +14,7 @@ class Parameters(Resource):
         """
         Gives back project parameters (modifiable)
         """
-        from optima import parameters
-        project_parameters = [p for p in parameters()
-                              if 'modifiable' in p and p['modifiable']]
-        return jsonify({"parameters": project_parameters})
+        from parameters import parameters
+        project_parameters = [
+            p for p in parameters() if 'modifiable' in p and p['modifiable']]
+        return jsonify({"parameters": project_parameters}), 200
