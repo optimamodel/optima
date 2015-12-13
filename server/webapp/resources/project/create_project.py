@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import current_app
 from flask import helpers
 from flask import json
@@ -71,7 +72,8 @@ class CreateProject(Resource):
             makeproject_args['datastart'],
             makeproject_args['dataend'],
             makeproject_args['pops'],
-            version=version)
+            version=version,
+            created=datetime.utcnow())
         current_app.logger.debug(
             'Creating new project: %s' % project_entry.name)
 

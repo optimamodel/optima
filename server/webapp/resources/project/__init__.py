@@ -1,3 +1,5 @@
 from create_project import CreateProject
 from update_project import UpdateProject
 from open_project import OpenProject
+from paramaters import Parameters
+from project_info import ProjectInfo
