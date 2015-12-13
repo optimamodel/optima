@@ -5,3 +5,5 @@ from resultsdb import ResultsDb
 from workingprojectdb import WorkingProjectDb
 from worklogdb import WorkLogDb
 from projectdatadb import ProjectDataDb
+from progsetsdb import ProgsetsDb
+from programsdb import ProgramsDb
