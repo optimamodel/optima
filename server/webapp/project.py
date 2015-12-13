@@ -462,8 +462,7 @@ def deleteProject(project_id):
         db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
-        programs = db.session.query(ProgramsDb.id, ProgsetsDb).join(ProgsetsDb).filter_by(project_id=str_project_id)
-        db.session.query(ProgramsDb).filter(ProgramsDb.id.in_([str(x[0]) for x in programs])).delete(synchronize_session='fetch')
+        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
     db.session.commit()
@@ -900,7 +899,7 @@ def getProgsets(project_id):
         ]})
 
 
-def _create_programs_for_progset(progset_id, programs):
+def _create_programs_for_progset(project_id, progset_id, programs):
 
     for program in programs:
         kwargs = {}
@@ -911,6 +910,7 @@ def _create_programs_for_progset(progset_id, programs):
             kwargs[field] = program[field]
 
         program_entry = ProgramsDb(
+            project_id,
             progset_id,
             active=program.get('active', False),
             pars=program.get('parameters', None),
@@ -946,7 +946,7 @@ def createProgsets(project_id):
         db.session.add(progset_entry)
         db.session.flush()
 
-        _create_programs_for_progset(progset_entry.id, data.get('programs', []))
+        _create_programs_for_progset(project_id, progset_entry.id, data.get('programs', []))
 
         db.session.commit()
 
@@ -1030,7 +1030,7 @@ def updateProgset(project_id, progset_id):
         progset_entry.name = data['name']
         db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
 
-        _create_programs_for_progset(progset_entry.id, data.get('programs', []))
+        _create_programs_for_progset(project_id, progset_entry.id, data.get('programs', []))
 
         db.session.commit()
 

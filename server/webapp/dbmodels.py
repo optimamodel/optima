@@ -253,6 +253,7 @@ class ProgramsDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     category = db.Column(db.String)
     name = db.Column(db.String)
     short_name = db.Column(db.String)
@@ -261,9 +262,9 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, progset_id, name, short_name, category, active=False, pars=None, created=None, updated=None, id=None):
-        from optima.utils import saves
+    def __init__(self, project_id, progset_id, name, short_name, category, active=False, pars=None, created=None, updated=None, id=None):
 
+        self.project_id = project_id
         self.progset_id = progset_id
         self.name = name
         self.short_name = short_name
@@ -276,4 +277,3 @@ class ProgramsDb(db.Model):
             self.updated = updated
         if id:
             self.id = id
-
