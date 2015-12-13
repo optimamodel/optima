@@ -50,6 +50,38 @@ class OptimaTestCase(unittest.TestCase):
         {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
         {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
 
+    progset_test_data = {
+      'name': 'Progset',
+      'programs': [
+        {
+          'active': True,
+          'category': 'Prevention',
+          'name': 'Condom promotion and distribution',
+          'parameters': [
+            {
+              'active': True,
+              'value': {
+                'pops': [
+                  '',
+                ],
+                'signature': [
+                  'condom',
+                  'cas',
+                ],
+              },
+            },
+          ],
+          'short_name': 'Condoms',
+        }, {
+          'active': False,
+          'category': 'Care and treatment',
+          'name': 'Post-exposure prophylaxis',
+          'parameters': [],
+          "short_name": "PEP",
+        },
+      ],
+    }
+
     def create_record_with(self, factory_class, **kwargs):
         factory_class._meta.sqlalchemy_session = db.session
         rv = factory_class.create(**kwargs)
@@ -99,6 +131,19 @@ class OptimaTestCase(unittest.TestCase):
         """ Helper method to list projects for the given user id"""
         projects = ProjectDb.query.filter_by(user_id=user_id).all()
         return [project for project in projects]
+
+    def api_create_progset(self, project_id):
+        response = self.client.post(
+            '/api/project/progsets/{}'.format(project_id),
+            data=json.dumps(self.progset_test_data)
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+
+        response_data = json.loads(response.data)
+        self.assertTrue('id' in response_data)
+        progset_id = response_data['id']
+
+        return progset_id
 
     def login(self, email=default_email, password=None):
         if not password: password = self.test_password
