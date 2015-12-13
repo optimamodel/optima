@@ -26,7 +26,6 @@ from server.webapp.dbmodels import WorkingProjectDb
 from server.webapp.exceptions import ParamsMissing
 from server.webapp.resources.project.fields import project_data_list_fields
 from server.webapp.utils import load_project
-from server.webapp.utils import verify_admin_request
 from werkzeug.utils import secure_filename
 from server.webapp.utils import delete_spreadsheet
 
@@ -39,11 +38,10 @@ class Project(Resource):
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
-        summary='Open a Project'
+        summary='Open all user;s project Project'
     )
     @marshal_with(result_fields)
     @login_required
-    @verify_admin_request
     def get(self):
         """
         Returns the list of existing projects from db.
@@ -68,8 +66,7 @@ class Project(Resource):
                     'populations': project_entry.populations,
                     'creation_time': project_entry.created,
                     'updated_time': project_entry.updated,
-                    'data_upload_time': project_entry.data_upload_time(),
-                    'user_id': project_entry.user_id
+                    'data_upload_time': project_entry.data_upload_time()
                 }
                 projects_data.append(project_data)
         return projects_data
