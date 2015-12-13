@@ -1,4 +1,5 @@
 import os
+
 from copy import deepcopy
 from flask import current_app
 from flask import helpers
@@ -7,23 +8,20 @@ from flask import request
 from flask.ext.login import current_user
 from flask.ext.login import login_required
 from flask_restful import Resource
+from flask_restful import marshal_with
 from flask_restful_swagger import swagger
 from server.webapp.dataio import TEMPLATEDIR
+from server.webapp.dataio import projectpath
 from server.webapp.dataio import upload_dir_user
 from server.webapp.dbconn import db
+from server.webapp.dbmodels import ProjectDataDb
 from server.webapp.dbmodels import ProjectDb
 from server.webapp.dbmodels import WorkingProjectDb
-from server.webapp.dbmodels import ProjectDataDb
-from server.webapp.exceptions import NotFound
+from server.webapp.exceptions import ProjectNotFound
 from server.webapp.utils import load_project
 from server.webapp.utils import model_as_bunch
 from server.webapp.utils import model_as_dict
-from server.webapp.dataio import projectpath
-
-
-class ProjectNotFound(NotFound):
-
-    _model = 'project'
+from server.webapp.utils import project_exists
 
 
 def getPopsAndProgsFromModel(project_entry, trustInputMetadata):
@@ -106,7 +104,26 @@ def getPopsAndProgsFromModel(project_entry, trustInputMetadata):
     project_entry.dataend = int(years[-1])
 
 
-class UpdateProject(Resource):
+class ProjectItem(Resource):
+
+    @swagger.operation(
+        responseClass=ProjectDb.__name__,
+        summary='Open a Project'
+    )
+    @marshal_with(ProjectDb.resource_fields)
+    @login_required
+    def get(self, project_id):
+        """
+        Opens the project with the given ID.
+        If the project exists, notifies the user about success.
+        expects project ID,
+        todo: only if it can be found
+        """
+        proj_exists = project_exists(project_id)
+        if not proj_exists:
+            raise ProjectNotFound(id=project_id)
+        else:
+            return project_exists
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
@@ -212,3 +229,4 @@ class UpdateProject(Resource):
         response = helpers.send_from_directory(dirname, basename)
         response.headers['X-project-id'] = project_entry.id
         return response
+
