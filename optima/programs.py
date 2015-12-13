@@ -59,7 +59,7 @@ class Programset(object):
                 for thispartype in thisprog.targetpartypes: self.targetpartypes.append(thispartype)
             self.targetpartypes = list(set(self.targetpartypes))
 
-    def initialize_covout(self):
+    def initialize_covout(self,default_interaction='random'):
         '''Sets up the required coverage-outcome curves.
            Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
@@ -84,7 +84,7 @@ class Programset(object):
                 for prog in progccopars.keys(): 
                     if prog not in targetingprogs: del ccopars[prog]
 
-                self.covout[targetpartype][thispop] = Covout(ccopars)
+                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=default_interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
         for tpt in self.covout.keys():
@@ -114,7 +114,6 @@ class Programset(object):
         self.gettargetpartypes()
         self.gettargetpops()
         self.initialize_covout()
-
                    
     def rmprogram(self,program):
         ''' Remove a program. Expects type(program) in [Program,str]'''
@@ -214,7 +213,7 @@ class Programset(object):
             else: popcoverage[thisprog] = None
         return popcoverage
 
-    def getoutcomes(self,forwhat,t,parset,forwhattype='budget',interaction='random',perturb=False):
+    def getoutcomes(self,forwhat,t,parset,forwhattype='budget',perturb=False):
         ''' Get the model parameters corresponding to a budget or coverage vector'''
         nyrs = len(t)
         outcomes = odict()
@@ -239,7 +238,7 @@ class Programset(object):
                         thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
                         delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
-                if interaction == 'additive':
+                if self.covout[thispartype][thispop].interaction == 'additive':
                         # Outcome += c1*delta_out1 + c2*delta_out2
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
                         if not self.covout[thispartype][thispop].ccopars[thisprog.name]:
@@ -247,7 +246,7 @@ class Programset(object):
                             outcomes[thispartype][thispop] = None
                         else: outcomes[thispartype][thispop] += thiscov[thisprog.name]*delta[thisprog.name]
                         
-                elif interaction == 'nested':
+                elif self.covout[thispartype][thispop].interaction == 'nested':
                     # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
                     for yr in range(nyrs):
                         cov,delt = [],[]
@@ -260,7 +259,7 @@ class Programset(object):
                             else: c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
                             outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
             
-                elif interaction == 'random':
+                elif self.covout[thispartype][thispop].interaction == 'random':
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
                 
                     for prog1 in thiscov.keys():
@@ -289,13 +288,13 @@ class Programset(object):
                     # All programs together
                     outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
                 
-                else: raise Exception('Unknown reachability type "%s"',interaction)
+                else: raise Exception('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
         
         return outcomes
         
-    def getparset(self,forwhat,t,parset,forwhattype='budget',newparsetname='programpars',interaction='random',perturb=False):
+    def getparset(self,forwhat,t,parset,forwhattype='budget',newparsetname='programpars',perturb=False):
         ''' Make a parset'''
-        outcomes = self.getoutcomes(forwhat=forwhat,t=t,parset=parset,interaction=interaction,perturb=perturb)
+        outcomes = self.getoutcomes(forwhat=forwhat,t=t,parset=parset,perturb=perturb)
         progparset = dcp(parset)
         progparset.name = newparsetname
         progparset.created = today() 
@@ -495,13 +494,15 @@ class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self,ccopars=None):
+    def __init__(self,ccopars=None,interaction=None):
         self.ccopars = ccopars
+        self.interaction = interaction
 
     def __repr__(self):
         ''' Print out useful info'''
         output = '\n'
         output += 'Programmatic parameters: %s\n'    % self.ccopars
+        output += '            Interaction: %s\n'    % self.interaction
         output += '\n'
         return output
 
@@ -634,6 +635,7 @@ class Costcov(CCOF):
 
 class Covout(CCOF):
     '''Coverage-outcome objects'''
+
 
     def function(self,x,ccopar,popsize):
         '''Returns single-program outcome in a given year for a given spending amount. Currently assumes coverage is a proportion.'''

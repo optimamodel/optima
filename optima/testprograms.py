@@ -79,7 +79,7 @@ if 'makeprograms' in tests:
 
     # Testing methods of program class
     # 1. Adding a target parameter to a program
-    HTC.addtargetpar({'param': 'hivtest', 'pop': 'FSW'})
+    HTC.addtargetpar({'param':'hivtest','pop':'FSW'})
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'Males 15-49'})
     
     ## NOTE that adding a targeted parameter does NOT automatically add a targeted population! Do this separately, e.g.
@@ -205,6 +205,8 @@ if 'makeprograms' in tests:
                                                     't': 2013.0,
                                                     'HTC': 0.6,
                                                     'SBCC':0.1})
+                                                
+    R.covout['hivtest']['Females 15-49'].interaction = 'nested'
                                                     
     R.covout['hivtest']['Males 15-49'].addccopar({'intercept': 0.3,
                                                   't': 2016.0,
@@ -251,7 +253,6 @@ if 'makeprograms' in tests:
     progparset1 = R.getparset(forwhat=budget,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
-                  interaction='random',
                   newparsetname='progparset1',
                   forwhattype='budget')
 
