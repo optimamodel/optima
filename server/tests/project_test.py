@@ -52,19 +52,17 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(projects_data['projects'][0]['name'], 'test2')
         self.assertEqual(projects_data['projects'][0]['id'], str(project_id))
 
-    # sim is in optima.legacy
-    # This test is probably obsolete
-
-    # def test_project_parameters(self):
-    #     from sim.parameters import parameter_name
-    #     response = self.client.get('/api/project/parameters')
-    #     print(response)
-    #     self.assertEqual(response.status_code, 200)
-    #     parameters = json.loads(response.data)['parameters']
-    #     self.assertTrue(len(parameters)>0)
-    #     self.assertTrue(set(parameters[0].keys())== \
-    #         set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
-    #     self.assertTrue(parameter_name(['condom','reg']) == 'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
+    def test_project_parameters(self):
+        from server.webapp.parameters import parameter_name
+        response = self.client.get('/api/project/parameters')
+        print(response)
+        self.assertEqual(response.status_code, 200)
+        parameters = json.loads(response.data)['parameters']
+        self.assertTrue(len(parameters) > 0)
+        self.assertTrue(set(parameters[0].keys()) ==
+            set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
+        self.assertTrue(parameter_name(['condom', 'reg']) ==
+            'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
 
     def test_upload_data(self):
         import re
@@ -150,7 +148,7 @@ class ProjectTestCase(OptimaTestCase):
         headers = [('project', 'test'), ('project-id', str(project_id))]
         response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
         example_excel.close()
-        
+
         response = self.client.get('/api/project/data/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
 
@@ -185,6 +183,85 @@ class ProjectTestCase(OptimaTestCase):
         headers = [('project', 'test'), ('project-id', str(project_id))]
         response = self.client.delete('api/project/delete/{}'.format(project_id), headers=headers)
         self.assertEqual(response.status_code, 200)
+
+    def test_create_and_retrieve_progset(self):
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        response = self.client.get('/api/project/progsets/{}/{}'.format(
+            project_id,
+            progset_id
+        ))
+        self.assertEqual(response.status_code, 200)
+
+    def test_update_progset(self):
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        data = self.progset_test_data.copy()
+        data['name'] = 'Edited progset'
+        data['programs'][0]['active'] = False
+        program_name = data['programs'][0]['name']
+
+        response = self.client.put(
+            '/api/project/progsets/{}/{}'.format(project_id, progset_id),
+            data=json.dumps(data)
+        )
+        self.assertEqual(response.status_code, 200)
+
+        progset = ProgsetsDb.query.get(progset_id)
+        self.assertEqual(progset.name, 'Edited progset')
+        # looping around all programs to make sure no ancient data is left over
+        for program in ProgramsDb.query.filter_by(progset_id=progset_id, name=program_name):
+            self.assertEqual(program.active, False)
+
+    def test_delete_progset(self):
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        response = self.client.delete('/api/project/progsets/{}/{}'.format(project_id, progset_id))
+        self.assertEqual(response.status_code, 200)
+
+        progset = ProgsetsDb.query.get(progset_id)
+        self.assertIsNone(progset)
+
+        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
+        self.assertEqual(program_count, 0)
+
+    def test_delete_project_with_progset(self):
+        project_id = self.create_project('test_progset')
+        self.api_create_progset(project_id)
+
+        response = self.client.delete('/api/project/delete/{}'.format(project_id))
+        self.assertEqual(response.status_code, 200)
+
+    def test_retrieve_list_of_progsets(self):
+        project_id = self.create_project('test_progset')
+        self.api_create_progset(project_id)
+        self.api_create_progset(project_id)
+        self.api_create_progset(project_id)
+
+        response = self.client.get('/api/project/progsets/{}'.format(project_id))
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.data)
+        self.assertTrue('progsets' in data)
+        self.assertEqual(len(data['progsets']), 3)
+
+    def test_progset_can_hydrate(self):
+        from server.webapp.dbmodels import ProgsetsDb
+
+        project_id = self.create_project('test_progset')
+        progset_id = self.api_create_progset(project_id)
+
+        progset = ProgsetsDb.query.get(progset_id)
+        programset = progset.hydrate()
+
+        self.assertIsNotNone(programset)
 
 if __name__ == '__main__':
     unittest.main()

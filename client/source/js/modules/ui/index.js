@@ -71,25 +71,35 @@ define([
                 state: {
                   name: 'project.upload'
                 }
-              },
+              }
             ]
           },
           {
-            title: 'View & calibrate model',
+            title: 'View data & model calibration',
             id: 'create-load',
+            click: function() {
+              ifActiveProject($state, 'model.view', activeProject);
+            },
+            state: {
+              name: 'model.view'
+            }
+          },
+          {
+            title: 'Create/manage project set',
+            id: 'manage-responses',
             matchingState: 'model',
             subitems: [
               {
-                title: 'View data & model calibration',
+                title: 'Define programs',
                 click: function() {
-                  ifActiveProject($state, 'model.view', activeProject);
+                  ifActiveProject($state, 'model.manageProgramSet', activeProject);
                 },
                 state: {
                   name: 'model.view'
                 }
               },
               {
-                title: 'Define cost-coverage-outcome assumptions',
+                title: 'Define cost and outcome functions',
                 click: function() {
                   ifActiveProject($state, 'model.define-cost-coverage-outcome', activeProject);
                 },

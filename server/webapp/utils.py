@@ -1,12 +1,13 @@
 import os
 from dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
-from flask import helpers, current_app
+from flask import helpers, current_app, abort
 from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
 from flask import request, jsonify, abort
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, UserDb
 import traceback
+from flask_restful.reqparse import RequestParser as OrigReqParser
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj'}
@@ -74,7 +75,7 @@ def verify_admin_request(api_call):
             secret = request.args.get('secret','')
             u = UserDb.query.filter_by(password = secret, is_admin=True).first()
         if u is None:
-            abort(404)
+            abort(403)
         else:
             current_app.logger.debug("admin_user: %s %s %s" % (u.name, u.password, u.email))
             return api_call(*args, **kwargs)
@@ -263,3 +264,48 @@ def update_or_create_parset(project_id, name, parset):
     else:
         parset_record.updated = datetime.now(dateutil.tz.tzutc())
         parset_record.pars = saves(parset.pars)
+
+
+def init_login_manager(login_manager):
+
+    @login_manager.user_loader
+    def load_user(userid):
+        from server.webapp.dbmodels import UserDb
+        try:
+            user = UserDb.query.filter_by(id=userid).first()
+        except Exception:
+            user = None
+        return user
+
+    @login_manager.request_loader
+    def load_user_from_request(request):  # pylint: disable=redefined-outer-name
+
+        # try to login using the secret url arg
+        secret = request.args.get('secret')
+        if secret:
+            from server.webapp.dbmodels import UserDb
+            user = UserDb.query.filter_by(password=secret, is_admin=True).first()
+            if user:
+                return user
+
+        # finally, return None if both methods did not login the user
+        return None
+
+    @login_manager.unauthorized_handler
+    def unauthorized_handler():
+        abort(401)
+
+
+class RequestParser(OrigReqParser):
+
+    def swagger_parameters(self):
+        return [
+            {
+                'name': arg.name,
+                'dataType': arg.type.__name__ if callable(arg.type) else arg.type,
+                'required': arg.required,
+                'description': arg.help,
+                'paramType': 'form',
+            }
+            for arg in self.args
+        ]

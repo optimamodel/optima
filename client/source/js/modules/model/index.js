@@ -1,4 +1,5 @@
 define([
+  './program-set/index',
   './calibration-ctrl',
   './calibration-service',
   './cost-coverage-ctrl',
