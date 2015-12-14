@@ -46,6 +46,19 @@ define([
             }
           }
         })
+        .state('model.manageProgramSet', {
+          url: '/programs',
+          templateUrl: 'js/modules/model/program-set/program-set.html',
+          controller: 'ProgramSetController',
+          resolve: {
+            availableParameters: function($http) {
+              return $http.get('/api/project/parameters');
+            },
+            predefined: function(Project) {
+              return Project.predefined().$promise;
+            }
+          }
+        })
         .state('model.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController',

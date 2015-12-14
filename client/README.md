@@ -1,104 +1,53 @@
-ngseed
-======
+Optima - Frontend
+=================
 
-AngularJS/RequireJS seed project. [Documentation](https://github.com/StarterSquad/ngseed/wiki)
+This has been made  using seed project [ng-seed](https://github.com/StarterSquad/ngseed/wiki)
 
 Installation
 ------------
 
-    # Get NPM dependencies:
-    npm install
+    # Run script ./clean_build.sh.
 
-    # Install global NPM dependencies:
-    npm -g install bower
-    npm -g install gulp
+      In case you face issue in executing ./clean_build.sh you can alternatively execute commands:
+       1. npm install
+       2. npm -g install bower (if you do not have bower already globally installed)
+       3. npm -g install gulp (if you do not have gulp already globally installed)
+       4. Create file client/source/js/version.js and add this content to it "define([], function () { return 'last_commit_short_hash'; });"
+          (Where last_commit_short_hash is short hash for the last commit).
 
-    # Also to be able to run tests from CLI
-    # without browser window popping consider
-    # to install PhantomJS:
-    # http://phantomjs.org/download.html
 
 [Gulp](http://gulpjs.com/) flows
 ----------
 
-To make development faster and more automated there are several Gulp tasks available:
+Gulp tasks available:
 
 * `gulp`
-
-  Builds project into `build` directory. Under the hood compiles and compresses Sass/CSS, compiles scripts
-  with ([RequireJs](http://requirejs.org/)) and [uglifies](http://lisperator.net/uglifyjs/) it.
-
-* `gulp bump-version`
-
-  Works with gitglow releases.
-  E.g. when you’re on `release/0.4.4` branch it will update cache beaters to follow version.
-
-* `gulp karma`
-
-  Starts Karma server watching scripts updates.
-
-* `gulp karma-ci`
-
-  Runs tests against the build (which should be run first) and quits, is good to use in CI scenarios.
-
-* `gulp protractor`
-
-  Runs E2E tests against source files.
-
-* `gulp protractor-ci`
-
-  Runs E2E tests against the build.
-
-* `gulp sass`
-
-  Compiles Sass project, feeds output to [Autoprefixer](https://github.com/ai/autoprefixer) and minifies it via
-  [CSSO](https://github.com/css/csso).
+  Builds project into `build` directory.
 
 * `gulp watch`
-
   Listens to changes to stylesheets and scripts and reloads browser page during development.
 
-Vendor update
--------------
+* `gulp karma-ci`
+  Runs tests against the build (which should be run first) and quits, is good to use in CI scenarios.
 
-* `bower install`
+* `gulp bump-version`
+  Works with gitflow releases.
 
-  To update all the dependencies to the latest compatible versions.
+* `gulp karma`
+  Starts Karma server watching scripts updates.
+
+* `gulp sass`
+  Compiles Sass project.
 
 ## Tests
 
 Tests use Jasmin for assertions.
-
 You can write tests in both Coffee and JS
 (see `/source/js/modules/home/home-ctrl.spec.js` and `/source/js/modules/home/home-ctrl.spec.coffee`).
-
-### E2E Tests
-
-[Protractor](https://github.com/angular/protractor) is used to provide way to do E2E tests. To install go to `client`
-directory and run:
-
-    npm install -g protractor
-
-    // This installs Selenium standalone
-    // server and Chrome driver:
-    webdriver-manager update
-
-    // Start the server with:
-    gulp webdriver
-
-    // To test source:
-    gulp protractor
-
-Check `p.conf` and `p-compiled.conf` for Protractor settings.
-
-Checkout [Protractor docs](https://github.com/angular/protractor/blob/master/docs/) for more information.
 
 
 User login
 -------------
 
-In order to use the application you need to login a registered user. In order to register a new user visit the endpoint: 
-
-`http://optima.dev/#/register` 
-
-and you'll be able to add yours
+In order to use the application you need to login a registered user. In order to register a new user visit the endpoint:
+`http://optima.dev/#/register` and you'll be able to add yours
