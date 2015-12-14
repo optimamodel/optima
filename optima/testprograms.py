@@ -204,7 +204,7 @@ if 'makeprograms' in tests:
                                                     'HTC': 0.6,
                                                     'SBCC':0.1})
                                                 
-    R.covout['hivtest']['Females 15-49'].interaction = 'nested'
+#    R.covout['hivtest']['Females 15-49'].interaction = 'nested'
                                                     
     R.covout['hivtest']['Males 15-49'].addccopar({'intercept': 0.3,
                                                   't': 2016.0,
