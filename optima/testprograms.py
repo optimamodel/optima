@@ -238,21 +238,15 @@ if 'makeprograms' in tests:
     R.covout['hivtest']['Females 15-49'].getccopar(2014)
 
     # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
-    outcomes_budget = R.getoutcomes(forwhat=budget,
+    outcomes_budget = R.getoutcomes(coverage=coverage,
                                 t=[2015,2016,2020],
-                                parset=P.parsets['default'],
-                                forwhattype='budget')
-    outcomes_coverage = R.getoutcomes(forwhat=coverage,
-                                t=[2015,2016,2020],
-                                parset=P.parsets['default'],
-                                forwhattype='coverage')
+                                parset=P.parsets['default'])
 
     # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
-    progparset1 = R.getparset(forwhat=budget,
+    progparset1 = R.getparset(coverage=coverage,
                   t=[2015,2016,2020],
                   parset=P.parsets['default'],
-                  newparsetname='progparset1',
-                  forwhattype='budget')
+                  newparsetname='progparset1')
 
     # 14. Plot cost-coverage curves for all programs
     if doplot: R.plotallcoverage(t=[2013,2015],

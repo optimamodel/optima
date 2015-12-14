@@ -207,14 +207,12 @@ class Programset(object):
             else: popcoverage[thisprog] = None
         return popcoverage
 
-    def getoutcomes(self,forwhat,t,parset,forwhattype='budget',perturb=False):
-        ''' Get the model parameters corresponding to a budget or coverage vector'''
+    def getoutcomes(self,coverage,t,parset,perturb=False):
+        ''' Get the model parameters corresponding to dictionary of coverage values'''
         nyrs = len(t)
         outcomes = odict()
         
-        if forwhattype=='coverage':
-            budget = self.getprogbudget(coverage=forwhat,t=t,parset=parset)
-        else: budget = forwhat
+        budget = self.getprogbudget(coverage=coverage,t=t,parset=parset)
         
         for thispartype in self.targetpartypes: # Loop over parameter types
             outcomes[thispartype] = odict()
@@ -290,9 +288,9 @@ class Programset(object):
         
         return outcomes
         
-    def getparset(self,forwhat,t,parset,forwhattype='budget',newparsetname='programpars',perturb=False):
+    def getparset(self,coverage,t,parset,forwhattype='budget',newparsetname='programpars',perturb=False):
         ''' Make a parset'''
-        outcomes = self.getoutcomes(forwhat=forwhat,t=t,parset=parset,perturb=perturb)
+        outcomes = self.getoutcomes(coverage=coverage,t=t,parset=parset,perturb=perturb)
         progparset = dcp(parset)
         progparset.name = newparsetname
         progparset.created = today() 
