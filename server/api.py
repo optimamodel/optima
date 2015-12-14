@@ -52,7 +52,9 @@ from server.webapp.project import project
 from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,
     UserLogin, UserLogout)
-from server.webapp.resources.project import (Project, ProjectItem, ProjectInfo, Parameters, Predefined, ProjectAll, ProjectCopy, ProjectWorkbook, ProjectDownload)
+from server.webapp.resources.project import (Project, ProjectItem, ProjectInfo,
+    Parameters, Predefined, ProjectAll, ProjectCopy, ProjectDownload, 
+    ProjectSpreadsheet, ProjectData, Progset, ProgsetItem)
 
 app.register_blueprint(model, url_prefix='/api/model')
 app.register_blueprint(scenarios, url_prefix='/api/analysis/scenarios')
@@ -66,11 +68,13 @@ api.add_resource(UserLogout, '/api/user/logout')
 api.add_resource(Project, '/api/project')
 api.add_resource(ProjectAll, '/api/project/all')
 api.add_resource(ProjectItem, '/api/project/<string:project_id>')
-api.add_resource(ProjectInfo, '/api/project/<string:project_id>/info')
+api.add_resource(ProjectSpreadsheet, '/api/project/<string:project_id>/spreadsheet')
+api.add_resource(ProjectData, '/api/project/<string:project_id>/data')
+api.add_resource(Progset, '/api/project/<string:project_id>/progsets')
+api.add_resource(ProgsetItem, '/api/project/<string:project_id>/progsets/<string:progset_id>')
 api.add_resource(Parameters, '/api/project/parameters')
 api.add_resource(Predefined, '/api/project/predefined')
 api.add_resource(ProjectCopy, '/api/project/<string:project_id>/copy')
-api.add_resource(ProjectWorkbook, '/api/project/<string:project_id>/workbook')
 api.add_resource(ProjectDownload, '/api/project/download/<string:filename>')
 app.register_blueprint(api_bp, url_prefix='')
 

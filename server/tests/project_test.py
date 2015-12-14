@@ -21,24 +21,19 @@ class ProjectTestCase(OptimaTestCase):
 
     def test_create_project(self):
         response = self.api_create_project()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
 
     def test_retrieve_project_info_fails(self):
         project_id = '{}'.format(uuid4())
         # It would probably be better to make sure the project id REALLY does not
         # exist firt. But this is uuid, so the chances are quite slim
-        headers = [('project', 'test'), ('project-id', project_id)]
-        response = self.client.get('/api/project/info', headers=headers)
-        self.assertEqual(response.status_code, 500)
-        self.assertEqual(json.loads(response.data), {
-            u'reason': u'Project {} does not exist'.format(project_id)
-        })
+        response = self.client.get('/api/project/{}'.format(project_id))
+        self.assertEqual(response.status_code, 410)
 
     def test_retrieve_project_info(self):
         project_id = self.create_project('test')
 
-        headers = [('project', 'test'), ('project-id', str(project_id))]
-        response = self.client.get('/api/project/info', headers=headers)
+        response = self.client.get('/api/project/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
         project_data = json.loads(response.data)
         self.assertEqual(project_data['name'], 'test')
@@ -46,7 +41,7 @@ class ProjectTestCase(OptimaTestCase):
     def test_retrieve_project_list(self):
         project_id = self.create_project('test2')
 
-        response = self.client.get('/api/project/list')
+        response = self.client.get('/api/project')
         self.assertEqual(response.status_code, 200)
         projects_data = json.loads(response.data)
         self.assertEqual(projects_data['projects'][0]['name'], 'test2')
@@ -70,18 +65,20 @@ class ProjectTestCase(OptimaTestCase):
         import filecmp
         # create project
         response = self.api_create_project()
-        self.assertEqual(response.status_code, 200)
-        project_id = str(response.headers['x-project-id'])
+        self.assertEqual(response.status_code, 201)
+        project_id = str(response.headers['X-project-id'])
         # upload data
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        headers = [('project', 'test'), ('project-id', str(project_id))]
-        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        response = self.client.post(
+            'api/project/{}/spreadsheet'.format(project_id),
+            data=dict(file=example_excel)
+        )
         example_excel.close()
         self.assertEqual(response.status_code, 200)
         # get data back and save the received file
-        response = self.client.get('/api/project/workbook/%s' % project_id)
+        response = self.client.get('/api/project/%s/spreadsheet' % project_id)
         content_disposition = response.headers.get('Content-Disposition')
         self.assertTrue(len(content_disposition) > 0)
         file_name_info = re.search('filename=\s*(\S*)', content_disposition)
@@ -102,30 +99,29 @@ class ProjectTestCase(OptimaTestCase):
     def test_copy_project(self):
         # create project
         response = self.api_create_project()
-        self.assertEqual(response.status_code, 200)
-        project_id = str(response.headers['x-project-id'])
+        self.assertEqual(response.status_code, 201)
+        project_id = str(response.headers['X-project-id'])
         # upload data so that we can check the existence of data in the copied project
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        headers = [('project', 'test'), ('project-id', str(project_id))]
-        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        response = self.client.post(
+            '/api/project/{}/spreadsheet'.format(project_id),
+            data=dict(file=example_excel)
+        )
         example_excel.close()
         # get the info for the existing project
-        response = self.client.get('/api/project/info', headers=headers)
+        response = self.client.get('/api/project/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
         old_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
-        response = self.client.post('/api/project/copy/%s?to=test_copy' % project_id, headers=headers)
+        response = self.client.post('/api/project/%s/copy?to=test_copy' % project_id)
         self.assertEqual(response.status_code, 200)
         copy_info = json.loads(response.data)
         new_project_id = copy_info['copy_id']
         # open the copy of the project
-        response = self.client.get('/api/project/open/%s' % new_project_id, headers=headers)
-        self.assertEqual(response.status_code, 200)
         # get info for the copy of the project
-        headers = [('project', 'test_copy'), ('project-id', str(new_project_id))]
-        response = self.client.get('/api/project/info', headers=headers)
+        response = self.client.get('/api/project/{}'.format(new_project_id))
         self.assertEqual(response.status_code, 200)
         new_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
@@ -145,11 +141,10 @@ class ProjectTestCase(OptimaTestCase):
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        headers = [('project', 'test'), ('project-id', str(project_id))]
-        response = self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        response = self.client.post('api/project/update', data=dict(file=example_excel))
         example_excel.close()
 
-        response = self.client.get('/api/project/data/{}'.format(project_id))
+        response = self.client.get('/api/project/{}/data'.format(project_id))
         self.assertEqual(response.status_code, 200)
 
         project = ProjectDb.query.filter_by(id=project_id).first()
@@ -160,7 +155,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertNotEqual(project.name, 'test')  # still just making sure
 
         upload_response = self.client.post(
-            '/api/project/data/{}'.format(project_id),
+            '/api/project/{}/data'.format(project_id),
             data={
                 'file': (BytesIO(response.data), 'project.prj'),
             }
@@ -176,19 +171,19 @@ class ProjectTestCase(OptimaTestCase):
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        headers = [('project', 'test'), ('project-id', str(project_id))]
-        self.client.post('api/project/update', headers=headers, data=dict(file=example_excel))
+        self.client.post(
+            'api/project/{}/spreadsheet'.format(project_id),
+            data=dict(file=example_excel))
         example_excel.close()
 
-        headers = [('project', 'test'), ('project-id', str(project_id))]
-        response = self.client.delete('api/project/delete/{}'.format(project_id), headers=headers)
-        self.assertEqual(response.status_code, 200)
+        response = self.client.delete('api/project/{}'.format(project_id))
+        self.assertEqual(response.status_code, 204)
 
     def test_create_and_retrieve_progset(self):
         project_id = self.create_project('test_progset')
         progset_id = self.api_create_progset(project_id)
 
-        response = self.client.get('/api/project/progsets/{}/{}'.format(
+        response = self.client.get('/api/project/{}/progsets/{}'.format(
             project_id,
             progset_id
         ))
@@ -205,11 +200,13 @@ class ProjectTestCase(OptimaTestCase):
         data['programs'][0]['active'] = False
         program_name = data['programs'][0]['name']
 
+        headers = {'Content-Type': 'application/json'}
         response = self.client.put(
-            '/api/project/progsets/{}/{}'.format(project_id, progset_id),
-            data=json.dumps(data)
+            '/api/project/{}/progsets/{}'.format(project_id, progset_id),
+            data=json.dumps(data),
+            headers=headers
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.data)
 
         progset = ProgsetsDb.query.get(progset_id)
         self.assertEqual(progset.name, 'Edited progset')
@@ -223,8 +220,8 @@ class ProjectTestCase(OptimaTestCase):
         project_id = self.create_project('test_progset')
         progset_id = self.api_create_progset(project_id)
 
-        response = self.client.delete('/api/project/progsets/{}/{}'.format(project_id, progset_id))
-        self.assertEqual(response.status_code, 200)
+        response = self.client.delete('/api/project/{}/progsets/{}'.format(project_id, progset_id))
+        self.assertEqual(response.status_code, 204)
 
         progset = ProgsetsDb.query.get(progset_id)
         self.assertIsNone(progset)
@@ -236,8 +233,8 @@ class ProjectTestCase(OptimaTestCase):
         project_id = self.create_project('test_progset')
         self.api_create_progset(project_id)
 
-        response = self.client.delete('/api/project/delete/{}'.format(project_id))
-        self.assertEqual(response.status_code, 200)
+        response = self.client.delete('/api/project/{}'.format(project_id))
+        self.assertEqual(response.status_code, 204)
 
     def test_retrieve_list_of_progsets(self):
         project_id = self.create_project('test_progset')
@@ -245,7 +242,7 @@ class ProjectTestCase(OptimaTestCase):
         self.api_create_progset(project_id)
         self.api_create_progset(project_id)
 
-        response = self.client.get('/api/project/progsets/{}'.format(project_id))
+        response = self.client.get('/api/project/{}/progsets'.format(project_id))
         self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)

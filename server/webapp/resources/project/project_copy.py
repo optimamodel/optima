@@ -1,15 +1,14 @@
 from datetime import datetime
 import dateutil
-from flask import request
+from flask import request, abort
 from flask.ext.login import login_required
 from flask_restful import Resource
 from flask_restful import marshal_with
 from flask_restful_swagger import swagger
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb
-from server.webapp.exceptions import ParamsMissing
 from server.webapp.utils import load_project
-from server.webapp.exceptions import ProjectNotFound
+from server.webapp.resources.project.project import ProjectDoesNotExist
 from server.webapp.resources.project.fields import project_copy_fields
 
 
@@ -30,11 +29,11 @@ class ProjectCopy(Resource):
         # from server.webapp.dataio import projectpath
         new_project_name = request.args.get('to')
         if not new_project_name:
-            raise ParamsMissing('to')
+            abort(400)
         # Get project row for current user with project name
         project_entry = load_project(project_id, all_data=True)
         if project_entry is None:
-            raise ProjectNotFound(id=project_id)
+            raise ProjectDoesNotExist(id=project_id)
         project_user_id = project_entry.user_id
 
         # force load the existing data, parset and result

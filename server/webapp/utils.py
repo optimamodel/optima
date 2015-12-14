@@ -309,3 +309,7 @@ class RequestParser(OrigReqParser):
             }
             for arg in self.args
         ]
+
+    def add_arguments(self, arguments_dict):
+        for argument_name, kwargs in arguments_dict.iteritems():
+            self.add_argument(argument_name, **kwargs)
