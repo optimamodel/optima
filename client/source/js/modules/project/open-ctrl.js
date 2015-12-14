@@ -8,6 +8,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.sortType = 'name'; // set the default sort type
     $scope.sortReverse = false;  // set the default sort order
+    console.log("projects", projects);
 
     $scope.filterByName = function (project) {
       if ($scope.searchTerm) {
@@ -24,7 +25,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     }
 
-    $scope.projects = _.map(projects.projects, function(project){
+    $scope.projects = _.map(projects.data.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
       project.updated_time = Date.parse(project.updated_time);
       project.data_upload_time = Date.parse(project.data_upload_time);

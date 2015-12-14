@@ -20,7 +20,7 @@ from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
     ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
 
 from server.webapp.inputs import secure_filename_input, SubParser
-from server.webapp.exceptions import RecordDoesNotExist, NoFileSubmitted, InvalidFileType
+from server.webapp.exceptions import RecordDoesNotExist, NoFileSubmitted, InvalidFileType, NoProjectNameProvided
 
 from server.webapp.utils import (load_project, verify_admin_request,
     delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
@@ -519,7 +519,7 @@ class ProjectData(Resource):
         return helpers.send_from_directory(loaddir, filename)
 
     @swagger.operation(
-        summary='Upload the project workbook',
+        summary='Uploads data for already created project',
         parameters=[
             {
                 'name': 'file',
@@ -562,6 +562,80 @@ class ProjectData(Resource):
             'file': source_filename,
             'result': 'Project %s is updated' % project_entry.name,
         }
+        return reply
+
+class ProjectFromData(Resource):
+    class_decorators = [login_required]
+
+    @swagger.operation(
+        summary='Creates a project & uploads data to initialize it.',
+        parameters=[
+            {
+                'name': 'file',
+                'dataType': 'file',
+                'required': True,
+                'description': 'Project file',
+                'paramType': 'form',
+            },
+            {
+                'name': 'name',
+                'dataType': 'string',
+                'required': True,
+                'description': 'New project name',
+                'paramType': 'form'
+            }
+        ]
+    )
+    @marshal_with(file_resource)
+    def post(self):
+        from optima.project import version
+        user_id = current_user.id
+        project_name = request.values.get('name')
+        if not project_name:
+            raise NoProjectNameProvided()
+
+        uploaded_file = request.files['file']
+
+        if not uploaded_file:
+            raise NoFileSubmitted()
+
+        source_filename = secure_filename(uploaded_file.filename)
+        if not allowed_file(source_filename):
+            raise InvalidFileType(source_filename)
+
+        from optima.utils import load
+        new_project = load(uploaded_file)
+
+        if new_project.data:
+            datastart = int(new_project.data['years'][0])
+            dataend = int(new_project.data['years'][-1])
+            pops = []
+            project_pops = new_project.data['pops']
+            for i in range(len(project_pops['short'])):
+                new_pop = {
+                'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
+                'female': project_pops['female'][i], 'male':project_pops['male'][i],
+                'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
+                }
+                pops.append(new_pop)
+        else:
+            from optima.makespreadsheet import default_datastart, default_dataend
+            datastart = default_datastart
+            dataend = default_dataend
+            pops = {}
+
+        project_entry = ProjectDb(project_name, user_id, datastart,
+            dataend,
+            pops,
+            version=version)
+
+        project_entry.restore(new_project)
+        project_entry.name = project_name
+
+        db.session.add(project_entry)
+        db.session.commit()
+
+        reply = {'file': source_filename, 'result': 'Project %s is created' % project_name}
         return reply
 
 

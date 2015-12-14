@@ -38,8 +38,8 @@ define([
             info: function() {
               return undefined;
             },
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function ($http) {
+              return $http.get('/api/project');
             }
           }
         })
@@ -61,8 +61,8 @@ define([
                 return undefined;
               }
             },
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function ($http) {
+              return $http.get('/api/project');
             }
           }
         })
@@ -71,8 +71,8 @@ define([
           templateUrl: 'js/modules/project/open.html',
           controller: 'ProjectOpenController',
           resolve: {
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function ($http) {
+              return $http.get('/api/project');
             }
           }
         })
@@ -81,8 +81,8 @@ define([
           templateUrl: 'js/modules/project/upload.html',
           controller: 'ProjectUploadController',
           resolve: {
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function ($http) {
+              return $http.get('/api/project');
             }
           }
         });
