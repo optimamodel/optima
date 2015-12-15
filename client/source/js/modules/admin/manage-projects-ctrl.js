@@ -38,11 +38,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      $http.get('/api/project/open/' + id)
-        .success(function (response) {
-          activeProject.setActiveProjectFor(name, id, UserManager.data);
-          window.location = '/';
-        });
+      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      window.location = '/';
     };
 
     /**
@@ -89,7 +86,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (user, name, id, index) {
-      $http.delete('/api/project/delete/' + id)
+      $http.delete('/api/project/' + id)
         .success(function (response) {
           user.projects = _(user.projects).filter(function (item) {
             return item.id != id;

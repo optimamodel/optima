@@ -123,7 +123,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (name, id, index) {
-      $http.delete('/api/project/delete/' + id)
+      $http.delete('/api/project/' +
+        '' + id)
         .success(function (response) {
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.id != id;
