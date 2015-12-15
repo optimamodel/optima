@@ -8,7 +8,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.sortType = 'name'; // set the default sort type
     $scope.sortReverse = false;  // set the default sort order
-    console.log("projects", projects);
 
     $scope.filterByName = function (project) {
       if ($scope.searchTerm) {
@@ -79,14 +78,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/workbook/' + id, '_blank', '');
+      window.open('/api/project/' + id + '/spreadsheet', '_blank', '');
     };
 
     /**
      * Gets the data for the given project `name` as <name>.json  file
      */
     $scope.getData = function (name, id) {
-      $http({url:'/api/project/data/'+ id,
+      $http({url:'/api/project/'+ id + '/data',
             method:'GET',
             headers: {'Content-type': 'application/octet-stream'},
             responseType:'blob'})
@@ -99,7 +98,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setData = function (name, id, file) {
       var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
       modalService.confirm(
-        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+id, false); },
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/'+id+'/data', false); },
         function (){},
         'Yes, overwrite data',
         'No',
