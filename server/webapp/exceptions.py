@@ -49,16 +49,6 @@ class InvalidCredentials(BaseRESTException):
     description = 'The user or password provided are incorrect'
 
 
-class NoFileSubmitted(BaseRESTException):
-    code = 400
-    description = 'No file is submitted!'
-
-
-class NoProjectNameProvided(BaseRESTException):
-    code = 400
-    description = 'No project name is provided!'
-
-
 class InvalidFileType(BaseRESTException):
     code = 406
     _message = 'This file type is not accepted!'

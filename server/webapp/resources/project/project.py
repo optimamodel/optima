@@ -6,6 +6,7 @@ from copy import deepcopy
 from flask import current_app, helpers, request, Response, abort
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
 from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with, fields
@@ -20,7 +21,7 @@ from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
     ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
 
 from server.webapp.inputs import secure_filename_input, SubParser
-from server.webapp.exceptions import RecordDoesNotExist, NoFileSubmitted, InvalidFileType, NoProjectNameProvided
+from server.webapp.exceptions import RecordDoesNotExist, InvalidFileType
 
 from server.webapp.utils import (load_project, verify_admin_request,
     delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
@@ -309,6 +310,11 @@ file_resource = {
     'file': fields.String,
     'result': fields.String,
 }
+file_uplod_form_parser = RequestParser()
+file_uplod_form_parser.add_arguments({
+    'file': {'type': FileStorage, 'location': 'files', 'required': True},
+    'name': {'required': True},
+})
 
 
 class ProjectSpreadsheet(Resource):
@@ -356,15 +362,7 @@ class ProjectSpreadsheet(Resource):
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         summary='Upload the project workbook',
-        parameters=[
-            {
-                'name': 'file',
-                'dataType': 'file',
-                'required': True,
-                'description': 'Excel file',
-                'paramType': 'form',
-            }
-        ]
+        parameters=file_uplod_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
     def post(self, project_id):
@@ -382,14 +380,13 @@ class ProjectSpreadsheet(Resource):
         user_id = current_user.id
         current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
-        uploaded_file = request.files['file']
+        args = file_uplod_form_parser.parse_args()
+        uploaded_file = args['file']
 
         # getting current user path
         loaddir = upload_dir_user(DATADIR)
         if not loaddir:
             loaddir = DATADIR
-        if not uploaded_file:
-            raise NoFileSubmitted()
 
         source_filename = secure_filename(uploaded_file.filename)
         if not allowed_file(source_filename):
@@ -520,15 +517,7 @@ class ProjectData(Resource):
 
     @swagger.operation(
         summary='Uploads data for already created project',
-        parameters=[
-            {
-                'name': 'file',
-                'dataType': 'file',
-                'required': True,
-                'description': 'Project file',
-                'paramType': 'form',
-            }
-        ]
+        parameters=file_uplod_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
     def post(self, project_id):
@@ -538,10 +527,9 @@ class ProjectData(Resource):
         """
         user_id = current_user.id
         current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
-        uploaded_file = request.files['file']
 
-        if not uploaded_file:
-            raise NoFileSubmitted()
+        args = file_uplod_form_parser.parse_args()
+        uploaded_file = args['file']
 
         source_filename = secure_filename(uploaded_file.filename)
         if not allowed_file(source_filename):
@@ -564,40 +552,29 @@ class ProjectData(Resource):
         }
         return reply
 
+
+project_uplod_form_parser = RequestParser()
+project_uplod_form_parser.add_arguments({
+    'file': {'type': FileStorage, 'location': 'files', 'required': True},
+    'name': {'required': True, 'help': 'Project name'},
+})
+
+
 class ProjectFromData(Resource):
     class_decorators = [login_required]
 
     @swagger.operation(
         summary='Creates a project & uploads data to initialize it.',
-        parameters=[
-            {
-                'name': 'file',
-                'dataType': 'file',
-                'required': True,
-                'description': 'Project file',
-                'paramType': 'form',
-            },
-            {
-                'name': 'name',
-                'dataType': 'string',
-                'required': True,
-                'description': 'New project name',
-                'paramType': 'form'
-            }
-        ]
+        parameters=project_uplod_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
     def post(self):
         from optima.project import version
         user_id = current_user.id
-        project_name = request.values.get('name')
-        if not project_name:
-            raise NoProjectNameProvided()
 
-        uploaded_file = request.files['file']
-
-        if not uploaded_file:
-            raise NoFileSubmitted()
+        args = project_uplod_form_parser.parse_args()
+        uploaded_file = args['file']
+        project_name = args['name']
 
         source_filename = secure_filename(uploaded_file.filename)
         if not allowed_file(source_filename):
@@ -613,9 +590,9 @@ class ProjectFromData(Resource):
             project_pops = new_project.data['pops']
             for i in range(len(project_pops['short'])):
                 new_pop = {
-                'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
-                'female': project_pops['female'][i], 'male':project_pops['male'][i],
-                'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
+                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
+                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
+                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
                 }
                 pops.append(new_pop)
         else:
