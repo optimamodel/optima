@@ -76,23 +76,17 @@ coverage = R.getprogcoverage(budget=budget,
 
 
 # Get the outcomes associated with this budget
-outcomes_nested = R.getoutcomes(forwhat=budget,
+outcomes_nested = R.getoutcomes(coverage,
                                 t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='nested')
+                                parset=P.parsets['default'])
 
-outcomes_random = R.getoutcomes(forwhat=budget,
+outcomes_random = R.getoutcomes(coverage,
                                 t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='random')
+                                parset=P.parsets['default'])
 
-outcomes_additive = R.getoutcomes(forwhat=budget,
+outcomes_additive = R.getoutcomes(coverage,
                                 t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='additive')
+                                parset=P.parsets['default'])
 
 r1 = 'PASS' if abs(outcomes_nested['hivtest']['Females 15-49'][0]-testval_nested)<eps else 'FAIL'
 r2 = 'PASS' if abs(outcomes_random['hivtest']['Females 15-49'][0]-testval_random)<eps else 'FAIL'
@@ -126,55 +120,44 @@ budget_outreachscaleup = {'HTC_clinics': array([ 1e7,]),
           'HTC_outreach': array([ 1e7,]),
           'HTC_hometest': array([ 1e6,])}
 
-outcomes_nested_outreachscaleup = R.getoutcomes(forwhat=budget_outreachscaleup,
-                                t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='nested')
-
-outcomes_random_outreachscaleup = R.getoutcomes(forwhat=budget_outreachscaleup,
-                                t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='random')
-
-outcomes_additive_outreachscaleup = R.getoutcomes(forwhat=budget_outreachscaleup,
-                                t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='additive')
-
 coverage_outreachscaleup = R.getprogcoverage(budget=budget_outreachscaleup,
                              t=[2013],
                              parset=P.parsets['default'],
                              proportion=True)
 
+outcomes_nested_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+                                t=[2013],
+                                parset=P.parsets['default'])
+
+outcomes_random_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+                                t=[2013],
+                                parset=P.parsets['default'])
+
+outcomes_additive_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+                                t=[2013],
+                                parset=P.parsets['default'])
+
+
 budget_hometestscaleup = {'HTC_clinics': array([ 1e7,]),
           'HTC_outreach': array([ 1e6,]),
           'HTC_hometest': array([ 1e7,])}
-
-outcomes_nested_hometestscaleup = R.getoutcomes(forwhat=budget_hometestscaleup,
-                                t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='nested')
-
-outcomes_random_hometestscaleup = R.getoutcomes(forwhat=budget_hometestscaleup,
-                                t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='random')
-
-outcomes_additive_hometestscaleup = R.getoutcomes(forwhat=budget_hometestscaleup,
-                                t=[2013],
-                                parset=P.parsets['default'],
-                                forwhattype='budget',
-                                interaction='additive')
 
 coverage_hometestscaleup = R.getprogcoverage(budget=budget_hometestscaleup,
                              t=[2013],
                              parset=P.parsets['default'],
                              proportion=True)
+
+outcomes_nested_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+                                t=[2013],
+                                parset=P.parsets['default'])
+
+outcomes_random_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+                                t=[2013],
+                                parset=P.parsets['default'])
+
+outcomes_additive_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+                                t=[2013],
+                                parset=P.parsets['default'])
 
 def summary_scaleup():
     ''' Print out useful information'''
@@ -223,11 +206,9 @@ def summary_scaleup():
 
 summary_scaleup()
 
-
-
-initialparset = R.getparset(forwhat=budget,t=[2013], parset=P.parsets['default'], forwhattype='budget')
-outreachparset = R.getparset(forwhat=budget_outreachscaleup,t=[2013], parset=P.parsets['default'], forwhattype='budget')
-hometestparset = R.getparset(forwhat=budget_hometestscaleup,t=[2013], parset=P.parsets['default'], forwhattype='budget')
+initialparset = R.getparset(coverage,t=[2013], parset=P.parsets['default'])
+outreachparset = R.getparset(coverage_outreachscaleup,t=[2013], parset=P.parsets['default'])
+hometestparset = R.getparset(coverage_hometestscaleup,t=[2013], parset=P.parsets['default'])
 
 P.addparset(name='initial',parset=initialparset)
 P.addparset(name='outreach',parset=outreachparset)
@@ -237,11 +218,13 @@ epiresults_initial = P.runsim(name='initial')
 epiresults_outreach = P.runsim(name='outreach')
 epiresults_hometest = P.runsim(name='hometest')
 
-
 e1 = epiresults_initial.main['numdiag'].pops[0,1,75:].sum(axis=0)
 e2 = epiresults_outreach.main['numdiag'].pops[0,1,75:].sum(axis=0)
 e3 = epiresults_hometest.main['numdiag'].pops[0,1,75:].sum(axis=0)
 
+r1 = 'PASS' if abs(outcomes_nested['hivtest']['Females 15-49'][0]-193502.458191)<eps else 'FAIL'
+r2 = 'PASS' if abs(outcomes_random['hivtest']['Females 15-49'][0]-193502.474709)<eps else 'FAIL'
+r3 = 'PASS' if abs(outcomes_additive['hivtest']['Females 15-49'][0]-193502.462236)<eps else 'FAIL'
 
 def summary_scaleup2():
     ''' Print out useful information'''

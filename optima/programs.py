@@ -286,7 +286,7 @@ class Programset(object):
         
         return outcomes
         
-    def getparset(self,coverage,t,parset,forwhattype='budget',newparsetname='programpars',perturb=False):
+    def getparset(self,coverage,t,parset,newparsetname='programpars',perturb=False):
         ''' Make a parset'''
         outcomes = self.getoutcomes(coverage=coverage,t=t,parset=parset,perturb=perturb)
         progparset = dcp(parset)
