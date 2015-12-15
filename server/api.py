@@ -68,7 +68,7 @@ api.add_resource(UserLogout, '/api/user/logout')
 
 api.add_resource(Project, '/api/project')
 api.add_resource(ProjectCopy, '/api/project/<string:project_id>/copy')
-api.add_resource(ProjectFromData,'/api/project/data')
+api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectAll, '/api/project/all')
 api.add_resource(ProjectInfo, '/api/project/<string:project_id>/info')
 api.add_resource(ProjectItem, '/api/project/<string:project_id>')

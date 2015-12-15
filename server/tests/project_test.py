@@ -76,7 +76,7 @@ class ProjectTestCase(OptimaTestCase):
             data=dict(file=example_excel)
         )
         example_excel.close()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, response.data)
         # get data back and save the received file
         response = self.client.get('/api/project/%s/spreadsheet' % project_id)
         content_disposition = response.headers.get('Content-Disposition')
@@ -160,7 +160,7 @@ class ProjectTestCase(OptimaTestCase):
                 'file': (BytesIO(response.data), 'project.prj'),
             }
         )
-        self.assertEqual(upload_response.status_code, 200)
+        self.assertEqual(upload_response.status_code, 200, upload_response.data)
         project = ProjectDb.query.filter_by(id=project_id).first()
         self.assertEqual(project.name, 'test')
 

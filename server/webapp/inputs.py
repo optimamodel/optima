@@ -1,7 +1,10 @@
 from validate_email import validate_email
 
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
+from server.webapp.exceptions import InvalidFileType
+from server.webapp.utils import allowed_file
 
 def email(email_str):
     if validate_email(email_str):
@@ -40,3 +43,30 @@ class SubParser:
 
     def __call__(self, item_to_parse):
         return self.child_parser.parse_args(req=SubRequest(item_to_parse))
+
+
+class AllowedFileTypeMixin(object):
+    "Mixin used of FileStorage subclasses to check the uploaded filetype"
+
+    def __init__(self, *args, **kwargs):
+        super(AllowedFileTypeMixin, self).__init__(*args, **kwargs)
+        if not allowed_file(self.filename):
+            raise ValueError('File type of {} is not accepted!'.format(self.filename))
+
+
+class SafeFilenameStorage(FileStorage):
+
+    def __init__(self, *args, **kwargs):
+        super(SafeFilenameStorage, self).__init__(*args, **kwargs)
+        if self.filename == 'file' and hasattr(self.stream, 'filename'):
+            self.filename = self.stream.filename
+        self.source_filename = self.filename
+        self.filename = secure_filename(self.filename)
+
+
+class AllowedFiletypeStorage(AllowedFileTypeMixin, FileStorage):
+    pass
+
+
+class AllowedSafeFilenameStorage(AllowedFileTypeMixin, SafeFilenameStorage):
+    pass

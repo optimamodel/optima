@@ -6,7 +6,6 @@ from copy import deepcopy
 from flask import current_app, helpers, request, Response, abort
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
 
 from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with, fields
@@ -20,8 +19,9 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
     ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
 
-from server.webapp.inputs import secure_filename_input, SubParser
-from server.webapp.exceptions import RecordDoesNotExist, InvalidFileType
+from server.webapp.inputs import secure_filename_input, SubParser, AllowedSafeFilenameStorage, AllowedFiletypeStorage
+from server.webapp.exceptions import RecordDoesNotExist
+from server.webapp.fields import Json
 
 from server.webapp.utils import (load_project, verify_admin_request,
     delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
@@ -310,11 +310,8 @@ file_resource = {
     'file': fields.String,
     'result': fields.String,
 }
-file_uplod_form_parser = RequestParser()
-file_uplod_form_parser.add_arguments({
-    'file': {'type': FileStorage, 'location': 'files', 'required': True},
-    'name': {'required': True},
-})
+file_upload_form_parser = RequestParser()
+file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)
 
 
 class ProjectSpreadsheet(Resource):
@@ -362,7 +359,7 @@ class ProjectSpreadsheet(Resource):
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         summary='Upload the project workbook',
-        parameters=file_uplod_form_parser.swagger_parameters()
+        parameters=file_upload_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
     def post(self, project_id):
@@ -380,7 +377,7 @@ class ProjectSpreadsheet(Resource):
         user_id = current_user.id
         current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
-        args = file_uplod_form_parser.parse_args()
+        args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
 
         # getting current user path
@@ -388,9 +385,7 @@ class ProjectSpreadsheet(Resource):
         if not loaddir:
             loaddir = DATADIR
 
-        source_filename = secure_filename(uploaded_file.filename)
-        if not allowed_file(source_filename):
-            raise InvalidFileType(source_filename)
+        source_filename = uploaded_file.source_filename
 
         filename = project_name + '.xlsx'
         server_filename = os.path.join(loaddir, filename)
@@ -517,7 +512,7 @@ class ProjectData(Resource):
 
     @swagger.operation(
         summary='Uploads data for already created project',
-        parameters=file_uplod_form_parser.swagger_parameters()
+        parameters=file_upload_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
     def post(self, project_id):
@@ -528,12 +523,10 @@ class ProjectData(Resource):
         user_id = current_user.id
         current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
 
-        args = file_uplod_form_parser.parse_args()
+        args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
 
-        source_filename = secure_filename(uploaded_file.filename)
-        if not allowed_file(source_filename):
-            raise InvalidFileType(source_filename)
+        source_filename = uploaded_file.source_filename
 
         project_entry = load_project(project_id)
         if project_entry is None:
@@ -553,9 +546,9 @@ class ProjectData(Resource):
         return reply
 
 
-project_uplod_form_parser = RequestParser()
-project_uplod_form_parser.add_arguments({
-    'file': {'type': FileStorage, 'location': 'files', 'required': True},
+project_upload_form_parser = RequestParser()
+project_upload_form_parser.add_arguments({
+    'file': {'type': AllowedSafeFilenameStorage, 'location': 'files', 'required': True},
     'name': {'required': True, 'help': 'Project name'},
 })
 
@@ -565,20 +558,18 @@ class ProjectFromData(Resource):
 
     @swagger.operation(
         summary='Creates a project & uploads data to initialize it.',
-        parameters=project_uplod_form_parser.swagger_parameters()
+        parameters=project_upload_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
     def post(self):
         from optima.project import version
         user_id = current_user.id
 
-        args = project_uplod_form_parser.parse_args()
+        args = project_upload_form_parser.parse_args()
         uploaded_file = args['file']
         project_name = args['name']
 
-        source_filename = secure_filename(uploaded_file.filename)
-        if not allowed_file(source_filename):
-            raise InvalidFileType(source_filename)
+        source_filename = uploaded_file.source_filename
 
         from optima.utils import load
         new_project = load(uploaded_file)
@@ -753,3 +744,42 @@ class ProgsetItem(Resource):
         db.session.delete(progset_entry)
         db.session.commit()
         return '', 204
+
+
+predefined_fields = {
+    "programs": Json,
+    "populations": Json,
+    "categories": Json
+}
+
+
+class Predefined(Resource):
+
+    @swagger.operation(
+        description='Gives back default populations and programs'
+    )
+    @marshal_with(predefined_fields)
+    @login_required
+    def get(self):
+        from server.webapp.programs import programs, program_categories
+        from server.webapp.populations import populations
+
+        programs = programs()
+        populations = populations()
+        program_categories = program_categories()
+        for p in populations:
+            p['active'] = False
+        for p in programs:
+            p['active'] = False
+            new_parameters = [
+                dict([
+                        ('value', parameter),
+                        ('active', True)]) for parameter in p['parameters']]
+            if new_parameters:
+                p['parameters'] = new_parameters
+        payload = {
+            "programs": programs,
+            "populations": populations,
+            "categories": program_categories
+        }
+        return payload
