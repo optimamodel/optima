@@ -235,14 +235,8 @@ class Programset(object):
                         if not self.covout[thispartype][thispop].ccopars[thisprog.name]:
                             print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.name, thispop, thispartype))
                             outcomes[thispartype][thispop] = None
-                        else: outcomes[thispartype][thispop] += thiscov[thisprog.name]*delta[thisprog.name]
-<<<<<<< HEAD
-                        
+                        else: outcomes[thispartype][thispop] += thiscov[thisprog.name]*delta[thisprog.name]         
                 elif self.covout[thispartype][thispop].interaction == 'nested':
-=======
-
-                elif interaction == 'nested':
->>>>>>> develop
                     # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
                     for yr in range(nyrs):
                         cov,delt = [],[]
@@ -253,7 +247,6 @@ class Programset(object):
                         for j in range(len(cov_tuple)): # For each entry in here
                             if j == 0: c1 = cov_tuple[j][0]
                             else: c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
-<<<<<<< HEAD
                             outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
             
                 elif self.covout[thispartype][thispop].interaction == 'random':
@@ -294,44 +287,6 @@ class Programset(object):
         return outcomes
         
     def getparset(self,coverage,t,parset,forwhattype='budget',newparsetname='programpars',perturb=False):
-=======
-                            outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])
-
-                elif interaction == 'random':
-                    # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-
-                    for prog1 in thiscov.keys():
-                        product = ones(thiscov[prog1].shape)
-                        for prog2 in thiscov.keys():
-                            if prog1 != prog2:
-                                product *= (1-thiscov[prog2])
-
-                        outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product
-
-                    # Recursion over overlap levels
-                    def overlap_calc(indexes,target_depth):
-                        if len(indexes) < target_depth:
-                            accum = 0
-                            for j in range(indexes[-1]+1,len(thiscov)):
-                                accum += overlap_calc(indexes+[j],target_depth)
-                            return thiscov.values()[indexes[-1]]*accum
-                        else:
-                            return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
-
-                    # Iterate over overlap levels
-                    for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
-                        for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                            outcomes[thispartype][thispop] += overlap_calc([j],i)
-
-                    # All programs together
-                    outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
-
-                else: raise Exception('Unknown reachability type "%s"',interaction)
-
-        return outcomes
-
-    def getparset(self,forwhat,t,parset,forwhattype='budget',newparsetname='programpars',interaction='random',perturb=False):
->>>>>>> develop
         ''' Make a parset'''
         outcomes = self.getoutcomes(coverage=coverage,t=t,parset=parset,perturb=perturb)
         progparset = dcp(parset)
@@ -361,12 +316,8 @@ class Programset(object):
         return cost_coverage_figures
 
 class Program(object):
-<<<<<<< HEAD
     '''
     Defines a single program. 
-=======
-    ''' Defines a single program.
->>>>>>> develop
     Can be initialized with:
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
     targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
@@ -419,13 +370,8 @@ class Program(object):
             self.optimizable
             print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
         return None
-<<<<<<< HEAD
         
     def addcostcovdatum(self,costcovdatum,overwrite=True):
-=======
-
-    def addcostcovdatum(self,costcovdatum,overwrite=False):
->>>>>>> develop
         '''Add cost-coverage data point'''
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
