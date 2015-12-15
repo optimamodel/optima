@@ -1,4 +1,5 @@
 define([
+  './project-service',
   './create-population-modal-ctrl',
   './create-or-edit-ctrl',
   './open-ctrl',

@@ -219,8 +219,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         params = angular.copy($scope.projectParams);
         params.populations = selectedPopulations;
-        form.action = '/api/project/create/';
-        form.data = {params: params};
+        form.action = '/api/project';
+        form.data = params;
         form.method = 'POST';
       }
 

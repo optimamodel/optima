@@ -13,8 +13,8 @@ define([
     'app.local-storage'
     ])
     .factory('activeProject', [ 
-      '$http', 'localStorage',
-      function ($http, localStorage) {
+      '$http', 'localStorage', 'UserManager',
+      function ($http, localStorage, UserManager) {
         var project = {
           setActiveProjectFor: function (projectName, projectId, user) { 
             // Sets the active project to be projectName for the given user.
@@ -40,6 +40,11 @@ define([
           },
           getProjectFor: function (user) {
             return localStorage[project.getProjectKeyFor(user)];
+          },
+          getProjectIdForCurrentUser: function (user) {
+            const openProjectStr = activeProject.getProjectFor(UserManager.data);
+            const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
+            return openProject.id;
           },
           ifActiveResetFor: function (projectName, projectId, user) {
             // If projectName is active, reset it for the given user.

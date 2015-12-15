@@ -38,11 +38,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      $http.get('/api/project/open/' + id)
-        .success(function (response) {
-          activeProject.setActiveProjectFor(name, id, UserManager.data);
-          window.location = '/';
-        });
+      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      window.location = '/';
     };
 
 
