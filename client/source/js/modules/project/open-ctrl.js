@@ -53,7 +53,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         "Copy project?",
         "New project name",
         function(newName) {
-          $http.post('/api/project/copy/' + id + '?to=' + newName)
+          $http.post('/api/project/' + id + '/copy' + '?to=' + newName)
             .success(function (response) {
               window.location.reload();
             });
