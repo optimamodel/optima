@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
-    $timeout, $http, activeProject, defaultsResponse, info,
+    $timeout, $http, activeProject, defaultsResponse,
     UserManager, modalService,projects) {
 
     $scope.allProjectNames = _(projects.projects).map(function(project){
@@ -22,7 +22,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       isEdit: false,
       canUpdate: true
     };
-    $scope.projectInfo = info;
+    $scope.projectInfo = activeProject.getProjectForCurrentUser();
 
     var availableDefaults = defaultsResponse.data;
 
