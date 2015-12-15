@@ -197,7 +197,7 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     growsize = 0.01
 
     origR = deepcopy(D['R'])
-    origalloc = D['data']['origalloc']
+    origalloc = deepcopy(D['data']['origalloc'])
     if mmorigalloc == None: mmorigalloc = origalloc     # This is for allowing minimize-money optimize function calls to be constrained on the ORIGINAL original allocation.
     
     # Make sure objectives and constraints exist, and overwrite using saved ones if available
@@ -232,6 +232,19 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
         if len(D['programs'][i]['effects']): opttrue[i] = 1.0
     opttrue = opttrue.astype(bool) # Logical values
     
+    # Fix to avoid programs having less than "minreq" funding WITHIN optimisation process.
+    # Transfers money over from any available program with "2*minreq" funding or more.
+    minreq = 10000
+    print(origalloc)
+    for x in xrange(len(origalloc)):
+        if origalloc[x] < minreq and opttrue[x]:
+            for y in xrange(len(origalloc)):
+                if origalloc[y] >= 2*minreq and opttrue[x]:
+                    sharedamount = origalloc[y]/2
+                    origalloc[x] += sharedamount
+                    origalloc[y] -= sharedamount
+                    break
+    print(origalloc)    
     
     # Define constraints on funding -- per year and total
     fundingchanges = dict()

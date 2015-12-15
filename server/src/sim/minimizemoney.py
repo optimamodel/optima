@@ -66,9 +66,11 @@ def objectivecalc(optimparams, options):
     preconparams = optimparams
     optimparams = constrainbudget(preconparams, total=sum(preconparams), limits=options['fundingchanges']['total'])
 
+#    print options['fundingchanges']['total']
+
     R = runmodelalloc(options['D'], optimparams, options['parindices'], options['randseed'], rerunfinancial=False) # Actually run
     
-    targetsmet = False
+    targetsmet = True
     for key in options['targets']:
         if options['targets'][key]['use']: # Don't bother unless it's actually used
             key1 = key
@@ -78,8 +80,10 @@ def objectivecalc(optimparams, options):
             new = R[key1]['tot'][0][options['outindices'][-1]]
             if options['targets'][key]['by_active']:
                 if new < orig*options['targets'][key]['by']:
-                    targetsmet = True
-                print('For target %s, orig:%f new:%f; met=%s' % (key, orig, new, targetsmet))
+                    print('For target %s, orig:%f new:%f; met=%s' % (key, orig, new, True))
+                else:
+                    print('For target %s, orig:%f new:%f; met=%s' % (key, orig, new, False))
+                    targetsmet = False
             else:
                 print('NOT IMPLEMENTED')
     
@@ -226,14 +230,14 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             print('========== Halve funding until floor is reached ==========')
             fundingfactor = 1.0
             while targetsmet:
-                fundingfactor /= 2
+                fundingfactor /= 1.2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
                 print('Current funding factor: %f' % fundingfactor)
             
             # Keep doubling funding till targets are met...
             print('========== Doubling funding until ceiling is reached ==========')
             while not(targetsmet):
-                fundingfactor *= 2
+                fundingfactor *= 1.2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
                 print('Current funding factor: %f' % fundingfactor)
             
@@ -250,7 +254,7 @@ def minimizemoney(D, objectives=None, constraints=None, maxiters=1000, timelimit
             # Now home in on the solution
             print('========== Homing in on solution ==========')
             upperlim = fundingfactor
-            lowerlim = fundingfactor/2.
+            lowerlim = fundingfactor/1.2
             while (upperlim-lowerlim>0.01): # Keep looping until they converge to within 10% of the budget
                 fundingfactor = (upperlim+lowerlim)/2
                 targetsmet, optparams = objectivecalc(array(optimparams)*fundingfactor, options)
