@@ -13,8 +13,8 @@ define(['./module'], function (module) {
         createProject: function(data) {
           return $http.post('/api/project', data);
         },
-        updateProject: function(data) {
-          return $http.put('/api/project/' + data);
+        updateProject: function(id, data) {
+          return $http.put('/api/project/' + id, data);
         },
         deleteProject: function(id) {
           return $http.delete('/api/project/' + id);

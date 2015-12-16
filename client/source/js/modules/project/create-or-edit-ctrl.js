@@ -3,7 +3,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
     $timeout, $http, activeProject, defaultsResponse,
-    UserManager, modalService,projects, projectApiService) {
+    UserManager, modalService,projects, projectApiService, info) {
 
     $scope.allProjectNames = _(projects.projects).map(function(project){
       return project.name;
@@ -22,7 +22,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       isEdit: false,
       canUpdate: true
     };
-    $scope.projectInfo = activeProject.getProjectForCurrentUser();
+
+    $scope.projectInfo = info ? info.data : void 0;
 
     var availableDefaults = defaultsResponse.data;
 
@@ -214,7 +215,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.editParams.isEdit) {
         params = _($scope.projectParams).omit('name');
         params.populations = selectedPopulations;
-        promise = projectApiService.updateProject(params);
+        promise = projectApiService.updateProject($scope.projectInfo.id, params);
       } else {
         params = angular.copy($scope.projectParams);
         params.populations = selectedPopulations;
