@@ -53,7 +53,7 @@ define([
               return projectApiService.getPredefined();
             },
             info: function (projectApiService) {
-              projectApiService.getActiveProject();
+              return projectApiService.getActiveProject();
             },
             projects: function (projectApiService) {
               return projectApiService.getProjectList();

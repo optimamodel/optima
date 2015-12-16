@@ -77,7 +77,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open(projectApiService.getDownloadSpreadsheetUrl(id), '_blank', '');
+      window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
     };
 
     /**
