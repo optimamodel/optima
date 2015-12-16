@@ -43,6 +43,9 @@ define(['./module'], function (module) {
         getSpreadsheetUrl: function(id) {
           return '/api/project/' + id + '/spreadsheet';
         },
+        getDataUploadUrl: function(id) {
+          return '/api/project/' + id + '/data';
+        },
         getProjectProgramSet: function(id) {
           $http.get('/api/project/progsets/');
         },

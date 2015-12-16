@@ -94,7 +94,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setData = function (name, id, file) {
       var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
       modalService.confirm(
-        function (){ fileUpload.uploadDataSpreadsheet($scope, file, projectApiService.getSpreadsheetUrl(id), false); },
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, projectApiService.getDataUploadUrl(id), false); },
         function (){},
         'Yes, overwrite data',
         'No',
