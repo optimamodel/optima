@@ -70,18 +70,18 @@ def data2popsize(dataarray, data, keys):
 
 
 
-def data2timepar(parname, dataarray, data, keys, by=None):
+def data2timepar(parname, data, keys, by=None):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=parname, m=1, y=odict(), t=odict(), by=None) # Create structure
+    par = Timepar(name=parname, m=1, y=odict(), t=odict(), by=by) # Create structure
     par.name = parname # Store the name of the parameter
     par.m = 1 # Set metaparameter to 1
     par.y = odict() # Initialize array for holding parameters
     par.t = odict() # Initialize array for holding time points
     for row,key in enumerate(keys):
-        validdata = ~isnan(dataarray[row])
+        validdata = ~isnan(data[parname][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
-            par.y[key] = sanitize(dataarray[row]) # Store each extant value
-            par.t[key] = array(data['years'])[~isnan(dataarray[row])] # Store each year
+            par.y[key] = sanitize(data[parname][row]) # Store each extant value
+            par.t[key] = array(data['years'])[~isnan(data[parname][row])] # Store each year
         else: # Blank, assume zero -- WARNING, is this ok?
             par.y[key] = array([0])
             par.t[key] = array([0])
@@ -158,7 +158,7 @@ def makeparsfromdata(data, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2015dec08 by cliffk
+    Version: 2015dec15 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -177,6 +177,52 @@ def makeparsfromdata(data, verbose=2):
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
     pars['initprev'] = dataindex(data['hivprev'], bestindex, popkeys) # Pull out first available HIV prevalence point
     pars['popsize'] = data2popsize(data['popsize'], data, popkeys)
+    
+    
+    ## Epidemilogy parameters -- most are data
+    pars['stiprev'] = data2timepar('stiprev', data, popkeys) # STI prevalence
+    pars['death']  = datapar2simpar(pars['death'], popkeys)  # Death rates
+    pars['tbprev'] = datapar2simpar(pars['tbprev'], popkeys) # TB prevalence
+    
+    ## Testing parameters -- most are data
+    pars['hivtest'] = datapar2simpar(pars['hivtest'], popkeys) # HIV testing rates
+    pars['aidstest'] = datapar2simpar(pars['aidstest'], tot) # AIDS testing rates
+    pars['tx'] = datapar2simpar(pars['numtx'], tot, smoothness=int(1/dt)) # Number of people on first-line treatment -- 0 since overall not by population
+
+    ## MTCT parameters
+    pars['numpmtct'] = datapar2simpar(pars['numpmtct'], tot)
+    pars['birth']    = datapar2simpar(pars['birth'], popkeys)
+    pars['breast']   = datapar2simpar(pars['breast'], tot)  
+    
+    ## Sexual behavior parameters -- all are parameters so can loop over all
+    pars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
+    pars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
+    pars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
+    pars['numactsinj'] = datapar2simpar(pars['numinject'], popkeys) 
+    pars['condomreg']  = datapar2simpar(pars['condomreg'], popkeys) 
+    pars['condomcas']  = datapar2simpar(pars['condomcas'], popkeys) 
+    pars['condomcom']  = datapar2simpar(pars['condomcom'], popkeys) 
+    
+    ## Circumcision parameters
+    pars['circum']    = datapar2simpar(pars['circum'], popkeys) # Circumcision percentage
+    if  'numcircum' in pars.keys():
+        pars['numcircum'] = datapar2simpar(pars['numcircum'], tot) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    else:
+        pars['numcircum'] = zeros(shape(simpars['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
+    
+    ## Drug behavior parameters
+    simpars['numost'] = datapar2simpar(pars['numost'], tot)
+    simpars['sharing'] = datapar2simpar(pars['sharing'], popkeys)
+    
+    ## Other intervention parameters (proportion of the populations, not absolute numbers)
+    simpars['prep'] = datapar2simpar(pars['prep'], popkeys)
+    
+    ## Matrices can be used almost directly
+    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
+        simpars[parname] = array(pars[parname])
+    
+    ## Constants...can be used directly
+    simpars['const'] = pars['const']
     
     ## Parameters that can be converted automatically
     sheets = data['meta']['sheets']
