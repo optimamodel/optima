@@ -47,17 +47,17 @@ define(['./module'], function (module) {
           return '/api/project/' + id + '/data';
         },
         getProjectProgramSet: function(id) {
-          $http.get('/api/project/progsets/');
+          return $http.get('/api/project/progsets/' + id);
         },
         saveProjectProgramSet: function(projectId, progSetId, data) {
-          $http({
-            url: 'api/project/progsets/' + projectId + (progSetId ? '/' + progSetId : ''),
+          return $http({
+            url: '/api/project/progsets/' + projectId + (progSetId ? '/' + progSetId : ''),
             method: (progSetId ? 'PUT' : 'POST'),
             data: data
           });
         },
         deleteProjectProgramSet: function(projectId, progSetId) {
-          $http.delete('api/project/progsets/' + projectId + '/' + progSetId);
+          return $http.delete('/api/project/progsets/' + projectId + '/' + progSetId);
         }
       };
 

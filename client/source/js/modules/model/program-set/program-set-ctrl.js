@@ -13,12 +13,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Initialize scope params
     $scope.activeProgramSet = {};
-    $scope.categories = angular.copy(predefined.categories);
-    $scope.programs = angular.copy(predefined.programs);
+    $scope.categories = angular.copy(predefined.data.categories);
+    $scope.programs = angular.copy(predefined.data.programs);
+    $scope.programSetList = [];
 
     // Reset programs to defaults
     const resetPrograms = function() {
-      $scope.programs = angular.copy(predefined.programs);
+      $scope.programs = angular.copy(predefined.data.programs);
     };
     resetPrograms();
 
@@ -35,17 +36,19 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Get the list of saved programs from DB and set the first one as active
       projectApiService.getProjectProgramSet(openProject.id)
        .success(function (response) {
-        $scope.programSetList = response.progsets || [];
-        if(response.progsets && response.progsets.length > 0) {
-          $scope.setActiveProgramSet(response.progsets[0]);
-        }
+         if(response.progsets) {
+           $scope.programSetList = response.progsets;
+           if (response.progsets && response.progsets.length > 0) {
+             $scope.setActiveProgramSet(response.progsets[0]);
+           }
+         }
       });
 
     // Open pop-up to add new programSet name, it will also reset programs
     $scope.addProgramSet = function () {
       var add = function (name) {
         const addedProgramSet = {name:name};
-        $scope.programSetList[$scope.programSetList.length] = addedProgramSet;
+        $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = addedProgramSet;
         $scope.setActiveProgramSet(addedProgramSet);
       };
       programSetModalService.openProgramSetModal(null, add, $scope.programSetList, 'Add program set', true);
@@ -124,7 +127,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $event.preventDefault();
       }
 
-      return programSetModalService.openProgramModal(program, predefined, availableParameters.data.parameters).result.then(
+      return programSetModalService.openProgramModal(program, predefined.data, availableParameters.data.parameters).result.then(
         function (newProgram) {
           _(program).extend(newProgram);
         }
@@ -143,7 +146,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, predefined, availableParameters.data.parameters).result.then(
+      return programSetModalService.openProgramModal(program, predefined.data, availableParameters.data.parameters).result.then(
         function (newProgram) {
           $scope.programs.push(newProgram);
         }
@@ -162,7 +165,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = angular.copy(existingProgram);
 
-      return programSetModalService.openProgramModal(program, predefined, availableParameters).result.then(
+      return programSetModalService.openProgramModal(program, predefined.data, availableParameters).result.then(
         function (newProgram) {
           $scope.programs.push(newProgram);
         }
