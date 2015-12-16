@@ -1,11 +1,9 @@
 import os
 from datetime import datetime
 import dateutil
-from copy import deepcopy
 
 from flask import current_app, helpers, request, Response, abort
 from werkzeug.exceptions import Unauthorized
-from werkzeug.utils import secure_filename
 
 from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with, fields
@@ -19,13 +17,12 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
     ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
 
-from server.webapp.inputs import secure_filename_input, SubParser, AllowedSafeFilenameStorage, AllowedFiletypeStorage
+from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
 from server.webapp.exceptions import RecordDoesNotExist
-from server.webapp.fields import Json
+from server.webapp.fields import Uuid
 
 from server.webapp.utils import (load_project, verify_admin_request,
     delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
-from server.webapp.resources.project.utils import getPopsAndProgsFromModel
 
 
 class ProjectBase(Resource):
@@ -620,179 +617,88 @@ class ProjectFromData(Resource):
         return reply
 
 
-program_parser = RequestParser()
-program_parser.add_arguments({
-    'name': {'required': True, 'location': 'json'},
-    'short_name': {'required': True, 'location': 'json'},
-    'category': {'required': True, 'location': 'json'},
-    'active': {'type': bool, 'default': False},
-    'parameters': {'type': dict, 'action': 'append', 'dest': 'pars'},
-})
-
-
-progset_parser = RequestParser()
-progset_parser.add_arguments({
-    'name': {'required': True},
-    'programs': {'required': True, 'type': SubParser(program_parser), 'action': 'append'}
-})
-
-
-class Progset(Resource):
-    class_decorators = [login_required]
-
-    @swagger.operation(
-        description='Download progsets for the project with the given id.',
-        notes="""
-            if project exists, returns progsets for it
-            if project does not exist, returns an error.
-        """,
-        responseClass=ProgsetsDb.__name__
-    )
-    @marshal_with(ProgsetsDb.resource_fields, envelope='progsets')
-    def get(self, project_id):
-
-        current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_entry = load_project(project_id)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
-
-        reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
-        return reply
-
-    @swagger.operation(
-        description='Create a progset for the project with the given id.',
-        parameters=progset_parser.swagger_parameters()
-    )
-    @marshal_with(ProgsetsDb.resource_fields)
-    def post(self, project_id):
-        current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_entry = load_project(project_id)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
-
-        args = progset_parser.parse_args()
-
-        progset_entry = ProgsetsDb(project_id, args['name'])
-        db.session.add(progset_entry)
-        db.session.flush()
-
-        progset_entry.create_programs_from_list(args['programs'])
-
-        db.session.commit()
-
-        return progset_entry, 201
-
-
-class ProgsetDoesNotExist(RecordDoesNotExist):
-    _model = 'progset'
-
-
-class ProgsetItem(Resource):
-    class_decorators = [login_required]
-
-    @swagger.operation(
-        description='Download progset with the given id.',
-        notes="""
-            if progset exists, returns it
-            if progset does not exist, returns an error.
-        """,
-        responseClass=ProgsetsDb.__name__
-    )
-    @marshal_with(ProgsetsDb.resource_fields)
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-        if str(progset_entry.project_id) != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
-        return progset_entry
-
-    @swagger.operation(
-        description='Update progset with the given id.',
-        notes="""
-            if progset exists, returns the updated version
-            if progset does not exist, returns an error.
-        """,
-        responseClass=ProgsetsDb.__name__
-    )
-    @marshal_with(ProgsetsDb.resource_fields)
-    def put(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        if str(progset_entry.project_id) != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        args = progset_parser.parse_args()
-        progset_entry.name = args['name']
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-
-        progset_entry.create_programs_from_list(args.get('programs', []))
-
-        db.session.commit()
-
-        return progset_entry
-
-    @swagger.operation(
-        description='Delete progset with the given id.',
-        notes="""
-            if progset exists, deletes it
-            if progset does not exist, returns an error.
-        """
-    )
-    def delete(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        if str(progset_entry.project_id) != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        progset_entry.name
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-        db.session.delete(progset_entry)
-        db.session.commit()
-        return '', 204
-
-
-predefined_fields = {
-    "programs": Json,
-    "populations": Json,
-    "categories": Json
+project_copy_fields = {
+    'project': Uuid,
+    'user': Uuid,
+    'copy_id': Uuid
 }
 
 
-class Predefined(Resource):
+class ProjectCopy(Resource):
 
     @swagger.operation(
-        description='Gives back default populations and programs'
+        responseClass=ProjectDb.__name__,
+        summary='Copy a Project'
     )
-    @marshal_with(predefined_fields)
+    @marshal_with(project_copy_fields)
     @login_required
-    def get(self):
-        from server.webapp.programs import programs, program_categories
-        from server.webapp.populations import populations
+    def post(self, project_id):
+        """
+        Copies the given project to a different name
+        usage: /api/project/copy/<project_id>?to=<new_project_name>
+        """
+        from sqlalchemy.orm.session import make_transient
+        # from server.webapp.dataio import projectpath
+        new_project_name = request.args.get('to')
+        if not new_project_name:
+            abort(400)
+        # Get project row for current user with project name
+        project_entry = load_project(project_id, all_data=True)
+        if project_entry is None:
+            raise ProjectDoesNotExist(id=project_id)
+        project_user_id = project_entry.user_id
 
-        programs = programs()
-        populations = populations()
-        program_categories = program_categories()
-        for p in populations:
-            p['active'] = False
-        for p in programs:
-            p['active'] = False
-            new_parameters = [
-                dict([
-                        ('value', parameter),
-                        ('active', True)]) for parameter in p['parameters']]
-            if new_parameters:
-                p['parameters'] = new_parameters
+        # force load the existing data, parset and result
+        project_data_exists = project_entry.project_data
+        project_parset_exists = project_entry.parsets
+        project_result_exists = project_entry.results
+
+        db.session.expunge(project_entry)
+        make_transient(project_entry)
+
+        project_entry.id = None
+        project_entry.name = new_project_name
+
+        # change the creation and update time
+        project_entry.created = datetime.now(dateutil.tz.tzutc())
+        project_entry.updated = datetime.now(dateutil.tz.tzutc())
+        # Question, why not use datetime.utcnow() instead
+        # of dateutil.tz.tzutc()?
+        # it's the same, without the need to import more
+        db.session.add(project_entry)
+        db.session.flush()  # this updates the project ID to the new value
+        new_project_id = project_entry.id
+
+        if project_data_exists:
+            # copy the project data
+            db.session.expunge(project_entry.project_data)
+            make_transient(project_entry.project_data)
+            db.session.add(project_entry.project_data)
+
+        if project_parset_exists:
+            # copy each parset
+            for parset in project_entry.parsets:
+                db.session.expunge(parset)
+                make_transient(parset)
+                # set the id to None to ensure no duplicate ID
+                parset.id = None
+                db.session.add(parset)
+
+        if project_result_exists:
+            # copy each result
+            for result in project_entry.results:
+                db.session.expunge(result)
+                make_transient(result)
+                # set the id to None to ensure no duplicate ID
+                result.id = None
+                db.session.add(result)
+        db.session.commit()
+        # let's not copy working project, it should be either saved or
+        # discarded
         payload = {
-            "programs": programs,
-            "populations": populations,
-            "categories": program_categories
+            'project': project_id,
+            'user': project_user_id,
+            'copy_id': new_project_id
         }
         return payload
+
