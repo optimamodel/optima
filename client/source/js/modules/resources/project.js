@@ -23,6 +23,13 @@ define([
             params: {
               path: 'info'
             }
+          },
+          predefined: {
+            method: 'GET',
+            isArray: false,
+            params: {
+              path: 'predefined'
+            }
           }
         }
       );
