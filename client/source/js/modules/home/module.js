@@ -21,9 +21,9 @@ define([
         templateUrl: '/js/modules/home/home.html',
         controller: 'HomeController',
         resolve: {
-          project: function (Project, activeProject) {
+          project: function ($http, activeProject) {
             if (activeProject.isSet()) {
-              return Project.info().$promise;
+              return $http.get('/api/project/' + activeProject.getProjectIdForCurrentUser());
             } else {
               return undefined;
             }

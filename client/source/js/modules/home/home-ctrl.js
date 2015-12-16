@@ -5,7 +5,7 @@ define(['./module', 'underscore'], function (module) {
 
     // initialize data for the template
     var initialize= function() {
-      $scope.project = project;
+      $scope.project = project.data;
 
       if ($scope.project) {
         $scope.project.creation_time = Date.parse($scope.project.creation_time);
