@@ -72,9 +72,9 @@ project_parser.add_arguments({
 # editing datastart & dataend currently is not allowed
 project_update_parser = RequestParser()
 project_update_parser.add_arguments({
-    'name': {'required': True, 'type': secure_filename_input},
+    'name': {'type': secure_filename_input},
     # FIXME: programs should be a "SubParser" with its own Parser
-    #'populations': {'type': SubParser(population_parser)},
+    # 'populations': {'type': SubParser(population_parser)},
     'populations': {'type': dict, 'action': 'append'},
     'canUpdate': {'type': bool, 'default': False},
     # FIXME: programs should be a "SubParser" with its own Parser
@@ -205,7 +205,7 @@ class ProjectItem(Resource):
             "updateProject %s for user %s" % (
                 project_id, current_user.email))
 
-        args = project_parser.parse_args()
+        args = project_update_parser.parse_args()
 
         current_app.logger.debug(
             "project %s is in edit mode" % project_id)
@@ -225,51 +225,59 @@ class ProjectItem(Resource):
 
         current_app.logger.debug(
             "Editing project %s by user %s:%s" % (
-                args['name'], current_user.id, current_user.email))
+                project_entry.name, current_user.id, current_user.email))
 
         # makeproject is supposed to return the name of the existing file...
         # D = makeproject(**makeproject_args)
         # D should have inputprograms and inputpopulations corresponding to the
         # entered data now
         # project_entry.model = tojson(D)
-        WorkingProjectDb.query.filter_by(id=project_entry.id).delete()
-        if can_update and project_entry.project_data is not None and project_entry.project_data.meta is not None:
-            from dataio import projectpath
+        # WorkingProjectDb.query.filter_by(id=project_entry.id).delete()
+        # if can_update and project_entry.project_data is not None and project_entry.project_data.meta is not None:
+        #     from dataio import projectpath
 
-            # try to reload the data
-            loaddir = upload_dir_user(DATADIR)
-            if not loaddir:
-                loaddir = DATADIR
-            filename = args['name'] + '.xlsx'
-            server_filename = os.path.join(loaddir, filename)
-            filedata = open(server_filename, 'wb')
-            filedata.write(project_entry.project_data.meta)
-            filedata.close()
-            D = model_as_bunch(project_entry.model)
-            # resave relevant metadata
-            D['G']['projectname'] = project_entry.name
-            D['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
-            D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
-            D['G']['inputprograms'] = deepcopy(project_entry.programs)
-            D['G']['inputpopulations'] = deepcopy(project_entry.populations)
-            # TODO fix after v2
-            # D = updatedata(
-            # D, input_programs = project_entry.programs, savetofile = False)
-            # and now, because workbook was uploaded, we have to correct the
-            # programs and populations
-            model = model_as_dict(D)
-            project_entry.model = model
-            getPopsAndProgsFromModel(project_entry, trustInputMetadata=False)
-        else:
-            ProjectDataDb.query.filter_by(
-                id=project_entry.id).delete()
+        #     # try to reload the data
+        #     loaddir = upload_dir_user(DATADIR)
+        #     if not loaddir:
+        #         loaddir = DATADIR
+        #     filename = args['name'] + '.xlsx'
+        #     server_filename = os.path.join(loaddir, filename)
+        #     filedata = open(server_filename, 'wb')
+        #     filedata.write(project_entry.project_data.meta)
+        #     filedata.close()
+        #     D = model_as_bunch(project_entry.model)
+        #     # resave relevant metadata
+        #     D['G']['projectname'] = project_entry.name
+        #     D['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
+        #     D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
+        #     D['G']['inputprograms'] = deepcopy(project_entry.programs)
+        #     D['G']['inputpopulations'] = deepcopy(project_entry.populations)
+        #     # TODO fix after v2
+        #     # D = updatedata(
+        #     # D, input_programs = project_entry.programs, savetofile = False)
+        #     # and now, because workbook was uploaded, we have to correct the
+        #     # programs and populations
+        #     model = model_as_dict(D)
+        #     project_entry.model = model
+        #     getPopsAndProgsFromModel(project_entry, trustInputMetadata=False)
+        # else:
+        #     ProjectDataDb.query.filter_by(
+        #         id=project_entry.id).delete()
 
         # Save to db
         current_app.logger.debug("About to persist project %s for user %s" % (
             project_entry.name, project_entry.user_id))
         db.session.add(project_entry)
         db.session.commit()
-        new_project_template = D['G']['workbookname']
+
+        new_project_template = project_entry.name
+
+        path = templatepath(project_entry.name)
+        makespreadsheet(
+            path,
+            pops=args['populations'],
+            datastart=project_entry.datastart,
+            dataend=project_entry.dataend)
 
         current_app.logger.debug(
             "new_project_template: %s" % new_project_template)
