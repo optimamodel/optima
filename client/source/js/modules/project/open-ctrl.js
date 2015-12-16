@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectOpenController',
-    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager) {
+    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager, projectApiService) {
 
     $scope.sortType = 'name'; // set the default sort type
     $scope.sortReverse = false;  // set the default sort order
@@ -52,8 +52,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         "Copy project?",
         "New project name",
         function(newName) {
-          $http.post('/api/project/' + id + '/copy' + '?to=' + newName)
-            .success(function (response) {
+          projectApiService.copyProject(id, newName).success(function (response) {
               window.location.reload();
             });
         }
@@ -78,17 +77,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/' + id + '/spreadsheet', '_blank', '');
+      window.open(projectApiService.getDownloadSpreadsheetUrl(id), '_blank', '');
     };
 
     /**
      * Gets the data for the given project `name` as <name>.json  file
      */
     $scope.getData = function (name, id) {
-      $http({url:'/api/project/'+ id + '/data',
-            method:'GET',
-            headers: {'Content-type': 'application/octet-stream'},
-            responseType:'blob'})
+      projectApiService.getProjectData(id)
         .success(function (response, status, headers, config) {
           var blob = new Blob([response], { type: 'application/octet-stream' });
           saveAs(blob, (name + '.prj'));
@@ -122,9 +118,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (name, id, index) {
-      $http.delete('/api/project/' +
-        '' + id)
-        .success(function (response) {
+      projectApiService.deleteProject(id).success(function (response) {
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.id != id;
           });

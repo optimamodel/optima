@@ -21,12 +21,8 @@ define([
         templateUrl: '/js/modules/home/home.html',
         controller: 'HomeController',
         resolve: {
-          project: function ($http, activeProject) {
-            if (activeProject.isSet()) {
-              return $http.get('/api/project/' + activeProject.getProjectIdForCurrentUser());
-            } else {
-              return undefined;
-            }
+          project: function (projectApiService) {
+            return projectApiService.getActiveProject();
           }
         }
       });

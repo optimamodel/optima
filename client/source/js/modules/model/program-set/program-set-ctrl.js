@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
+    $timeout, modalService, predefined, availableParameters, UserManager, activeProject, projectApiService) {
 
     // Check if come project is currently open, else show error message
     const openProjectStr = activeProject.getProjectFor(UserManager.data);
@@ -33,10 +33,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // Get the list of saved programs from DB and set the first one as active
-    $http({
-      url: '/api/project/progsets/' + openProject.id,
-      method: 'GET'})
-      .success(function (response) {
+      projectApiService.getProjectProgramSet(openProject.id)
+       .success(function (response) {
         $scope.programSetList = response.progsets || [];
         if(response.progsets && response.progsets.length > 0) {
           $scope.setActiveProgramSet(response.progsets[0]);
@@ -72,10 +70,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            $http({
-              url: 'api/project/progsets/' + openProject.id + '/' + $scope.activeProgramSet.id,
-              method: 'DELETE'
-            });
+            projectApiService.deleteProjectProgramSet(openProject.id, $scope.activeProgramSet.id);
           }
           $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
             return programSet.name !== $scope.activeProgramSet.name;
@@ -112,14 +107,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if (!openProject) {
         modalService.informError([{message: 'Open project before proceeding.'}]);
       } else {
-        $http({
-          url: 'api/project/progsets/' + openProject.id + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
-          method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
-          data: {
-            name: $scope.activeProgramSet.name,
-            programs: $scope.programs
-          }})
-          .success(function (response) {
+        projectApiService.saveProjectProgramSet(openProject.id, $scope.activeProgramSet.id, {
+          name: $scope.activeProgramSet.name,
+          programs: $scope.programs
+        }).success(function (response) {
             if(response.id) {
               $scope.activeProgramSet.id = response.id;
             }
