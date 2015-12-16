@@ -37,6 +37,8 @@ class ProjectBase(Resource):
     @marshal_with(ProjectDb.resource_fields, envelope='projects')
     def get(self):
         projects = self.get_query().all()
+        print "******uhuy create banget******"
+        print projects
         return projects
 
 
@@ -466,7 +468,10 @@ class ProjectSpreadsheet(Resource):
                 projdata.upload_time = data_upload_time
             else:
                 # create new project data
-                projdata = ProjectDataDb(project_entry.id, filedata, data_upload_time)
+                projdata = ProjectDataDb(
+                    project_id=project_entry.id,
+                    meta=filedata,
+                    updated=data_upload_time)
 
             # Save to db
             db.session.add(projdata)
