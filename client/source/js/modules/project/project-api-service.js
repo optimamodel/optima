@@ -7,8 +7,7 @@ define(['./module'], function (module) {
 
       return {
         getActiveProject: function () {
-          const projectId = activeProject.getProjectIdForCurrentUser();
-          console.log('1');
+          var projectId = activeProject.getProjectIdForCurrentUser();
           return $http.get('/api/project/' + projectId);
         },
         createProject: function(data) {
@@ -33,7 +32,6 @@ define(['./module'], function (module) {
           return $http.get('/api/project/'+ id + '/data');
         },
         getProjectList: function () {
-          console.log('2');
           return $http.get('/api/project');
         },
         getPredefined: function () {
@@ -42,7 +40,7 @@ define(['./module'], function (module) {
         getParameters: function () {
           return $http.get('/api/project/parameters');
         },
-        getDownloadSpreadsheetUrl: function(id) {
+        getSpreadsheetUrl: function(id) {
           return '/api/project/' + id + '/spreadsheet';
         },
         getProjectProgramSet: function(id) {
