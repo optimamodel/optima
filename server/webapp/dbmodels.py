@@ -24,15 +24,15 @@ class UserDb(db.Model):
         'is_admin': fields.Boolean,
     }
 
-    id = db.Column(UUID(True), server_default=text(
-        "uuid_generate_v1mc()"), primary_key=True)
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
     is_admin = db.Column(db.Boolean, server_default=text('FALSE'))
-    project = db.relationship('ProjectDb', backref='users', lazy='dynamic')
+    projects = db.relationship('ProjectDb', backref='users',
+                                lazy='dynamic')
 
-    def __init__(self, name, email, password, is_admin=False):
+    def __init__(self, name, email, password, is_admin = False):
         self.name = name
         self.email = email
         self.password = password
@@ -41,13 +41,13 @@ class UserDb(db.Model):
     def get_id(self):
         return self.id
 
-    def is_active(self):  # pylint: disable=R0201
+    def is_active(self): # pylint: disable=R0201
         return True
 
-    def is_anonymous(self):  # pylint: disable=R0201
+    def is_anonymous(self): # pylint: disable=R0201
         return False
 
-    def is_authenticated(self):  # pylint: disable=R0201
+    def is_authenticated(self): # pylint: disable=R0201
         return True
 
 
@@ -69,35 +69,30 @@ class ProjectDb(db.Model):
         'has_data': fields.Boolean,
     }
 
-    id = db.Column(UUID(True), server_default=text(
-        "uuid_generate_v1mc()"), primary_key=True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     name = db.Column(db.String(60))
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     datastart = db.Column(db.Integer)
     dataend = db.Column(db.Integer)
     populations = db.Column(JSON)
-    created = db.Column(
-        db.DateTime(timezone=True), server_default=text('now()'))
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     version = db.Column(db.Text)
     settings = db.Column(db.LargeBinary)
     data = db.Column(db.LargeBinary)
     working_project = db.relationship('WorkingProjectDb', backref='projects',
-                                      uselist=False)
+                                uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='projects',
-                                   uselist=False)
+                                uselist=False)
     parsets = db.relationship('ParsetsDb', backref='projects')
     results = db.relationship('ResultsDb', backref='results')
     progsets = db.relationship('ProgsetsDb', backref='progsets')
 
-    def __init__(self, name, datastart, dataend, populations, version, user_id=None, user=None,
-                 created=None, updated=None, settings=None, data=None, parsets=None,
-                 results=None):
+    def __init__(self, name, user_id, datastart, dataend, populations, version,
+            created=None, updated=None, settings=None, data=None, parsets=None,
+            results=None):
         self.name = name
-        if user_id:
-            self.user_id = user_id
-        if user:
-            self.users = user
+        self.user_id = user_id
         self.datastart = datastart
         self.dataend = dataend
         self.populations = populations
@@ -161,46 +156,32 @@ class ProjectDb(db.Model):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(
-            project_id=str_project_id).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete()
-        db.session.query(WorkingProjectDb).filter_by(
-            id=str_project_id).delete()
-        db.session.query(ResultsDb).filter_by(
-            project_id=str_project_id).delete()
-        db.session.query(ParsetsDb).filter_by(
-            project_id=str_project_id).delete()
-        db.session.query(ProgramsDb).filter_by(
-            project_id=str_project_id).delete()
-        db.session.query(ProgsetsDb).filter_by(
-            project_id=str_project_id).delete()
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
 
 
 class ParsetsDb(db.Model):
     __tablename__ = 'parsets'
-    id = db.Column(UUID(True), server_default=text(
-        "uuid_generate_v1mc()"), primary_key=True)
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.Text)
-    created = db.Column(
-        db.DateTime(timezone=True), server_default=text('now()'))
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     pars = db.Column(db.LargeBinary)
 
-    def __init__(self, name, project_id=None, project=None, created=None, updated=None, pars=None, id=None):
-        if project_id:
-            self.project_id = project_id
-        if project:
-            self.projects = project
+    def __init__(self, project_id, name, created = None, updated = None, pars = None, id = None):
+        self.project_id = project_id
         self.name = name
-        if created:
-            self.created = created
-        if updated:
-            self.updated = updated
+        if created: self.created = created
+        if updated: self.updated = updated
         self.pars = pars
-        if id:
-            self.id = id
+        if id: self.id = id
 
     def hydrate(self):
         from optima.parameters import Parameterset
@@ -216,83 +197,60 @@ class ParsetsDb(db.Model):
 
 class ResultsDb(db.Model):
     __tablename__ = 'results'
-    id = db.Column(UUID(True), server_default=text(
-        "uuid_generate_v1mc()"), primary_key=True)
+    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
-    parset = db.relationship('ParsetsDb', backref='results', uselist=False)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     calculation_type = db.Column(db.Text)
     blob = db.Column(db.LargeBinary)
 
-    def __init__(self, calculation_type, blob, parset_id=None, parset=None, project_id=None, project=None, id=None):
-        if parset_id:
-            self.parset_id = parset_id
-        if parset:
-            self.parset = parset
-        if project_id:
-            self.project_id = project_id
-        if project:
-            projects = project
+    def __init__(self, parset_id, project_id, calculation_type, blob, id = None):
+        self.parset_id = parset_id
+        self.project_id = project_id
         self.calculation_type = calculation_type
         self.blob = blob
-        if id:
-            self.id = id
+        if id: self.id = id
 
 
-class WorkingProjectDb(db.Model):  # pylint: disable=R0903
+class WorkingProjectDb(db.Model): # pylint: disable=R0903
     __tablename__ = 'working_projects'
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
+    id = db.Column(UUID(True),db.ForeignKey('projects.id'), primary_key=True )
     is_working = db.Column(db.Boolean, unique=False, default=False)
     work_type = db.Column(db.String(32), default=None)
     project = db.Column(db.LargeBinary)
-    work_log_id = db.Column(UUID(True), default=None)
+    work_log_id = db.Column(UUID(True), default = None)
 
-    def __init__(self, is_working=False, project_id=None, projects=None, project=None, work_type=None, work_log_id=None):  # pylint: disable=R0913
-        if progset_id:
-            self.id = project_id
-        if projects:
-            self.projects = projects
+    def __init__(self, project_id, is_working=False, project = None, work_type = None, work_log_id = None): # pylint: disable=R0913
+        self.id = project_id
         self.project = project
         self.is_working = is_working
         self.work_type = work_type
         self.work_log_id = work_log_id
 
-
-class WorkLogDb(db.Model):  # pylint: disable=R0903
+class WorkLogDb(db.Model): # pylint: disable=R0903
     __tablename__ = "work_log"
 
-    work_status = db.Enum(
-        'started', 'completed', 'cancelled', 'error', name='work_status')
+    work_status = db.Enum('started', 'completed', 'cancelled', 'error' , name='work_status')
 
     id = db.Column(UUID(True), primary_key=True)
-    work_type = db.Column(db.String(32), default=None)
+    work_type = db.Column(db.String(32), default = None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
-    start_time = db.Column(
-        db.DateTime(timezone=True), server_default=text('now()'))
-    stop_time = db.Column(db.DateTime(timezone=True), default=None)
+    start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+    stop_time = db.Column(db.DateTime(timezone=True), default = None)
     status = db.Column(work_status, default='started')
-    error = db.Column(db.Text, default=None)
+    error = db.Column(db.Text, default = None)
 
-    def __init__(self, project_id=None, project=None, work_type=None):
-        if project_id:
-            self.project_id = project_id
-        if project:
-            self.projects = project
+    def __init__(self, project_id, work_type = None):
+        self.project_id = project_id
         self.work_type = work_type
 
-
-class ProjectDataDb(db.Model):  # pylint: disable=R0903
+class ProjectDataDb(db.Model): # pylint: disable=R0903
     __tablename__ = 'project_data'
-    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
+    id = db.Column(UUID(True),db.ForeignKey('projects.id'), primary_key=True )
     meta = deferred(db.Column(db.LargeBinary))
-    updated = db.Column(
-        db.DateTime(timezone=True), server_default=text('now()'))
+    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
 
-    def __init__(self, meta, project_id=None, project=None, updated=None):
-        if project_id:
-            self.id = project_id
-        if project:
-            self.projects = project
+    def __init__(self, project_id, meta, updated = None):
+        self.id = project_id
         self.meta = meta
         self.updated = updated
 
@@ -314,32 +272,21 @@ class ProgramsDb(db.Model):
         'updated': fields.DateTime,
     }
 
-    id = db.Column(UUID(True), server_default=text(
-        "uuid_generate_v1mc()"), primary_key=True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
-    progset = db.relationship('ProgsetsDb', backref='programs', uselist=False)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     category = db.Column(db.String)
     name = db.Column(db.String)
     short_name = db.Column(db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
-    created = db.Column(
-        db.DateTime(timezone=True), server_default=text('now()'))
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, name, short_name, category, project_id=None,
-                 project=None, progset_id=None, progset=None, active=False,
-                 ars=None, created=None, updated=None, id=None):
+    def __init__(self, project_id, progset_id, name, short_name, category, active=False, pars=None, created=None, updated=None, id=None):
 
-        if project_id:
-            self.project_id = project_id
-        if project:
-            self.projects = project
-        if progset_id:
-            self.progset_id = progset_id
-        if progset:
-            self.progsets = progset
+        self.project_id = project_id
+        self.progset_id = progset_id
         self.name = name
         self.short_name = short_name
         self.category = category
@@ -367,19 +314,15 @@ class ProgsetsDb(db.Model):
 
     __tablename__ = 'progsets'
 
-    id = db.Column(UUID(True), server_default=text(
-        "uuid_generate_v1mc()"), primary_key=True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.String)
-    created = db.Column(
-        db.DateTime(timezone=True), server_default=text('now()'))
+    created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    programs = db.relationship('ProgramsDb', backref='programs', lazy='joined')
 
-    def __init__(self, name, project_id=None, project=None, created=None, updated=None, id=None):
-        if project_id:
-            self.project_id = project_id
-        if project:
-            self.projects = project
+    def __init__(self, project_id, name, created=None, updated=None, id=None):
+        self.project_id = project_id
         self.name = name
         if created:
             self.created = created
