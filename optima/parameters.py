@@ -328,6 +328,9 @@ class Timepar(object):
 
 
 
+
+
+
 class Popsizepar(object):
     ''' The definition of the population size parameter '''
     
@@ -355,6 +358,9 @@ class Popsizepar(object):
         for pop,key in enumerate(keys):
             output[pop,:] = self.m * popgrow(self.p[key], tvec-self.start)
         return output
+
+
+
 
 
 
@@ -387,8 +393,6 @@ class Parameterset(object):
         return None
 
 
-
-
     def interp(self, ind=0, start=2000, end=2030, dt=0.2, tvec=None, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
@@ -397,88 +401,15 @@ class Parameterset(object):
         simpars = odict() # Used to be called M
         if tvec is not None: simpars['tvec'] = tvec
         else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
-        popkeys = dcp(self.popkeys)
-        tot = ['tot'] # WARNING, this is kludgy
-        simpars['popkeys'] = popkeys
-        npts = len(simpars['tvec']) # Number of time points
+        simpars['popkeys'] = dcp(self.popkeys)
         
+        for key in pars.keys():
+            try: simpars[key] = pars[key].interp(tvec=simpars['tvec']) # WARNING, probably a better way to do this, but  avoids need to give explicit list
+            except: simpars[key] = dcp(pars[key]) # If interpolation doesn't work, just copy it
         
+        ## Metaparameters -- convert from odict to array -- WARNING
+        simpars['force'] = array(simpars['force'][:])
+        simpars['inhomo'] = array(simpars['inhomo'][:])
         
-        
-        
-        
-        
-        
-        ## Epidemilogy parameters -- most are data
-        simpars['popsize'] = popsize2simpar(pars['popsize'], popkeys) # Population size
-        simpars['initprev'] = pars['initprev'] # Initial HIV prevalence
-        simpars['stiprev'] = datapar2simpar(pars['stiprev'], popkeys) # STI prevalence
-        simpars['death']  = datapar2simpar(pars['death'], popkeys)  # Death rates
-        simpars['tbprev'] = datapar2simpar(pars['tbprev'], popkeys) # TB prevalence
-        
-        ## Testing parameters -- most are data
-        simpars['hivtest'] = datapar2simpar(pars['hivtest'], popkeys) # HIV testing rates
-        simpars['aidstest'] = datapar2simpar(pars['aidstest'], tot) # AIDS testing rates
-        simpars['tx'] = datapar2simpar(pars['numtx'], tot, smoothness=int(1/dt)) # Number of people on first-line treatment -- 0 since overall not by population
-    
-        ## MTCT parameters
-        simpars['numpmtct'] = datapar2simpar(pars['numpmtct'], tot)
-        simpars['birth']    = datapar2simpar(pars['birth'], popkeys)
-        simpars['breast']   = datapar2simpar(pars['breast'], tot)  
-        
-        ## Sexual behavior parameters -- all are parameters so can loop over all
-        simpars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
-        simpars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
-        simpars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
-        simpars['numactsinj'] = datapar2simpar(pars['numinject'], popkeys) 
-        simpars['condomreg']  = datapar2simpar(pars['condomreg'], popkeys) 
-        simpars['condomcas']  = datapar2simpar(pars['condomcas'], popkeys) 
-        simpars['condomcom']  = datapar2simpar(pars['condomcom'], popkeys) 
-        
-        ## Circumcision parameters
-        simpars['circum']    = datapar2simpar(pars['circum'], popkeys) # Circumcision percentage
-        if  'numcircum' in pars.keys():
-            simpars['numcircum'] = datapar2simpar(pars['numcircum'], tot) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
-        else:
-            simpars['numcircum'] = zeros(shape(simpars['tvec'])) # Number to be circumcised -- to be populated by the relevant CCOC at non-zero allocations
-        
-        ## Drug behavior parameters
-        simpars['numost'] = datapar2simpar(pars['numost'], tot)
-        simpars['sharing'] = datapar2simpar(pars['sharing'], popkeys)
-        
-        ## Other intervention parameters (proportion of the populations, not absolute numbers)
-        simpars['prep'] = datapar2simpar(pars['prep'], popkeys)
-        
-        ## Matrices can be used almost directly
-        for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
-            simpars[parname] = array(pars[parname])
-        
-        ## Constants...can be used directly
-        simpars['const'] = pars['const']
-        
-        ## Calculate total acts
-        totalacts = gettotalacts(simpars, npts)
-        for act in ['reg','cas','com','inj']:
-            simpars['totalacts'+act] = totalacts[act]
-        
-        ## Program parameters not related to data
-        simpars['propaware'] = zeros(shape(simpars['hivtest'])) # Initialize proportion of PLHIV aware of their status
-        simpars['txtotal'] = zeros(shape(simpars['tx'])) # Initialize total number of people on treatment
-        
-        ## Metaparameters
-        simpars['force'] = array(pars['force'][:])
-        simpars['inhomo'] = array(pars['inhomo'][:])
-        
-        ## Other things that can be used directly as well
-        simpars['male'] = pars['male']
-        simpars['female'] = pars['female']
-
         printv('...done making model parameters.', 2, verbose)
         return simpars
-    
-    
-            
-        
-
-
-    
