@@ -347,6 +347,32 @@ class Popsizepar(object):
 
 
 
+class Constant(object):
+    ''' The definition of a single constant parameter, which may or may not vary by population '''
+    
+    def __init__(self, name=None, y=None, by=None):
+        if y is None: y = odict()
+        self.name = name
+        self.y = y # Value data, e.g. [0.3, 0.7]
+        self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = '\n'
+        output += '           Name: %s\n'    % self.name
+        output += '         Values: %s\n'    % self.y
+        output += 'Time/value keys: %s\n'    % self.y.keys()
+        return output
+    
+    def interp(self, tvec=None, smoothness=20):
+        """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        keys = self.y.keys()
+        npops = len(keys)
+        output = zeros((npops,len(tvec)))
+        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            output[pop,:] = self.y[pop] # Just copy y values
+        else: return output
+
 
 
 
