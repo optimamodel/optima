@@ -170,29 +170,33 @@ def makeparsfromdata(data, verbose=2):
     
     pars = odict()
     
+    # Shorten information on which populations are male, which are female
+    pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
+    pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
+    
+    # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
-    fpopkeys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['female'][i]]
-    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['male'][i]]
+    fpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['female'][i]]
+    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]]
     pars['popkeys'] = dcp(popkeys)
     
-    ## Key parameters
+    # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
     pars['initprev'] = dataindex(data['hivprev'], bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
     pars['popsize'] = data2popsize(data['popsize'], data, popkeys, by='pop')
     
-    
-    ## Epidemilogy parameters -- most are data
+    # Epidemilogy parameters -- most are data
     pars['stiprev'] = data2timepar('stiprev', data, popkeys, by='pop') # STI prevalence
     pars['death']  = data2timepar(pars['death'], popkeys, by='pop')  # Death rates
     pars['tbprev'] = data2timepar(pars['tbprev'], popkeys, by='pop') # TB prevalence
     
-    ## Testing parameters -- most are data
+    # Testing parameters -- most are data
     pars['hivtest'] = data2timepar(pars['hivtest'], popkeys, by='pop') # HIV testing rates
     pars['aidstest'] = data2timepar(pars['aidstest'], totkey, by='tot') # AIDS testing rates
     pars['txtotal'] = data2timepar(pars['numtx'], totkey, by='tot') # Number of people on first-line treatment -- 0 since overall not by population
 
-    ## MTCT parameters
+    # MTCT parameters
     pars['numpmtct'] = data2timepar(pars['numpmtct'], totkey, by='tot')
     pars['breast']   = data2timepar(pars['breast'], totkey, by='tot')  
     pars['birth']    = data2timepar(pars['birth'], popkeys, by='pop')
@@ -200,7 +204,7 @@ def makeparsfromdata(data, verbose=2):
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
-    ## Sexual behavior parameters -- all are parameters so can loop over all
+    # Sexual behavior parameters -- all are parameters so can loop over all
     pars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
     pars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
     pars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
@@ -209,56 +213,20 @@ def makeparsfromdata(data, verbose=2):
     pars['condomcas']  = datapar2simpar(pars['condomcas'], popkeys) 
     pars['condomcom']  = datapar2simpar(pars['condomcom'], popkeys) 
     
-    ## Circumcision parameters
+    # Circumcision parameters
     pars['circum'] = data2timepar(pars['circum'], mpopkeys, by='pop') # Circumcision percentage
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
-    ## Drug behavior parameters
-    pars['numost'] = data2timepar(pars['numost'], tot, by='tot')
+    # Drug behavior parameters
+    pars['numost'] = data2timepar(pars['numost'], totkey, by='tot')
     pars['sharing'] = data2timepar(pars['sharing'], popkeys, by='pop')
     
-    ## Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar(pars['prep'], popkeys)
+    # Other intervention parameters (proportion of the populations, not absolute numbers)
+    pars['prep'] = data2timepar(pars['prep'], popkeys, by='pop')
     
-    ## Matrices can be used almost directly
-    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
-        pars[parname] = array(data[parname])
-    
-    ## Constants...can be used directly
-    simpars['const'] = pars['const']
-    
-    ## Parameters that can be converted automatically
-    sheets = data['meta']['sheets']
-    for parname in sheets['Other epidemiology'] + sheets['Testing & treatment'] + sheets['Sexual behavior'] + sheets['Injecting behavior']:
-        printv('Converting data parameter %s...' % parname, 3, verbose)
-        nrows = shape(data[parname])[0]
-        
-        # Check how many rows there are, handle special cases, and die if it doesn't match
-        if parname=='birth':
-            keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['female'][i]]
-        elif parname=='circum':
-            keys = [popkeys[i] for i in range(len(popkeys)) if data['pops']['male'][i]]
-        elif nrows==1:
-            print('WARNING, should change this')
-            keys = totkey
-        elif nrows==len(popkeys): 
-            keys = popkeys
-        else:
-            errormsg = 'Unable to figure out size of parameter "%s"\n' % parname
-            errormsg += '(number of rows = %i; number of populations = %i)' % (nrows, len(popkeys))
-            raise Exception(errormsg)
-        pars[parname] = data2timepar(parname, data[parname], data, keys)
-        
-    
-    
-
-    ## WARNING, not sure what to do with these
-    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
-        printv('Converting data parameter %s...' % parname, 3, verbose)
-        pars[parname] = data[parname]
-    
+    # Constants
     pars['const'] = odict()
     for parname in data['const'].keys():
         printv('Converting data parameter %s...' % parname, 3, verbose)
@@ -271,9 +239,19 @@ def makeparsfromdata(data, verbose=2):
         pars['force'][key] = 1
         pars['inhomo'][key] = 0
     
-    # Store male/female properties
-    pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
-    pars['female'] = array(data['pops']['female']).astype(bool) # Male populations
+    # Matrices can be used almost directly
+    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
+        pars[parname] = odict()
+        for i,key1 in enumerate(popkeys):
+            for j,key2 in enumerate(popkeys):
+                if array(data[parname])[i,j]>0:
+                    pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
+        
+        array(data[parname])
+    
+    
+    
+    
     
     printv('...done converting data to parameters.', 2, verbose)
     
