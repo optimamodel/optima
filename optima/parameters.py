@@ -319,6 +319,7 @@ class Timepar(object):
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
             output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+        if npops==1: return output[0,:]
         else: return output
 
 
