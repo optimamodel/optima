@@ -261,7 +261,7 @@ def makeparsfromdata(data, verbose=2):
     
     # Store the actual keys that will need to be iterated over in model.py
     for act in ['reg','cas','com','inj']:
-        pars['pships'+act] = pars['acts'+act].keys() 
+        pars['pships'+act] = pars['acts'+act].y.keys() 
 
     
     
@@ -412,7 +412,7 @@ class Parameterset(object):
     
     def makeparsfromdata(self, data, verbose=2):
         self.pars.append(makeparsfromdata(data, verbose=verbose))
-        self.popkeys = dcp(self.pars[-1].popkeys) # Store population keys
+        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
         return None
 
 
