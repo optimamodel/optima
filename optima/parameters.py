@@ -196,18 +196,19 @@ def makeparsfromdata(data, verbose=2):
         pars['inhomo'][key] = 0
     
     
-    def gettotalacts(act, popsize):
+    def gettotalacts(act, popsizepar):
         ''' Combine the different estimates for the number of acts and return the "average" value '''
-        mixmatrix = data['part'+act]
+        mixmatrix = array(data['part'+act])
         npops = len(popkeys) # WARNING, what is this?
-        symmetricmatrix=zeros((npops,npops));
+        symmetricmatrix = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
                 symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
         
         # Interpolate over population acts data for each year
-        tmpacts = data2timepar('numacts'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
-        simacts = tmpacts.interp(tvec=data['years'])
+        tmpactspar = data2timepar('numacts'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
+        simacts = tmpactspar.interp(tvec=data['years'])
+        popsize = popsizepar.interp(tvec=data['years'])
         nyears = len(data['years'])
         
         totalacts = zeros((npops,npops,nyears))
@@ -226,9 +227,10 @@ def makeparsfromdata(data, verbose=2):
             pshipacts = zeros((npops,npops));
             for pop1 in range(npops):
                 for pop2 in range(npops):
-                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-                    pshipacts[pop2,pop1] = balanced/psize[pop2]; # Divide by population size to get per-person estimate
-                    pshipacts[pop1,pop2] = balanced/psize[pop1]; # ...and for the other population
+                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                    pshipacts[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
+                    pshipacts[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+
         
             totalacts[:,:,t] = pshipacts # Note use of copy()
     
@@ -244,14 +246,17 @@ def makeparsfromdata(data, verbose=2):
     # Convert matrices to lists of of population-pair keys
     tmpmatrix['transit'] = data['transit']
     for parname in ['actsreg', 'actscas', 'actscom', 'actsinj', 'transit']: # Will probably include birth matrices in here too...
-        pars[parname] = odict()
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
-                if array(tmpmatrix[parname])[i,j]>0:
-                    if parname=='transit': # Convert from matrix to odict with tuple keys
+                if parname=='transit': # Convert from matrix to odict with tuple keys
+                    if array(tmpmatrix[parname])[i,j]>0:
                         pars[parname][(key1,key2)] = array(tmpmatrix[parname])[i,j] 
-                    else:
-                        pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
+                else:
+                    if sum(array(tmpmatrix[parname])[i,j,:])>0:
+                        try:
+                            pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
+                        except:
+                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         pars[parname].t[(key1,key2)] = data['years'] # WARNING, TEMP
     
     # Store the actual keys that will need to be iterated over in model.py
@@ -344,11 +349,11 @@ class Popsizepar(object):
 
     def interp(self, tvec):
         """ Take population size parameter and turn it into a model parameters """  
-        keys = self.y.keys()
+        keys = self.p.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys):
-            output[pop,:] = self.m * popgrow(self.p[key], tvec-self.start)
+            output[pop,:] = self.m * popgrow(self.p[key], array(tvec)-self.start)
         return output
 
 
