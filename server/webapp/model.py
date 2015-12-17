@@ -27,25 +27,30 @@ from server.webapp.plotting import generate_cost_coverage_chart, generate_covera
 model = Blueprint('model',  __name__, static_folder = '../static')
 model.config = {}
 
-def add_calibration_parameters(D_dict, result = None):
+def add_calibration_parameters(project_instance, result = None):
     """
     picks the parameters for calibration based on D as dictionary and the parameters settings
     """
-    from sim.parameters import parameters
-    from sim.nested import getnested
+    from parameters import parameters
+    if not project_instance.parsets:
+        raise Exception("No parsets are present for the project %s" % project_instance.id)
+
+#    from optima.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
     if result is None: result = {}
-    result['F'] = D_dict.get('F', {})
-    M = D_dict.get('M', {})
+    print "default parset", project_instance.parsets['default'].pars
+    result['F'] = [] # project_instance.parsets['default'].pars 
+    # !!!!! TODO make project_instance.parsets['default'].pars (which is odict) serializable
+#    M = D_dict.get('M', {})
     M_out = []
-    if M:
-        for parameter in calibrate_parameters:
-            keys = parameter['keys']
-            entry = {}
-            entry['name'] = keys
-            entry['title'] = parameter['name']
-            entry['data'] = getnested(M, keys, safe = True)
-            M_out.append(entry)
+#    if M:
+#        for parameter in calibrate_parameters:
+#            keys = parameter['keys']
+#            entry = {}
+#            entry['name'] = keys
+#            entry['title'] = parameter['name']
+#            entry['data'] = getnested(M, keys, safe = True) TODO restore
+#            M_out.append(entry)
     result['M']=M_out
     return result
 
@@ -218,8 +223,8 @@ def doManualCalibration():
 @check_project_name
 def getModelCalibrateParameters():
     """ Returns the parameters of the given model. """
-    D_dict = load_model(request.project_id, from_json = False)
-    result = add_calibration_parameters(D_dict)
+    project_instance = load_model(request.project_id, from_json = False)
+    result = add_calibration_parameters(project_instance)
     return jsonify(result)
 
 @model.route('/data')
@@ -246,8 +251,9 @@ def getModelGroup(key):
 def getModelSubGroup(key, subkey):
     """ Returns the subset with the given key and subkey for the D (model) in the open project. """
     current_app.logger.debug("getModelSubGroup: %s %s" % (key, subkey))
-    D_dict = load_model(request.project_id, from_json = False)
-    the_group = D_dict.get(key,{})
+    project_instance = load_model(request.project_id, from_json = False)
+    print "data", project_instance.data.keys()
+    the_group = project_instance.data.get(key,{})
     the_subgroup = the_group.get(subkey, {})
     return jsonify({'data': the_subgroup})
 

@@ -161,7 +161,7 @@ def model_as_dict(model):
 def model_as_bunch(model):
     return fromjson(model)
 
-def load_model(project_id, from_json = True, working_model = False):
+def load_model(project_id, from_json = True, working_model = False): # todo rename
     """
       loads the project with the given name
       returns the model (D).
@@ -172,14 +172,14 @@ def load_model(project_id, from_json = True, working_model = False):
     if project is not None:
         if  working_model == False or project.working_project is None:
             current_app.logger.debug("project %s loading main model" % project_id)
-            model = project.model
+            model = project.hydrate()
         else:
             current_app.logger.debug("project %s loading working model" % project_id)
-            model = project.working_project.model
-        if model is None or len(model.keys())==0:
+            model = project.working_project.hydrate()
+        if model is None:
             current_app.logger.debug("model %s is None" % project_id)
-        else:
-            if from_json: model = model_as_bunch(model)
+#        else: todo remove from_json
+#            if from_json: model = model_as_bunch(model)
     return model
 
 def save_working_model_as_default(project_id):

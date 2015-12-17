@@ -87,7 +87,7 @@ class Project(object):
         output += '\n'
         output += '    Optima version: %0.1f\n' % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
+        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion

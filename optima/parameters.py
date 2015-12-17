@@ -302,8 +302,8 @@ class Parameterset(object):
         output = objectid(self)
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
+        if self.created: output += '      Date created: %s\n'    % getdate(self.created)
+        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '              UUID: %s\n'    % self.uuid
         return output
     
