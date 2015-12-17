@@ -107,63 +107,7 @@ def dataindex(parname, data, index, keys):
 
 
 
-def gettotalacts(simpars, npts):
-        totalacts = dict()
-        
-        popsize = simpars['popsize']
     
-        for act in ['reg', 'cas', 'com', 'inj']:
-            npops = len(simpars['popsize'][:,0]) # WARNING, what is this?
-            npop=len(popsize); # Number of populations
-            mixmatrix = simpars['part'+act]
-            symmetricmatrix=zeros((npop,npop));
-            for pop1 in range(npop):
-                for pop2 in range(npop):
-                    symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
-    
-            acts = zeros((npops,npops,npts))
-            numacts = simpars['numacts'+act]
-            for t in range(npts):
-                # Initialize
-                smatrix = symmetricmatrix.copy()
-                psize = popsize[:,t]
-                popacts = numacts[:,t]
-                
-                # Make sure the dimensions all agree
-                npop=len(psize); # Number of populations
-                
-                for pop1 in range(npop):
-                    smatrix[pop1,:]=smatrix[pop1,:]*psize[pop1];
-                
-                # Divide by the sum of the column to normalize the probability, then
-                # multiply by the number of acts and population size to get total number of
-                # acts
-                for pop1 in range(npop):
-                    smatrix[:,pop1]=psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1]))
-                
-                # Reconcile different estimates of number of acts, which must balance
-                pshipacts=zeros((npop,npop));
-                for pop1 in range(npop):
-                    for pop2 in range(npop):
-                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-                        pshipacts[pop2,pop1] = balanced/psize[pop2]; # Divide by population size to get per-person estimate
-                        pshipacts[pop1,pop2] = balanced/psize[pop1]; # ...and for the other population
-            
-                acts[:,:,t] = pshipacts # Note use of copy()
-    
-            totalacts[act] = acts
-        
-        return totalacts
-    
-    
-
-
-
-
-
-            
-            
-        
 
 
 
@@ -258,12 +202,51 @@ def makeparsfromdata(data, verbose=2):
             for j,key2 in enumerate(popkeys):
                 if array(data[parname])[i,j]>0:
                     pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
+    
+    
+    
+    
+    def gettotalacts(act, popsize):
+        ''' Combine the different estimates for the number of acts and return the "average" value '''
+        mixmatrix = data['part'+act]
+        npops = len(popkeys) # WARNING, what is this?
+        symmetricmatrix=zeros((npops,npops));
+        for pop1 in range(npops):
+            for pop2 in range(npops):
+                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
         
+        # Interpolate over population acts data for each year
+        tmpacts = data2timepar('numacts'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
+        simacts = tmpacts.interp(tvec=data['years'])
+        nyears = len(data['years'])
+        
+        totalacts = zeros((npops,npops,nyears))
+        for t in range(nyears):
+            smatrix = dcp(symmetricmatrix) # Initialize
+            psize = popsize[:,t]
+            popacts = simacts[:,t]
+            
+            # Yes, this needs to be separate! Don't try to put in the next for loop!
+            for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1]
+            
+            # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
+            for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1]))
+            
+            # Reconcile different estimates of number of acts, which must balance
+            pshipacts = zeros((npops,npops));
+            for pop1 in range(npops):
+                for pop2 in range(npops):
+                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+                    pshipacts[pop2,pop1] = balanced/psize[pop2]; # Divide by population size to get per-person estimate
+                    pshipacts[pop1,pop2] = balanced/psize[pop1]; # ...and for the other population
+        
+            totalacts[:,:,t] = pshipacts # Note use of copy()
+    
+        return totalacts
+    
     # Sexual behavior parameters
     for act in ['reg','cas','com','inj']:
-        theseacts = data['numacts'+act]
-        thesepships = data['part'+act]
-        pars['acts'+act] = gettotalacts(theseacts, thesepships, pars['popsize'])
+        pars['acts'+act] = gettotalacts(act, pars['popsize'])
 #    pars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
 #    pars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
 #    pars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
@@ -320,14 +303,13 @@ class Timepar(object):
         output += 'Time/value keys: %s\n'    % self.y.keys()
         return output
     
-    def interp(self, tvec, smoothness=5):
+    def interp(self, tvec, smoothness=20):
         """ Take parameters and turn them into model parameters """
         keys = self.y.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
-        dt = tvec[1]-tvec[0] # Assume constant 
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=int(smoothness*1.0/dt)) # Use interpolation
+            output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
         else: return output
 
 
@@ -397,7 +379,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, ind=0, start=2000, end=2030, dt=0.2, tvec=None, verbose=2):
+    def interp(self, ind=0, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
@@ -408,7 +390,7 @@ class Parameterset(object):
         simpars['popkeys'] = dcp(self.popkeys)
         
         for key in pars.keys():
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec']) # WARNING, probably a better way to do this, but  avoids need to give explicit list
+            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, probably a better way to do this, but  avoids need to give explicit list
             except: simpars[key] = dcp(pars[key]) # If interpolation doesn't work, just copy it
         
         ## Metaparameters -- convert from odict to array -- WARNING
