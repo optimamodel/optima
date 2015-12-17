@@ -88,7 +88,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
-    sheets['Injecting behavior']  = ['numinject', 'sharing', 'numost']
+    sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
     sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','transit']

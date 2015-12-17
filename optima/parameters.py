@@ -90,11 +90,11 @@ def data2timepar(parname, data, keys, by=None):
 
 
 
-def dataindex(dataarray, index, keys):
+def dataindex(parname, data, index, keys):
     """ Take an array of data return either the first or last (...or some other) non-NaN entry """
     par = odict() # Create structure
     for row,key in enumerate(keys):
-        par[key] = sanitize(dataarray[row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par[key] = sanitize(data[parname][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
     
     return par
 
@@ -151,6 +151,28 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 
 
 
+def popsize2simpar(par, keys, tvec):
+    """ Take population size and turn it into a model parameters """    
+    npops = len(keys)
+    output = zeros((npops,len(tvec)))
+    for pop,key in enumerate(keys):
+        output[pop,:] = par.m * popgrow(par.p[key], tvec-tvec[0])
+    return output
+            
+            
+        
+def datapar2simpar(datapar, keys, tvec, smoothness=5):
+    """ Take parameters and turn them into model parameters """
+    npops = len(keys)
+    output = zeros((npops,len(tvec)))
+    dt = tvec[1]-tvec[0] # Assume constant 
+    for pop,key in enumerate(keys):
+        output[pop,:] = datapar.m * smoothinterp(tvec, datapar.t[pop], datapar.y[pop], smoothness=int(smoothness*1.0/dt)) # Use interpolation
+    else: return output
+
+
+
+
 def makeparsfromdata(data, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet). into
@@ -183,8 +205,8 @@ def makeparsfromdata(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = dataindex(data['hivprev'], bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize(data['popsize'], data, popkeys, by='pop')
+    pars['initprev'] = dataindex('hivprev', data, bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize('popsize', data, popkeys, by='pop')
     
     # Epidemilogy parameters -- most are data
     pars['stiprev'] = data2timepar('stiprev', data, popkeys, by='pop') # STI prevalence
@@ -203,15 +225,6 @@ def makeparsfromdata(data, verbose=2):
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
-    
-    # Sexual behavior parameters -- all are parameters so can loop over all
-    pars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
-    pars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
-    pars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
-    pars['numactsinj'] = datapar2simpar(pars['numinject'], popkeys) 
-    pars['condomreg']  = datapar2simpar(pars['condomreg'], popkeys) 
-    pars['condomcas']  = datapar2simpar(pars['condomcas'], popkeys) 
-    pars['condomcom']  = datapar2simpar(pars['condomcom'], popkeys) 
     
     # Circumcision parameters
     pars['circum'] = data2timepar(pars['circum'], mpopkeys, by='pop') # Circumcision percentage
@@ -240,14 +253,25 @@ def makeparsfromdata(data, verbose=2):
         pars['inhomo'][key] = 0
     
     # Matrices can be used almost directly
-    for parname in ['partreg', 'partcas', 'partcom', 'partinj', 'transit']:
+    for parname in ['transit']: # Will probably include birth matrices in here too...
         pars[parname] = odict()
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
                 if array(data[parname])[i,j]>0:
                     pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
         
-        array(data[parname])
+    # Sexual behavior parameters -- all are parameters so can loop over all
+    for act in ['reg','cas','com','inj']:
+        theseacts = data['numacts'+act]
+        thesepships = data['part'+act]
+        pars['acts'+act] = gettotalacts(theseacts, thesepships, pars['popsize'])
+#    pars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
+#    pars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
+#    pars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
+#    pars['numactsinj'] = datapar2simpar(pars['numinject'], popkeys) 
+#    pars['condomreg']  = datapar2simpar(pars['condomreg'], popkeys) 
+#    pars['condomcas']  = datapar2simpar(pars['condomcas'], popkeys) 
+#    pars['condomcom']  = datapar2simpar(pars['condomcom'], popkeys) 
     
     
     
@@ -287,14 +311,17 @@ class Timepar(object):
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.by = by # Whether it's total, by pop, or by partnership
+        self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = '\n'
+        output += '          Name: %s\n'    % self.name
         output += '   Time points: %s\n'    % self.t
         output += '        Values: %s\n'    % self.y
         output += ' Metaparameter: %s\n'    % self.m
+        output += '       By type: %s\n'    % self.by
+        output += '          Keys: %s\n'    % self.y.keys()
         return output
 
 
@@ -363,24 +390,7 @@ class Parameterset(object):
         npts = len(simpars['tvec']) # Number of time points
         
         
-        def popsize2simpar(par, keys):
-            """ Take population size and turn it into a model parameters """    
-            npops = len(keys)
-            output = zeros((npops,npts))
-            for pop,key in enumerate(keys):
-                output[pop,:] = par.m * popgrow(par.p[key], simpars['tvec']-start)
-            return output
-            
-            
         
-        def datapar2simpar(datapar, keys, smoothness=5*int(1/dt)):
-            """ Take parameters and turn them into model parameters """
-            npops = len(keys)
-            output = zeros((npops,npts))
-            for pop,key in enumerate(keys):
-                output[pop,:] = datapar.m * smoothinterp(simpars['tvec'], datapar.t[pop], datapar.y[pop], smoothness=smoothness) # Use interpolation
-            if npops==1: return output[0] # Return 1D vector if only a single 'population'
-            else: return output
         
         
         
