@@ -92,11 +92,11 @@ def data2timepar(parname, data, keys, by=None):
 
 
 
-def dataindex(parname, data, index, keys):
+def dataindex(parname, data, index, keys, by=None):
     """ Take an array of data return either the first or last (...or some other) non-NaN entry """
-    par = odict() # Create structure
+    par = Constant(name=parname, y=odict(), by=by) # Create structure
     for row,key in enumerate(keys):
-        par[key] = sanitize(data[parname][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.y[key] = sanitize(data[parname][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
     
     return par
 
