@@ -13,23 +13,33 @@ from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
+
 def popgrow(exppars, tvec):
     ''' Return a time vector for a population growth '''
     return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
 
 
-def data2popsize(dataarray, data, keys):
+
+def data2prev(parname, data, index, keys, by=None, blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+    """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
+    par = Constant(name=parname, y=odict(), by=by) # Create structure
+    for row,key in enumerate(keys):
+        par.y[key] = sanitize(data[parname][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+
+    return par
+
+
+
+def data2popsize(parname, data, keys, by=None, blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar()
-    par.name = 'popsize' # Store the name of the parameter
-    par.m = 1 # Set metaparameter to 1
+    par = Popsizepar(name=parname, m=1, by=by)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
     for row,key in enumerate(keys):
-        sanitizedy[key] = sanitize(dataarray[row]) # Store each extant value
-        sanitizedt[key] = array(data['years'])[~isnan(dataarray[row])] # Store each year
+        sanitizedy[key] = sanitize(data[parname][blh][row]) # Store each extant value
+        sanitizedt[key] = array(data['years'])[~isnan(data[parname][blh][row])] # Store each year
 
     largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
     
@@ -92,13 +102,7 @@ def data2timepar(parname, data, keys, by=None):
 
 
 
-def dataindex(parname, data, index, keys, by=None):
-    """ Take an array of data return either the first or last (...or some other) non-NaN entry """
-    par = Constant(name=parname, y=odict(), by=by) # Create structure
-    for row,key in enumerate(keys):
-        par.y[key] = sanitize(data[parname][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
-    
-    return par
+
 
 
 
@@ -144,7 +148,7 @@ def makeparsfromdata(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = dataindex('hivprev', data, bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
+    pars['initprev'] = data2prev('hivprev', data, bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
     pars['popsize'] = data2popsize('popsize', data, popkeys, by='pop')
     
     # Epidemilogy parameters -- most are data
@@ -160,7 +164,7 @@ def makeparsfromdata(data, verbose=2):
     # MTCT parameters
     pars['numpmtct'] = data2timepar('numpmtct', data, totkey, by='tot')
     pars['breast']   = data2timepar('breast', data, totkey, by='tot')  
-    pars['birth']    = data2timepar('birth', data, popkeys, by='pop')
+    pars['birth']    = data2timepar('birth', data, fpopkeys, by='pop')
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
@@ -176,7 +180,7 @@ def makeparsfromdata(data, verbose=2):
     pars['sharing'] = data2timepar('sharing', data, popkeys, by='pop')
     
     # Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar(pars['prep'], popkeys, by='pop')
+    pars['prep'] = data2timepar('prep', data, popkeys, by='pop')
     
     # Constants
     pars['const'] = odict()
@@ -320,20 +324,22 @@ class Timepar(object):
 class Popsizepar(object):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, p=None, m=1, start=2000):
+    def __init__(self, name=None, p=None, m=1, start=2000, by=None):
         if p is None: p = odict()
         self.name = name # Going to be "popsize"
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
+        self.by = by # Whether it's by population, partnership, etc...
     
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '\n'
         output += '          Name: %s\n'    % self.name
         output += 'Fit parameters: %s\n'    % self.p
-        output += ' Metaparameter: %s\n'    % self.m
         output += '    Start year: %s\n'    % self.start
+        output += ' Metaparameter: %s\n'    % self.m
+        output += 'Parameter keys: %s\n'    % self.p.keys()
         return output
 
     def interp(self, tvec):
