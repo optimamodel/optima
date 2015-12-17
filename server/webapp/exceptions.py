@@ -7,7 +7,7 @@ class BaseRESTException(HTTPException):
 
     def __init__(self):
         self.description = self._message
-        super(HTTPException, self).__init__()
+        super(BaseRESTException, self).__init__()
 
     def to_dict(self):
         return {
@@ -22,13 +22,22 @@ class UserAlreadyExists(BaseRESTException):
     _message = 'User already exists'
 
     def __init__(self, email=None):
-        super(BaseRESTException, self).__init__()
+        super(UserAlreadyExists, self).__init__()
         if email is not None:
             self.description = 'User with e-mail "{}" already exists'.format(email)
 
 
-class RecordDoesNotExist(BaseRESTException):
+class ProjectDoesNotExist(BaseRESTException):
+    code = 410
+    _model = 'project'
 
+    def __init__(self, id=None):
+        super(ProjectDoesNotExist, self).__init__()
+        if id is not None:
+            self.description = 'Project with id %s does not exist' % id
+
+
+class RecordDoesNotExist(BaseRESTException):
     code = 410
     _message = 'The resource you are looking for does not exist'
     _model = 'Resource'

@@ -6,13 +6,11 @@ from flask_restful_swagger import swagger
 
 from server.webapp.inputs import SubParser
 from server.webapp.utils import load_project, RequestParser
-from server.webapp.exceptions import RecordDoesNotExist
+from server.webapp.exceptions import RecordDoesNotExist, ProjectDoesNotExist
 
 from server.webapp.dbconn import db
 
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
-
-from server.webapp.resources.project import ProjectDoesNotExist
 
 
 program_parser = RequestParser()
@@ -32,7 +30,10 @@ progset_parser.add_arguments({
 })
 
 
-class Progset(Resource):
+class Progsets(Resource):
+    """
+    Progsets for a given project.
+    """
     class_decorators = [login_required]
 
     @swagger.operation(
@@ -82,7 +83,10 @@ class ProgsetDoesNotExist(RecordDoesNotExist):
     _model = 'progset'
 
 
-class ProgsetItem(Resource):
+class Progset(Resource):
+    """
+    An individual progset.
+    """
     class_decorators = [login_required]
 
     @swagger.operation(
@@ -95,11 +99,11 @@ class ProgsetItem(Resource):
     )
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
+        current_app.logger.info("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)
-        if str(progset_entry.project_id) != project_id:
+        if progset_entry.project_id != project_id:
             raise ProgsetDoesNotExist(id=progset_id)
         return progset_entry
 
@@ -118,7 +122,7 @@ class ProgsetItem(Resource):
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)
 
-        if str(progset_entry.project_id) != project_id:
+        if progset_entry.project_id != project_id:
             raise ProgsetDoesNotExist(id=progset_id)
 
         args = progset_parser.parse_args()
@@ -144,7 +148,7 @@ class ProgsetItem(Resource):
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)
 
-        if str(progset_entry.project_id) != project_id:
+        if progset_entry.project_id != project_id:
             raise ProgsetDoesNotExist(id=progset_id)
 
         progset_entry.name

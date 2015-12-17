@@ -15,18 +15,18 @@ from optima.project import version
 from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
-    ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
+                                    ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
 
 from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
-from server.webapp.exceptions import RecordDoesNotExist
+from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid
 
 from server.webapp.utils import (load_project, verify_admin_request,
-    delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
+                                 delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
 
 
 class ProjectBase(Resource):
-    method_decoractors = [login_required]
+    method_decorators = [login_required]
 
     def get_query(self):
         return ProjectDb.query
@@ -34,14 +34,7 @@ class ProjectBase(Resource):
     @marshal_with(ProjectDb.resource_fields, envelope='projects')
     def get(self):
         projects = self.get_query().all()
-        print "******uhuy create banget******"
-        print projects
         return projects
-
-
-class ProjectDoesNotExist(RecordDoesNotExist):
-
-    _model = 'project'
 
 
 population_parser = RequestParser()
@@ -79,7 +72,10 @@ project_update_parser.add_arguments({
 })
 
 
-class ProjectAll(ProjectBase):
+class ProjectsAll(ProjectBase):
+    """
+    A collection of all projects.
+    """
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
@@ -88,20 +84,23 @@ class ProjectAll(ProjectBase):
     )
     @verify_admin_request
     def get(self):
-        return super(ProjectAll, self).get()
+        return super(ProjectsAll, self).get()
 
 
-class Project(ProjectBase):
+class Projects(ProjectBase):
+    """
+    A collection of projects for the given user.
+    """
 
     def get_query(self):
-        return super(Project, self).get_query().filter_by(user_id=current_user.id)
+        return super(Projects, self).get_query().filter_by(user_id=current_user.id)
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
         summary="List all project for current user"
     )
     def get(self):
-        return super(Project, self).get()
+        return super(Projects, self).get()
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -119,12 +118,7 @@ class Project(ProjectBase):
         args = project_parser.parse_args()
         user_id = current_user.id
 
-        current_app.logger.debug(
-            "createProject %s for user %s" % (
-                args['name'], current_user.email))
         current_app.logger.debug("createProject data: %s" % args)
-
-        current_app.logger.debug("createProject(%s)" % args)
 
         # create new project
         current_app.logger.debug("Creating new project %s by user %s:%s" % (
@@ -163,8 +157,11 @@ class Project(ProjectBase):
         return response
 
 
-class ProjectItem(Resource):
-    method_decoractors = [login_required]
+class Project(Resource):
+    """
+    An individual project.
+    """
+    method_decorators = [login_required]
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
@@ -174,11 +171,8 @@ class ProjectItem(Resource):
     def get(self, project_id):
         query = ProjectDb.query
         project_entry = query.get(project_id)
-
         if project_entry is None:
-            abort(410)
-            # FIXME
-            # raise ProjectDoesNotExist()
+            raise ProjectDoesNotExist(id=project_id)
         if not current_user.is_admin and \
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
@@ -322,6 +316,9 @@ file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, lo
 
 
 class ProjectSpreadsheet(Resource):
+    """
+    Spreadsheet upload and download for the given project.
+    """
     class_decorators = [login_required]
 
     @swagger.operation(
@@ -438,7 +435,8 @@ class ProjectSpreadsheet(Resource):
 
             # update parsets
             result_parset_id = None
-            parset_records_map = {record.id: record for record in project_entry.parsets}  # may be SQLAlchemy can do stuff like this already?
+            parset_records_map = {record.id: record for record in project_entry.parsets}
+            # may be SQLAlchemy can do stuff like this already?
             for (parset_name, parset_entry) in new_project.parsets.iteritems():
                 parset_record = parset_records_map.get(parset_entry.uuid)
                 if not parset_record:
@@ -490,6 +488,9 @@ class ProjectSpreadsheet(Resource):
 
 
 class ProjectData(Resource):
+    """
+    Export and import of the existing project in / from pickled format.
+    """
     class_decorators = [login_required]
 
     @swagger.operation(
@@ -564,6 +565,9 @@ project_upload_form_parser.add_arguments({
 
 
 class ProjectFromData(Resource):
+    """
+    Import of a new project from pickled format.
+    """
     class_decorators = [login_required]
 
     @swagger.operation(
@@ -602,7 +606,8 @@ class ProjectFromData(Resource):
             dataend = default_dataend
             pops = {}
 
-        project_entry = ProjectDb(project_name, user_id, datastart,
+        project_entry = ProjectDb(
+            project_name, user_id, datastart,
             dataend,
             pops,
             version=version)
@@ -701,4 +706,3 @@ class ProjectCopy(Resource):
             'copy_id': new_project_id
         }
         return payload
-

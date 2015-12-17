@@ -26,7 +26,7 @@ class ProjectTestCase(OptimaTestCase):
     def test_retrieve_project_info_fails(self):
         project_id = '{}'.format(uuid4())
         # It would probably be better to make sure the project id REALLY does not
-        # exist firt. But this is uuid, so the chances are quite slim
+        # exist first. But this is uuid, so the chances are quite slim
         response = self.client.get('/api/project/{}'.format(project_id))
         self.assertEqual(response.status_code, 410)
 
