@@ -7,7 +7,7 @@ Version: 2015dec17 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, shape, argmax, mean, log, polyfit, exp, arange
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange
 from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
@@ -19,6 +19,7 @@ def popgrow(exppars, tvec):
 
 
 def data2popsize(dataarray, data, keys):
+    ''' Convert population size data into population size parameters '''
     par = Popsizepar()
     par.name = 'popsize' # Store the name of the parameter
     par.m = 1 # Set metaparameter to 1
@@ -120,39 +121,42 @@ def gettotalacts(simpars, npts):
                 for pop2 in range(npop):
                     symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
     
-            a = zeros((npops,npops,npts))
+            acts = zeros((npops,npops,npts))
             numacts = simpars['numacts'+act]
             for t in range(npts):
-                a[:,:,t] = reconcileacts(symmetricmatrix.copy(), popsize[:,t], numacts[:,t]) # Note use of copy()
+                # Initialize
+                smatrix = symmetricmatrix.copy()
+                psize = popsize[:,t]
+                popacts = numacts[:,t]
+                
+                # Make sure the dimensions all agree
+                npop=len(psize); # Number of populations
+                
+                for pop1 in range(npop):
+                    smatrix[pop1,:]=smatrix[pop1,:]*psize[pop1];
+                
+                # Divide by the sum of the column to normalize the probability, then
+                # multiply by the number of acts and population size to get total number of
+                # acts
+                for pop1 in range(npop):
+                    smatrix[:,pop1]=psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1]))
+                
+                # Reconcile different estimates of number of acts, which must balance
+                pshipacts=zeros((npop,npop));
+                for pop1 in range(npop):
+                    for pop2 in range(npop):
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
+                        pshipacts[pop2,pop1] = balanced/psize[pop2]; # Divide by population size to get per-person estimate
+                        pshipacts[pop1,pop2] = balanced/psize[pop1]; # ...and for the other population
+            
+                acts[:,:,t] = pshipacts # Note use of copy()
     
-            totalacts[act] = a
+            totalacts[act] = acts
         
         return totalacts
     
     
-def reconcileacts(symmetricmatrix,popsize,popacts):
 
-    # Make sure the dimensions all agree
-    npop=len(popsize); # Number of populations
-    
-    for pop1 in range(npop):
-        symmetricmatrix[pop1,:]=symmetricmatrix[pop1,:]*popsize[pop1];
-    
-    # Divide by the sum of the column to normalize the probability, then
-    # multiply by the number of acts and population size to get total number of
-    # acts
-    for pop1 in range(npop):
-        symmetricmatrix[:,pop1]=popsize[pop1]*popacts[pop1]*symmetricmatrix[:,pop1] / float(eps+sum(symmetricmatrix[:,pop1]))
-    
-    # Reconcile different estimates of number of acts, which must balance
-    pshipacts=zeros((npop,npop));
-    for pop1 in range(npop):
-        for pop2 in range(npop):
-            balanced = (symmetricmatrix[pop1,pop2] * popsize[pop1] + symmetricmatrix[pop2,pop1] * popsize[pop2])/(popsize[pop1]+popsize[pop2]); # here are two estimates for each interaction; reconcile them here
-            pshipacts[pop2,pop1] = balanced/popsize[pop2]; # Divide by population size to get per-person estimate
-            pshipacts[pop1,pop2] = balanced/popsize[pop1]; # ...and for the other population
-
-    return pshipacts
 
 
 
@@ -255,7 +259,7 @@ def makeparsfromdata(data, verbose=2):
                 if array(data[parname])[i,j]>0:
                     pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
         
-    # Sexual behavior parameters -- all are parameters so can loop over all
+    # Sexual behavior parameters
     for act in ['reg','cas','com','inj']:
         theseacts = data['numacts'+act]
         thesepships = data['part'+act]
