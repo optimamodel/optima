@@ -129,7 +129,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
 #    ost      = simpars['numost']    # OST (N)
     propcirc = simpars['circum']    # Proportion of men circumcised (P)
     tobecirc = simpars['numcircum'] # Number of men to be circumcised (N)
-    mtx1     = simpars['tx']       # 1st line treatement (N) -- tx already used for index of people on treatment
+    mtx1     = simpars['numtx']       # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     
@@ -574,7 +574,7 @@ def equilibrate(settings, simpars, verbose=2):
     """
     from numpy import zeros, hstack, inf
     
-    npops = len(simpars['initprev']) # WARNING len(simpars['hivprev']) is npops
+    npops = len(simpars['popkeys']) # WARNING len(simpars['hivprev']) is npops
     
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
@@ -592,7 +592,7 @@ def equilibrate(settings, simpars, verbose=2):
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
-        treatment = simpars['tx'][0] * fractotal # Number of people on 1st-line treatment
+        treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
         if treatment > popinfected: # More people on treatment than ever infected, uh oh!
             treatment = popinfected
         

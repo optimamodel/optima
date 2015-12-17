@@ -159,7 +159,7 @@ def makeparsfromdata(data, verbose=2):
     # Testing parameters -- most are data
     pars['hivtest'] = data2timepar('hivtest', data, popkeys, by='pop') # HIV testing rates
     pars['aidstest'] = data2timepar('aidstest', data, totkey, by='tot') # AIDS testing rates
-    pars['txtotal'] = data2timepar('numtx', data, totkey, by='tot') # Number of people on first-line treatment -- 0 since overall not by population
+    pars['numtx'] = data2timepar('numtx', data, totkey, by='tot') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
     pars['numpmtct'] = data2timepar('numpmtct', data, totkey, by='tot')
@@ -375,13 +375,13 @@ class Constant(object):
         output += 'Time/value keys: %s\n'    % self.y.keys()
         return output
     
-    def interp(self, tvec=None, smoothness=20):
+    def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         keys = self.y.keys()
         npops = len(keys)
-        output = zeros((npops,len(tvec)))
+        output = zeros(npops)
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            output[pop,:] = self.y[pop] # Just copy y values
+            output[pop] = self.y[pop] # Just copy y values
         else: return output
 
 
@@ -421,7 +421,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo', 'pshipsreg', 'pshipscas', 'pshipscom', 'pshipsinj']
-        modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'txtotal', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj']
+        modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj']
         if keys is None: keys = modelkeys
         
         pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
