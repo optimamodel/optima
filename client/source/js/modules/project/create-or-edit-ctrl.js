@@ -2,8 +2,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
-    $timeout, $http, activeProject, defaultsResponse, info,
-    UserManager, modalService,projects) {
+    $timeout, $http, activeProject, defaultsResponse,
+    UserManager, modalService,projects, projectApiService, info) {
 
     $scope.allProjectNames = _(projects.projects).map(function(project){
       return project.name;
@@ -22,7 +22,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       isEdit: false,
       canUpdate: true
     };
-    $scope.projectInfo = info;
+
+    $scope.projectInfo = info ? info.data : void 0;
 
     var availableDefaults = defaultsResponse.data;
 
@@ -210,28 +211,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var form = {};
       var params;
 
+      var promise;
       if ($scope.editParams.isEdit) {
         params = _($scope.projectParams).omit('name');
         params.populations = selectedPopulations;
-        form.action = '/api/project/update/' + $scope.projectParams.id; // TODO check if id is available
-        form.data = {canUpdate: $scope.editParams.canUpdate, params: params};
-        form.method = 'PUT';
+        promise = projectApiService.updateProject($scope.projectInfo.id, params);
       } else {
         params = angular.copy($scope.projectParams);
         params.populations = selectedPopulations;
-        form.action = '/api/project/create/';
-        form.data = {params: params};
-        form.method = 'POST';
+        promise = projectApiService.createProject(params);
       }
 
-      // according to documentation it should have been working without this line, but no cigar
-      // https://docs.angularjs.org/api/ng/directive/ngSubmit
-      $http({url: form.action,
-          method: form.method,
-          data: form.data,
-          headers: {'Content-type': 'application/json'},
-          responseType:'arraybuffer'})
-          .success(function (response, status, headers, config) {
+      promise
+        .success(function (response, status, headers, config) {
             var newProjectId = headers()['x-project-id'];
             var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, ($scope.projectParams.name + '.xlsx'));

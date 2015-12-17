@@ -9,6 +9,8 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
+from werkzeug.routing import UUIDConverter
+
 
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -48,22 +50,36 @@ def before_request():
 
 from server.webapp.scenarios import scenarios
 from server.webapp.model import model
-from server.webapp.project import project
 from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,
-    UserLogin, UserLogout)
+                                          UserLogin, UserLogout)
+from server.webapp.resources.project import (Projects, ProjectsAll, Project,
+                                             ProjectCopy, ProjectSpreadsheet, ProjectData, ProjectFromData)
+from server.webapp.resources.project_constants import Parameters, Predefined
+from server.webapp.resources.project_progsets import Progsets, Progset
 
 
-app.register_blueprint(project, url_prefix='/api/project')
 app.register_blueprint(model, url_prefix='/api/model')
 app.register_blueprint(scenarios, url_prefix='/api/analysis/scenarios')
 app.register_blueprint(optimization, url_prefix='/api/analysis/optimization')
 
 api.add_resource(User, '/api/user')
-api.add_resource(UserDetail, '/api/user/<user_id>')
+api.add_resource(UserDetail, '/api/user/<uuid:user_id>')
 api.add_resource(CurrentUser, '/api/user/current')
 api.add_resource(UserLogin, '/api/user/login')
 api.add_resource(UserLogout, '/api/user/logout')
+
+api.add_resource(Projects, '/api/project')
+api.add_resource(ProjectsAll, '/api/project/all')
+api.add_resource(Project, '/api/project/<uuid:project_id>')
+api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
+api.add_resource(ProjectFromData, '/api/project/data')
+api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
+api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
+api.add_resource(Parameters, '/api/project/parameters')
+api.add_resource(Predefined, '/api/project/predefined')
 app.register_blueprint(api_bp, url_prefix='')
 
 

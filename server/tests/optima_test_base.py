@@ -115,15 +115,14 @@ class OptimaTestCase(unittest.TestCase):
 
     def api_create_project(self):
         project_data = json.dumps({
-            'params': {
-                'name': 'test',
-                'datastart': 2000,
-                'dataend': 2015,
-                'populations': OptimaTestCase.default_pops
-            },
+            'name': 'test',
+            'datastart': 2000,
+            'dataend': 2015,
+            'populations': OptimaTestCase.default_pops
         })
         headers = {'Content-Type': 'application/json'}
-        response = self.client.post('/api/project/create/', data=project_data, headers=headers)
+        response = self.client.post('/api/project', data=project_data, headers=headers)
+        self.assertEqual(response.status_code, 201)
         return response
 
     def list_projects(self, user_id):
@@ -133,11 +132,13 @@ class OptimaTestCase(unittest.TestCase):
         return [project for project in projects]
 
     def api_create_progset(self, project_id):
+        headers = {'Content-Type': 'application/json'}
         response = self.client.post(
-            '/api/project/progsets/{}'.format(project_id),
-            data=json.dumps(self.progset_test_data)
+            '/api/project/{}/progsets'.format(project_id),
+            data=json.dumps(self.progset_test_data),
+            headers=headers
         )
-        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.status_code, 201, response.data)
 
         response_data = json.loads(response.data)
         self.assertTrue('id' in response_data)

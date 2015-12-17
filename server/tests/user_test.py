@@ -101,7 +101,7 @@ class UserTestCase(OptimaTestCase):
         response = self.api_create_project()
         response = self.logout()
         response = self.login(self.admin_email, self.admin_password)
-        response = self.client.get('/api/project/list/all')
+        response = self.client.get('/api/project/all')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         projects = data.get('projects')
@@ -120,18 +120,18 @@ class UserTestCase(OptimaTestCase):
         response = self.logout()
         # log in as another user and create a project
         response = self.create_user(name='test2', email=other_email)
+        response = self.login(other_email, self.test_password)
         response = self.api_create_project()
         response = self.logout()
         # log in as admin
         response = self.login(self.admin_email, self.admin_password)
-        response = self.client.get('/api/project/list')
+        response = self.client.get('/api/project')
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         # now admin should only see his own project
         projects = data.get('projects')
         self.assertIsNotNone(projects)
         self.assertEqual(len(projects), 1)
-        self.assertNotIn('user_id', projects[0])
 
     def test_delete_user(self):
         other_email = 'test2@test.com'
@@ -178,7 +178,7 @@ class UserTestCase(OptimaTestCase):
         self.assertEqual(data.get('id'), admin_id)
         response = self.login(email=new_email, password=new_password)
         response = self.api_create_project()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.logout()
 
     def test_modify_user_nonadmin(self):

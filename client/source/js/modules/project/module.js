@@ -8,8 +8,7 @@ define([
   'ui.router',
   '../common/active-project-service',
   '../common/update-checkbox-on-click-directive',
-  '../common/file-upload-service',
-  '../resources/project'
+  '../common/file-upload-service'
 ], function (angular) {
   'use strict';
 
@@ -17,7 +16,6 @@ define([
     'app.active-project',
     'app.common.update-checkbox-on-click',
     'app.common.file-upload',
-    'app.resources.project',
     'ui.router'
   ])
     .config(function ($stateProvider) {
@@ -32,14 +30,14 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            defaultsResponse: function($http) {
-              return $http.get('/api/project/predefined')
+            defaultsResponse: function(projectApiService) {
+              return projectApiService.getPredefined();
             },
             info: function() {
               return undefined;
             },
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function (projectApiService) {
+              return projectApiService.getProjectList();
             }
           }
         })
@@ -48,21 +46,17 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            parametersResponse: function($http) {
-              return $http.get('/api/project/parameters');
+            parametersResponse: function(projectApiService) {
+              return projectApiService.getParameters();
             },
-            defaultsResponse: function($http) {
-              return $http.get('/api/project/predefined')
+            defaultsResponse: function(projectApiService) {
+              return projectApiService.getPredefined();
             },
-            info: function (Project, activeProject) {
-              if (activeProject.isSet()) {
-                return Project.info().$promise;
-              } else {
-                return undefined;
-              }
+            info: function (projectApiService) {
+              return projectApiService.getActiveProject();
             },
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function (projectApiService) {
+              return projectApiService.getProjectList();
             }
           }
         })
@@ -71,8 +65,8 @@ define([
           templateUrl: 'js/modules/project/open.html',
           controller: 'ProjectOpenController',
           resolve: {
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function (projectApiService) {
+              return projectApiService.getProjectList();
             }
           }
         })
@@ -81,8 +75,8 @@ define([
           templateUrl: 'js/modules/project/upload.html',
           controller: 'ProjectUploadController',
           resolve: {
-            projects: function (Project) {
-              return Project.list().$promise;
+            projects: function (projectApiService) {
+              return projectApiService.getProjectList();
             }
           }
         });
