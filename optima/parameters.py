@@ -79,10 +79,6 @@ def data2popsize(dataarray, data, keys):
 def data2timepar(parname, data, keys, by=None):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     par = Timepar(name=parname, m=1, y=odict(), t=odict(), by=by) # Create structure
-    par.name = parname # Store the name of the parameter
-    par.m = 1 # Set metaparameter to 1
-    par.y = odict() # Initialize array for holding parameters
-    par.t = odict() # Initialize array for holding time points
     for row,key in enumerate(keys):
         validdata = ~isnan(data[parname][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
@@ -239,16 +235,21 @@ def makeparsfromdata(data, verbose=2):
     for act in ['reg','cas','com','inj']:
         tmpmatrix['acts'+act] = gettotalacts(act, pars['popsize'])
     
-    
-    # Convert matrices to things that can be used
+    # Convert matrices to lists of of population-pair keys
     tmpmatrix['transit'] = data['transit']
     for parname in ['actsreg', 'actscas', 'actscom', 'actsinj', 'transit']: # Will probably include birth matrices in here too...
         pars[parname] = odict()
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
                 if array(tmpmatrix[parname])[i,j]>0:
-                    pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
-
+                    if parname=='transit': # Convert from matrix to odict with tuple keys
+                        pars[parname][(key1,key2)] = array(tmpmatrix[parname])[i,j] 
+                    else:
+                        pars[parname][(key1,key2)] = 
+    
+    # Store the actual keys that will need to be iterated over in model.py
+    for act in ['reg','cas','com','inj']:
+        pars['pships'+act] = pars['acts'+act].keys() 
 
     
     
