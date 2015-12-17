@@ -347,7 +347,7 @@ class Popsizepar(object):
         output += 'Parameter keys: %s\n'    % self.p.keys()
         return output
 
-    def interp(self, tvec):
+    def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """  
         keys = self.p.keys()
         npops = len(keys)
@@ -416,9 +416,13 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, ind=0, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    def interp(self, ind=0, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
+        
+        generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo', 'pshipsreg', 'pshipscas', 'pshipscom', 'pshipsinj']
+        modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'txtotal', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj']
+        if keys is None: keys = modelkeys
         
         pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
         simpars = odict() # Used to be called M
@@ -426,9 +430,15 @@ class Parameterset(object):
         else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
         simpars['popkeys'] = dcp(self.popkeys)
         
-        for key in pars.keys():
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, probably a better way to do this, but  avoids need to give explicit list
-            except: simpars[key] = dcp(pars[key]) # If interpolation doesn't work, just copy it
+        # Copy default keys by default
+        for key in generalkeys: simpars[key] = dcp(pars[key])
+        for key in keys:
+            try:
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
+            except:
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
+        
         
         ## Metaparameters -- convert from odict to array -- WARNING
         simpars['force'] = array(simpars['force'][:])
