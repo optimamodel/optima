@@ -13,10 +13,10 @@ class Project(object):
     The main Optima project class. Almost all Optima functionality is provided by this class.
     
     An Optima project is based around 4 major lists:
-        1. parset -- a list of parameter structures
-        2. responses -- a list of response structures
-        3. scens -- a list of scenario structures
-        4. optims -- a list of optimization structures
+        1. parsets -- an odict of parameter structures
+        2. progsets -- an odict of response structures
+        3. scens -- an odict of scenario structures
+        4. optims -- an odict of optimization structures
     
     In addition, an Optima project contains:
         1. data -- loaded from the spreadsheet
@@ -24,13 +24,12 @@ class Project(object):
         3. settings -- timestep, indices, etc.
     
     Methods for structure lists:
-        1. add -- add a new structure to the list
-        2. remove -- remove a structure from the list
-        3. copy -- copy a structure in the list
-        4. rename -- rename a structure in the list
-        5. show -- show information on all items in the list(s)
+        1. add -- add a new structure to the odict
+        2. remove -- remove a structure from the odict
+        3. copy -- copy a structure in the odict
+        4. rename -- rename a structure in the odict
     
-    Version: 2015dec09 by cliffk
+    Version: 2015dec17 by cliffk
     """
     
     
@@ -44,7 +43,7 @@ class Project(object):
 
         ## Define the structure sets
         self.parsets = odict()
-        self.respsets = odict()
+        self.progsets = odict()
         self.scens = odict()
         self.optims = odict()
         
@@ -81,7 +80,7 @@ class Project(object):
         output += '      Project name: %s\n'    % self.name
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
-        output += '     Response sets: %i\n'    % len(self.respsets)
+        output += '     Response sets: %i\n'    % len(self.progsets)
         output += '     Scenario sets: %i\n'    % len(self.scens)
         output += ' Optimization sets: %i\n'    % len(self.optims)
         output += '\n'
@@ -136,7 +135,7 @@ class Project(object):
         '''
         if what is None: raise Exception('No structure list provided')
         elif what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
-        elif what in ['r', 'resp', 'response', 'responses']: structlist = self.resps # WARNING, inconsistent terminology!
+        elif what in ['r', 'pr', 'progs', 'progset', 'progsets']: structlist = self.progsets # WARNING, inconsistent terminology!
         elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
         elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
         else: raise Exception('Structure list "%s" not understood' % what)
@@ -200,22 +199,22 @@ class Project(object):
     #######################################################################################################
     
     def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset, overwrite=overwrite)
-    def addresponse(self, name='default', response=None, overwrite=False): self.add(what='response', name=name, item=response, overwrite=overwrite)
+    def addprogset(self,  name='default', progset=None, overwrite=False): self.add(what='progset',   name=name, item=progset, overwrite=overwrite)
     def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen, overwrite=overwrite)
     def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim, overwrite=overwrite)
  
     def rmparset(self,   name): self.remove(what='parset',   name=name)
-    def rmresponse(self, name): self.remove(what='response', name=name)
+    def rmprogset(self, name):  self.remove(what='progset', name=name)
     def rmscen(self,     name): self.remove(what='scen',     name=name)
     def rmoptim(self,    name): self.remove(what='optim',    name=name)
     
     def copyparset(self,   orig='default', new='new', overwrite=False): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyresponse(self, orig='default', new='new', overwrite=False): self.copy(what='response', orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self,  orig='default', new='new', overwrite=False): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
     def copyscen(self,     orig='default', new='new', overwrite=False): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def copyoptim(self,    orig='default', new='new', overwrite=False): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
         
     def renameparset(self,   orig='default', new='new', overwrite=False): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def renameresponse(self, orig='default', new='new', overwrite=False): self.rename(what='response', orig=orig, new=new, overwrite=overwrite)
+    def renameprogset(self,  orig='default', new='new', overwrite=False): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
