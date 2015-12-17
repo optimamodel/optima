@@ -8,10 +8,11 @@ define([
   'use strict';
 
   return angular.module('app.common.file-upload',[])
-  .factory('fileUpload', ['$http', '$upload', 'modalService', function ($http, $upload, modalService) {
+  .factory('fileUpload', ['$http', '$upload', 'modalService', 'activeProject', 'projectApiService', function ($http, $upload, modalService, activeProject, projectApiService) {
     var uploadDataSpreadsheet = function(scope, file, url, reload) {
       if (url === undefined) {
-        url = '/api/project/update';
+        const projectId = activeProject.getProjectIdForCurrentUser();
+        url = projectApiService.getSpreadsheetUrl(projectId);
       }
       if (reload === undefined ) {
         reload = true;

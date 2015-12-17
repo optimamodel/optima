@@ -21,12 +21,8 @@ define([
         templateUrl: '/js/modules/home/home.html',
         controller: 'HomeController',
         resolve: {
-          project: function (Project, activeProject) {
-            if (activeProject.isSet()) {
-              return Project.info().$promise;
-            } else {
-              return undefined;
-            }
+          project: function (projectApiService) {
+            return projectApiService.getActiveProject();
           }
         }
       });
