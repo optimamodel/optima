@@ -233,7 +233,9 @@ def makeparsfromdata(data, verbose=2):
     # Sexual behavior parameters
     tmpmatrix = {}
     for act in ['reg','cas','com','inj']:
-        tmpmatrix['acts'+act] = gettotalacts(act, pars['popsize'])
+        parname = 'acts'+act
+        tmpmatrix[parname] = gettotalacts(act, pars['popsize'])
+        pars[parname] = Timepar(name=parname, m=1, y=odict(), t=odict(), by='pship') # Create structure
     
     # Convert matrices to lists of of population-pair keys
     tmpmatrix['transit'] = data['transit']
@@ -245,7 +247,8 @@ def makeparsfromdata(data, verbose=2):
                     if parname=='transit': # Convert from matrix to odict with tuple keys
                         pars[parname][(key1,key2)] = array(tmpmatrix[parname])[i,j] 
                     else:
-                        pars[parname][(key1,key2)] = 
+                        pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
+                        pars[parname].t[(key1,key2)] = data['years'] # WARNING, TEMP
     
     # Store the actual keys that will need to be iterated over in model.py
     for act in ['reg','cas','com','inj']:
