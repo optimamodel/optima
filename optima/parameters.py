@@ -40,6 +40,7 @@ def data2popsize(dataarray, data, keys):
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
+    par.start = data['years'][0]
     for key in atleast2datapoints:
         tdata = sanitizedt[key]-startyear
         ydata = log(sanitizedy[key])
@@ -151,12 +152,12 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 
 
 
-def popsize2simpar(par, keys, tvec):
-    """ Take population size and turn it into a model parameters """    
+def popsize2simpar(pspar, keys, tvec):
+    """ Take population size parameter and turn it into a model parameters """    
     npops = len(keys)
     output = zeros((npops,len(tvec)))
     for pop,key in enumerate(keys):
-        output[pop,:] = par.m * popgrow(par.p[key], tvec-tvec[0])
+        output[pop,:] = pspar.m * popgrow(pspar.p[key], tvec-pspar.start)
     return output
             
             
@@ -171,6 +172,11 @@ def datapar2simpar(datapar, keys, tvec, smoothness=5):
     else: return output
 
 
+
+
+def popgrow(exppars, tvec):
+    ''' Return a time vector for a population growth '''
+    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
 
 
 def makeparsfromdata(data, verbose=2):
@@ -210,31 +216,31 @@ def makeparsfromdata(data, verbose=2):
     
     # Epidemilogy parameters -- most are data
     pars['stiprev'] = data2timepar('stiprev', data, popkeys, by='pop') # STI prevalence
-    pars['death']  = data2timepar(pars['death'], popkeys, by='pop')  # Death rates
-    pars['tbprev'] = data2timepar(pars['tbprev'], popkeys, by='pop') # TB prevalence
+    pars['death']  = data2timepar('death', data, popkeys, by='pop')  # Death rates
+    pars['tbprev'] = data2timepar('tbprev', data, popkeys, by='pop') # TB prevalence
     
     # Testing parameters -- most are data
-    pars['hivtest'] = data2timepar(pars['hivtest'], popkeys, by='pop') # HIV testing rates
-    pars['aidstest'] = data2timepar(pars['aidstest'], totkey, by='tot') # AIDS testing rates
-    pars['txtotal'] = data2timepar(pars['numtx'], totkey, by='tot') # Number of people on first-line treatment -- 0 since overall not by population
+    pars['hivtest'] = data2timepar('hivtest', data, popkeys, by='pop') # HIV testing rates
+    pars['aidstest'] = data2timepar('aidstest', data, totkey, by='tot') # AIDS testing rates
+    pars['txtotal'] = data2timepar('numtx', data, totkey, by='tot') # Number of people on first-line treatment -- 0 since overall not by population
 
     # MTCT parameters
-    pars['numpmtct'] = data2timepar(pars['numpmtct'], totkey, by='tot')
-    pars['breast']   = data2timepar(pars['breast'], totkey, by='tot')  
-    pars['birth']    = data2timepar(pars['birth'], popkeys, by='pop')
+    pars['numpmtct'] = data2timepar('numpmtct', data, totkey, by='tot')
+    pars['breast']   = data2timepar('breast', data, totkey, by='tot')  
+    pars['birth']    = data2timepar('birth', data, popkeys, by='pop')
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
     # Circumcision parameters
-    pars['circum'] = data2timepar(pars['circum'], mpopkeys, by='pop') # Circumcision percentage
+    pars['circum'] = data2timepar('circum', data, mpopkeys, by='pop') # Circumcision percentage
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
     # Drug behavior parameters
-    pars['numost'] = data2timepar(pars['numost'], totkey, by='tot')
-    pars['sharing'] = data2timepar(pars['sharing'], popkeys, by='pop')
+    pars['numost'] = data2timepar('numost', data, totkey, by='tot')
+    pars['sharing'] = data2timepar('sharing', data, popkeys, by='pop')
     
     # Other intervention parameters (proportion of the populations, not absolute numbers)
     pars['prep'] = data2timepar(pars['prep'], popkeys, by='pop')
@@ -289,9 +295,7 @@ def makeparsfromdata(data, verbose=2):
 
 
 
-def popgrow(exppars, tvec):
-    ''' Return a time vector for a population growth '''
-    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
+
 
 
 
@@ -304,7 +308,7 @@ def popgrow(exppars, tvec):
 class Timepar(object):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, t=None, y=None, m=1, by=None):
+    def __init__(self, name=None, t=None, y=None, m=1, by=None, interp=datapar2simpar):
         if t is None: t = odict()
         if y is None: y = odict()
         self.name = name
@@ -312,16 +316,16 @@ class Timepar(object):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
+        self.interp = interp # The interpolation method used
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = '\n'
-        output += '          Name: %s\n'    % self.name
-        output += '   Time points: %s\n'    % self.t
-        output += '        Values: %s\n'    % self.y
-        output += ' Metaparameter: %s\n'    % self.m
-        output += '       By type: %s\n'    % self.by
-        output += '          Keys: %s\n'    % self.y.keys()
+        output += '           Name: %s\n'    % self.name
+        output += '         Values: %s\n'    % self.y
+        output += '    Time points: %s\n'    % self.t
+        output += '  Metaparameter: %s\n'    % self.m
+        output += 'Time/value keys: %s\n'    % self.y.keys()
         return output
 
 
@@ -329,17 +333,21 @@ class Timepar(object):
 class Popsizepar(object):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, p=None, m=1):
+    def __init__(self, name=None, p=None, m=1, start=2000, interp=popsize2simpar):
         if p is None: p = odict()
-        self.name = name
+        self.name = name # Going to be "popsize"
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
+        self.start = start # Year for which population growth start is calibrated to
+        self.interp = interp # The interpolation method used
     
     def __repr__(self):
-        ''' Print out useful information when called'''
+        ''' Print out useful information when called '''
         output = '\n'
+        output += '          Name: %s\n'    % self.name
         output += 'Fit parameters: %s\n'    % self.p
         output += ' Metaparameter: %s\n'    % self.m
+        output += '    Start year: %s\n'    % self.start
         return output
 
 
@@ -388,6 +396,7 @@ class Parameterset(object):
         tot = ['tot'] # WARNING, this is kludgy
         simpars['popkeys'] = popkeys
         npts = len(simpars['tvec']) # Number of time points
+        
         
         
         
