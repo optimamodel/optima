@@ -1,8 +1,8 @@
 define([
   'angular',
   'ui.router',
+  '../project/project-api-service',
   '../resources/model',
-  '../resources/project',
   '../ui/type-selector/index',
   '../common/export-all-charts',
   '../common/export-all-data',
@@ -15,7 +15,6 @@ define([
     'app.export-all-charts',
     'app.export-all-data',
     'app.resources.model',
-    'app.resources.project',
     'app.ui.type-selector',
     'ui.router',
     'app.validations.more-than',
@@ -28,8 +27,8 @@ define([
           abstract: true,
           template: '<div ui-view></div>',
           resolve: {
-            info: function(Project) {
-              return Project.info().$promise;
+            info: function (projectApiService) {
+              projectApiService.getActiveProject();
             }
           }
         })
@@ -51,11 +50,11 @@ define([
           templateUrl: 'js/modules/model/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
-            availableParameters: function($http) {
-              return $http.get('/api/project/parameters');
+            availableParameters: function(projectApiService) {
+              return projectApiService.getParameters();
             },
-            predefined: function(Project) {
-              return Project.predefined().$promise;
+            predefined: function(projectApiService) {
+              return projectApiService.getPredefined();
             }
           }
         })

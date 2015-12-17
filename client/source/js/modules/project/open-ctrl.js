@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectOpenController',
-    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager) {
+    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager, projectApiService) {
 
     $scope.sortType = 'name'; // set the default sort type
     $scope.sortReverse = false;  // set the default sort order
@@ -24,7 +24,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     }
 
-    $scope.projects = _.map(projects.projects, function(project){
+    $scope.projects = _.map(projects.data.projects, function(project){
       project.creation_time = Date.parse(project.creation_time);
       project.updated_time = Date.parse(project.updated_time);
       project.data_upload_time = Date.parse(project.data_upload_time);
@@ -37,11 +37,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      $http.get('/api/project/open/' + id)
-        .success(function (response) {
-          activeProject.setActiveProjectFor(name, id, UserManager.data);
-          window.location = '/';
-        });
+      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      window.location = '/';
     };
 
 
@@ -55,8 +52,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         "Copy project?",
         "New project name",
         function(newName) {
-          $http.post('/api/project/copy/' + id + '?to=' + newName)
-            .success(function (response) {
+          projectApiService.copyProject(id, newName).success(function (response) {
               window.location.reload();
             });
         }
@@ -69,11 +65,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.edit = function (name, id) {
-      $http.get('/api/project/open/' + id)
-        .success(function (response) {
-          activeProject.setActiveProjectFor(name, id, UserManager.data);
-          window.location = '/#/project/edit';
-        });
+      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      window.location = '/#/project/edit';
     };
 
     /**
@@ -84,17 +77,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/workbook/' + id, '_blank', '');
+      window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
     };
 
     /**
      * Gets the data for the given project `name` as <name>.json  file
      */
     $scope.getData = function (name, id) {
-      $http({url:'/api/project/data/'+ id,
-            method:'GET',
-            headers: {'Content-type': 'application/octet-stream'},
-            responseType:'blob'})
+      projectApiService.getProjectData(id)
         .success(function (response, status, headers, config) {
           var blob = new Blob([response], { type: 'application/octet-stream' });
           saveAs(blob, (name + '.prj'));
@@ -104,7 +94,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.setData = function (name, id, file) {
       var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
       modalService.confirm(
-        function (){ fileUpload.uploadDataSpreadsheet($scope, file, '/api/project/data/'+id, false); },
+        function (){ fileUpload.uploadDataSpreadsheet($scope, file, projectApiService.getDataUploadUrl(id), false); },
         function (){},
         'Yes, overwrite data',
         'No',
@@ -128,8 +118,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (name, id, index) {
-      $http.delete('/api/project/delete/' + id)
-        .success(function (response) {
+      projectApiService.deleteProject(id).success(function (response) {
           $scope.projects = _($scope.projects).filter(function (item) {
             return item.id != id;
           });

@@ -3,7 +3,7 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
   'use strict';
 
   return angular.module('app.chart-toolbar', [])
-    .directive('chartToolbar', function ($http, modalService, exportHelpers) {
+    .directive('chartToolbar', function ($http, modalService, exportHelpers, projectApiService) {
       return {
         restrict: 'E',
         templateUrl: '/js/modules/common/chart-toolbar.html',
@@ -196,11 +196,7 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
            * Requesting a Spreadsheet from the prepared dataset.
            */
           var exportApiRequest = function(title, exportableData) {
-            $http({url:'/api/project/export',
-                  method:'POST',
-                  data: exportableData,
-                  headers: {'Content-type': 'application/json'},
-                  responseType:'arraybuffer'})
+            projectApiService.exportProject(exportableData)
               .success(function (response, status, headers, config) {
                   var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                   // The saveAs function must be wrapped in a setTimeout with 0 ms because Angular has a problem with fileSaver.js on FF 34.0 and the download doesn't start
