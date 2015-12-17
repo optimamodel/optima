@@ -195,16 +195,6 @@ def makeparsfromdata(data, verbose=2):
         pars['force'][key] = 1
         pars['inhomo'][key] = 0
     
-    # Matrices can be used almost directly
-    for parname in ['transit']: # Will probably include birth matrices in here too...
-        pars[parname] = odict()
-        for i,key1 in enumerate(popkeys):
-            for j,key2 in enumerate(popkeys):
-                if array(data[parname])[i,j]>0:
-                    pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
-    
-    
-    
     
     def gettotalacts(act, popsize):
         ''' Combine the different estimates for the number of acts and return the "average" value '''
@@ -245,15 +235,21 @@ def makeparsfromdata(data, verbose=2):
         return totalacts
     
     # Sexual behavior parameters
+    tmpmatrix = {}
     for act in ['reg','cas','com','inj']:
-        pars['acts'+act] = gettotalacts(act, pars['popsize'])
-#    pars['numactsreg'] = datapar2simpar(pars['numactsreg'], popkeys) 
-#    pars['numactscas'] = datapar2simpar(pars['numactscas'], popkeys) 
-#    pars['numactscom'] = datapar2simpar(pars['numactscom'], popkeys) 
-#    pars['numactsinj'] = datapar2simpar(pars['numinject'], popkeys) 
-#    pars['condomreg']  = datapar2simpar(pars['condomreg'], popkeys) 
-#    pars['condomcas']  = datapar2simpar(pars['condomcas'], popkeys) 
-#    pars['condomcom']  = datapar2simpar(pars['condomcom'], popkeys) 
+        tmpmatrix['acts'+act] = gettotalacts(act, pars['popsize'])
+    
+    
+    # Convert matrices to things that can be used
+    tmpmatrix['transit'] = data['transit']
+    for parname in ['actsreg', 'actscas', 'actscom', 'actsinj', 'transit']: # Will probably include birth matrices in here too...
+        pars[parname] = odict()
+        for i,key1 in enumerate(popkeys):
+            for j,key2 in enumerate(popkeys):
+                if array(tmpmatrix[parname])[i,j]>0:
+                    pars[parname][(key1,key2)] = array(data[parname])[i,j] # Convert from matrix to odict with tuple keys
+
+
     
     
     
