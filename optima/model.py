@@ -114,16 +114,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
 #    effost    = 1 - simpars['const']['effost']             # OST effect
     
     # Partnerships, acts and transitions
-    pshipsinj = simpars['partinj']
-    pships = dict() # TEMP
-    totalacts = dict()
-    for key in ['reg','cas','com']: pships[key] = simpars['part'+key]
-    for key in ['reg','cas','com','inj']: totalacts[key] = simpars['totalacts'+key]
+    pshipsinj = simpars['pshipinj']
     transit   = simpars['transit'] # Asymmetric transitions
     
     # Intervention uptake (P=proportion, N=number)
-    condom = dict()
-    for key in ['reg','cas','com']: condom[key] = simpars['condom'+key]
+    
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
     numpmtct = simpars['numpmtct']  # PMTCT (N)
 #    ost      = simpars['numost']    # OST (N)
@@ -132,6 +127,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     mtx1     = simpars['numtx']       # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
+    from numpy import shape
+    condom = dict()
+    for key in ['reg','cas','com']: condom[key] = zeros(shape(hivtest)) # WARNING NEED TO FIX simpars['condom'+key]    
     
     # Force of infection metaparameter
     force = simpars['force']
@@ -140,15 +138,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     # Proportion of PLHIV who are aware of their status
     propaware = simpars['propaware']
     
-    # Initialize the list of sex acts so it doesn't have to happen in the time loop
-    sexactslist = []
-    for popM in range(npops):
-        sexactslist.append([])
-        for popF in range(npops):
-            sexactslist[popM].append([])
-            for act in ['reg','cas','com']:
-                if pships[act][popM,popF]>0: # Ignore if this isn't a valid partnership for this sexual act type
-                    sexactslist[popM][popF].append(act)
 
 
     ###############################################################################
