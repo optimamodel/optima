@@ -23,8 +23,6 @@ tests = [
 numericalassertions = True # Whether or not to actually run things and test their values
 doplot = True # Whether or not to show diagnostic plots
 
-runalltests=True
-
 ##############################################################################
 ## Initialization
 ##############################################################################

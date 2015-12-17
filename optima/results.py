@@ -18,7 +18,7 @@ class Result(object):
         
 
 
-class Results(object):
+class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
     def __init__(self):
         # Basic info

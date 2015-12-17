@@ -1,6 +1,6 @@
 ## Imports
 from numpy import array, zeros, exp, maximum, minimum, median
-from optima import printv, tic, toc, dcp, Results
+from optima import printv, tic, toc, dcp, Resultset
 from math import pow as mpow
 
 
@@ -26,7 +26,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
-    results = Results()    # Sim output structure
+    results = Resultset()    # Sim output structure
     results.tvec  = simpars['tvec']   # Append time vector
     dt      = simpars['tvec'][1]-simpars['tvec'][0]      # Shorten dt
     npts    = len(results.tvec) # Number of time points

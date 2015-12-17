@@ -8,8 +8,10 @@ import optima as op
 or
 from optima import *
 
-Version: 2015dec09
+Version: 2015dec17
 """
+
+# analysis:ignore
 
 ## Load general modules
 from uuid import uuid4 as uuid
@@ -23,13 +25,12 @@ from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, ob
 
 ## Load Optima functions and classes
 from settings import Settings
+from makespreadsheet import makespreadsheet
 from loadspreadsheet import loadspreadsheet
-from makesimpars import *
-from makespreadsheet import *
-from parameters import * # Parameter and Parameterset classes
-from results import * # Result and Results classes
-from model import *
-from programs import *
-from project import * # Project class
-from makeplots import *
-from gui import *
+from parameters import Timepar, Popsizepar, Parameterset # Parameter and Parameterset classes
+from results import Result, Resultset # Result and Results classes
+from model import model
+from programs import Program, Programset
+from project import Project # Project class
+from makeplots import epiplot
+from gui import gui
