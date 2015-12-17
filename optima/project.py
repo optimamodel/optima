@@ -13,10 +13,10 @@ class Project(object):
     The main Optima project class. Almost all Optima functionality is provided by this class.
     
     An Optima project is based around 4 major lists:
-        1. parset -- a list of parameter structures
-        2. progset -- a list of response structures
-        3. scens -- a list of scenario structures
-        4. optims -- a list of optimization structures
+        1. parsets -- an odict of parameter structures
+        2. progsets -- an odict of response structures
+        3. scens -- an odict of scenario structures
+        4. optims -- an odict of optimization structures
     
     In addition, an Optima project contains:
         1. data -- loaded from the spreadsheet
@@ -24,13 +24,12 @@ class Project(object):
         3. settings -- timestep, indices, etc.
     
     Methods for structure lists:
-        1. add -- add a new structure to the list
-        2. remove -- remove a structure from the list
-        3. copy -- copy a structure in the list
-        4. rename -- rename a structure in the list
-        5. show -- show information on all items in the list(s)
+        1. add -- add a new structure to the odict
+        2. remove -- remove a structure from the odict
+        3. copy -- copy a structure in the odict
+        4. rename -- rename a structure in the odict
     
-    Version: 2015dec09 by cliffk
+    Version: 2015dec17 by cliffk
     """
     
     
