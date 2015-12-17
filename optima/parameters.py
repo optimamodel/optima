@@ -13,6 +13,10 @@ from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
 
+def popgrow(exppars, tvec):
+    ''' Return a time vector for a population growth '''
+    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
+
 
 def data2popsize(dataarray, data, keys):
     par = Popsizepar()
@@ -152,31 +156,16 @@ def reconcileacts(symmetricmatrix,popsize,popacts):
 
 
 
-def popsize2simpar(pspar, keys, tvec):
-    """ Take population size parameter and turn it into a model parameters """    
-    npops = len(keys)
-    output = zeros((npops,len(tvec)))
-    for pop,key in enumerate(keys):
-        output[pop,:] = pspar.m * popgrow(pspar.p[key], tvec-pspar.start)
-    return output
+
             
             
         
-def datapar2simpar(datapar, keys, tvec, smoothness=5):
-    """ Take parameters and turn them into model parameters """
-    npops = len(keys)
-    output = zeros((npops,len(tvec)))
-    dt = tvec[1]-tvec[0] # Assume constant 
-    for pop,key in enumerate(keys):
-        output[pop,:] = datapar.m * smoothinterp(tvec, datapar.t[pop], datapar.y[pop], smoothness=int(smoothness*1.0/dt)) # Use interpolation
-    else: return output
 
 
 
 
-def popgrow(exppars, tvec):
-    ''' Return a time vector for a population growth '''
-    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
+
+
 
 
 def makeparsfromdata(data, verbose=2):
@@ -308,7 +297,7 @@ def makeparsfromdata(data, verbose=2):
 class Timepar(object):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, t=None, y=None, m=1, by=None, interp=datapar2simpar):
+    def __init__(self, name=None, t=None, y=None, m=1, by=None):
         if t is None: t = odict()
         if y is None: y = odict()
         self.name = name
@@ -316,7 +305,6 @@ class Timepar(object):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
-        self.interp = interp # The interpolation method used
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -327,19 +315,28 @@ class Timepar(object):
         output += '  Metaparameter: %s\n'    % self.m
         output += 'Time/value keys: %s\n'    % self.y.keys()
         return output
+    
+    def interp(self, tvec, smoothness=5):
+        """ Take parameters and turn them into model parameters """
+        keys = self.y.keys()
+        npops = len(keys)
+        output = zeros((npops,len(tvec)))
+        dt = tvec[1]-tvec[0] # Assume constant 
+        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=int(smoothness*1.0/dt)) # Use interpolation
+        else: return output
 
 
 
 class Popsizepar(object):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, p=None, m=1, start=2000, interp=popsize2simpar):
+    def __init__(self, name=None, p=None, m=1, start=2000):
         if p is None: p = odict()
         self.name = name # Going to be "popsize"
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
-        self.interp = interp # The interpolation method used
     
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -350,6 +347,14 @@ class Popsizepar(object):
         output += '    Start year: %s\n'    % self.start
         return output
 
+    def interp(self, tvec):
+        """ Take population size parameter and turn it into a model parameters """  
+        keys = self.y.keys()
+        npops = len(keys)
+        output = zeros((npops,len(tvec)))
+        for pop,key in enumerate(keys):
+            output[pop,:] = self.m * popgrow(self.p[key], tvec-self.start)
+        return output
 
 
 
