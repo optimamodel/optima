@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp, objectid
+from optima import odict, Settings, Parameterset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -60,8 +60,8 @@ class Project(object):
         self.spreadsheetdate = 'Spreadsheet never loaded'
         self.version = version
         try:
-            self.gitbranch = run('git rev-parse --abbrev-ref HEAD').rstrip('\n')
-            self.gitversion = run('git rev-parse HEAD').rstrip('\n')
+            self.gitbranch = runcommand('git rev-parse --abbrev-ref HEAD').rstrip('\n')
+            self.gitversion = runcommand('git rev-parse HEAD').rstrip('\n')
         except:
             self.gitbranch = 'Git branch information not retrivable'
             self.gitversion = 'Git version information not retrivable'

@@ -397,7 +397,7 @@ class Parameterset(object):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
-        pars = self.pars[ind] # Shorten name of parameters thing
+        pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
         simpars = odict() # Used to be called M
         if tvec is not None: simpars['tvec'] = tvec
         else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters

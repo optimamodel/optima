@@ -475,7 +475,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
-def run(command, printinput=False, printoutput=False):
+def runcommand(command, printinput=False, printoutput=False):
    """ Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 """
    from subprocess import Popen, PIPE
    if printinput: print(command)

@@ -17,13 +17,13 @@ from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
 ## Load non-Optima-specific custom functions
-from ballsd import *
-from colortools import *
-from utils import * # odict class
+from ballsd import ballsd
+from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
+from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, objectid, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, save, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
 
 ## Load Optima functions and classes
-from settings import *
-from loadspreadsheet import *
+from settings import Settings
+from loadspreadsheet import loadspreadsheet
 from makesimpars import *
 from makespreadsheet import *
 from parameters import * # Parameter and Parameterset classes
