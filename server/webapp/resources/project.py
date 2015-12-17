@@ -353,6 +353,13 @@ class ProjectSpreadsheet(Resource):
             # TODO fix after v2
             # makeworkbook(wb_name, project_entry.populations, project_entry.programs, \
             #     project_entry.datastart, project_entry.dataend)
+            path = templatepath(wb_name)
+            makespreadsheet(
+                path,
+                pops=project_entry.populations,
+                datastart=project_entry.datastart,
+                dataend=project_entry.dataend)
+
             current_app.logger.debug(
                 "project %s template created: %s" % (project_entry.name, wb_name)
             )
