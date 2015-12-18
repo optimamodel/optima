@@ -16,17 +16,19 @@ from server.webapp.utils import verify_admin_request, RequestParser
 
 user_parser = RequestParser()
 user_parser.add_arguments({
-    'email':    {'type': email, 'required': True},
-    'name':     {'required': True, 'help': 'A valid e-mail address'},
-    'password': {'type': hashed_password, 'required': True},
+    'email':       {'type': email, 'required': True, 'help': 'A valid e-mail address'},
+    'displayName': {'required': True, 'dest': 'name'},
+    'username':    {'required': True},
+    'password':    {'type': hashed_password, 'required': True},
 })
 
 
 user_update_parser = RequestParser()
 user_update_parser.add_arguments({
-    'email':    {'type': email},
-    'name':     {},
-    'password': {'type': hashed_password},
+    'email':       {'type': email},
+    'displayName': {'dest': 'name'},
+    'username':    {},
+    'password':    {'type': hashed_password},
 })
 
 
@@ -61,7 +63,7 @@ class User(Resource):
         if same_user_count > 0:
             raise UserAlreadyExists(args.email)
 
-        user = UserDb(args.name, args.email, args.password)
+        user = UserDb(**args)
         db.session.add(user)
         db.session.commit()
 
@@ -130,7 +132,7 @@ class UserDetail(Resource):
 
 user_login_parser = RequestParser()
 user_login_parser.add_arguments({
-    'email':    {'type': email, 'required': True},
+    'username': {'required': True},
     'password': {'type': hashed_password, 'required': True},
 })
 
@@ -164,7 +166,7 @@ class UserLogin(Resource):
             args = user_login_parser.parse_args()
             try:
                 # Get user for this username
-                user = UserDb.query.filter_by(email=args['email']).first()
+                user = UserDb.query.filter_by(username=args['username']).first()
 
                 # Make sure user is valid and password matches
                 if user is not None and user.password == args['password']:
@@ -173,7 +175,7 @@ class UserLogin(Resource):
 
             except Exception:
                 var = traceback.format_exc()
-                print("Exception when logging user {}: \n{}".format(args['email'], var))
+                print("Exception when logging user {}: \n{}".format(args['username'], var))
 
             raise InvalidCredentials
 
