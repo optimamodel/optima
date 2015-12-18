@@ -22,7 +22,7 @@ define([
                 controller: 'AdminManageUsersController',
                 resolve: {
                   users:function($http){
-                    return $http.get('/api/user/list');
+                    return $http.get('/api/user');
                   }
                 }
             })
@@ -35,7 +35,7 @@ define([
                     return projectApiService.getProjectList();
                   },
                   users:function($http){
-                    return $http.get('/api/user/list');
+                    return $http.get('/api/user');
                   }
                 }
             });

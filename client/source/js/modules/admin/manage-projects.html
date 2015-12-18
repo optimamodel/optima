@@ -2,7 +2,7 @@
   <h3>Manage projects</h3>
   <div class="section" ng-show="!users.length"> No other users have projects. </div>
   <div class="section" ng-show="users.length" ng-repeat="user in ::users">
-    <h4> {{ ::user.data.name }} ({{ ::user.data.email }}) </h4>
+    <h4> {{ ::user.data.displayName }} ({{ ::user.data.email }}) </h4>
     <table ng-show="user.projects.length" class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
       <tr>

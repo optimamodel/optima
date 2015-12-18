@@ -4,8 +4,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService) {
     $scope.users = users.data.users;
     $scope.users = _.compact(_.map(_(projects.data.projects).groupBy(function (p) {return p.user_id;}), function (projects, userId) {
-      var user = _.findWhere($scope.users, {id: parseInt(userId)});
-      return user.email===UserManager.data.email ? undefined :{
+      var user = _.findWhere($scope.users, {id: userId});
+      return user.username===UserManager.data.username ? undefined :{
         projects: projects,
         data: user
       };
