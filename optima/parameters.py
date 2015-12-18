@@ -252,15 +252,13 @@ def makeparsfromdata(data, verbose=2):
     
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
+        parname = 'acts'+act
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
-                if parname=='transit': # Convert from matrix to odict with tuple keys
-                    if array(tmpmatrix[parname])[i,j]>0:
-                        pars[parname][(key1,key2)] = array(tmpmatrix[parname])[i,j] 
-                else:
-                    if sum(array(tmpmatrix[parname])[i,j,:])>0:
-                        pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,indices]
-                        pars[parname].t[(key1,key2)] = array(data['years'])[indices] # WARNING, TEMP
+                if sum(array(tmpmatrix[parname])[i,j,:])>0:
+                    
+                    pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,indices]
+                    pars[parname].t[(key1,key2)] = array(data['years'])[indices] # WARNING, TEMP
     
     # Store the actual keys that will need to be iterated over in model.py
     for act in ['reg','cas','com','inj']:
