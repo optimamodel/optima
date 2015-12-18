@@ -32,7 +32,7 @@ define([
                 controller: 'AdminManageProjectsController',
                 resolve: {
                   projects: function (projectApiService) {
-                    return projectApiService.getProjectList();
+                    return projectApiService.getAllProjectList();
                   },
                   users:function($http){
                     return $http.get('/api/user');
