@@ -8,7 +8,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
-    Version: 2015aug23 by cliffk
+    Version: 2015dec17 by cliffk
     """
     
     printv('Running model...', 1, verbose, newline=False)

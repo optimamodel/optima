@@ -118,7 +118,7 @@ def data2timepar(parname, data, keys, by=None):
 
 def makeparsfromdata(data, verbose=2):
     """
-    Translates the raw data (which were read from the spreadsheet). into
+    Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
     the corresponding model (project). This method should be called before a 
     simulation is run.
@@ -195,7 +195,14 @@ def makeparsfromdata(data, verbose=2):
         pars['force'][key] = 1
         pars['inhomo'][key] = 0
     
+    # Risk-related population transitions
+    pars['transit'] = odict() # Will probably include birth matrices in here too...
+    for i,key1 in enumerate(popkeys):
+        for j,key2 in enumerate(popkeys):
+            pars['transit'][(key1,key2)] = array(data['transit'])[i,j] 
     
+    
+    ## Acts
     def gettotalacts(act, popsizepar):
         ''' Combine the different estimates for the number of acts and return the "average" value '''
         mixmatrix = array(data['part'+act])
@@ -237,15 +244,14 @@ def makeparsfromdata(data, verbose=2):
         return totalacts
     
     # Sexual behavior parameters
-    tmpmatrix = {}
+    tmpmatrix = odict()
     for act in ['reg','cas','com','inj']:
         parname = 'acts'+act
         tmpmatrix[parname] = gettotalacts(act, pars['popsize'])
         pars[parname] = Timepar(name=parname, m=1, y=odict(), t=odict(), by='pship') # Create structure
     
     # Convert matrices to lists of of population-pair keys
-    tmpmatrix['transit'] = data['transit']
-    for parname in ['actsreg', 'actscas', 'actscom', 'actsinj', 'transit']: # Will probably include birth matrices in here too...
+    for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
                 if parname=='transit': # Convert from matrix to odict with tuple keys
@@ -253,11 +259,8 @@ def makeparsfromdata(data, verbose=2):
                         pars[parname][(key1,key2)] = array(tmpmatrix[parname])[i,j] 
                 else:
                     if sum(array(tmpmatrix[parname])[i,j,:])>0:
-                        try:
-                            pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
-                        except:
-                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                        pars[parname].t[(key1,key2)] = data['years'] # WARNING, TEMP
+                        pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,indices]
+                        pars[parname].t[(key1,key2)] = array(data['years'])[indices] # WARNING, TEMP
     
     # Store the actual keys that will need to be iterated over in model.py
     for act in ['reg','cas','com','inj']:
