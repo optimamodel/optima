@@ -17,7 +17,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
       var hashed_password = SHA224($scope.password).toString();
 
       User.create({
-        username: $scope.userName,
+        username: $scope.username,
         password: hashed_password,
         displayName: $scope.displayName,
         email: $scope.email

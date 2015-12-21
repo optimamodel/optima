@@ -36,7 +36,7 @@ define([
           },
           getProjectKeyFor: function (user) {
             // Answers the key used to locally store this project as active for the given user.
-            return 'activeProjectFor:'+ user.username;
+            return 'activeProjectFor:'+ user.id;
           },
           getProjectFor: function (user) {
             return localStorage[project.getProjectKeyFor(user)];
