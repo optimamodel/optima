@@ -271,6 +271,59 @@ def update_or_create_parset(project_id, name, parset):
         parset_record.pars = saves(parset.pars)
 
 
+def update_or_create_progset(project_id, name, progset):
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import ProgsetsDb
+
+    progset_record = ProgsetsDb.query \
+        .filter_by(id=progset.id, project_id=project_id) \
+        .first()
+
+    if progset_record is None:
+        progset_record = ProgsetsDb(
+            project_id=project_id,
+            name=name,
+            created=progset.created or datetime.now(dateutil.tz.tzutc()),
+            updated=datetime.now(dateutil.tz.tzutc())
+        )
+
+        db.session.add(progset_record)
+    else:
+        progset_record.updated = datetime.now(dateutil.tz.tzutc())
+        progset_record.name = name
+
+    return progset_record
+
+
+def update_or_create_program(project_id, progset_id, name, program):
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import ProgramsDb
+
+    program_record = ProgramsDb.query \
+        .filter_by(id=program.id, project_id=project_id, progset_id=progset_id) \
+        .first()
+
+    if program_record is None:
+        program_record = ProgramsDb(
+            project_id=project_id,
+            progset_id=progset_id,
+            name=name,
+            created=program.created or datetime.now(dateutil.tz.tzutc()),
+            updated=datetime.now(dateutil.tz.tzutc()),
+            pars=program.targetpars
+        )
+
+        db.session.add(program_record)
+    else:
+        program_record.updated = datetime.now(dateutil.tz.tzutc())
+        program_record.name = name
+        program_record.pars = program.targetpars
+
+
 def init_login_manager(login_manager):
 
     @login_manager.user_loader

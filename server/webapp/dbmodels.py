@@ -134,6 +134,10 @@ class ProjectDb(db.Model):
             for parset_record in self.parsets:
                 parset_entry = parset_record.hydrate()
                 project_entry.addparset(parset_entry.name, parset_entry)
+        if self.progsets:
+            for progset_record in self.progsets:
+                progset_entry = progset_record.hydrate()
+                project_entry.addprogset(progset_entry.name, progset_entry)
         return project_entry
 
     def restore(self, project):
@@ -151,6 +155,15 @@ class ProjectDb(db.Model):
             from server.webapp.utils import update_or_create_parset
             for name, parset in project.parsets.iteritems():
                 update_or_create_parset(self.id, name, parset)
+
+        # Expects that progsets or programs should not be deleted from restoring a project
+        # This is the same behaviour as with parsets.
+        if project.progsets:
+            from server.webapp.utils import update_or_create_progset, update_or_create_program
+            for name, progset in project.progsets.iteritems:
+                progset_record = update_or_create_progset(self.id, name, progset)
+                for program_name, program in progset.programs.iteritems:
+                    update_or_create_program(self.id, progset_record.id, program_name, program)
 
     def recursive_delete(self):
 
@@ -298,12 +311,12 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name, category, active=False, pars=None, created=None, updated=None, id=None):
+    def __init__(self, project_id, progset_id, name, short_name=None, category='No category', active=False, pars=None, created=None, updated=None, id=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
         self.name = name
-        self.short_name = short_name
+        self.short_name = short_name if short_name is not None else name
         self.category = category
         self.pars = pars
         self.active = active
@@ -313,6 +326,12 @@ class ProgramsDb(db.Model):
             self.updated = updated
         if id:
             self.id = id
+
+    def hydrate(self):
+        from optima.programs import Program
+        program_entry = Program(self.name, targetpars=self.pars)
+        program_entry.id = self.id
+        return program_entry
 
 
 @swagger.model
@@ -350,7 +369,10 @@ class ProgsetsDb(db.Model):
         from optima.programs import Programset
         progset_entry = Programset(
             name=self.name,
-            programs=None
+            programs=[
+                program.hydrate()
+                for program in self.programs
+            ]
         )
 
         return progset_entry
