@@ -678,7 +678,7 @@ class odict(OrderedDict):
     
     def __repr__(self):
         ''' Print a meaningful representation of the odict '''
-        if len(self.keys())==0: 'odict()'
+        if len(self.keys())==0: output = 'odict()'
         else: output = '\n'.join(["#%i: '%s': %s" % (i, self.keys()[i], self.values()[i]) for i in range(len(self))])
         return output
     
