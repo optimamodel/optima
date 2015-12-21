@@ -3,8 +3,8 @@ from validate_email import validate_email
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
-from server.webapp.exceptions import InvalidFileType
 from server.webapp.utils import allowed_file
+
 
 def email(email_str):
     if validate_email(email_str):

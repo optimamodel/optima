@@ -14,15 +14,14 @@ from optima.project import version
 
 from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
-                                    ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
+from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb
 
 from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid
 
 from server.webapp.utils import (load_project, verify_admin_request,
-                                 delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
+                                 delete_spreadsheet, RequestParser)
 
 
 class ProjectBase(Resource):
@@ -510,21 +509,14 @@ class ProjectData(Resource):
     )
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/data" % project_id)
-        project_entry = load_project(project_id)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
-
-        new_project = project_entry.hydrate()
+        project_entry = load_project(project_id, raise_exception=True)
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
-        filename = project_entry.name + '.prj'
-        server_filename = os.path.join(loaddir, filename)
 
-        from optima.utils import save
-        save(server_filename, new_project)
+        filename = project_entry.as_file(loaddir)
 
         return helpers.send_from_directory(loaddir, filename)
 
@@ -713,3 +705,43 @@ class ProjectCopy(Resource):
             'copy_id': new_project_id
         }
         return payload
+
+
+portfolio_parser = RequestParser()
+portfolio_parser.add_arguments({
+    'projects': {'required': True, 'action': 'append'},
+})
+
+
+class Portfolio(Resource):
+
+    @swagger.operation(
+        produces='application/x-zip',
+        summary='Download data for projects with the given ids as a zip file',
+        parameters=portfolio_parser.swagger_parameters()
+    )
+    @login_required
+    def post(self):
+        from zipfile import ZipFile
+        from uuid import uuid4
+
+        current_app.logger.debug("Download Portfolio (/api/project/portfolio)")
+        args = portfolio_parser.parse_args()
+        current_app.logger.debug("Portfolio requested for projects {}".format(args['projects']))
+
+        loaddir = upload_dir_user(TEMPLATEDIR)
+        if not loaddir:
+            loaddir = TEMPLATEDIR
+
+        projects = [
+            load_project(id, raise_exception=True).as_file(loaddir)
+            for id in args['projects']
+        ]
+
+        zipfile_name = '{}.zip'.format(uuid4())
+        zipfile_server_name = os.path.join(loaddir, zipfile_name)
+        with ZipFile(zipfile_server_name, 'w') as portfolio:
+            for project in projects:
+                portfolio.write(os.path.join(loaddir, project), project)
+
+        return helpers.send_from_directory(loaddir, zipfile_name)
