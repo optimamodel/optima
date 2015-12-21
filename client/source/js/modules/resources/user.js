@@ -24,6 +24,13 @@ define([
               path: ''
             }
           },
+          update: {
+            method: 'PUT',
+            isArray: false,
+            params: {
+              path: '@id'
+            }
+          },
           login: {
             method: 'POST',
             isArray: false,

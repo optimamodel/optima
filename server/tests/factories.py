@@ -30,7 +30,8 @@ class UserFactory(SQLAlchemyModelFactory):
     class Meta:
         model = UserDb
 
-    name = 'test'
+    name = factory.Faker('name')
+    username = Sequence(lambda n: 'user_{}'.format(n))
     email = Sequence(lambda n: 'user_{}@test.com'.format(n))
     password = hashlib.sha224("test").hexdigest()
     is_admin = False

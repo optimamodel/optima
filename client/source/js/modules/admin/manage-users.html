@@ -8,7 +8,7 @@
         <th> Actions </th>
       </tr>
       <tr ng-repeat="user in users">
-        <td>{{ ::user.name }}</td>
+        <td>{{ ::user.displayName }}</td>
         <td>{{ ::user.email }}</td>
         <td><button ng-click="deleteUser(user)" type="button" class="btn __red">Delete user</button></td>
       </tr>

@@ -40,8 +40,7 @@ class OptimaTestCase(unittest.TestCase):
 
     """
 
-    default_name = 'test'
-    default_email = 'test@test.com'
+    default_username = 'test'
 
     default_pops = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
         {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
@@ -83,13 +82,13 @@ class OptimaTestCase(unittest.TestCase):
     }
 
     def create_record_with(self, factory_class, **kwargs):
-        factory_class._meta.sqlalchemy_session = db.session
+        factory_class._meta.sqlalchemy_session = self.session
         rv = factory_class.create(**kwargs)
-        db.session.commit()
+        self.session.commit()
         return rv
 
-    def create_user(self, name=default_name, email=default_email):
-        return self.create_record_with(UserFactory, name=name, email=email)
+    def create_user(self, username=default_username):
+        return self.create_record_with(UserFactory, username=username)
 
     def get_any_user_id(self, admin=False):
         from server.webapp.dbmodels import UserDb
@@ -146,28 +145,31 @@ class OptimaTestCase(unittest.TestCase):
 
         return progset_id
 
-    def login(self, email=default_email, password=None):
-        if not password: password = self.test_password
-        headers = {'Content-Type' : 'application/json'}
-        login_data = '{"email":"%s","password":"%s"}' % (email, password)
+    def login(self, username=default_username, password=None):
+        if not password:
+            password = self.test_password
+        login_data = '{"username":"%s","password":"%s"}' % (username, password)
         self.client.post('/api/user/login', data=login_data, follow_redirects=True)
 
     def logout(self):
         self.client.get('/api/user/logout', follow_redirects=True)
 
     def setUp(self):
+        from sqlalchemy import orm
         self.test_password = hashlib.sha224("test").hexdigest()
         app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://test:test@localhost:5432/optima_test'
         app.config['TESTING'] = True
         print "app created %s" % app
         init_db()
+        self.session = orm.scoped_session(orm.sessionmaker())
+        self.session.configure(bind=db.engine)
         print("db created. db: %s" % db)
         self.client = app.test_client()
 
     def _db_DropEverything(self, db):
         # From http://www.sqlalchemy.org/trac/wiki/UsageRecipes/DropEverything
 
-        conn=db.engine.connect()
+        conn = db.engine.connect()
 
         # the transaction only applies if the DB supports
         # transactional DDL, i.e. Postgresql, MS SQL Server
@@ -205,7 +207,8 @@ class OptimaTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.logout()
-        db.session.remove()
+        self.session.rollback()
+        self.session.remove()
         self._db_DropEverything(db)
         db.drop_all()
         db.get_engine(app).dispose()
