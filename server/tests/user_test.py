@@ -36,8 +36,8 @@ class UserTestCase(OptimaTestCase):
         response = self.client.get('/api/user/current', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        for attr in ('username', 'email',):
-            self.assertEqual(data[attr], getattr(user, attr))
+        self.assertEqual(data['username'], user.username)
+        self.assertEqual(data['email'], user.email)
 
     def test_current_admin(self):
         admin = self.create_admin_user()
@@ -45,8 +45,9 @@ class UserTestCase(OptimaTestCase):
         response = self.client.get('/api/user/current', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        for attr in ('username', 'email', 'is_admin', ):
-            self.assertEqual(data[attr], getattr(admin, attr))
+        self.assertEqual(data['username'], admin.username)
+        self.assertEqual(data['email'], admin.email)
+        self.assertEqual(data['is_admin'], admin.is_admin)
         self.assertEqual(data['displayName'], 'admin')
 
     def test_list_users_as_admin(self):
@@ -61,8 +62,8 @@ class UserTestCase(OptimaTestCase):
         self.assertIsNotNone(users)
         self.assertEqual(len(users), 2, users)
         test_user = users[1]
-        for attr in ('id', 'email'):
-            self.assertEqual(test_user[attr], str(getattr(user, attr)))
+        self.assertEqual(test_user['id'], str(user.id))
+        self.assertEqual(test_user['email'], user.email)
         self.assertNotIn('password', test_user)
 
     def test_list_users(self):
@@ -75,8 +76,8 @@ class UserTestCase(OptimaTestCase):
         self.assertIsNotNone(users)
         self.assertEqual(len(users), 2)
         test_user = users[1]
-        for attr in ('id', 'email'):
-            self.assertEqual(test_user[attr], str(getattr(user, attr)))
+        self.assertEqual(test_user['id'], str(user.id))
+        self.assertEqual(test_user['email'], user.email)
         self.assertNotIn('password', test_user)
 
     def test_list_all_projects(self):
