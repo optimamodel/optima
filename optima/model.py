@@ -85,7 +85,12 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     numtx    = simpars['numtx']       # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
-    propcirc = simpars['propcirc']
+    circum = simpars['circum']
+    
+    # Calculations...used to be inside time loop
+    circeff = 1 - effcirc*circum
+    prepeff = 1 - effprep
+    stieff  = 1 + effsti
     
     # Force of infection metaparameter
     force = simpars['force']
@@ -161,6 +166,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     sexactslist = []
     injactslist = []
     
+    
+    
 
 
 
@@ -193,6 +200,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         
         
+        
+        
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
@@ -200,42 +209,33 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         # Reset force-of-infection vector for each population group
         forceinfvec = zeros(npops)
         
-        ## Sexual partnerships...
-        
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for act in sexactslist:
             effacts = act['effacts'][t]
+            condeff = act['cond'][t]
             pop1 = act['pop1']
             pop2 = act['pop2']
             thistrans = act['trans']
             
-            circeff = 1 - effcirc*propcirc[pop1,t]
-            prepeff = 1 - effprep[pop1,t]
-            stieff  = 1 + effsti[pop1,t]
-            
-            thisforceinf = 1 - mpow((1-thistrans*circeff*prepeff*stieff), (dt*effacts*effhivprev[pop2]))
+            thisforceinf = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*condeff*effacts*effhivprev[pop2]))
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)          
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
         for act in injactslist:
-            effacts = act['effacts'][t]
+            effinj = act['effacts'][t]
             pop1 = act['pop1']
             pop2 = act['pop2']
-            osteff = 1 # WARNING, TEMP
             
-            circeff = 1 - effcirc*propcirc[pop1,t]
-            prepeff = 1 - effprep[pop1,t]
-            stieff  = 1 + effsti[pop1,t]
-            
-            thisforceinf = 1 - mpow((1-transinj), (dt*effacts*osteff*effhivprev[pop2])) 
+            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*osteff[pop1,t]*effhivprev[pop2])) 
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
         
         if not(all(forceinfvec>=0)):
             invalid = [simpars['popkeys'][i] for i in findinds(forceinfvec<0)]
             errormsg = 'Force-of-infection is invalid in population %s' % invalid
             raise Exception(errormsg)
-
             
+
+
 
 
         
