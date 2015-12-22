@@ -84,6 +84,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     sus  = settings.uncirc  # Susceptible
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
+    care = settings.incare   # in Care
     tx  = settings.treat  # Treatment -- 1st line
     
     # Concatenate all PLHIV, diagnosed and treated for ease
@@ -175,7 +176,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, results.tvec[t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
+            #MK effcare = sum(dxfactor * people[care,pop,t]) # the diagnosis efficacy also applies to those in care (not on treatment)??
             efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
+            #MK add effcare to sum
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             if not(effhivprev[pop]>=0): 
                 raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
@@ -282,6 +285,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         mtcttx       = sum(birthrate * sum(people[tx,:,t]))  * pmtcteff # MTCT from those on treatment (not eligible for PMTCT)
         mtctuntx     = sum(birthrate * sum(people[undx,:,t])) * effmtct  # MTCT from those undiagnosed or failed (also not eligible)
         birthselig   = sum(birthrate * sum(people[dx,:,t])) # Births to diagnosed mothers eligible for PMTCT
+        #MK will in-care mothers be grouped with diagnosed? since not actually receiving treatment? thus simply adding to birthselig? 
+        # birthselig  +=   sum(birthrate * sum(people[care,:,t]))
         if numpmtct[t]>1: # It's greater than 1: assume it's a number
             receivepmtct = min(numpmtct[t], birthselig) # Births protected by PMTCT -- constrained by number eligible 
         else: # It's a proportion
@@ -474,7 +479,14 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             dD[cd4] = negativepeople('diagnosed', dD[cd4], people[dx[cd4],:,t], t)
             results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
-        
+
+        #MK This is the main addition with immediatecare, linktocarerate, propstop, proploss
+        ## In-Care
+        for cd4 in range(ncd4):
+            hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
+            otherdeaths = dt * people[dx[cd4],:,t] * background
+            
+
         ## 1st-line treatment
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
