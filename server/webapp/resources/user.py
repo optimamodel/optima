@@ -9,14 +9,14 @@ from flask_restful_swagger import swagger
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 
-from server.webapp.inputs import email, hashed_password
+from server.webapp.inputs import email, hashed_password, nullable_email
 from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist, InvalidCredentials
 from server.webapp.utils import verify_admin_request, RequestParser
 
 
 user_parser = RequestParser()
 user_parser.add_arguments({
-    'email':       {'type': email, 'help': 'A valid e-mail address'},
+    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
     'displayName': {'dest': 'name'},
     'username':    {'required': True},
     'password':    {'type': hashed_password, 'required': True},
@@ -25,7 +25,7 @@ user_parser.add_arguments({
 
 user_update_parser = RequestParser()
 user_update_parser.add_arguments({
-    'email':       {'type': email},
+    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
     'displayName': {'dest': 'name'},
     'username':    {},
     'password':    {'type': hashed_password},
@@ -71,12 +71,12 @@ class User(Resource):
 
 
 class UserDetail(Resource):
-    method_decorators = [verify_admin_request]
 
     @swagger.operation(
         summary='Delete a user',
         notes='Requires admin privileges'
     )
+    @verify_admin_request
     def delete(self, user_id):
         current_app.logger.debug('/api/user/delete/{}'.format(user_id))
         user = UserDb.query.get(user_id)
