@@ -225,13 +225,13 @@ def makeparsfromdata(data, verbose=2):
             npts = maximum(npts, len(yearstouse[row]))
         if minyear==Inf:  minyear = data['years'][0] # If not set, reset to beginning
         if maxyear==-Inf: maxyear = data['years'][-1] # If not set, reset to end
-        controlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
+        ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
         
         # Interpolate over population acts data for each year
         tmpactspar = data2timepar('numacts'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
-        simacts = tmpactspar.interp(tvec=controlpts)
-        popsize = popsizepar.interp(tvec=controlpts)
-        npts = len(controlpts)
+        simacts = tmpactspar.interp(tvec=ctrlpts)
+        popsize = popsizepar.interp(tvec=ctrlpts)
+        npts = len(ctrlpts)
         
         # Compute the balanced acts
         totalacts = zeros((npops,npops,npts))
@@ -257,16 +257,62 @@ def makeparsfromdata(data, verbose=2):
         
             totalacts[:,:,t] = pshipacts # Note use of copy()
     
-        return totalacts, controlpts
+        return totalacts, ctrlpts
+    
+    
+    ## Condoms
+    def balancecond(act, popsizepar):
+        ''' Combine the different estimates for the number of acts and return the "average" value '''
+        mixmatrix = array(data['part'+act])
+        npops = len(popkeys) # WARNING, what is this?
+        symmetricmatrix = zeros((npops,npops));
+        for pop1 in range(npops):
+            for pop2 in range(npops):
+                symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
+        
+        
+        # Decide which years to use -- use the earliest year, the latest year, and the most time points available
+        yearstouse = []
+        for row in range(npops):
+            yearstouse.append(array(data['years'])[~isnan(data['condom'+act][row])]   )
+        minyear = Inf
+        maxyear = -Inf
+        npts = 1 # Don't use fewer than 1 point
+        for row in range(npops):
+            minyear = minimum(minyear, min(yearstouse[row]))
+            maxyear = maximum(maxyear, max(yearstouse[row]))
+            npts = maximum(npts, len(yearstouse[row]))
+        if minyear==Inf:  minyear = data['years'][0] # If not set, reset to beginning
+        if maxyear==-Inf: maxyear = data['years'][-1] # If not set, reset to end
+        ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
+        
+        # Interpolate over population acts data for each year
+        tmpcondpar = data2timepar('condom'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
+        simcond = tmpcondpar.interp(tvec=ctrlpts)
+        npts = len(ctrlpts)
+        
+        # Compute the balanced acts
+        totalcond = zeros((npops,npops,npts))
+        for t in range(npts):
+            pshipcond = zeros((npops,npops))
+            for pop1 in range(npops):
+                for pop2 in range(npops):
+                    pshipcond[pop1,pop2] = (simcond[pop1,t]+simcond[pop2,t])/2.0
+                    pshipcond[pop2,pop1] = pshipcond[pop1,pop2]
+        
+            totalcond[:,:,t] = pshipcond # Note use of copy()
+    
+        return totalcond, ctrlpts
     
     # Sexual behavior parameters
     tmpacts = odict()
     tmpcond = odict()
-    tmppts = odict()
+    tmpactspts = odict()
+    tmpcondpts = odict()
     for act in ['reg','cas','com','inj']:
         actsname = 'acts'+act
         condname = 'cond'+act
-        tmpacts[act], tmpcond[act], tmppts[act] = balanceacts(act, pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balanceacts(act, pars['popsize'])
         pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
