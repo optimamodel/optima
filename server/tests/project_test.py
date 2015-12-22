@@ -16,7 +16,7 @@ class ProjectTestCase(OptimaTestCase):
 
     def setUp(self):
         super(ProjectTestCase, self).setUp()
-        self.create_user()
+        self.user = self.create_user()
         self.login()
 
     def test_create_project(self):
@@ -258,6 +258,66 @@ class ProjectTestCase(OptimaTestCase):
         programset = progset.hydrate()
 
         self.assertIsNotNone(programset)
+
+    def test_bulk_delete(self):
+        from server.webapp.dbmodels import ProjectDb
+
+        project_count = 5
+        projects_to_delete = 2
+        project_ids = [
+            self.create_project(user_id=self.user.id)
+            for i in range(project_count)
+        ]
+
+        self.assertEqual(ProjectDb.query.count(), project_count)
+
+        # test bulk delete projects for current user
+
+        response = self.client.delete('/api/project', data={'projects': project_ids[:projects_to_delete]})
+        self.assertEqual(response.status_code, 204)
+        projects_left = project_count - projects_to_delete
+        self.assertEqual(ProjectDb.query.count(), projects_left)
+
+        other_user = self.create_user()
+        project_ids.append(self.create_project(user_id=other_user.id))
+        projects_left += 1
+
+        self.assertEqual(ProjectDb.query.count(), projects_left)
+
+        response = self.client.delete('/api/project', data={'projects': project_ids[projects_to_delete:]})
+        self.assertEqual(response.status_code, 410)
+        self.assertEqual(ProjectDb.query.count(), projects_left)
+
+    def test_portfolio(self):
+        from io import BytesIO
+        from zipfile import ZipFile
+        from server.webapp.dbmodels import ProjectDb
+        from optima.utils import load
+
+        project_count = 5
+        projects = [
+            self.create_project(user_id=self.user.id, return_instance=True)
+            for i in range(project_count)
+        ]
+
+        self.assertEqual(ProjectDb.query.count(), project_count)
+        response = self.client.post(
+            '/api/project/portfolio',
+            data={'projects': [
+              str(project.id)
+              for project in projects
+            ]})
+        self.assertEqual(response.status_code, 200)
+
+        first_project_filename = 'portfolio/{}.prj'.format(projects[0].name)
+        zip_file = ZipFile(BytesIO(response.data))
+        self.assertEqual(len(zip_file.namelist()), project_count)
+        self.assertIn(first_project_filename, zip_file.namelist())
+
+        project_file = BytesIO(zip_file.read(first_project_filename))
+        be_project = load(project_file)
+        self.assertEqual(be_project.name, projects[0].name)
+
 
 if __name__ == '__main__':
     unittest.main()
