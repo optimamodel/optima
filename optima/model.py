@@ -133,7 +133,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     mtx1     = simpars['tx']       # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
-    
+    #MK
+    immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
+    linktocare = simpars['linktocare'] # rate of linkage to care (P/T)....  hivtest/aidstest should also be P/T?
+    treatmentrate
+
     # Force of infection metaparameter
     Fforce = simpars['force']
     Finhomo = simpars['inhomo']
@@ -416,7 +420,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         newinfections = forceinfvec * Fforce * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
     
         # Initalise / reset arrays
-        dU = []; dD = []; dT = []; # Reset differences
+        dU = []; dD = []; dC = []; dT = []; # Reset differences MK added dC
         testingrate  = [0] * ncd4
         newdiagnoses = [0] * ncd4
         newtreat1    = [0] * ncd4
@@ -440,7 +444,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 progin = 0 # Cannot progress into acute stage
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[undx[cd4],:,t]
-                testingrate[cd4] = hivtest[:,t] # Population specific testing rates
+                testingrate[cd4] = hivtest[:,t] # Population specific testing rates 
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
@@ -457,7 +461,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
-        newtreat1tot = mtx1[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -468,24 +471,41 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
-            newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed
+            #newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed
             hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[dx[cd4],:,t] * background
-            inflows = progin + newdiagnoses[cd4]
-            outflows = progout + hivdeaths + otherdeaths
-            newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
-            newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+            #inflows = progin + newdiagnoses[cd4]
+            inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) #MK some go immediately into care after testing
+            outflows = progout + hivdeaths + otherdeaths + currentdiagnosed[cd4,:]*linktocare[cd4,:,t] #MK diagnosed moving into care
+            newtreat1[cd4] = 0 #MK diagnosed don't go to treatment directly
             dD.append(inflows - outflows - newtreat1[cd4])
             dD[cd4] = negativepeople('diagnosed', dD[cd4], people[dx[cd4],:,t], t)
-            results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
 
         #MK This is the main addition with immediatecare, linktocarerate, propstop, proploss
         ## In-Care
+        currentincare = people[care,:,t] # how many people currently in care (by population)
+        newtreat1tot = mtx1[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
         for cd4 in range(ncd4):
-            hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
-            otherdeaths = dt * people[dx[cd4],:,t] * background
-            
+            if cd4>0: 
+                progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
+            else: 
+                progin = 0 # Cannot progress into acute stage
+            if cd4<ncd4-1: 
+                progout = dt*prog[cd4]*people[care[cd4],:,t]
+            else: 
+                progout = 0 # Cannot progress out of AIDS stage
+            newtreat1[cd4] = newtreat1tot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
+            hivdeaths   = dt * people[care[cd4],:,t] * death[cd4]
+            otherdeaths = dt * people[care[cd4],:,t] * background
+            inflows = progin + newdiagnoses[cd4]*immediatecare[:,t]
+            outflows = progout + hivdeaths + otherdeaths
+            newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
+            newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+            dC.append(inflows - outflows - newtreat1[cd4])
+            dC[cd4] = negativepeople('incare', dC[cd4], people[care[cd4],:,t], t)
+            results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
 
         ## 1st-line treatment
         for cd4 in range(ncd4):
@@ -516,7 +536,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
-                change[tx[cd4],:]  = dT[cd4]
+                change[care[cd4],:] = dC[cd4]
+                change[tx[cd4],:]   = dT[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
@@ -611,9 +632,12 @@ def equilibrate(settings, simpars, verbose=2):
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
         assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        immcare = simpars['immediatecare'][p,0]
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
-        undiagnosed = nevertreated * assumedforceinf / undxdxrates     
-        diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
+        undiagnosed = nevertreated * assumedforceinf / undxdxrates     # MK should this be multiplied?
+        # MK split diagnosed to put some immediately into care
+        diagnosed   = nevertreated * simpars['hivtest'][p,0]*(1.-immcare) / undxdxrates
+        incare      = nevertreated * simpars['hivtest'][p,0]*immcare      / undxdxrates
         
         # Set rates within
         progratios = hstack([simpars['prog'], simpars['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
@@ -624,12 +648,14 @@ def equilibrate(settings, simpars, verbose=2):
         # Final calculations
         undiagnosed *= progratios
         diagnosed *= progratios
+        incare    *= progratios
         treatment *= recovratios
         
         # Populated equilibrated array
         initpeople[settings.uncirc, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
+        initpeople[settings.incare, p] = incare
         initpeople[settings.treat, p] = treatment
     
         if not((initpeople>=0).all()):
