@@ -84,7 +84,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     sus  = settings.uncirc  # Susceptible
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
-    care = settings.incare   # in Care
+    care = settings.incare   # in Care MK
     tx  = settings.treat  # Treatment -- 1st line
     
     # Concatenate all PLHIV, diagnosed and treated for ease
@@ -471,10 +471,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                 progout = dt*prog[cd4]*people[dx[cd4],:,t]
             else: 
                 progout = 0 # Cannot progress out of AIDS stage
-            #newtreat1[cd4] = newtreat1tot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed
             hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[dx[cd4],:,t] * background
-            #inflows = progin + newdiagnoses[cd4]
             inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) #MK some go immediately into care after testing
             outflows = progout + hivdeaths + otherdeaths + currentdiagnosed[cd4,:]*linktocare[cd4,:,t] #MK diagnosed moving into care
             newtreat1[cd4] = 0 #MK diagnosed don't go to treatment directly
@@ -536,7 +534,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
-                change[care[cd4],:] = dC[cd4]
+                change[care[cd4],:] = dC[cd4] # MK
                 change[tx[cd4],:]   = dT[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
@@ -632,7 +630,7 @@ def equilibrate(settings, simpars, verbose=2):
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
         assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
-        immcare = simpars['immediatecare'][p,0]
+        immcare = simpars['immediatecare'][p,0] # MK
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     # MK should this be multiplied?
         # MK split diagnosed to put some immediately into care
@@ -648,14 +646,14 @@ def equilibrate(settings, simpars, verbose=2):
         # Final calculations
         undiagnosed *= progratios
         diagnosed *= progratios
-        incare    *= progratios
+        incare    *= progratios # MK
         treatment *= recovratios
         
         # Populated equilibrated array
         initpeople[settings.uncirc, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
-        initpeople[settings.incare, p] = incare
+        initpeople[settings.incare, p] = incare # MK
         initpeople[settings.treat, p] = treatment
     
         if not((initpeople>=0).all()):
