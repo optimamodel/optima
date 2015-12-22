@@ -1,6 +1,7 @@
 from optima import epiplot
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
+from matplotlib.gridspec import GridSpec
 global plotfig, check, button # Without these, interactivity doesn't work
 plotfig = None # Initialize plot figure
 
@@ -33,6 +34,12 @@ def gui(results):
         ''' Add a plot to an existing figure '''
         thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
         thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+        print(thisplot)
+        
+        pos1 = thisplot.get_position() # get the original position 
+        pos2 = [pos1.x0 + 0.3, pos1.y0 + 0.3,  pos1.width / 2.0, pos1.height / 2.0] 
+        thisplot.set_position(pos2) # set a new position
+
         return None
         
     
@@ -80,7 +87,9 @@ def gui(results):
     nboxes = len(checkboxes)
     
     ## Set up control panel
-    figure(figsize=(7,8))
+    try: fc = results.project.settings.optimablue
+    except: fc = (0.16, 0.67, 0.94)
+    figure(figsize=(7,8), facecolor=(0.95, 0.95, 0.95))
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
     buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
     defaultchecks = [True]+[False]*(nboxes-1)
@@ -88,6 +97,6 @@ def gui(results):
     for label in check.labels:
         thispos = label.get_position()
         label.set_position((thispos[0]*0.5,thispos[1])) # not sure why by default the check boxes are so far away
-    button = Button(buttonaxes, 'Update') 
+    button = Button(buttonaxes, 'Update', color=fc) 
     button.on_clicked(update) # Update figure if button is clicked
     update(None) # Plot initially
