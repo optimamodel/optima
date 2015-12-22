@@ -272,11 +272,11 @@ def makeparsfromdata(data, verbose=2):
     tmpcondpts = odict()
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
-        tmpacts[act], tmpactspts[act] = balance(act, which='numacts', pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balance(act, 'numacts', pars['popsize'])
         pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
-        tmpcond[act], tmpcondpts[act] = balance(act, which='condom')
+        tmpcond[act], tmpcondpts[act] = balance(act, 'condom')
         pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
     # Convert matrices to lists of of population-pair keys
@@ -452,7 +452,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo']
-        modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj']
+        modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
         if keys is None: keys = modelkeys
         
         pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
