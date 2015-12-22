@@ -203,78 +203,25 @@ def makeparsfromdata(data, verbose=2):
     
     
     ## Acts
-    def balance(act, popsizepar=None, which=None):
-        ''' Combine the different estimates for the number of acts or condom use and return the "average" value '''
-        mixmatrix = array(data['part'+act])
-        npops = len(popkeys) # WARNING, what is this?
+    def balance(act, which=None, popsizepar=None):
+        ''' 
+        Combine the different estimates for the number of acts or condom use and return the "average" value.
+        
+        Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
+        '''
+        if which not in ['numacts','condom']: raise Exception('Can only balance numacts or condom, not "%s"' % which)
+        mixmatrix = array(data['part'+act]) # Get the partnerships matrix
+        npops = len(popkeys) # Figure out the number of populations
         symmetricmatrix = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
-        
+                if which=='numacts': symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
+                if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
+            
         # Decide which years to use -- use the earliest year, the latest year, and the most time points available
         yearstouse = []
         for row in range(npops):
-            yearstouse.append(array(data['years'])[~isnan(data['numacts'+act][row])]   )
-        minyear = Inf
-        maxyear = -Inf
-        npts = 1 # Don't use fewer than 2 points
-        for row in range(npops):
-            minyear = minimum(minyear, min(yearstouse[row]))
-            maxyear = maximum(maxyear, max(yearstouse[row]))
-            npts = maximum(npts, len(yearstouse[row]))
-        if minyear==Inf:  minyear = data['years'][0] # If not set, reset to beginning
-        if maxyear==-Inf: maxyear = data['years'][-1] # If not set, reset to end
-        ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
-        
-        # Interpolate over population acts data for each year
-        tmpactspar = data2timepar('numacts'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
-        simacts = tmpactspar.interp(tvec=ctrlpts)
-        popsize = popsizepar.interp(tvec=ctrlpts)
-        npts = len(ctrlpts)
-        
-        # Compute the balanced acts
-        totalacts = zeros((npops,npops,npts))
-        for t in range(npts):
-            smatrix = dcp(symmetricmatrix) # Initialize
-            psize = popsize[:,t]
-            popacts = simacts[:,t]
-            
-            # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
-            for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1]
-            
-            # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
-            for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1]))
-            
-            # Reconcile different estimates of number of acts, which must balance
-            pshipacts = zeros((npops,npops));
-            for pop1 in range(npops):
-                for pop2 in range(npops):
-                    balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
-                    pshipacts[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
-                    pshipacts[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
-
-        
-            totalacts[:,:,t] = pshipacts # Note use of copy()
-    
-        return totalacts, ctrlpts
-    
-    
-    ## Condoms
-    def balancecond(act, popsizepar):
-        ''' Combine the different estimates for the number of acts and return the "average" value '''
-        mixmatrix = array(data['part'+act])
-        npops = len(popkeys) # WARNING, what is this?
-        symmetricmatrix = zeros((npops,npops));
-        for pop1 in range(npops):
-            for pop2 in range(npops):
-                symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
-        
-        
-        # Decide which years to use -- use the earliest year, the latest year, and the most time points available
-        yearstouse = []
-        for row in range(npops):
-            yearstouse.append(array(data['years'])[~isnan(data['condom'+act][row])]   )
+            yearstouse.append(array(data['years'])[~isnan(data[which+act][row])]   )
         minyear = Inf
         maxyear = -Inf
         npts = 1 # Don't use fewer than 1 point
@@ -287,33 +234,49 @@ def makeparsfromdata(data, verbose=2):
         ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
         
         # Interpolate over population acts data for each year
-        tmpcondpar = data2timepar('condom'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
-        simcond = tmpcondpar.interp(tvec=ctrlpts)
+        tmppar = data2timepar(which+act, data, popkeys, by='pop') # Temporary parameter for storing acts
+        tmpsim = tmppar.interp(tvec=ctrlpts)
+        if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
         npts = len(ctrlpts)
         
         # Compute the balanced acts
-        totalcond = zeros((npops,npops,npts))
+        output = zeros((npops,npops,npts))
         for t in range(npts):
-            pshipcond = zeros((npops,npops))
+            if which=='numacts':
+                smatrix = dcp(symmetricmatrix) # Initialize
+                psize = popsize[:,t]
+                popacts = tmpsim[:,t]
+                for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1] # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
+                for pop1 in range(npops): smatrix[:,pop1] = psize[pop1]*popacts[pop1]*smatrix[:,pop1] / float(eps+sum(smatrix[:,pop1])) # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
+            
+            # Reconcile different estimates of number of acts, which must balance
+            thispoint = zeros((npops,npops));
             for pop1 in range(npops):
                 for pop2 in range(npops):
-                    pshipcond[pop1,pop2] = (simcond[pop1,t]+simcond[pop2,t])/2.0
-                    pshipcond[pop2,pop1] = pshipcond[pop1,pop2]
+                    if which=='numacts':
+                        balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
+                        thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
+                        thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
+                    if which=='condom':
+                        thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
+                        thispoint[pop2,pop1] = thispoint[pop1,pop2]
         
-            totalcond[:,:,t] = pshipcond # Note use of copy()
-    
-        return totalcond, ctrlpts
-    
+            output[:,:,t] = thispoint
+        
+        return output, ctrlpts
+        
     # Sexual behavior parameters
     tmpacts = odict()
     tmpcond = odict()
     tmpactspts = odict()
     tmpcondpts = odict()
-    for act in ['reg','cas','com','inj']:
+    for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
-        condname = 'cond'+act
-        tmpacts[act], tmpactspts[act], tmpcond[act], tmpactspts[act] = balanceacts(act, pars['popsize'])
+        tmpacts[act], tmpactspts[act] = balance(act, which='numacts', pars['popsize'])
         pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+    for act in ['reg','cas','com']: # Condom use
+        condname = 'cond'+act
+        tmpcond[act], tmpcondpts[act] = balance(act, which='condom')
         pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
     # Convert matrices to lists of of population-pair keys
@@ -324,10 +287,10 @@ def makeparsfromdata(data, verbose=2):
             for j,key2 in enumerate(popkeys):
                 if sum(array(tmpacts[act])[i,j,:])>0:
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
-                    pars[actsname].t[(key1,key2)] = array(tmppts[act])
+                    pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
                         pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                        pars[condname].t[(key1,key2)] = array(tmppts[act])
+                        pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
 
     
