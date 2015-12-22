@@ -27,7 +27,7 @@ define(['./module'], function (module) {
           });
         },
         downloadSelectedProjects: function(projects) {
-          return $http.post('/api/project/portfolio', { projects: projects});
+          return $http.post('/api/project/portfolio', { projects: projects}, {responseType:'arraybuffer'});
         },
         copyProject: function(sourceId, destinationName) {
           return $http.post('/api/project/' + sourceId + '/copy' + '?to=' + destinationName)
