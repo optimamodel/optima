@@ -32,10 +32,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
       $scope.allSelected = false;
-      $scope.projectSelected = [];
-      for (var index = 0;index < $scope.projects.length;index++) {
-        $scope.projectSelected[index] = false;
-      }
+      const initProjectSelected = function() {
+        $scope.projectSelected = [];
+        for (var index = 0;index < $scope.projects.length;index++) {
+          $scope.projectSelected[index] = false;
+        }
+      };
+      initProjectSelected();
 
       $scope.selectAll = function() {
         for(var index = 0; index < $scope.projectSelected.length; index++) {
@@ -49,7 +52,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).map(function(project) {
           return project.id;
         });
-        projectApiService.deleteSelectedProjects(selectedProjects);
+        projectApiService.deleteSelectedProjects(selectedProjects)
+          .success(function (response, status, headers, config) {
+            $scope.projects = _.filter($scope.projects, function(project, index) {
+              return !$scope.projectSelected[index];
+            });
+            initProjectSelected();
+          });
       };
 
       $scope.downloadSelected = function() {
