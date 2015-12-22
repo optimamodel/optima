@@ -19,22 +19,25 @@ class UserDb(db.Model):
 
     resource_fields = {
         'id': Uuid,
-        'name': fields.String,
+        'displayName': fields.String(attribute='name'),
+        'username': fields.String,
         'email': fields.String,
         'is_admin': fields.Boolean,
     }
 
-    id = db.Column(UUID(True), server_default = text("uuid_generate_v1mc()"), primary_key = True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    username = db.Column(db.String(255))
     name = db.Column(db.String(60))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
     is_admin = db.Column(db.Boolean, server_default=text('FALSE'))
     projects = db.relationship('ProjectDb', backref='user', lazy='dynamic')
 
-    def __init__(self, name, email, password, is_admin=False):
+    def __init__(self, name, email, password, username, is_admin=False):
         self.name = name
         self.email = email
         self.password = password
+        self.username = username
         self.is_admin = is_admin
 
     def get_id(self):
