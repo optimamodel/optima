@@ -311,7 +311,7 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name=None, category='No category', active=False, pars=None, created=None, updated=None, id=None):
+    def __init__(self, project_id, progset_id, name, short_name='', category='No category', active=False, pars=None, created=None, updated=None, id=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -329,7 +329,12 @@ class ProgramsDb(db.Model):
 
     def hydrate(self):
         from optima.programs import Program
-        program_entry = Program(self.name, targetpars=self.pars)
+        program_entry = Program(
+            self.name,
+            targetpars=self.pars,
+            short_name=self.short_name,
+            category=self.category
+        )
         program_entry.id = self.id
         return program_entry
 

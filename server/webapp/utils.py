@@ -311,6 +311,8 @@ def update_or_create_program(project_id, progset_id, name, program):
             project_id=project_id,
             progset_id=progset_id,
             name=name,
+            short_name=program.short_name,
+            category=program.category,
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
             pars=program.targetpars
@@ -320,6 +322,8 @@ def update_or_create_program(project_id, progset_id, name, program):
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
         program_record.pars = program.targetpars
+        program_record.short_name = program.short_name
+        program_record.category = program.category
 
 
 def init_login_manager(login_manager):

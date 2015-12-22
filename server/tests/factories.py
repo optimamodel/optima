@@ -113,7 +113,7 @@ class ProgramsFactory(SQLAlchemyModelFactory):
     class Meta:
         model = ProgramsDb
 
-    category = 'No category'
+    category = 'Test category'
     name = fuzzy.FuzzyText(prefix='program_')
     short_name = fuzzy.FuzzyText()
     active = True

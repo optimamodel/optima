@@ -172,6 +172,7 @@ class ProjectTestCase(OptimaTestCase):
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         self.assertEqual(project.name, 'test')
         self.assertEqual(len(project.progsets), progsets_count)
+        self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
 
     def test_delete_project_with_parsets(self):
         project_id = self.create_project('test')

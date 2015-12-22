@@ -312,7 +312,7 @@ class Program(object):
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
     modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
 
-    def __init__(self,name,targetpars=None,targetpops=None,ccopars=None,costcovdata=None,nonhivdalys=0):
+    def __init__(self,name,targetpars=None,targetpops=None,ccopars=None,costcovdata=None,nonhivdalys=0,category='No ctaegory',short_name=''):
         '''Initialize'''
         self.name = name
         self.id = uuid()
@@ -322,6 +322,8 @@ class Program(object):
         self.optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
+        self.category = category
+        self.short_name = short_name
 
     def __repr__(self):
         ''' Print out useful info'''
