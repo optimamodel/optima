@@ -166,7 +166,21 @@ class Projects(ProjectBase):
         parameters=bulk_project_parser.swagger_parameters()
     )
     def delete(self):
-        args = bulk_project_parser.parse_args()
+        # dirty hack in case the wsgi layer didn't put json data where it belongs
+        from flask import request
+        import json
+
+        class FakeRequest:
+            def __init__(self, data):
+                self.json = json.loads(data)
+
+        try:
+            req = FakeRequest(request.data)
+        except ValueError:
+            req = request
+        # end of dirty hack
+
+        args = bulk_project_parser.parse_args(req=req)
 
         projects = [
             load_project(id, raise_exception=True)
@@ -743,6 +757,9 @@ class Portfolio(Resource):
     def post(self):
         from zipfile import ZipFile
         from uuid import uuid4
+
+        for arg in bulk_project_parser.args:
+            print('{} location: {}'.format(arg.name, arg.location))
 
         current_app.logger.debug("Download Portfolio (/api/project/portfolio)")
         args = bulk_project_parser.parse_args()
