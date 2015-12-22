@@ -1,7 +1,7 @@
 ## Imports
 from math import pow as mpow
-from numpy import array, zeros, exp, maximum, minimum, median, hstack, inf, shape
-from optima import printv, tic, toc, dcp, Resultset
+from numpy import array, zeros, exp, maximum, minimum, hstack, inf
+from optima import printv, tic, toc, dcp, Resultset, findinds
 
 
 def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
@@ -65,18 +65,13 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     tx  = settings.treat  # Treatment -- 1st line
-    plhivind = settings.allplhiv # All PLHIV
-    dxind    = settings.alldiag       # All people who have been diagnosed
     popsize = dcp(simpars['popsize']) # Population sizes
-    male = array(simpars['male']).astype(bool) # Male populations
     
     # Infection propabilities
     mmi  = simpars['const']['transmmi']          # Male -> male insertive
     mfi  = simpars['const']['transmfi']          # Male -> female insertive
     mmr  = simpars['const']['transmmr']          # Male -> male receptive
     mfr  = simpars['const']['transmfr']          # Male -> female receptive
-    mtcb = simpars['const']['mtctbreast']   # MTCT with breastfeeding
-    mtcn = simpars['const']['mtctnobreast'] # MTCT no breastfeeding
     transinj = simpars['const']['transinj']      # Injecting
     
     # Further potential effects on transmission
@@ -84,17 +79,13 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     effcirc   = 1 - simpars['const']['effcirc']            # Circumcision effect
     effprep   = (1 - simpars['const']['effprep']) * simpars['prep'] # PrEP effect
     effcondom = 1 - simpars['const']['effcondom']          # Condom effect
-    effpmtct  = 1 - simpars['const']['effpmtct']           # PMTCT effect
     
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
-    numpmtct = simpars['numpmtct']  # PMTCT (N)
-    propcirc = simpars['circum']    # Proportion of men circumcised (P)
-    tobecirc = simpars['numcircum'] # Number of men to be circumcised (N)
-    mtx1     = simpars['numtx']       # 1st line treatement (N) -- tx already used for index of people on treatment
+    numtx    = simpars['numtx']       # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
-    transit   = simpars['transit'] # Asymmetric transitions
+    propcirc = simpars['propcirc']
     
     # Force of infection metaparameter
     force = simpars['force']
@@ -164,6 +155,12 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     people[:,:,0] = equilibrate() # No it hasn't, so run equilibration
     
     
+    ###############################################################################
+    ## Compute the effective numbers of acts outside the time loop
+    ###############################################################################
+    sexactslist = []
+    injactslist = []
+    
 
 
 
@@ -172,8 +169,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ## Run the model -- numerically integrate over time
     ###############################################################################
 
-    # Loop over time
-    for t in range(npts): # Skip the last timestep for people since we don't need to know what happens after that
+    for t in range(npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 8, verbose)
         
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
@@ -193,10 +189,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             thisprev = sum(people[1:,pop,t]) / allpeople[pop,t] # Probably a better way of doing this
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
-        # Also calculate effective MTCT transmissibility
-        effmtct  = mtcb*simpars['breast'][t] + mtcn*(1-simpars['breast'][t]) # Effective MTCT transmission
-        pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
-                
+        
+        
+        
         
         ###############################################################################
         ## Calculate force-of-infection (forceinf)
@@ -207,53 +202,40 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         ## Sexual partnerships...
         
-        # Loop over all populations (for males)
-        for popM in range(npops):
+        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
+        for act in sexactslist:
+            effacts = act['effacts'][t]
+            pop1 = act['pop1']
+            pop2 = act['pop2']
+            thistrans = act['trans']
             
-            # Circumcision
-            circeffF = 1 # Trivial circumcision effect for female or receptive male
-            circeffM = 1 - effcirc*propcirc[popM,t]
+            circeff = 1 - effcirc*propcirc[pop1,t]
+            prepeff = 1 - effprep[pop1,t]
+            stieff  = 1 + effsti[pop1,t]
             
-            # Loop over all populations (for females)
-            for popF in range(npops):
-                
-                # Transmissibility (depends on receptive population being male or female)
-                transM = mmi if male[popF] else mfi # Insertive transmissibility
-                transF = mmr if male[popF] else mfr # Receptive transmissibility
+            thisforceinf = 1 - mpow((1-thistrans*circeff*prepeff*stieff), (dt*effacts*effhivprev[pop2]))
+            forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)          
+            
+        # Injection-related infections -- force-of-infection in pop1 due to pop2
+        for act in injactslist:
+            effacts = act['effacts'][t]
+            pop1 = act['pop1']
+            pop2 = act['pop2']
+            osteff = 1 # WARNING, TEMP
+            
+            circeff = 1 - effcirc*propcirc[pop1,t]
+            prepeff = 1 - effprep[pop1,t]
+            stieff  = 1 + effsti[pop1,t]
+            
+            thisforceinf = 1 - mpow((1-transinj), (dt*effacts*osteff*effhivprev[pop2])) 
+            forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
+        
+        if not(all(forceinfvec>=0)):
+            invalid = [simpars['popkeys'][i] for i in findinds(forceinfvec<0)]
+            errormsg = 'Force-of-infection is invalid in population %s' % invalid
+            raise Exception(errormsg)
 
-                # Transmission effects                
-                prepeffM = 1 - effprep[popM,t] # Male PrEP effect
-                prepeffF = 1 - effprep[popF,t] # Female PrEP effect
-                stieffM  = 1 + effsti[popM,t]  # Male STI prevalence effect
-                stieffF  = 1 + effsti[popF,t]  # Female STI prevalence effect
-                
-                # Iterate through the sexual act types
-                for act in sexactslist[popM][popF]: # Ignore if this isn't a valid partnership for this sexual act type
-                    numactsM = totalacts[act][popM,popF,t]; # Number of acts per person per year (insertive partner)
-                    numactsF = totalacts[act][popF,popM,t]; # Number of acts per person per year (receptive partner)
-                    condomprob = (condom[act][popM,t] + condom[act][popF,t]) / 2 # Reconcile condom probability
-                    condomeff = 1 - condomprob*effcondom # Effect of condom use
-                    forceinfM = 1 - mpow((1-transM*circeffM*prepeffM*stieffM), (dt*numactsM*condomeff*effhivprev[popF])) # The chance of "female" infecting "male"
-                    forceinfF = 1 - mpow((1-transF*circeffF*prepeffF*stieffF), (dt*numactsF*condomeff*effhivprev[popM])) # The chance of "male" infecting "female"
-                    forceinfvec[popM] = 1 - (1-forceinfvec[popM]) * (1-forceinfM) # Calculate the new "male" forceinf, ensuring that it never gets above 1
-                    forceinfvec[popF] = 1 - (1-forceinfvec[popF]) * (1-forceinfF) # Calculate the new "female" forceinf, ensuring that it never gets above 1
-                    if not(all(forceinfvec>=0)): raise Exception('Sexual force-of-infection is invalid')
-        
-        ## Injecting partnerships...
-        
-       
-       # Iterate through partnership pairs
-        for pop1 in range(npops):
-            for pop2 in range(npops):
-                if pshipsinj[pop1,pop2]>0: # Ignore if this isn't a valid injecting partnership
-                    numacts1 = sharing[pop1,t] * totalacts['inj'][pop1,pop2,t] / 2 # Number of acts per person per year -- /2 since otherwise double-count
-                    numacts2 = sharing[pop2,t] * totalacts['inj'][pop2,pop1,t] / 2 # Number of acts per person per year
-                    forceinf1 = 1 - mpow((1-transinj), (dt*numacts1*osteff*effhivprev[pop2])) # The chance of "2" infecting "1"
-                    forceinf2 = 1 - mpow((1-transinj), (dt*numacts2*osteff*effhivprev[pop1])) # The chance of "1" infecting "2"
-                    forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-forceinf1) # Calculate the new "male" forceinf, ensuring that it never gets above 1
-                    forceinfvec[pop2] = 1 - (1-forceinfvec[pop2]) * (1-forceinf2) # Calculate the new "male" forceinf, ensuring that it never gets above 1
-                    if not(all(forceinfvec>=0)): raise Exception('Injecting force-of-infection is invalid (transinj=%f, numacts1=%f, numacts2=%f, osteff=%f, effhivprev1=%f, effhivprev2=%f)'% (transinj, numacts1, numacts2, osteff, effhivprev[pop2], effhivprev[pop1]))
-        
+            
 
 
         
@@ -275,15 +257,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        results.inci[:,t] = (newinfections + mtctperpop)/float(dt)  # Store new infections AND new MTCT births
+        results.inci[:,t] = (newinfections)/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
-        propdx = None
-        if propaware[:,t].any(): # Only do this if nonzero
-            currplhiv = people[plhivind,:,t].sum(axis=0)
-            currdx = people[dxind,:,t].sum(axis=0)
-            currundx = currplhiv[:] - currdx[:]
-            fractiontodx = maximum(0, propaware[:,t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
@@ -295,20 +271,16 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            if propdx is None: # No proportion diagnosed information, go with testing rate
-                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
-            else: # It exists, use what's calculated before
-                newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
+            newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
-            dU[cd4] = negativepeople('undiagnosed', dU[cd4], people[undx[cd4],:,t], t)
             results.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             results.death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
-        newtreat1tot = mtx1[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = numtx[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
@@ -327,7 +299,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
             newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dD.append(inflows - outflows - newtreat1[cd4])
-            dD[cd4] = negativepeople('diagnosed', dD[cd4], people[dx[cd4],:,t], t)
             results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
