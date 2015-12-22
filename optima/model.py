@@ -171,6 +171,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
             if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmmi']
+            # WARNING how to specify receptive male-male??
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['const']['transmfi']  
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmfr']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
