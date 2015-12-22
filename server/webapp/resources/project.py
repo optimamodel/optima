@@ -86,6 +86,12 @@ class ProjectsAll(ProjectBase):
         return super(ProjectsAll, self).get()
 
 
+bulk_project_parser = RequestParser()
+bulk_project_parser.add_arguments({
+    'projects': {'required': True, 'action': 'append'},
+})
+
+
 class Projects(ProjectBase):
     """
     A collection of projects for the given user.
@@ -154,6 +160,25 @@ class Projects(ProjectBase):
         response.headers['X-project-id'] = project_entry.id
         response.status_code = 201
         return response
+
+    @swagger.operation(
+        summary="Bulk delete for project with the provided ids",
+        parameters=bulk_project_parser.swagger_parameters()
+    )
+    def delete(self):
+        args = bulk_project_parser.parse_args()
+
+        projects = [
+            load_project(id, raise_exception=True)
+            for id in args['projects']
+        ]
+
+        for project in projects:
+            project.recursive_delete()
+
+        db.session.commit()
+
+        return '', 204
 
 
 class Project(Resource):
@@ -707,18 +732,12 @@ class ProjectCopy(Resource):
         return payload
 
 
-portfolio_parser = RequestParser()
-portfolio_parser.add_arguments({
-    'projects': {'required': True, 'action': 'append'},
-})
-
-
 class Portfolio(Resource):
 
     @swagger.operation(
         produces='application/x-zip',
         summary='Download data for projects with the given ids as a zip file',
-        parameters=portfolio_parser.swagger_parameters()
+        parameters=bulk_project_parser.swagger_parameters()
     )
     @login_required
     def post(self):
@@ -726,7 +745,7 @@ class Portfolio(Resource):
         from uuid import uuid4
 
         current_app.logger.debug("Download Portfolio (/api/project/portfolio)")
-        args = portfolio_parser.parse_args()
+        args = bulk_project_parser.parse_args()
         current_app.logger.debug("Portfolio requested for projects {}".format(args['projects']))
 
         loaddir = upload_dir_user(TEMPLATEDIR)
