@@ -1,7 +1,6 @@
 from optima import epiplot
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-from matplotlib.gridspec import GridSpec
 global plotfig, check, button # Without these, interactivity doesn't work
 plotfig = None # Initialize plot figure
 
