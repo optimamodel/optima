@@ -68,10 +68,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     popsize = dcp(simpars['popsize']) # Population sizes
     
     # Infection propabilities
-    mmi  = simpars['const']['transmmi']          # Male -> male insertive
-    mfi  = simpars['const']['transmfi']          # Male -> female insertive
-    mmr  = simpars['const']['transmmr']          # Male -> male receptive
-    mfr  = simpars['const']['transmfr']          # Male -> female receptive
+    male = simpars['male']
+    female = simpars['female']
     transinj = simpars['const']['transinj']      # Injecting
     
     # Further potential effects on transmission
@@ -106,58 +104,55 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     # Set initial epidemic conditions 
     ###########################################
     
-    def equilibrate():
-        # Set parameters
-        prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
-        efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-        
-        # Shorten key variables
-        initpeople = zeros((settings.ncomparts,npops)) 
-        allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
-        
-        # Can calculate equilibrium for each population separately
-        for p in range(npops):
-            # Set up basic calculations
-            popinfected = allinfected[p]
-            uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
-            
-            # Treatment & treatment failure
-            fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
-            treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
-            if treatment > popinfected: # More people on treatment than ever infected, uh oh!
-                treatment = popinfected
-            
-            # Diagnosed & undiagnosed
-            nevertreated = popinfected - treatment
-            assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
-            undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
-            undiagnosed = nevertreated * assumedforceinf / undxdxrates     
-            diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
-            
-            # Set rates within
-            progratios = hstack([prog, simpars['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
-            progratios = (1/progratios)  / sum(1/progratios) # Normalize
-            recovratios = hstack([inf, recov, efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
-            recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
-            
-            # Final calculations
-            undiagnosed *= progratios
-            diagnosed *= progratios
-            treatment *= recovratios
-            
-            # Populated equilibrated array
-            initpeople[settings.uncirc, p] = uninfected
-            initpeople[settings.undiag, p] = undiagnosed
-            initpeople[settings.diag, p] = diagnosed
-            initpeople[settings.treat, p] = treatment
-        
-            if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
-                err = 'Non-positive people found during epidemic initialization!'  
-                raise Exception(err)
-            
-        return initpeople
+    # Set parameters
+    prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
+    efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     
-    people[:,:,0] = equilibrate() # No it hasn't, so run equilibration
+    # Shorten key variables
+    initpeople = zeros((settings.ncomparts,npops)) 
+    allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
+    
+    # Can calculate equilibrium for each population separately
+    for p in range(npops):
+        # Set up basic calculations
+        popinfected = allinfected[p]
+        uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
+        
+        # Treatment & treatment failure
+        fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
+        treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
+        if treatment > popinfected: # More people on treatment than ever infected, uh oh!
+            treatment = popinfected
+        
+        # Diagnosed & undiagnosed
+        nevertreated = popinfected - treatment
+        assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
+        undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
+        undiagnosed = nevertreated * assumedforceinf / undxdxrates     
+        diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
+        
+        # Set rates within
+        progratios = hstack([prog, simpars['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
+        progratios = (1/progratios)  / sum(1/progratios) # Normalize
+        recovratios = hstack([inf, recov, efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
+        recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
+        
+        # Final calculations
+        undiagnosed *= progratios
+        diagnosed *= progratios
+        treatment *= recovratios
+        
+        # Populated equilibrated array
+        initpeople[settings.uncirc, p] = uninfected
+        initpeople[settings.undiag, p] = undiagnosed
+        initpeople[settings.diag, p] = diagnosed
+        initpeople[settings.treat, p] = treatment
+    
+        if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
+            err = 'Non-positive people found during epidemic initialization!'  
+            raise Exception(err)
+            
+    people[:,:,0] = initpeople # No it hasn't, so run equilibration
     
     
     ###############################################################################
@@ -165,6 +160,16 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ###############################################################################
     sexactslist = []
     injactslist = []
+    for acts in ['actsreg','actscas','actscom']:
+        for key in simpars[acts]:
+            this = {}
+            this['effacts'] = simpars[acts][key]
+            this['pop1'] = key[0]
+            this['pop2'] = key[1]
+            if     male[key[0]] and   male[key[1]]: this['trans'] = simpars['const']['transmmi']
+            elif   male[key[0]] and female[key[1]]: this['trans'] = simpars['const']['transmfi']  
+            elif female[key[0]] and   male[key[1]]: this['trans'] = simpars['const']['transfmi']
+            else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
     
     
     

@@ -203,7 +203,7 @@ def makeparsfromdata(data, verbose=2):
     
     
     ## Acts
-    def gettotalacts(act, popsizepar):
+    def balanceacts(act, popsizepar):
         ''' Combine the different estimates for the number of acts and return the "average" value '''
         mixmatrix = array(data['part'+act])
         npops = len(popkeys) # WARNING, what is this?
@@ -233,10 +233,7 @@ def makeparsfromdata(data, verbose=2):
         popsize = popsizepar.interp(tvec=controlpts)
         npts = len(controlpts)
         
-        print('HI!!!!')
-        print(controlpts)
-        
-        
+        # Compute the balanced acts
         totalacts = zeros((npops,npops,npts))
         for t in range(npts):
             smatrix = dcp(symmetricmatrix) # Initialize
@@ -266,22 +263,25 @@ def makeparsfromdata(data, verbose=2):
     tmpmatrix = odict()
     tmppts = odict()
     for act in ['reg','cas','com','inj']:
-        parname = 'acts'+act
-        tmpmatrix[parname], tmppts[parname] = gettotalacts(act, pars['popsize'])
-        pars[parname] = Timepar(name=parname, m=1, y=odict(), t=odict(), by='pship') # Create structure
-    
+        actsname = 'acts'+act
+        condname = 'cond'+act
+        tmpmatrix[act], tmppts[act] = balanceacts(act, pars['popsize'])
+        pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+        pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+        
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
-        parname = 'acts'+act
+        actsname = 'acts'+act
+        condname = 'cond'+act
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
-                if sum(array(tmpmatrix[parname])[i,j,:])>0:
-                    pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
-                    pars[parname].t[(key1,key2)] = array(tmppts[parname])
+                if sum(array(tmpmatrix[act])[i,j,:])>0:
+                    pars[actsname].y[(key1,key2)] = array(tmpmatrix[act])[i,j,:]
+                    pars[actsname].t[(key1,key2)] = array(tmppts[act])
+                    
+                    if act!='inj':
+                        pars[condname].y
     
-    # Store the actual keys that will need to be iterated over in model.py
-    for act in ['reg','cas','com','inj']:
-        pars['pships'+act] = pars['acts'+act].y.keys() 
 
     
     
