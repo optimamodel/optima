@@ -240,7 +240,7 @@ def makeparsfromdata(data, verbose=2):
             psize = popsize[:,t]
             popacts = simacts[:,t]
             
-            # Yes, this needs to be separate! Don't try to put in the next for loop!
+            # Yes, this needs to be separate! Don't try to put in the next for loop, the indices are opposite!
             for pop1 in range(npops): smatrix[pop1,:] = smatrix[pop1,:]*psize[pop1]
             
             # Divide by the sum of the column to normalize the probability, then multiply by the number of acts and population size to get total number of acts
@@ -260,12 +260,13 @@ def makeparsfromdata(data, verbose=2):
         return totalacts, controlpts
     
     # Sexual behavior parameters
-    tmpmatrix = odict()
+    tmpacts = odict()
+    tmpcond = odict()
     tmppts = odict()
     for act in ['reg','cas','com','inj']:
         actsname = 'acts'+act
         condname = 'cond'+act
-        tmpmatrix[act], tmppts[act] = balanceacts(act, pars['popsize'])
+        tmpacts[act], tmpcond[act], tmppts[act] = balanceacts(act, pars['popsize'])
         pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
@@ -275,12 +276,12 @@ def makeparsfromdata(data, verbose=2):
         condname = 'cond'+act
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
-                if sum(array(tmpmatrix[act])[i,j,:])>0:
-                    pars[actsname].y[(key1,key2)] = array(tmpmatrix[act])[i,j,:]
+                if sum(array(tmpacts[act])[i,j,:])>0:
+                    pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmppts[act])
-                    
                     if act!='inj':
-                        pars[condname].y
+                        pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                        pars[condname].t[(key1,key2)] = array(tmppts[act])
     
 
     
@@ -441,7 +442,7 @@ class Parameterset(object):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
-        generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo', 'pshipsreg', 'pshipscas', 'pshipscom', 'pshipsinj']
+        generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo']
         modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj']
         if keys is None: keys = modelkeys
         

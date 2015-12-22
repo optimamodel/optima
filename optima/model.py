@@ -24,7 +24,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
-    npops      = len(simpars['initprev']) # WARNING TEMP
+    popkeys    = simpars['popkeys']
+    npops      = len(popkeys)
     simpars    = dcp(simpars)
     tvec       = simpars['tvec']
     dt         = tvec[1]-tvec[0]      # Shorten dt
@@ -164,11 +165,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         for key in simpars[acts]:
             this = {}
             this['effacts'] = simpars[acts][key]
-            this['pop1'] = key[0]
-            this['pop2'] = key[1]
-            if     male[key[0]] and   male[key[1]]: this['trans'] = simpars['const']['transmmi']
-            elif   male[key[0]] and female[key[1]]: this['trans'] = simpars['const']['transmfi']  
-            elif female[key[0]] and   male[key[1]]: this['trans'] = simpars['const']['transfmi']
+            this['pop1'] = popkeys.index(key[0])
+            this['pop2'] = popkeys.index(key[1])
+            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmmi']
+            elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['const']['transmfi']  
+            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transfmi']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
     
     
