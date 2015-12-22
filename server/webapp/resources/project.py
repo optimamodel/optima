@@ -761,6 +761,6 @@ class Portfolio(Resource):
         zipfile_server_name = os.path.join(loaddir, zipfile_name)
         with ZipFile(zipfile_server_name, 'w') as portfolio:
             for project in projects:
-                portfolio.write(os.path.join(loaddir, project), project)
+                portfolio.write(os.path.join(loaddir, project), 'portfolio/{}'.format(project))
 
         return helpers.send_from_directory(loaddir, zipfile_name)
