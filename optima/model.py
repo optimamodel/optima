@@ -161,16 +161,28 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     ###############################################################################
     sexactslist = []
     injactslist = []
-    for acts in ['actsreg','actscas','actscom']:
-        for key in simpars[acts]:
+    
+    # Sex
+    for act in ['reg','cas','com']:
+        for key in simpars['acts'+act]:
             this = {}
-            this['effacts'] = simpars[acts][key]
+            this['acts'] = simpars['acts'+act][key]
+            this['cond'] = 1 - simpars['cond'+act][key]*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
             if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmmi']
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['const']['transmfi']  
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transfmi']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
+            sexactslist.append(this)
+    
+    # Injection
+    for key in simpars['actsinj']:
+        this = {}
+        this['acts'] = simpars['actsinj'][key]
+        this['pop1'] = popkeys.index(key[0])
+        this['pop2'] = popkeys.index(key[1])
+        injactslist.append(this)
     
     
     
@@ -193,8 +205,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
             effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t]; # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-            if not(effhivprev[pop]>=0): 
-                raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+            if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
@@ -216,23 +227,24 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         forceinfvec = zeros(npops)
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-        for act in sexactslist:
-            effacts = act['effacts'][t]
-            condeff = act['cond'][t]
-            pop1 = act['pop1']
-            pop2 = act['pop2']
-            thistrans = act['trans']
+        for this in sexactslist:
+            effacts = this['effacts'][t]
+            condeff = this['cond'][t]
+            pop1 = this['pop1']
+            pop2 = this['pop2']
+            thistrans = this['trans']
             
             thisforceinf = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*condeff*effacts*effhivprev[pop2]))
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)          
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
-        for act in injactslist:
-            effinj = act['effacts'][t]
-            pop1 = act['pop1']
-            pop2 = act['pop2']
+        for this in injactslist:
+            effinj = this['acts'][t]
+            pop1 = this['pop1']
+            pop2 = this['pop2']
+            osteff = 1 # WARNING, TEMP osteff[pop1,t]
             
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*osteff[pop1,t]*effhivprev[pop2])) 
+            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*osteff*effhivprev[pop2])) 
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
         
         if not(all(forceinfvec>=0)):
