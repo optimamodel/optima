@@ -36,8 +36,9 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
             currentylims = ylim()
             ylim((0,currentylims[1]))
             xlim((results.tvec[0], results.tvec[-1]))
-            if poptype=='pops': legend(results.parset.popkeys, loc=(1,0))
-            if poptype=='tot':  legend(['Total'], loc=(1,0))
+            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':'small'}
+            if poptype=='pops': legend(results.parset.popkeys, **legendsettings)
+            if poptype=='tot':  legend(['Total'], **legendsettings)
             close(epiplots[pl])
         
         if wasinteractive: ion() # Turn interactivity back on

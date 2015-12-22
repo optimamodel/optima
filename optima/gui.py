@@ -34,10 +34,9 @@ def gui(results):
         ''' Add a plot to an existing figure '''
         thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
         thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-        print(thisplot)
-        
-        pos1 = thisplot.get_position() # get the original position 
-        pos2 = [pos1.x0 + 0.3, pos1.y0 + 0.3,  pos1.width / 2.0, pos1.height / 2.0] 
+        orig = thisplot.get_position() # get the original position 
+        factor = 0.3+nrows**(1/3.)
+        pos2 = [orig.x0, orig.y0,  orig.width/factor, orig.height] 
         thisplot.set_position(pos2) # set a new position
 
         return None
