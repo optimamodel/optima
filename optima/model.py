@@ -172,7 +172,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             this['pop2'] = popkeys.index(key[1])
             if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmmi']
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['const']['transmfi']  
-            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transfmi']
+            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmfr']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
             sexactslist.append(this)
     
@@ -228,13 +228,13 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for this in sexactslist:
-            effacts = this['effacts'][t]
-            condeff = this['cond'][t]
+            acts = this['acts'][t]
+            cond = this['cond'][t]
             pop1 = this['pop1']
             pop2 = this['pop2']
             thistrans = this['trans']
             
-            thisforceinf = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*condeff*effacts*effhivprev[pop2]))
+            thisforceinf = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)          
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
@@ -317,7 +317,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
             newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dD.append(inflows - outflows - newtreat1[cd4])
-            results.newtx1[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            results.newtx[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
         ## 1st-line treatment

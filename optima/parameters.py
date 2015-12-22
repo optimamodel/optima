@@ -273,11 +273,11 @@ def makeparsfromdata(data, verbose=2):
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act, 'numacts', pars['popsize'])
-        pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship', popkeys=popkeys) # Create structure
+        pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act, 'condom')
-        pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship', popkeys=popkeys) # Create structure
+        pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -323,7 +323,7 @@ def makeparsfromdata(data, verbose=2):
 class Timepar(object):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, t=None, y=None, m=1, by=None, popkeys=None):
+    def __init__(self, name=None, t=None, y=None, m=1, by=None):
         if t is None: t = odict()
         if y is None: y = odict()
         self.name = name
@@ -331,7 +331,6 @@ class Timepar(object):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
-        if self.by=='pship': self.popkeys = popkeys # Store the population keys, but only if required
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -348,12 +347,10 @@ class Timepar(object):
         """ Take parameters and turn them into model parameters """
         keys = self.y.keys()
         npops = len(keys)
-        if self.by=='pship': # Have 3D matrix: pop, pop, time
-            output = zeros((npops,npops,len(tvec)))
+        if self.by=='pship': # Have odict
+            output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                pop1 = self.popkeys.index(key[0])
-                pop2 = self.popkeys.index(key[1])
-                output[pop1, pop2,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[key] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array

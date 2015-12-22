@@ -103,7 +103,7 @@ if 'loadspreadsheet' in tests:
     Q.loadspreadsheet('test.xlsx')
     
     if numericalassertions:
-        assert Q.data['const']['effcondom'][0]==0.05, 'Condom efficacy not 95% or not being read in properly'
+        assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
     
     done(t)
 
