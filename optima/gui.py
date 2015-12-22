@@ -55,7 +55,7 @@ def gui(results):
         if nplots>0: # Don't do anything if no plots
             wasinteractive = isinteractive()
             if wasinteractive: ioff()
-            plotfig = figure(figsize=(width, height)) # Create figure with correct number of plots
+            plotfig = figure(figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
             
             # Actually create plots
             plots = epiplot(results, toplot, figsize=(width, height))
