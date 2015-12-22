@@ -25,7 +25,7 @@ class Resultset(object):
         self.uuid = uuid()
         self.created = today()
         self.project = None
-        self.pars = None
+        self.parset = None
         
         # Fundamental quantities
         self.tvec = None
