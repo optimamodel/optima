@@ -56,7 +56,7 @@ if 'makeproject' in tests:
     print('Running makeproject/runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
     
     done(t)
