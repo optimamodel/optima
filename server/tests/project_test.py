@@ -31,7 +31,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 410)
 
     def test_retrieve_project_info(self):
-        project_id = self.create_project('test')
+        project_id = self.create_project(name='test')
 
         response = self.client.get('/api/project/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
@@ -39,7 +39,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(project_data['name'], 'test')
 
     def test_retrieve_project_list(self):
-        project_id = self.create_project('test2')
+        project_id = self.create_project(name='test2')
 
         response = self.client.get('/api/project')
         self.assertEqual(response.status_code, 200)
@@ -135,7 +135,7 @@ class ProjectTestCase(OptimaTestCase):
         from server.webapp.dbmodels import ProjectDb
         from server.webapp.dbconn import db
 
-        project_id = self.create_project('test')
+        project_id = self.create_project(name='test')
 
         # create a parset for the project
         example_excel_file_name = 'test.xlsx'
@@ -165,7 +165,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(project.name, 'test')
 
     def test_delete_project_with_parsets(self):
-        project_id = self.create_project('test')
+        project_id = self.create_project()
 
         # create a parset and result for the project
         example_excel_file_name = 'test.xlsx'
@@ -180,7 +180,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 204)
 
     def test_create_and_retrieve_progset(self):
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project()
         progset_id = self.api_create_progset(project_id)
 
         response = self.client.get('/api/project/{}/progsets/{}'.format(
@@ -192,7 +192,7 @@ class ProjectTestCase(OptimaTestCase):
     def test_update_progset(self):
         from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project(name='test_progset')
         progset_id = self.api_create_progset(project_id)
 
         data = self.progset_test_data.copy()
@@ -217,7 +217,7 @@ class ProjectTestCase(OptimaTestCase):
     def test_delete_progset(self):
         from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project()
         progset_id = self.api_create_progset(project_id)
 
         response = self.client.delete('/api/project/{}/progsets/{}'.format(project_id, progset_id))
@@ -230,29 +230,28 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(program_count, 0)
 
     def test_delete_project_with_progset(self):
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project()
         self.api_create_progset(project_id)
 
         response = self.client.delete('/api/project/{}'.format(project_id))
         self.assertEqual(response.status_code, 204)
 
     def test_retrieve_list_of_progsets(self):
-        project_id = self.create_project('test_progset')
-        self.api_create_progset(project_id)
-        self.api_create_progset(project_id)
-        self.api_create_progset(project_id)
+        progsets_count = 3
+        project = self.create_project(progsets_count=progsets_count, return_instance=True)
+        self.assertEqual(len(project.progsets), progsets_count)
 
-        response = self.client.get('/api/project/{}/progsets'.format(project_id))
+        response = self.client.get('/api/project/{}/progsets'.format(project.id))
         self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
         self.assertTrue('progsets' in data)
-        self.assertEqual(len(data['progsets']), 3)
+        self.assertEqual(len(data['progsets']), progsets_count)
 
     def test_progset_can_hydrate(self):
         from server.webapp.dbmodels import ProgsetsDb
 
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project()
         progset_id = self.api_create_progset(project_id)
 
         progset = ProgsetsDb.query.get(progset_id)

@@ -105,10 +105,10 @@ class OptimaTestCase(unittest.TestCase):
         user = UserDb.query.filter(UserDb.email == email).first()
         return str(user.id)
 
-    def create_project(self, name, return_instance=False, progsets_count=0, programs_per_progset=2, **kwargs):
+    def create_project(self, return_instance=False, progsets_count=0, programs_per_progset=2, **kwargs):
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
-        project = self.create_record_with(ProjectFactory, name=name, **kwargs)
+        project = self.create_record_with(ProjectFactory, **kwargs)
         for x in range(progsets_count):
             progset = self.create_record_with(ProgsetsFactory, project_id=project.id)
             for y in range(programs_per_progset):
