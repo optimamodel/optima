@@ -19,6 +19,16 @@ define(['./module'], function (module) {
         deleteProject: function(id) {
           return $http.delete('/api/project/' + id);
         },
+        deleteSelectedProjects: function(projects) {
+          return $http({
+            method: 'DELETE',
+            url: '/api/project',
+            data: projects
+          });
+        },
+        downloadSelectedProjects: function(projects) {
+          return $http.post('/api/project/portfolio', projects);
+        },
         copyProject: function(sourceId, destinationName) {
           return $http.post('/api/project/' + sourceId + '/copy' + '?to=' + destinationName)
         },
