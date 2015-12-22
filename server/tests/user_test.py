@@ -3,6 +3,8 @@
 from optima_test_base import OptimaTestCase
 import unittest
 import json
+import hashlib
+from server.tests.factories import make_password
 
 
 class UserTestCase(OptimaTestCase):
@@ -12,7 +14,6 @@ class UserTestCase(OptimaTestCase):
     """
 
     def setUp(self):
-        import hashlib
         self.admin_email = "admin@test.com"
         self.admin_password = hashlib.sha224("admin").hexdigest()
         OptimaTestCase.setUp(self)
@@ -21,7 +22,7 @@ class UserTestCase(OptimaTestCase):
         from server.tests.factories import UserFactory
         ''' Helper method to create project and save it to the database '''
         return self.create_record_with(UserFactory, name='admin',
-            password=self.admin_password, is_admin=True)
+                                       password=self.admin_password, is_admin=True)
 
     def list_users(self):
         return self.client.get('/api/user?secret=%s' % self.admin_password)
@@ -155,13 +156,12 @@ class UserTestCase(OptimaTestCase):
         self.assertEqual(len(projects), 0)
 
     def test_modify_user(self):
-        import hashlib
         admin = self.create_admin_user()
         self.create_user()
-        new_password = hashlib.sha224("test1").hexdigest()
+        new_password = make_password("test1")
         username = 'new_username'
         response = self.client.put('/api/user/%s?secret=%s&username=%s&password=%s'
-            % (str(admin.id), self.admin_password, username, new_password))
+                                   % (str(admin.id), self.admin_password, username, new_password))
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data.get('id'), str(admin.id))
@@ -171,13 +171,28 @@ class UserTestCase(OptimaTestCase):
         self.logout()
 
     def test_modify_user_nonadmin(self):
-        import hashlib
         user = self.create_user()
-        new_password = hashlib.sha224("test1").hexdigest()
+        new_password = make_password("test1")
         username = 'new_username'
         response = self.client.put('/api/user/%s?secret=%s&username=%s&password=%s'
-            % (user.id, self.test_password, username, new_password))
+                                   % (user.id, self.test_password, username, new_password))
         self.assertEqual(response.status_code, 403)
+
+    def test_dont_reuse_username(self):
+        from uuid import uuid4
+        username = str(uuid4())
+        user = self.create_user(username=username)
+        response = self.client.post('/api/user',
+                                    data=dict(username=username, password=make_password("test1")))
+        self.assertEqual(response.status_code, 409)
+
+    def test_do_reuse_email(self):
+        from uuid import uuid4
+        email = 'test@example.com'
+        user = self.create_user(username=str(uuid4()), email=email)
+        response = self.client.post('/api/user',
+                                    data=dict(username=str(uuid4()), password=make_password("test1"), email=email))
+        self.assertEqual(response.status_code, 201)
 
 if __name__ == '__main__':
     unittest.main()
