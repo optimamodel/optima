@@ -256,9 +256,8 @@ def makeparsfromdata(data, verbose=2):
         for i,key1 in enumerate(popkeys):
             for j,key2 in enumerate(popkeys):
                 if sum(array(tmpmatrix[parname])[i,j,:])>0:
-                    
-                    pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,indices]
-                    pars[parname].t[(key1,key2)] = array(data['years'])[indices] # WARNING, TEMP
+                    pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
+                    pars[parname].t[(key1,key2)] = array(data['years'])[:] # WARNING, TEMP
     
     # Store the actual keys that will need to be iterated over in model.py
     for act in ['reg','cas','com','inj']:
