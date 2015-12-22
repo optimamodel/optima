@@ -203,8 +203,8 @@ def makeparsfromdata(data, verbose=2):
     
     
     ## Acts
-    def balanceacts(act, popsizepar):
-        ''' Combine the different estimates for the number of acts and return the "average" value '''
+    def balance(act, popsizepar=None, which=None):
+        ''' Combine the different estimates for the number of acts or condom use and return the "average" value '''
         mixmatrix = array(data['part'+act])
         npops = len(popkeys) # WARNING, what is this?
         symmetricmatrix = zeros((npops,npops));
@@ -312,7 +312,7 @@ def makeparsfromdata(data, verbose=2):
     for act in ['reg','cas','com','inj']:
         actsname = 'acts'+act
         condname = 'cond'+act
-        tmpacts[act], tmpactspts[act] = balanceacts(act, pars['popsize'])
+        tmpacts[act], tmpactspts[act], tmpcond[act], tmpactspts[act] = balanceacts(act, pars['popsize'])
         pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
