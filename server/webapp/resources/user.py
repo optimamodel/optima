@@ -16,8 +16,8 @@ from server.webapp.utils import verify_admin_request, RequestParser
 
 user_parser = RequestParser()
 user_parser.add_arguments({
-    'email':       {'type': email, 'required': True, 'help': 'A valid e-mail address'},
-    'displayName': {'required': True, 'dest': 'name'},
+    'email':       {'type': email, 'help': 'A valid e-mail address'},
+    'displayName': {'dest': 'name'},
     'username':    {'required': True},
     'password':    {'type': hashed_password, 'required': True},
 })
@@ -58,10 +58,10 @@ class User(Resource):
         current_app.logger.info("create request: {} {}".format(request, request.data))
         args = user_parser.parse_args()
 
-        same_user_count = UserDb.query.filter_by(email=args.email).count()
+        same_user_count = UserDb.query.filter_by(username=args.username).count()
 
         if same_user_count > 0:
-            raise UserAlreadyExists(args.email)
+            raise UserAlreadyExists(args.username)
 
         user = UserDb(**args)
         db.session.add(user)
@@ -85,6 +85,7 @@ class UserDetail(Resource):
             raise UserDoesNotExist(user_id)
 
         user_email = user.email
+        user_name = user.username
         from server.webapp.dbmodels import ProjectDb
         from sqlalchemy.orm import load_only
 
@@ -97,7 +98,7 @@ class UserDetail(Resource):
         db.session.delete(user)
         db.session.commit()
 
-        current_app.logger.info("deleted user:{} {}".format(user_id, user_email))
+        current_app.logger.info("deleted user:{} {} {}".format(user_id, user_name, user_email))
 
         return '', 204
 
