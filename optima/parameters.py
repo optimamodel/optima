@@ -1,13 +1,13 @@
 """
-This module defines the Parameter and Parameterset classes, which are 
+This module defines the Timepar, Popsizepar, and Constant classes, which are 
 used to define a single parameter (e.g., hivtest) and the full set of
-parameters, respetively.
+parameters, the Parameterset class.
 
-Version: 2015dec17 by cliffk
+Version: 2015dec21 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
 from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
@@ -212,14 +212,33 @@ def makeparsfromdata(data, verbose=2):
             for pop2 in range(npops):
                 symmetricmatrix[pop1,pop2] = symmetricmatrix[pop1,pop2] + (mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1]) / float(eps+((mixmatrix[pop1,pop2]>0)+(mixmatrix[pop2,pop1]>0)))
         
+        # Decide which years to use -- use the earliest year, the latest year, and the most time points available
+        yearstouse = []
+        for row in range(npops):
+            yearstouse.append(array(data['years'])[~isnan(data['numacts'+act][row])]   )
+        minyear = Inf
+        maxyear = -Inf
+        npts = 1 # Don't use fewer than 2 points
+        for row in range(npops):
+            minyear = minimum(minyear, min(yearstouse[row]))
+            maxyear = maximum(maxyear, max(yearstouse[row]))
+            npts = maximum(npts, len(yearstouse[row]))
+        if minyear==Inf:  minyear = data['years'][0] # If not set, reset to beginning
+        if maxyear==-Inf: maxyear = data['years'][-1] # If not set, reset to end
+        controlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
+        
         # Interpolate over population acts data for each year
         tmpactspar = data2timepar('numacts'+act, data, popkeys, by='pop') # Temporary parameter for storing acts
-        simacts = tmpactspar.interp(tvec=data['years'])
-        popsize = popsizepar.interp(tvec=data['years'])
-        nyears = len(data['years'])
+        simacts = tmpactspar.interp(tvec=controlpts)
+        popsize = popsizepar.interp(tvec=controlpts)
+        npts = len(controlpts)
         
-        totalacts = zeros((npops,npops,nyears))
-        for t in range(nyears):
+        print('HI!!!!')
+        print(controlpts)
+        
+        
+        totalacts = zeros((npops,npops,npts))
+        for t in range(npts):
             smatrix = dcp(symmetricmatrix) # Initialize
             psize = popsize[:,t]
             popacts = simacts[:,t]
@@ -241,13 +260,14 @@ def makeparsfromdata(data, verbose=2):
         
             totalacts[:,:,t] = pshipacts # Note use of copy()
     
-        return totalacts
+        return totalacts, controlpts
     
     # Sexual behavior parameters
     tmpmatrix = odict()
+    tmppts = odict()
     for act in ['reg','cas','com','inj']:
         parname = 'acts'+act
-        tmpmatrix[parname] = gettotalacts(act, pars['popsize'])
+        tmpmatrix[parname], tmppts[parname] = gettotalacts(act, pars['popsize'])
         pars[parname] = Timepar(name=parname, m=1, y=odict(), t=odict(), by='pship') # Create structure
     
     # Convert matrices to lists of of population-pair keys
@@ -257,7 +277,7 @@ def makeparsfromdata(data, verbose=2):
             for j,key2 in enumerate(popkeys):
                 if sum(array(tmpmatrix[parname])[i,j,:])>0:
                     pars[parname].y[(key1,key2)] = array(tmpmatrix[parname])[i,j,:]
-                    pars[parname].t[(key1,key2)] = array(data['years'])[:] # WARNING, TEMP
+                    pars[parname].t[(key1,key2)] = array(tmppts[parname])
     
     # Store the actual keys that will need to be iterated over in model.py
     for act in ['reg','cas','com','inj']:
@@ -305,11 +325,11 @@ class Timepar(object):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = '\n'
-        output += '           Name: %s\n'    % self.name
-        output += '         Values: %s\n'    % self.y
-        output += '    Time points: %s\n'    % self.t
-        output += '  Metaparameter: %s\n'    % self.m
-        output += 'Time/value keys: %s\n'    % self.y.keys()
+        output += ' name: %s\n'    % self.name
+        output += '    y: %s\n'    % self.y
+        output += '    t: %s\n'    % self.t
+        output += '    m: %s\n'    % self.m
+        output += ' keys: %s\n'    % self.y.keys()
         return output
     
     def interp(self, tvec, smoothness=20):
