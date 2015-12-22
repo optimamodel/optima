@@ -14,6 +14,7 @@ parset.makeparsfromdata(P.data) # Create parameters
 P.addparset('default', parset)
 p = P.parsets[0].pars[0]
 simpars = P.parsets[0].interp()
+P.runsim()
 
 
 print('Done.')
