@@ -60,8 +60,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
         projectApiService.downloadSelectedProjects(selectedProjectsIds)
           .success(function (response, status, headers, config) {
-          var blob = new Blob([response], { type: 'application/octet-stream' });
-          saveAs(blob, ('portfolio.zip'));
+          saveAs(response, ('portfolio.zip'));
         });
       };
 
