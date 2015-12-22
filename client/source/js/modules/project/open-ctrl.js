@@ -31,39 +31,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return project;
       });
 
-      $scope.allSelected = false;
-      const initProjectSelected = function() {
-        $scope.projectSelected = [];
-        for (var index = 0;index < $scope.projects.length;index++) {
-          $scope.projectSelected[index] = false;
-        }
-      };
-      initProjectSelected();
-
       $scope.selectAll = function() {
-        for(var index = 0; index < $scope.projectSelected.length; index++) {
-          $scope.projectSelected[index] = $scope.allSelected;
-        }
+        _.forEach($scope.projects, function(project) {
+          projects.selected = $scope.allSelected;
+        })
       };
 
       $scope.deleteSelected = function() {
-        const selectedProjects = _.filter($scope.projects, function(project, index) {
-          return $scope.projectSelected[index];
+        const selectedProjects = _.filter($scope.projects, function(project) {
+          return project.selected;
         }).map(function(project) {
           return project.id;
         });
         projectApiService.deleteSelectedProjects(selectedProjects)
           .success(function (response, status, headers, config) {
-            $scope.projects = _.filter($scope.projects, function(project, index) {
-              return !$scope.projectSelected[index];
+            $scope.projects = _.filter($scope.projects, function(project) {
+              return !project.selected;
             });
-            initProjectSelected();
           });
       };
 
       $scope.downloadSelected = function() {
-        const selectedProjectsIds = _.filter($scope.projects, function(project, index) {
-          return $scope.projectSelected[index];
+        const selectedProjectsIds = _.filter($scope.projects, function(project) {
+          return project.selected;
         }).map(function(project) {
           return project.id;
         });
