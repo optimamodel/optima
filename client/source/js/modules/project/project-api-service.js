@@ -23,11 +23,11 @@ define(['./module'], function (module) {
           return $http({
             method: 'DELETE',
             url: '/api/project',
-            data: projects
+            data: { projects: projects}
           });
         },
         downloadSelectedProjects: function(projects) {
-          return $http.post('/api/project/portfolio', projects);
+          return $http.post('/api/project/portfolio', { projects: projects});
         },
         copyProject: function(sourceId, destinationName) {
           return $http.post('/api/project/' + sourceId + '/copy' + '?to=' + destinationName)

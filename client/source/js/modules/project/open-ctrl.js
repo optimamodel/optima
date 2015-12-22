@@ -46,6 +46,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.deleteSelected = function() {
         const selectedProjects = _.filter($scope.projects, function(project, index) {
           return $scope.projectSelected[index];
+        }).map(function(project) {
+          return project.id;
         });
         projectApiService.deleteSelectedProjects(selectedProjects);
       };
@@ -56,7 +58,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).map(function(project) {
           return project.id;
         });
-        projectApiService.downloadSelectedProjects({ project: selectedProjectsIds});
+        projectApiService.downloadSelectedProjects(selectedProjectsIds)
+          .success(function (response, status, headers, config) {
+          var blob = new Blob([response], { type: 'application/octet-stream' });
+          saveAs(blob, ('portfolio.zip'));
+        });
       };
 
       /**
