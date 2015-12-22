@@ -87,8 +87,10 @@ class OptimaTestCase(unittest.TestCase):
         self.session.commit()
         return rv
 
-    def create_user(self, username=default_username):
-        return self.create_record_with(UserFactory, username=username)
+    def create_user(self, username=default_username, email=None):
+        kwargs = {'username':username}
+        if email: kwargs['email'] = email
+        return self.create_record_with(UserFactory, **kwargs)
 
     def get_any_user_id(self, admin=False):
         from server.webapp.dbmodels import UserDb
