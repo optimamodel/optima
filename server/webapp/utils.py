@@ -278,7 +278,7 @@ def update_or_create_progset(project_id, name, progset):
     from server.webapp.dbmodels import ProgsetsDb
 
     progset_record = ProgsetsDb.query \
-        .filter_by(id=progset.id, project_id=project_id) \
+        .filter_by(name=progset.name, project_id=project_id) \
         .first()
 
     if progset_record is None:
@@ -292,7 +292,6 @@ def update_or_create_progset(project_id, name, progset):
         db.session.add(progset_record)
     else:
         progset_record.updated = datetime.now(dateutil.tz.tzutc())
-        progset_record.name = name
 
     return progset_record
 
@@ -304,7 +303,7 @@ def update_or_create_program(project_id, progset_id, name, program):
     from server.webapp.dbmodels import ProgramsDb
 
     program_record = ProgramsDb.query \
-        .filter_by(id=program.id, project_id=project_id, progset_id=progset_id) \
+        .filter_by(name=program.name, project_id=project_id, progset_id=progset_id) \
         .first()
 
     if program_record is None:
@@ -312,7 +311,7 @@ def update_or_create_program(project_id, progset_id, name, program):
             project_id=project_id,
             progset_id=progset_id,
             name=name,
-            created=program.created or datetime.now(dateutil.tz.tzutc()),
+            created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
             pars=program.targetpars
         )
@@ -320,7 +319,6 @@ def update_or_create_program(project_id, progset_id, name, program):
         db.session.add(program_record)
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.name = name
         program_record.pars = program.targetpars
 
 

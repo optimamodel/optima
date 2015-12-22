@@ -160,9 +160,9 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.utils import update_or_create_progset, update_or_create_program
-            for name, progset in project.progsets.iteritems:
+            for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset(self.id, name, progset)
-                for program_name, program in progset.programs.iteritems:
+                for program_name, program in progset.programs.iteritems():
                     update_or_create_program(self.id, progset_record.id, program_name, program)
 
     def recursive_delete(self):
@@ -391,3 +391,7 @@ class ProgsetsDb(db.Model):
                 **kwargs
             )
             db.session.add(program_entry)
+
+    def recursive_delete(self):
+        db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete()
+        db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete()

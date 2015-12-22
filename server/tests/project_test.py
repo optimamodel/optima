@@ -135,7 +135,10 @@ class ProjectTestCase(OptimaTestCase):
         from server.webapp.dbmodels import ProjectDb
         from server.webapp.dbconn import db
 
-        project_id = self.create_project('test')
+        progsets_count = 3
+        project = self.create_project('test', return_instance=True, progsets_count=progsets_count)
+
+        self.assertEqual(len(project.progsets), progsets_count)
 
         # create a parset for the project
         example_excel_file_name = 'test.xlsx'
@@ -144,25 +147,31 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.post('api/project/update', data=dict(file=example_excel))
         example_excel.close()
 
-        response = self.client.get('/api/project/{}/data'.format(project_id))
+        response = self.client.get('/api/project/{}/data'.format(project.id))
         self.assertEqual(response.status_code, 200)
 
-        project = ProjectDb.query.filter_by(id=project_id).first()
-        self.assertEqual(project.name, 'test')  # just making sure
+        # we need to get the project using the "regular" session instead of the "factory" session
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
         project.name = 'Not test'
+        project.progsets[0].recursive_delete()
         db.session.commit()
-        project = ProjectDb.query.filter_by(id=project_id).first()
+
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
+        self.assertEqual(len(project.progsets), progsets_count - 1)
         self.assertNotEqual(project.name, 'test')  # still just making sure
 
         upload_response = self.client.post(
-            '/api/project/{}/data'.format(project_id),
+            '/api/project/{}/data'.format(project.id),
             data={
                 'file': (BytesIO(response.data), 'project.prj'),
             }
         )
         self.assertEqual(upload_response.status_code, 200, upload_response.data)
-        project = ProjectDb.query.filter_by(id=project_id).first()
+
+        # reloading from db after upload
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
         self.assertEqual(project.name, 'test')
+        self.assertEqual(len(project.progsets), progsets_count)
 
     def test_delete_project_with_parsets(self):
         project_id = self.create_project('test')
@@ -230,10 +239,11 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(program_count, 0)
 
     def test_delete_project_with_progset(self):
-        project_id = self.create_project('test_progset')
-        self.api_create_progset(project_id)
+        project = self.create_project('test_progset', return_instance=True, progsets_count=1)
 
-        response = self.client.delete('/api/project/{}'.format(project_id))
+        self.assertEquals(len(project.progsets), 1)
+
+        response = self.client.delete('/api/project/{}'.format(project.id))
         self.assertEqual(response.status_code, 204)
 
     def test_retrieve_list_of_progsets(self):
