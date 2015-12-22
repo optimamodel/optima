@@ -62,6 +62,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     death = C['deathacute':'deathaids']
     cd4trans = C['cd4transacute':'cd4transaids']
     deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
+    biofailure = C['biofail'] # biological treatment failure rate MK
     simpars['prog'] = prog # for equilibrate()
     simpars['recov'] = recov    
     
