@@ -137,7 +137,7 @@ def browser(results):
         addplot(figs[-1], plots[p].axes[0])
         mpld3.plugins.connect(figs[-1], mpld3.plugins.MousePosition(fontsize=14)) # Add plugins
         jsons.append(str(json.dumps(mpld3.fig_to_dict(figs[-1])))) # Save to JSON
-        
+        close(figs[-1])
     
     divstr = ''
     jsonstr = ''

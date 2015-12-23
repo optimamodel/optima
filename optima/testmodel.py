@@ -14,10 +14,8 @@ Version: 2015dec05 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-#'gui',
-'browser',
-#'force',
-#'treatment',
+'force',
+'treatment',
 ]
 
 
@@ -54,40 +52,6 @@ T = tic()
 
 
 
-## GUI test
-if 'gui' in tests:
-    t = tic()
-
-    print('Running GUI test...')
-    from optima import Project
-    
-    P = Project(spreadsheet='test.xlsx')
-    results = P.runsim('default')
-    
-    from gui import gui
-    gui(results)
-
-    done(t)
-
-
-
-
-
-## mpld3 test
-if 'browser' in tests:
-    t = tic()
-
-    print('Running GUI test...')
-    from optima import Project
-    
-    P = Project(spreadsheet='test.xlsx')
-    results = P.runsim('default')
-    
-    print('  Starting browser...')
-    from gui import browser
-    browser(results)
-
-    done(t)
 
 
 
@@ -107,9 +71,7 @@ if 'force' in tests:
     P.parsets['forcetest'].pars[0]['force'][:] *= 3
     results2 = P.runsim('forcetest')
     
-    from gui import gui
     from plotpeople import plotpeople
-    gui([results1, results2])
     plotpeople([results1, results2])
 
     done(t)
@@ -132,9 +94,7 @@ if 'treatment' in tests:
     treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
     results2 = P.runsim('treatment')
     
-    from gui import gui
     from plotpeople import plotpeople
-    gui([results1, results2])
     plotpeople([results1, results2])
 
     done(t)
