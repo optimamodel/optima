@@ -117,7 +117,7 @@ def browser(results):
     wasinteractive = isinteractive() # Get current state of interactivity
     if wasinteractive: ioff()
     
-    divstyle = "float: left;"
+    divstyle = "float: left; border: solid 1px black;"
     
     html = '''
     <html><body>
@@ -135,7 +135,9 @@ def browser(results):
     for p in range(nplots): 
         figs.append(figure())
         addplot(figs[-1], plots[p].axes[0])
-        jsons.append(str(json.dumps(mpld3.fig_to_dict(figs[-1]))))
+        mpld3.plugins.connect(figs[-1], mpld3.plugins.MousePosition(fontsize=14)) # Add plugins
+        jsons.append(str(json.dumps(mpld3.fig_to_dict(figs[-1])))) # Save to JSON
+        
     
     divstr = ''
     jsonstr = ''
