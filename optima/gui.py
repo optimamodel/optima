@@ -4,6 +4,19 @@ from matplotlib.widgets import CheckButtons, Button
 global plotfig, check, button # Without these, interactivity doesn't work
 plotfig = None # Initialize plot figure
 
+
+def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
+    ''' Add a plot to an existing figure '''
+    thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
+    thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
+    orig = thisplot.get_position() # get the original position 
+    factor = 0.3+nrows**(1/3.)
+    pos2 = [orig.x0, orig.y0,  orig.width/factor, orig.height] 
+    thisplot.set_position(pos2) # set a new position
+
+    return None
+        
+
 def gui(results):
     '''
     GUI
@@ -17,7 +30,7 @@ def gui(results):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 2015dec08 by cliffk
+    Version: 2015dec23 by cliffk
     '''
     global check, button
     
@@ -28,18 +41,6 @@ def gui(results):
         for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
         return ischecked
     
-    
-    def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
-        ''' Add a plot to an existing figure '''
-        thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
-        thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
-        orig = thisplot.get_position() # get the original position 
-        factor = 0.3+nrows**(1/3.)
-        pos2 = [orig.x0, orig.y0,  orig.width/factor, orig.height] 
-        thisplot.set_position(pos2) # set a new position
-
-        return None
-        
     
     def update(event):
         ''' Close current window if it exists and open a new one based on user selections '''
@@ -98,3 +99,17 @@ def gui(results):
     button = Button(buttonaxes, 'Update', color=fc) 
     button.on_clicked(update) # Update figure if button is clicked
     update(None) # Plot initially
+
+
+
+def browser(results):
+    ''' Create an mpld3 GUI '''
+    wasinteractive = isinteractive() # Get current state of interactivity
+    if not(wasinteractive): ion()
+    import mpld3
+    figs = []
+    plots = epiplot(results)
+    for p in range(len(plots)): 
+        figs.append(figure())
+        addplot(figs[-1], plots[p].axes[0])
+        mpld3.display(fig=figs[-1])

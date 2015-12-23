@@ -6,7 +6,8 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
         
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
-        if type(whichplots)==str: whichplots = [whichplots] # Convert to list
+        if whichplots is None: whichplots = [datatype+'-'+poptype for datatype in results.main.keys() for poptype in ['pops', 'tot']] # Just plot everything if not specified
+        elif type(whichplots)==str: whichplots = [whichplots] # Convert to list
         epiplots = odict()
         for pl in whichplots:
             try:
@@ -22,7 +23,12 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
                 errormsg = 'Could not parse plot "%s"\n' % pl
                 errormsg += 'Please ensure format is e.g. "numplhiv-tot"'
                 raise Exception(errormsg)
-            if not uncertainty: thisdata = getattr(results.main[datatype], poptype)[0] # Either 'tot' or 'pops'
+            if not uncertainty: 
+                try:
+                    thisdata = getattr(results.main[datatype], poptype)[0] # Either 'tot' or 'pops'
+                except:
+                    errormsg = 'Unable to find key "%s" in results' % datatype
+                    raise Exception(errormsg)
             else: raise Exception('WARNING, uncertainty in plots not implemented yet')
             
             epiplots[pl] = figure(figsize=figsize)

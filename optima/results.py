@@ -26,12 +26,13 @@ class Data(object):
 
 class Result(object):
     ''' A tiny class just to hold overall and by-population results '''
-    def __init__(self, name=None, isnumber=True, pops=None, tot=None, data=None):
-        self.name = name
-        self.isnumber = isnumber
-        self.pops = pops
-        self.tot = tot
-        self.data = Data() # An instance of the Data class
+    def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
+        self.name = name # Name of this parameter
+        self.isnumber = isnumber # Whether or not the result is a number (instead of a percentage)
+        self.pops = pops # The model result by population, if available
+        self.tot = tot # The model result total, if available
+        self.datapops = datapops # The input data by population, if available
+        self.datatot = datatot # The input data total, if available
         
 
 
@@ -54,15 +55,15 @@ class Resultset(object):
         self.main['force'] = Result('Force-of-infection', isnumber=False)
         self.main['numinci'] = Result('Number of new infections')
         self.main['numplhiv'] = Result('Number of PLHIV')
-        self.main['dalys'] = Result('Number of DALYs')
         self.main['numdeath'] = Result('Number of HIV-related deaths')
-        self.main['numtreat'] = Result('Number of people on treatment')
         self.main['numdiag'] = Result('Number of people diagnosed')
-        self.main['numnewtreat'] = Result('Number of people newly treated')
-        self.main['numnewdiag'] = Result('Number of new diagnoses')
+#        self.main['dalys'] = Result('Number of DALYs')
+#        self.main['numtreat'] = Result('Number of people on treatment')
+#        self.main['numnewtreat'] = Result('Number of people newly treated')
+#        self.main['numnewdiag'] = Result('Number of new diagnoses')
         
         # Other quantities
-        self.other = odict() # For storing main results
+#        self.other = odict() # For storing main results
 #        self.births = Result()
 #        self.mtct = Result()
 #        self.newtreat = Result()
@@ -97,17 +98,17 @@ class Resultset(object):
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['prev'].data.add('hivprev', data=data, by='pops')
-        self.main['prev'].data.add('optprev', data=data, by='tot')
+        self.main['prev'].datapops = data['hivprev']
+        self.main['prev'].datatot = data['optprev']
         
         self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['numplhiv'].data.add('optplhiv', data=data, by='tot')        
+        self.main['numplhiv'].datatot = data['optplhiv']
         
         allinci = array([self.inci])
         self.main['numinci'].pops = quantile(allinci, quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numinci'].data.add('optnuminfect', data=data, by='tot')    
+        self.main['numinci'].datatot = data['optnuminfect']
 
         allinci = array([self.inci])
         self.main['force'].pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -116,12 +117,12 @@ class Resultset(object):
         alldeaths = array([self.death])
         self.main['numdeath'].pops = quantile(alldeaths, quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numdeath'].data.add('optdeath', data=data, by='tot') 
+        self.main['numdeath'].datatot = data['optdeath']
 
         alldx = array([self.dx])
         self.main['numdiag'].pops = quantile(alldx, quantiles=quantiles)
         self.main['numdiag'].tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numdiag'].data.add('optnumdiag', data=data, by='tot') 
+        self.main['numdiag'].datatot = data['optnumdiag']
         
 
 # WARNING, need to implement

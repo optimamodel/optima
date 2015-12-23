@@ -14,7 +14,8 @@ Version: 2015dec05 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'gui',
+#'gui',
+'browser',
 #'force',
 #'treatment',
 ]
@@ -63,11 +64,27 @@ if 'gui' in tests:
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim('default')
     
-#    import gui
     from gui import gui
-#    from plotpeople import plotpeople
     gui(results)
-#    plotpeople(results)
+
+    done(t)
+
+
+
+
+
+## mpld3 test
+if 'browser' in tests:
+    t = tic()
+
+    print('Running GUI test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test.xlsx')
+    results = P.runsim('default')
+    
+    from gui import browser
+    browser(results)
 
     done(t)
 
