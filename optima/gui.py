@@ -117,6 +117,8 @@ def browser(results):
     wasinteractive = isinteractive() # Get current state of interactivity
     if wasinteractive: ioff()
     
+    divstyle = "float: left;"
+    
     html = '''
     <html><body>
     !MAKE DIVS!
@@ -138,7 +140,7 @@ def browser(results):
     divstr = ''
     jsonstr = ''
     for p in range(nplots):
-        divstr += '<div id="fig%i"></div>\n' % p
+        divstr += '<div style="%s" id="fig%i"></div>\n' % (divstyle, p)
         jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p])
     
     html = html.replace('!MAKE DIVS!',divstr)

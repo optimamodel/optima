@@ -1,5 +1,5 @@
 from optima import odict, gridcolormap
-from pylab import isinteractive, ioff, ion, figure, plot, xlabel, ylabel, close, xlim, ylim, legend, ndim
+from pylab import isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim
 
 def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6)):
         ''' Render the plots requested and store them in a list '''
@@ -38,7 +38,7 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
             for l in range(nlines):
                 plot(results.tvec, thisdata[l], lw=2, c=colors[l]) # Actually do the plot
             xlabel('Year')
-            ylabel(results.main[datatype].name)
+            title(results.main[datatype].name)
             currentylims = ylim()
             ylim((0,currentylims[1]))
             xlim((results.tvec[0], results.tvec[-1]))
