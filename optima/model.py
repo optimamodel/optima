@@ -56,7 +56,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     
     # Biological and failure parameters -- death etc
-    C = simpars['const']
     prog = simpars['const']['progacute':'proggt50']
     recov = simpars['const']['recovgt500':'recovgt50']
     death = simpars['const']['deathacute':'deathaids']
