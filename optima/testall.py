@@ -2,13 +2,14 @@
 """
 TESTALL
 
-Run all tests.
+Run all tests except 'testworkflow', 'testgui'
 
-Version: 2015nov23 by cliffk
+Version: 2015dec22 by cliffk
 """
 
-import tests
 import testutils
+import testproject
 import testprograms
 import testmodel
+import testmodalities
 import testscenarios
