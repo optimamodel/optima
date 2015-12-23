@@ -14,7 +14,7 @@ from sqlalchemy.schema import (
         ForeignKeyConstraint,
         DropConstraint,
     )
-from server.tests.factories import UserFactory
+from server.tests.factories import UserFactory, make_password
 
 
 class OptimaTestCase(unittest.TestCase):
@@ -87,9 +87,8 @@ class OptimaTestCase(unittest.TestCase):
         self.session.commit()
         return rv
 
-    def create_user(self, username=default_username, email=None):
-        kwargs = {'username':username}
-        if email: kwargs['email'] = email
+    def create_user(self, username=default_username, **kwargs):
+        kwargs['username'] = username
         return self.create_record_with(UserFactory, **kwargs)
 
     def get_any_user_id(self, admin=False):
@@ -149,9 +148,11 @@ class OptimaTestCase(unittest.TestCase):
 
     def login(self, username=default_username, password=None):
         if not password:
-            password = self.test_password
+            password = make_password()
         login_data = '{"username":"%s","password":"%s"}' % (username, password)
-        self.client.post('/api/user/login', data=login_data, follow_redirects=True)
+        response = self.client.post('/api/user/login', data=login_data, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        return response
 
     def logout(self):
         self.client.get('/api/user/logout', follow_redirects=True)
