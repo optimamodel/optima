@@ -83,6 +83,7 @@ if 'browser' in tests:
     P = Project(spreadsheet='test.xlsx')
     results = P.runsim('default')
     
+    print('  Starting browser...')
     from gui import browser
     browser(results)
 
