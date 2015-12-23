@@ -34,14 +34,8 @@ ion()
 
 
 html = '''
-<html><head><title>mpld3 plot</title></head><body>
-
-
-<style>
-
-</style>
-
-<div id="fig_el66921396654576636326433896759"></div>
+<html><head><title>Optima plot</title></head><body>
+<div id="fig01"></div>
 <script>
 function mpld3_load_lib(url, callback){
   var s = document.createElement('script');
@@ -51,18 +45,15 @@ function mpld3_load_lib(url, callback){
   s.onerror = function(){console.warn("failed to load library " + url);};
   document.getElementsByTagName("head")[0].appendChild(s);
 }
-
-
-    // require.js not available: dynamically load d3 & mpld3
-    mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
-         mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3git.js", function(){
-                 
-                 mpld3.draw_figure("fig_el66921396654576636326433896759", {"axes": [{"xlim": [0.0, 1.0], "yscale": "linear", "axesbg": "#FFFFFF", "texts": [], "zoomable": true, "images": [], "xdomain": [0.0, 1.0], "ylim": [3.0, 5.0], "paths": [], "sharey": [], "sharex": [], "axesbgalpha": null, "axes": [{"scale": "linear", "tickformat": null, "grid": {"gridOn": false}, "fontsize": 12.0, "position": "bottom", "nticks": 6, "tickvalues": null}, {"scale": "linear", "tickformat": null, "grid": {"gridOn": false}, "fontsize": 12.0, "position": "left", "nticks": 5, "tickvalues": null}], "lines": [{"color": "#0000FF", "yindex": 1, "coordinates": "data", "dasharray": "none", "zorder": 2, "alpha": 1, "xindex": 0, "linewidth": 1.0, "data": "data01", "id": "el6692139665197662544"}], "markers": [], "id": "el6692139665215857744", "ydomain": [3.0, 5.0], "collections": [], "xscale": "linear", "bbox": [0.125, 0.099999999999999978, 0.77500000000000002, 0.80000000000000004]}], "height": 480.0, "width": 640.0, "plugins": [{"type": "reset"}, {"enabled": false, "button": true, "type": "zoom"}, {"enabled": false, "button": true, "type": "boxzoom"}], "data": {"data01": [[0.0, 3.0], [1.0, 5.0]]}, "id": "el6692139665457663632"});
-            })
-         });
-
+mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){
+mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3git.js", function(){
+mpld3.draw_figure("fig01", {"axes": [{"xlim": [0.0, 1.0], "yscale": "linear", "axesbg": "#FFFFFF", "texts": [], "zoomable": true, "images": [], "xdomain": [0.0, 1.0], "ylim": [3.0, 5.0], "paths": [], "sharey": [], "sharex": [], "axesbgalpha": null, "axes": [{"scale": "linear", "tickformat": null, "grid": {"gridOn": false}, "fontsize": 12.0, "position": "bottom", "nticks": 6, "tickvalues": null}, {"scale": "linear", "tickformat": null, "grid": {"gridOn": false}, "fontsize": 12.0, "position": "left", "nticks": 5, "tickvalues": null}], "lines": [{"color": "#0000FF", "yindex": 1, "coordinates": "data", "dasharray": "none", "zorder": 2, "alpha": 1, "xindex": 0, "linewidth": 1.0, "data": "data01", "id": "el6692139665197662544"}], "markers": [], "id": "el6692139665215857744", "ydomain": [3.0, 5.0], "collections": [], "xscale": "linear", "bbox": [0.125, 0.099999999999999978, 0.77500000000000002, 0.80000000000000004]}], "height": 480.0, "width": 640.0, "plugins": [{"type": "reset"}, {"enabled": false, "button": true, "type": "zoom"}, {"enabled": false, "button": true, "type": "boxzoom"}], "data": {"data01": [[0.0, 3.0], [1.0, 5.0]]}, "id": "el6692139665457663632"});
+})});
 </script></body></html>
 '''
+
+
+
 #
 #json01 = json.dumps(mpld3.fig_to_dict(fig1))
 #json02 = json.dumps(mpld3.fig_to_dict(fig2))
