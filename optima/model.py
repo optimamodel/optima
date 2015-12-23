@@ -57,21 +57,21 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     # Biological and failure parameters -- death etc
     C = simpars['const']
-    prog = C['progacute':'proggt50']
-    recov = C['recovgt500':'recovgt50']
-    death = C['deathacute':'deathaids']
-    cd4trans = C['cd4transacute':'cd4transaids']
-    deathtx      = C['deathtreat']   # Death rate whilst on treatment
-    biofailure   = C['biofail']      # biological treatment failure rate (P) MK
+    prog = simpars['const']['progacute':'proggt50']
+    recov = simpars['const']['recovgt500':'recovgt50']
+    death = simpars['const']['deathacute':'deathaids']
+    cd4trans = simpars['const']['cd4transacute':'cd4transaids']
+    deathtx      = simpars['const']['deathtreat']   # Death rate whilst on treatment
+    biofailure   = simpars['const']['biofail']      # biological treatment failure rate (P) MK
     simpars['prog'] = prog # for equilibrate()
     simpars['recov'] = recov    
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = C['effdx'] * cd4trans # Include diagnosis efficacy
-    txfactor = C['efftx'] * dxfactor # And treatment efficacy
-    redtranssvl  = C['redtranssvl']  # reduction in transmission probability for sVL
-    redtransusvl = C['redtransusvl'] # reduction in transmission probability for usVL
+    dxfactor = simpars['const']['effdx'] * cd4trans # Include diagnosis efficacy
+    txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
+    redtranssvl  = simpars['const']['redtranssvl']  # reduction in transmission probability for sVL
+    redtransusvl = simpars['const']['redtransusvl'] # reduction in transmission probability for usVL
 
     
     # Set initial epidemic conditions 
