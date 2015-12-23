@@ -66,7 +66,7 @@ class Resultset(object):
     
     
     
-    def derivedresults(self, verbose=2):
+    def derivedresults(self, quantiles=None, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
         printv('Making derived results...', 3, verbose)
@@ -74,8 +74,7 @@ class Resultset(object):
         if self.people is None:
             raise Exception('It seems the model has not been run yet, people is empty!')
         
-        ## WARNING, TEMP
-        quantiles = [0.5]
+        if quantiles is None: quantiles = [0.5]
         allpeople = array([self.people]) 
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state

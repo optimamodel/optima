@@ -76,7 +76,7 @@ class Programset(object):
                 initccoparams['t'],initccoparams['intercept'] = [], []
                 self.covout[targetpartype][thispop] = Covout(initccoparams)
 
-    def addprograms(self,newprograms):
+    def addprograms(self,newprograms, verbose=2):
         ''' Add new programs'''
         if type(newprograms)==Program: newprograms = [newprograms]
         if type(newprograms)==list:
@@ -86,7 +86,7 @@ class Programset(object):
                     self.gettargetpops()
                     self.gettargetpartypes()
                     self.initialize_covout()
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
+                    printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]), 4, verbose)
                 else:
                     raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
         elif type(newprograms)==dict:
@@ -96,21 +96,22 @@ class Programset(object):
                     self.gettargetpops()
                     self.gettargetpartypes()
                     self.initialize_covout()
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
+                    printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]), 4, verbose)
                 else:
                     raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
 
-    def rmprogram(self,program):
+    def rmprogram(self,program, verbose=2):
         ''' Remove a program. Expects type(program) in [Program,str]'''
         if not type(program)==str: program = program.name
         if program not in self.programs:
-            raise Exception('You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (program, self.name, [p for p in self.programs]))
+            errormsg = 'You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (program, self.name, [p for p in self.programs])
+            raise Exception(errormsg)
         else:
             self.programs.pop(program)
             self.gettargetpops()
             self.gettargetpartypes()
             self.initialize_covout()
-            print('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [p.name for p in self.programs.values()]))
+            printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [p.name for p in self.programs.values()]), 4, verbose)
 
     def optimizable(self):
         return [True if prog.targetpars else False for prog in self.programs.values()]
@@ -336,17 +337,17 @@ class Program(object):
     def optimizable(self):
         return True if self.targetpars else False
 
-    def addtargetpar(self,targetpar):
+    def addtargetpar(self, targetpar, verbose=2):
         '''Add a model parameter to be targeted by this program'''
         if targetpar not in self.targetpars:
             self.targetpars.append(targetpar)
             self.optimizable
-            print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
+            printv('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars), 4, verbose)
         else:
             raise Exception('The target parameter you are trying to add is already present in the list of target parameters affected by this program:%s.' % self.targetpars)
         return None
 
-    def rmtargetpar(self,targetpar):
+    def rmtargetpar(self, targetpar, verbose=2):
         '''Remove a model parameter from those targeted by this program'''
         if targetpar not in self.targetpars:
             errormsg = 'The target parameter "%s" you have selected for removal is not in the list of target parameters affected by this program:%s.' % (targetpar, self.targetpars)
@@ -354,16 +355,16 @@ class Program(object):
         else:
             self.targetpars.pop(self.targetpars.index(targetpar))
             self.optimizable
-            print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
+            printv('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars), 4, verbose)
         return None
 
-    def addcostcovdatum(self,costcovdatum,overwrite=False):
+    def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
         '''Add cost-coverage data point'''
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
             self.costcovdata['cost'].append(costcovdatum['cost'])
             self.costcovdata['coverage'].append(costcovdatum['coverage'])
-            print('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.name, self.costcovdata))
+            printv('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.name, self.costcovdata), 4, verbose)
         else:
             if overwrite:
                 ind = self.costcovdata['t'].index(int(costcovdatum['t']))
@@ -372,21 +373,23 @@ class Program(object):
                 self.costcovdata['cost'][ind] = costcovdatum['cost']
                 self.costcovdata['coverage'][ind] = costcovdatum['coverage']
                 newcostcovdatum = {'t':self.costcovdata['t'][ind],'cost':self.costcovdata['cost'][ind],'coverage':self.costcovdata['coverage'][ind]}
-                print('\nModified cc data from "%s" to "%s" for program: "%s". \nCC data for this program are: %s' % (oldcostcovdatum, newcostcovdatum, self.name, self.costcovdata))
+                printv('\nModified cc data from "%s" to "%s" for program: "%s". \nCC data for this program are: %s' % (oldcostcovdatum, newcostcovdatum, self.name, self.costcovdata), 4, verbose)
             else:
-                raise Exception('You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t'])
+                errormsg = 'You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t']
+                raise Exception(errormsg)
 
-    def rmcostcovdatum(self,year):
+    def rmcostcovdatum(self, year, verbose=2):
         '''Remove cost-coverage data point. The point to be removed can be specified by year (int or float).'''
         if int(year) in self.costcovdata['t']:
             self.costcovdata['cost'].pop(self.costcovdata['t'].index(int(year)))
             self.costcovdata['coverage'].pop(self.costcovdata['t'].index(int(year)))
             self.costcovdata['t'].pop(self.costcovdata['t'].index(int(year)))
-            print('\nRemoved cc data in year "%s" from program: "%s". \nCC data for this program are: %s' % (year, self.name, self.costcovdata))
+            printv('\nRemoved cc data in year "%s" from program: "%s". \nCC data for this program are: %s' % (year, self.name, self.costcovdata), 4, verbose)
         else:
-            raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
+            errormsg = 'You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata)
+            raise Exception(errormsg)
 
-    def gettargetpopsize(self,t,parset,total=True):
+    def gettargetpopsize(self, t, parset, total=True):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Figure out input data type, transform if necessary
@@ -398,7 +401,6 @@ class Program(object):
         allpops = getpopsizes(parset=parset,years=t,filter_pop=None)
         for targetpop in self.targetpops:
             targetpopsize[targetpop] = allpops[targetpop]
-
 
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
@@ -485,7 +487,7 @@ class CCOF(object):
         output += '\n'
         return output
 
-    def addccopar(self,ccopar,overwrite=False):
+    def addccopar(self, ccopar, overwrite=False, verbose=2):
         ''' Add or replace parameters for cost-coverage functions'''
 
         if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.
@@ -498,7 +500,7 @@ class CCOF(object):
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
                     self.ccopars[ccopartype].append(ccopar[ccopartype])
-                print('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars))
+                printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
@@ -506,24 +508,26 @@ class CCOF(object):
                     for ccopartype in self.ccopars.keys():
                         oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
                         self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    print('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars))
+                    printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
                 else:
-                    raise Exception('You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t'])
+                    errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
+                    raise Exception(errormsg)
         return None
 
-    def rmccopar(self,t):
+    def rmccopar(self, t, verbose=2):
         '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
         if isinstance(t,int) or isinstance(t,float):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
                 for ccopartype in self.ccopars.keys():
                     self.ccopars[ccopartype].pop(ind)
-                print('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars))
+                printv('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars), 4, verbose)
             else:
-                raise Exception('You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars))
+                errormsg = 'You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars)
+                raise Exception(errormsg)
         return None
 
-    def getccopar(self,t,verbose=1,randseed=None,bounds=None):
+    def getccopar(self, t, verbose=2, randseed=None, bounds=None):
         '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
 
         # Error checks
