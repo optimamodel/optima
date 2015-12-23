@@ -3,7 +3,7 @@ function (_) {
   'use strict';
 
   return angular.module('app.export-all-data', ['app.common.export-helpers'])
-  .directive('exportAllData', function ($http, exportHelpers, modalService) {
+  .directive('exportAllData', function ($http, exportHelpers, modalService, projectApiService) {
     return {
       restrict: 'E',
       scope: {
@@ -44,12 +44,7 @@ function (_) {
           });
           if(showAlert) { modalService.inform(undefined,undefined,"Sorry, some graphs cannot be exported"); }
 
-          $http({url:'/api/project/exportall',
-          method:'POST',
-          data: exportables,
-          headers: {'Content-type': 'application/json'},
-          responseType:'arraybuffer'})
-          .success(function (response, status, headers, config) {
+          projectApiService.exportAllProject(exportables).success(function (response, status, headers, config) {
             var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             saveAs(blob, (scope.name + '.xlsx'));
           })

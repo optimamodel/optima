@@ -1,11 +1,11 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService) {
+  module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService) {
     $scope.users = users.data.users;
     $scope.users = _.compact(_.map(_(projects.data.projects).groupBy(function (p) {return p.user_id;}), function (projects, userId) {
-      var user = _.findWhere($scope.users, {id: parseInt(userId)});
-      return user.email===UserManager.data.email ? undefined :{
+      var user = _.findWhere($scope.users, {id: userId});
+      return user.id===UserManager.data.id ? undefined :{
         projects: projects,
         data: user
       };
@@ -19,7 +19,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.workbook = function (name, id) {
       // read that this is the universal method which should work everywhere in
       // http://stackoverflow.com/questions/24080018/download-file-from-a-webapi-method-using-angularjs
-      window.open('/api/project/workbook/' + id, '_blank', '');
+      window.open(projectApiService.getSpreadsheetUrl(id), '_blank', '');
     };
 
     /**
@@ -28,11 +28,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.edit = function (name, id) {
-      $http.get('/api/project/open/' + id)
-        .success(function (response) {
-          activeProject.setActiveProjectFor(name, id, UserManager.data);
-          window.location = '/#/project/edit';
-        });
+      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      window.location = '/#/project/edit';
     };
 
     /**
@@ -41,11 +38,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Alerts the user if it cannot do it.
      */
     $scope.open = function (name, id) {
-      $http.get('/api/project/open/' + id)
-        .success(function (response) {
-          activeProject.setActiveProjectFor(name, id, UserManager.data);
-          window.location = '/';
-        });
+      activeProject.setActiveProjectFor(name, id, UserManager.data);
+      window.location = '/';
     };
 
     /**
@@ -75,11 +69,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * Gets the data for the given project `name` as <name>.json  file
      */
     $scope.getData = function (name, id) {
-      $http({url:'/api/project/data/'+ id,
-        method:'GET',
-        headers: {'Content-type': 'application/json'},
-        responseType:'arraybuffer'})
-        .success(function (response, status, headers, config) {
+      projectApiService.getProjectData(id).success(function (response, status, headers, config) {
           var blob = new Blob([response], { type: 'application/json' });
           saveAs(blob, (name + '.json'));
         });
@@ -92,7 +82,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      * in case of failure.
      */
     var removeNoQuestionsAsked = function (user, name, id, index) {
-      $http.delete('/api/project/delete/' + id)
+      projectApiService.deleteProject(id)
         .success(function (response) {
           user.projects = _(user.projects).filter(function (item) {
             return item.id != id;

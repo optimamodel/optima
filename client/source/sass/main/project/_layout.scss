@@ -21,3 +21,10 @@
     margin-top: -$footer-height;
   }
 }
+
+.flex__medium_space_between {
+  display: flex;
+  width: 500px;
+  justify-content: space-between;
+  align-items: center;
+}

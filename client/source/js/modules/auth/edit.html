@@ -1,9 +1,16 @@
-<form name="RegisterForm" ng-submit="register()" novalidate="novalidate"
-      style="max-width: 500px; min-width: 200px; margin: 0 auto">
-  <h1>Registration</h1>
+<form name="EditForm" ng-submit="update()" novalidate="novalidate">
+  <h1>Edit details</h1>
 
   <div class="section text-error" ng-show="error">
     {{ error }}
+  </div>
+
+  <div class="section text-error" ng-show="!error && !success">
+    &nbsp;
+  </div>
+
+  <div class="section text-success" ng-show="success">
+    {{ success }}
   </div>
 
   <div class="section form-input-validate flex__medium_space_between">
@@ -35,7 +42,8 @@
            type="text"
            name="displayName"
            ng-model="displayName"
-           placeholder="Display name">
+           placeholder="Display name"
+           required="required">
   </div>
 
   <div class="section form-input-validate flex__medium_space_between">
@@ -45,13 +53,10 @@
            type="email"
            name="email"
            ng-model="email"
-           placeholder="Email">
+           placeholder="Email"
+           required="required">
   </div>
 
-  <button type="submit" class="section btn __l __block">Join</button>
-
-  <div class="section text-right">
-    Already have an account? <a class="link __blue" ui-sref="login">Log in</a>
-  </div>
+  <button type="submit" class="section btn __s">Update</button>
 
 </form>

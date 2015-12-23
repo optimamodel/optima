@@ -1,13 +1,18 @@
 import os
-from dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
-from flask import helpers, current_app, abort
-from flask.ext.login import current_user # pylint: disable=E0611,F0401
 from functools import wraps
-from flask import request, jsonify, abort
+import traceback
+
+from dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
+
+from flask import helpers, current_app, abort
+from flask import request, jsonify
+from werkzeug.datastructures import FileStorage
+
+from flask.ext.login import current_user
+from flask_restful.reqparse import RequestParser as OrigReqParser
+
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, UserDb
-import traceback
-from flask_restful.reqparse import RequestParser as OrigReqParser
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj'}
@@ -298,14 +303,30 @@ def init_login_manager(login_manager):
 
 class RequestParser(OrigReqParser):
 
+    def get_swagger_type(self, arg):
+        try:
+            if issubclass(arg.type, FileStorage):
+                return 'file'
+        except TypeError:
+            ## this arg.type was not a class
+            pass
+
+        if callable(arg.type):
+            return arg.type.__name__
+        return arg.type
+
     def swagger_parameters(self):
         return [
             {
                 'name': arg.name,
-                'dataType': arg.type.__name__ if callable(arg.type) else arg.type,
+                'dataType': self.get_swagger_type(arg),
                 'required': arg.required,
                 'description': arg.help,
                 'paramType': 'form',
             }
             for arg in self.args
         ]
+
+    def add_arguments(self, arguments_dict):
+        for argument_name, kwargs in arguments_dict.iteritems():
+            self.add_argument(argument_name, **kwargs)
