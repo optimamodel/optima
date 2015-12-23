@@ -18,14 +18,14 @@ class Result(object):
         
 
 
-class Results(object):
+class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
     def __init__(self):
         # Basic info
         self.uuid = uuid()
         self.created = today()
         self.project = None
-        self.pars = None
+        self.parset = None
         
         # Fundamental quantities
         self.tvec = None
@@ -45,14 +45,15 @@ class Results(object):
         self.main['numnewdiag'] = Result('Number of new diagnoses')
         
         # Other quantities
-        self.births = Result()
-        self.mtct = Result()
-        self.newtreat = Result()
-        self.newcircum = Result()
-        self.numcircum = Result()
-        self.reqcircum = Result()
-        self.sexinci = Result()
-    
+        self.other = odict() # For storing main results
+#        self.births = Result()
+#        self.mtct = Result()
+#        self.newtreat = Result()
+#        self.newcircum = Result()
+#        self.numcircum = Result()
+#        self.reqcircum = Result()
+#        self.sexinci = Result()
+#    
     
     
     def __repr__(self):

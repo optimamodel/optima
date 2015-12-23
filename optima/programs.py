@@ -220,7 +220,8 @@ class Programset(object):
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                         x = budget[thisprog.name]
-                        thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
+                        try: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
+                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
                 if interaction == 'additive':
@@ -348,7 +349,8 @@ class Program(object):
     def rmtargetpar(self,targetpar):
         '''Remove a model parameter from those targeted by this program'''
         if targetpar not in self.targetpars:
-            raise Exception('The target parameter you have selected for removal is not in the list of target parameters affected by this program:%s.' % self.targetpars)
+            errormsg = 'The target parameter "%s" you have selected for removal is not in the list of target parameters affected by this program:%s.' % (targetpar, self.targetpars)
+            raise Exception(errormsg)
         else:
             self.targetpars.pop(self.targetpars.index(targetpar))
             self.optimizable
@@ -396,6 +398,7 @@ class Program(object):
         allpops = getpopsizes(parset=parset,years=t,filter_pop=None)
         for targetpop in self.targetpops:
             targetpopsize[targetpop] = allpops[targetpop]
+
 
         if total: return sum(targetpopsize.values())
         else: return targetpopsize

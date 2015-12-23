@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, loadspreadsheet, model, run, getdate, today, uuid, dcp, objectid
+from optima import odict, Settings, Parameterset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -59,8 +59,8 @@ class Project(object):
         self.spreadsheetdate = 'Spreadsheet never loaded'
         self.version = version
         try:
-            self.gitbranch = run('git rev-parse --abbrev-ref HEAD').rstrip('\n')
-            self.gitversion = run('git rev-parse HEAD').rstrip('\n')
+            self.gitbranch = runcommand('git rev-parse --abbrev-ref HEAD').rstrip('\n')
+            self.gitversion = runcommand('git rev-parse HEAD').rstrip('\n')
         except:
             self.gitbranch = 'Git branch information not retrivable'
             self.gitversion = 'Git version information not retrivable'
@@ -236,7 +236,7 @@ class Project(object):
             simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         results = model(simpars, self.settings)
         results.derivedresults() # Generate derived results
-        results.pars = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
+        results.parset = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
         results.simpars = simpars # ...and sim parameters
         results.project = dcp(self) # ...and just copy the whole project
         

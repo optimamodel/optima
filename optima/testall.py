@@ -4,11 +4,12 @@ TESTALL
 
 Run all tests.
 
-Version: 2015nov23 by cliffk
+Version: 2015dec22 by cliffk
 """
 
-import tests
+import testproject
 import testutils
 import testprograms
 import testmodel
+import testmodalities
 import testscenarios
