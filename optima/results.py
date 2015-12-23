@@ -11,12 +11,15 @@ from numpy import array
 class Data(object):
     ''' A small class to process data into a form usable for results '''
     
-    def __init__(self, parname=None, data=None, by=None):
-        self.by = by
+    def __init__(self):
+        ''' Create an empty shell of a data structure...'''
         self.pops = None
         self.tot = None
-        if by=='pops': self.pops = dcp(data[parname]) # WARNING, is the dcp() needed?
-        elif by=='tot': self.tot = dcp(data[parname][0]) # WARNING, is the dcp() needed?
+    
+    def add(self, parname, data, by):
+        ''' Actually add data to the data object '''
+        if by=='pops': self.pops = dcp(data) # WARNING, is the dcp() needed?
+        elif by=='tot': self.tot = dcp(data) # WARNING, is the dcp() needed?
         else: raise Exception('by="%s" not understood, should be "pops" or "tot"' % by)
 
 
@@ -28,7 +31,7 @@ class Result(object):
         self.isnumber = isnumber
         self.pops = pops
         self.tot = tot
-        self.data = data # An instance of the Data class
+        self.data = Data() # An instance of the Data class
         
 
 
@@ -94,17 +97,17 @@ class Resultset(object):
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['prev'].data = Data('hivprev', data=data, by='pops')
-        self.main['prev'].data = Data('optprev', data=data, by='tot')
+        self.main['prev'].data.add('hivprev', data=data, by='pops')
+        self.main['prev'].data.add('optprev', data=data, by='tot')
         
         self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['numplhiv'].data = Data('optplhiv', data=data, by='tot')        
+        self.main['numplhiv'].data.add('optplhiv', data=data, by='tot')        
         
         allinci = array([self.inci])
         self.main['numinci'].pops = quantile(allinci, quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numinci'].data = Data('optnuminfect', data=data, by='tot')    
+        self.main['numinci'].data.add('optnuminfect', data=data, by='tot')    
 
         allinci = array([self.inci])
         self.main['force'].pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -113,12 +116,12 @@ class Resultset(object):
         alldeaths = array([self.death])
         self.main['numdeath'].pops = quantile(alldeaths, quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numdeath'].data = Data('optdeath', data=data, by='tot') 
+        self.main['numdeath'].data.add('optdeath', data=data, by='tot') 
 
         alldx = array([self.dx])
         self.main['numdiag'].pops = quantile(alldx, quantiles=quantiles)
         self.main['numdiag'].tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numdiag'].data = Data('optnumdiag', data=data, by='tot') 
+        self.main['numdiag'].data.add('optnumdiag', data=data, by='tot') 
         
 
 # WARNING, need to implement
