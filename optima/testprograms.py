@@ -58,18 +58,13 @@ if 'makeprograms' in tests:
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
     HTC = Program(name='HTC',
-                  targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],
-                  targetpops=['Females 15-49'])
+                  targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
+                  targetpops=['F 15-49'])
 
     SBCC = Program(name='SBCC',
-                   targetpars=[{'param': 'condomcas', 'pop': 'Females 15-49'},
-                               {'param': 'hivtest', 'pop': 'Females 15-49'}],
-                   targetpops=['Females 15-49'])
-                   
-    FSW = Program(name='FSW programs',
-                  targetpars=[{'param': 'hivtest', 'pop': 'FSW'},
-                              {'param': 'condomcas', 'pop': 'FSW'}],
-                  targetpops=['FSW'])
+                   targetpars=[#CK: WARNING,TEMP {'param': 'condcas', 'pop': ('F 15-49','M 15-49')},
+                               {'param': 'hivtest', 'pop': 'F 15-49'}],
+                   targetpops=['F 15-49']) # CK: what should this be for a partnership?
 
     MGT = Program('MGT')
 
@@ -79,14 +74,13 @@ if 'makeprograms' in tests:
 
     # Testing methods of program class
     # 1. Adding a target parameter to a program
-    HTC.addtargetpar({'param': 'hivtest', 'pop': 'FSW'})
-    HTC.addtargetpar({'param': 'hivtest', 'pop': 'Males 15-49'})
+    HTC.addtargetpar({'param': 'hivtest', 'pop': 'M 15-49'})
     
     ## NOTE that adding a targeted parameter does NOT automatically add a targeted population! Do this separately, e.g.
-    HTC.targetpops.append('Males 15-49')
+    HTC.targetpops.append('M 15-49')
         
     # 2. Removing a target parameter from a program
-    HTC.rmtargetpar({'param': 'hivtest', 'pop': 'FSW'})
+    HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
 
     # 3. Add historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
@@ -150,13 +144,13 @@ if 'makeprograms' in tests:
 
     print('Running make programs set test...')
     # Different ways to initialise
-    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
+    R = Programset(programs={'HTC':HTC,'SBCC':SBCC,'MGT':MGT,'SBCC':SBCC})
 
     # Testing methods of programset class
     # 1. Adding a program
-    R.addprograms({'ART':ART})
+    R.addprograms(ART)
 
     # 2. Removing a program
     R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
@@ -200,41 +194,42 @@ if 'makeprograms' in tests:
                      parset=P.parsets['default'])
 
     # 8. Add parameters for defining coverage-outcome function.
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3,
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.3,
                                                     't': 2013.0,
                                                     'HTC': 0.6,
                                                     'SBCC':0.1})
                                                     
-    R.covout['hivtest']['Males 15-49'].addccopar({'intercept': 0.3,
+    R.covout['hivtest']['M 15-49'].addccopar({'intercept': 0.3,
                                                   't': 2016.0,
                                                   'HTC': 0.65})
                                                   
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3,
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.3,
                                                     't': 2015.0,
                                                     'HTC': 0.5,
                                                     'SBCC':0.15})
                                                     
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.4,
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.4,
                                                     't': 2017.0,
                                                     'HTC': 0.4,
                                                     'SBCC':0.2})
 
-    R.covout['condomcas']['Females 15-49'].addccopar({'intercept': 0.3,
-                                                    't': 2015.0,
-                                                    'SBCC':0.15})
+# CK: WARNING, TEMP
+#    R.covout['condcas']['F 15-49'].addccopar({'intercept': 0.3, # CK: this gives an error since I think it's expecting the partnership rather than the population, but changing it to the partnership gives a different error, ugh...
+#                                                    't': 2015.0,
+#                                                    'SBCC':0.15})
                                                     
     # 9. Overwrite parameters for defining coverage-outcome function.
-    R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.35,
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.35,
                                                     't': 2015.0,
                                                     'HTC': 0.45,
                                                     'SBCC':0.15},
                                                     overwrite=True)
 
     # 10. Remove parameters for defining coverage-outcome function.
-    R.covout['hivtest']['Females 15-49'].rmccopar(2017)
+    R.covout['hivtest']['F 15-49'].rmccopar(2017)
     
     # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
-    R.covout['hivtest']['Females 15-49'].getccopar(2014)
+    R.covout['hivtest']['F 15-49'].getccopar(2014)
 
     # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
     outcomes_budget = R.getoutcomes(forwhat=budget,

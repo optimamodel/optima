@@ -2,7 +2,7 @@
 Test script for service modalities
 
 Details:
-Three different programs are targeting testing rates for Females 15-49.
+Three different programs are targeting testing rates for F 15-49.
 This script demonstrates the effect of these programs under different interaction assumptions.
 It can also be used as a test script, to ensure that the calculations are being done correctly.
 
@@ -24,16 +24,16 @@ testval_additive = 0.44181250
 
 # First set up some programs
 HTC_clinics = Program(name='HTC_clinics',
-              targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],
-              targetpops=['Females 15-49'])
+              targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
+              targetpops=['F 15-49'])
 
 HTC_outreach = Program(name='HTC_outreach',
-              targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],
-              targetpops=['Females 15-49'])
+              targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
+              targetpops=['F 15-49'])
                
 HTC_hometest = Program(name='HTC_hometest',
-              targetpars=[{'param': 'hivtest', 'pop': 'Females 15-49'}],
-              targetpops=['Females 15-49'])
+              targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
+              targetpops=['F 15-49'])
 
 # What's the target population size for these programs?
 targetpopsize = HTC_outreach.gettargetpopsize(t=[2013],
@@ -56,7 +56,7 @@ HTC_hometest.costcovfn.addccopar({'t': 2013.0,
 R = Programset(programs=[HTC_clinics,HTC_outreach,HTC_hometest])
 
 # Add parameters for the coverage-outcome functions
-R.covout['hivtest']['Females 15-49'].addccopar({'intercept': 0.3,
+R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.3,
                                                 't': 2013.0,
                                                 'HTC_clinics': 0.5,
                                                 'HTC_outreach': 0.6,
@@ -98,18 +98,18 @@ outcomes_additive = R.getoutcomes(forwhat=budget,
                                 forwhattype='budget',
                                 interaction='additive')
 
-r1 = 'PASS' if abs(outcomes_nested['hivtest']['Females 15-49'][0]-testval_nested)<eps else 'FAIL'
-r2 = 'PASS' if abs(outcomes_random['hivtest']['Females 15-49'][0]-testval_random)<eps else 'FAIL'
-r3 = 'PASS' if abs(outcomes_additive['hivtest']['Females 15-49'][0]-testval_additive)<eps else 'FAIL'
+r1 = 'PASS' if abs(outcomes_nested['hivtest']['F 15-49'][0]-testval_nested)<eps else 'FAIL'
+r2 = 'PASS' if abs(outcomes_random['hivtest']['F 15-49'][0]-testval_random)<eps else 'FAIL'
+r3 = 'PASS' if abs(outcomes_additive['hivtest']['F 15-49'][0]-testval_additive)<eps else 'FAIL'
 
 def summary():
     ''' Print out useful information'''
     output = '\n'
     output += '===================================\n'
     output += 'Calculated outcomes\n'
-    output += '   Nested: %s\n'    % outcomes_nested['hivtest']['Females 15-49'][0]
-    output += '   Random: %s\n'    % outcomes_random['hivtest']['Females 15-49'][0]
-    output += ' Additive: %s\n'    % outcomes_additive['hivtest']['Females 15-49'][0]
+    output += '   Nested: %s\n'    % outcomes_nested['hivtest']['F 15-49'][0]
+    output += '   Random: %s\n'    % outcomes_random['hivtest']['F 15-49'][0]
+    output += ' Additive: %s\n'    % outcomes_additive['hivtest']['F 15-49'][0]
     output += '===================================\n'
     output += 'Outcomes should be:\n'
     output += '   Nested: %s\n'    % testval_nested
@@ -193,9 +193,9 @@ def summary_scaleup():
     output += ' Outreach: %s\n'    % coverage['HTC_outreach'][0]
     output += ' Hometest: %s\n'    % coverage['HTC_hometest'][0]
     output += 'Initial outcomes:\n'
-    output += '   Nested: %s\n'    % outcomes_nested['hivtest']['Females 15-49'][0]
-    output += '   Random: %s\n'    % outcomes_random['hivtest']['Females 15-49'][0]
-    output += ' Additive: %s\n'    % outcomes_additive['hivtest']['Females 15-49'][0]
+    output += '   Nested: %s\n'    % outcomes_nested['hivtest']['F 15-49'][0]
+    output += '   Random: %s\n'    % outcomes_random['hivtest']['F 15-49'][0]
+    output += ' Additive: %s\n'    % outcomes_additive['hivtest']['F 15-49'][0]
     output += '===================================\n'
     output += 'Budget with outreach scale-up:\n'
     output += ' Clinics: %s\n'    % budget_outreachscaleup['HTC_clinics'][0]
@@ -206,9 +206,9 @@ def summary_scaleup():
     output += ' Outreach: %s\n'    % coverage_outreachscaleup['HTC_outreach'][0]
     output += ' Hometest: %s\n'    % coverage_outreachscaleup['HTC_hometest'][0]
     output += 'Outcomes with outreach scale-up:\n'
-    output += '   Nested: %s\n'    % outcomes_nested_outreachscaleup['hivtest']['Females 15-49'][0]
-    output += '   Random: %s\n'    % outcomes_random_outreachscaleup['hivtest']['Females 15-49'][0]
-    output += ' Additive: %s\n'    % outcomes_additive_outreachscaleup['hivtest']['Females 15-49'][0]
+    output += '   Nested: %s\n'    % outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0]
+    output += '   Random: %s\n'    % outcomes_random_outreachscaleup['hivtest']['F 15-49'][0]
+    output += ' Additive: %s\n'    % outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0]
     output += '===================================\n'
     output += 'Budget with hometest scale-up:\n'
     output += ' Clinics: %s\n'    % budget_hometestscaleup['HTC_clinics'][0]
@@ -219,9 +219,9 @@ def summary_scaleup():
     output += ' Outreach: %s\n'    % coverage_hometestscaleup['HTC_outreach'][0]
     output += ' Hometest: %s\n'    % coverage_hometestscaleup['HTC_hometest'][0]
     output += 'Outcomes with hometest scale-up:\n'
-    output += '   Nested: %s\n' % outcomes_nested_hometestscaleup['hivtest']['Females 15-49'][0]
-    output += '   Random: %s\n' % outcomes_random_hometestscaleup['hivtest']['Females 15-49'][0]
-    output += ' Additive: %s\n' % outcomes_additive_hometestscaleup['hivtest']['Females 15-49'][0]
+    output += '   Nested: %s\n' % outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0]
+    output += '   Random: %s\n' % outcomes_random_hometestscaleup['hivtest']['F 15-49'][0]
+    output += ' Additive: %s\n' % outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0]
     output += '===================================\n'
     print output
 
