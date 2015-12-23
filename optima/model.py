@@ -61,15 +61,17 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     recov = C['recovgt500':'recovgt50']
     death = C['deathacute':'deathaids']
     cd4trans = C['cd4transacute':'cd4transaids']
-    deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
-    biofailure = C['biofail'] # biological treatment failure rate MK
+    deathtx      = C['deathtreat']   # Death rate whilst on treatment
+    biofailure   = C['biofail']      # biological treatment failure rate (P) MK
+    redtranssvl  = C['redtranssvl']  # reduction in transmission probability for sVL
+    redtransusvl = C['redtransusvl'] # reduction in transmission probability for usVL
     simpars['prog'] = prog # for equilibrate()
     simpars['recov'] = recov    
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = simpars['const']['effdx'] * cd4trans # Include diagnosis efficacy
-    txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
+    dxfactor = C['effdx'] * cd4trans # Include diagnosis efficacy
+    txfactor = C['efftx'] * dxfactor # And treatment efficacy
 
     
     # Set initial epidemic conditions 
@@ -136,8 +138,9 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     #MK
     immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
-    linktocare = simpars['linktocare'] # rate of linkage to care (P/T)....  hivtest/aidstest should also be P/T?
-    treatmentrate
+    linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)....  hivtest/aidstest should also be P/T?
+    treatmentrate = simpars['treatmentrate'] # treatment rate (N) wait this is the same as mtx1
+    adherencerate = simpars['adherencerate'] # adherence rate (P)
 
     # Force of infection metaparameter
     Fforce = simpars['force']
