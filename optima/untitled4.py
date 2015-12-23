@@ -7,7 +7,7 @@ import mpld3
 ion()
 
 
-mpld3.enable_notebook()
+#mpld3.enable_notebook()
 
 def create_plot():
     fig, ax = plt.subplots(figsize=(12,4))
@@ -28,6 +28,6 @@ def create_plot():
     return fig
 
 fig1 = create_plot()
-fig2 = create_plot()
-#mpld3.show()
+#fig2 = create_plot()
+mpld3.show()
 
