@@ -1,6 +1,6 @@
 ## Imports
 from math import pow as mpow
-from numpy import array, zeros, exp, maximum, minimum, hstack, inf
+from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import printv, tic, toc, dcp, Resultset, findinds
 
 
