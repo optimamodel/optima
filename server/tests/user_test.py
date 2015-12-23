@@ -170,6 +170,35 @@ class UserTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 201)
         self.logout()
 
+        user = self.create_user()
+        response = self.login(username=user.username)
+        self.assertEqual(response.status_code, 200)
+        id = json.loads(response.data).get('id')
+
+        new_username = '{}_edited'.format(user.username)
+        response = self.client.put('/api/user/{}'.format(id), data={
+            'displayName': user.name,
+            'email': user.email,
+            'password': make_password(),
+            'username': new_username
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['username'], new_username)
+
+        response = self.client.put('/api/user/{}'.format(id), data={
+            'displayName': '',
+            'email': '',
+            'password': make_password(),
+            'username': new_username
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['displayName'], '')
+        self.assertEqual(data['email'], '')
+
+        self.logout()
+
     def test_modify_user_nonadmin(self):
         user = self.create_user()
         new_password = make_password("test1")

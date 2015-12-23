@@ -6,6 +6,13 @@ from werkzeug.datastructures import FileStorage
 from server.webapp.exceptions import InvalidFileType
 from server.webapp.utils import allowed_file
 
+def nullable_email(email_str):
+    if not email_str:
+        return email_str
+    else:
+        return email(email_str)
+
+
 def email(email_str):
     if validate_email(email_str):
         return email_str
