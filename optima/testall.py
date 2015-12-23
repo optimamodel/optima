@@ -2,7 +2,7 @@
 """
 TESTALL
 
-Run all tests.
+Run all tests except 'testworkflow', 'testgui'
 
 Version: 2015dec22 by cliffk
 """
