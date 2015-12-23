@@ -2,6 +2,7 @@ from pylab import *
 
 import numpy as np, matplotlib.pyplot as plt
 import mpld3
+import json
 
 
 ion()
@@ -28,26 +29,31 @@ def create_plot():
     return fig
 
 fig1 = create_plot()
-#fig2 = create_plot()
-mpld3.show()
+fig2 = create_plot()
+#mpld3.show()
 
 
-html = '''
-<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
-<script type="text/javascript" src="http://mpld3.github.io/js/mpld3.v0.1.js"></script>
-<style>
-</style>
-<div id="fig01"></div>
-<div id="fig02"></div>
-<div id="fig03"></div>
-<script type="text/javascript">
-  var json01 = {<snip>};
-  mpld3.draw_figure("fig01", json01);
-</script>
-'''
+#html = '''
+#<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+#<script type="text/javascript" src="http://mpld3.github.io/js/mpld3.v0.2.js"></script>
+#<style>
+#</style>
+#<div id="fig01"></div>
+#<div id="fig02"></div>
+#<script type="text/javascript">
+#  var json01 = {<snip1>};
+#  var json02 = {<snip1>};
+#  mpld3.draw_figure("fig01", json01);
+#  mpld3.draw_figure("fig02", json02);
+#</script>
+#'''
+#
+#json01 = json.dumps(mpld3.fig_to_dict(fig1))
+#json02 = json.dumps(mpld3.fig_to_dict(fig2))
+#html.replace('{<snip1}',json01)
+#html.replace('{<snip2}',json02)
 
-json01 = json.dumps(mpld3.fig_to_dict(fig1))
-html.replace('{<snip}',json01)
+html = mpld3.fig_to_html(fig1)
 
 
 mpld3._server.serve(html, ip='127.0.0.1', port=8888, n_retries=50, files=None, open_browser=True, http_server=None)
