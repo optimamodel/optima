@@ -31,3 +31,24 @@ fig1 = create_plot()
 #fig2 = create_plot()
 mpld3.show()
 
+
+html = '''
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="http://mpld3.github.io/js/mpld3.v0.1.js"></script>
+<style>
+</style>
+<div id="fig01"></div>
+<div id="fig02"></div>
+<div id="fig03"></div>
+<script type="text/javascript">
+  var json01 = {<snip>};
+  mpld3.draw_figure("fig01", json01);
+</script>
+'''
+
+json01 = json.dumps(mpld3.fig_to_dict(fig1))
+html.replace('{<snip}',json01)
+
+
+mpld3._server.serve(html, ip='127.0.0.1', port=8888, n_retries=50, files=None, open_browser=True, http_server=None)
+
