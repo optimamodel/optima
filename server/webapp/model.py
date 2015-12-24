@@ -38,11 +38,9 @@ def add_calibration_parameters(project_instance, result = None):
 #    from optima.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
     if result is None: result = {}
-    print "default parset", project_instance.parsets['default'].pars
-    result['F'] = [] # project_instance.parsets['default'].pars 
-    # !!!!! TODO make project_instance.parsets['default'].pars (which is odict) serializable
+    result['F'] = [] # TBC by Cliff: which part of pars is it? project_instance.parsets['default'].pars 
 #    M = D_dict.get('M', {})
-    M_out = []
+    M_out = [] # TBC by Cliff: is it still needed or gone? 
 #    if M:
 #        for parameter in calibrate_parameters:
 #            keys = parameter['keys']
@@ -79,7 +77,7 @@ def doAutoCalibration():
 
     project_name = request.project_name
     project_id = request.project_id
-    # TODO fix after v2
+    # TODO fix after v2 - we might want to switch to Celery instead
     # can_start, can_join, current_calculation = start_or_report_calculation(
     #     current_user.id, project_id, autofit, db.session)
     can_start, can_join, current_calculation = (False, False, None)
@@ -119,6 +117,7 @@ def stopCalibration():
 @report_exception()
 def getWorkingModel():
     """ Returns the working model of project. """
+    # TODO: this would not make sense anymore, because we'd only need results for a specific parset.
     D_dict = {}
     # Make sure model is calibrating
     project_id = request.project_id
@@ -154,6 +153,7 @@ def getWorkingModel():
 @report_exception()
 def saveCalibrationModel():
     """ Saves working model as the default model """
+    # TODO: we no longer need to save the whole project, only the results for the specific parset.
     # get project name
     project_id = request.project_id
     D_dict = save_working_model_as_default(project_id)
@@ -169,6 +169,7 @@ def saveCalibrationModel():
 @report_exception()
 def revertCalibrationModel():
     """ Revert working model to the default model """
+    # TODO: we would only need to delete temporary result corresponding to the given project / parset.
     # get project name
     project_id = request.project_id
     D_dict = revert_working_model_to_default(project_id)
@@ -182,6 +183,8 @@ def revertCalibrationModel():
 @check_project_exists
 @report_exception()
 def doManualCalibration():
+    # TODO: we can do that once we know which data we are going to save and where they would go
+    # most probably this will be done as a Parset update.
     """
     Uses provided parameters to manually calibrate the model (update it with these data)
 
@@ -223,6 +226,7 @@ def doManualCalibration():
 @check_project_name
 def getModelCalibrateParameters():
     """ Returns the parameters of the given model. """
+    # TODO: find out how do we show calibration parameters now.
     project_instance = load_model(request.project_id, from_json = False)
     result = add_calibration_parameters(project_instance)
     return jsonify(result)
@@ -231,6 +235,7 @@ def getModelCalibrateParameters():
 @login_required
 @check_project_name
 def getModel():
+    # TODO: make it a Data resource
     """ Returns the model (aka D or data) for the currently open project. """
     D_dict = load_model(request.project_id, from_json = False)
     return jsonify(D_dict)
@@ -239,6 +244,7 @@ def getModel():
 @login_required
 @check_project_name
 def getModelGroup(key):
+    # TODO: make it a DataKey resource
     """ Returns the subset with the given key for the D (model) in the open project."""
     current_app.logger.debug("getModelGroup: %s" % key)
     D_dict = load_model(request.project_id, from_json = False)
@@ -249,6 +255,8 @@ def getModelGroup(key):
 @login_required
 @check_project_name
 def getModelSubGroup(key, subkey):
+    # TODO (if necessary): either make it a DataSubKey resource, or generalise and make it possible to retrieve data by json path
+    # (but the simpler the better, so probably just the option 1)
     """ Returns the subset with the given key and subkey for the D (model) in the open project. """
     current_app.logger.debug("getModelSubGroup: %s %s" % (key, subkey))
     project_instance = load_model(request.project_id, from_json = False)
@@ -262,6 +270,7 @@ def getModelSubGroup(key, subkey):
 @check_project_name
 @report_exception()
 def setModelGroup(key):
+    # TODO: this should be part of DataKey CRUD
     """ Stores the provided data as a subset with the given key for the D (model) in the open project. """
     data = json.loads(request.data)
     current_app.logger.debug("set parameters key: %s for data: %s" % (key, data))
@@ -276,32 +285,40 @@ def setModelGroup(key):
 @check_project_name
 @report_exception()
 def doRunSimulation():
+    # TODO: this should have the "parset id" and "project id" parameters.
+    # the flow: 
+    # retrieve parset with the given id / project id, hydrate the project
+    # call p.runsim for the given parset
+    # what to do with the results? We might want to store them temporarily somewhere (we only save them if the user confirms)
+    # make a graph based on results and return it
+    # TBC with Cliff / Robyn: will there still be "startyear" and "endyear" parameters?
     """
     Starts simulation for the given project and given date range.
 
     Returns back the file with the simulation data.
 
     """
-    data = json.loads(request.data)
+    # data = json.loads(request.data)
 
-    args = {}
-    D_dict = load_model(request.project_id, from_json = False)
-    result = {'graph': D_dict.get('plot',{}).get('E',{})}
-    if not result:
-        D = fromjson(D_dict)
-        args['D'] = D
-        startyear = data.get("startyear")
-        if startyear:
-            args["startyear"] = int(startyear)
-        endyear = data.get("endyear")
-        if endyear:
-            args["endyear"] = int(endyear)
-        args["dosave"] = False
-        # TODO fix after v2
-        # D = runsimulation(**args)
-        D_dict = tojson(D)
-        save_model(request.project_id, D_dict)
-        result = {'graph':D_dict.get('plot',{}).get('E',{})}
+    # args = {}
+    # D_dict = load_model(request.project_id, from_json = False)
+    # result = {'graph': D_dict.get('plot',{}).get('E',{})}
+    # if not result:
+    #     D = fromjson(D_dict)
+    #     args['D'] = D
+    #     startyear = data.get("startyear")
+    #     if startyear:
+    #         args["startyear"] = int(startyear)
+    #     endyear = data.get("endyear")
+    #     if endyear:
+    #         args["endyear"] = int(endyear)
+    #     args["dosave"] = False
+    #     # TODO fix after v2
+    #     # D = runsimulation(**args)
+    #     D_dict = tojson(D)
+    #     save_model(request.project_id, D_dict)
+    #     result = {'graph':D_dict.get('plot',{}).get('E',{})}
+    result = {'graph':{}}
     result = add_calibration_parameters(D_dict, result)
     return jsonify(result)
 

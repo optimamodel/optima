@@ -164,8 +164,9 @@ def model_as_bunch(model):
 def load_model(project_id, from_json = True, working_model = False): # todo rename
     """
       loads the project with the given name
-      returns the model (D).
+      returns the hydrated project instance (Can't think of another name than "model" yet...).
     """
+    # TODO we won't have to do this for working_model, because this concept won't make sense in Optima 2.0
     current_app.logger.debug("load_model:%s" % project_id)
     model = None
     project = load_project(project_id)
