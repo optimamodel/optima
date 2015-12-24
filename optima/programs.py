@@ -254,7 +254,7 @@ class Programset(object):
             
                 elif self.covout[thispartype][thispop].interaction == 'random':
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                     if all(self.covout[thispartype][thispop].ccopars.values()):
                 
