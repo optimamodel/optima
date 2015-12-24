@@ -23,6 +23,11 @@ define(['angular'], function (angular) {
           },
           templateUrl: 'js/modules/auth/register.html' ,
           controller: 'RegisterController'
+        })
+        .state('edit', {
+          url: '/edit',
+          templateUrl: 'js/modules/auth/edit.html' ,
+          controller: 'EditController'
         });
     });
 

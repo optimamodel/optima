@@ -25,14 +25,19 @@ from server.webapp.dbmodels import WorkingProjectDb
 #         sqlalchemy_session = session
 
 
+def make_password(password="test"):
+    return hashlib.sha224("test").hexdigest()
+
+
 class UserFactory(SQLAlchemyModelFactory):
 
     class Meta:
         model = UserDb
 
-    name = 'test'
+    name = factory.Faker('name')
+    username = Sequence(lambda n: 'user_{}'.format(n))
     email = Sequence(lambda n: 'user_{}@test.com'.format(n))
-    password = hashlib.sha224("test").hexdigest()
+    password = make_password()
     is_admin = False
 
 

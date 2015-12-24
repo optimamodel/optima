@@ -9,8 +9,7 @@ from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 
-from optima.makespreadsheet import default_dataend, default_datastart, makespreadsheet
-from optima.project import version
+import optima as op
 
 from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
@@ -51,8 +50,8 @@ population_parser.add_arguments({
 project_parser = RequestParser()
 project_parser.add_arguments({
     'name': {'required': True, 'type': secure_filename_input},
-    'datastart': {'type': int, 'default': default_datastart},
-    'dataend': {'type': int, 'default': default_dataend},
+    'datastart': {'type': int, 'default': op.default_datastart},
+    'dataend': {'type': int, 'default': op.default_dataend},
     # FIXME: programs should be a "SubParser" with its own Parser
     # 'populations': {'type': (population_parser), 'required': True},
     'populations': {'type': dict, 'required': True, 'action': 'append'},
@@ -125,7 +124,7 @@ class Projects(ProjectBase):
             args['name'], user_id, current_user.email))
         project_entry = ProjectDb(
             user_id=user_id,
-            version=version,
+            version=op.version,
             created=datetime.utcnow(),
             **args
         )
@@ -141,7 +140,7 @@ class Projects(ProjectBase):
         new_project_template = args['name']
 
         path = templatepath(args['name'])
-        makespreadsheet(
+        op.makespreadsheet(
             path,
             pops=args['populations'],
             datastart=args['datastart'],
