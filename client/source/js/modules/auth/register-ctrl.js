@@ -17,15 +17,16 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
       var hashed_password = SHA224($scope.password).toString();
 
       User.create({
-        name: $scope.fullName,
-        email: $scope.email,
-        password: hashed_password
+        username: $scope.username,
+        password: hashed_password,
+        displayName: $scope.displayName,
+        email: $scope.email
       },
         // success
         function (response) {
-          if (response.email) {
+          if (response.username) {
             // success
-            $window.location = '/';
+            $window.location = '/#/login';
           }
         },
         // error

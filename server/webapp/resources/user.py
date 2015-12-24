@@ -1,6 +1,6 @@
 import traceback
 
-from flask import request, current_app, session, flash, redirect, url_for
+from flask import request, current_app, session, flash, redirect, url_for, abort
 
 from flask_restful import Resource, marshal_with
 from flask.ext.login import login_user, current_user, logout_user, login_required
@@ -9,21 +9,27 @@ from flask_restful_swagger import swagger
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 
-from server.webapp.inputs import email, hashed_password
+from server.webapp.inputs import email, hashed_password, nullable_email
 from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist, InvalidCredentials
 from server.webapp.utils import verify_admin_request, RequestParser
 
 
 user_parser = RequestParser()
-user_parser.add_argument('email', type=email, required=True)
-user_parser.add_argument('name', required=True, help='A valid e-mail address')
-user_parser.add_argument('password', type=hashed_password, required=True)
+user_parser.add_arguments({
+    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
+    'displayName': {'dest': 'name'},
+    'username':    {'required': True},
+    'password':    {'type': hashed_password, 'required': True},
+})
 
 
 user_update_parser = RequestParser()
-user_update_parser.add_argument('email', type=email)
-user_update_parser.add_argument('name')
-user_update_parser.add_argument('password', type=hashed_password)
+user_update_parser.add_arguments({
+    'email':       {'type': nullable_email, 'help': 'A valid e-mail address'},
+    'displayName': {'dest': 'name'},
+    'username':    {'required': True},
+    'password':    {'type': hashed_password},
+})
 
 
 class UserDoesNotExist(RecordDoesNotExist):
@@ -52,12 +58,12 @@ class User(Resource):
         current_app.logger.info("create request: {} {}".format(request, request.data))
         args = user_parser.parse_args()
 
-        same_user_count = UserDb.query.filter_by(email=args.email).count()
+        same_user_count = UserDb.query.filter_by(username=args.username).count()
 
         if same_user_count > 0:
-            raise UserAlreadyExists(args.email)
+            raise UserAlreadyExists(args.username)
 
-        user = UserDb(args.name, args.email, args.password)
+        user = UserDb(**args)
         db.session.add(user)
         db.session.commit()
 
@@ -65,12 +71,12 @@ class User(Resource):
 
 
 class UserDetail(Resource):
-    method_decorators = [verify_admin_request]
 
     @swagger.operation(
         summary='Delete a user',
         notes='Requires admin privileges'
     )
+    @verify_admin_request
     def delete(self, user_id):
         current_app.logger.debug('/api/user/delete/{}'.format(user_id))
         user = UserDb.query.get(user_id)
@@ -79,22 +85,20 @@ class UserDetail(Resource):
             raise UserDoesNotExist(user_id)
 
         user_email = user.email
-        from server.webapp.dbmodels import ProjectDb, WorkingProjectDb, ProjectDataDb, WorkLogDb
+        user_name = user.username
+        from server.webapp.dbmodels import ProjectDb
         from sqlalchemy.orm import load_only
 
         # delete all corresponding projects and working projects as well
         # project and related records delete should be on a method on the project model
         projects = ProjectDb.query.filter_by(user_id=user_id).options(load_only("id")).all()
-        project_ids = [project.id for project in projects]
-        current_app.logger.debug("project_ids for user %s:%s" % (user_id, project_ids))
-        WorkLogDb.query.filter(WorkLogDb.id.in_(project_ids)).delete(synchronize_session=False)
-        ProjectDataDb.query.filter(ProjectDataDb.id.in_(project_ids)).delete(synchronize_session=False)
-        WorkingProjectDb.query.filter(WorkingProjectDb.id.in_(project_ids)).delete(synchronize_session=False)
-        ProjectDb.query.filter_by(user_id=user_id).delete()
+        for project in projects:
+            project.recursive_delete()
+
         db.session.delete(user)
         db.session.commit()
 
-        current_app.logger.info("deleted user:{} {}".format(user_id, user_email))
+        current_app.logger.info("deleted user:{} {} {}".format(user_id, user_name, user_email))
 
         return '', 204
 
@@ -112,6 +116,12 @@ class UserDetail(Resource):
         if user is None:
             raise UserDoesNotExist(user_id)
 
+        if current_user.is_anonymous() or (str(user_id) != str(current_user.id) and not current_user.is_admin):
+            secret = request.args.get('secret', '')
+            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
+            if u is None:
+                abort(403)
+
         args = user_update_parser.parse_args()
         for key, value in args.iteritems():
             if value is not None:
@@ -128,8 +138,10 @@ class UserDetail(Resource):
 
 
 user_login_parser = RequestParser()
-user_login_parser.add_argument('email', type=email, required=True)
-user_login_parser.add_argument('password', type=hashed_password, required=True)
+user_login_parser.add_arguments({
+    'username': {'required': True},
+    'password': {'type': hashed_password, 'required': True},
+})
 
 
 class CurrentUser(Resource):
@@ -161,7 +173,7 @@ class UserLogin(Resource):
             args = user_login_parser.parse_args()
             try:
                 # Get user for this username
-                user = UserDb.query.filter_by(email=args['email']).first()
+                user = UserDb.query.filter_by(username=args['username']).first()
 
                 # Make sure user is valid and password matches
                 if user is not None and user.password == args['password']:
@@ -170,7 +182,7 @@ class UserLogin(Resource):
 
             except Exception:
                 var = traceback.format_exc()
-                print("Exception when logging user {}: \n{}".format(args['email'], var))
+                print("Exception when logging user {}: \n{}".format(args['username'], var))
 
             raise InvalidCredentials
 
