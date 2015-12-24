@@ -1,7 +1,12 @@
 #!/bin/bash
 
 if [ ! -d "./p-env/" ]; then
+  if [ "$1" == "--system" ]; then
+    virtualenv --system-site-packages p-env
+    shift
+  else
     virtualenv p-env
+  fi
 fi
 
 source ./p-env/bin/activate

@@ -25,12 +25,12 @@ from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, ob
 
 ## Load Optima functions and classes
 from settings import Settings
-from makespreadsheet import makespreadsheet
+from makespreadsheet import makespreadsheet, default_datastart, default_dataend
 from loadspreadsheet import loadspreadsheet
 from parameters import Timepar, Popsizepar, Parameterset # Parameter and Parameterset classes
 from results import Result, Resultset # Result and Results classes
 from model import model
 from programs import Program, Programset
-from project import Project # Project class
+from project import Project, version # Project class
 from makeplots import epiplot
 from gui import gui
