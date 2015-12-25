@@ -11,6 +11,8 @@ from sqlalchemy.orm import deferred
 from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json
 
+import optima as op
+
 
 @swagger.model
 class UserDb(db.Model):
@@ -117,9 +119,7 @@ class ProjectDb(db.Model):
         return self.project_data.updated if self.project_data else None
 
     def hydrate(self):
-        from optima.project import Project
-        from optima.utils import loads
-        project_entry = Project()
+        project_entry = op.Project()
         project_entry.uuid = self.id
         project_entry.name = self.name
         project_entry.created = (
@@ -127,9 +127,9 @@ class ProjectDb(db.Model):
         )
         project_entry.modified = self.updated
         if self.data:
-            project_entry.data = loads(self.data)
+            project_entry.data = op.loads(self.data)
         if self.settings:
-            project_entry.settings = loads(self.settings)
+            project_entry.settings = op.loads(self.settings)
         if self.parsets:
             for parset_record in self.parsets:
                 parset_entry = parset_record.hydrate()
@@ -153,13 +153,12 @@ class ProjectDb(db.Model):
 
         from datetime import datetime
         import dateutil
-        from optima.utils import saves
 
         self.name = project.name
         self.created = project.created
         self.updated = datetime.now(dateutil.tz.tzutc())
-        self.settings = saves(project.settings)
-        self.data = saves(project.data)
+        self.settings = op.saves(project.settings)
+        self.data = op.saves(project.data)
         if project.parsets:
             from server.webapp.utils import update_or_create_parset
             for name, parset in project.parsets.iteritems():
@@ -202,14 +201,12 @@ class ParsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        from optima.parameters import Parameterset
-        from optima.utils import loads
-        parset_entry = Parameterset()
+        parset_entry = op.Parameterset()
         parset_entry.name = self.name
         parset_entry.uuid = self.id
         parset_entry.created = self.created
         parset_entry.modified = self.updated
-        parset_entry.pars = loads(self.pars)
+        parset_entry.pars = op.loads(self.pars)
         return parset_entry
 
 
@@ -360,8 +357,7 @@ class ProgsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        from optima.programs import Programset
-        progset_entry = Programset(
+        progset_entry = op.Programset(
             name=self.name,
             programs=None
         )
