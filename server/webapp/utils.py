@@ -17,6 +17,7 @@ from server.webapp.dbmodels import ProjectDb, UserDb
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj'}
 
+
 def check_project_name(api_call):
     @wraps(api_call)
     def _check_project_name(*args, **kwargs):
@@ -35,6 +36,7 @@ def check_project_name(api_call):
             return jsonify(reply), 500
     return _check_project_name
 
+
 #this should be run after check_project_name
 def check_project_exists(api_call):
     @wraps(api_call)
@@ -44,13 +46,14 @@ def check_project_exists(api_call):
         if not project_exists(project_id):
             error_msg = 'Project %s(%s) does not exist' % (project_id, project_name)
             current_app.logger.error(error_msg)
-            reply = {'reason':error_msg}
+            reply = {'reason': error_msg}
             return jsonify(reply), 500
         else:
             return api_call(*args, **kwargs)
     return _check_project_exists
 
-def report_exception(reason = None):
+
+def report_exception(reason=None):
     def _report_exception(api_call):
         @wraps(api_call)
         def __report_exception(*args, **kwargs):
@@ -58,7 +61,8 @@ def report_exception(reason = None):
                 return api_call(*args, **kwargs)
             except Exception:
                 exception = traceback.format_exc()
-                # limiting the exception information to 10000 characters maximum (to prevent monstrous sqlalchemy outputs)
+                # limiting the exception information to 10000 characters maximum
+                # (to prevent monstrous sqlalchemy outputs)
                 current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
                 reply = {'exception': exception}
                 if reason:
@@ -66,6 +70,7 @@ def report_exception(reason = None):
                 return jsonify(reply), 500
         return __report_exception
     return _report_exception
+
 
 def verify_admin_request(api_call):
     """
@@ -77,8 +82,8 @@ def verify_admin_request(api_call):
         if (not current_user.is_anonymous()) and current_user.is_authenticated() and current_user.is_admin:
             u = current_user
         else:
-            secret = request.args.get('secret','')
-            u = UserDb.query.filter_by(password = secret, is_admin=True).first()
+            secret = request.args.get('secret', '')
+            u = UserDb.query.filter_by(password=secret, is_admin=True).first()
         if u is None:
             abort(403)
         else:
@@ -91,16 +96,17 @@ def allowed_file(filename):
     """
     Finds out if this file is allowed to be uploaded
     """
-    return '.' in filename and \
-    filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
 
 def loaddir(app):
     the_loaddir = app.config['UPLOAD_FOLDER']
     return the_loaddir
 
+
 def send_as_json_file(data):
     import json
-    the_loaddir =  upload_dir_user(TEMPLATEDIR)
+    the_loaddir = upload_dir_user(TEMPLATEDIR)
     if not the_loaddir:
         the_loaddir = TEMPLATEDIR
     filename = 'data.json'
@@ -116,11 +122,12 @@ def send_as_json_file(data):
 def project_exists(project_id):
     cu = current_user
     if current_user.is_admin:
-        return ProjectDb.query.filter_by(id=project_id).count()>0
+        return ProjectDb.query.filter_by(id=project_id).count() > 0
     else:
-        return ProjectDb.query.filter_by(id=project_id, user_id=cu.id).count()>0
+        return ProjectDb.query.filter_by(id=project_id, user_id=cu.id).count() > 0
 
-def load_project(project_id, all_data = False):
+
+def load_project(project_id, all_data=False):
     from sqlalchemy.orm import undefer, defaultload
     cu = current_user
     current_app.logger.debug("getting project %s for user %s (admin:%s)" % (project_id, cu.id, cu.is_admin))
@@ -129,39 +136,46 @@ def load_project(project_id, all_data = False):
     else:
         query = ProjectDb.query.filter_by(id=project_id, user_id=cu.id)
     if all_data:
-        query = query.options( \
-            # undefer('model'), \
-            # defaultload(ProjectDb.working_project).undefer('model'), \
+        query = query.options(
+            # undefer('model'),
+            # defaultload(ProjectDb.working_project).undefer('model'),
             defaultload(ProjectDb.project_data).undefer('meta'))
     project = query.first()
     if project is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
     return project
 
+
 def save_data_spreadsheet(name, folder=None):
-    if folder == None:
+    if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
     spreadsheet_file = name
     user_dir = upload_dir_user(folder)
     if not spreadsheet_file.startswith(user_dir):
-        spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')
+        spreadsheet_file = helpers.safe_join(user_dir, name + '.xlsx')
 
-def delete_spreadsheet(name, user_id = None):
+
+def delete_spreadsheet(name, user_id=None):
     spreadsheet_file = name
     for parent_dir in [TEMPLATEDIR, current_app.config['UPLOAD_FOLDER']]:
         user_dir = upload_dir_user(parent_dir, user_id)
         if not spreadsheet_file.startswith(user_dir):
-            spreadsheet_file = helpers.safe_join(user_dir, name+ '.xlsx')
+            spreadsheet_file = helpers.safe_join(user_dir, name + '.xlsx')
         if os.path.exists(spreadsheet_file):
             os.remove(spreadsheet_file)
 
+
+# TODO get rid of this
 def model_as_dict(model):
     return tojson(model)
 
+
+# TODO get rid of this
 def model_as_bunch(model):
     return fromjson(model)
 
-def load_model(project_id, from_json = True, working_model = False): # todo rename
+
+def load_model(project_id, from_json=True, working_model=False):  # todo rename
     """
       loads the project with the given name
       returns the hydrated project instance (Can't think of another name than "model" yet...).
@@ -171,10 +185,10 @@ def load_model(project_id, from_json = True, working_model = False): # todo rena
     model = None
     project = load_project(project_id)
     if project is not None:
-        if  working_model == False or project.working_project is None:
+        if not working_model or project.working_project is None:
             current_app.logger.debug("project %s loading main model" % project_id)
             model = project.hydrate()
-        else:
+        else:  # this branch won't be needed
             current_app.logger.debug("project %s loading working model" % project_id)
             model = project.working_project.hydrate()
         if model is None:
@@ -183,7 +197,8 @@ def load_model(project_id, from_json = True, working_model = False): # todo rena
 #            if from_json: model = model_as_bunch(model)
     return model
 
-def save_working_model_as_default(project_id):
+
+def save_working_model_as_default(project_id):  # TODO will be about results, not about the model
     current_app.logger.debug("save_working_model_as_default %s" % project_id)
 
     project = load_project(project_id)
@@ -198,10 +213,11 @@ def save_working_model_as_default(project_id):
 
     return model
 
-def revert_working_model_to_default(project_id):
+
+def revert_working_model_to_default(project_id):  # TODO will be about results, not about the model
     current_app.logger.debug("revert_working_model_to_default %s" % project_id)
 
-    project = load_project(project_id, all_data = True)
+    project = load_project(project_id, all_data=True)
     model = project.model
 
     # Make sure there is a working project
@@ -213,25 +229,30 @@ def revert_working_model_to_default(project_id):
 
     return model
 
-def save_model(project_id, model, to_json = False):
+
+def save_model(project_id, model, to_json=False):
     # model is given as json by default, no need to convert
     current_app.logger.debug("save_model %s" % project_id)
 
-    if to_json:model = model_as_dict(model)
+    if to_json:
+        model = model_as_dict(model)
     project = load_project(project_id)
-    project.model = model #we want it to fail if there is no project...
+    project.model = model  # we want it to fail if there is no project...
     db.session.add(project)
     db.session.commit()
 
-def pick_params(params, data, args = None):
-    if args is None: args = {}
+
+def pick_params(params, data, args=None):
+    if args is None:
+        args = {}
     for param in params:
         the_value = data.get(param)
         if the_value:
             args[param] = the_value
     return args
 
-def for_fe(item): #only for json
+
+def for_fe(item):  # only for json
     import numpy as np
 
     if isinstance(item, list):
@@ -239,7 +260,7 @@ def for_fe(item): #only for json
     if isinstance(item, np.ndarray):
         return [for_fe(v) for v in item.tolist()]
     elif isinstance(item, dict):
-        return dict( (k, for_fe(v)) for k,v in item.iteritems() )
+        return dict((k, for_fe(v)) for k, v in item.iteritems())
     elif isinstance(item, float) and np.isnan(item):
         return None
     else:
