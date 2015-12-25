@@ -88,7 +88,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
-    sheets['Injecting behavior']  = ['numinject', 'sharing', 'numost']
+    sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
     sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','transit']
@@ -99,7 +99,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],
-                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'efftx', 'effprep'],
+                           ['efftx', 'effpmtct', 'effprep','effcondom', 'effcirc', 'effost', 'effdx', 'effsti'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutilaids','disutiltx']]
     
 
@@ -180,6 +180,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             elif subparam != '': # The first column is blank: it's time for the data
                 printv('Parameter: %s' % subparam, 4, verbose)
                 
+                
                 # It's pops-data, split into pieces
                 if sheetname=='Populations': 
                     thesedata = sheetdata.row_values(row, start_colx=2, end_colx=11) # Data starts in 3rd column, finishes in 11th column
@@ -187,17 +188,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     data['pops']['long'].append(str(thesedata[1]))
                     data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
                     data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
-                    agestring = thesedata[4] # Pull out age string
-                    try:
-                        agestring = agestring.split('-') # Separate into lower and higher
-                        data['pops']['age'].append([int(agestring[0]), int(agestring[1])]) # Convert to int and append
-                    except:
-                        errormsg = 'Error loading spreadsheet %s\n' % sheetname
-                        errormsg += 'Could not convert "%s" into ages\n' % agestring
-                        errormsg += 'Please enter age range as e.g. "25-34"'
-                        raise Exception(errormsg)
+                    data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
                     
-
                 
                 # It's key data, save both the values and uncertainties
                 if sheetname in ['Population size', 'HIV prevalence']:

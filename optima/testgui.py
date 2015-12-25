@@ -7,15 +7,15 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015dec05 by cliffk
+Version: 2015dec23 by cliffk
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'force',
-'treatment',
+'browser',
+'gui',
 ]
 
 
@@ -53,51 +53,42 @@ T = tic()
 
 
 
-
-
-
-
-## Force-of-infection change test
-if 'force' in tests:
+## mpld3 test
+if 'browser' in tests:
     t = tic()
 
-    print('Running force-of-infection test...')
+    print('Running GUI test...')
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results1 = P.runsim('default')
+    results = P.runsim('default')
     
-    P.copyparset('default', 'forcetest')
-    for i in range(len(P.parsets[0].popkeys)): P.parsets['forcetest'].pars[0]['force'][i] *= 3 # WARNING, TEMP
-    results2 = P.runsim('forcetest')
-    
-    from plotpeople import plotpeople
-    plotpeople([results1, results2])
+    print('  Starting browser...')
+    from gui import browser
+    browser(results)
 
     done(t)
 
 
 
 
-## Treatment change test
-if 'treatment' in tests:
+
+
+## Python GUI test
+if 'gui' in tests:
     t = tic()
 
-    print('Running force-of-infection test...')
+    print('Running GUI test...')
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results1 = P.runsim('default')
+    results = P.runsim('default')
     
-    P.copyparset('default', 'treatment')
-    treatpar = P.parsets['treatment'].pars[0]['numtx']
-    treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
-    results2 = P.runsim('treatment')
-    
-    from plotpeople import plotpeople
-    plotpeople([results1, results2])
+    from gui import gui
+    gui(results)
 
     done(t)
+
 
 
 

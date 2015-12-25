@@ -25,6 +25,10 @@ from server.webapp.dbmodels import WorkingProjectDb
 #         sqlalchemy_session = session
 
 
+def make_password(password="test"):
+    return hashlib.sha224("test").hexdigest()
+
+
 class UserFactory(SQLAlchemyModelFactory):
 
     class Meta:
@@ -33,7 +37,7 @@ class UserFactory(SQLAlchemyModelFactory):
     name = factory.Faker('name')
     username = Sequence(lambda n: 'user_{}'.format(n))
     email = Sequence(lambda n: 'user_{}@test.com'.format(n))
-    password = hashlib.sha224("test").hexdigest()
+    password = make_password()
     is_admin = False
 
 
@@ -45,12 +49,20 @@ class ProjectFactory(SQLAlchemyModelFactory):
     name = fuzzy.FuzzyText(prefix='project_')
     datastart = 2000
     dataend = 2030
-    populations = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
-            {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
-            {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
+    populations = [
+        {"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False},
+        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False,
+         "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True},
+        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False},
+        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}
+    ]
     version = '{}'
 
     @factory.lazy_attribute

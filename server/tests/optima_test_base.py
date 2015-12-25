@@ -7,17 +7,14 @@ import hashlib
 import json
 from sqlalchemy.engine import reflection
 from sqlalchemy.schema import (
-        MetaData,
-        Table,
-        DropTable,
-        ForeignKeyConstraint,
-        DropConstraint,
-    )
+    MetaData,
+    Table,
+    DropTable,
+    ForeignKeyConstraint,
+    DropConstraint,
+)
 from server.tests.factories import (UserFactory, ProjectFactory,
-                                    ProgsetsFactory, ProgramsFactory)
-
-
-print "test package", __package__
+                                    ProgsetsFactory, ProgramsFactory, make_password)
 
 
 class OptimaTestCase(unittest.TestCase):
@@ -45,43 +42,51 @@ class OptimaTestCase(unittest.TestCase):
 
     default_username = 'test'
 
-    default_pops = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
-        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
-        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
-        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
+    default_pops = [
+        {"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False},
+        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False,
+         "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True},
+        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False},
+        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}
+    ]
 
     progset_test_data = {
-      'name': 'Progset',
-      'programs': [
+        'name': 'Progset',
+        'programs': [
         {
-          'active': True,
-          'category': 'Prevention',
-          'name': 'Condom promotion and distribution',
-          'parameters': [
-            {
-              'active': True,
-              'value': {
-                'pops': [
-                  '',
-                ],
-                'signature': [
-                  'condom',
-                  'cas',
-                ],
-              },
-            },
-          ],
-          'short_name': 'Condoms',
+            'active': True,
+            'category': 'Prevention',
+            'name': 'Condom promotion and distribution',
+            'parameters': [
+                {
+                    'active': True,
+                    'value': {
+                        'pops': [
+                            '',
+                        ],
+                        'signature': [
+                            'condom',
+                            'cas',
+                        ],
+                    },
+                },
+            ],
+        'short_name': 'Condoms',
         }, {
-          'active': False,
-          'category': 'Care and treatment',
-          'name': 'Post-exposure prophylaxis',
-          'parameters': [],
-          "short_name": "PEP",
+            'active': False,
+            'category': 'Care and treatment',
+            'name': 'Post-exposure prophylaxis',
+            'parameters': [],
+            "short_name": "PEP",
         },
-      ],
+        ],
     }
 
     def create_record_with(self, factory_class, **kwargs):
@@ -90,8 +95,9 @@ class OptimaTestCase(unittest.TestCase):
         self.session.commit()
         return rv
 
-    def create_user(self, username=default_username):
-        return self.create_record_with(UserFactory, username=username)
+    def create_user(self, username=default_username, **kwargs):
+        kwargs['username'] = username
+        return self.create_record_with(UserFactory, **kwargs)
 
     def get_any_user_id(self, admin=False):
         from server.webapp.dbmodels import UserDb
@@ -105,10 +111,11 @@ class OptimaTestCase(unittest.TestCase):
         user = UserDb.query.filter(UserDb.email == email).first()
         return str(user.id)
 
-    def create_project(self, name, return_instance=False, progsets_count=0, programs_per_progset=2, **kwargs):
+    def create_project(self, name="test", return_instance=False, progsets_count=0, programs_per_progset=2, **kwargs):
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
         project = self.create_record_with(ProjectFactory, name=name, **kwargs)
+
         for x in range(progsets_count):
             progset = self.create_record_with(ProgsetsFactory, project_id=project.id)
             for y in range(programs_per_progset):
@@ -122,7 +129,7 @@ class OptimaTestCase(unittest.TestCase):
             'name': 'test',
             'datastart': 2000,
             'dataend': 2015,
-            'populations': OptimaTestCase.default_pops
+            'populations': ProjectFactory.populations
         })
         headers = {'Content-Type': 'application/json'}
         response = self.client.post('/api/project', data=project_data, headers=headers)
@@ -152,9 +159,11 @@ class OptimaTestCase(unittest.TestCase):
 
     def login(self, username=default_username, password=None):
         if not password:
-            password = self.test_password
+            password = make_password()
         login_data = '{"username":"%s","password":"%s"}' % (username, password)
-        self.client.post('/api/user/login', data=login_data, follow_redirects=True)
+        response = self.client.post('/api/user/login', data=login_data, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        return response
 
     def logout(self):
         self.client.get('/api/user/logout', follow_redirects=True)
@@ -183,7 +192,7 @@ class OptimaTestCase(unittest.TestCase):
         inspector = reflection.Inspector.from_engine(db.engine)
 
         # gather all data first before dropping anything.
-        # some DBs lock after things have been dropped in 
+        # some DBs lock after things have been dropped in
         # a transaction.
         metadata = MetaData()
 
@@ -196,9 +205,9 @@ class OptimaTestCase(unittest.TestCase):
                 if not fk['name']:
                     continue
                 fks.append(
-                    ForeignKeyConstraint((),(),name=fk['name'])
-                    )
-            t = Table(table_name,metadata,*fks)
+                    ForeignKeyConstraint((), (), name=fk['name'])
+                )
+            t = Table(table_name, metadata, *fks)
             tbs.append(t)
             all_fks.extend(fks)
 

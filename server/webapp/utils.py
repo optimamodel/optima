@@ -113,15 +113,23 @@ def send_as_json_file(data):
     return response
 
 
-def project_exists(project_id):
+def project_exists(project_id, raise_exception=False):
+    from server.webapp.exceptions import ProjectDoesNotExist
     cu = current_user
     if current_user.is_admin:
-        return ProjectDb.query.filter_by(id=project_id).count()>0
+        count = ProjectDb.query.filter_by(id=project_id).count()
     else:
-        return ProjectDb.query.filter_by(id=project_id, user_id=cu.id).count()>0
+        count = ProjectDb.query.filter_by(id=project_id, user_id=cu.id).count()
 
-def load_project(project_id, all_data = False):
+    if raise_exception and count == 0:
+        raise ProjectDoesNotExist(id=project_id)
+
+    return count > 0
+
+
+def load_project(project_id, all_data=False, raise_exception=False):
     from sqlalchemy.orm import undefer, defaultload
+    from server.webapp.exceptions import ProjectDoesNotExist
     cu = current_user
     current_app.logger.debug("getting project %s for user %s (admin:%s)" % (project_id, cu.id, cu.is_admin))
     if cu.is_admin:
@@ -136,7 +144,10 @@ def load_project(project_id, all_data = False):
     project = query.first()
     if project is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
+        if raise_exception:
+            raise ProjectDoesNotExist(id=project_id)
     return project
+
 
 def save_data_spreadsheet(name, folder=None):
     if folder == None:

@@ -27,16 +27,6 @@ class UserAlreadyExists(BaseRESTException):
             self.description = 'User with e-mail "{}" already exists'.format(email)
 
 
-class ProjectDoesNotExist(BaseRESTException):
-    code = 410
-    _model = 'project'
-
-    def __init__(self, id=None):
-        super(ProjectDoesNotExist, self).__init__()
-        if id is not None:
-            self.description = 'Project with id %s does not exist' % id
-
-
 class RecordDoesNotExist(BaseRESTException):
     code = 410
     _message = 'The resource you are looking for does not exist'
@@ -51,6 +41,10 @@ class RecordDoesNotExist(BaseRESTException):
                 'does not exist'
             ]
             self.description = ' '.join(elements)
+
+
+class ProjectDoesNotExist(RecordDoesNotExist):
+    _model = 'project'
 
 
 class InvalidCredentials(BaseRESTException):

@@ -1,11 +1,15 @@
 #!/bin/bash
 
-if [ ! -f "config.py" ]; then
-  cp config.example.py config.py
+if [ ! -d "./p-env/" ]; then
+  if [ "$1" == "--system" ]; then
+    virtualenv --system-site-packages p-env
+  else
+    virtualenv p-env
+  fi
 fi
 
-if [ ! -d "./p-env/" ]; then
-    virtualenv p-env
+if [ ! -f "config.py" ]; then
+  cp config.example.py config.py
 fi
 
 source ./p-env/bin/activate
@@ -20,3 +24,4 @@ then
 fi
 
 python api.py
+

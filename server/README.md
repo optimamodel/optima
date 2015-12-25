@@ -17,6 +17,9 @@ Run the server:
 
 `$ ./run.sh`
 
+To use pre-installed system-wide python libraries, you can also run the server using:
+
+ $ ./run.sh --system
 
 ATTENTION: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
 
@@ -52,6 +55,8 @@ Run the testsuite from your server directory:
 In order to run a single test file and activate logging you can use:
 
     test.sh /src/tests/project_test.py
+
+Same as with `run.sh`, you can use `--system` as first argument to `test.sh` in order to use pre-installed system-wide python libraries.
 
 Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
