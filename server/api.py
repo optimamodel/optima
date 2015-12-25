@@ -53,7 +53,8 @@ from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,
                                           UserLogin, UserLogout)
 from server.webapp.resources.project import (Projects, ProjectsAll, Project,
-                                             ProjectCopy, ProjectSpreadsheet, ProjectData, ProjectFromData)
+                                             ProjectCopy, ProjectSpreadsheet,
+                                             ProjectData, ProjectFromData, Portfolio)
 from server.webapp.resources.project_constants import Parameters, Predefined
 from server.webapp.resources.project_progsets import Progsets, Progset
 
@@ -77,6 +78,7 @@ api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
+api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/parameters')
 api.add_resource(Predefined, '/api/project/predefined')
 app.register_blueprint(api_bp, url_prefix='')

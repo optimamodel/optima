@@ -1,7 +1,6 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 from server.api import app, init_db
-print "test package", __package__
 from server.webapp.dbconn import db
 import unittest
 import hashlib
@@ -14,7 +13,8 @@ from sqlalchemy.schema import (
         ForeignKeyConstraint,
         DropConstraint,
     )
-from server.tests.factories import UserFactory, make_password
+from server.tests.factories import (UserFactory, ProjectFactory,
+                                    ProgsetsFactory, ProgramsFactory, make_password)
 
 
 class OptimaTestCase(unittest.TestCase):
@@ -103,15 +103,17 @@ class OptimaTestCase(unittest.TestCase):
         user = UserDb.query.filter(UserDb.email == email).first()
         return str(user.id)
 
-    def create_project(self, name):
-        from server.webapp.dbmodels import ProjectDb
-        """ Helper method to create project and save it to the database """
-        project = ProjectDb(name, self.get_any_user_id(), '2000', '2010', OptimaTestCase.default_pops, '{}')
-        db.session.add(project)
-        db.session.flush()
-        id = project.id
-        db.session.commit()
-        return id
+    def create_project(self, return_instance=False, progsets_count=0, programs_per_progset=2, **kwargs):
+        if 'user_id' not in kwargs:
+            kwargs['user_id'] = self.get_any_user_id()
+        project = self.create_record_with(ProjectFactory, **kwargs)
+        for x in range(progsets_count):
+            progset = self.create_record_with(ProgsetsFactory, project_id=project.id)
+            for y in range(programs_per_progset):
+                self.create_record_with(ProgramsFactory, project_id=project.id, progset_id=progset.id)
+        if return_instance:
+            return project
+        return str(project.id)
 
     def api_create_project(self):
         project_data = json.dumps({
