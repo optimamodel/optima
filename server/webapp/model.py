@@ -264,8 +264,8 @@ def getModelGroup(key):
     # TODO: make it a DataKey resource
     """ Returns the subset with the given key for the D (model) in the open project."""
     current_app.logger.debug("getModelGroup: %s" % key)
-    D_dict = load_model(request.project_id, from_json=False)
-    the_group = D_dict.get(key, {})
+    project_instance = load_model(request.project_id, from_json=False)
+    the_group = {}  # project_instance.data.get(key, {})
     return jsonify({'data': the_group})
 
 
@@ -280,8 +280,8 @@ def getModelSubGroup(key, subkey):
     current_app.logger.debug("getModelSubGroup: %s %s" % (key, subkey))
     project_instance = load_model(request.project_id, from_json=False)
     print "data", project_instance.data.keys()
-    the_group = project_instance.data.get(key, {})
-    the_subgroup = the_group.get(subkey, {})
+#    the_group = project_instance.data.get(key, {})
+    the_subgroup = {}  # the_group.get(subkey, {})
     return jsonify({'data': the_subgroup})
 
 
@@ -292,13 +292,14 @@ def getModelSubGroup(key, subkey):
 def setModelGroup(key):
     # TODO: this should be part of DataKey CRUD
     """ Stores the provided data as a subset with the given key for the D (model) in the open project. """
-    data = json.loads(request.data)
-    current_app.logger.debug("set parameters key: %s for data: %s" % (key, data))
-    project_id = request.project_id
-    D_dict = load_model(project_id, from_json=False)
-    D_dict[key] = data
-    save_model(project_id, D_dict)
-    return jsonify({"project": project_id, "key": key})
+    # data = json.loads(request.data)
+    # current_app.logger.debug("set parameters key: %s for data: %s" % (key, data))
+    # project_id = request.project_id
+    # D_dict = load_model(project_id, from_json=False)
+    # D_dict[key] = data
+    # save_model(project_id, D_dict)
+    # return jsonify({"project": project_id, "key": key})
+    return jsonify({"key": key})
 
 
 @model.route('/view', methods=['POST'])
