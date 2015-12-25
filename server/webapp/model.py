@@ -254,7 +254,7 @@ def getModel():
     project_instance = load_model(request.project_id, from_json=False)
     project_data = project_instance.data
     # TODO: see abouve
-    return jsonify('data': {})
+    return jsonify({'data': {}})
 
 
 @model.route('/data/<key>')
