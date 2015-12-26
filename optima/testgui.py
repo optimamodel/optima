@@ -81,7 +81,7 @@ if 'gui' in tests:
     print('Running GUI test...')
     from optima import Project
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
     
     from gui import gui

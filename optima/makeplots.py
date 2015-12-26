@@ -1,7 +1,7 @@
 from optima import odict, gridcolormap
 from pylab import isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
 
-def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6), alpha=0.5, lw=2):
+def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.5, lw=2, dotsize=50):
         ''' Render the plots requested and store them in a list '''
         
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -26,9 +26,10 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
                 errormsg += 'Please ensure format is e.g. "numplhiv-tot"'
                 raise Exception(errormsg)
             
-            # Process the data
+            # Process the plot data
             try: # This should only fail if the key is wrong
                 best = getattr(results.main[datatype], poptype)[0] # poptype = either 'tot' or 'pops'
+                factor = 1.0 if results.main[datatype].isnumber else 100 # Swap between number and percent
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
@@ -47,6 +48,7 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
                 best = [best]
                 lower = [lower]
                 upper = [upper]
+                data = [data]
             
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
@@ -54,10 +56,11 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
             colors = gridcolormap(nlines)
             for l in range(nlines):
                 if uncertainty:
-                    fill_between(results.tvec, lower[l], upper[l], c=colors[l], alpha=alpha)
-                plot(results.tvec, best[l], lw=lw, c=colors[l]) # Actually do the plot
+                    fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha)
+                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
                 try: 
-                    if data is not None: scatter(results.datayears, data[l], c=colors[l])
+                    if data is not None: 
+                        scatter(results.datayears, factor*data[l], c=colors[l], s=dotsize, lw=0)
                 except: print('FAILED') # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
             xlabel('Year')

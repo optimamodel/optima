@@ -40,8 +40,8 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['prev'] = Result('HIV prevalence', isnumber=False)
-        self.main['force'] = Result('Force-of-infection', isnumber=False)
+        self.main['prev'] = Result('HIV prevalence (%)', isnumber=False)
+        self.main['force'] = Result('Force-of-infection (%/year)', isnumber=False)
         self.main['numinci'] = Result('Number of new infections')
         self.main['numplhiv'] = Result('Number of PLHIV')
         self.main['numdeath'] = Result('Number of HIV-related deaths')
