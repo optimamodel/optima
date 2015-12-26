@@ -44,7 +44,7 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
             except:# Don't worry if no data
                 data = None
             
-            if ndim(best)==1: # Wrap so right number of dimensions
+            if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
                 best = array([best])
                 lower = array([lower])
                 upper = array([upper])
