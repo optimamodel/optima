@@ -453,7 +453,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, ind=0, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    def interp(self, ind=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
@@ -461,24 +461,27 @@ class Parameterset(object):
         modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
         if keys is None: keys = modelkeys
         
-        pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
-        simpars = odict() # Used to be called M
-        simpars['parsetname'] = self.name
-        simpars['parsetuuid'] = self.uuid
-        if tvec is not None: simpars['tvec'] = tvec
-        else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
-        simpars['popkeys'] = dcp(self.popkeys)
-        
-        # Copy default keys by default
-        for key in generalkeys: simpars[key] = dcp(pars[key])
-        for key in keys:
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-            except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
-
-        
-        ## Metaparameters -- convert from odict to array -- WARNING, is this a good idea?
-        simpars['force'] = array(simpars['force'][:])
-        simpars['inhomo'] = array(simpars['inhomo'][:])
+        simparslist = []
+        for ind in range(len(self.pars)):
+            pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
+            simpars = odict() # Used to be called M
+            simpars['parsetname'] = self.name
+            simpars['parsetuuid'] = self.uuid
+            if tvec is not None: simpars['tvec'] = tvec
+            else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+            simpars['popkeys'] = dcp(self.popkeys)
+            
+            # Copy default keys by default
+            for key in generalkeys: simpars[key] = dcp(pars[key])
+            for key in keys:
+                try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
+                except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
+    
+            
+            ## Metaparameters -- convert from odict to array -- WARNING, is this a good idea?
+            simpars['force'] = array(simpars['force'][:])
+            simpars['inhomo'] = array(simpars['inhomo'][:])
+            simparslist.append(simpars)
         
         printv('...done making model parameters.', 2, verbose)
-        return simpars
+        return simparslist

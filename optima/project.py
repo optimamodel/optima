@@ -228,21 +228,26 @@ class Project(object):
 
 
     def runsim(self, name='default', simpars=None, start=None, end=None, dt=None):
-        ''' This function runs a single simulation '''
+        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
-        simparlist = []
-        rawlist = []
+        
+        # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
-            
+            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
+        else:
+            if type(simpars)==list: simparslist = simpars
+            else: simparslist = [simpars]
         
         # Run the model!
-        raw = model(simpars, self.settings)
+        rawlist = []
+        for ind in range(len(simparslist)):
+            raw = model(simpars, self.settings)
+            rawlist.append(raw)
         
         # Store results
-        results = Resultset(self, simpars, raw)
+        results = Resultset(self, simparslist, rawlist)
         results.make() # Generate derived results
         
         return results
