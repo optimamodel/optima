@@ -57,8 +57,8 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
                     fill_between(results.tvec, lower[l], upper[l], c=colors[l], alpha=alpha)
                 plot(results.tvec, best[l], lw=lw, c=colors[l]) # Actually do the plot
                 try: 
-                    if data is not None: scatter(results.datayears, data)
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    if data is not None: scatter(results.datayears, data[l], c=colors[l])
+                except: print('FAILED') # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
             xlabel('Year')
             title(results.main[datatype].name)

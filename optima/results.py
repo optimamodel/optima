@@ -80,12 +80,11 @@ class Resultset(object):
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
-        allpeople = self.raw['people']
-        allinci   = self.raw['inci']
-        alldeaths = self.raw['death']
-        alldiag   = self.raw['diag']
+        allpeople = array([self.raw[i]['people'] for i in range(len(self.raw))])
+        allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
+        alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
+        alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
         data = self.project.data
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
