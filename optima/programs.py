@@ -87,11 +87,12 @@ class Programset(object):
                 self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=default_interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for tpt in self.covout.keys():
             if tpt not in self.targetpartypes: del self.covout[tpt]
             else: 
                 for tp in self.covout[tpt].keys():
-                    if tp not in self.targetpops: del self.covout[tpt][tp]
+                    if type(tp)==str and tp not in self.targetpops: del self.covout[tpt][tp]
 
     def addprograms(self,newprograms, verbose=2):
         ''' Add new programs'''
@@ -116,6 +117,7 @@ class Programset(object):
             raise Exception(errormsg)
         else:
             self.programs.pop(program)
+            self.gettargetpars()
             self.gettargetpops()
             self.gettargetpartypes()
             self.initialize_covout()
@@ -212,7 +214,7 @@ class Programset(object):
         nyrs = len(t)
         outcomes = odict()
         
-        budget = self.getprogbudget(coverage=coverage,t=t,parset=parset,proportion=True)
+        budget = self.getprogbudget(coverage=coverage,t=t,parset=parset,proportion=False)
 
         for thispartype in self.targetpartypes: # Loop over parameter types
             outcomes[thispartype] = odict()
@@ -221,14 +223,18 @@ class Programset(object):
                 delta, thiscov = odict(), odict()
 
                 for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
+                    if type(thispop)==tuple: thiscovpop = thisprog.targetpops[0] # If it's a partnership parameters, get the target population separately
                     if not self.covout[thispartype][thispop].ccopars[thisprog.name]:
                         print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.name))
                         outcomes[thispartype][thispop] = None
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                         x = budget[thisprog.name]
-                        try: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        if thiscovpop: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thiscovpop]
+                        else: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
+#                        try: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
+#                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
                 if self.covout[thispartype][thispop].interaction == 'additive':

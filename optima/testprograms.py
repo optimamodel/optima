@@ -62,9 +62,10 @@ if 'makeprograms' in tests:
                   targetpops=['F 15-49'])
 
     SBCC = Program(name='SBCC',
-                   targetpars=[#CK: WARNING,TEMP {'param': 'condcas', 'pop': ('F 15-49','M 15-49')},
+                   targetpars=[{'param': 'condcas', 'pop': ('F 15-49','M 15-49')},
                                {'param': 'hivtest', 'pop': 'F 15-49'}],
                    targetpops=['F 15-49']) # CK: what should this be for a partnership?
+                                           # RS: it should be the population that's targeted. E.g. if the condoms are distributed to the FSW, that's the target population.
 
     MGT = Program('MGT')
 
@@ -197,9 +198,7 @@ if 'makeprograms' in tests:
                                                     't': 2013.0,
                                                     'HTC': 0.6,
                                                     'SBCC':0.1})
-                                                
-#    R.covout['hivtest']['Females 15-49'].interaction = 'nested'
-                                                    
+                                                                                                    
     R.covout['hivtest']['M 15-49'].addccopar({'intercept': 0.3,
                                                   't': 2016.0,
                                                   'HTC': 0.65})
@@ -214,10 +213,9 @@ if 'makeprograms' in tests:
                                                     'HTC': 0.4,
                                                     'SBCC':0.2})
 
-# CK: WARNING, TEMP
-#    R.covout['condcas']['F 15-49'].addccopar({'intercept': 0.3, # CK: this gives an error since I think it's expecting the partnership rather than the population, but changing it to the partnership gives a different error, ugh...
-#                                                    't': 2015.0,
-#                                                    'SBCC':0.15})
+    R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': 0.3, # CK: this gives an error since I think it's expecting the partnership rather than the population, but changing it to the partnership gives a different error, ugh...
+                                                    't': 2015.0,
+                                                    'SBCC':0.15})
                                                     
     # 9. Overwrite parameters for defining coverage-outcome function.
     R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.35,
@@ -233,7 +231,7 @@ if 'makeprograms' in tests:
     R.covout['hivtest']['F 15-49'].getccopar(2014)
 
     # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
-    outcomes_budget = R.getoutcomes(coverage=coverage,
+    outcomes = R.getoutcomes(coverage=coverage,
                                 t=[2015,2016,2020],
                                 parset=P.parsets['default'])
 
