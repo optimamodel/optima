@@ -78,12 +78,14 @@ class Resultset(object):
         
         printv('Making derived results...', 3, verbose)
         
-        if self.people is None:
-            raise Exception('It seems the model has not been run yet, people is empty!')
-        
-        if quantiles is None: quantiles = [0.5, 0.25, 0.75]
-        allpeople = array([self.people])
-        data = dcp(self.project.data)
+        # Initialize
+        if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        allpeople = self.raw['people']
+        allinci   = self.raw['inci']
+        alldeaths = self.raw['death']
+        alldiag   = self.raw['diag']
+        data = self.project.data
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
@@ -94,23 +96,19 @@ class Resultset(object):
         self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         self.main['numplhiv'].datatot = data['optplhiv']
         
-        allinci = array([self.inci])
         self.main['numinci'].pops = quantile(allinci, quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         self.main['numinci'].datatot = data['optnuminfect']
 
-        allinci = array([self.inci])
         self.main['force'].pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['force'].tot = quantile(allinci.sum(axis=1) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
-        alldeaths = array([self.death])
         self.main['numdeath'].pops = quantile(alldeaths, quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         self.main['numdeath'].datatot = data['optdeath']
 
-        alldx = array([self.dx])
-        self.main['numdiag'].pops = quantile(alldx, quantiles=quantiles)
-        self.main['numdiag'].tot = quantile(alldx.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdiag'].pops = quantile(alldiag, quantiles=quantiles)
+        self.main['numdiag'].tot = quantile(alldiag.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         self.main['numdiag'].datatot = data['optnumdiag']
         
 
