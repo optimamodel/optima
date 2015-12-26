@@ -232,8 +232,11 @@ class Project(object):
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
+        simparlist = []
+        rawlist = []
         if simpars is None: # Optionally run with a precreated simpars instead
             simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
+            
         
         # Run the model!
         raw = model(simpars, self.settings)
