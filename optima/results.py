@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015dec09 by cliffk
+Version: 2015dec25 by cliffk -- merry christmas!
 """
 
 from optima import uuid, today, getdate, quantile, printv, odict, objectid, dcp
@@ -46,8 +46,9 @@ class Resultset(object):
         self.parset = None
         
         # Fundamental quantities
-        self.tvec = None
         self.people = None
+        self.tvec = None
+        self.datayears = None
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
@@ -75,7 +76,7 @@ class Resultset(object):
     
     
     def __repr__(self):
-        ''' Print out useful information when called '''
+        ''' Print out useful information when called -- WARNING, add summary stats '''
         output = objectid(self)
         output += '      Project name: %s\n'    % (self.project.name if self.project is not None else 'N/A')
         output += '      Date created: %s\n'    % getdate(self.created)
