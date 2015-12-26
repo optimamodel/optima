@@ -38,16 +38,15 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     inhomo     = zeros(npops)    # Inhomogeneity calculations
     
     # Initialize arrays
-    results         = Resultset()    # Sim output structure
-    results.tvec    = simpars['tvec']   # Append time vector
-    results.sexinci = zeros((npops, npts)) # Incidence through sex
-    results.injinci = zeros((npops, npts)) # Incidence through injecting
-    results.inci    = zeros((npops, npts)) # Total incidence
-    results.births  = zeros((1, npts))     # Number of births
-    results.mtct    = zeros((1, npts))     # Number of mother-to-child transmissions
-    results.dx      = zeros((npops, npts)) # Number diagnosed per timestep
-    results.newtx   = zeros((npops, npts)) # Number initiating ART1 per timestep
-    results.death   = zeros((npops, npts)) # Number of deaths per timestep
+    results          = Resultset(npops, npts)    # Sim output structure
+    results.sexinci  = zeros((npops, npts)) # Incidence through sex
+    results.injinci  = zeros((npops, npts)) # Incidence through injecting
+    results.inci     = zeros((npops, npts)) # Total incidence
+    results.births   = zeros((1, npts))     # Number of births
+    results.mtct     = zeros((1, npts))     # Number of mother-to-child transmissions
+    results.diag     = zeros((npops, npts)) # Number diagnosed per timestep
+    results.newtreat = zeros((npops, npts)) # Number initiating ART1 per timestep
+    results.death    = zeros((npops, npts)) # Number of deaths per timestep
     
     # Biological and failure parameters -- death etc
     prog = simpars['const']['progacute':'proggt50']
@@ -295,7 +294,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
-            results.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
+            results.diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             results.death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
@@ -319,7 +318,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
             newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dD.append(inflows - outflows - newtreat1[cd4])
-            results.newtx[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            results.newtreat[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
         
         ## 1st-line treatment
