@@ -24,19 +24,19 @@ class Result(object):
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, project, simpars, raw):
+    def __init__(self, project, simparslist, rawlist):
         # Basic info
         self.uuid = uuid()
         self.created = today()
         
         # Fundamental quantities -- populated by project.runsim()
-        self.raw = raw
+        self.raw = rawlist
         self.project = dcp(project) # ...and just copy the whole project
-        self.parset = project.parsets[simpars['parsetname']] # Store parameters -- WARNING, won't necessarily work with a simpars input
-        self.simpars = simpars # ...and sim parameters
-        self.tvec = simpars['tvec']
+        self.parset = project.parsets[simparslist[0]['parsetname']] # Store parameters -- WARNING, ugly!
+        self.simpars = simparslist # ...and sim parameters
+        self.tvec = simparslist[0]['tvec']
         self.datayears = project.data['years']
-        self.popkeys = simpars['popkeys']
+        self.popkeys = simparslist[0]['popkeys']
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results

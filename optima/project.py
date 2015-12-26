@@ -243,11 +243,11 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind in range(len(simparslist)):
-            raw = model(simpars, self.settings)
+            raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
             rawlist.append(raw)
         
         # Store results
-        results = Resultset(self, simparslist, rawlist)
+        results = Resultset(self, simparslist, rawlist) # Create structure for storing results
         results.make() # Generate derived results
         
         return results
