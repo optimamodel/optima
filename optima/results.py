@@ -80,8 +80,9 @@ class Resultset(object):
         
         def processdata(rawdata):
             ''' Little method to turn the data into a form suitable for plotting -- basically, replace assumptions with nans '''
-            array(data) # WARNING!
-            return data
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            processeddata = array(rawdata) # WARNING!
+            return processeddata
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
