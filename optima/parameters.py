@@ -463,6 +463,8 @@ class Parameterset(object):
         
         pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
         simpars = odict() # Used to be called M
+        simpars['parsetname'] = self.name
+        simpars['parsetuuid'] = self.uuid
         if tvec is not None: simpars['tvec'] = tvec
         else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
         simpars['popkeys'] = dcp(self.popkeys)

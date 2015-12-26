@@ -66,7 +66,7 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
             ylim((0,currentylims[1]))
             xlim((results.tvec[0], results.tvec[-1]))
             legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':'small'}
-            if poptype=='pops': legend(results.parset.popkeys, **legendsettings)
+            if poptype=='pops': legend(results.popkeys, **legendsettings)
             if poptype=='tot':  legend(['Total'], **legendsettings)
             close(epiplots[pl])
         

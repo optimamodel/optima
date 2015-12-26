@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid
+from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -234,12 +234,12 @@ class Project(object):
         if dt is None: dt=self.settings.dt # Specify the timestep
         if simpars is None: # Optionally run with a precreated simpars instead
             simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
-        results = model(simpars, self.settings)
-        results.project = dcp(self) # ...and just copy the whole project
-        results.parset = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
-        results.simpars = simpars # ...and sim parameters
-        results.tvec = simpars['tvec']
-        results.datayears = self.data['years']
+        
+        # Run the model!
+        raw = model(simpars, self.settings)
+        
+        # Store results
+        results = Resultset(self, simpars, raw)
         results.make() # Generate derived results
         
         return results
