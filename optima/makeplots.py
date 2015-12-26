@@ -1,5 +1,5 @@
 from optima import odict, gridcolormap
-from pylab import isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
+from pylab import array, isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
 
 def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.5, lw=2, dotsize=50):
         ''' Render the plots requested and store them in a list '''
@@ -45,10 +45,10 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
                 data = None
             
             if ndim(best)==1: # Wrap so right number of dimensions
-                best = [best]
-                lower = [lower]
-                upper = [upper]
-                data = [data]
+                best = array([best])
+                lower = array([lower])
+                upper = array([upper])
+                data = array([data])
             
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
@@ -61,7 +61,7 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
                 try: 
                     if data is not None: 
                         scatter(results.datayears, factor*data[l], c=colors[l], s=dotsize, lw=0)
-                except: print('FAILED') # import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
             xlabel('Year')
             title(results.main[datatype].name)

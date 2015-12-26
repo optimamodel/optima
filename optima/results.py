@@ -88,27 +88,27 @@ class Resultset(object):
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['prev'].datapops = data['hivprev']
-        self.main['prev'].datatot = data['optprev']
+        self.main['prev'].datapops = array(data['hivprev'])
+        self.main['prev'].datatot = array(data['optprev'])
         
         self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['numplhiv'].datatot = data['optplhiv']
+        self.main['numplhiv'].datatot = array(data['optplhiv'])
         
         self.main['numinci'].pops = quantile(allinci, quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numinci'].datatot = data['optnuminfect']
+        self.main['numinci'].datatot = array(data['optnuminfect'])
 
         self.main['force'].pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['force'].tot = quantile(allinci.sum(axis=1) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         self.main['numdeath'].pops = quantile(alldeaths, quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numdeath'].datatot = data['optdeath']
+        self.main['numdeath'].datatot = array(data['optdeath'])
 
         self.main['numdiag'].pops = quantile(alldiag, quantiles=quantiles)
         self.main['numdiag'].tot = quantile(alldiag.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        self.main['numdiag'].datatot = data['optnumdiag']
+        self.main['numdiag'].datatot = array(data['optnumdiag'])
         
 
 # WARNING, need to implement
