@@ -14,7 +14,7 @@ Version: 2015dec23 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'browser',
+#'browser',
 'gui',
 ]
 

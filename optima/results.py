@@ -8,20 +8,6 @@ from optima import uuid, today, getdate, quantile, printv, odict, objectid, dcp
 from numpy import array
 
 
-class Data(object):
-    ''' A small class to process data into a form usable for results '''
-    
-    def __init__(self):
-        ''' Create an empty shell of a data structure...'''
-        self.pops = None
-        self.tot = None
-    
-    def add(self, parname, data, by):
-        ''' Actually add data to the data object '''
-        if by=='pops': self.pops = dcp(data) # WARNING, is the dcp() needed?
-        elif by=='tot': self.tot = dcp(data) # WARNING, is the dcp() needed?
-        else: raise Exception('by="%s" not understood, should be "pops" or "tot"' % by)
-
 
 
 class Result(object):
@@ -85,7 +71,7 @@ class Resultset(object):
     
     
     
-    def derivedresults(self, quantiles=None, verbose=2):
+    def make(self, quantiles=None, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
         printv('Making derived results...', 3, verbose)
@@ -93,7 +79,7 @@ class Resultset(object):
         if self.people is None:
             raise Exception('It seems the model has not been run yet, people is empty!')
         
-        if quantiles is None: quantiles = [0.5]
+        if quantiles is None: quantiles = [0.5, 0.25, 0.75]
         allpeople = array([self.people])
         data = dcp(self.project.data)
         
@@ -137,7 +123,7 @@ class Resultset(object):
 #        self.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
 #        self.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
         
-        return None # derivedresults()
+        return None # make()
         
 
     

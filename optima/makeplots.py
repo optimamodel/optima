@@ -1,7 +1,7 @@
 from optima import odict, gridcolormap
-from pylab import isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim
+from pylab import isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
 
-def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6)):
+def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6), alpha=0.5, lw=2):
         ''' Render the plots requested and store them in a list '''
         
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -10,6 +10,8 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
         elif type(whichplots)==str: whichplots = [whichplots] # Convert to list
         epiplots = odict()
         for pl in whichplots:
+            
+            # Parse user input
             try:
                 datatype, poptype = pl.split('-')
                 if datatype not in results.main.keys(): 
@@ -23,20 +25,41 @@ def epiplot(results, whichplots=None, uncertainty=False, verbose=2, figsize=(8,6
                 errormsg = 'Could not parse plot "%s"\n' % pl
                 errormsg += 'Please ensure format is e.g. "numplhiv-tot"'
                 raise Exception(errormsg)
-            if not uncertainty: 
-                try:
-                    thisdata = getattr(results.main[datatype], poptype)[0] # Either 'tot' or 'pops'
-                except:
-                    errormsg = 'Unable to find key "%s" in results' % datatype
-                    raise Exception(errormsg)
-            else: raise Exception('WARNING, uncertainty in plots not implemented yet')
             
+            # Process the data
+            try: # This should only fail if the key is wrong
+                best = getattr(results.main[datatype], poptype)[0] # poptype = either 'tot' or 'pops'
+            except:
+                errormsg = 'Unable to find key "%s" in results' % datatype
+                raise Exception(errormsg)
+            try: # If results were calculated with quantiles, these should exist
+                lower = getattr(results.main[datatype], poptype)[1]
+                upper = getattr(results.main[datatype], poptype)[2]
+            except: # No? Just use the best data
+                lower = best
+                upper = best
+            try: # Try loading actual data -- very likely to not exist
+                data = getattr(results.main[datatype], 'data'+poptype)[0] # TEMP
+            except:# Don't worry if no data
+                data = None
+            
+            if ndim(best)==1: # Wrap so right number of dimensions
+                best = [best]
+                lower = [lower]
+                upper = [upper]
+            
+            # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
-            if ndim(thisdata)==1: thisdata = [thisdata] # Wrap so right number of dimensions
-            nlines = len(thisdata)
+            nlines = len(best)
             colors = gridcolormap(nlines)
             for l in range(nlines):
-                plot(results.tvec, thisdata[l], lw=2, c=colors[l]) # Actually do the plot
+                if uncertainty:
+                    fill_between(results.tvec, lower[l], upper[l], c=colors[l], alpha=alpha)
+                plot(results.tvec, best[l], lw=lw, c=colors[l]) # Actually do the plot
+                try: 
+                    if data is not None: scatter(results.datayears, data)
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            
             xlabel('Year')
             title(results.main[datatype].name)
             currentylims = ylim()

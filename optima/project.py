@@ -235,10 +235,12 @@ class Project(object):
         if simpars is None: # Optionally run with a precreated simpars instead
             simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
         results = model(simpars, self.settings)
+        results.project = dcp(self) # ...and just copy the whole project
         results.parset = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
         results.simpars = simpars # ...and sim parameters
-        results.project = dcp(self) # ...and just copy the whole project
-        results.derivedresults() # Generate derived results
+        results.tvec = simpars['tvec']
+        results.datayears = self.data['years']
+        results.make() # Generate derived results
         
         return results
     
