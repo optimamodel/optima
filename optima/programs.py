@@ -15,7 +15,7 @@ from matplotlib.ticker import MaxNLocator
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None):
+    def __init__(self, name='default', programs=None, default_interaction='random'):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
@@ -23,11 +23,12 @@ class Programset(object):
         if programs is not None: self.addprograms(programs)
         self.created = today()
         self.modified = today()
+        self.default_interaction = default_interaction
 
     def __repr__(self):
         ''' Print out useful information'''
         output = '\n'
-        output += '       Response name: %s\n'    % self.name
+        output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
         output += '        Date created: %s\n'    % getdate(self.created)
@@ -36,7 +37,7 @@ class Programset(object):
         return output
 
     def gettargetpops(self):
-        '''Lists populations targeted by some program in the response'''
+        '''Update populations targeted by some program in the response'''
         self.targetpops = []
         if self.programs:
             for prog in self.programs.values():
@@ -44,21 +45,21 @@ class Programset(object):
             self.targetpops = list(set(self.targetpops))
 
     def gettargetpars(self):
-        '''Lists model parameters targeted by some program in the response'''
+        '''Update model parameters targeted by some program in the response'''
         self.targetpars = []
         if self.programs:
             for thisprog in self.programs.values():
                 for thispop in thisprog.targetpars: self.targetpars.append(thispop)
 
     def gettargetpartypes(self):
-        '''Lists model parameter types targeted by some program in the response'''
+        '''Update model parameter types targeted by some program in the response'''
         self.targetpartypes = []
         if self.programs:
             for thisprog in self.programs.values():
                 for thispartype in thisprog.targetpartypes: self.targetpartypes.append(thispartype)
             self.targetpartypes = list(set(self.targetpartypes))
 
-    def initialize_covout(self,default_interaction='random'):
+    def initialize_covout(self):
         '''Sets up the required coverage-outcome curves.
            Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
@@ -84,10 +85,9 @@ class Programset(object):
                 for prog in progccopars.keys(): 
                     if prog not in targetingprogs: del ccopars[prog]
 
-                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=default_interaction)
+                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
 
         # Delete any stored effects that aren't needed (if removing a program)
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for tpt in self.covout.keys():
             if tpt not in self.targetpartypes: del self.covout[tpt]
             else: 
@@ -124,7 +124,7 @@ class Programset(object):
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [p.name for p in self.programs.values()]), 4, verbose)
 
     def optimizable(self):
-        return [True if prog.targetpars else False for prog in self.programs.values()]
+        return [True if prog.optimizable else False for prog in self.programs.values()]
 
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
@@ -230,11 +230,8 @@ class Programset(object):
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                         x = budget[thisprog.name]
-#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         if thiscovpop: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thiscovpop]
                         else: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-#                        try: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-#                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
 
                 if self.covout[thispartype][thispop].interaction == 'additive':
@@ -260,7 +257,6 @@ class Programset(object):
             
                 elif self.covout[thispartype][thispop].interaction == 'random':
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
-#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                     if all(self.covout[thispartype][thispop].ccopars.values()):
                 
@@ -289,8 +285,6 @@ class Programset(object):
     
                         # All programs together
                         outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
-#                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                        
                 
                 else: raise Exception('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
         
@@ -644,14 +638,8 @@ class Costcov(CCOF):
 class Covout(CCOF):
     '''Coverage-outcome objects'''
 
-
     def function(self,x,ccopar,popsize):
-        '''Returns single-program outcome in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        i = array(ccopar['intercept'])
-        g = array(ccopar['gradient'])
-        if isinstance(popsize,(float,int)): popsize = array([popsize])
-        y = array([min(j,1) for j in (i + (x*g)/popsize)])
-        return y
+        pass
 
     def inversefunction(self,x,ccopar,popsize):
         pass

@@ -54,7 +54,6 @@ if 'standardscen' in tests:
     ## Define scenarios
     scenlist = [
         {'name': 'Current conditions', 'pars': []},
-# CK: WARNING, TEMP
         {'name': 'Less casual condom use',
           'pars': [{'endval': 0.1,
             'endyear': 2015,
