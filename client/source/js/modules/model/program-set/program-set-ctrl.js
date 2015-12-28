@@ -73,12 +73,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            $http.delete('/api/project/' + projectId +  '/progsets' + '/' + progSetId);
+            $http.delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id);
           }
           $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
             return programSet.name !== $scope.activeProgramSet.name;
           });
-          $scope.programSetList ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
+          $scope.programSetList && $scope.programSetList.length > 0 ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
         };
         modalService.confirm(
           function () {
