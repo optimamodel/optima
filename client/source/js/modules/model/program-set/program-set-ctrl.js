@@ -34,14 +34,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // Get the list of saved programs from DB and set the first one as active
-      projectApiService.getProjectProgramSet(openProject.id)
-       .success(function (response) {
-         if(response.progsets) {
-           $scope.programSetList = response.progsets;
-           if (response.progsets && response.progsets.length > 0) {
-             $scope.setActiveProgramSet(response.progsets[0]);
-           }
-         }
+    $http.get('/api/project/' + openProject.id + '/progsets' )
+      .success(function (response) {
+        if(response.progsets) {
+          $scope.programSetList = response.progsets;
+          if (response.progsets && response.progsets.length > 0) {
+            $scope.setActiveProgramSet(response.progsets[0]);
+          }
+        }
       });
 
     // Open pop-up to add new programSet name, it will also reset programs
@@ -73,7 +73,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            projectApiService.deleteProjectProgramSet(openProject.id, $scope.activeProgramSet.id);
+            $http.delete('/api/project/' + projectId +  '/progsets' + '/' + progSetId);
           }
           $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
             return programSet.name !== $scope.activeProgramSet.name;
@@ -107,17 +107,27 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Save a programSet to DB
     $scope.saveProgramSet = function() {
+      var errorMessage;
       if (!openProject) {
-        modalService.informError([{message: 'Open project before proceeding.'}]);
+        errorMessage = 'Open project before proceeding.';
+      } else if (!$scope.activeProgramSet || !$scope.activeProgramSet.name) {
+        errorMessage = 'Please add program set name before proceeding.';
+      }
+      if (errorMessage) {
+        modalService.informError([{message: errorMessage}]);
       } else {
-        projectApiService.saveProjectProgramSet(openProject.id, $scope.activeProgramSet.id, {
-          name: $scope.activeProgramSet.name,
-          programs: $scope.programs
+        $http({
+          url: '/api/project/' + openProject.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
+          method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
+          data: {
+            name: $scope.activeProgramSet.name,
+            programs: $scope.programs
+          }
         }).success(function (response) {
-            if(response.id) {
-              $scope.activeProgramSet.id = response.id;
-            }
-          });
+          if(response.id) {
+            $scope.activeProgramSet.id = response.id;
+          }
+        });
       }
     };
 
