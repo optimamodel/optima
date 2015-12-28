@@ -423,12 +423,12 @@ class Program(object):
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
-    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False):
+    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
 
         poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
         totaltargeted = sum(poptargeted.values())
-        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,toplot=toplot)
+        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,toplot=toplot,bounds=bounds)
 
         popreached = {}
         if not total and not targetpopprop: # calculate targeting since it hasn't been provided
@@ -441,13 +441,13 @@ class Program(object):
         if total: return totalreached/totaltargeted if proportion else totalreached
         else: return popreached
 
-    def getbudget(self,x,t,parset,proportion=False,toplot=False):
+    def getbudget(self,x,t,parset,proportion=False,toplot=False,bounds=None):
         '''Returns budget for a coverage vector'''
 
         poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
         totaltargeted = sum(poptargeted.values())
-        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False)
-        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False)
+        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
+        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
         return reqbudget
 
     def plotcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,randseed=None,bounds=None):
@@ -457,10 +457,14 @@ class Program(object):
         x = linspace(0,xupperlim,100)
         plotdata['xlinedata'] = x
         try:
-            y = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True)
+            y_l = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds='l')
+            y_m = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds=None)
+            y_u = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds='u')
         except:
-            y = None
-        plotdata['ylinedata'] = y
+            y_l,y_m,y_u = None,None,None
+        plotdata['ylinedata_l'] = y_l
+        plotdata['ylinedata_m'] = y_m
+        plotdata['ylinedata_u'] = y_u
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Number covered'
 
@@ -468,14 +472,26 @@ class Program(object):
         cost_coverage_figure.hold(True)
         axis = cost_coverage_figure.gca()
 
-        if y is not None:
-            for yr in range(y.shape[0]):
+        if y_m is not None:
+            for yr in range(y_m.shape[0]):
                 axis.plot(
                     x,
-                    y[yr],
+                    y_m[yr],
                     linestyle='-',
                     linewidth=2,
                     color='#a6cee3')
+                axis.plot(
+                    x,
+                    y_l[yr],
+                    linestyle='--',
+                    linewidth=2,
+                    color='#000000')
+                axis.plot(
+                    x,
+                    y_u[yr],
+                    linestyle='--',
+                    linewidth=2,
+                    color='#000000')
         axis.scatter(
             self.costcovdata['cost'],
             self.costcovdata['coverage'],

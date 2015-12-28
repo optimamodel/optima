@@ -34,7 +34,7 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
-doplot = False
+doplot = True
 
 
 ##############################################################################
@@ -109,24 +109,28 @@ if 'makeprograms' in tests:
                              'unitcost_l': 30,
                              'unitcost_u': 40})
                              
-#    HTC.costcovfn.addccopar({'t': 2016.0,
-#                             'unitcost': 30})
-#                             
-#    HTC.costcovfn.addccopar({'t': 2017.0,
-#                             'unitcost': 30})
-#                             
-#    SBCC.costcovfn.addccopar({'saturation': 0.4,
-#                              't': 2013.0,
-#                              'unitcost': 10})
-#
-#    # 7. Overwrite parameters for defining cost-coverage function.
-#    HTC.costcovfn.addccopar({'t': 2016.0,
-#                             'unitcost': 25},
-#                             overwrite=True)
-#
-#    # 8. Remove parameters for defining cost-coverage function.
-#    HTC.costcovfn.rmccopar(2017)
-#
+    HTC.costcovfn.addccopar({'t': 2016.0,
+                             'unitcost_l': 25,
+                             'unitcost_u': 35})
+                             
+    HTC.costcovfn.addccopar({'t': 2017.0,
+                             'unitcost_l': 30,
+                             'unitcost_u': 35,})
+                             
+    SBCC.costcovfn.addccopar({'saturation': 0.4,
+                              't': 2013.0,
+                              'unitcost_l': 8,
+                              'unitcost_u': 12})
+
+    # 7. Overwrite parameters for defining cost-coverage function.
+    HTC.costcovfn.addccopar({'t': 2016.0,
+                             'unitcost_l': 20,
+                             'unitcost_u': 30},
+                             overwrite=True)
+
+    # 8. Remove parameters for defining cost-coverage function.
+    HTC.costcovfn.rmccopar(2017)
+
     # 9. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
     HTC.costcovfn.getccopar(2014)
 
@@ -135,15 +139,15 @@ if 'makeprograms' in tests:
 
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace
-    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
-#    HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
-#
-#    # NB, if you want to evaluate it for a particular population size, can also do...
-#    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
-#
-#    # 12. Plot cost-coverage function
-#    if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
-#
+    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False,bounds=None)
+    HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
+
+    # NB, if you want to evaluate it for a particular population size, can also do...
+    HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
+
+    # 12. Plot cost-coverage function
+    if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
+
 #    print('Running make programs set test...')
 #    # Initialise with or without programs
 #    R = Programset()
