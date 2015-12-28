@@ -334,6 +334,10 @@ def init_login_manager(login_manager):
 
 class RequestParser(OrigReqParser):
 
+    def __init__(self, *args, **kwargs):
+        super(RequestParser, self).__init__(*args, **kwargs)
+        self.abort_on_error = True
+
     def get_swagger_type(self, arg):
         try:
             if issubclass(arg.type, FileStorage):
@@ -361,3 +365,14 @@ class RequestParser(OrigReqParser):
     def add_arguments(self, arguments_dict):
         for argument_name, kwargs in arguments_dict.iteritems():
             self.add_argument(argument_name, **kwargs)
+
+    def parse_args(self, req=None, strict=False):
+        from werkzeug.exceptions import HTTPException
+
+        try:
+            return super(RequestParser, self).parse_args(req, strict)
+        except HTTPException as e:
+            if self.abort_on_error:
+                raise e
+            else:
+                raise ValueError(e.data['message'])
