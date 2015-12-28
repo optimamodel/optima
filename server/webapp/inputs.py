@@ -48,6 +48,7 @@ class SubParser:
 
     def __init__(self, child_parser):
         self.child_parser = child_parser
+        self.child_parser.abort_on_error = False
 
     def __call__(self, item_to_parse):
         return self.child_parser.parse_args(req=SubRequest(item_to_parse))
