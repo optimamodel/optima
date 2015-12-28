@@ -136,7 +136,7 @@ class ProjectTestCase(OptimaTestCase):
         from server.webapp.dbconn import db
 
         progsets_count = 3
-        project = self.create_project('test', return_instance=True, progsets_count=progsets_count)
+        project = self.create_project(name='test', return_instance=True, progsets_count=progsets_count)
 
         self.assertEqual(len(project.progsets), progsets_count)
 
@@ -240,7 +240,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(program_count, 0)
 
     def test_delete_project_with_progset(self):
-        project = self.create_project('test_progset', return_instance=True, progsets_count=1)
+        project = self.create_project(name='test_progset', return_instance=True, progsets_count=1)
 
         self.assertEquals(len(project.progsets), 1)
 
