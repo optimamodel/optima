@@ -510,7 +510,15 @@ class CCOF(object):
     def addccopar(self, ccopar, overwrite=False, verbose=2):
         ''' Add or replace parameters for cost-coverage functions'''
 
-        if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.
+        # Fill in the missing information for cost-coverage curves
+        if ccopar.get('unitcost_l'):
+            if not ccopar.get('saturation'): ccopar['saturation'] = 1.
+            if not ccopar.get('unitcost_u'):
+                errormsg = 'You need to enter both an upper and lower bound for the unit cost'
+                raise Exception(errormsg)
+            else:
+                ccopar['unitcost_m'] = (ccopar['unitcost_l'] + ccopar['unitcost_u'])/2
+
         if not self.ccopars:
             for ccopartype in ccopar.keys():
                 self.ccopars[ccopartype] = [ccopar[ccopartype]]
@@ -577,10 +585,24 @@ class CCOF(object):
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
             j += 1
 
-        # Finsh, return
         ccopar['t'] = t
+
+        # Return the median, low or high parameters if bounds are given, or a random sample if no bounds are given.
+        finalccopar = dcp(ccopar)
+        boundpars = [x for x in ccopar.keys() if x[-2:] in ['_u','_l','_m']]
+        for boundpar in boundpars: del finalccopar[boundpar]
+        boundpartype = boundpars[0][:-2]
+        if not bounds: # Return the median
+            finalccopar[boundpartype] = ccopar[boundpartype+'_m']
+        else: # Return the upper or lower, as desired
+            if bounds in ['upper','u','up','high','h']:
+                finalccopar[boundpartype] = ccopar[boundpartype+'_u']
+            elif bounds in ['lower','l','low']:
+                finalccopar[boundpartype] = ccopar[boundpartype+'_l']
+            
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
-        return ccopar
+
+        return finalccopar
 
     def evaluate(self,x,popsize,t,toplot,inverse=False,randseed=None,bounds=None):
         if (not toplot) and (not len(x)==len(t)): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
