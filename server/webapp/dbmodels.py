@@ -303,6 +303,7 @@ class ProgramsDb(db.Model):
         'progset_id': Uuid,
         'project_id': Uuid,
         'category': fields.String,
+        'short_name': fields.String,
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
