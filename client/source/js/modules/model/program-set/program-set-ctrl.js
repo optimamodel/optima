@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    $timeout, modalService, predefined, availableParameters, UserManager, activeProject, projectApiService) {
+    $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
 
     // Check if come project is currently open, else show error message
     const openProjectStr = activeProject.getProjectFor(UserManager.data);
@@ -127,6 +127,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
           }
+          modalService.inform(
+            function (){},
+            'Okay',
+            'Project set saved successfully',
+            'Project set saved'
+          );
         });
       }
     };
