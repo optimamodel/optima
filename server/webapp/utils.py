@@ -302,6 +302,64 @@ def update_or_create_parset(project_id, name, parset):
         parset_record.pars = saves(parset.pars)
 
 
+def update_or_create_progset(project_id, name, progset):
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import ProgsetsDb
+
+    progset_record = ProgsetsDb.query \
+        .filter_by(name=progset.name, project_id=project_id) \
+        .first()
+
+    if progset_record is None:
+        progset_record = ProgsetsDb(
+            project_id=project_id,
+            name=name,
+            created=progset.created or datetime.now(dateutil.tz.tzutc()),
+            updated=datetime.now(dateutil.tz.tzutc())
+        )
+
+        db.session.add(progset_record)
+        db.session.flush()
+    else:
+        progset_record.updated = datetime.now(dateutil.tz.tzutc())
+
+    return progset_record
+
+
+def update_or_create_program(project_id, progset_id, name, program, active=False):
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import ProgramsDb
+
+    program_record = ProgramsDb.query \
+        .filter_by(name=name, project_id=project_id, progset_id=progset_id) \
+        .first()
+
+    if program_record is None:
+        program_record = ProgramsDb(
+            project_id=project_id,
+            progset_id=progset_id,
+            name=name,
+            short_name=program.get('short_name', ''),
+            category=program.get('category', ''),
+            created=datetime.now(dateutil.tz.tzutc()),
+            updated=datetime.now(dateutil.tz.tzutc()),
+            pars=program.get('parameters', []),
+            active=active
+        )
+
+        db.session.add(program_record)
+    else:
+        program_record.updated = datetime.now(dateutil.tz.tzutc())
+        program_record.pars = program.get('parameters', [])
+        program_record.short_name = program.get('short_name', '')
+        program_record.category = program.get('category', '')
+        program_record.active = active
+
+
 def init_login_manager(login_manager):
 
     @login_manager.user_loader
@@ -334,6 +392,10 @@ def init_login_manager(login_manager):
 
 class RequestParser(OrigReqParser):
 
+    def __init__(self, *args, **kwargs):
+        super(RequestParser, self).__init__(*args, **kwargs)
+        self.abort_on_error = True
+
     def get_swagger_type(self, arg):
         try:
             if issubclass(arg.type, FileStorage):
@@ -361,3 +423,14 @@ class RequestParser(OrigReqParser):
     def add_arguments(self, arguments_dict):
         for argument_name, kwargs in arguments_dict.iteritems():
             self.add_argument(argument_name, **kwargs)
+
+    def parse_args(self, req=None, strict=False):
+        from werkzeug.exceptions import HTTPException
+
+        try:
+            return super(RequestParser, self).parse_args(req, strict)
+        except HTTPException as e:
+            if self.abort_on_error:
+                raise e
+            else:
+                raise ValueError(e.data['message'])

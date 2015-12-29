@@ -49,12 +49,20 @@ class ProjectFactory(SQLAlchemyModelFactory):
     name = fuzzy.FuzzyText(prefix='project_')
     datastart = 2000
     dataend = 2030
-    populations = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
-            {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
-            {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
+    populations = [
+        {"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False},
+        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False,
+         "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True},
+        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False},
+        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}
+    ]
     version = '{}'
 
     @factory.lazy_attribute
@@ -117,7 +125,7 @@ class ProgramsFactory(SQLAlchemyModelFactory):
     class Meta:
         model = ProgramsDb
 
-    category = 'No category'
+    category = 'Test category'
     name = fuzzy.FuzzyText(prefix='program_')
     short_name = fuzzy.FuzzyText()
     active = True

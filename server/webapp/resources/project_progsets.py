@@ -18,8 +18,8 @@ program_parser.add_arguments({
     'name': {'required': True, 'location': 'json'},
     'short_name': {'required': True, 'location': 'json'},
     'category': {'required': True, 'location': 'json'},
-    'active': {'type': bool, 'default': False},
-    'parameters': {'type': dict, 'action': 'append', 'dest': 'pars'},
+    'active': {'type': bool, 'default': False, 'location': 'json'},
+    'parameters': {'type': dict, 'action': 'append', 'dest': 'pars', 'location': 'json'},
 })
 
 
