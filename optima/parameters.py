@@ -320,9 +320,9 @@ class Par(object):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
-        output += '  name: %s\n'    % self.name
-        output += ' short: %s\n'    % self.short
-        output += 'limits: %s\n'    % self.limits
+        output += '  name: "%s"\n'    % self.name
+        output += ' short: "%s"\n'    % self.short
+        output += 'limits: %s\n'    % str(self.limits)
         return output
 
 
@@ -347,10 +347,10 @@ class Timepar(Par):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
-        output += '     t: %s\n'    % self.t
-        output += '     y: %s\n'    % self.y
+        output += '     t: \n%s\n'    % self.t
+        output += '     y: \n%s\n'    % self.y
         output += '     m: %s\n'    % self.m
-        output += '    by: %s\n'    % self.by
+        output += '    by: "%s"\n'    % self.by
         output += '  keys: %s\n'    % self.y.keys()
         return output
     
