@@ -28,14 +28,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.program = programCopy;
       $scope.program.active = true;
-      if (!$scope.program.populations) {
-        $scope.program.populations = populations;
-      }
       if ($scope.isNew) { $scope.program.category = 'Other'; }
     };
 
     $scope.selectAllPopulations = function() {
-      _.forEach($scope.program.populations, function(population) {
+      _.forEach($scope.populations, function(population) {
         population.active = $scope.selectAll;
       });
     };
