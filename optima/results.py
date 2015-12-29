@@ -78,7 +78,7 @@ class Resultset(object):
         
         printv('Making derived results...', 3, verbose)
         
-        def processdata(rawdata):
+        def processdata(rawdata, uncertainty=False):
             ''' Little method to turn the data into a form suitable for plotting -- basically, replace assumptions with nans '''
             import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             processeddata = array(rawdata) # WARNING!
@@ -94,7 +94,7 @@ class Resultset(object):
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        self.main['prev'].datapops = processdata(data['hivprev'])
+        self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
         self.main['prev'].datatot = processdata(data['optprev'])
         
         self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
