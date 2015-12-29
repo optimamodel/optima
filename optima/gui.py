@@ -86,12 +86,13 @@ def gui(results):
     nboxes = len(checkboxes)
     
     ## Set up control panel
+    truebydefault = 2 # Number of boxes to check true by default
     try: fc = results.project.settings.optimablue
     except: fc = (0.16, 0.67, 0.94)
     figure(figsize=(7,8), facecolor=(0.95, 0.95, 0.95))
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
     buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
-    defaultchecks = [True]+[False]*(nboxes-1)
+    defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
     check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks)
     for label in check.labels:
         thispos = label.get_position()
