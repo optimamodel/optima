@@ -1,15 +1,25 @@
 from optima import odict, gridcolormap
 from pylab import array, isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
 
-def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.2, lw=2, dotsize=50):
-        ''' Render the plots requested and store them in a list '''
+def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.2, lw=2, dotsize=50):
+        ''' 
+        Render the plots requested and store them in a list. Argument "which" should be a list of form e.g.
+        ['prev-tot', 'inci-pops']
         
+        This function returns an odict of figures, which can then be saved as MPLD3, etc.
+        
+        Version: 2015dec29
+        '''
+        
+        # Initialize
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
-        if whichplots is None: whichplots = [datatype+'-'+poptype for datatype in results.main.keys() for poptype in ['pops', 'tot']] # Just plot everything if not specified
-        elif type(whichplots)==str: whichplots = [whichplots] # Convert to list
+        if which is None: which = [datatype+'-'+poptype for datatype in results.main.keys() for poptype in ['pops', 'tot']] # Just plot everything if not specified
+        elif type(which)==str: which = [which] # Convert to list
+        
+        # Loop over each plot
         epiplots = odict()
-        for pl in whichplots:
+        for pl in which:
             
             # Parse user input
             try:

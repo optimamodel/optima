@@ -17,7 +17,7 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     return None
         
 
-def gui(results):
+def gui(results, which=None):
     '''
     GUI
     
@@ -25,12 +25,15 @@ def gui(results):
     and when "Update" is clicked, will clear the contents of the plotting window and replot.
     
     Usage:
-        gui(results)
+        gui(results, [which])
+    
+    where results is the output of e.g. runsim() and which is an optional list of form e.g.
+        which = ['prev-tot', 'inci-pops']
     
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 2015dec23 by cliffk
+    Version: 2015dec29 by cliffk
     '''
     global check, button
     
@@ -64,7 +67,7 @@ def gui(results):
             plotfig = figure(figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
             
             # Actually create plots
-            plots = epiplot(results, toplot, figsize=(width, height))
+            plots = epiplot(results, which=toplot, figsize=(width, height))
             for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
             if wasinteractive: ion()
             show()
@@ -75,8 +78,8 @@ def gui(results):
     epinames = [thing.name for thing in results.main.values()]
     episubkeys = ['tot','pops'] # Would be best not to hard-code this...
     episubnames = ['total', 'by population']
-    checkboxes = []
-    checkboxnames = []
+    checkboxes = [] # e.g. 'prev-tot'
+    checkboxnames = [] # e.g. 'HIV prevalence (%) -- total'
     for key in epikeys:
         for subkey in episubkeys:
             checkboxes.append(key+'-'+subkey)
@@ -85,14 +88,22 @@ def gui(results):
             checkboxnames.append(name+' -- '+subname)
     nboxes = len(checkboxes)
     
-    ## Set up control panel
+    ## Set up what to plot when screen first opens
     truebydefault = 2 # Number of boxes to check true by default
+    if which is None:
+        defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
+    else:
+        defaultchecks = []
+        for name in checkboxes:
+            if name in which: defaultchecks.append(True)
+            else: defaultchecks.append(False)
+            
+    ## Set up control panel
     try: fc = results.project.settings.optimablue
     except: fc = (0.16, 0.67, 0.94)
     figure(figsize=(7,8), facecolor=(0.95, 0.95, 0.95))
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
     buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
-    defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
     check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks)
     for label in check.labels:
         thispos = label.get_position()
@@ -110,7 +121,7 @@ def gui(results):
 
 
 
-def browser(results):
+def browser(results, which=None):
     ''' Create an mpld3 GUI '''
     import mpld3 # Only import this if needed, since might not always be available
     import json
@@ -131,7 +142,7 @@ def browser(results):
 
     figs = []
     jsons = []
-    plots = epiplot(results)
+    plots = epiplot(results, which)
     nplots = len(plots)
     for p in range(nplots): 
         figs.append(figure())
