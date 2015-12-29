@@ -1,4 +1,4 @@
-def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False):
+def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False, newwindow=True):
     """
     GRIDCOLORMAP
 
@@ -12,16 +12,18 @@ def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False
         nsteps: the discretization of the color cube (e.g. 10 = 10 units per side = 1000 points total)
         asarray: whether to return the colors as an array instead of as a list of tuples
         doplot: whether or not to plot the color cube itself
+        newwindow: if doplot=True, whether to use a new window
 
     Usage example:
-    from matplotlib.pylab import *
-    from colortools import gridcolormap
-    ncolors = 10
-    piedata = rand(ncolors)
-    colors = gridcolormap(ncolors, doplot=True)
-    figure()
-    pie(piedata, colors=colors)
-    show()
+        from pylab import *
+        from colortools import gridcolormap
+        ncolors = 10
+        piedata = rand(ncolors)
+        colors = gridcolormap(ncolors)
+        figure()
+        pie(piedata, colors=colors)
+        gridcolormap(ncolors, doplot=True)
+        show()
 
     Version: 1.2 (2015dec29) by cliffk
     """
@@ -80,11 +82,14 @@ def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False
     ## For plotting
     if doplot:
         from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
-        from matplotlib.pyplot import figure
-        fig = figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.cla()
-        ax.scatter(dots[indices,0], dots[indices,1], dots[indices,2], c=output, s=200, depthshade=False)
+        from pylab import figure, gca
+        if newwindow:
+            fig = figure()
+            ax = fig.add_subplot(111, projection='3d')
+        else: 
+            ax = gca(projection='3d')
+#        ax.cla()
+        ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False)
         ax.set_xlabel('R')
         ax.set_ylabel('G')
         ax.set_zlabel('B')

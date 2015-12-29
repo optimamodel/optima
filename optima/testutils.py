@@ -11,6 +11,7 @@ Version: 2015nov21 by cliffk
 ## Define tests to run here!!!
 tests = [
 'odict',
+'gridcolormap',
 ]
 
 
@@ -63,4 +64,39 @@ if 'odict' in tests:
     bar[0:1] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
     bar.rename('cough','chill') # Show rename
     print(bar) # Print results
+    done(t)
+
+
+
+## gridcolormap test
+if 'gridcolormap' in tests:
+    t = tic()
+    
+    from optima import gridcolormap
+    from pylab import figure, plot, cumsum, rand, legend
+    
+    nlines1 = 5
+    nlines2 = 12
+    npts = 50
+    lw = 3 # Line width
+    
+    colors1 = gridcolormap(ncolors=nlines1)
+    colors2 = gridcolormap(ncolors=nlines2)
+    
+    fig = figure(figsize=(12,12))
+    
+    fig.add_subplot(2,2,1)
+    for l in range(nlines1): plot(cumsum((rand(npts)+0.1*l)**2), c=colors1[l], lw=lw)
+    legend(['%i' % l for l in range(nlines1)], loc='upper left')
+    
+    fig.add_subplot(2,2,2)
+    for l in range(nlines2): plot(cumsum((rand(npts)+0.1*l)**2), c=colors2[l], lw=lw)
+    legend(['%i' % l for l in range(nlines2)], loc='upper left')
+    
+    fig.add_subplot(2,2,3, projection='3d')
+    gridcolormap(ncolors=nlines1, doplot=True, newwindow=False)
+    fig.add_subplot(2,2,4, projection='3d')
+    gridcolormap(ncolors=nlines2, doplot=True, newwindow=False)
+        
+    
     done(t)
