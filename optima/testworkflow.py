@@ -10,7 +10,7 @@ python -i tests.py
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2015dec23 by cliffk
+Version: 2015dec29 by cliffk
 """
 
 

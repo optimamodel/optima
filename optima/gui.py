@@ -2,9 +2,8 @@ from optima import epiplot
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
 
-global plotfig, panelfig, check, updatebutton, closebutton # Without these, interactivity doesn't work
-plotfig = None # Initialize plot figure
-panelfig = None # Initialize panel figure
+global plotfig, panelfig, check, checkboxes, updatebutton, closebutton, results # Without these, interactivity doesn't work
+plotfig, panelfig, check, checkboxes, updatebutton, closebutton, results = [None]*7 # Weird way of doing it but it works :)
 
 
 def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
@@ -27,7 +26,44 @@ def closegui(event):
     close(panelfig)
 
 
-def gui(results, which=None):
+
+def getchecked(check):
+    ''' Return a list of whether or not each check box is checked or not '''
+    ischecked = []
+    for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
+    return ischecked
+    
+    
+def update(event):
+    ''' Close current window if it exists and open a new one based on user selections '''
+    global plotfig, check, checkboxes
+
+    # If figure exists, get size, then close it
+    try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
+    except: width,height = 14,12 # No figure: use defaults
+    
+    # Get user selections
+    ischecked = getchecked(check)
+    toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
+    nplots = sum(ischecked) # Calculate rows and columns of subplots
+    nrows = int(ceil(sqrt(nplots)))
+    ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
+    
+    # Do plotting
+    if nplots>0: # Don't do anything if no plots
+        wasinteractive = isinteractive()
+        if wasinteractive: ioff()
+        plotfig = figure(figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
+        
+        # Actually create plots
+        plots = epiplot(results, which=toplot, figsize=(width, height))
+        for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
+        if wasinteractive: ion()
+        show()
+
+
+
+def gui(tmpresults, which=None):
     '''
     GUI
     
@@ -45,42 +81,8 @@ def gui(results, which=None):
     
     Version: 1.1 (2015dec29) by cliffk
     '''
-    global check, updatebutton, closebutton, panelfig
-    
-    
-    def getchecked(check):
-        ''' Return a list of whether or not each check box is checked or not '''
-        ischecked = []
-        for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
-        return ischecked
-    
-    
-    def update(event):
-        ''' Close current window if it exists and open a new one based on user selections '''
-        global plotfig
-
-        # If figure exists, get size, then close it
-        try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
-        except: width,height = 14,12 # No figure: use defaults
-        
-        # Get user selections
-        ischecked = getchecked(check)
-        toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
-        nplots = sum(ischecked) # Calculate rows and columns of subplots
-        nrows = int(ceil(sqrt(nplots)))
-        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-        
-        # Do plotting
-        if nplots>0: # Don't do anything if no plots
-            wasinteractive = isinteractive()
-            if wasinteractive: ioff()
-            plotfig = figure(figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-            
-            # Actually create plots
-            plots = epiplot(results, which=toplot, figsize=(width, height))
-            for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
-            if wasinteractive: ion()
-            show()
+    global check, checkboxes, updatebutton, closebutton, panelfig, results
+    results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
     epikeys = results.main.keys()
