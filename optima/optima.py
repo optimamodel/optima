@@ -36,4 +36,9 @@ from model import model # The thing that actually runs the model
 from programs import Program, Programset # Define programs
 from project import Project, version # Project class
 from makeplots import epiplot # Create the plots
-from gui import gui # Handle the plotting
+
+## Load optional plotting functions
+try: from gui import gui # Handle the Python plotting
+except: pass
+try: from gui import browser # Handle the browser-based plotting
+except: pass

@@ -1,7 +1,8 @@
 from optima import epiplot
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
-global plotfig, check, button # Without these, interactivity doesn't work
+
+global plotfig, panelfig, check, button # Without these, interactivity doesn't work
 plotfig = None # Initialize plot figure
 panelfig = None # Initialize panel figure
 
