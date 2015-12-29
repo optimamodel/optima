@@ -254,15 +254,10 @@ class Project(object):
     
     
     
-    def perturb(self, orig='default', new='perturb', what='force'):
-        ''' Function to perturb the '''
-        parset = perturbpars(self, orig='default', new='perturb', what='force')
-        
-        ## If parameter set of that name doesn't exist, create it
-        if new not in self.parsets:
-            parset = Parameterset()
-            parset.makeparsfromdata(self.data) # Create parameters
-            self.addparset(name=new, parset=parset) # Store parameters
+    def perturb(self, orig='default', name='perturb', n=5, what='force', span=0.5): # orig=default or orig=0?
+        ''' Function to perturb the parameters to get "uncertainties" '''
+        parset = perturbpars(orig=self.parsets[orig], ncopies=n, what='force', span=0.5)
+        self.addparset(name=name, parset=parset) # Store parameters
         return None
     
     def autofit(self):
