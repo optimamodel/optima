@@ -674,41 +674,43 @@ project_copy_fields = {
     'user': Uuid,
     'copy_id': Uuid
 }
+project_copy_parser = RequestParser()
+project_copy_parser.add_arguments({
+    'to': {'required': True, 'type': secure_filename_input},
+})
 
 
 class ProjectCopy(Resource):
 
     @swagger.operation(
-        responseClass=ProjectDb.__name__,
-        summary='Copy a Project'
+        summary='Copies the given project to a different name',
+        parameters=project_copy_parser.swagger_parameters()
     )
     @marshal_with(project_copy_fields)
     @login_required
     def post(self, project_id):
-        """
-        Copies the given project to a different name
-        usage: /api/project/copy/<project_id>?to=<new_project_name>
-        """
         from sqlalchemy.orm.session import make_transient
         # from server.webapp.dataio import projectpath
-        new_project_name = request.args.get('to')
-        if not new_project_name:
-            abort(400)
+        args = project_copy_parser.parse_args()
+        new_project_name = args['to']
+
         # Get project row for current user with project name
-        project_entry = load_project(project_id, all_data=True)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
+        project_entry = load_project(project_id, all_data=True, raise_exception=True)
         project_user_id = project_entry.user_id
 
-        # force load the existing data, parset and result
-        project_data_exists = project_entry.project_data
-        project_parset_exists = project_entry.parsets
+        be_project = project_entry.hydrate()
+
+        # force load the existing result
         project_result_exists = project_entry.results
 
         db.session.expunge(project_entry)
         make_transient(project_entry)
 
         project_entry.id = None
+        db.session.add(project_entry)
+        db.session.flush()  # this updates the project ID to the new value
+
+        project_entry.restore(be_project)
         project_entry.name = new_project_name
 
         # change the creation and update time
@@ -717,24 +719,7 @@ class ProjectCopy(Resource):
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
-        db.session.add(project_entry)
-        db.session.flush()  # this updates the project ID to the new value
         new_project_id = project_entry.id
-
-        if project_data_exists:
-            # copy the project data
-            db.session.expunge(project_entry.project_data)
-            make_transient(project_entry.project_data)
-            db.session.add(project_entry.project_data)
-
-        if project_parset_exists:
-            # copy each parset
-            for parset in project_entry.parsets:
-                db.session.expunge(parset)
-                make_transient(parset)
-                # set the id to None to ensure no duplicate ID
-                parset.id = None
-                db.session.add(parset)
 
         if project_result_exists:
             # copy each result

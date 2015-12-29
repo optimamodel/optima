@@ -30,7 +30,7 @@ define(['./module'], function (module) {
           return $http.post('/api/project/portfolio', { projects: projects}, {responseType:'arraybuffer'});
         },
         copyProject: function(sourceId, destinationName) {
-          return $http.post('/api/project/' + sourceId + '/copy' + '?to=' + destinationName)
+          return $http.post('/api/project/' + sourceId + '/copy', {to: destinationName});
         },
         exportProject: function(data) {
           return $http.post('/api/project/export', data);

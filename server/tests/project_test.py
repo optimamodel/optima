@@ -115,7 +115,9 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         old_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
-        response = self.client.post('/api/project/%s/copy?to=test_copy' % project_id)
+        response = self.client.post('/api/project/%s/copy' % project_id, data={
+            'to': 'test_copy'
+        })
         self.assertEqual(response.status_code, 200)
         copy_info = json.loads(response.data)
         new_project_id = copy_info['copy_id']
