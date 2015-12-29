@@ -40,28 +40,40 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
                 lower = best
                 upper = best
             try: # Try loading actual data -- very likely to not exist
-                data = getattr(results.main[datatype], 'data'+poptype)[0] # TEMP
+                tmp = getattr(results.main[datatype], 'data'+poptype)
+                databest = tmp[0]
+                datalow = tmp[1]
+                datahigh = tmp[2]
             except:# Don't worry if no data
-                data = None
+                databest = None
+                datalow = None
+                datahigh = None
             
             if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
-                best = array([best])
+                best  = array([best])
                 lower = array([lower])
                 upper = array([upper])
-                data = array([data])
+#                databest = array([databest])
+#                datalow  = array([datalow])
+#                datahigh = array([datahigh])
             
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
-            nlines = len(best)
+            nlines = len(best) # Either 1 or npops
             colors = gridcolormap(nlines)
+            
+            # Plot model estimates with uncertainty
             for l in range(nlines):
                 if uncertainty:
                     fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha)
                 plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
-                try: 
-                    if data is not None: 
-                        scatter(results.datayears, factor*data[l], c=colors[l], s=dotsize, lw=0)
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            
+            # Plot data points with uncertainty
+            for l in range(nlines):
+                if databest is not None: 
+                    scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
+                    for y in range(len(results.datayears)):
+                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
             
             xlabel('Year')
             title(results.main[datatype].name)

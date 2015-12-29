@@ -5,7 +5,7 @@ Version: 2015dec25 by cliffk -- merry christmas!
 """
 
 from optima import uuid, today, getdate, quantile, printv, odict, objectid, dcp
-from numpy import array
+from numpy import array, nan, zeros
 
 
 
@@ -80,9 +80,22 @@ class Resultset(object):
         
         def processdata(rawdata, uncertainty=False):
             ''' Little method to turn the data into a form suitable for plotting -- basically, replace assumptions with nans '''
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            processeddata = array(rawdata) # WARNING!
-            return processeddata
+            if uncertainty: 
+                best = dcp(rawdata[0])
+                low = dcp(rawdata[1])
+                high = dcp(rawdata[2])
+            else:
+                best = dcp(rawdata)
+                low = dcp(rawdata)
+                high = dcp(rawdata)
+            try:
+                for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
+                    for p in range(len(thisdata)):
+                        if len(array(thisdata[p]))!=len(self.datayears):
+                            thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
+                processed = array([best, low, high]) # For plotting uncertainties
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            return processed
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
