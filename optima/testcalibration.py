@@ -59,18 +59,16 @@ T = tic()
 if 'sensitivity' in tests:
     t = tic()
 
-    print('Running GUI test...')
+    print('Running sensitivity test...')
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
     results = P.runsim('sensitivity')
     
-    from gui import gui, browser
-    browser(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    from gui import gui
     gui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
     
-
     done(t)
 
 

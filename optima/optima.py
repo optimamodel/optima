@@ -10,10 +10,8 @@ from optima import *
 
 The __init__.py file imports all functions and classes defined in this file..
 
-Version: 2015dec28
+Version: 2015dec29
 """
-
-# analysis:ignore
 
 ## Load general modules
 from uuid import uuid4 as uuid

@@ -174,7 +174,7 @@ def browser(results, which=None, doplot=True):
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
         addplot(fig, plots[p].axes[0]) # Add this plot to this figure
-        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14)) # Add plugins
+        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14,fmt='.3r')) # Add plugins
         jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
         close(fig) # Close
     
