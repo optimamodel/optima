@@ -11,6 +11,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isNew = !programCopy.name;
       $scope.selectAll = false;
       $scope.availableParameters = angular.copy(availableParameters);
+      $scope.populations = populations;
 
       $scope.initializeAllCategories();
 
@@ -27,14 +28,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.program = programCopy;
       $scope.program.active = true;
-      if (!$scope.program.populations) {
-        $scope.program.populations = populations;
-      }
       if ($scope.isNew) { $scope.program.category = 'Other'; }
     };
 
     $scope.selectAllPopulations = function() {
-      _.forEach($scope.program.populations, function(population) {
+      _.forEach($scope.populations, function(population) {
         population.active = $scope.selectAll;
       });
     };
@@ -93,6 +91,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.inform(undefined,undefined,'Please fill in the form correctly');
       } else {
         // filter out empty parameters
+        var selected_populations = _.filter($scope.populations, function(population) {
+          return population.active;
+        });
+        _.forEach(selected_populations, function(population) {
+          delete population.active;
+        });
+
+        $scope.program.populations = selected_populations;
         $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           return item.value.signature.length && item.value.pops.length;
         });

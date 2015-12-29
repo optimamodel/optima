@@ -44,7 +44,7 @@
           <input type="checkbox" ng-click="selectAllPopulations(selectAll = !selectAll)">
           <span>All populations</span>
         </span>
-        <span ng-repeat="population in program.populations" class="option">
+        <span ng-repeat="population in populations" class="option">
           <input type="checkbox" ng-model="population.active" />
           <span>{{population.name}}</span>
         </span>
