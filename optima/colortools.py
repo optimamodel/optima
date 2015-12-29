@@ -88,7 +88,6 @@ def gridcolormap(ncolors=10, limits=None, nsteps=10, asarray=False, doplot=False
             ax = fig.add_subplot(111, projection='3d')
         else: 
             ax = gca(projection='3d')
-#        ax.cla()
         ax.scatter(colors[:,0], colors[:,1], colors[:,2], c=output, s=200, depthshade=False)
         ax.set_xlabel('R')
         ax.set_ylabel('G')

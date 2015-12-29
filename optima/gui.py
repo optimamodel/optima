@@ -3,6 +3,7 @@ from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, clo
 from matplotlib.widgets import CheckButtons, Button
 global plotfig, check, button # Without these, interactivity doesn't work
 plotfig = None # Initialize plot figure
+panelfig = None # Initialize panel figure
 
 
 def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
@@ -34,9 +35,9 @@ def gui(results, which=None):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 2015dec29 by cliffk
+    Version: 1.1 (2015dec29) by cliffk
     '''
-    global check, button
+    global check, button, panelfig
     
     
     def getchecked(check):
@@ -73,6 +74,12 @@ def gui(results, which=None):
             if wasinteractive: ion()
             show()
     
+    def closegui(event):
+        ''' Close all GUI windows '''
+        global plotfig, panelfig
+        close(plotfig)
+        close(panelfig)
+    
     
     ## Define options for selection
     epikeys = results.main.keys()
@@ -81,36 +88,39 @@ def gui(results, which=None):
     episubnames = ['total', 'by population']
     checkboxes = [] # e.g. 'prev-tot'
     checkboxnames = [] # e.g. 'HIV prevalence (%) -- total'
-    for key in epikeys:
-        for subkey in episubkeys:
+    for key in epikeys: # e.g. 'prev'
+        for subkey in episubkeys: # e.g. 'tot'
             checkboxes.append(key+'-'+subkey)
-    for name in epinames:
-        for subname in episubnames:
+    for name in epinames: # e.g. 'HIV prevalence'
+        for subname in episubnames: # e.g. 'total'
             checkboxnames.append(name+' -- '+subname)
-    nboxes = len(checkboxes)
+    nboxes = len(checkboxes) # Number of choices
     
     ## Set up what to plot when screen first opens
     truebydefault = 2 # Number of boxes to check true by default
-    if which is None:
+    if which is None: # No inputs: set the first couple true by default
         defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
-    else:
+    else: # They're specified
         defaultchecks = []
-        for name in checkboxes:
+        for name in checkboxes: # Check to see if they match
             if name in which: defaultchecks.append(True)
             else: defaultchecks.append(False)
             
     ## Set up control panel
-    try: fc = results.project.settings.optimablue
-    except: fc = (0.16, 0.67, 0.94)
-    figure(figsize=(7,8), facecolor=(0.95, 0.95, 0.95))
-    checkboxaxes = axes([0.1, 0.15, 0.8, 0.8])
-    buttonaxes = axes([0.1, 0.05, 0.8, 0.08])
-    check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks)
-    for label in check.labels:
-        thispos = label.get_position()
-        label.set_position((thispos[0]*0.5,thispos[1])) # not sure why by default the check boxes are so far away
-    button = Button(buttonaxes, 'Update', color=fc) 
-    button.on_clicked(update) # Update figure if button is clicked
+    try: fc = results.project.settings.optimablue # Try loading global optimablue
+    except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
+    panelfig = figure(figsize=(7,8), facecolor=(0.95, 0.95, 0.95)) # Open control panel
+    checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
+    updateaxes = axes([0.1, 0.05, 0.3, 0.05]) # Create update button location
+    closeaxes  = axes([0.6, 0.05, 0.3, 0.05]) # Create close button location
+    check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks) # Actually create checkboxes
+    for label in check.labels: # Loop over each checkbox
+        thispos = label.get_position() # Get their current location
+        label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
+    updatebutton = Button(updateaxes, 'Update', color=fc) # Make button pretty and blue
+    closebutton = Button(closeaxes, 'Close', color=fc) # Make button pretty and blue
+    updatebutton.on_clicked(update) # Update figure if button is clicked
+    closebutton.on_clicked(closegui) # Close figures
     update(None) # Plot initially
 
 
@@ -128,15 +138,14 @@ def browser(results, which=None, doplot=True):
     the Optima frontend.
     
     Usage:
-        gui(results, [which])
+        browser(results, [which])
     
     where results is the output of e.g. runsim() and which is an optional list of form e.g.
         which = ['prev-tot', 'inci-pops']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
-    Version: 1.0 (2015de29) by cliffk
-    
+    Version: 1.1 (2015dec29) by cliffk
     '''
     import mpld3 # Only import this if needed, since might not always be available
     import json
