@@ -31,9 +31,10 @@ from parameters import Timepar, Popsizepar, Parameterset # Parameter and Paramet
 from results import Result, Resultset # Result and Results classes
 from model import model # The thing that actually runs the model
 from programs import Program, Programset # Define programs
-from project import Project, version # Project class
 from makeplots import epiplot # Create the plots
-from calibration import sensitivity # Calibration functions
+from calibration import sensitivity, manualfit, autofit # Calibration functions
+from project import Project, version # Project class
+
 
 ## Load optional plotting functions
 try: from gui import gui # Handle the Python plotting
