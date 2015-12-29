@@ -111,34 +111,32 @@ def manualfit():
 
 def autofit(orig=None, what='force', ind=0):
     ''' 
-    Function to perturb the parameters to get "uncertainties".
+    Function to automatically fit the parameters to get "uncertainties".
     
     Inputs:
         orig = parset to perturb
-        ncopies = number of perturbed copies of pars to produce
         what = which parameters to perturb
-        span = how much to perturb
         ind = index of pars to start from
     Outputs:
-        parset = perturbed parameter set with ncopies sets of pars
+        parset = auto-fitted parameter set
     
-    Version: 2015dec29 by cliffk
+    Version: 1.0 (2015dec29) by cliffk
     '''
     
-    # Validate input
-    if type(orig)!=Parameterset:
-        raise Exception('First argument to sensitivity() must be a parameter set')
-    
-    # Copy things
-    parset = dcp(orig) # Copy the original parameter set
-    origpars = dcp(parset.pars[ind])
-    parset.pars = [dcp(origpars)]
-    popkeys = origpars['popkeys']
-    
+#    # Validate input
+#    if type(orig)!=Parameterset:
+#        raise Exception('First argument to sensitivity() must be a parameter set')
+#    
+#    # Copy things
+#    parset = dcp(orig) # Copy the original parameter set
+#    origpars = dcp(parset.pars[ind])
+#    parset.pars = [dcp(origpars)]
+#    popkeys = origpars['popkeys']
+#    
 #    if what=='force':
 #        for key in popkeys:
 #            parset.pars[n]['force'][key] = perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
 #    else:
 #        raise Exception('Sorry, only "force" is implemented currently')
-    
-    return parset
+#    
+#    return parset
