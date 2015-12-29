@@ -20,6 +20,12 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     return None
 
 
+def closegui(event):
+    ''' Close all GUI windows '''
+    global plotfig, panelfig
+    close(plotfig)
+    close(panelfig)
+
 
 def gui(results, which=None):
     '''
@@ -75,13 +81,6 @@ def gui(results, which=None):
             for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
             if wasinteractive: ion()
             show()
-    
-    def closegui(event):
-        ''' Close all GUI windows '''
-        global plotfig, panelfig
-        close(plotfig)
-        close(panelfig)
-    
     
     ## Define options for selection
     epikeys = results.main.keys()
