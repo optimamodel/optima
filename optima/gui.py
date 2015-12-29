@@ -112,7 +112,7 @@ def gui(results):
 
 def browser(results):
     ''' Create an mpld3 GUI '''
-    import mpld3
+    import mpld3 # Only import this if needed, since might not always be available
     import json
 
     wasinteractive = isinteractive() # Get current state of interactivity

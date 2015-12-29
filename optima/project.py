@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid, perturbpars
+from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid, sensitivity
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -254,9 +254,9 @@ class Project(object):
     
     
     
-    def perturb(self, orig='default', name='perturb', n=5, what='force', span=0.5): # orig=default or orig=0?
-        ''' Function to perturb the parameters to get "uncertainties" '''
-        parset = perturbpars(orig=self.parsets[orig], ncopies=n, what='force', span=0.5)
+    def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5): # orig=default or orig=0?
+        ''' Function to perform sensitivityanalysis over the parameters as a proxy for "uncertainty"'''
+        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=0.5)
         self.addparset(name=name, parset=parset) # Store parameters
         return None
     

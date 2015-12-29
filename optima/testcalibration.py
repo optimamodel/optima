@@ -63,10 +63,8 @@ if 'perturb' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results1 = P.runsim('default')
-    
-    P.perturb(name='perturb', n=10, span=0.9)
-    results2 = P.runsim('perturb')
+    P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
+    results2 = P.runsim('sensitivity')
     
     from gui import gui
     gui(results2)

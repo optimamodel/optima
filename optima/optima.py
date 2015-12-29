@@ -30,10 +30,10 @@ from settings import Settings # Inter-project definitions, e.g. health states
 from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
 from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 from parameters import Timepar, Popsizepar, Parameterset # Parameter and Parameterset classes
-from calibration import perturbpars # 
+from calibration import sensitivity # Calibration functions
 from results import Result, Resultset # Result and Results classes
-from model import model
-from programs import Program, Programset
+from model import model # The thing that actually runs the model
+from programs import Program, Programset # Define programs
 from project import Project, version # Project class
-from makeplots import epiplot
-from gui import gui
+from makeplots import epiplot # Create the plots
+from gui import gui # Handle the plotting
