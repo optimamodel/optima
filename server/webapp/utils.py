@@ -327,14 +327,14 @@ def update_or_create_progset(project_id, name, progset):
     return progset_record
 
 
-def update_or_create_program(project_id, progset_id, name, program):
+def update_or_create_program(project_id, progset_id, name, program, active=False):
 
     from datetime import datetime
     import dateutil
     from server.webapp.dbmodels import ProgramsDb
 
     program_record = ProgramsDb.query \
-        .filter_by(name=program.name, project_id=project_id, progset_id=progset_id) \
+        .filter_by(name=name, project_id=project_id, progset_id=progset_id) \
         .first()
 
     if program_record is None:
@@ -342,19 +342,21 @@ def update_or_create_program(project_id, progset_id, name, program):
             project_id=project_id,
             progset_id=progset_id,
             name=name,
-            short_name=program.short_name,
-            category=program.category,
+            short_name=program.get('short_name', ''),
+            category=program.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
-            pars=program.targetpars
+            pars=program.get('parameters', []),
+            active=active
         )
 
         db.session.add(program_record)
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.pars = program.targetpars
-        program_record.short_name = program.short_name
-        program_record.category = program.category
+        program_record.pars = program.get('parameters', [])
+        program_record.short_name = program.get('short_name', '')
+        program_record.category = program.get('category', '')
+        program_record.active = active
 
 
 def init_login_manager(login_manager):

@@ -172,10 +172,23 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.utils import update_or_create_progset, update_or_create_program
+            from server.webapp.programs import program_list
+
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset(self.id, name, progset)
-                for program_name, program in progset.programs.iteritems():
-                    update_or_create_program(self.id, progset_record.id, program_name, program)
+
+                # only active programs are hydrated
+                # therefore we need to retrieve the default list of programs
+                for program in program_list:
+                    program_name = program['name']
+                    if program_name in progset.programs:
+                        program = progset.programs[program_name].__dict__
+                        program['parameters'] = program.get('targetpars', [])
+                        active = True
+                    else:
+                        active = False
+
+                    update_or_create_program(self.id, progset_record.id, program_name, program, active)
 
     def recursive_delete(self):
 
@@ -382,11 +395,14 @@ class ProgsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
+        # In BE, programs don't have an "active" flag
+        # therefore only hydrating active programs
         progset_entry = op.Programset(
             name=self.name,
+
             programs=[
                 program.hydrate()
-                for program in self.programs
+                for program in self.programs if program.active
             ]
         )
 
