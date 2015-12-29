@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid
+from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid, perturbpars
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -253,14 +253,17 @@ class Project(object):
         return results
     
     
-#    def runscen(self, name='default', start=2000, end=2030):
-#        ''' This function runs a single scenario '''
-#        simpars = makesimpars(self.parset[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.parset['default']
-#        simpars = applyoverrides(simpars, self.scens[name])
-#        S = model(simpars, self.settings)
-#        return S
     
-    
+    def perturb(self, orig='default', new='perturb', what='force'):
+        ''' Function to perturb the '''
+        parset = perturbpars(self, orig='default', new='perturb', what='force')
+        
+        ## If parameter set of that name doesn't exist, create it
+        if new not in self.parsets:
+            parset = Parameterset()
+            parset.makeparsfromdata(self.data) # Create parameters
+            self.addparset(name=new, parset=parset) # Store parameters
+        return None
     
     def autofit(self):
         print('Not implemented')
@@ -277,6 +280,13 @@ class Project(object):
     def makescenarios(self):
         print('Not implemented')
         return None
+    
+    #    def runscen(self, name='default', start=2000, end=2030):
+#        ''' This function runs a single scenario '''
+#        simpars = makesimpars(self.parset[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.parset['default']
+#        simpars = applyoverrides(simpars, self.scens[name])
+#        S = model(simpars, self.settings)
+#        return S
     
     def optimize(self):
         print('Not implemented')
