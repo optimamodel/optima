@@ -11,7 +11,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.isNew = !programCopy.name;
       $scope.selectAll = false;
       $scope.availableParameters = angular.copy(availableParameters);
-      $scope.populations = populations;
+      $scope.populations = angular.copy(populations);
 
       $scope.initializeAllCategories();
 
@@ -34,6 +34,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.selectAllPopulations = function() {
       _.forEach($scope.populations, function(population) {
         population.active = $scope.selectAll;
+      });
+    };
+
+    $scope.selectAllEntryPopulations = function(entry, selectAll) {
+      _.forEach(entry.value.pops, function(population) {
+        population.active = selectAll;
       });
     };
 
@@ -74,7 +80,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.addParameter = function () {
-      var entry = {value: {signature: [], pops: []}, active: true};
+      var entry = {value: {signature: [], pops: angular.copy(populations)}, active: true};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
     };
@@ -100,6 +106,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
         $scope.program.populations = selected_populations;
         $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
+          delete item.selectAll;
+          item.value.pops = _.filter(item.value.pops, function(population) {
+            return population.active;
+          });
+          _.forEach(item.value.pops, function(population) {
+            delete population.active;
+          });
           return item.value.signature.length && item.value.pops.length;
         });
 
