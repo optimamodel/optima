@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid
+from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid, sensitivity
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -228,29 +228,37 @@ class Project(object):
 
 
     def runsim(self, name='default', simpars=None, start=None, end=None, dt=None):
-        ''' This function runs a single simulation '''
+        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
+        
+        # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simpars = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
-        results = model(simpars, self.settings)
-        results.parset = self.parsets[name] # Store parameters -- WARNING, won't necessarily work with a simpars input
-        results.simpars = simpars # ...and sim parameters
-        results.project = dcp(self) # ...and just copy the whole project
-        results.derivedresults() # Generate derived results
+            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
+        else:
+            if type(simpars)==list: simparslist = simpars
+            else: simparslist = [simpars]
+        
+        # Run the model!
+        rawlist = []
+        for ind in range(len(simparslist)):
+            raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
+            rawlist.append(raw)
+        
+        # Store results
+        results = Resultset(self, simparslist, rawlist) # Create structure for storing results
+        results.make() # Generate derived results
         
         return results
     
     
-#    def runscen(self, name='default', start=2000, end=2030):
-#        ''' This function runs a single scenario '''
-#        simpars = makesimpars(self.parset[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.parset['default']
-#        simpars = applyoverrides(simpars, self.scens[name])
-#        S = model(simpars, self.settings)
-#        return S
     
-    
+    def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5): # orig=default or orig=0?
+        ''' Function to perform sensitivityanalysis over the parameters as a proxy for "uncertainty"'''
+        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span)
+        self.addparset(name=name, parset=parset) # Store parameters
+        return None
     
     def autofit(self):
         print('Not implemented')
@@ -267,6 +275,13 @@ class Project(object):
     def makescenarios(self):
         print('Not implemented')
         return None
+    
+    #    def runscen(self, name='default', start=2000, end=2030):
+#        ''' This function runs a single scenario '''
+#        simpars = makesimpars(self.parset[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.parset['default']
+#        simpars = applyoverrides(simpars, self.scens[name])
+#        S = model(simpars, self.settings)
+#        return S
     
     def optimize(self):
         print('Not implemented')

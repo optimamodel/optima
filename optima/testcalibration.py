@@ -1,5 +1,5 @@
 """
-Test script to see if Optima works.
+Test calibration..
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
@@ -7,15 +7,14 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015dec23 by cliffk
+Version: 2015dec28 by cliffk
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-#'browser',
-'gui',
+'sensitivity',
 ]
 
 
@@ -53,39 +52,24 @@ T = tic()
 
 
 
-## mpld3 test
-if 'browser' in tests:
-    t = tic()
-
-    print('Running GUI test...')
-    from optima import Project
-    
-    P = Project(spreadsheet='test.xlsx')
-    results = P.runsim('default')
-    
-    print('  Starting browser...')
-    from gui import browser
-    browser(results)
-
-    done(t)
 
 
 
-
-
-
-## Python GUI test
-if 'gui' in tests:
+## Sensitivity test
+if 'sensitivity' in tests:
     t = tic()
 
     print('Running GUI test...')
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
+    P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
+    results = P.runsim('sensitivity')
     
-    from gui import gui
-    gui(results)
+    from gui import gui, browser
+    browser(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    gui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    
 
     done(t)
 
