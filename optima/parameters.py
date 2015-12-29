@@ -24,7 +24,7 @@ def data2prev(parname, data, index, keys, by=None, blh=0): # WARNING, "blh" mean
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Constant(name=parname, y=odict(), by=by) # Create structure
     for row,key in enumerate(keys):
-        par.y[key] = sanitize(data[parname][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.v[key] = sanitize(data[parname][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
     return par
 
@@ -183,7 +183,7 @@ def makeparsfromdata(data, verbose=2):
     pars['prep'] = data2timepar('prep', data, popkeys, by='pop')
     
     # Constants
-    pars['const'] = odict()
+    pars['const'] = odict() # WARNING, actually use Parameters class?
     for parname in data['const'].keys():
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
@@ -373,7 +373,7 @@ class Timepar(Par):
 
 
 
-class Popsizepar(object):
+class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
     def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None):
@@ -404,31 +404,34 @@ class Popsizepar(object):
 
 
 
-class Constant(object):
+
+
+class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, y=None, by=None):
-        if y is None: y = odict()
-        self.name = name
-        self.y = y # Value data, e.g. [0.3, 0.7]
-        self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
+    def __init__(self, name=None, short=None, limits=None, v=None):
+        Par.__init__(self, name, short, limits)
+        self.v = v # Value data, e.g. [0.3, 0.7]
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = '\n'
-        output += '           Name: %s\n'    % self.name
-        output += '         Values: %s\n'    % self.y
-        output += 'Time/value keys: %s\n'    % self.y.keys()
+        output = Par.__repr__(self)
+        output += '    v: %s\n'    % self.v
         return output
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        keys = self.y.keys()
-        npops = len(keys)
-        output = zeros(npops)
-        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            output[pop] = self.y[pop] # Just copy y values
-        else: return output
+        if len(self.v)==1: # Just a simple constant
+            output = self.v
+        else: # No, it has keys, return as an array
+            keys = self.y.keys()
+            npops = len(keys)
+            output = zeros(npops)
+            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+                output[pop] = self.y[key] # Just copy y values
+        return output
+
+
 
 
 
