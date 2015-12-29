@@ -20,9 +20,9 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, short, data, index, keys, by=None, blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, short, data, index, keys, by=None, manual='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short=short, v=odict(), by=by) # Create structure
+    par = Constant(name=name, short=short, v=odict(), by=by, manual=manual) # Create structure
     for row,key in enumerate(keys):
         par.v[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -30,9 +30,9 @@ def data2prev(name, short, data, index, keys, by=None, blh=0): # WARNING, "blh" 
 
 
 
-def data2popsize(name, short, data, keys, by=None, blh=0):
+def data2popsize(name, short, data, keys, by=None, manual='', blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(short=short, m=1, by=by)
+    par = Popsizepar(name=name, short=short, m=1, by=by, manual=manual)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -86,9 +86,9 @@ def data2popsize(name, short, data, keys, by=None, blh=0):
 
 
 
-def data2timepar(name, short, data, keys, by=None):
+def data2timepar(name, short, data, keys, by=None, manual=''):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by) # Create structure
+    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, manual=manual) # Create structure
     for row,key in enumerate(keys):
         validdata = ~isnan(data[short][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
@@ -196,7 +196,7 @@ def makeparsfromdata(data, verbose=2):
         pars['inhomo'].v[key] = 0
     
     # Risk-related population transitions
-    pars['transit'] = Constant(name='Transitions', short='transit', v=odict(), by='pop', manual='no')
+    pars['transit'] = Constant(name='Transitions', short='transit', v=odict(), by='pop', manual='')
     for i,key1 in enumerate(popkeys):
         for j,key2 in enumerate(popkeys):
             pars['transit'].v[(key1,key2)] = array(data['transit'])[i,j] 
@@ -274,11 +274,11 @@ def makeparsfromdata(data, verbose=2):
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act, 'numacts', pars['popsize'])
-        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship', manual='pship') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act, 'condom')
-        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship', manual='pship') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -339,8 +339,8 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None):
-        Par.__init__(self, name, short, limits)
+    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, manual='', auto=''):
+        Par.__init__(self, name, short, limits, manual, auto)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
@@ -381,8 +381,8 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None):
-        Par.__init__(self, name, short, limits)
+    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None, manual='', auto=''):
+        Par.__init__(self, name, short, limits, manual, auto)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -414,8 +414,8 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=None, v=None, by=None):
-        Par.__init__(self, name, short, limits)
+    def __init__(self, name=None, short=None, limits=None, v=None, by=None, manual='', auto=''):
+        Par.__init__(self, name, short, limits, manual, auto)
         self.v = v # Value data, e.g. [0.3, 0.7]
         self.by = by # By pops, by none, etc.
     

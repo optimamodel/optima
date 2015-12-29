@@ -65,23 +65,30 @@ def manualfit(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
-    try:
-        pars = project.parsets[name].pars[0]
-        namelist = []
-        keylist = []
+    
+    ## Get the list of parameters that can be fitted
+    pars = project.parsets[name].pars[0]
+    keylist = []
+    namelist = []
+    typelist = []
+    for key in pars.keys():
+        try:
+            if pars[key].manual is not '':
+                keylist.append(key) # e.g. "initprev"
+                namelist.append(pars[key].name) # e.g. "HIV prevalence"
+                typelist.append(pars[key].manual) # e.g. 'pop'
+        except: pass # Don't worry if it doesn't work, not everything in pars is actually a parameter
+    nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
+    
+    labelist = [] # e.g. "Initial HIV prevalence -- FSW"
+    fullkeylist = [] # e.g. "initprev"
+    fullsubkeylist = [] # e.g. "fsw"
+    fulltypelist = [] # e.g. "pop"
+    for i,key in enumerate(keylist):
         
-        for key in pars.keys():
-            try:
-                if pars[key].manual is not '':
-                    namelist.append(pars[key].name)
-                    keylist.append(key)
-            except: pass # Don't worry if it doesn't work, not everything in pars is actually a parameter
-        
-        
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     
+    ## 
     
     
     
