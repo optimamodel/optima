@@ -65,15 +65,15 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
             # Plot model estimates with uncertainty
             for l in range(nlines):
                 if uncertainty:
-                    fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha)
-                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
+                    fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
+#                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
             
             # Plot data points with uncertainty
-            for l in range(nlines):
-                if databest is not None: 
-                    scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
-                    for y in range(len(results.datayears)):
-                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
+#            for l in range(nlines):
+#                if databest is not None: 
+#                    scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
+#                    for y in range(len(results.datayears)):
+#                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
             
             xlabel('Year')
             title(results.main[datatype].name)
