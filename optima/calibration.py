@@ -65,8 +65,21 @@ def manualfit(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
-    
-    pars = project.parsets[name].pars[0]
+    try:
+        pars = project.parsets[name].pars[0]
+        namelist = []
+        keylist = []
+        
+        for key in pars.keys():
+            try:
+                if pars[key].manual is not '':
+                    namelist.append(pars[key].name)
+                    keylist.append(key)
+            except: pass # Don't worry if it doesn't work, not everything in pars is actually a parameter
+        
+        
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     
     
