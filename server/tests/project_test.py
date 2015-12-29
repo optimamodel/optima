@@ -130,11 +130,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(old_info['dataStart'], new_info['dataStart'])
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
 
-    def test_download_upload_project(self):
-        from io import BytesIO
-        from server.webapp.dbmodels import ProjectDb
-        from server.webapp.dbconn import db
-
+    def _create_project_and_download(self):
         progsets_count = 3
         project = self.create_project(name='test', return_instance=True, progsets_count=progsets_count)
 
@@ -150,6 +146,14 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.get('/api/project/{}/data'.format(project.id))
         self.assertEqual(response.status_code, 200)
 
+        return progsets_count, project, response
+
+    def test_download_upload_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from server.webapp.dbconn import db
+        from io import BytesIO
+
+        progsets_count, project, response = self._create_project_and_download()
         # we need to get the project using the "regular" session instead of the "factory" session
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         project.name = 'Not test'
@@ -171,6 +175,31 @@ class ProjectTestCase(OptimaTestCase):
         # reloading from db after upload
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         self.assertEqual(project.name, 'test')
+        self.assertEqual(len(project.progsets), progsets_count)
+        self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
+
+    def test_download_upload_as_new_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from io import BytesIO
+
+        progsets_count, project, response = self._create_project_and_download()
+
+        upload_response = self.client.post(
+            '/api/project/data'.format(project.id),
+            data={
+                'name': 'upload_as_new',
+                'file': (BytesIO(response.data), 'project.prj'),
+            }
+        )
+
+        self.assertEqual(upload_response.status_code, 200, upload_response.data)
+
+        # loading new project from db after upload
+        data = json.loads(upload_response.data)
+        self.assertIn('id', data)
+
+        project = ProjectDb.query.filter_by(id=data['id']).first()
+        self.assertEqual(project.name, 'upload_as_new')
         self.assertEqual(len(project.progsets), progsets_count)
         self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
 

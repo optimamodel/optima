@@ -601,6 +601,10 @@ project_upload_form_parser.add_arguments({
 })
 
 
+project_upload_resource = file_resource.copy()
+project_upload_resource['id'] = Uuid
+
+
 class ProjectFromData(Resource):
     """
     Import of a new project from pickled format.
@@ -611,7 +615,7 @@ class ProjectFromData(Resource):
         summary='Creates a project & uploads data to initialize it.',
         parameters=project_upload_form_parser.swagger_parameters()
     )
-    @marshal_with(file_resource)
+    @marshal_with(project_upload_resource)
     def post(self):
         from optima.project import version
         user_id = current_user.id
@@ -649,13 +653,19 @@ class ProjectFromData(Resource):
             pops,
             version=version)
 
+        # New project ID needs to be generated before calling restore
+        db.session.add(project_entry)
+        db.session.flush()
+
         project_entry.restore(new_project)
         project_entry.name = project_name
-
-        db.session.add(project_entry)
         db.session.commit()
 
-        reply = {'file': source_filename, 'result': 'Project %s is created' % project_name}
+        reply = {
+            'file': source_filename,
+            'result': 'Project %s is created' % project_name,
+            'id': str(project_entry.id)
+        }
         return reply
 
 
