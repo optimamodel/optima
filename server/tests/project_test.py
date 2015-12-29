@@ -97,6 +97,9 @@ class ProjectTestCase(OptimaTestCase):
         os.remove(output_path)
 
     def test_copy_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from server.tests.factories import ProgsetsFactory, ProgramsFactory
+
         # create project
         response = self.api_create_project()
         self.assertEqual(response.status_code, 201)
@@ -115,6 +118,15 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         old_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
+
+        # create progsets and make sure they are part of the project
+        progsets_count = 2
+        for x in range(progsets_count):
+            progset = self.create_record_with(ProgsetsFactory, project_id=project_id)
+            self.create_record_with(ProgramsFactory, project_id=project_id, progset_id=progset.id)
+        project = ProjectDb.query.filter_by(id=str(project_id)).first()
+        self.assertEqual(len(project.progsets), progsets_count)
+
         response = self.client.post('/api/project/%s/copy' % project_id, data={
             'to': 'test_copy'
         })
@@ -126,11 +138,14 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.get('/api/project/{}'.format(new_project_id))
         self.assertEqual(response.status_code, 200)
         new_info = json.loads(response.data)
-        self.assertEqual(old_info['has_data'], True)
+        self.assertEqual(new_info['has_data'], True)
         # compare some elements
         self.assertEqual(old_info['populations'], new_info['populations'])
         self.assertEqual(old_info['dataStart'], new_info['dataStart'])
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
+
+        new_project = ProjectDb.query.filter_by(id=str(new_project_id)).first()
+        self.assertEquals(len(new_project.progsets), progsets_count)
 
     def _create_project_and_download(self):
         progsets_count = 3
