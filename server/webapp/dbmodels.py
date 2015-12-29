@@ -179,8 +179,10 @@ class ProjectDb(db.Model):
 
                 # only active programs are hydrated
                 # therefore we need to retrieve the default list of programs
+                loaded_programs = set()
                 for program in program_list:
                     program_name = program['name']
+                    loaded_programs.add(program_name)
                     if program_name in progset.programs:
                         program = progset.programs[program_name].__dict__
                         program['parameters'] = program.get('targetpars', [])
@@ -189,6 +191,13 @@ class ProjectDb(db.Model):
                         active = False
 
                     update_or_create_program(self.id, progset_record.id, program_name, program, active)
+
+                # In case programs from prj are not in the defaults
+                for program_name, program in progset.programs.iteritems():
+                    if program_name not in loaded_programs:
+                        program = program.__dict__
+                        program['parameters'] = program.get('targetpars', [])
+                        update_or_create_program(self.id, progset_record.id, program_name, program, True)
 
     def recursive_delete(self):
 
@@ -399,7 +408,6 @@ class ProgsetsDb(db.Model):
         # therefore only hydrating active programs
         progset_entry = op.Programset(
             name=self.name,
-
             programs=[
                 program.hydrate()
                 for program in self.programs if program.active
