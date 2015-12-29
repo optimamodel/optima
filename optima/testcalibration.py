@@ -12,7 +12,8 @@ Version: 2015dec29 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'sensitivity',
+#'sensitivity',
+'manualfit',
 ]
 
 
@@ -69,6 +70,22 @@ if 'sensitivity' in tests:
     
     done(t)
 
+
+
+
+
+
+## Manual calibration test
+if 'manualfit' in tests:
+    t = tic()
+
+    print('Running manual calibration test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test7pops.xlsx')
+    P.manualfit(orig='default', name='manual')
+    
+    done(t)
 
 
 

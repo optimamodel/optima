@@ -1,4 +1,6 @@
-from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, runcommand, getdate, today, uuid, dcp, objectid, sensitivity
+from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, 
+runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualfit
+
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
 
@@ -254,11 +256,22 @@ class Project(object):
     
     
     
-    def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5): # orig=default or orig=0?
-        ''' Function to perform sensitivityanalysis over the parameters as a proxy for "uncertainty"'''
-        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span)
+    def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
+        ''' Function to perform sensitivit yanalysis over the parameters as a proxy for "uncertainty"'''
+        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
         return None
+        
+        
+    def manualfit(self, orig='default', name='perturb', ind=0): # orig=default or orig=0?
+        ''' Function to perform manual fitting'''
+        self.copyparset(orig=orig, new=name) # Store parameters
+        manualfit(self, name=name) # Actually run manual fitting
+        return None
+    
+    
+    
+    
     
     def autofit(self):
         print('Not implemented')
