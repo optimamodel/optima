@@ -2,7 +2,7 @@ from optima import epiplot
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
 
-global plotfig, panelfig, check, button # Without these, interactivity doesn't work
+global plotfig, panelfig, check, updatebutton, closebutton # Without these, interactivity doesn't work
 plotfig = None # Initialize plot figure
 panelfig = None # Initialize panel figure
 
@@ -39,7 +39,7 @@ def gui(results, which=None):
     
     Version: 1.1 (2015dec29) by cliffk
     '''
-    global check, button, panelfig
+    global check, updatebutton, closebutton, panelfig
     
     
     def getchecked(check):

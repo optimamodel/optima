@@ -20,26 +20,26 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(parname, data, index, keys, by=None, blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, short, data, index, keys, by=None, blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=parname, y=odict(), by=by) # Create structure
+    par = Constant(name=name, short=short, v=odict(), by=by) # Create structure
     for row,key in enumerate(keys):
-        par.y[key] = sanitize(data[parname][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.v[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
     return par
 
 
 
-def data2popsize(parname, data, keys, by=None, blh=0):
+def data2popsize(name, short, data, keys, by=None, blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=parname, m=1, by=by)
+    par = Popsizepar(short=short, m=1, by=by)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
     for row,key in enumerate(keys):
-        sanitizedy[key] = sanitize(data[parname][blh][row]) # Store each extant value
-        sanitizedt[key] = array(data['years'])[~isnan(data[parname][blh][row])] # Store each year
+        sanitizedy[key] = sanitize(data[short][blh][row]) # Store each extant value
+        sanitizedt[key] = array(data['years'])[~isnan(data[short][blh][row])] # Store each year
 
     largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
     
@@ -86,14 +86,14 @@ def data2popsize(parname, data, keys, by=None, blh=0):
 
 
 
-def data2timepar(parname, data, keys, by=None):
+def data2timepar(name, short, data, keys, by=None):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=parname, m=1, y=odict(), t=odict(), by=by) # Create structure
+    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by) # Create structure
     for row,key in enumerate(keys):
-        validdata = ~isnan(data[parname][row])
+        validdata = ~isnan(data[short][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
-            par.y[key] = sanitize(data[parname][row]) # Store each extant value
-            par.t[key] = array(data['years'])[~isnan(data[parname][row])] # Store each year
+            par.y[key] = sanitize(data[short][row]) # Store each extant value
+            par.t[key] = array(data['years'])[~isnan(data[short][row])] # Store each year
         else: # Blank, assume zero -- WARNING, is this ok?
             par.y[key] = array([0])
             par.t[key] = array([0])
@@ -148,42 +148,42 @@ def makeparsfromdata(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('hivprev', data, bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('popsize', data, popkeys, by='pop')
+    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, bestindex, popkeys, by='pop') # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop')
     
     # Epidemilogy parameters -- most are data
-    pars['stiprev'] = data2timepar('stiprev', data, popkeys, by='pop') # STI prevalence
-    pars['death']  = data2timepar('death', data, popkeys, by='pop')  # Death rates
-    pars['tbprev'] = data2timepar('tbprev', data, popkeys, by='pop') # TB prevalence
+    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop') # STI prevalence
+    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, by='pop')  # Death rates
+    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, by='pop') # TB prevalence
     
     # Testing parameters -- most are data
-    pars['hivtest'] = data2timepar('hivtest', data, popkeys, by='pop') # HIV testing rates
-    pars['aidstest'] = data2timepar('aidstest', data, totkey, by='tot') # AIDS testing rates
-    pars['numtx'] = data2timepar('numtx', data, totkey, by='tot') # Number of people on first-line treatment -- WARNING, will need to change
+    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, by='pop') # HIV testing rates
+    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, by='tot') # AIDS testing rates
+    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, by='tot') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
-    pars['numpmtct'] = data2timepar('numpmtct', data, totkey, by='tot')
-    pars['breast']   = data2timepar('breast', data, totkey, by='tot')  
-    pars['birth']    = data2timepar('birth', data, fpopkeys, by='pop')
+    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, by='tot')
+    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, by='tot')  
+    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, by='pop')
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
     # Circumcision parameters
-    pars['circum'] = data2timepar('circum', data, mpopkeys, by='pop') # Circumcision percentage
+    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, by='pop') # Circumcision percentage
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
     # Drug behavior parameters
-    pars['numost'] = data2timepar('numost', data, totkey, by='tot')
-    pars['sharing'] = data2timepar('sharing', data, popkeys, by='pop')
+    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, by='tot')
+    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, by='pop')
     
     # Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar('prep', data, popkeys, by='pop')
+    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, by='pop')
     
     # Constants
-    pars['const'] = odict()
+    pars['const'] = odict() # WARNING, actually use Parameters class?
     for parname in data['const'].keys():
         printv('Converting data parameter %s...' % parname, 3, verbose)
         pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
@@ -234,7 +234,7 @@ def makeparsfromdata(data, verbose=2):
         ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
         
         # Interpolate over population acts data for each year
-        tmppar = data2timepar(which+act, data, popkeys, by='pop') # Temporary parameter for storing acts
+        tmppar = data2timepar(name='tmp', short=which+act, data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
         tmpsim = tmppar.interp(tvec=ctrlpts)
         if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
         npts = len(ctrlpts)
@@ -270,14 +270,15 @@ def makeparsfromdata(data, verbose=2):
     tmpcond = odict()
     tmpactspts = odict()
     tmpcondpts = odict()
+    fullnames = {'reg':'regular', 'cas':'casual', 'com':'commercial', 'inj':'injecting'}
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act, 'numacts', pars['popsize'])
-        pars[actsname] = Timepar(name=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act, 'condom')
-        pars[condname] = Timepar(name=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
+        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -309,6 +310,20 @@ def makeparsfromdata(data, verbose=2):
 
 
 
+class Par(object):
+    ''' The base class for parameters '''
+    def __init__(self, name=None, short=None, limits=(0,1)):
+        self.name = name # The full name, e.g. "HIV testing rate"
+        self.short = short # The short name, e.g. "hivtest"
+        self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = objectid(self)
+        output += '  name: "%s"\n'    % self.name
+        output += ' short: "%s"\n'    % self.short
+        output += 'limits: %s\n'    % str(self.limits)
+        return output
 
 
 
@@ -317,16 +332,13 @@ def makeparsfromdata(data, verbose=2):
 
 
 
-
-
-
-class Timepar(object):
+class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, t=None, y=None, m=1, by=None):
+    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None):
+        Par.__init__(self, name, short, limits)
         if t is None: t = odict()
         if y is None: y = odict()
-        self.name = name
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -334,13 +346,12 @@ class Timepar(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = '\n'
-        output += ' name: %s\n'    % self.name
-        output += '    y: %s\n'    % self.y
-        output += '    t: %s\n'    % self.t
-        output += '    m: %s\n'    % self.m
-        output += '   by: %s\n'    % self.by
-        output += ' keys: %s\n'    % self.y.keys()
+        output = Par.__repr__(self)
+        output += '     t: \n%s\n'    % self.t
+        output += '     y: \n%s\n'    % self.y
+        output += '     m: %s\n'    % self.m
+        output += '    by: "%s"\n'    % self.by
+        output += '  keys: %s\n'    % self.y.keys()
         return output
     
     def interp(self, tvec, smoothness=20):
@@ -363,12 +374,12 @@ class Timepar(object):
 
 
 
-class Popsizepar(object):
+class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, p=None, m=1, start=2000, by=None):
+    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None):
+        Par.__init__(self, name, short, limits)
         if p is None: p = odict()
-        self.name = name # Going to be "popsize"
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
@@ -376,12 +387,11 @@ class Popsizepar(object):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = '\n'
-        output += '          Name: %s\n'    % self.name
-        output += 'Fit parameters: %s\n'    % self.p
-        output += '    Start year: %s\n'    % self.start
-        output += ' Metaparameter: %s\n'    % self.m
-        output += 'Parameter keys: %s\n'    % self.p.keys()
+        output = Par.__repr__(self)
+        output += '  start: %s\n'    % self.start
+        output += '      p: %s\n'    % self.p
+        output += '      m: %s\n'    % self.m
+        output += '   keys: %s\n'    % self.p.keys()
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
@@ -395,31 +405,36 @@ class Popsizepar(object):
 
 
 
-class Constant(object):
+
+
+class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, y=None, by=None):
-        if y is None: y = odict()
-        self.name = name
-        self.y = y # Value data, e.g. [0.3, 0.7]
-        self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
+    def __init__(self, name=None, short=None, limits=None, v=None, by=None):
+        Par.__init__(self, name, short, limits)
+        self.v = v # Value data, e.g. [0.3, 0.7]
+        self.by = by # By pops, by none, etc.
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = '\n'
-        output += '           Name: %s\n'    % self.name
-        output += '         Values: %s\n'    % self.y
-        output += 'Time/value keys: %s\n'    % self.y.keys()
+        output = Par.__repr__(self)
+        output += '    v: %s\n'    % self.v
+        output += '   by: %s\n'    % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        keys = self.y.keys()
-        npops = len(keys)
-        output = zeros(npops)
-        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            output[pop] = self.y[pop] # Just copy y values
-        else: return output
+        if len(self.v)==1: # Just a simple constant
+            output = self.v
+        else: # No, it has keys, return as an array
+            keys = self.v.keys()
+            npops = len(keys)
+            output = zeros(npops)
+            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+                output[pop] = self.v[key] # Just copy y values
+        return output
+
+
 
 
 
@@ -475,7 +490,9 @@ class Parameterset(object):
             for key in generalkeys: simpars[key] = dcp(pars[key])
             for key in keys:
                 try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-                except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
+                except: 
+                    errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                    raise Exception(errormsg)
     
             
             ## Metaparameters -- convert from odict to array -- WARNING, is this a good idea?
