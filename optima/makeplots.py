@@ -1,7 +1,8 @@
 from optima import odict, gridcolormap
-from pylab import array, isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
+from pylab import array, isinteractive, ioff, ion, figure, plot, close, ylim, ndim, fill_between, scatter
 
-def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.2, lw=2, dotsize=50):
+def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+            titlesize=14, labelsize=12, ticksize=10, legendsize=10):
         ''' 
         Render the plots requested and store them in a list. Argument "which" should be a list of form e.g.
         ['prev-tot', 'inci-pops']
@@ -66,6 +67,7 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(8,6), alp
             
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
+            ax = epiplots[pl].add_subplot(111)
             nlines = len(best) # Either 1 or npops
             colors = gridcolormap(nlines)
             
@@ -82,15 +84,29 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(8,6), alp
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
             
-            xlabel('Year')
-            title(results.main[datatype].name)
+            # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+            ax.spines["top"].set_visible(False)    
+            ax.spines["right"].set_visible(False)    
+            ax.get_xaxis().tick_bottom()
+            ax.get_yaxis().tick_left()
+            ax.title.set_fontsize(titlesize)
+            ax.xaxis.label.set_fontsize(labelsize)
+            for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+            
+            # Configure plot
             currentylims = ylim()
-            ylim((0,currentylims[1]))
-            xlim((results.tvec[0], results.tvec[-1]))
-            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':'small'}
-            if poptype=='pops': legend(results.popkeys, **legendsettings)
-            if poptype=='tot':  legend(['Total'], **legendsettings)
+            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize}
+            ax.set_xlabel('Year')
+            ax.set_title(results.main[datatype].name)
+            ax.set_ylim((0,currentylims[1]))
+            ax.set_xlim((results.tvec[0], results.tvec[-1]))
+            if poptype=='pops': ax.legend(results.popkeys, **legendsettings)
+            if poptype=='tot':  ax.legend(['Total'], **legendsettings)
+            
+            
             close(epiplots[pl])
+            
+             
         
         if wasinteractive: ion() # Turn interactivity back on
         return epiplots

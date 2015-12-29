@@ -62,12 +62,12 @@ if 'perturb' in tests:
     print('Running GUI test...')
     from optima import Project
     
-    P = Project(spreadsheet='test.xlsx')
-    P.sensitivity(orig='default', name='sensitivity', n=5, span=0.99)
+    P = Project(spreadsheet='test7pops.xlsx')
+    P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5)
     results2 = P.runsim('sensitivity')
     
     from gui import gui, browser
-    gui(results2, which=['prev-tot', 'numinci-pops'])
+    gui(results2, which=['prev-tot', 'prev-pops', 'numinci-pops'])
 #    browser(results2, which=['prev-tot', 'prev-pops'])
 
     done(t)
