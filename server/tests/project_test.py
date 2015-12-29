@@ -336,6 +336,27 @@ class ProjectTestCase(OptimaTestCase):
 
         self.assertEqual(program_count, programs_per_progset)
 
+    def test_default_programs_for_project_restore(self):
+        from server.webapp.dbmodels import ProgramsDb
+        from server.webapp.programs import program_list
+
+        project = self.create_project(
+            progsets_count=1,
+            programs_per_progset=0,
+            return_instance=True
+        )
+        progset_id = str(project.progsets[0].id)
+
+        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
+        self.assertEqual(program_count, 0)
+
+        be_project = project.hydrate()
+        project.restore(be_project)
+
+        program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
+
+        self.assertEqual(program_count, len(program_list))
+
     def test_bulk_delete(self):
         from server.webapp.dbmodels import ProjectDb
 
