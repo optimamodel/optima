@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
+    $timeout, modalService, predefined, availableParameters, UserManager, activeProject, projectApiService) {
 
     // Check if come project is currently open, else show error message
     const openProject = activeProject.getProjectForCurrentUser();
