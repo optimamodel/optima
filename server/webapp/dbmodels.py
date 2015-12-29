@@ -182,8 +182,8 @@ class ProjectDb(db.Model):
                 loaded_programs = set()
                 for program in program_list:
                     program_name = program['name']
-                    loaded_programs.add(program_name)
                     if program_name in progset.programs:
+                        loaded_programs.add(program_name)
                         program = progset.programs[program_name].__dict__
                         program['parameters'] = program.get('targetpars', [])
                         active = True

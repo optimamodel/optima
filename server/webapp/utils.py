@@ -321,6 +321,7 @@ def update_or_create_progset(project_id, name, progset):
         )
 
         db.session.add(progset_record)
+        db.session.flush()
     else:
         progset_record.updated = datetime.now(dateutil.tz.tzutc())
 
