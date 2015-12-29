@@ -122,16 +122,32 @@ def gui(results, which=None):
 
 
 
-def browser(results, which=None):
-    ''' Create an mpld3 GUI '''
+def browser(results, which=None, doplot=True):
+    ''' 
+    Create an MPLD3 GUI and display in the browser. This is basically a testbed for 
+    the Optima frontend.
+    
+    Usage:
+        gui(results, [which])
+    
+    where results is the output of e.g. runsim() and which is an optional list of form e.g.
+        which = ['prev-tot', 'inci-pops']
+    
+    With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
+    
+    Version: 1.0 (2015de29) by cliffk
+    
+    '''
     import mpld3 # Only import this if needed, since might not always be available
     import json
+    if doplot: from webserver import serve # For launching in a browser
 
-    wasinteractive = isinteractive() # Get current state of interactivity
+    wasinteractive = isinteractive() # Get current state of interactivity so the screen isn't flooded with plots
     if wasinteractive: ioff()
     
-    divstyle = "float: left; border: solid 1px black;"
     
+    ## Specify the div style, and create the HTML template we'll add the data to
+    divstyle = "float: left"
     html = '''
     <html><body>
     !MAKE DIVS!
@@ -141,24 +157,26 @@ def browser(results, which=None):
     </script></body></html>
     '''
 
-    figs = []
-    jsons = []
-    plots = epiplot(results, which)
-    nplots = len(plots)
-    for p in range(nplots): 
-        figs.append(figure())
-        addplot(figs[-1], plots[p].axes[0])
-        mpld3.plugins.connect(figs[-1], mpld3.plugins.MousePosition(fontsize=14)) # Add plugins
-        jsons.append(str(json.dumps(mpld3.fig_to_dict(figs[-1])))) # Save to JSON
-        close(figs[-1])
+    ## Create the figures to plot
+    jsons = [] # List for storing the converted JSONs
+    plots = epiplot(results, which) # Generate the plots
+    nplots = len(plots) # Figure out how many plots there are
+    for p in range(nplots): # Loop over each plot
+        fig = figure() # Create a blank figure
+        addplot(fig, plots[p].axes[0]) # Add this plot to this figure
+        mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14)) # Add plugins
+        jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
+        close(fig) # Close
     
+    ## Create div and JSON strings to replace the placeholers above
     divstr = ''
     jsonstr = ''
     for p in range(nplots):
-        divstr += '<div style="%s" id="fig%i"></div>\n' % (divstyle, p)
-        jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p])
+        divstr += '<div style="%s" id="fig%i"></div>\n' % (divstyle, p) # Add div information: key is unique ID for each figure
+        jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p]) # Add the JSON representation of each figure -- THIS IS KEY!
+    html = html.replace('!MAKE DIVS!',divstr) # Populate div information
+    html = html.replace('!DRAW FIGURES!',jsonstr) # Populate figure information
     
-    html = html.replace('!MAKE DIVS!',divstr)
-    html = html.replace('!DRAW FIGURES!',jsonstr)
-    
-    mpld3._server.serve(html, ip='127.0.0.1', port=8888, n_retries=50, files=None, open_browser=True, http_server=None)
+    ## Launch a server or return the HTML representation
+    if doplot: serve(html)
+    else: return html

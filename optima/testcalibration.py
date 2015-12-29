@@ -14,7 +14,7 @@ Version: 2015dec28 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'perturb',
+'sensitivity',
 ]
 
 
@@ -55,20 +55,21 @@ T = tic()
 
 
 
-## Perturbation test
-if 'perturb' in tests:
+## Sensitivity test
+if 'sensitivity' in tests:
     t = tic()
 
     print('Running GUI test...')
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5)
-    results2 = P.runsim('sensitivity')
+    P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
+    results = P.runsim('sensitivity')
     
     from gui import gui, browser
-    gui(results2, which=['prev-tot', 'prev-pops', 'numinci-pops'])
-#    browser(results2, which=['prev-tot', 'prev-pops'])
+    browser(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    gui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    
 
     done(t)
 
