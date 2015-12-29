@@ -65,7 +65,7 @@ if 'perturb' in tests:
     P = Project(spreadsheet='test.xlsx')
     results1 = P.runsim('default')
     
-    P.perturb(name='perturb', span=0)
+    P.perturb(name='perturb', n=10, span=0.9)
     results2 = P.runsim('perturb')
     
     from gui import gui
