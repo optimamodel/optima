@@ -1,4 +1,4 @@
-from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, 
+from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, \
 runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualfit
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
@@ -269,45 +269,3 @@ class Project(object):
         manualfit(self, name=name, ind=0) # Actually run manual fitting
         return None
     
-    
-    
-    
-    
-    def autofit(self):
-        print('Not implemented')
-        return None
-    
-    def manualfit(self):
-        print('Not implemented')
-        return None
-    
-    def mcmc(self):
-        print('Not implemented')
-        return None
-        
-    def makescenarios(self):
-        print('Not implemented')
-        return None
-    
-    #    def runscen(self, name='default', start=2000, end=2030):
-#        ''' This function runs a single scenario '''
-#        simpars = makesimpars(self.parset[name], start=start, end=end) # "self.getwhat(what)[name]" is e.g. P.parset['default']
-#        simpars = applyoverrides(simpars, self.scens[name])
-#        S = model(simpars, self.settings)
-#        return S
-    
-    def optimize(self):
-        print('Not implemented')
-        return None
-    
-    
-    
-    
-    #######################################################################################################
-    ## Plotting methods
-    #######################################################################################################    
-    
-    
-    def plotepi(self, parset='default', scens=None, optims=None):
-        print('Not implemented')
-        return None
