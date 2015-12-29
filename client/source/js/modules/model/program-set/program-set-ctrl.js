@@ -2,11 +2,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    $timeout, modalService, predefined, availableParameters, UserManager, activeProject) {
+    $timeout, modalService, predefined, availableParameters, UserManager, activeProject, projectApiService) {
 
     // Check if come project is currently open, else show error message
-    const openProjectStr = activeProject.getProjectFor(UserManager.data);
-    const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
+    const openProject = activeProject.getProjectForCurrentUser();
+
+    var openProjectData;
+    projectApiService.getActiveProject().success(function(response) {
+      openProjectData = response;
+    });
+
     if(!openProject) {
       modalService.informError([{message: 'There is no project open currently.'}]);
     }
@@ -143,7 +148,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $event.preventDefault();
       }
 
-      return programSetModalService.openProgramModal(program, predefined.data, availableParameters.data.parameters).result.then(
+      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters).result.then(
         function (newProgram) {
           _(program).extend(newProgram);
         }
@@ -162,7 +167,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, predefined.data, availableParameters.data.parameters).result.then(
+      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters).result.then(
         function (newProgram) {
           $scope.programs.push(newProgram);
         }
@@ -181,7 +186,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = angular.copy(existingProgram);
 
-      return programSetModalService.openProgramModal(program, predefined.data, availableParameters).result.then(
+      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters).result.then(
         function (newProgram) {
           $scope.programs.push(newProgram);
         }

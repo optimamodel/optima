@@ -74,7 +74,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       /**
        * This function opens a modal for creating, editing and copying a program.
        */
-      openProgramModal: function (program, predefined, availableParameters) {
+      openProgramModal: function (program, populations, availableParameters) {
         return $modal.open({
           templateUrl: 'js/modules/model/program-set/program-modal.html',
           controller: 'ProgramSetModalController',
@@ -87,7 +87,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
               return availableParameters;
             },
             populations: function () {
-              return predefined.populations;
+              return populations;
             }
           }
         });
