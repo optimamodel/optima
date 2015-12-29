@@ -309,6 +309,20 @@ def makeparsfromdata(data, verbose=2):
 
 
 
+class Par(object):
+    ''' The base class for parameters '''
+    def __init__(self, name=None, short=None, limits=(0,1)):
+        self.name = name # The full name, e.g. "HIV testing rate"
+        self.short = short # The short name, e.g. "hivtest"
+        self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = objectid(self)
+        output += '  name: %s\n'    % self.name
+        output += ' short: %s\n'    % self.short
+        output += 'limits: %s\n'    % self.limits
+        return output
 
 
 
@@ -317,16 +331,13 @@ def makeparsfromdata(data, verbose=2):
 
 
 
-
-
-
-class Timepar(object):
+class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, t=None, y=None, m=1, by=None):
+    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None):
+        Par.__init__(self, name, short, limits)
         if t is None: t = odict()
         if y is None: y = odict()
-        self.name = name
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -334,13 +345,12 @@ class Timepar(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = '\n'
-        output += ' name: %s\n'    % self.name
-        output += '    y: %s\n'    % self.y
-        output += '    t: %s\n'    % self.t
-        output += '    m: %s\n'    % self.m
-        output += '   by: %s\n'    % self.by
-        output += ' keys: %s\n'    % self.y.keys()
+        output = Par.__repr__(self)
+        output += '     t: %s\n'    % self.t
+        output += '     y: %s\n'    % self.y
+        output += '     m: %s\n'    % self.m
+        output += '    by: %s\n'    % self.by
+        output += '  keys: %s\n'    % self.y.keys()
         return output
     
     def interp(self, tvec, smoothness=20):
@@ -366,9 +376,9 @@ class Timepar(object):
 class Popsizepar(object):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, p=None, m=1, start=2000, by=None):
+    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None):
+        Par.__init__(self, name, short, limits)
         if p is None: p = odict()
-        self.name = name # Going to be "popsize"
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
@@ -376,12 +386,11 @@ class Popsizepar(object):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = '\n'
-        output += '          Name: %s\n'    % self.name
-        output += 'Fit parameters: %s\n'    % self.p
-        output += '    Start year: %s\n'    % self.start
-        output += ' Metaparameter: %s\n'    % self.m
-        output += 'Parameter keys: %s\n'    % self.p.keys()
+        output = Par.__repr__(self)
+        output += '  start: %s\n'    % self.start
+        output += '      p: %s\n'    % self.p
+        output += '      m: %s\n'    % self.m
+        output += '   keys: %s\n'    % self.p.keys()
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
