@@ -19,7 +19,7 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     return None
 
 
-def closegui(event):
+def closegui(event=None):
     ''' Close all GUI windows '''
     global plotfig, panelfig
     close(plotfig)
@@ -27,14 +27,14 @@ def closegui(event):
 
 
 
-def getchecked(check):
+def getchecked(check=None):
     ''' Return a list of whether or not each check box is checked or not '''
     ischecked = []
     for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
     return ischecked
     
     
-def update(event):
+def update(event=None):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes
 
