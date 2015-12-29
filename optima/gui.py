@@ -10,8 +10,9 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
     thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
     orig = thisplot.get_position() # get the original position 
-    factor = 0.3+nrows**(1/3.)
-    pos2 = [orig.x0, orig.y0,  orig.width/factor, orig.height] 
+    widthfactor = 0.9/ncols**(1/4.)
+    heightfactor = 0.9/nrows**(1/4.)
+    pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
 
     return None

@@ -1,5 +1,5 @@
 from optima import odict, gridcolormap
-from pylab import array, isinteractive, ioff, ion, figure, plot, close, ylim, ndim, fill_between, scatter
+from pylab import array, isinteractive, ioff, ion, figure, plot, close, ylim, ndim, fill_between, scatter, gca
 
 def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10):
@@ -67,7 +67,7 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
-            ax = epiplots[pl].add_subplot(111)
+            
             nlines = len(best) # Either 1 or npops
             colors = gridcolormap(nlines)
             
@@ -85,6 +85,7 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
             
             # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+            ax = gca()
             ax.spines["top"].set_visible(False)    
             ax.spines["right"].set_visible(False)    
             ax.get_xaxis().tick_bottom()
