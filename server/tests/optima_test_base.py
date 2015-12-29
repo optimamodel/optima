@@ -119,7 +119,12 @@ class OptimaTestCase(unittest.TestCase):
         for x in range(progsets_count):
             progset = self.create_record_with(ProgsetsFactory, project_id=project.id)
             for y in range(programs_per_progset):
-                self.create_record_with(ProgramsFactory, project_id=project.id, progset_id=progset.id)
+                self.create_record_with(
+                    ProgramsFactory,
+                    project_id=project.id,
+                    progset_id=progset.id,
+                    active=True
+                )
         if return_instance:
             return project
         return str(project.id)

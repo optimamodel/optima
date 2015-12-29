@@ -305,16 +305,36 @@ class ProjectTestCase(OptimaTestCase):
         self.assertTrue('progsets' in data)
         self.assertEqual(len(data['progsets']), progsets_count)
 
-    def test_progset_can_hydrate(self):
-        from server.webapp.dbmodels import ProgsetsDb
+    def test_progset_can_hydrate_and_restore(self):
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
-        project_id = self.create_project()
-        progset_id = self.api_create_progset(project_id)
+        programs_per_progset = 3
+
+        project = self.create_project(
+            progsets_count=1,
+            programs_per_progset=programs_per_progset,
+            return_instance=True
+        )
+        progset_id = str(project.progsets[0].id)
 
         progset = ProgsetsDb.query.get(progset_id)
+        program_count = ProgramsDb.query \
+            .filter_by(progset_id=progset_id, active=True) \
+            .count()
+        self.assertEqual(program_count, programs_per_progset)
         programset = progset.hydrate()
 
         self.assertIsNotNone(programset)
+
+        be_project = project.hydrate()
+        new_project = self.create_project(return_instance=True)
+        new_project.restore(be_project)
+
+        program_count = ProgramsDb.query \
+            .filter_by(project_id=str(new_project.id), active=True) \
+            .count()
+
+        self.assertEqual(program_count, programs_per_progset)
 
     def test_bulk_delete(self):
         from server.webapp.dbmodels import ProjectDb
