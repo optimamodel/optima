@@ -18,7 +18,8 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     thisplot.set_position(pos2) # set a new position
 
     return None
-        
+
+
 
 def gui(results, which=None):
     '''
@@ -54,7 +55,7 @@ def gui(results, which=None):
 
         # If figure exists, get size, then close it
         try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
-        except: width,height = 8,6 # No figure: use defaults
+        except: width,height = 14,12 # No figure: use defaults
         
         # Get user selections
         ischecked = getchecked(check)
