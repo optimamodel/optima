@@ -22,7 +22,7 @@ def popgrow(exppars, tvec):
 
 def data2prev(parname, data, index, keys, by=None, blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=parname, y=odict(), by=by) # Create structure
+    par = Constant(name=parname, v=odict(), by=by) # Create structure
     for row,key in enumerate(keys):
         par.v[key] = sanitize(data[parname][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -409,14 +409,16 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=None, v=None):
+    def __init__(self, name=None, short=None, limits=None, v=None, by=None):
         Par.__init__(self, name, short, limits)
         self.v = v # Value data, e.g. [0.3, 0.7]
+        self.by = by # By pops, by none, etc.
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
         output += '    v: %s\n'    % self.v
+        output += '   by: %s\n'    % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
@@ -424,11 +426,11 @@ class Constant(Par):
         if len(self.v)==1: # Just a simple constant
             output = self.v
         else: # No, it has keys, return as an array
-            keys = self.y.keys()
+            keys = self.v.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = self.y[key] # Just copy y values
+                output[pop] = self.v[key] # Just copy y values
         return output
 
 
@@ -487,7 +489,9 @@ class Parameterset(object):
             for key in generalkeys: simpars[key] = dcp(pars[key])
             for key in keys:
                 try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-                except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
+                except: 
+                    errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                    raise Exception(errormsg)
     
             
             ## Metaparameters -- convert from odict to array -- WARNING, is this a good idea?
