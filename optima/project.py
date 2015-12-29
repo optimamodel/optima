@@ -256,7 +256,7 @@ class Project(object):
     
     def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5): # orig=default or orig=0?
         ''' Function to perform sensitivityanalysis over the parameters as a proxy for "uncertainty"'''
-        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=0.5)
+        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span)
         self.addparset(name=name, parset=parset) # Store parameters
         return None
     

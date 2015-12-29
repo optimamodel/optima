@@ -1,7 +1,7 @@
 from optima import odict, gridcolormap
 from pylab import array, isinteractive, ioff, ion, figure, plot, xlabel, title, close, xlim, ylim, legend, ndim, fill_between, scatter
 
-def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.5, lw=2, dotsize=50):
+def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6), alpha=0.2, lw=2, dotsize=50):
         ''' Render the plots requested and store them in a list '''
         
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -53,9 +53,6 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
                 best  = array([best])
                 lower = array([lower])
                 upper = array([upper])
-#                databest = array([databest])
-#                datalow  = array([datalow])
-#                datahigh = array([datahigh])
             
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
@@ -66,14 +63,14 @@ def epiplot(results, whichplots=None, uncertainty=True, verbose=2, figsize=(8,6)
             for l in range(nlines):
                 if uncertainty:
                     fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
-#                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
+                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
             
             # Plot data points with uncertainty
-#            for l in range(nlines):
-#                if databest is not None: 
-#                    scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
-#                    for y in range(len(results.datayears)):
-#                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
+            for l in range(nlines):
+                if databest is not None: 
+                    scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
+                    for y in range(len(results.datayears)):
+                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
             
             xlabel('Year')
             title(results.main[datatype].name)
