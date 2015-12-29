@@ -57,9 +57,24 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 def manualfit(project=None, name='default', ind=0):
+    ''' 
+    Create a GUI for doing manual fitting via the backend. Opens up three windows: 
+    results, results selection, and edit boxes.
+    
+    Current version only allows the user to modify force-of-infection, 
+    
+    Version: 1.0 (2015dec29) by cliffk
+    '''
+    
+    
+    
+    
+    
+    
+    
     import numpy as np
-    import matplotlib
-    matplotlib.use("Qt4Agg") # This program works with Qt only
+    from matplotlib import use
+    use("Qt4Agg") # This program works with Qt only
     import pylab as pl
     fig, ax1 = pl.subplots()
     

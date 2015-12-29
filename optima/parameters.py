@@ -312,10 +312,12 @@ def makeparsfromdata(data, verbose=2):
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1)):
+    def __init__(self, name=None, short=None, limits=(0,1), manual='', auto=''):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+        self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'full'
+        self.auto = auto # Whether or not this parameter can be automatically fitted: options are '', 'meta', 'full'
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -323,6 +325,8 @@ class Par(object):
         output += '  name: "%s"\n'    % self.name
         output += ' short: "%s"\n'    % self.short
         output += 'limits: %s\n'      % str(self.limits)
+        output += 'manual: "%s"\n'    % self.manual
+        output += '  auto: "%s"\n'    % self.auto
         return output
 
 
