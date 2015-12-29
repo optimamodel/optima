@@ -56,7 +56,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def manualfit():
+def manualfit(project=None, name='default', ind=0):
     import numpy as np
     import matplotlib
     matplotlib.use("Qt4Agg") # This program works with Qt only

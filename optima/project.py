@@ -266,7 +266,7 @@ class Project(object):
     def manualfit(self, orig='default', name='perturb', ind=0): # orig=default or orig=0?
         ''' Function to perform manual fitting'''
         self.copyparset(orig=orig, new=name) # Store parameters
-        manualfit(self, name=name) # Actually run manual fitting
+        manualfit(self, name=name, ind=0) # Actually run manual fitting
         return None
     
     
