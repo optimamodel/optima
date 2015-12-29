@@ -20,6 +20,6 @@ def perturbpars(orig=None, ncopies=5, what='force', span=0.5):
     
     for n in range(ncopies):
         for key in popkeys:
-            parset.pars[n]['force'][key] = perturb(n=1, span=span)
+            parset.pars[n]['force'][key] = perturb(n=1, span=span)[0]
     
     return parset

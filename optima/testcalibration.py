@@ -54,6 +54,7 @@ T = tic()
 
 
 
+
 ## Perturbation test
 if 'perturb' in tests:
     t = tic()
@@ -64,7 +65,7 @@ if 'perturb' in tests:
     P = Project(spreadsheet='test.xlsx')
     results1 = P.runsim('default')
     
-    P.perturb(name='perturb')
+    P.perturb(name='perturb', span=0)
     results2 = P.runsim('perturb')
     
     from gui import gui

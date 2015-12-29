@@ -276,7 +276,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
         try: raw['inci'][:,t] = (newinfections)/float(dt)  # Store new infections AND new MTCT births
-        except: raise Exception() #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         ## Undiagnosed
         for cd4 in range(ncd4):

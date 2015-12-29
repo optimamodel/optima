@@ -273,7 +273,6 @@ def perturb(n=1, span=0.5, randseed=None):
     from numpy.random import rand, seed
     if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
-    output = output.tolist() # Otherwise, convert to a list
     return output
 
 
