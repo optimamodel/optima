@@ -28,3 +28,18 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.section_dashed_border {
+  border: 1px dashed gray;
+  padding: 15px;
+  .option {
+    display: inline-block;
+    width: 33%;
+    padding-right: 20px;
+    padding-bottom: 10px;
+    &:first-child {
+      width: 100%;
+      display: block;
+    }
+  }
+}

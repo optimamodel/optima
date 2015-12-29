@@ -9,12 +9,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Initializes relevant attributes
     var initialize = function () {
       $scope.isNew = !programCopy.name;
-
+      $scope.selectAll = false;
       $scope.availableParameters = angular.copy(availableParameters);
-      $scope.populations = _(populations).map(function(population) {
-        return {label: population.name, value: [population.short_name]};
-      });
-      $scope.populations.unshift({label: 'All selected populations', value: ['']});
 
       $scope.initializeAllCategories();
 
@@ -31,7 +27,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.program = programCopy;
       $scope.program.active = true;
+      if (!$scope.program.populations) {
+        $scope.program.populations = populations;
+      }
       if ($scope.isNew) { $scope.program.category = 'Other'; }
+    };
+
+    $scope.selectAllPopulations = function() {
+      _.forEach($scope.program.populations, function(population) {
+        population.active = $scope.selectAll;
+      });
     };
 
     /*

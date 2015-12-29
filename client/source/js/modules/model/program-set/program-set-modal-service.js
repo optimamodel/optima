@@ -87,7 +87,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
               return availableParameters;
             },
             populations: function () {
-              return toCleanArray(predefined.categories);
+              return predefined.populations;
             }
           }
         });

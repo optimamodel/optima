@@ -37,6 +37,22 @@
 
     <div class="section grid">
       <h3>
+        Populations
+      </h3>
+      <div class="section_dashed_border">
+        <span class="option">
+          <input type="checkbox" ng-click="selectAllPopulations(selectAll = !selectAll)">
+          <span>All populations</span>
+        </span>
+        <span ng-repeat="population in program.populations" class="option">
+          <input type="checkbox" ng-model="population.active" />
+          <span>{{population.name}}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <h3>
         Parameters in model influenced by this program
       </h3>
     </div>
