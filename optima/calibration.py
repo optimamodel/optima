@@ -66,7 +66,7 @@ def manualfit(project=None, name='default', ind=0):
     Version: 1.0 (2015dec29) by cliffk
     '''
     
-    
+    pars = project.parsets[name].pars[0]
     
     
     
