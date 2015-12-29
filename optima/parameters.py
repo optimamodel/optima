@@ -322,7 +322,7 @@ class Par(object):
         output = objectid(self)
         output += '  name: "%s"\n'    % self.name
         output += ' short: "%s"\n'    % self.short
-        output += 'limits: %s\n'    % str(self.limits)
+        output += 'limits: %s\n'      % str(self.limits)
         return output
 
 
