@@ -132,10 +132,11 @@ def manualfit(project=None, name='default', ind=0):
     
     def closewindows():
         global panel, plotfig, panelfig
-        close(plotfig)
-        close(panelfig)
+        try: close(plotfig)
+        except: pass
+        try: close(panelfig)
+        except: pass
         panel.close()
-        print('hi')
     
     
     ## Create control panel
