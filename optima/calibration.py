@@ -72,12 +72,14 @@ def manualfit(project=None, name='default', ind=0):
     namelist = []
     typelist = [] # Valid types are meta, pop, exp
     for key in pars.keys():
-        try:
+        print(key)
+        if hasattr(pars[key],'manual'): # Don't worry if it doesn't work, not everything in pars is actually a parameter
+            print(pars[key].manual)
             if pars[key].manual is not '':
                 keylist.append(key) # e.g. "initprev"
                 namelist.append(pars[key].name) # e.g. "HIV prevalence"
                 typelist.append(pars[key].manual) # e.g. 'pop'
-        except: pass # Don't worry if it doesn't work, not everything in pars is actually a parameter
+        
     nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
     fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
