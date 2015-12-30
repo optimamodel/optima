@@ -113,10 +113,9 @@ def manualfit(project=None, name='default', ind=0):
     boxes = []
     fig = figure() # Open figure
     panel = QtGui.QWidget() # Create panel widget
-    for i in range(5):
-        hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
-        textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
-        hbox.addWidget(textbox) # Add the textbox to the "hbox"
+    hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
+    textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
+    hbox.addWidget(textbox) # Add the textbox to the "hbox"
     panel.setLayout(hbox) # Add the "hbox" to the "panel"
     root = fig.canvas.manager.window # Get window of the figure
     dock = QtGui.QDockWidget("control", root) # Dock the widget to the window
