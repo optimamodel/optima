@@ -4,10 +4,10 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import dcp, perturb, Parameterset
+from optima import dcp, perturb, Parameterset, GUI
 from numpy import median
-global panel, panelfig, plotfig # For manualfit GUI
-panel, panelfig, plotfig = [None]*3
+global panel, panelfig, plotfig, results # For manualfit GUI
+panel, panelfig, plotfig, results = [None]*4
 
 
 def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
@@ -111,10 +111,13 @@ def manualfit(project=None, name='default', ind=0):
             print('NOT IMPLEMENTED')
     nfull = len(fulllabellist) # The total number of boxes needed
     
+    results = project.runsim(name)
+    GUI.gui(results)
+    
     
     ## Define update step
     def update():
-        
+        global results
         ## Loop over all parameters and update them
         for b,box in enumerate(boxes):
             if fulltypelist[b]=='meta':
@@ -128,6 +131,11 @@ def manualfit(project=None, name='default', ind=0):
                 print('%s.y[%s] = %s' % (key, subkey, box.text()))
             else:
                 print('NOT IMPLEMENTED %s'%fulltypelist[b])
+        
+        results = project.runsim(name)
+        GUI.update()
+        
+        
     
     
     def closewindows():
