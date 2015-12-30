@@ -7,8 +7,8 @@ Created on Wed Dec 30 00:31:26 2015
 
 from optima import dcp
 import gui
-global panel, panelfig, plotfig, results, origpars, tmppars, project, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
-if 1:  panel, panelfig, plotfig, results, origpars, tmppars, project, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*13
+global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
+if 1:  panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*12
 
 def manualgui(project=None, name='default', ind=0):
     ''' 
@@ -19,7 +19,7 @@ def manualgui(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
-    global panel, panelfig, plotfig, results, origpars, tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
+    global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
     from PyQt4 import QtGui
@@ -35,6 +35,7 @@ def manualgui(project=None, name='default', ind=0):
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
+    print(parset)
     tmppars = parset.pars[0]
     origpars = dcp(tmppars)
 
@@ -92,7 +93,7 @@ def manualgui(project=None, name='default', ind=0):
     ## Define update step
     def update():
         ''' Update GUI with new results '''
-        global project, results, tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
+        global results, tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
         
         ## Loop over all parameters and update them
         for b,box in enumerate(boxes):
@@ -116,7 +117,7 @@ def manualgui(project=None, name='default', ind=0):
     ## Keep the current parameters in the project; otherwise discard
     def keeppars():
         ''' Little function to reset origpars and update the project '''
-        global origpars, tmppars, project, parset
+        global origpars, tmppars, parset
         origpars = tmppars
         parset.pars[0] = tmppars
         project.parsets[name].pars[0] = tmppars
@@ -126,7 +127,7 @@ def manualgui(project=None, name='default', ind=0):
     
     def resetpars():
         ''' Reset the parameters to the last saved version '''
-        global origpars, tmppars, project, parset
+        global origpars, tmppars, parset
         tmppars = origpars
         parset.pars[0] = tmppars
         populatelists()
