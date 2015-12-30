@@ -210,7 +210,7 @@ def makeparsfromdata(data, verbose=2):
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
     pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, bestindex, popkeys, by='pop', manual='pop') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', manual='meta')
+    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', manual='exp')
     
     # Epidemilogy parameters -- most are data
     pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop', manual='meta') # STI prevalence

@@ -1,5 +1,5 @@
 ## Imports and globals
-from optima import dcp, printv
+from optima import dcp, printv, sigfig
 import gui # Need low-level functions so need to import directly
 global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
 if 1:  panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*12
@@ -19,6 +19,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
     from PyQt4 import QtGui
     from pylab import figure, close, floor
     fig = figure(); close(fig) # Open and close figure...dumb, no?
+    nsigfigs = 3
     
     ## Initialize lists
     boxes = []
@@ -63,6 +64,13 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
                     fulltypelist.append(typelist[k])
                     fullvallist.append(tmppars[key].y[subkey])
                     fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
+            elif typelist[k]=='exp':
+                for subkey in tmppars[key].p.keys():
+                    fullkeylist.append(key)
+                    fullsubkeylist.append(subkey)
+                    fulltypelist.append(typelist[k])
+                    fullvallist.append(tmppars[key].p[subkey][0])
+                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             else:
                 print('Parameter type "%s" not implemented!' % typelist[k])
     
@@ -99,6 +107,11 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
                 subkey = fullsubkeylist[b]
                 tmppars[key].y[subkey] = eval(box.text())
                 printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+            elif fulltypelist[b]=='exp': # Population growth
+                key = fullkeylist[b]
+                subkey = fullsubkeylist[b]
+                tmppars[key].p[subkey][0] = eval(box.text())
+                printv('%s.p[0] = %s' % (key, box.text()), 4, verbose=verbose)
             else:
                 print('Parameter type "%s" not implemented!' % fulltypelist[b])
         
@@ -124,7 +137,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
         tmppars = dcp(origpars)
         parset.pars[0] = tmppars
         populatelists()
-        for i in range(nfull): boxes[i].setText(str(fullvallist[i]))
+        for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
         gui.update(tmpresults=results)
@@ -154,7 +167,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
         
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
-        boxes[-1].setText(str(fullvallist[i]))
+        boxes[-1].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         boxes[-1].returnPressed.connect(update)
     
     keepbutton  = QtGui.QPushButton('Keep', parent=panel)
