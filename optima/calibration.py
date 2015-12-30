@@ -65,6 +65,10 @@ def manualfit(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
+    from PyQt4 import QtGui
+    from PyQt4.QtCore import Qt
+    from matplotlib import use
+    use("Qt4Agg") # This program works with Qt only
     
     ## Get the list of parameters that can be fitted
     pars = project.parsets[name].pars[0]
@@ -77,9 +81,9 @@ def manualfit(project=None, name='default', ind=0):
                 keylist.append(key) # e.g. "initprev"
                 namelist.append(pars[key].name) # e.g. "HIV prevalence"
                 typelist.append(pars[key].manual) # e.g. 'pop'
-        
     nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
+    ## Convert to the full list of parameters to be fitted
     fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
     fullkeylist = [] # e.g. "initprev"
     fullsubkeylist = [] # e.g. "fsw"
@@ -100,25 +104,17 @@ def manualfit(project=None, name='default', ind=0):
                 fulltypelist.append(typelist[k])
                 fullvallist.append(pars[key].y[subkey])
                 fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-            
+    nfull = len(fulllabellist) # The total number of boxes needed
     
-    ## 
-    
-    
-    
+    ## Create control panel
     import numpy as np
-    from matplotlib import use
-    use("Qt4Agg") # This program works with Qt only
     import pylab as pl
     fig, ax1 = pl.subplots()
-    
     t = np.linspace(0, 10, 200)
-    
     line, = ax1.plot(t, np.sin(t))
     
     ### control panel ###
-    from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
+
     
     def update():
         freq = float(textbox.text())
