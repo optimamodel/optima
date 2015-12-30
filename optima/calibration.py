@@ -110,17 +110,18 @@ def manualfit(project=None, name='default', ind=0):
     nfull = len(fulllabellist) # The total number of boxes needed
     
     ## Create control panel
-    boxes = []
+#    boxes = []
     fig = figure() # Open figure
     panel = QtGui.QWidget() # Create panel widget
     hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
-    textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
-    hbox.addWidget(textbox) # Add the textbox to the "hbox"
-    panel.setLayout(hbox) # Add the "hbox" to the "panel"
     root = fig.canvas.manager.window # Get window of the figure
     dock = QtGui.QDockWidget("control", root) # Dock the widget to the window
-    root.addDockWidget(Qt.BottomDockWidgetArea, dock) # Um, and do it again
-    dock.setWidget(panel) # Yeah, and again
+    for i in range(20):
+        textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
+        hbox.addWidget(textbox) # Add the textbox to the "hbox"
+        panel.setLayout(hbox) # Add the "hbox" to the "panel"
+        root.addDockWidget(Qt.BottomDockWidgetArea, dock) # Um, and do it again
+        dock.setWidget(panel) # Yeah, and again
     #    textbox.textChanged.connect(update)
     
     
