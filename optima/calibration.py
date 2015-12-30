@@ -7,8 +7,8 @@ Functions to perform calibration.
 from optima import dcp, perturb, Parameterset
 import gui
 from numpy import median
-global panel, panelfig, plotfig, results, origpars, pars # For manualfit GUI
-panel, panelfig, plotfig, results, origpars, pars = [None]*6
+global panel, panelfig, plotfig, results, origpars, tmppars # For manualfit GUI
+panel, panelfig, plotfig, results, origpars, tmppars = [None]*6
 
 
 def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
@@ -67,53 +67,61 @@ def manualfit(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
-    global panel
+    global panel, origpars, tmppars
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
     from PyQt4 import QtGui
     from pylab import figure, close, floor
     fig = figure(); close(fig) # Open and close figure...dumb, no?
     
-    ## Get the list of parameters that can be fitted
-    parset = dcp(project.parsets[name])
-    pars = parset.pars[0]
-    origpars = dcp(pars)
+    ## Initialize lists
+    boxes = []
+    texts = []
     keylist = []
     namelist = []
     typelist = [] # Valid types are meta, pop, exp
-    for key in pars.keys():
-        if hasattr(pars[key],'manual'): # Don't worry if it doesn't work, not everything in pars is actually a parameter
-            if pars[key].manual is not '':
-                keylist.append(key) # e.g. "initprev"
-                namelist.append(pars[key].name) # e.g. "HIV prevalence"
-                typelist.append(pars[key].manual) # e.g. 'pop'
-    nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
-    
-    ## Convert to the full list of parameters to be fitted
     fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
     fullkeylist = [] # e.g. "initprev"
     fullsubkeylist = [] # e.g. "fsw"
     fulltypelist = [] # e.g. "pop"
     fullvallist = [] # e.g. 0.3
-    for k in range(nkeys):
-        key = keylist[k]
-        if typelist[k]=='meta':
-            fullkeylist.append(key)
-            fullsubkeylist.append(None)
-            fulltypelist.append(typelist[k])
-            fullvallist.append(pars[key].m)
-            fulllabellist.append(namelist[k] + ' -- meta')
-        elif typelist[k]=='pop' or typelist[k]=='pship':
-            for subkey in pars[key].y.keys():
-                fullkeylist.append(key)
-                fullsubkeylist.append(subkey)
-                fulltypelist.append(typelist[k])
-                fullvallist.append(pars[key].y[subkey])
-                fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-        else:
-            print('NOT IMPLEMENTED')
-    nfull = len(fulllabellist) # The total number of boxes needed
     
+    ## Get the list of parameters that can be fitted
+    parset = dcp(project.parsets[name])
+    tmppars = parset.pars[0]
+    origpars = dcp(tmppars)
+
+    for key in tmppars.keys():
+        if hasattr(tmppars[key],'manual'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+            if tmppars[key].manual is not '':
+                keylist.append(key) # e.g. "initprev"
+                namelist.append(tmppars[key].name) # e.g. "HIV prevalence"
+                typelist.append(tmppars[key].manual) # e.g. 'pop'
+    nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
+    
+    ## Convert to the full list of parameters to be fitted
+    def populatelists():
+        for k in range(nkeys):
+            key = keylist[k]
+            if typelist[k]=='meta':
+                fullkeylist.append(key)
+                fullsubkeylist.append(None)
+                fulltypelist.append(typelist[k])
+                fullvallist.append(tmppars[key].m)
+                fulllabellist.append(namelist[k] + ' -- meta')
+            elif typelist[k]=='pop' or typelist[k]=='pship':
+                for subkey in tmppars[key].y.keys():
+                    fullkeylist.append(key)
+                    fullsubkeylist.append(subkey)
+                    fulltypelist.append(typelist[k])
+                    fullvallist.append(tmppars[key].y[subkey])
+                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
+            else:
+                print('NOT IMPLEMENTED')
+        nfull = len(fulllabellist) # The total number of boxes needed
+        return nfull
+    
+    nfull = populatelists()
     results = project.runsim(name)
     gui.pygui(results)
     
@@ -138,12 +146,12 @@ def manualfit(project=None, name='default', ind=0):
         for b,box in enumerate(boxes):
             if fulltypelist[b]=='meta':
                 key = fullkeylist[b]
-                pars[key].m = eval(box.text())
+                tmppars[key].m = eval(box.text())
                 print('%s.m = %s' % (key, box.text()))
             elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship':
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
-                pars[key].y[subkey] = eval(box.text())
+                tmppars[key].y[subkey] = eval(box.text())
                 print('%s.y[%s] = %s' % (key, subkey, box.text()))
             else:
                 print('NOT IMPLEMENTED %s'%fulltypelist[b])
@@ -156,28 +164,28 @@ def manualfit(project=None, name='default', ind=0):
     ## Keep the current parameters in the project; otherwise discard
     def keeppars():
         ''' Little function to reset origpars and update the project '''
-        global origpars, pars
-        origpars = pars
-        parset.pars[0] = pars
-        project.parsets[name].pars[0] = pars
+        global origpars, tmppars
+        origpars = tmppars
+        parset.pars[0] = tmppars
+        project.parsets[name].pars[0] = tmppars
         print('Parameters kept')
         return None
     
     
     def resetpars():
         ''' Reset the parameters to the last saved version '''
-        global origpars, pars
-        pars = origpars
-        parset.pars[0] = pars
+        global origpars, tmppars
+        tmppars = origpars
+        parset.pars[0] = tmppars
+        for i in range(nfull):
+            boxes[i].setText(str(fullvallist[i]))
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
         gui.update(tmpresults=results)
         return None
     
 
-    
-    
-    ## Create control panel
+    ## Set up GUI
     leftmargin = 10
     rowheight = 25
     colwidth = 450
@@ -187,8 +195,7 @@ def manualfit(project=None, name='default', ind=0):
     buttonheight = panelheight-rowheight*1.5
     buttonoffset = (panelwidth-400)/2
     boxoffset = 250+leftmargin
-    boxes = []
-    texts = []
+    
     panel = QtGui.QWidget() # Create panel widget
     panel.setGeometry(100, 100, panelwidth, panelheight)
     for i in range(nfull):
