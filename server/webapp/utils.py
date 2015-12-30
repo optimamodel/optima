@@ -348,6 +348,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
             pars=program.get('parameters', []),
+            targetpops=program.get('targetpops', []),
             active=active
         )
 
@@ -355,6 +356,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
         program_record.pars = program.get('parameters', [])
+        program_record.targetpops = program.get('targetpops', [])
         program_record.short_name = program.get('short_name', '')
         program_record.category = program.get('category', '')
         program_record.active = active

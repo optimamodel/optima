@@ -4,7 +4,7 @@ import dateutil
 from flask_restful_swagger import swagger
 from flask_restful import fields
 
-from sqlalchemy.dialects.postgresql import JSON, UUID
+from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
@@ -329,6 +329,7 @@ class ProgramsDb(db.Model):
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
+        'populations': fields.List(fields.String, attribute='targetpops'),
         'created': fields.DateTime,
         'updated': fields.DateTime,
     }
@@ -341,10 +342,13 @@ class ProgramsDb(db.Model):
     short_name = db.Column(db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
+    targetpops = db.Column(ARRAY(db.String), default=[])
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name='', category='No category', active=False, pars=None, created=None, updated=None, id=None):
+    def __init__(self, project_id, progset_id, name, short_name='',
+            category='No category', active=False, pars=None, created=None,
+            updated=None, id=None, targetpops=[]):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -353,6 +357,7 @@ class ProgramsDb(db.Model):
         self.category = category
         self.pars = pars
         self.active = active
+        self.targetpops = targetpops
         if created:
             self.created = created
         if updated:
@@ -366,7 +371,8 @@ class ProgramsDb(db.Model):
             self.name,
             targetpars=self.pars,
             short_name=self.short_name,
-            category=self.category
+            category=self.category,
+            targetpops=self.targetpops
         )
         program_entry.id = self.id
         return program_entry
@@ -419,7 +425,7 @@ class ProgsetsDb(db.Model):
     def create_programs_from_list(self, programs):
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short_name', 'category']:
+            for field in ['name', 'short_name', 'category', 'targetpops']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(

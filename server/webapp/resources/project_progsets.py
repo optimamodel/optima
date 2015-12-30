@@ -20,6 +20,7 @@ program_parser.add_arguments({
     'category': {'required': True, 'location': 'json'},
     'active': {'type': bool, 'default': False, 'location': 'json'},
     'parameters': {'type': dict, 'action': 'append', 'dest': 'pars', 'location': 'json'},
+    'populations': {'action': 'append', 'location': 'json', 'dest': 'targetpops'},
 })
 
 
