@@ -1,5 +1,7 @@
-## Imports and globals
+## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import dcp, printv, sigfig
+from pylab import figure, close, floor, ion
+from PyQt4 import QtGui
 import gui # Need low-level functions so need to import directly
 global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
 if 1:  panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*12
@@ -13,15 +15,14 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
-    global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     
-    ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
-    from PyQt4 import QtGui
-    from pylab import figure, close, floor
+    ## Random housekeeping
+    global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     fig = figure(); close(fig) # Open and close figure...dumb, no?
+    ion() # We really need this here!
     nsigfigs = 3
     
-    ## Initialize lists
+    ## Initialize lists that do not initialize themselves
     boxes = []
     texts = []
     keylist = []
