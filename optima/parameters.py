@@ -22,9 +22,9 @@ def popgrow(exppars, tvec):
 
 def data2prev(name, short, data, index, keys, by=None, manual='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short=short, v=odict(), by=by, manual=manual) # Create structure
+    par = Constant(name=name, short=short, y=odict(), by=by, manual=manual) # Create structure
     for row,key in enumerate(keys):
-        par.v[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.y[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
     return par
 
@@ -250,17 +250,17 @@ def makeparsfromdata(data, verbose=2):
         pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
 
     # Initialize metaparameters
-    pars['force'] = Constant(name='Force-of-infection', short='force', v=odict(), by='pop', manual='pop') # Create structure
-    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', v=odict(), by='pop', manual='pop') # Create structure
+    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', manual='pop') # Create structure
+    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), by='pop', manual='pop') # Create structure
     for key in popkeys:
-        pars['force'].v[key] = 1
-        pars['inhomo'].v[key] = 0
+        pars['force'].y[key] = 1
+        pars['inhomo'].y[key] = 0
     
     # Risk-related population transitions
-    pars['transit'] = Constant(name='Transitions', short='transit', v=odict(), by='pop', manual='')
+    pars['transit'] = Constant(name='Transitions', short='transit', y=odict(), by='pop', manual='')
     for i,key1 in enumerate(popkeys):
         for j,key2 in enumerate(popkeys):
-            pars['transit'].v[(key1,key2)] = array(data['transit'])[i,j] 
+            pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
     
     
     # Sexual behavior parameters
@@ -412,28 +412,28 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=None, v=None, by=None, manual='', auto=''):
+    def __init__(self, name=None, short=None, limits=None, y=None, by=None, manual='', auto=''):
         Par.__init__(self, name, short, limits, manual, auto)
-        self.v = v # Value data, e.g. [0.3, 0.7]
+        self.y = y # y-value data, e.g. [0.3, 0.7]
         self.by = by # By pops, by none, etc.
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
-        output += '    v: %s\n'    % self.v
+        output += '    y: %s\n'    % self.y
         output += '   by: %s\n'    % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        if len(self.v)==1: # Just a simple constant
-            output = self.v
+        if len(self.y)==1: # Just a simple constant
+            output = self.y
         else: # No, it has keys, return as an array
-            keys = self.v.keys()
+            keys = self.y.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = self.v[key] # Just copy y values
+                output[pop] = self.y[key] # Just copy y values
         return output
 
 
