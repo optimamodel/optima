@@ -65,10 +65,13 @@ def manualfit(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
+    
+    ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
     from PyQt4 import QtGui
     from PyQt4.QtCore import Qt
     from matplotlib import use
     use("Qt4Agg") # This program works with Qt only
+    from pylab import figure, show
     
     ## Get the list of parameters that can be fitted
     pars = project.parsets[name].pars[0]
@@ -107,35 +110,41 @@ def manualfit(project=None, name='default', ind=0):
     nfull = len(fulllabellist) # The total number of boxes needed
     
     ## Create control panel
-    import numpy as np
-    import pylab as pl
-    fig, ax1 = pl.subplots()
-    t = np.linspace(0, 10, 200)
-    line, = ax1.plot(t, np.sin(t))
+    boxes = []
+    fig = figure() # Open figure
+    panel = QtGui.QWidget() # Create panel widget
+    for i in range(5):
+        hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
+        textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
+        hbox.addWidget(textbox) # Add the textbox to the "hbox"
+    panel.setLayout(hbox) # Add the "hbox" to the "panel"
+    root = fig.canvas.manager.window # Get window of the figure
+    dock = QtGui.QDockWidget("control", root) # Dock the widget to the window
+    root.addDockWidget(Qt.BottomDockWidgetArea, dock) # Um, and do it again
+    dock.setWidget(panel) # Yeah, and again
+    #    textbox.textChanged.connect(update)
+    
+    
+    
+#    import numpy as np
+#    import pylab as pl
+#    fig, ax1 = pl.subplots()
+#    t = np.linspace(0, 10, 200)
+#    line, = ax1.plot(t, np.sin(t))
     
     ### control panel ###
 
     
-    def update():
-        freq = float(textbox.text())
-        y = np.sin(2*np.pi*freq*t)
-        line.set_data(t, y)
-        fig.canvas.draw_idle()
+#    def update():
+#        freq = float(textbox.text())
+#        y = np.sin(2*np.pi*freq*t)
+#        line.set_data(t, y)
+#        fig.canvas.draw_idle()
     
-    root = fig.canvas.manager.window
-    panel = QtGui.QWidget()
-    hbox = QtGui.QHBoxLayout(panel)
-    textbox = QtGui.QLineEdit(parent = panel)
-    textbox.textChanged.connect(update)
-    hbox.addWidget(textbox)
-    panel.setLayout(hbox)
     
-    dock = QtGui.QDockWidget("control", root)
-    root.addDockWidget(Qt.BottomDockWidgetArea, dock)
-    dock.setWidget(panel)
     ######################
     
-    pl.show()
+    show()
 
 
 
