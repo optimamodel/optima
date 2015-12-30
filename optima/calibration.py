@@ -6,6 +6,7 @@ Functions to perform calibration.
 
 from optima import dcp, perturb, Parameterset
 from numpy import median
+global panel # For manualfit GUI
 
 
 
@@ -65,13 +66,12 @@ def manualfit(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
+    global panel
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
     from PyQt4 import QtGui
-    from PyQt4.QtCore import Qt
-    from matplotlib import use
-    use("Qt4Agg") # This program works with Qt only
-    from pylab import figure, show
+    from pylab import figure, close
+    fig = figure(); close(fig) # Open and close figure...dumb, no?
     
     ## Get the list of parameters that can be fitted
     pars = project.parsets[name].pars[0]
@@ -109,44 +109,21 @@ def manualfit(project=None, name='default', ind=0):
                 fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
     nfull = len(fulllabellist) # The total number of boxes needed
     
+    
+    ## Define update step
+    def update(obj):
+        print(obj[0])
+        print('hi!')
+        
     ## Create control panel
-#    boxes = []
-    fig = figure() # Open figure
+    boxes = []
     panel = QtGui.QWidget() # Create panel widget
-    hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
-    root = fig.canvas.manager.window # Get window of the figure
-    dock = QtGui.QDockWidget("control", root) # Dock the widget to the window
-    for i in range(20):
-        textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
-        hbox.addWidget(textbox) # Add the textbox to the "hbox"
-        panel.setLayout(hbox) # Add the "hbox" to the "panel"
-        root.addDockWidget(Qt.BottomDockWidgetArea, dock) # Um, and do it again
-        dock.setWidget(panel) # Yeah, and again
-    #    textbox.textChanged.connect(update)
-    
-    
-    
-#    import numpy as np
-#    import pylab as pl
-#    fig, ax1 = pl.subplots()
-#    t = np.linspace(0, 10, 200)
-#    line, = ax1.plot(t, np.sin(t))
-    
-    ### control panel ###
-
-    
-#    def update():
-#        freq = float(textbox.text())
-#        y = np.sin(2*np.pi*freq*t)
-#        line.set_data(t, y)
-#        fig.canvas.draw_idle()
-    
-    
-    ######################
-    
-    show()
-
-
+    panel.setGeometry(300, 300, 250, 150)
+    for i in range(3):
+        boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
+        boxes[-1].move(50, 50*(i+1))
+        boxes[-1].textChanged.connect(update) 
+    panel.show()
 
 
 
