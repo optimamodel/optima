@@ -69,8 +69,8 @@ def manualfit(project=None, name='default', ind=0):
     global panel
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
-    from PyQt4 import QtGui, Qt
-    from pylab import figure, close, ceil, floor
+    from PyQt4 import QtGui
+    from pylab import figure, close, floor
     fig = figure(); close(fig) # Open and close figure...dumb, no?
     
     ## Get the list of parameters that can be fitted
@@ -116,24 +116,27 @@ def manualfit(project=None, name='default', ind=0):
             print('I am box and my value is %s' % (box.text()))
     
     ## Create control panel
+    leftmargin = 10
     rowheight = 25
     colwidth = 450
     ncols = 2
     boxes = []
     texts = []
-    boxoffset = 250
+    boxoffset = 250+leftmargin
     panel = QtGui.QWidget() # Create panel widget
-    panel.setGeometry(100, 100, colwidth*ncols, rowheight*(nfull/ncols+1))
+    panel.setGeometry(100, 100, colwidth*ncols, rowheight*(nfull/ncols+2))
     for i in range(nfull):
-        row = (i % ceil(nfull/2))+1
+        row = (i % floor((nfull+1)/2))+1
         col = floor(2*i/nfull)
+        print([i, row,col])
         
         texts.append(QtGui.QLabel(parent = panel))
         texts[-1].setText(fulllabellist[i])
-        texts[-1].move(colwidth*col, rowheight*row)
+        texts[-1].move(leftmargin+colwidth*col, rowheight*row)
         
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
+        boxes[-1].setText(str(fullvallist[i]))
         boxes[-1].textChanged.connect(update)
     panel.show()
 
