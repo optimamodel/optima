@@ -117,16 +117,16 @@ def manualfit(project=None, name='default', ind=0):
     
     ## Create control panel
     rowheight = 25
-    colwidth = 300
+    colwidth = 450
     ncols = 2
     boxes = []
     texts = []
-    boxoffset = 400
+    boxoffset = 250
     panel = QtGui.QWidget() # Create panel widget
-    panel.setGeometry(100, 100, colwidth*ncols+boxoffset+50, rowheight*(nfull/ncols+1))
+    panel.setGeometry(100, 100, colwidth*ncols, rowheight*(nfull/ncols+1))
     for i in range(nfull):
         row = (i % ceil(nfull/2))+1
-        col = floor(2*i/nfull)+1
+        col = floor(2*i/nfull)
         
         texts.append(QtGui.QLabel(parent = panel))
         texts[-1].setText(fulllabellist[i])
