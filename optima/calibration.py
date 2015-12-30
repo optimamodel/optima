@@ -177,8 +177,8 @@ def manualfit(project=None, name='default', ind=0):
         global origpars, tmppars
         tmppars = origpars
         parset.pars[0] = tmppars
-        for i in range(nfull):
-            boxes[i].setText(str(fullvallist[i]))
+        populatelists()
+        for i in range(nfull): boxes[i].setText(str(fullvallist[i]))
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
         gui.update(tmpresults=results)
