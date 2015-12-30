@@ -84,11 +84,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
     
     def closewindows():
         ''' Close all three open windows '''
-        global panel, plotfig, panelfig
-        try: close(plotfig)
-        except: pass
-        try: close(panelfig)
-        except: pass
+        gui.closegui()
         panel.close()
     
     
