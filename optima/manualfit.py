@@ -111,7 +111,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[0] = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
             else:
                 print('Parameter type "%s" not implemented!' % fulltypelist[b])
         
