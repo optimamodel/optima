@@ -162,12 +162,69 @@ def browser(results, which=None, doplot=True):
     ## Specify the div style, and create the HTML template we'll add the data to
     divstyle = "float: left"
     html = '''
-    <html><body>
+    <html>
+    <head><script src="https://code.jquery.com/jquery-1.11.3.min.js"></script></head>
+    <body>
     !MAKE DIVS!
     <script>function mpld3_load_lib(url, callback){var s = document.createElement('script'); s.src = url; s.async = true; s.onreadystatechange = s.onload = callback; s.onerror = function(){console.warn("failed to load library " + url);}; document.getElementsByTagName("head")[0].appendChild(s)} mpld3_load_lib("https://mpld3.github.io/js/d3.v3.min.js", function(){mpld3_load_lib("https://mpld3.github.io/js/mpld3.v0.3git.js", function(){
     !DRAW FIGURES!
     })});
-    </script></body></html>
+    </script>
+    <script>
+    function move_year() {
+        console.log('trying to move year');
+        var al = $('.mpld3-baseaxes').length;
+        var dl = $('div.fig').length
+        if (al === dl) {
+            $('.mpld3-baseaxes > text').each(function() {
+                var value = $(this).text();
+                if (value === 'Year') {
+                    console.log('found year');
+                    $(this).attr('y', parseInt($(this).attr('y'))+10);
+                    console.log($(this).attr('y'));
+                }
+            });
+        } else {
+            setTimeout(move_year, 150);
+        }
+    }
+    function format_xaxis() {
+        var axes = $('.mpld3-xaxis');
+        var al = axes.length;
+        var dl = $('div.fig').length;
+        if (al === dl) {
+            $(axes).find('g.tick > text').each(function() {
+                $(this).text($(this).text().replace(',',''));
+            });
+        } else {
+            setTimeout(format_xaxis, 150);
+        }
+    }
+    function add_lines_to_legends() {
+        console.log('adding lines to legends');
+        var al = $('.mpld3-baseaxes').length;
+        var dl = $('div.fig').length
+        if (al === dl) {
+            $('div.fig').each(function() {
+                var paths = $(this).find('.mpld3-baseaxes > text');
+                if (paths) {
+                    var legend_length = paths.length - 2;
+                    var lines = $(this).find('.mpld3-axes > path');
+                    var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+                    $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+                }
+            });
+        } else {
+            setTimeout(add_lines_to_legends, 150);
+        }
+    }
+    $(document).ready(function() {
+        format_xaxis();
+        move_year();
+        add_lines_to_legends();
+    });
+    </script>
+    </body></html>
     '''
 
     ## Create the figures to plot
@@ -185,7 +242,7 @@ def browser(results, which=None, doplot=True):
     divstr = ''
     jsonstr = ''
     for p in range(nplots):
-        divstr += '<div style="%s" id="fig%i"></div>\n' % (divstyle, p) # Add div information: key is unique ID for each figure
+        divstr += '<div style="%s" id="fig%i" class="fig"></div>\n' % (divstyle, p) # Add div information: key is unique ID for each figure
         jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p]) # Add the JSON representation of each figure -- THIS IS KEY!
     html = html.replace('!MAKE DIVS!',divstr) # Populate div information
     html = html.replace('!DRAW FIGURES!',jsonstr) # Populate figure information
