@@ -1,10 +1,10 @@
 ## Imports and globals
-from optima import dcp
+from optima import dcp, printv
 import gui # Need low-level functions so need to import directly
 global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
 if 1:  panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*12
 
-def manualgui(project=None, name='default', ind=0):
+def manualgui(project=None, name='default', ind=0, verbose=4):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -29,7 +29,6 @@ def manualgui(project=None, name='default', ind=0):
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
-    print(parset)
     tmppars = parset.pars[0]
     origpars = dcp(tmppars)
 
@@ -64,8 +63,15 @@ def manualgui(project=None, name='default', ind=0):
                     fulltypelist.append(typelist[k])
                     fullvallist.append(tmppars[key].y[subkey])
                     fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
+            elif typelist[k]=='exp':
+                for subkey in tmppars[key].p.keys():
+                    fullkeylist.append(key)
+                    fullsubkeylist.append(subkey)
+                    fulltypelist.append(typelist[k])
+                    fullvallist.append(tmppars[key].p[subkey])
+                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             else:
-                print('NOT IMPLEMENTED')
+                print('NOT IMPLEMENTED (%s)' % typelist[k])
     
     populatelists()
     nfull = len(fulllabellist) # The total number of boxes needed
@@ -91,17 +97,21 @@ def manualgui(project=None, name='default', ind=0):
         
         ## Loop over all parameters and update them
         for b,box in enumerate(boxes):
-            if fulltypelist[b]=='meta':
+            if fulltypelist[b]=='meta': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].m = eval(box.text())
-                print('%s.m = %s' % (key, box.text()))
-            elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship':
+                printv('%s.m = %s' % (key, box.text()), 4, verbose=verbose)
+            elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship': # Populations or partnerships
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].y[subkey] = eval(box.text())
-                print('%s.y[%s] = %s' % (key, subkey, box.text()))
+                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+            elif fulltypelist[b]=='exp': # Population growth
+                key = fullkeylist[b]
+                tmppars[key].p = eval(box.text())
+                printv('%s.p = %s' % (key, box.text()), 4, verbose=verbose)
             else:
-                print('NOT IMPLEMENTED %s' % fulltypelist[b])
+                print('Parameter type "%s" not implemented!' % fulltypelist[b])
         
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
