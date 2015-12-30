@@ -144,7 +144,7 @@ def manualfit(project=None, name='default', ind=0):
         
         project.parsets[name].pars[0] = pars
         results = project.runsim(name)
-        gui.update()
+        gui.update(tmpresults=results)
         
         
     

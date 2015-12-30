@@ -34,9 +34,10 @@ def getchecked(check=None):
     return ischecked
     
     
-def update(event=None):
+def update(event=None, tmpresults=None):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
+    if tmpresults is not None: results = tmpresults
 
     # If figure exists, get size, then close it
     try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
