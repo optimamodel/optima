@@ -111,15 +111,9 @@ def manualfit(project=None, name='default', ind=0):
     
     
     ## Define update step
-    def update(box, val):
-        print('I am box %i and my value is %s' % (box, val))
-    
-    def makeupdate(    
-    
-    updatefuncs = []
-    for i in range(3):
-        updatefuncs.append(update)
-    
+    def update(val):
+        for box in boxes:
+            print('I am box and my value is %s' % (box.text()))
     
     ## Create control panel
     boxes = []
