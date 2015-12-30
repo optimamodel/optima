@@ -87,15 +87,20 @@ def manualfit(project=None, name='default', ind=0):
     fullsubkeylist = [] # e.g. "fsw"
     fulltypelist = [] # e.g. "pop"
     fullvallist = [] # e.g. 0.3
+    print('STARTING LOOP')
     for k in range(nkeys):
+        print(k)
         if typelist[k]=='meta':
+            print('  META')
             fullkeylist.append(keylist[k])
             fullsubkeylist.append(None)
             fulltypelist.append(typelist[k])
             fullvallist.append(pars[key].m)
             fulllabellist.append(namelist[k] + ' -- ' + 'metaparameter')
         elif typelist[k]=='pop' or typelist[k]=='pship':
+            print('  POP/PSHIP')
             for subkey in pars[key].y.keys():
+                print('      HI %i' % len(fullkeylist))
                 fullkeylist.append(keylist[k])
                 fullsubkeylist.append(subkey)
                 fulltypelist.append(typelist[k])
