@@ -7,8 +7,8 @@ Functions to perform calibration.
 from optima import dcp, perturb, Parameterset
 import gui
 from numpy import median
-global panel, panelfig, plotfig, results # For manualfit GUI
-panel, panelfig, plotfig, results = [None]*4
+global panel, panelfig, plotfig, results, origpars, pars # For manualfit GUI
+panel, panelfig, plotfig, results, origpars, pars = [None]*6
 
 
 def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
@@ -75,7 +75,9 @@ def manualfit(project=None, name='default', ind=0):
     fig = figure(); close(fig) # Open and close figure...dumb, no?
     
     ## Get the list of parameters that can be fitted
-    pars = project.parsets[name].pars[0]
+    parset = dcp(project.parsets[name])
+    pars = parset.pars[0]
+    origpars = dcp(pars)
     keylist = []
     namelist = []
     typelist = [] # Valid types are meta, pop, exp
@@ -115,6 +117,8 @@ def manualfit(project=None, name='default', ind=0):
     results = project.runsim(name)
     gui.pygui(results)
     
+    
+    
     def closewindows():
         ''' Close all three open windows '''
         global panel, plotfig, panelfig
@@ -127,7 +131,9 @@ def manualfit(project=None, name='default', ind=0):
     
     ## Define update step
     def update():
+        ''' Update GUI with new results '''
         global results
+        
         ## Loop over all parameters and update them
         for b,box in enumerate(boxes):
             if fulltypelist[b]=='meta':
@@ -142,12 +148,31 @@ def manualfit(project=None, name='default', ind=0):
             else:
                 print('NOT IMPLEMENTED %s'%fulltypelist[b])
         
-        project.parsets[name].pars[0] = pars
-        results = project.runsim(name)
+        simparslist = parset.interp()
+        results = project.runsim(simpars=simparslist)
         gui.update(tmpresults=results)
         
-        
     
+    ## Keep the current parameters in the project; otherwise discard
+    def keeppars():
+        ''' Little function to reset origpars and update the project '''
+        global origpars, pars
+        origpars = pars
+        parset.pars[0] = pars
+        project.parsets[name].pars[0] = pars
+        print('Parameters kept')
+        return None
+    
+    
+    def resetpars():
+        ''' Reset the parameters to the last saved version '''
+        global origpars, pars
+        pars = origpars
+        parset.pars[0] = pars
+        simparslist = parset.interp()
+        results = project.runsim(simpars=simparslist)
+        gui.update(tmpresults=results)
+        return None
     
 
     
@@ -159,9 +184,11 @@ def manualfit(project=None, name='default', ind=0):
     ncols = 2
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
+    buttonheight = panelheight-rowheight*1.5
+    buttonoffset = (panelwidth-400)/2
+    boxoffset = 250+leftmargin
     boxes = []
     texts = []
-    boxoffset = 250+leftmargin
     panel = QtGui.QWidget() # Create panel widget
     panel.setGeometry(100, 100, panelwidth, panelheight)
     for i in range(nfull):
@@ -175,16 +202,18 @@ def manualfit(project=None, name='default', ind=0):
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
         boxes[-1].setText(str(fullvallist[i]))
-        boxes[-1].textChanged.connect(update)
+        boxes[-1].returnPressed.connect(update)
     
-    savebutton  = QtGui.QPushButton('Save', parent=panel)
+    keepbutton  = QtGui.QPushButton('Keep', parent=panel)
     resetbutton = QtGui.QPushButton('Reset', parent=panel)
     closebutton = QtGui.QPushButton('Close', parent=panel)
-    buttonheight = panelheight-rowheight*1.5
-    buttonoffset = (panelwidth-400)/2
-    savebutton.move(0+buttonoffset, buttonheight)
+    
+    keepbutton.move(0+buttonoffset, buttonheight)
     resetbutton.move(200+buttonoffset, buttonheight)
     closebutton.move(400+buttonoffset, buttonheight)
+    
+    keepbutton.clicked.connect(keeppars)
+    resetbutton.clicked.connect(resetpars)
     closebutton.clicked.connect(closewindows)
     panel.show()
 
