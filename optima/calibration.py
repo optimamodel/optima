@@ -72,9 +72,7 @@ def manualfit(project=None, name='default', ind=0):
     namelist = []
     typelist = [] # Valid types are meta, pop, exp
     for key in pars.keys():
-        print(key)
         if hasattr(pars[key],'manual'): # Don't worry if it doesn't work, not everything in pars is actually a parameter
-            print(pars[key].manual)
             if pars[key].manual is not '':
                 keylist.append(key) # e.g. "initprev"
                 namelist.append(pars[key].name) # e.g. "HIV prevalence"
@@ -87,27 +85,22 @@ def manualfit(project=None, name='default', ind=0):
     fullsubkeylist = [] # e.g. "fsw"
     fulltypelist = [] # e.g. "pop"
     fullvallist = [] # e.g. 0.3
-    print('STARTING LOOP')
     for k in range(nkeys):
         key = keylist[k]
         if typelist[k]=='meta':
-            print('  META %s %i' % (key, len(fullkeylist)))
             fullkeylist.append(key)
             fullsubkeylist.append(None)
             fulltypelist.append(typelist[k])
             fullvallist.append(pars[key].m)
-            fulllabellist.append(namelist[k] + ' -- ' + 'metaparameter')
+            fulllabellist.append(namelist[k] + '(meta)')
         elif typelist[k]=='pop' or typelist[k]=='pship':
             for subkey in pars[key].y.keys():
-                print('      POP/PSHIP %s %s %i' % (key, subkey,len(fullkeylist)))
                 fullkeylist.append(key)
                 fullsubkeylist.append(subkey)
                 fulltypelist.append(typelist[k])
                 fullvallist.append(pars[key].y[subkey])
                 fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             
-        
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     ## 
     
