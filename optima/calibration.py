@@ -115,6 +115,15 @@ def manualfit(project=None, name='default', ind=0):
     results = project.runsim(name)
     gui.pygui(results)
     
+    def closewindows():
+        ''' Close all three open windows '''
+        global panel, plotfig, panelfig
+        try: close(plotfig)
+        except: pass
+        try: close(panelfig)
+        except: pass
+        panel.close()
+    
     
     ## Define update step
     def update():
@@ -133,19 +142,14 @@ def manualfit(project=None, name='default', ind=0):
             else:
                 print('NOT IMPLEMENTED %s'%fulltypelist[b])
         
+        project.parsets[name].pars[0] = pars
         results = project.runsim(name)
         gui.update()
         
         
     
     
-    def closewindows():
-        global panel, plotfig, panelfig
-        try: close(plotfig)
-        except: pass
-        try: close(panelfig)
-        except: pass
-        panel.close()
+
     
     
     ## Create control panel

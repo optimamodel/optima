@@ -83,6 +83,7 @@ if 'manualfit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
+    P.parsets[0].pars[0]['force'].y['MSM'] = 0.1 # TMP
     P.manualfit(orig='default', name='manual')
     
     done(t)
