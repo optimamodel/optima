@@ -54,15 +54,20 @@ def printarr(arr, arrformat='%0.2f  '):
 
 def sigfig(x, sigfigs=3):
     """ Return a string representation of variable x with sigfigs number of significant figures """
-    from numpy import log10, floor
-    magnitude = floor(log10(abs(x)))
-    factor = 10**(sigfigs-magnitude-1)
-    x = round(x*factor)/float(factor)
-    digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
-    decimals = int(max(0,-magnitude+sigfigs-1))
-    strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
-    string = strformat % x
-    return string
+    try:
+        if x==0: return '0'
+        from numpy import log10, floor
+        magnitude = floor(log10(abs(x)))
+        factor = 10**(sigfigs-magnitude-1)
+        x = round(x*factor)/float(factor)
+        digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+        decimals = int(max(0,-magnitude+sigfigs-1))
+        strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+        string = strformat % x
+        return string
+    except:
+        return str(x)
+    
 
     
 

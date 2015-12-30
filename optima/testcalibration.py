@@ -12,7 +12,8 @@ Version: 2015dec29 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'sensitivity',
+#'sensitivity',
+'manualfit',
 ]
 
 
@@ -64,11 +65,27 @@ if 'sensitivity' in tests:
     P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
     results = P.runsim('sensitivity')
     
-    from gui import gui
-    gui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    from gui import pygui
+    pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
+
+
+
+
+
+## Manual calibration test
+if 'manualfit' in tests:
+    t = tic()
+
+    print('Running manual calibration test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test7pops.xlsx')
+    P.manualfit(orig='default', name='manual')
+    
+    done(t)
 
 
 
