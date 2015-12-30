@@ -63,15 +63,8 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
                     fulltypelist.append(typelist[k])
                     fullvallist.append(tmppars[key].y[subkey])
                     fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-            elif typelist[k]=='exp':
-                for subkey in tmppars[key].p.keys():
-                    fullkeylist.append(key)
-                    fullsubkeylist.append(subkey)
-                    fulltypelist.append(typelist[k])
-                    fullvallist.append(tmppars[key].p[subkey])
-                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             else:
-                print('NOT IMPLEMENTED (%s)' % typelist[k])
+                print('Parameter type "%s" not implemented!' % typelist[k])
     
     populatelists()
     nfull = len(fulllabellist) # The total number of boxes needed
@@ -106,10 +99,6 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
                 subkey = fullsubkeylist[b]
                 tmppars[key].y[subkey] = eval(box.text())
                 printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
-            elif fulltypelist[b]=='exp': # Population growth
-                key = fullkeylist[b]
-                tmppars[key].p = eval(box.text())
-                printv('%s.p = %s' % (key, box.text()), 4, verbose=verbose)
             else:
                 print('Parameter type "%s" not implemented!' % fulltypelist[b])
         
