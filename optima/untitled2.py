@@ -11,7 +11,7 @@ from PyQt4.QtCore import Qt
 from matplotlib import use
 use("Qt4Agg") # This program works with Qt only
 
-#fig = figure() # Open figure
+fig = figure() # Open figure
 panel = QtGui.QWidget() # Create panel widget
  
 #hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
