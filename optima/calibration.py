@@ -70,7 +70,7 @@ def manualfit(project=None, name='default', ind=0):
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
     from PyQt4 import QtGui
-    from pylab import figure, close
+    from pylab import figure, close, ceil, floor
     fig = figure(); close(fig) # Open and close figure...dumb, no?
     
     ## Get the list of parameters that can be fitted
@@ -112,16 +112,21 @@ def manualfit(project=None, name='default', ind=0):
     
     ## Define update step
     def update(val):
-        for box in boxes:
+        for i,box in enumerate(boxes):
             print('I am box and my value is %s' % (box.text()))
     
     ## Create control panel
+    rowheight = 25
+    colwidth = 300
+    ncols = 2
     boxes = []
     panel = QtGui.QWidget() # Create panel widget
-    panel.setGeometry(300, 300, 250, 150)
-    for i in range(3):
+    panel.setGeometry(100, 100, colwidth*ncols, rowheight*(nfull/ncols+1))
+    for i in range(nfull):
+        row = (i % ceil(nfull/2))+1
+        col = floor(2*i/nfull)
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
-        boxes[-1].move(50, 50*(i+1))
+        boxes[-1].move(300*col, rowheight*row)
         boxes[-1].textChanged.connect(update)
     panel.show()
 
