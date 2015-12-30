@@ -4,7 +4,8 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import dcp, perturb, Parameterset, GUI
+from optima import dcp, perturb, Parameterset
+import gui
 from numpy import median
 global panel, panelfig, plotfig, results # For manualfit GUI
 panel, panelfig, plotfig, results = [None]*4
@@ -112,7 +113,7 @@ def manualfit(project=None, name='default', ind=0):
     nfull = len(fulllabellist) # The total number of boxes needed
     
     results = project.runsim(name)
-    GUI.gui(results)
+    gui.pygui(results)
     
     
     ## Define update step
@@ -133,7 +134,7 @@ def manualfit(project=None, name='default', ind=0):
                 print('NOT IMPLEMENTED %s'%fulltypelist[b])
         
         results = project.runsim(name)
-        GUI.update()
+        gui.update()
         
         
     

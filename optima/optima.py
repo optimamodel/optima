@@ -37,9 +37,7 @@ from project import Project, version # Project class
 
 
 ## Load optional plotting functions
-try: 
-    import gui as GUI
-    from gui import gui # Handle the Python plotting
+try: from gui import pygui # Handle the Python plotting
 except: pass
 try: from gui import browser # Handle the browser-based plotting
 except: pass

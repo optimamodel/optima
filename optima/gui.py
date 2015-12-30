@@ -63,9 +63,9 @@ def update(event=None):
 
 
 
-def gui(tmpresults, which=None):
+def pygui(tmpresults, which=None):
     '''
-    GUI
+    PYGUI
     
     Make a Python GUI for plotting results. Opens up a control window and a plotting window,
     and when "Update" is clicked, will clear the contents of the plotting window and replot.

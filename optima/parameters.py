@@ -475,7 +475,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo']
-        modelkeys = ['initprev', 'popsize', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
+        modelkeys = ['initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
         if keys is None: keys = modelkeys
         
         simparslist = []
@@ -496,10 +496,7 @@ class Parameterset(object):
                     errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                     raise Exception(errormsg)
     
-            
-            ## Metaparameters -- convert from odict to array -- WARNING, is this a good idea?
-            simpars['force'] = array(simpars['force'][:])
-            simpars['inhomo'] = array(simpars['inhomo'][:])
+            # Wrap up
             simparslist.append(simpars)
         
         printv('...done making model parameters.', 2, verbose)

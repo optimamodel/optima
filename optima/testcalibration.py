@@ -65,8 +65,8 @@ if 'sensitivity' in tests:
     P.sensitivity(orig='default', name='sensitivity', n=10, span=0.5)
     results = P.runsim('sensitivity')
     
-    from gui import gui
-    gui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+    from gui import pygui
+    pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
