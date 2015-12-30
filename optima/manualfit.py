@@ -7,16 +7,8 @@ Created on Wed Dec 30 00:31:26 2015
 
 from optima import dcp
 import gui
-global panel, panelfig, plotfig, results, origpars, tmppars # For manualfit GUI
-panel, panelfig, plotfig, results, origpars, tmppars = [None]*6
-
-global panel, origpars, tmppars
-
-fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
-fullkeylist = [] # e.g. "initprev"
-fullsubkeylist = [] # e.g. "fsw"
-fulltypelist = [] # e.g. "pop"
-fullvallist = [] # e.g. 0.3
+global panel, panelfig, plotfig, results, origpars, tmppars, project, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
+if 1:  panel, panelfig, plotfig, results, origpars, tmppars, project, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*13
 
 def manualgui(project=None, name='default', ind=0):
     ''' 
@@ -27,7 +19,7 @@ def manualgui(project=None, name='default', ind=0):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
-    global panel, origpars, tmppars
+    global panel, panelfig, plotfig, results, origpars, tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
     from PyQt4 import QtGui
@@ -56,6 +48,7 @@ def manualgui(project=None, name='default', ind=0):
     
     ## Convert to the full list of parameters to be fitted
     def populatelists():
+        global tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
         fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
         fullkeylist = [] # e.g. "initprev"
         fullsubkeylist = [] # e.g. "fsw"
@@ -99,7 +92,7 @@ def manualgui(project=None, name='default', ind=0):
     ## Define update step
     def update():
         ''' Update GUI with new results '''
-        global results
+        global project, results, tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
         
         ## Loop over all parameters and update them
         for b,box in enumerate(boxes):
@@ -113,7 +106,7 @@ def manualgui(project=None, name='default', ind=0):
                 tmppars[key].y[subkey] = eval(box.text())
                 print('%s.y[%s] = %s' % (key, subkey, box.text()))
             else:
-                print('NOT IMPLEMENTED %s'%fulltypelist[b])
+                print('NOT IMPLEMENTED %s' % fulltypelist[b])
         
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
@@ -123,7 +116,7 @@ def manualgui(project=None, name='default', ind=0):
     ## Keep the current parameters in the project; otherwise discard
     def keeppars():
         ''' Little function to reset origpars and update the project '''
-        global origpars, tmppars
+        global origpars, tmppars, project, parset
         origpars = tmppars
         parset.pars[0] = tmppars
         project.parsets[name].pars[0] = tmppars
@@ -133,7 +126,7 @@ def manualgui(project=None, name='default', ind=0):
     
     def resetpars():
         ''' Reset the parameters to the last saved version '''
-        global origpars, tmppars
+        global origpars, tmppars, project, parset
         tmppars = origpars
         parset.pars[0] = tmppars
         populatelists()
