@@ -111,10 +111,16 @@ def manualfit(project=None, name='default', ind=0):
     
     
     ## Define update step
-    def update(obj):
-        print(obj[0])
-        print('hi!')
-        
+    def update(box, val):
+        print('I am box %i and my value is %s' % (box, val))
+    
+    def makeupdate(    
+    
+    updatefuncs = []
+    for i in range(3):
+        updatefuncs.append(update)
+    
+    
     ## Create control panel
     boxes = []
     panel = QtGui.QWidget() # Create panel widget
@@ -122,7 +128,7 @@ def manualfit(project=None, name='default', ind=0):
     for i in range(3):
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(50, 50*(i+1))
-        boxes[-1].textChanged.connect(update) 
+        boxes[-1].textChanged.connect(update)
     panel.show()
 
 
