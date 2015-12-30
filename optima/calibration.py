@@ -57,6 +57,11 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
+fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
+fullkeylist = [] # e.g. "initprev"
+fullsubkeylist = [] # e.g. "fsw"
+fulltypelist = [] # e.g. "pop"
+fullvallist = [] # e.g. 0.3
 
 def manualfit(project=None, name='default', ind=0):
     ''' 
@@ -80,11 +85,6 @@ def manualfit(project=None, name='default', ind=0):
     keylist = []
     namelist = []
     typelist = [] # Valid types are meta, pop, exp
-    fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
-    fullkeylist = [] # e.g. "initprev"
-    fullsubkeylist = [] # e.g. "fsw"
-    fulltypelist = [] # e.g. "pop"
-    fullvallist = [] # e.g. 0.3
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
@@ -101,6 +101,11 @@ def manualfit(project=None, name='default', ind=0):
     
     ## Convert to the full list of parameters to be fitted
     def populatelists():
+        fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
+        fullkeylist = [] # e.g. "initprev"
+        fullsubkeylist = [] # e.g. "fsw"
+        fulltypelist = [] # e.g. "pop"
+        fullvallist = [] # e.g. 0.3
         for k in range(nkeys):
             key = keylist[k]
             if typelist[k]=='meta':
@@ -118,10 +123,9 @@ def manualfit(project=None, name='default', ind=0):
                     fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             else:
                 print('NOT IMPLEMENTED')
-        nfull = len(fulllabellist) # The total number of boxes needed
-        return nfull
     
-    nfull = populatelists()
+    populatelists()
+    nfull = len(fulllabellist) # The total number of boxes needed
     results = project.runsim(name)
     gui.pygui(results)
     
