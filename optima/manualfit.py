@@ -100,17 +100,17 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
         for b,box in enumerate(boxes):
             if fulltypelist[b]=='meta': # Metaparameters
                 key = fullkeylist[b]
-                tmppars[key].m = eval(box.text())
+                tmppars[key].m = eval(str(box.text()))
                 printv('%s.m = %s' % (key, box.text()), 4, verbose=verbose)
             elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship': # Populations or partnerships
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
-                tmppars[key].y[subkey] = eval(box.text())
+                tmppars[key].y[subkey] = eval(str(box.text()))
                 printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
-                tmppars[key].p[subkey][0] = eval(box.text())
+                tmppars[key].p[subkey][0] = eval(str(box.text()))
                 printv('%s.p[0] = %s' % (key, box.text()), 4, verbose=verbose)
             else:
                 print('Parameter type "%s" not implemented!' % fulltypelist[b])

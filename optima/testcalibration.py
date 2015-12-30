@@ -12,8 +12,8 @@ Version: 2015dec29 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'sensitivity',
-#'manualfit',
+#'sensitivity',
+'manualfit',
 ]
 
 
