@@ -69,7 +69,7 @@ def manualfit(project=None, name='default', ind=0):
     global panel
     
     ## Set up imports for plotting...need Qt since matplotlib doesn't support edit boxes, grr!
-    from PyQt4 import QtGui
+    from PyQt4 import QtGui, Qt
     from pylab import figure, close, ceil, floor
     fig = figure(); close(fig) # Open and close figure...dumb, no?
     
@@ -99,7 +99,7 @@ def manualfit(project=None, name='default', ind=0):
             fullsubkeylist.append(None)
             fulltypelist.append(typelist[k])
             fullvallist.append(pars[key].m)
-            fulllabellist.append(namelist[k] + '(meta)')
+            fulllabellist.append(namelist[k] + ' (meta)')
         elif typelist[k]=='pop' or typelist[k]=='pship':
             for subkey in pars[key].y.keys():
                 fullkeylist.append(key)
@@ -120,13 +120,20 @@ def manualfit(project=None, name='default', ind=0):
     colwidth = 300
     ncols = 2
     boxes = []
+    texts = []
+    boxoffset = 400
     panel = QtGui.QWidget() # Create panel widget
-    panel.setGeometry(100, 100, colwidth*ncols, rowheight*(nfull/ncols+1))
+    panel.setGeometry(100, 100, colwidth*ncols+boxoffset+50, rowheight*(nfull/ncols+1))
     for i in range(nfull):
         row = (i % ceil(nfull/2))+1
-        col = floor(2*i/nfull)
+        col = floor(2*i/nfull)+1
+        
+        texts.append(QtGui.QLabel(parent = panel))
+        texts[-1].setText(fulllabellist[i])
+        texts[-1].move(colwidth*col, rowheight*row)
+        
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
-        boxes[-1].move(300*col, rowheight*row)
+        boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
         boxes[-1].textChanged.connect(update)
     panel.show()
 
