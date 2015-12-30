@@ -10,16 +10,18 @@ from PyQt4 import QtGui
 from PyQt4.QtCore import Qt
 from matplotlib import use
 use("Qt4Agg") # This program works with Qt only
-#from pylab import figure, show
 
-fig = figure() # Open figure
+#fig = figure() # Open figure
 panel = QtGui.QWidget() # Create panel widget
-hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
-root = fig.canvas.manager.window # Get window of the figure
-dock = QtGui.QDockWidget("control", root) # Dock the widget to the window
-for i in range(20):
-    textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
-    hbox.addWidget(textbox) # Add the textbox to the "hbox"
-    panel.setLayout(hbox) # Add the "hbox" to the "panel"
-    root.addDockWidget(Qt.BottomDockWidgetArea, dock) # Um, and do it again
-    dock.setWidget(panel) # Yeah, and again
+ 
+#hbox = QtGui.QHBoxLayout(panel) # Create some kind of box
+#root = fig.canvas.manager.window # Get window of the figure
+#dock = QtGui.QDockWidget("control", root) # Dock the widget to the window
+#hbox.addWidget(textbox) # Add the textbox to the "hbox"
+#panel.setLayout(hbox) # Add the "hbox" to the "panel"
+#root.addDockWidget(Qt.BottomDockWidgetArea, dock) # Um, and do it again
+#dock.setWidget(panel) # Yeah, and again
+panel.setGeometry(300, 300, 250, 150)
+textbox = QtGui.QLineEdit(parent = panel) # Actually create the text edit box
+textbox.move(50, 50) 
+panel.show()
