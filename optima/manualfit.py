@@ -3,8 +3,8 @@ from optima import dcp, printv, sigfig
 from pylab import figure, close, floor, ion
 from PyQt4 import QtGui
 import gui # Need low-level functions so need to import directly
-global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
-if 1:  panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*12
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*10
 
 def manualgui(project=None, name='default', ind=0, verbose=4):
     ''' 
@@ -17,7 +17,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
     '''
     
     ## Random housekeeping
-    global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
+    global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
     fig = figure(); close(fig) # Open and close figure...dumb, no?
     ion() # We really need this here!
     nsigfigs = 3
