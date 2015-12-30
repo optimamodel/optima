@@ -32,12 +32,15 @@ from results import Result, Resultset # Result and Results classes
 from model import model # The thing that actually runs the model
 from programs import Program, Programset # Define programs
 from makeplots import epiplot # Create the plots
-from calibration import sensitivity, manualfit, autofit # Calibration functions
-from project import Project, version # Project class
-
+from calibration import sensitivity, autofit # Calibration functions
 
 ## Load optional plotting functions
 try: from gui import pygui # Handle the Python plotting
-except: pass
+except: pygui = 'Import failed'
 try: from gui import browser # Handle the browser-based plotting
-except: pass
+except: browser = 'Import failed'
+try: from manualfit import manualgui # Do manual fitting
+except: manualgui = 'Import failed'
+
+## Finally, import the Project class that ties everything together
+from project import Project, version # Project class
