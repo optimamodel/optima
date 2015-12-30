@@ -107,13 +107,27 @@ def manualfit(project=None, name='default', ind=0):
                 fulltypelist.append(typelist[k])
                 fullvallist.append(pars[key].y[subkey])
                 fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
+        else:
+            print('NOT IMPLEMENTED')
     nfull = len(fulllabellist) # The total number of boxes needed
     
     
     ## Define update step
-    def update(val):
-        for i,box in enumerate(boxes):
-            print('I am box and my value is %s' % (box.text()))
+    def update():
+        
+        ## Loop over all parameters and update them
+        for b,box in enumerate(boxes):
+            if fulltypelist[b]=='meta':
+                key = fullkeylist[b]
+                pars[key].m = eval(box.text())
+                print('%s.m = %s' % (key, box.text()))
+            elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship':
+                key = fullkeylist[b]
+                subkey = fullsubkeylist[b]
+                pars[key].y[subkey] = eval(box.text())
+                print('%s.y[%s] = %s' % (key, subkey, box.text()))
+            else:
+                print('NOT IMPLEMENTED %s'%fulltypelist[b])
     
     ## Create control panel
     leftmargin = 10
@@ -128,7 +142,6 @@ def manualfit(project=None, name='default', ind=0):
     for i in range(nfull):
         row = (i % floor((nfull+1)/2))+1
         col = floor(2*i/nfull)
-        print([i, row,col])
         
         texts.append(QtGui.QLabel(parent = panel))
         texts[-1].setText(fulllabellist[i])

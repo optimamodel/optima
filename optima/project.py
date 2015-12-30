@@ -263,7 +263,7 @@ class Project(object):
         return None
         
         
-    def manualfit(self, orig='default', name='perturb', ind=0): # orig=default or orig=0?
+    def manualfit(self, orig='default', name='manual', ind=0): # orig=default or orig=0?
         ''' Function to perform manual fitting'''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
