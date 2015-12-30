@@ -70,7 +70,7 @@ def manualfit(project=None, name='default', ind=0):
     pars = project.parsets[name].pars[0]
     keylist = []
     namelist = []
-    typelist = []
+    typelist = [] # Valid types are meta, pop, exp
     for key in pars.keys():
         try:
             if pars[key].manual is not '':
@@ -80,13 +80,28 @@ def manualfit(project=None, name='default', ind=0):
         except: pass # Don't worry if it doesn't work, not everything in pars is actually a parameter
     nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
-    labelist = [] # e.g. "Initial HIV prevalence -- FSW"
+    fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
     fullkeylist = [] # e.g. "initprev"
     fullsubkeylist = [] # e.g. "fsw"
     fulltypelist = [] # e.g. "pop"
-    for i,key in enumerate(keylist):
+    fullvallist = [] # e.g. 0.3
+    for k in range(nkeys):
+        if typelist[k]=='meta':
+            fullkeylist.append(keylist[k])
+            fullsubkeylist.append(None)
+            fulltypelist.append(typelist[k])
+            fullvallist.append(pars[key].m)
+            fulllabellist.append(namelist[k] + ' -- ' + 'metaparameter')
+        elif typelist[k]=='pop':
+            for subkey in pars[key].y.keys():
+                fullkeylist.append(keylist[k])
+                fullsubkeylist.append(subkey)
+                fulltypelist.append(typelist[k])
+                fullvallist.append(pars[key].y[subkey])
+                fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
+            
         
-    
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     ## 
     
