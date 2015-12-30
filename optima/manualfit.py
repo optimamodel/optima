@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 30 00:31:26 2015
-
-@author: cliffk
-"""
-
+## Imports and globals
 from optima import dcp
-import gui
+import gui # Need low-level functions so need to import directly
 global panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
 if 1:  panel, panelfig, plotfig, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*12
 
@@ -118,7 +112,7 @@ def manualgui(project=None, name='default', ind=0):
     def keeppars():
         ''' Little function to reset origpars and update the project '''
         global origpars, tmppars, parset
-        origpars = tmppars
+        origpars = dcp(tmppars)
         parset.pars[0] = tmppars
         project.parsets[name].pars[0] = tmppars
         print('Parameters kept')
@@ -128,7 +122,7 @@ def manualgui(project=None, name='default', ind=0):
     def resetpars():
         ''' Reset the parameters to the last saved version '''
         global origpars, tmppars, parset
-        tmppars = origpars
+        tmppars = dcp(origpars)
         parset.pars[0] = tmppars
         populatelists()
         for i in range(nfull): boxes[i].setText(str(fullvallist[i]))

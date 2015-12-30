@@ -72,7 +72,7 @@ def pygui(tmpresults, which=None):
     and when "Update" is clicked, will clear the contents of the plotting window and replot.
     
     Usage:
-        gui(results, [which])
+        pygui(results, [which])
     
     where results is the output of e.g. runsim() and which is an optional list of form e.g.
         which = ['prev-tot', 'inci-pops']

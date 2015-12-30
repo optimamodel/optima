@@ -11,9 +11,6 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     Version: 2015dec21 by cliffk
     """
     
-    print('HIIIIIIIIIIIIIIIIIIIIIIIIII')
-    print(simpars['force'])
-    
     printv('Running model...', 1, verbose, newline=False)
     if benchmark: starttime = tic()
 

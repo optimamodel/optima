@@ -69,8 +69,8 @@ if 'gui' in tests:
     t = tic()
 
     print('Running GUI test...')
-    from gui import gui
-    gui(results)
+    from gui import pygui
+    pygui(results)
     
     done(t)
 

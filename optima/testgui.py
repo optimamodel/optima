@@ -74,11 +74,11 @@ if 'gui' in tests:
     t = tic()
 
     print('Running GUI test...')
-    from optima import Project, gui
+    from optima import Project, pygui
     
     P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
-    gui(results)
+    pygui(results)
 
     done(t)
 
