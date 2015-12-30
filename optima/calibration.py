@@ -6,8 +6,8 @@ Functions to perform calibration.
 
 from optima import dcp, perturb, Parameterset
 from numpy import median
-global panel # For manualfit GUI
-
+global panel, panelfig, plotfig # For manualfit GUI
+panel, panelfig, plotfig = [None]*3
 
 
 def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
@@ -129,21 +129,32 @@ def manualfit(project=None, name='default', ind=0):
             else:
                 print('NOT IMPLEMENTED %s'%fulltypelist[b])
     
+    
+    def closewindows():
+        global panel, plotfig, panelfig
+        close(plotfig)
+        close(panelfig)
+        panel.close()
+        print('hi')
+    
+    
     ## Create control panel
     leftmargin = 10
     rowheight = 25
     colwidth = 450
     ncols = 2
+    panelwidth = colwidth*ncols
+    panelheight = rowheight*(nfull/ncols+2)+50
     boxes = []
     texts = []
     boxoffset = 250+leftmargin
     panel = QtGui.QWidget() # Create panel widget
-    panel.setGeometry(100, 100, colwidth*ncols, rowheight*(nfull/ncols+2))
+    panel.setGeometry(100, 100, panelwidth, panelheight)
     for i in range(nfull):
         row = (i % floor((nfull+1)/2))+1
         col = floor(2*i/nfull)
         
-        texts.append(QtGui.QLabel(parent = panel))
+        texts.append(QtGui.QLabel(parent=panel))
         texts[-1].setText(fulllabellist[i])
         texts[-1].move(leftmargin+colwidth*col, rowheight*row)
         
@@ -151,6 +162,16 @@ def manualfit(project=None, name='default', ind=0):
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
         boxes[-1].setText(str(fullvallist[i]))
         boxes[-1].textChanged.connect(update)
+    
+    savebutton  = QtGui.QPushButton('Save', parent=panel)
+    resetbutton = QtGui.QPushButton('Reset', parent=panel)
+    closebutton = QtGui.QPushButton('Close', parent=panel)
+    buttonheight = panelheight-rowheight*1.5
+    buttonoffset = (panelwidth-400)/2
+    savebutton.move(0+buttonoffset, buttonheight)
+    resetbutton.move(200+buttonoffset, buttonheight)
+    closebutton.move(400+buttonoffset, buttonheight)
+    closebutton.clicked.connect(closewindows)
     panel.show()
 
 
