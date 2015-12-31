@@ -148,7 +148,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $event.preventDefault();
       }
 
-      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters).result.then(
+      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters, $scope.programs).result.then(
         function (newProgram) {
           _(program).extend(newProgram);
         }
@@ -167,7 +167,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters).result.then(
+      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters, $scope.programs).result.then(
         function (newProgram) {
           $scope.programs.push(newProgram);
         }
@@ -185,8 +185,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $event.preventDefault();
       }
       var program = angular.copy(existingProgram);
+      delete program.id;
 
-      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters).result.then(
+      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters, $scope.programs).result.then(
         function (newProgram) {
           $scope.programs.push(newProgram);
         }

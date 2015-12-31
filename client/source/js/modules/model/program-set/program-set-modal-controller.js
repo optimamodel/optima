@@ -1,10 +1,13 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, availableParameters, populations, modalService) {
+  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, availableParameters, populations, programList, modalService) {
 
     // in order to not perform changes directly on the final value here is created a copy
     var programCopy = angular.copy(program);
+    if(programCopy.name && !programCopy.id) {
+      programCopy.name = programCopy.name + ' - Copy';
+    }
 
     // Initializes relevant attributes
     var initialize = function () {
@@ -69,13 +72,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    /*
-    * Finds a population entry based on the value
-    */
-    var findPopulation = function(populations, value) {
-      return _(populations).find(function(population) {
-        return areEqualArrays(population.value, value);
+    $scope.isUniqueName = function (name, programForm) {
+      var exists = _(programList).some(function(program) {
+        return program.name == name && program.id !== $scope.program.id;
       });
+      programForm.programName.$setValidity("programExists", !exists);
+      return exists;
     };
 
     $scope.initializeAllCategories = function () {
