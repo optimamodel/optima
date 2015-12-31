@@ -34,7 +34,7 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
-doplot = True
+doplot = False
 
 
 ##############################################################################
@@ -82,6 +82,7 @@ if 'makeprograms' in tests:
         
     # 2. Removing a target parameter from a program
     HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
+    HTC.addtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
 
     # 3. Add historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
@@ -104,28 +105,23 @@ if 'makeprograms' in tests:
     HTC.rmcostcovdatum(2013)
 
     # 6. Add parameters for defining cost-coverage function.
-    HTC.costcovfn.addccopar({'saturation': 0.8,
+    HTC.costcovfn.addccopar({'saturation': (0.75,0.85),
                              't': 2013.0,
-                             'unitcost_l': 30,
-                             'unitcost_u': 40})
+                             'unitcost': (30,40)})
                              
     HTC.costcovfn.addccopar({'t': 2016.0,
-                             'unitcost_l': 25,
-                             'unitcost_u': 35})
+                             'unitcost': (25,35)})
                              
     HTC.costcovfn.addccopar({'t': 2017.0,
-                             'unitcost_l': 30,
-                             'unitcost_u': 35,})
+                             'unitcost': (30,35)})
                              
-    SBCC.costcovfn.addccopar({'saturation': 0.4,
+    SBCC.costcovfn.addccopar({'saturation': (0.4,0.5),
                               't': 2013.0,
-                              'unitcost_l': 8,
-                              'unitcost_u': 12})
+                              'unitcost': (8,12)})
 
     # 7. Overwrite parameters for defining cost-coverage function.
     HTC.costcovfn.addccopar({'t': 2016.0,
-                             'unitcost_l': 20,
-                             'unitcost_u': 30},
+                             'unitcost': (20,30)},
                              overwrite=True)
 
     # 8. Remove parameters for defining cost-coverage function.
@@ -148,118 +144,118 @@ if 'makeprograms' in tests:
     # 12. Plot cost-coverage function
     if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
 
-#    print('Running make programs set test...')
-#    # Initialise with or without programs
-#    R = Programset()
-#    R = Programset(programs=[HTC,SBCC,MGT])
-#
-#    # Testing methods of programset class
-#    # 1. Adding a program
-#    R.addprograms(ART)
-#
-#    # 2. Removing a program
-#    R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
-#    
-#    # 3. See which programs are optimizable
-#    R.optimizable()
-#
-#    # 4. Produce a dictionary whose keys are populations targeted by some 
-#    #    program, and values are the programs that target them
-#    R.progs_by_targetpop()
-#
-#    # 5. Produce a dictionary whose keys are paramter types targeted by some 
-#    #    program, and values are the programs that target them
-#    R.progs_by_targetpartype()
-#
-#    # 6. Produce a dictionary whose keys are paramter types targeted by some 
-#    #    program, and values are dictionaries  whose keys are populations 
-#    #    targeted by some program, and values are the programs that target them
-#    R.progs_by_targetpar()
-#
-#    # 7. Get a vector of coverage levels corresponding to a vector of program allocations
-#    from numpy import array
-#    budget={'HTC':array([1e7,1.2e7,1.5e7]),
-#            'SBCC':array([1e6,1.2e6,1.5e6]),
-#            'MGT':array([2e5,3e5,3e5])}
-#            
-#    coverage={'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
-#              'MGT': None,
-#              'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])}
-#            
-#    R.getprogcoverage(budget=budget,
-#                      t=[2015,2016,2020],
-#                      parset=P.parsets['default'])
-#                        
-#    R.getprogbudget(coverage=coverage,
-#                      t=[2015,2016,2020],
-#                      parset=P.parsets['default'])
-#                        
-#    R.getpopcoverage(budget=budget,
-#                     t=[2015,2016,2020],
-#                     parset=P.parsets['default'])
-#
-#    # 8. Add parameters for defining coverage-outcome function.
-#    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.3,
-#                                                    't': 2013.0,
-#                                                    'HTC': 0.6,
-#                                                    'SBCC':0.1})
-#                                                                                                    
-#    R.covout['hivtest']['M 15-49'].addccopar({'intercept': 0.3,
-#                                                  't': 2016.0,
-#                                                  'HTC': 0.65})
-#                                                  
-#    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.3,
-#                                                    't': 2015.0,
-#                                                    'HTC': 0.5,
-#                                                    'SBCC':0.15})
-#                                                    
-#    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.4,
-#                                                    't': 2017.0,
-#                                                    'HTC': 0.4,
-#                                                    'SBCC':0.2})
-#
-#    R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': 0.3, # CK: this gives an error since I think it's expecting the partnership rather than the population, but changing it to the partnership gives a different error, ugh...
-#                                                    't': 2015.0,
-#                                                    'SBCC':0.15})
-#                                                    
-#    # 9. Overwrite parameters for defining coverage-outcome function.
-#    R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.35,
-#                                                    't': 2015.0,
-#                                                    'HTC': 0.45,
-#                                                    'SBCC':0.15},
-#                                                    overwrite=True)
-#
-#    # 10. Remove parameters for defining coverage-outcome function.
-#    R.covout['hivtest']['F 15-49'].rmccopar(2017)
-#    
-#    # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
-#    R.covout['hivtest']['F 15-49'].getccopar(2014)
-#
-#    # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
-#    outcomes = R.getoutcomes(coverage=coverage,
-#                                t=[2015,2016,2020],
-#                                parset=P.parsets['default'])
-#
-#    # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
-#    progparset1 = R.getparset(coverage=coverage,
-#                  t=[2015,2016,2020],
-#                  parset=P.parsets['default'],
-#                  newparsetname='progparset1')
-#
-#    # 14. Plot cost-coverage curves for all programs
-#    if doplot: R.plotallcoverage(t=[2013,2015],
-#                      parset=P.parsets['default'],
-#                      xupperlim=1e8)
-#
-#    # 15. Example use of program scenarios
-#    if doplot:
-#        P.parsets['progparset1'] = progparset1
-#        results0 = P.runsim('default')
-#        results1 = P.runsim('progparset1')
-#        from plotpeople import plotpeople
-#        plotpeople([results0, results1])
-#
-#    done(t)
+    print('Running make programs set test...')
+    # Initialise with or without programs
+    R = Programset()
+    R = Programset(programs=[HTC,SBCC,MGT])
+
+    # Testing methods of programset class
+    # 1. Adding a program
+    R.addprograms(ART)
+
+    # 2. Removing a program
+    R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
+    
+    # 3. See which programs are optimizable
+    R.optimizable()
+
+    # 4. Produce a dictionary whose keys are populations targeted by some 
+    #    program, and values are the programs that target them
+    R.progs_by_targetpop()
+
+    # 5. Produce a dictionary whose keys are paramter types targeted by some 
+    #    program, and values are the programs that target them
+    R.progs_by_targetpartype()
+
+    # 6. Produce a dictionary whose keys are paramter types targeted by some 
+    #    program, and values are dictionaries  whose keys are populations 
+    #    targeted by some program, and values are the programs that target them
+    R.progs_by_targetpar()
+
+    # 7. Get a vector of coverage levels corresponding to a vector of program allocations
+    from numpy import array
+    budget={'HTC':array([1e7,1.2e7,1.5e7]),
+            'SBCC':array([1e6,1.2e6,1.5e6]),
+            'MGT':array([2e5,3e5,3e5])}
+            
+    coverage={'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
+              'MGT': None,
+              'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])}
+            
+    R.getprogcoverage(budget=budget,
+                      t=[2015,2016,2020],
+                      parset=P.parsets['default'])
+                        
+    R.getprogbudget(coverage=coverage,
+                      t=[2015,2016,2020],
+                      parset=P.parsets['default'])
+                        
+    R.getpopcoverage(budget=budget,
+                     t=[2015,2016,2020],
+                     parset=P.parsets['default'])
+
+    # 8. Add parameters for defining coverage-outcome function.
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
+                                                    't': 2013.0,
+                                                  'HTC': (0.85,0.95),
+                                                 'SBCC': (0.35,0.45)})
+                                                                                                    
+    R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.25,0.35),
+                                                  't': 2016.0,
+                                                  'HTC': (0.9,1.)})
+                                                  
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
+                                                    't': 2015.0,
+                                                    'HTC': (0.75,0.85),
+                                                    'SBCC':(0.4,0.5)})
+                                                    
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.45),
+                                                    't': 2017.0,
+                                                    'HTC': (0.8,0.85),
+                                                    'SBCC':(0.6,0.65)})
+
+    R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': (0.3,0.35), 
+                                                    't': 2015.0,
+                                                    'SBCC':(0.45,0.55)})
+                                                    
+    # 9. Overwrite parameters for defining coverage-outcome function.
+    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.45),
+                                                    't': 2015.0,
+                                                    'HTC': (0.85,0.95),
+                                                    'SBCC':(0.55,0.65)},
+                                                    overwrite=True)
+
+    # 10. Remove parameters for defining coverage-outcome function.
+    R.covout['hivtest']['F 15-49'].rmccopar(2017)
+    
+    # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
+    R.covout['hivtest']['F 15-49'].getccopar(2014)
+
+    # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
+    outcomes = R.getoutcomes(coverage=coverage,
+                                t=[2015,2016,2020],
+                                parset=P.parsets['default'])
+
+    # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
+    progparset1 = R.getparset(coverage=coverage,
+                  t=[2015,2016,2020],
+                  parset=P.parsets['default'],
+                  newparsetname='progparset1')
+
+    # 14. Plot cost-coverage curves for all programs
+    if doplot: R.plotallcoverage(t=[2013,2015],
+                      parset=P.parsets['default'],
+                      xupperlim=1e8)
+
+    # 15. Example use of program scenarios
+    if doplot:
+        P.parsets['progparset1'] = progparset1
+        results0 = P.runsim('default')
+        results1 = P.runsim('progparset1')
+        from plotpeople import plotpeople
+        plotpeople([results0, results1])
+
+    done(t)
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))

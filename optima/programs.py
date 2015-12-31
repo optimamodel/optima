@@ -19,11 +19,11 @@ class Programset(object):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
+        self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
         self.created = today()
         self.modified = today()
-        self.default_interaction = default_interaction
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -527,13 +527,8 @@ class CCOF(object):
         ''' Add or replace parameters for cost-coverage functions'''
 
         # Fill in the missing information for cost-coverage curves
-        if ccopar.get('unitcost_l'):
-            if not ccopar.get('saturation'): ccopar['saturation'] = 1.
-            if not ccopar.get('unitcost_u'):
-                errormsg = 'You need to enter both an upper and lower bound for the unit cost'
-                raise Exception(errormsg)
-            else:
-                ccopar['unitcost_m'] = (ccopar['unitcost_l'] + ccopar['unitcost_u'])/2
+        if ccopar.get('unitcost'):
+            if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
 
         if not self.ccopars:
             for ccopartype in ccopar.keys():
@@ -586,6 +581,23 @@ class CCOF(object):
         nyrs = len(t)
         ccopars_no_t = dcp(self.ccopars)
         del ccopars_no_t['t']
+        
+        # Deal with bounds
+        if not bounds:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = (parvalue[j][0]+parvalue[j][1])/2
+        if bounds in ['upper','u','up','high','h']:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = parvalue[j][1]
+        if bounds in ['lower','l','low']:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = parvalue[j][0]
+            
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
         allt = arange(1900,2100)
@@ -604,21 +616,21 @@ class CCOF(object):
         ccopar['t'] = t
 
         # Return the median, low or high parameters if bounds are given, or a random sample if no bounds are given.
-        finalccopar = dcp(ccopar)
-        boundpars = [x for x in ccopar.keys() if x[-2:] in ['_u','_l','_m']]
-        for boundpar in boundpars: del finalccopar[boundpar]
-        boundpartype = boundpars[0][:-2]
-        if not bounds: # Return the median
-            finalccopar[boundpartype] = ccopar[boundpartype+'_m']
-        else: # Return the upper or lower, as desired
-            if bounds in ['upper','u','up','high','h']:
-                finalccopar[boundpartype] = ccopar[boundpartype+'_u']
-            elif bounds in ['lower','l','low']:
-                finalccopar[boundpartype] = ccopar[boundpartype+'_l']
+#        finalccopar = dcp(ccopar)
+#        boundpars = [x for x in ccopar.keys() if x[-2:] in ['_u','_l','_m']]
+#        for boundpar in boundpars: del finalccopar[boundpar]
+#        boundpartype = boundpars[0][:-2]
+#        if not bounds: # Return the median
+#            finalccopar[boundpartype] = ccopar[boundpartype+'_m']
+#        else: # Return the upper or lower, as desired
+#            if bounds in ['upper','u','up','high','h']:
+#                finalccopar[boundpartype] = ccopar[boundpartype+'_u']
+#            elif bounds in ['lower','l','low']:
+#                finalccopar[boundpartype] = ccopar[boundpartype+'_l']
             
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
 
-        return finalccopar
+        return ccopar
 
     def evaluate(self,x,popsize,t,toplot,inverse=False,randseed=None,bounds=None):
         if (not toplot) and (not len(x)==len(t)): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
