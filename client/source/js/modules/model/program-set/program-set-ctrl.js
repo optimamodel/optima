@@ -5,7 +5,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $timeout, modalService, predefined, availableParameters, UserManager, activeProject, projectApiService) {
 
     // Check if come project is currently open, else show error message
-    const openProject = activeProject.getProjectForCurrentUser();
+    var openProject = activeProject.getProjectForCurrentUser();
 
     var openProjectData;
     projectApiService.getActiveProject().success(function(response) {
@@ -14,6 +14,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     if(!openProject) {
       modalService.informError([{message: 'There is no project open currently.'}]);
+    } else {
+      // Get the list of saved programs from DB and set the first one as active
+      $http.get('/api/project/' + openProject.id + '/progsets' )
+        .success(function (response) {
+          if(response.progsets) {
+            $scope.programSetList = response.progsets;
+            if (response.progsets && response.progsets.length > 0) {
+              $scope.setActiveProgramSet(response.progsets[0]);
+            }
+          }
+        });
     }
 
     // Initialize scope params
@@ -23,7 +34,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.programSetList = [];
 
     // Reset programs to defaults
-    const resetPrograms = function() {
+    var resetPrograms = function() {
       $scope.programs = angular.copy(predefined.data.programs);
     };
     resetPrograms();
@@ -38,21 +49,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Get the list of saved programs from DB and set the first one as active
-    $http.get('/api/project/' + openProject.id + '/progsets' )
-      .success(function (response) {
-        if(response.progsets) {
-          $scope.programSetList = response.progsets;
-          if (response.progsets && response.progsets.length > 0) {
-            $scope.setActiveProgramSet(response.progsets[0]);
-          }
-        }
-      });
-
     // Open pop-up to add new programSet name, it will also reset programs
     $scope.addProgramSet = function () {
       var add = function (name) {
-        const addedProgramSet = {name:name};
+        var addedProgramSet = {name:name};
         $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = addedProgramSet;
         $scope.setActiveProgramSet(addedProgramSet);
       };
@@ -102,7 +102,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var copy = function (name) {
-          const copiedProgramSet = {name: name, programs: $scope.activeProgramSet.programs};
+          var copiedProgramSet = {name: name, programs: $scope.activeProgramSet.programs};
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.setActiveProgramSet(copiedProgramSet);
         };
