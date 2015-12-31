@@ -425,14 +425,13 @@ class ProgsetsDb(db.Model):
     def create_programs_from_list(self, programs):
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short_name', 'category', 'targetpops']:
+            for field in ['name', 'short_name', 'category', 'targetpops', 'pars']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
                 self.project_id,
                 self.id,
                 active=program.get('active', False),
-                pars=program.get('parameters', None),
                 **kwargs
             )
             db.session.add(program_entry)
