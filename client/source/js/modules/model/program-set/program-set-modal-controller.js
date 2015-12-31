@@ -18,19 +18,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           population.active = programCopy.populations.indexOf(population.short_name) > -1;
         }
       });
-      $scope.selectAll = programCopy.populations && $scope.populations && $scope.populations.length === programCopy.populations.length;
 
       $scope.initializeAllCategories();
 
+      var oldPops;
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
       _(programCopy.parameters).each(function(entry) {
         entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
-        var foundPopulation = findPopulation($scope.populations, entry.value.pops);
-        if (foundPopulation) {
-          entry.value.pops = foundPopulation.value;
-        }
+        oldPops = entry.value.pops;
+        entry.value.pops = angular.copy(populations);
+        _.each(entry.value.pops, function(pop) {
+          pop.active = oldPops.indexOf(pop.short_name) > -1;
+        });
       });
 
       $scope.program = programCopy;
