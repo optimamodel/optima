@@ -41,26 +41,26 @@ HTC_hometest = Program(name='HTC_hometest',
 
 # Add cost-coverage function parameters to each program
 HTC_clinics.costcovfn.addccopar({'t': 2013.0,
-                                 'saturation':0.4,
-                                 'unitcost': 40})
+                                 'saturation':(0.35,0.45),
+                                 'unitcost': (35,45)})
                          
 HTC_outreach.costcovfn.addccopar({'t': 2013.0,
-                                 'saturation':0.6,
-                                  'unitcost': 50})
+                                 'saturation':(0.55,0.65),
+                                  'unitcost': (45,55)})
                          
 HTC_hometest.costcovfn.addccopar({'t': 2013.0,
-                                 'saturation':0.4,
-                                  'unitcost': 20})
+                                 'saturation':(0.35,0.45),
+                                  'unitcost': (15,25)})
 
 # Combine the 3 program together in a program set
 R = Programset(programs=[HTC_clinics,HTC_outreach,HTC_hometest])
 
 # Add parameters for the coverage-outcome functions
-R.covout['hivtest']['F 15-49'].addccopar({'intercept': 0.3,
+R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
                                                 't': 2013.0,
-                                                'HTC_clinics': 0.5,
-                                                'HTC_outreach': 0.6,
-                                                'HTC_hometest':0.1})
+                                                'HTC_clinics': (0.75,0.85),
+                                                'HTC_outreach': (0.85,0.95),
+                                                'HTC_hometest':(0.35,0.45)})
                    
 # Define the budget and the type of interaction
 budget = {'HTC_clinics': array([ 1e7,]),
@@ -77,20 +77,24 @@ coverage = R.getprogcoverage(budget=budget,
                              t=[2013],
                              parset=P.parsets['default'],
                              proportion=True)
+coverage_number = R.getprogcoverage(budget=budget,
+                             t=[2013],
+                             parset=P.parsets['default'],
+                             proportion=False)
 
 # Get the outcomes associated with this budget
 R.covout['hivtest']['F 15-49'].interaction = 'nested'
-outcomes_nested = R.getoutcomes(coverage,
+outcomes_nested = R.getoutcomes(coverage_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 
 R.covout['hivtest']['F 15-49'].interaction = 'random'
-outcomes_random = R.getoutcomes(coverage,
+outcomes_random = R.getoutcomes(coverage_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 
 R.covout['hivtest']['F 15-49'].interaction = 'additive'
-outcomes_additive = R.getoutcomes(coverage,
+outcomes_additive = R.getoutcomes(coverage_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 
@@ -149,19 +153,23 @@ coverage_outreachscaleup = R.getprogcoverage(budget=budget_outreachscaleup,
                              t=[2013],
                              parset=P.parsets['default'],
                              proportion=True)
+coverage_outreachscaleup_number = R.getprogcoverage(budget=budget_outreachscaleup,
+                             t=[2013],
+                             parset=P.parsets['default'],
+                             proportion=False)
 
 R.covout['hivtest']['F 15-49'].interaction = 'nested'
-outcomes_nested_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+outcomes_nested_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 
 R.covout['hivtest']['F 15-49'].interaction = 'random'
-outcomes_random_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+outcomes_random_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 
 R.covout['hivtest']['F 15-49'].interaction = 'additive'
-outcomes_additive_outreachscaleup = R.getoutcomes(coverage_outreachscaleup,
+outcomes_additive_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 
@@ -174,17 +182,21 @@ coverage_hometestscaleup = R.getprogcoverage(budget=budget_hometestscaleup,
                              t=[2013],
                              parset=P.parsets['default'],
                              proportion=True)
+coverage_hometestscaleup_number = R.getprogcoverage(budget=budget_hometestscaleup,
+                             t=[2013],
+                             parset=P.parsets['default'],
+                             proportion=False)
 
 R.covout['hivtest']['F 15-49'].interaction = 'nested'
-outcomes_nested_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+outcomes_nested_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 R.covout['hivtest']['F 15-49'].interaction = 'random'
-outcomes_random_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+outcomes_random_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 R.covout['hivtest']['F 15-49'].interaction = 'additive'
-outcomes_additive_hometestscaleup = R.getoutcomes(coverage_hometestscaleup,
+outcomes_additive_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
                                 t=[2013],
                                 parset=P.parsets['default'])
 

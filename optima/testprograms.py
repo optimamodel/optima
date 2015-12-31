@@ -80,7 +80,7 @@ if 'makeprograms' in tests:
     ## NOTE that adding a targeted parameter does NOT automatically add a targeted population! Do this separately, e.g.
     HTC.targetpops.append('M 15-49')
         
-    # 2. Removing a target parameter from a program
+    # 2. Removing a target parameter from a program (then readding it)
     HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
 

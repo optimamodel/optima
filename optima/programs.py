@@ -224,6 +224,7 @@ class Programset(object):
 
                 for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                     if type(thispop)==tuple: thiscovpop = thisprog.targetpops[0] # If it's a partnership parameters, get the target population separately
+                    else: thiscovpop = None
                     if not self.covout[thispartype][thispop].ccopars[thisprog.name]:
                         print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.name))
                         outcomes[thispartype][thispop] = None
@@ -232,7 +233,9 @@ class Programset(object):
                         x = budget[thisprog.name]
                         if thiscovpop: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thiscovpop]
                         else: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-                        delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
+                        delta[thisprog.name] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name][0] - outcomes[thispartype][thispop][0]]
+
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                 if self.covout[thispartype][thispop].interaction == 'additive':
                         # Outcome += c1*delta_out1 + c2*delta_out2
@@ -570,8 +573,6 @@ class CCOF(object):
         # Error checks
         if not self.ccopars:
             raise Exception('Need parameters for at least one year before function can be evaluated.')
-        elif not self.ccopars['t']:
-            raise Exception('Need parameters for at least one year before function can be evaluated.')
         if randseed and bounds:
             raise Exception('Either select bounds or specify randseed')
 
@@ -587,17 +588,17 @@ class CCOF(object):
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
                     ccopars_no_t[parname][j] = (parvalue[j][0]+parvalue[j][1])/2
-        if bounds in ['upper','u','up','high','h']:
+        elif bounds in ['upper','u','up','high','h']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
                     ccopars_no_t[parname][j] = parvalue[j][1]
-        if bounds in ['lower','l','low']:
+        elif bounds in ['lower','l','low']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
                     ccopars_no_t[parname][j] = parvalue[j][0]
+        else:
+            raise Exception('Unrecognised bounds.')
             
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
         allt = arange(1900,2100)
@@ -614,22 +615,7 @@ class CCOF(object):
             j += 1
 
         ccopar['t'] = t
-
-        # Return the median, low or high parameters if bounds are given, or a random sample if no bounds are given.
-#        finalccopar = dcp(ccopar)
-#        boundpars = [x for x in ccopar.keys() if x[-2:] in ['_u','_l','_m']]
-#        for boundpar in boundpars: del finalccopar[boundpar]
-#        boundpartype = boundpars[0][:-2]
-#        if not bounds: # Return the median
-#            finalccopar[boundpartype] = ccopar[boundpartype+'_m']
-#        else: # Return the upper or lower, as desired
-#            if bounds in ['upper','u','up','high','h']:
-#                finalccopar[boundpartype] = ccopar[boundpartype+'_u']
-#            elif bounds in ['lower','l','low']:
-#                finalccopar[boundpartype] = ccopar[boundpartype+'_l']
-            
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
-
         return ccopar
 
     def evaluate(self,x,popsize,t,toplot,inverse=False,randseed=None,bounds=None):
