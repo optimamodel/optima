@@ -41,7 +41,7 @@
       </h3>
       <div class="section_dashed_border">
         <span class="option">
-          <input type="checkbox" ng-click="selectAllPopulations(selectAll = !selectAll)">
+          <input type="checkbox" ng-click="selectAllPopulations()" ng-model="selectAll">
           <span>All populations</span>
         </span>
         <span ng-repeat="population in populations" class="option">
@@ -91,7 +91,7 @@
           </h3>
           <div class="section_dashed_border">
         <span class="option">
-          <input type="checkbox" ng-click="selectAllEntryPopulations(entry, entry.selectAll = !entry.selectAll)">
+          <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
           <span>All populations</span>
         </span>
         <span ng-repeat="population in entry.value.pops" class="option">

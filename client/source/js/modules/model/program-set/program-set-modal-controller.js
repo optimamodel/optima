@@ -13,6 +13,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = angular.copy(populations);
 
+      _.forEach($scope.populations, function(population) {
+        if(programCopy.populations) {
+          population.active = programCopy.populations.indexOf(population.short_name) > -1;
+        }
+      });
+      $scope.selectAll = programCopy.populations && $scope.populations && $scope.populations.length === programCopy.populations.length;
+
       $scope.initializeAllCategories();
 
       // make sure the names are exactly the objects as in the list for the
@@ -37,9 +44,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    $scope.selectAllEntryPopulations = function(entry, selectAll) {
+    $scope.selectAllEntryPopulations = function(entry) {
       _.forEach(entry.value.pops, function(population) {
-        population.active = selectAll;
+        population.active = entry.selectAll;
       });
     };
 
