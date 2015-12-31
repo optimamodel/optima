@@ -99,9 +99,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         // filter out empty parameters
         var selected_populations = _.filter($scope.populations, function(population) {
           return population.active;
-        });
-        _.forEach(selected_populations, function(population) {
-          delete population.active;
+        }).map(function(population) {
+          return population.short_name;
         });
 
         $scope.program.populations = selected_populations;
@@ -109,9 +108,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           delete item.selectAll;
           item.value.pops = _.filter(item.value.pops, function(population) {
             return population.active;
-          });
-          _.forEach(item.value.pops, function(population) {
-            delete population.active;
+          }).map(function(population) {
+            return population.short_name;
           });
           return item.value.signature.length && item.value.pops.length;
         });
