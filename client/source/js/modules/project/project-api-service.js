@@ -19,8 +19,18 @@ define(['./module'], function (module) {
         deleteProject: function(id) {
           return $http.delete('/api/project/' + id);
         },
+        deleteSelectedProjects: function(projects) {
+          return $http({
+            method: 'DELETE',
+            url: '/api/project',
+            data: { projects: projects}
+          });
+        },
+        downloadSelectedProjects: function(projects) {
+          return $http.post('/api/project/portfolio', { projects: projects}, {responseType:'arraybuffer'});
+        },
         copyProject: function(sourceId, destinationName) {
-          return $http.post('/api/project/' + sourceId + '/copy' + '?to=' + destinationName)
+          return $http.post('/api/project/' + sourceId + '/copy', {to: destinationName});
         },
         exportProject: function(data) {
           return $http.post('/api/project/export', data);
@@ -50,19 +60,6 @@ define(['./module'], function (module) {
         },
         getDataUploadUrl: function(id) {
           return '/api/project/' + id + '/data';
-        },
-        getProjectProgramSet: function(id) {
-          return $http.get('/api/project/' + id + '/progsets' );
-        },
-        saveProjectProgramSet: function(projectId, progSetId, data) {
-          return $http({
-            url: '/api/project/' + projectId + '/progsets' + (progSetId ? '/' + progSetId : ''),
-            method: (progSetId ? 'PUT' : 'POST'),
-            data: data
-          });
-        },
-        deleteProjectProgramSet: function(projectId, progSetId) {
-          return $http.delete('/api/project/' + projectId +  '/progsets' + '/' + progSetId);
         }
       };
 

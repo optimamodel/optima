@@ -166,7 +166,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.prepareCreateOrEditForm = function () {
-      if ($scope.CreateOrEditProjectForm.$invalid) {
+
+      const populationSelected = _.find($scope.populations, function(population) {
+        return population.active === true;
+      });
+
+      if ($scope.CreateOrEditProjectForm.$invalid || !populationSelected) {
         modalService.informError([{message: 'Please fill in all the required project fields'}]);
         return false;
       }

@@ -1,7 +1,7 @@
 import factory
 import hashlib
 
-from factory import Sequence
+from factory import Sequence, fuzzy
 from factory.alchemy import SQLAlchemyModelFactory
 
 from server.webapp.dbmodels import ParsetsDb
@@ -46,17 +46,28 @@ class ProjectFactory(SQLAlchemyModelFactory):
     class Meta:
         model = ProjectDb
 
-    name = factory.Faker('name')
-    user = factory.SubFactory(UserFactory)
+    name = fuzzy.FuzzyText(prefix='project_')
     datastart = 2000
     dataend = 2030
-    populations = [{"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}, \
-            {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False, "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False}, \
-            {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False, "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True}, \
-            {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False, "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}]
-    version = '2.0'
+    populations = [
+        {"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False},
+        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False,
+         "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True},
+        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False},
+        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False,
+         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
+        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False,
+         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}
+    ]
+    version = '{}'
+
+    @factory.lazy_attribute
+    def user_id(self):
+        return UserDb.query.filter_by(is_admin=False).first().value(UserDb.id)
 
 
 class ParsetFactory(SQLAlchemyModelFactory):
@@ -105,8 +116,8 @@ class ProgsetsFactory(SQLAlchemyModelFactory):
 
     class Meta:
         model = ProgsetsDb
-    project = factory.SubFactory(ProjectFactory)
-    name = factory.Faker('name')
+
+    name = fuzzy.FuzzyText(prefix='progset_')
 
 
 class ProgramsFactory(SQLAlchemyModelFactory):
@@ -114,9 +125,7 @@ class ProgramsFactory(SQLAlchemyModelFactory):
     class Meta:
         model = ProgramsDb
 
-    progset = factory.SubFactory(ProgsetsFactory)
-    project = factory.SubFactory(ProjectDataFactory)
-    category = 'test'
-    name = factory.Faker('name')
-    short_name = factory.Faker('name')
+    category = 'Test category'
+    name = fuzzy.FuzzyText(prefix='program_')
+    short_name = fuzzy.FuzzyText()
     active = True

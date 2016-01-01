@@ -16,7 +16,7 @@ class ProjectTestCase(OptimaTestCase):
 
     def setUp(self):
         super(ProjectTestCase, self).setUp()
-        self.create_user()
+        self.user = self.create_user()
         self.login()
 
     def test_create_project(self):
@@ -31,7 +31,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 410)
 
     def test_retrieve_project_info(self):
-        project_id = self.create_project('test')
+        project_id = self.create_project(name='test')
 
         response = self.client.get('/api/project/{}'.format(project_id))
         self.assertEqual(response.status_code, 200)
@@ -39,7 +39,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(project_data['name'], 'test')
 
     def test_retrieve_project_list(self):
-        project_id = self.create_project('test2')
+        project_id = self.create_project(name='test2')
 
         response = self.client.get('/api/project')
         self.assertEqual(response.status_code, 200)
@@ -55,9 +55,9 @@ class ProjectTestCase(OptimaTestCase):
         parameters = json.loads(response.data)['parameters']
         self.assertTrue(len(parameters) > 0)
         self.assertTrue(set(parameters[0].keys()) ==
-            set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
+                        set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
         self.assertTrue(parameter_name(['condom', 'reg']) ==
-            'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
+                        'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
 
     def test_upload_data(self):
         import re
@@ -97,6 +97,9 @@ class ProjectTestCase(OptimaTestCase):
         os.remove(output_path)
 
     def test_copy_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from server.tests.factories import ProgsetsFactory, ProgramsFactory
+
         # create project
         response = self.api_create_project()
         self.assertEqual(response.status_code, 201)
@@ -115,7 +118,18 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
         old_info = json.loads(response.data)
         self.assertEqual(old_info['has_data'], True)
-        response = self.client.post('/api/project/%s/copy?to=test_copy' % project_id)
+
+        # create progsets and make sure they are part of the project
+        progsets_count = 2
+        for x in range(progsets_count):
+            progset = self.create_record_with(ProgsetsFactory, project_id=project_id)
+            self.create_record_with(ProgramsFactory, project_id=project_id, progset_id=progset.id)
+        project = ProjectDb.query.filter_by(id=str(project_id)).first()
+        self.assertEqual(len(project.progsets), progsets_count)
+
+        response = self.client.post('/api/project/%s/copy' % project_id, data={
+            'to': 'test_copy'
+        })
         self.assertEqual(response.status_code, 200)
         copy_info = json.loads(response.data)
         new_project_id = copy_info['copy_id']
@@ -124,18 +138,20 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.get('/api/project/{}'.format(new_project_id))
         self.assertEqual(response.status_code, 200)
         new_info = json.loads(response.data)
-        self.assertEqual(old_info['has_data'], True)
+        self.assertEqual(new_info['has_data'], True)
         # compare some elements
         self.assertEqual(old_info['populations'], new_info['populations'])
         self.assertEqual(old_info['dataStart'], new_info['dataStart'])
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
 
-    def test_download_upload_project(self):
-        from io import BytesIO
-        from server.webapp.dbmodels import ProjectDb
-        from server.webapp.dbconn import db
+        new_project = ProjectDb.query.filter_by(id=str(new_project_id)).first()
+        self.assertEquals(len(new_project.progsets), progsets_count)
 
-        project_id = self.create_project('test')
+    def _create_project_and_download(self):
+        progsets_count = 3
+        project = self.create_project(name='test', return_instance=True, progsets_count=progsets_count)
+
+        self.assertEqual(len(project.progsets), progsets_count)
 
         # create a parset for the project
         example_excel_file_name = 'test.xlsx'
@@ -144,28 +160,68 @@ class ProjectTestCase(OptimaTestCase):
         response = self.client.post('api/project/update', data=dict(file=example_excel))
         example_excel.close()
 
-        response = self.client.get('/api/project/{}/data'.format(project_id))
+        response = self.client.get('/api/project/{}/data'.format(project.id))
         self.assertEqual(response.status_code, 200)
 
-        project = ProjectDb.query.filter_by(id=project_id).first()
-        self.assertEqual(project.name, 'test')  # just making sure
+        return progsets_count, project, response
+
+    def test_download_upload_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from server.webapp.dbconn import db
+        from io import BytesIO
+
+        progsets_count, project, response = self._create_project_and_download()
+        # we need to get the project using the "regular" session instead of the "factory" session
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
         project.name = 'Not test'
+        project.progsets[0].recursive_delete()
         db.session.commit()
-        project = ProjectDb.query.filter_by(id=project_id).first()
+
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
+        self.assertEqual(len(project.progsets), progsets_count - 1)
         self.assertNotEqual(project.name, 'test')  # still just making sure
 
         upload_response = self.client.post(
-            '/api/project/{}/data'.format(project_id),
+            '/api/project/{}/data'.format(project.id),
             data={
                 'file': (BytesIO(response.data), 'project.prj'),
             }
         )
         self.assertEqual(upload_response.status_code, 200, upload_response.data)
-        project = ProjectDb.query.filter_by(id=project_id).first()
+
+        # reloading from db after upload
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
         self.assertEqual(project.name, 'test')
+        self.assertEqual(len(project.progsets), progsets_count)
+        self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
+
+    def test_download_upload_as_new_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from io import BytesIO
+
+        progsets_count, project, response = self._create_project_and_download()
+
+        upload_response = self.client.post(
+            '/api/project/data'.format(project.id),
+            data={
+                'name': 'upload_as_new',
+                'file': (BytesIO(response.data), 'project.prj'),
+            }
+        )
+
+        self.assertEqual(upload_response.status_code, 200, upload_response.data)
+
+        # loading new project from db after upload
+        data = json.loads(upload_response.data)
+        self.assertIn('id', data)
+
+        project = ProjectDb.query.filter_by(id=data['id']).first()
+        self.assertEqual(project.name, 'upload_as_new')
+        self.assertEqual(len(project.progsets), progsets_count)
+        self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
 
     def test_delete_project_with_parsets(self):
-        project_id = self.create_project('test')
+        project_id = self.create_project()
 
         # create a parset and result for the project
         example_excel_file_name = 'test.xlsx'
@@ -180,7 +236,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 204)
 
     def test_create_and_retrieve_progset(self):
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project()
         progset_id = self.api_create_progset(project_id)
 
         response = self.client.get('/api/project/{}/progsets/{}'.format(
@@ -192,7 +248,7 @@ class ProjectTestCase(OptimaTestCase):
     def test_update_progset(self):
         from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project(name='test_progset')
         progset_id = self.api_create_progset(project_id)
 
         data = self.progset_test_data.copy()
@@ -217,7 +273,7 @@ class ProjectTestCase(OptimaTestCase):
     def test_delete_progset(self):
         from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
-        project_id = self.create_project('test_progset')
+        project_id = self.create_project()
         progset_id = self.api_create_progset(project_id)
 
         response = self.client.delete('/api/project/{}/progsets/{}'.format(project_id, progset_id))
@@ -230,35 +286,136 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(program_count, 0)
 
     def test_delete_project_with_progset(self):
-        project_id = self.create_project('test_progset')
-        self.api_create_progset(project_id)
+        project = self.create_project(name='test_progset', return_instance=True, progsets_count=1)
 
-        response = self.client.delete('/api/project/{}'.format(project_id))
+        self.assertEquals(len(project.progsets), 1)
+
+        response = self.client.delete('/api/project/{}'.format(project.id))
         self.assertEqual(response.status_code, 204)
 
     def test_retrieve_list_of_progsets(self):
-        project_id = self.create_project('test_progset')
-        self.api_create_progset(project_id)
-        self.api_create_progset(project_id)
-        self.api_create_progset(project_id)
+        progsets_count = 3
+        project = self.create_project(progsets_count=progsets_count, return_instance=True)
+        self.assertEqual(len(project.progsets), progsets_count)
 
-        response = self.client.get('/api/project/{}/progsets'.format(project_id))
+        response = self.client.get('/api/project/{}/progsets'.format(project.id))
         self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
         self.assertTrue('progsets' in data)
-        self.assertEqual(len(data['progsets']), 3)
+        self.assertEqual(len(data['progsets']), progsets_count)
 
-    def test_progset_can_hydrate(self):
-        from server.webapp.dbmodels import ProgsetsDb
+    def test_progset_can_hydrate_and_restore(self):
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
-        project_id = self.create_project('test_progset')
-        progset_id = self.api_create_progset(project_id)
+        programs_per_progset = 3
+
+        project = self.create_project(
+            progsets_count=1,
+            programs_per_progset=programs_per_progset,
+            return_instance=True
+        )
+        progset_id = str(project.progsets[0].id)
 
         progset = ProgsetsDb.query.get(progset_id)
+        program_count = ProgramsDb.query \
+            .filter_by(progset_id=progset_id, active=True) \
+            .count()
+        self.assertEqual(program_count, programs_per_progset)
         programset = progset.hydrate()
 
         self.assertIsNotNone(programset)
+
+        be_project = project.hydrate()
+        new_project = self.create_project(return_instance=True)
+        new_project.restore(be_project)
+
+        program_count = ProgramsDb.query \
+            .filter_by(project_id=str(new_project.id), active=True) \
+            .count()
+
+        self.assertEqual(program_count, programs_per_progset)
+
+    def test_default_programs_for_project_restore(self):
+        from server.webapp.dbmodels import ProgramsDb
+        from server.webapp.programs import program_list
+
+        project = self.create_project(
+            progsets_count=1,
+            programs_per_progset=0,
+            return_instance=True
+        )
+        progset_id = str(project.progsets[0].id)
+
+        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
+        self.assertEqual(program_count, 0)
+
+        be_project = project.hydrate()
+        project.restore(be_project)
+
+        program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
+
+        self.assertEqual(program_count, len(program_list))
+
+    def test_bulk_delete(self):
+        from server.webapp.dbmodels import ProjectDb
+
+        project_count = 5
+        projects_to_delete = 2
+        project_ids = [
+            self.create_project(user_id=self.user.id)
+            for i in range(project_count)
+        ]
+
+        self.assertEqual(ProjectDb.query.count(), project_count)
+
+        # test bulk delete projects for current user
+
+        response = self.client.delete('/api/project', data={'projects': project_ids[:projects_to_delete]})
+        self.assertEqual(response.status_code, 204)
+        projects_left = project_count - projects_to_delete
+        self.assertEqual(ProjectDb.query.count(), projects_left)
+
+        other_user = self.create_user()
+        project_ids.append(self.create_project(user_id=other_user.id))
+        projects_left += 1
+
+        self.assertEqual(ProjectDb.query.count(), projects_left)
+
+        response = self.client.delete('/api/project', data={'projects': project_ids[projects_to_delete:]})
+        self.assertEqual(response.status_code, 410)
+        self.assertEqual(ProjectDb.query.count(), projects_left)
+
+    def test_portfolio(self):
+        from io import BytesIO
+        from zipfile import ZipFile
+        from server.webapp.dbmodels import ProjectDb
+        from optima.utils import load
+
+        project_count = 5
+        projects = [
+            self.create_project(user_id=self.user.id, return_instance=True)
+            for i in range(project_count)
+        ]
+
+        self.assertEqual(ProjectDb.query.count(), project_count)
+        response = self.client.post(
+            '/api/project/portfolio',
+            data={'projects': [
+                str(project.id)
+                for project in projects
+            ]})
+        self.assertEqual(response.status_code, 200)
+
+        first_project_filename = 'portfolio/{}.prj'.format(projects[0].name)
+        zip_file = ZipFile(BytesIO(response.data))
+        self.assertEqual(len(zip_file.namelist()), project_count)
+        self.assertIn(first_project_filename, zip_file.namelist())
+
+        project_file = BytesIO(zip_file.read(first_project_filename))
+        be_project = load(project_file)
+        self.assertEqual(be_project.name, projects[0].name)
+
 
 if __name__ == '__main__':
     unittest.main()
