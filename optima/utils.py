@@ -620,6 +620,14 @@ class odict(OrderedDict):
     
     Version: 2015nov21 by cliffk
     """
+
+    def __slicekey(self, key, slice_end):
+        shift = int(slice_end=='stop')
+        if type(key) is int: return key
+        elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
+        elif key is None: return 0
+        else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
+
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str: # Treat like a normal dict
@@ -627,14 +635,8 @@ class odict(OrderedDict):
         elif type(key) in [int, float]: # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
-            if type(key.start) is int: startind = key.start
-            elif type(key.start) is str: startind = self.index(key.start)
-            elif key.start is None: startind = 0
-            else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
-            if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
-            elif key.stop is None: stopind = len(self)
-            else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
+            startind = self.__slicekey(key.start, 'start')
+            stopind = self.__slicekey(key.stop, 'stop')
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             return array([self.__getitem__(i) for i in range(startind,stopind)])
         elif type(key)==list: # Iterate over items
@@ -652,32 +654,23 @@ class odict(OrderedDict):
             thiskey = self.keys()[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
-            if type(key.start) is int: startind = key.start
-            elif type(key.start) is str: startind = self.index(key.start)
-            elif key.start is None: startind = 0
-            else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
-            if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
-            elif key.stop is None: stopind = len(self)
-            else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
+            startind = self.__slicekey(key.start, 'start')
+            stopind = self.__slicekey(key.stop, 'stop')
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             enumerator = enumerate(range(startind,stopind))
-            try:
-                slicelen = len(range(startind,stopind+1))
+            slicelen = len(range(startind,stopind+1))
+            if hasattr(value, '__len__'):                    
                 if len(value)==slicelen:
                     for valind,index in enumerator: 
                         self.__setitem__(index, value[valind])
-                else: 
-                    for valind,index in enumerator:
-                        self.__setitem__(index, value)
-            except:
+                else:
+                    raise Exception('Setitem for slice(%s) with mismatched value %s' % (key, value))
+            else: 
                 for valind,index in enumerator: # +1 since otherwise confusing with names
                     self.__setitem__(index, value)
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
-    
-    
     
     
     def __repr__(self):
