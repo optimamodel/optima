@@ -1,6 +1,12 @@
 <div class="rich">
   <div class="section" ng-show="projects.length">
-    <h3>Available projects:</h3>
+
+    <div style="display: flex;margin-left: 70%;">
+      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete Selected</button>
+      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
+    </div>
+
+    <h1>Available projects:</h1>
 
     <input type="text"
            class="txbox"
@@ -10,6 +16,9 @@
     <table class="table table-bordered table-hover table-striped" style="width: auto">
       <thead>
       <tr>
+        <th>
+          <input type="checkbox" ng-click="selectAll()" ng-model="allSelected"/>
+        </th>
         <th ng-click="updateSorting('name')" class="sortable">
           Name
           <span ng-show="sortType == 'name' && !sortReverse" class="fa fa-caret-down"></span>
@@ -45,6 +54,9 @@
       </thead>
       <tbody>
       <tr ng-repeat="project in projects | orderBy:sortType:sortReverse | filter:filterByName">
+        <td>
+          <input type="checkbox" ng-model="project.selected"/>
+        </td>
         <td>
           {{ ::project.name }}
         </td>

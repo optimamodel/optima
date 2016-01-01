@@ -3,8 +3,8 @@ from validate_email import validate_email
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 
-from server.webapp.exceptions import InvalidFileType
 from server.webapp.utils import allowed_file
+
 
 def nullable_email(email_str):
     if not email_str:
@@ -24,7 +24,8 @@ def hashed_password(password_str):
     if isinstance(password_str, basestring) and len(password_str) == 56:
         return password_str
 
-    raise ValueError('Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(password_str, len(password_str), type(password_str)))
+    raise ValueError('Invalid password - expecting SHA224 - Received {} of length {} and type {}'.format(
+        password_str, len(password_str), type(password_str)))
 
 
 def secure_filename_input(orig_name):
@@ -47,6 +48,7 @@ class SubParser:
 
     def __init__(self, child_parser):
         self.child_parser = child_parser
+        self.child_parser.abort_on_error = False
 
     def __call__(self, item_to_parse):
         return self.child_parser.parse_args(req=SubRequest(item_to_parse))

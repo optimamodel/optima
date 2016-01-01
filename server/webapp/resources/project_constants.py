@@ -42,7 +42,7 @@ predefined_fields = {
 class Predefined(Resource):
 
     @swagger.operation(
-        description='Gives back default populations and programs'
+        summary='Gives back default populations and programs'
     )
     @marshal_with(predefined_fields)
     @login_required

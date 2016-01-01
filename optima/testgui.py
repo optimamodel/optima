@@ -2,12 +2,10 @@
 Test script to see if Optima works.
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
-
 NOTE: for best results, run in interactive mode, e.g.
-
 python -i tests.py
 
-Version: 2015dec23 by cliffk
+Version: 2015dec29 by cliffk
 """
 
 
@@ -57,14 +55,11 @@ T = tic()
 if 'browser' in tests:
     t = tic()
 
-    print('Running GUI test...')
-    from optima import Project
+    print('Running browser test...')
+    from optima import Project, browser
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
-    
-    print('  Starting browser...')
-    from gui import browser
     browser(results)
 
     done(t)
@@ -79,13 +74,11 @@ if 'gui' in tests:
     t = tic()
 
     print('Running GUI test...')
-    from optima import Project
+    from optima import Project, pygui
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
-    
-    from gui import gui
-    gui(results)
+    pygui(results)
 
     done(t)
 
