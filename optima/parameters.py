@@ -177,7 +177,7 @@ def balance(act=None, which=None, data=None, popkeys=None, popsizepar=None):
 
 
 
-def makeparsfromdata(data, verbose=2):
+def makepars(data, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -464,8 +464,8 @@ class Parameterset(object):
     
     
     
-    def makeparsfromdata(self, data, verbose=2):
-        self.pars.append(makeparsfromdata(data, verbose=verbose))
+    def makepars(self, data, verbose=2):
+        self.pars.append(makepars(data, verbose=verbose))
         self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
         return None
 
