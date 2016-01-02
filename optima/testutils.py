@@ -60,6 +60,8 @@ if 'odict' in tests:
     assert((bar[0:2] == [3,4]).all()) # Show get item by slice
     assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
     assert(bar[[2,1]] == [6,4]) # Show get item by list
+    assert((foo[:] == [3,4,6,8]).all()) # Show slice with everything
+    assert((foo[2:] == [6,8]).all()) # Show slice without end
     bar[3] = [3,4,5] # Show assignment by item
     bar[0:1] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
     bar.rename('cough','chill') # Show rename
@@ -70,7 +72,7 @@ if 'odict' in tests:
 
 ## gridcolormap test
 if 'gridcolormap' in tests:
-    from mpl_toolkits.mplot3d import Axes3D
+    # from mpl_toolkits.mplot3d import Axes3D
     t = tic()
     
     from optima import gridcolormap
@@ -101,3 +103,4 @@ if 'gridcolormap' in tests:
         
     
     done(t)
+    show()
