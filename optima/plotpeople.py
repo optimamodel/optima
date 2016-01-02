@@ -10,7 +10,7 @@ from pylab import hold, shape, subplot, figure, title, ylabel, plot, maximum
 
 def plotpeople(resultslist, normalized=True):
     if type(resultslist) is not list: resultslist = [resultslist]
-    ppl = resultslist[0].people
+    ppl = resultslist[0].raw[0]['people']
     settings = resultslist[0].project.settings
     statelabels = []
     statelabels.append('sus1')
@@ -37,7 +37,7 @@ def plotpeople(resultslist, normalized=True):
             h = subplot(nstates, npops, count)
             hold(True)
             for z in range(len(resultslist)):
-                ppl = resultslist[z].people
+                ppl = resultslist[z].raw[0]['people']
                 if normalized:
                     normalization = maximum(normalization, ppl[settings.allplhiv,p,:].max()*1.1)
                 else:

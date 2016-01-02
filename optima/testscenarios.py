@@ -54,38 +54,29 @@ if 'standardscen' in tests:
     ## Define scenarios
     scenlist = [
         {'name': 'Current conditions', 'pars': []},
-# CK: WARNING, TEMP
-#        {'name': 'Less casual condom use in men',
-#          'pars': [{'endval': 0.1,
-#            'endyear': 2015,
-#            'name': 'condomcas',
-#            'pops': 0,
-#            'startval': 0.1,
-#            'startyear': 2005}]},
-#         {'name': 'Less regular condom use',
-#          'pars': [{'endval': 0.01,
-#            'endyear': 2015,
-#            'name': 'condomreg',
-#            'pops': 11,
-#            'startval': 0.01,
-#            'startyear': 2005}]},
-#         {'name': 'More casual acts',
-#          'pars': [{'endval': 100.,
-#            'endyear': 2015,
-#            'name': 'totalactscas',
-#            'pops': 0,
-#            'startval': 100.,
-#            'startyear': 2005}]},
+        {'name': 'Less casual condom use',
+          'pars': [{'endval': 0.1,
+            'endyear': 2015,
+            'name': 'condcas',
+            'for': ('M 15-49', 'F 15-49'),
+            'startval': 0.1,
+            'startyear': 2005}]},
+         {'name': 'More casual acts',
+          'pars': [{'endval': 100.,
+            'endyear': 2015,
+            'name': 'actscas',
+            'for': ('F 15-49', 'M 15-49'),
+            'startval': 100.,
+            'startyear': 2005}]},
          {'name': 'Increased STI prevalence in women',
           'pars': [{'endval': 0.5,
             'endyear': 2015,
             'name': 'stiprev',
-            'pops': 1,
+            'for': 1,
             'startval': 0.5,
             'startyear': 2005}]}
         ]
     
-    P.copyparset('default', 'scentest')
     from scenarios import runscenarios
     allresults = runscenarios(P, P.parsets['default'], scenlist=scenlist)
      

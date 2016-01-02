@@ -41,7 +41,14 @@ def makescenarios(parset,scenlist,verbose=2):
         for sc in range(len(parset.pars)): # Loop over all parameter sets
             for par in scenlist[scenno]['pars']: # Loop over all parameters being changed
                 thispar = thisparset.pars[sc][par['name']]
-                pops = range(npops) if par['pops'] > npops else [par['pops']]
+                if type(par['for'])==tuple: # If it's a partnership...
+                    par2 = (par['for'][1],par['for'][0])
+                    pops = [par['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
+                elif type(par['for'])==int: #... if its a population.
+                    pops = range(npops) if par['for'] > npops else [par['for']]
+                else: 
+                    errormsg = 'Unrecognized population or partnership type.'
+                    raise Exception(errormsg)
                 for pop in pops:
                     if par['startyear'] < max(thispar.t[pop]):
                         thispar.t[pop] = thispar.t[pop][thispar.t[pop] < par['startyear']]

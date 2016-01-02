@@ -68,7 +68,7 @@ if 'force' in tests:
     results1 = P.runsim('default')
     
     P.copyparset('default', 'forcetest')
-    for i in range(len(P.parsets[0].popkeys)): P.parsets['forcetest'].pars[0]['force'][i] *= 3 # WARNING, TEMP
+    for i in range(len(P.parsets[0].popkeys)): P.parsets['forcetest'].pars[0]['force'].y[i] *= 3 # WARNING, TEMP
     results2 = P.runsim('forcetest')
     
     from plotpeople import plotpeople
