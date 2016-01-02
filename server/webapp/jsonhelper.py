@@ -4,18 +4,21 @@ import optima as op
 import numpy as np
 
 
-def normalize_dict(the_odict):
-    if type(the_odict) != op.utils.odict:
-        return the_odict
-    result = {}
-    for (k, v) in the_odict.iteritems():
-        norm_k = str(k)
-        if type(v) == op.utils.odict:
-            norm_v = normalize_dict(v)
-        else:
-            norm_v = v
-        result[norm_k] = norm_v
-    return result
+def normalize_dict(elem):
+    if isinstance(elem, list):
+        return [normalize_dict(p) for p in elem]
+    elif isinstance(elem, op.utils.odict):
+        result = {}
+        for (k, v) in elem.iteritems():
+            norm_k = str(k)
+            if type(v) == op.utils.odict:
+                norm_v = normalize_dict(v)
+            else:
+                norm_v = v
+            result[norm_k] = norm_v
+        return result
+    else:
+        return elem
 
 
 class OptimaJSONEncoder(flask.json.JSONEncoder):
@@ -29,8 +32,11 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
         Support additional data types when encoding to JSON.
         """
 #        print type(obj)
+        if isinstance(obj, op.parameters.Parameterset):  # TODO preserve order of keys
+            return {'Parameterset': dict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])}
+
         if isinstance(obj, op.parameters.Par):
-            return [(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()]
+            return {'Par': dict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])}
 
         if isinstance(obj, np.float64):
             return float(obj)
