@@ -234,7 +234,6 @@ class Programset(object):
                         x = budget[thisprog.name]
                         if thiscovpop: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thiscovpop]
                         else: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         delta[thisprog.name] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
 
                 if self.covout[thispartype][thispop].interaction == 'additive':
