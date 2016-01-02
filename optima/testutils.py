@@ -70,7 +70,7 @@ if 'odict' in tests:
 
 ## gridcolormap test
 if 'gridcolormap' in tests:
-    from mpl_toolkits.mplot3d import Axes3D
+    # from mpl_toolkits.mplot3d import Axes3D
     t = tic()
     
     from optima import gridcolormap
@@ -101,3 +101,4 @@ if 'gridcolormap' in tests:
         
     
     done(t)
+    show()
