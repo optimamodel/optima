@@ -524,9 +524,9 @@ class OptimaSpreadsheet:
         [0.0014, 0.0011, 0.0186, 0.0028, 0.0240, 0.440, 0.270], OptimaFormats.DECIMAL_PERCENTAGE), \
         ('Relative disease-related transmissibility', \
         ['Acute infection','CD4(>500)','CD4(500) to CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)'], \
-        [5.6,1,1,1,3.49,7.17], [3.3,1,1,1,1.76,3.9], [9.1,1,1,1,6.92,12.08], OptimaFormats.NUMBER), \
+        [26.03,1,1,1,3.49,7.17], [2,1,1,1,1.76,3.9], [48.02,1,1,1,6.92,12.08], OptimaFormats.NUMBER), \
         ('Disease progression rate (% per year)', \
-        ['Acute to CD4(>500)','CD4(500) to CD4(350-500)','CD4(350,500) to CD4(200-350)','CD4(200-350) to CD4(50-200)','CD4(50-200) to CD4(<50)'], \
+        ['Acute to CD4(>500)','CD4(500) to CD4(350-500)','CD4(350-500) to CD4(200-350)','CD4(200-350) to CD4(50-200)','CD4(50-200) to CD4(<50)'], \
         [4.14, 1.05, 0.33, 0.27, 0.67], [2.00, 0.86, 0.32, 0.25, 0.44], [9.76, 1.61, 0.35, 0.29, 0.88], OptimaFormats.PERCENTAGE), \
         ('Treatment recovery rate (% per year)', \
         ['CD4(350-500) to CD4(>500)','CD4(200-350) to CD4(350-500)','CD4(50-200) to CD4(200-350)','CD4(<50) to CD4(50-200)'], \
