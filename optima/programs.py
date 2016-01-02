@@ -125,7 +125,7 @@ class Programset(object):
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [p.name for p in self.programs.values()]), 4, verbose)
 
     def optimizable(self):
-        return [True if prog.optimizable else False for prog in self.programs.values()]
+        return [True if prog.optimizable() else False for prog in self.programs.values()]
 
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
@@ -234,9 +234,8 @@ class Programset(object):
                         x = budget[thisprog.name]
                         if thiscovpop: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thiscovpop]
                         else: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-                        delta[thisprog.name] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name][0] - outcomes[thispartype][thispop][0]]
-
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        delta[thisprog.name] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
 
                 if self.covout[thispartype][thispop].interaction == 'additive':
                         # Outcome += c1*delta_out1 + c2*delta_out2
@@ -704,7 +703,9 @@ def getpopsizes(parset, years, ind=0, filter_pop=None):
     if type(years) in [float, int]: years = array([[years]])
     elif type(years)==list: years = array([years])
 
-    initpopsizes = parset.interp(ind=0, tvec=years, verbose=0)['popsize']
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#    initpopsizes = parset.interp(ind=0, keys='popsize', tvec=years, verbose=0)
+    initpopsizes = parset.pars[0]['popsize'].interp(tvec=years)
     popsizes = {}
 
     for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
