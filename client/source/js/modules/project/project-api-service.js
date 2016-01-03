@@ -11,10 +11,12 @@ define(['./module'], function (module) {
           return $http.get('/api/project/' + projectId);
         },
         createProject: function(data) {
-          return $http.post('/api/project', data);
+          return $http.post('/api/project', data, {
+          responseType:'blob'});
         },
         updateProject: function(id, data) {
-          return $http.put('/api/project/' + id, data);
+          return $http.put('/api/project/' + id, data, {
+          responseType:'blob'});
         },
         deleteProject: function(id) {
           return $http.delete('/api/project/' + id);

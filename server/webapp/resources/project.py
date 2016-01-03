@@ -117,7 +117,7 @@ class Projects(ProjectBase):
     @login_required
     def post(self):
         current_app.logger.info(
-            "create request: {} {}".format(request, request.data))
+            "create request: {} {}".format(request, request.data, request.headers))
 
         args = project_parser.parse_args()
         user_id = current_user.id
@@ -142,9 +142,9 @@ class Projects(ProjectBase):
             project_entry.name, project_entry.user_id))
         db.session.add(project_entry)
         db.session.commit()
-        new_project_template = args['name']
+        new_project_template = "{}.xlsx".format(args['name'])
 
-        path = templatepath(args['name'])
+        path = templatepath(new_project_template)
         op.makespreadsheet(
             path,
             pops=args['populations'],
@@ -391,7 +391,7 @@ class ProjectSpreadsheet(Resource):
             # makeworkbook(wb_name, project_entry.populations, project_entry.programs, \
             #     project_entry.datastart, project_entry.dataend)
             path = templatepath(wb_name)
-            makespreadsheet(
+            op.makespreadsheet(
                 path,
                 pops=project_entry.populations,
                 datastart=project_entry.datastart,
