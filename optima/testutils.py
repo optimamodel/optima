@@ -51,15 +51,17 @@ T = tic()
 ## Spreadsheet creation test
 if 'odict' in tests:
     t = tic()
+    
     print('Running odict tests...')
     from optima import odict
+    
     foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8})
     bar = foo.sort() # Sort the list
     assert(bar['boo'] == 4) # Show get item by value
     assert(bar[1] == 4) # Show get item by index
     assert((bar[0:2] == [3,4]).all()) # Show get item by slice
     assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
-    assert(bar[[2,1]] == [6,4]) # Show get item by list
+    assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
     assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
     assert((bar[2:] == [6,8]).all()) # Show slice without end
     bar[3] = [3,4,5] # Show assignment by item
