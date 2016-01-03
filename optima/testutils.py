@@ -51,17 +51,22 @@ T = tic()
 ## Spreadsheet creation test
 if 'odict' in tests:
     t = tic()
+    
     print('Running odict tests...')
     from optima import odict
+    
     foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8})
     bar = foo.sort() # Sort the list
     assert(bar['boo'] == 4) # Show get item by value
     assert(bar[1] == 4) # Show get item by index
     assert((bar[0:2] == [3,4]).all()) # Show get item by slice
     assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
-    assert(bar[[2,1]] == [6,4]) # Show get item by list
+    assert((bar[[2,1]] == [6,4]).all()) # Show get item by list
+    assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
+    assert((bar[2:] == [6,8]).all()) # Show slice without end
     bar[3] = [3,4,5] # Show assignment by item
-    bar[0:1] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
+    bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
+    bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
     bar.rename('cough','chill') # Show rename
     print(bar) # Print results
     done(t)
@@ -70,11 +75,11 @@ if 'odict' in tests:
 
 ## gridcolormap test
 if 'gridcolormap' in tests:
-    from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     t = tic()
     
     from optima import gridcolormap
-    from pylab import figure, plot, cumsum, rand, legend
+    from pylab import figure, plot, cumsum, rand, legend, show, title
     
     nlines1 = 5
     nlines2 = 12
@@ -89,15 +94,20 @@ if 'gridcolormap' in tests:
     fig.add_subplot(2,2,1)
     for l in range(nlines1): plot(cumsum((rand(npts)+0.1*l)**2), c=colors1[l], lw=lw)
     legend(['%i' % l for l in range(nlines1)], loc='upper left')
+    title('<=9 colors: use Color Brewer defaults')
     
     fig.add_subplot(2,2,2)
     for l in range(nlines2): plot(cumsum((rand(npts)+0.1*l)**2), c=colors2[l], lw=lw)
     legend(['%i' % l for l in range(nlines2)], loc='upper left')
+    title('>=10 colors: generate based on color cube')
     
     fig.add_subplot(2,2,3, projection='3d')
     gridcolormap(ncolors=nlines1, doplot=True, newwindow=False)
+    
     fig.add_subplot(2,2,4, projection='3d')
     gridcolormap(ncolors=nlines2, doplot=True, newwindow=False)
+    
         
     
     done(t)
+    show()
