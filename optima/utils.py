@@ -628,6 +628,11 @@ class odict(OrderedDict):
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
 
+
+    def __is_odict_iterable(self, v):
+        return type(v)==list or type(v)==type(array([]))
+
+
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str: # Treat like a normal dict
@@ -641,14 +646,13 @@ class odict(OrderedDict):
             slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
             try: return array(slicevals) # Try to convert to an array
             except: return slicevals
-        elif type(key)==list or type(key)==type(array([])): # Iterate over items
+        elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)
             except: return listvals
         else: # Try to convert to a list if it's an array or something
             return OrderedDict.__getitem__(self, key)
 
-        
         
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
@@ -660,22 +664,22 @@ class odict(OrderedDict):
         elif type(key)==slice:
             startind = self.__slicekey(key.start, 'start')
             stopind = self.__slicekey(key.stop, 'stop')
-            if stopind<startind: 
+            if stopind<startind:
                 errormsg = 'Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind)
                 raise Exception(errormsg)
             slicerange = range(startind,stopind)
             enumerator = enumerate(slicerange)
             slicelen = len(slicerange)
-            if hasattr(value, '__len__'):                    
+            if self.__is_odict_iterable(value):
                 if len(value)==slicelen:
-                    for valind,index in enumerator: 
+                    for valind,index in enumerator:
                         self.__setitem__(index, value[valind])
                 else:
                     errormsg = 'Slice "%s" and values "%s" have different lengths! (%i, %i)' % (slicerange, value, slicelen, len(value))
                     raise Exception(errormsg)
             else: 
                 self.__setitem__(key, value)
-        elif (type(key)==list or type(key)==type(array([]))) and (type(value)==list or type(value)==type(array([]))): # Iterate over items
+        elif self.__is_odict_iterable(key) and self.__is_odict_iterable(value): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 
                     self.__setitem__(thiskey, value[valind])
