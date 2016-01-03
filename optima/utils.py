@@ -658,7 +658,7 @@ class odict(OrderedDict):
             stopind = self.__slicekey(key.stop, 'stop')
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
             enumerator = enumerate(range(startind,stopind))
-            slicelen = len(range(startind,stopind+1))
+            slicelen = len(range(startind,stopind))
             if hasattr(value, '__len__'):                    
                 if len(value)==slicelen:
                     for valind,index in enumerator: 
