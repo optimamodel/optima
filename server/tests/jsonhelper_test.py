@@ -20,13 +20,12 @@ class JsonHelperTestCase(unittest.TestCase):
         p.loadspreadsheet(file_path)
         def_parset = p.parsets['default']
         self.assertTrue(def_parset)
-        json_dump = json.dumps(def_parset, cls=OptimaJSONEncoder)
-        print "json_dump", json_dump
-        self.assertTrue(json_dump)
-        json_load = json.loads(json_dump, object_pairs_hook=OrderedDict)
+        dumped_parset = json.dumps(def_parset, cls=OptimaJSONEncoder)
+        print "dumped_parset", dumped_parset
+        self.assertTrue(dumped_parset)
+        restored_parset = json.loads(dumped_parset, object_pairs_hook=OrderedDict)
 #        print "json_load", json_load
-        ps = json_load['Parameterset']
-        print ps['pars'][0].keys(), def_parset.pars[0].keys()
-        print ps.keys(), def_parset.__dict__.keys()
-        self.assertTrue(ps.keys() == def_parset.__dict__.keys())
-        self.assertTrue(ps['pars'][0].keys() == def_parset.pars[0].keys())
+        print restored_parset['pars'][0].keys(), def_parset.pars[0].keys()
+        print restored_parset.keys(), def_parset.__dict__.keys()
+        self.assertTrue(restored_parset.keys() == def_parset.__dict__.keys())
+        self.assertTrue(restored_parset['pars'][0].keys() == def_parset.pars[0].keys())
