@@ -638,7 +638,9 @@ class odict(OrderedDict):
             startind = self.__slicekey(key.start, 'start')
             stopind = self.__slicekey(key.stop, 'stop')
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            return array([self.__getitem__(i) for i in range(startind,stopind)])
+            slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+            try: return array(slicevals) # Try to convert to an array
+            except: return slicevals
         elif type(key)==list: # Iterate over items
             return [self.__getitem__(item) for item in key]
         else: # Try to convert to a list if it's an array or something

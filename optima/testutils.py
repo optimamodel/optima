@@ -72,11 +72,11 @@ if 'odict' in tests:
 
 ## gridcolormap test
 if 'gridcolormap' in tests:
-    # from mpl_toolkits.mplot3d import Axes3D
+    from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     t = tic()
     
     from optima import gridcolormap
-    from pylab import figure, plot, cumsum, rand, legend
+    from pylab import figure, plot, cumsum, rand, legend, show
     
     nlines1 = 5
     nlines2 = 12
