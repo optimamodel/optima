@@ -34,10 +34,10 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
         """
 #        print type(obj)
         if isinstance(obj, op.parameters.Parameterset):  # TODO preserve order of keys
-            return {'Parameterset': OrderedDict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])}
+            return {type(obj).__name__: OrderedDict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])}
 
         if isinstance(obj, op.parameters.Par):
-            return {'Par': OrderedDict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])}
+            return {type(obj).__name__: OrderedDict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])}
 
         if isinstance(obj, np.float64):
             return float(obj)
