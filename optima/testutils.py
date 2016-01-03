@@ -53,15 +53,17 @@ if 'odict' in tests:
     t = tic()
     print('Running odict tests...')
     from optima import odict
-    foo = odict({'ah':3,'boo':4, 'cough':6, 'dill': 8})
-    bar = foo.sort() # Sort the list
+    foo = odict({'ah':3,'boo':4, 'dill':8, 'cough': 6}) # Slightly unsorted list
+    bar = foo.sort() # Sort the list -- 3, 4, 6, 8
     assert(bar['boo'] == 4) # Show get item by value
     assert(bar[1] == 4) # Show get item by index
     assert((bar[0:2] == [3,4]).all()) # Show get item by slice
     assert((bar['cough':'dill'] == [6,8]).all()) # Show alternate slice notation
     assert(bar[[2,1]] == [6,4]) # Show get item by list
+    assert((bar[:] == [3,4,6,8]).all()) # Show slice with everything
+    assert((bar[2:] == [6,8]).all()) # Show slice without end
     bar[3] = [3,4,5] # Show assignment by item
-    bar[0:1] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
+    bar[0:2] = ['the', 'power'] # Show assignment by slice
     bar.rename('cough','chill') # Show rename
     print(bar) # Print results
     done(t)
