@@ -66,6 +66,7 @@ if 'odict' in tests:
     assert((bar[2:] == [6,8]).all()) # Show slice without end
     bar[3] = [3,4,5] # Show assignment by item
     bar[0:2] = ['the', 'power'] # Show assignment by slice -- NOTE, inclusive slice!!
+    bar[[0,2]] = ['cat', 'trip'] # Show assignment by list
     bar.rename('cough','chill') # Show rename
     print(bar) # Print results
     done(t)

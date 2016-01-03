@@ -672,6 +672,12 @@ class odict(OrderedDict):
             else: 
                 for valind,index in enumerator: # +1 since otherwise confusing with names
                     self.__setitem__(index, value)
+        elif hasattr(key, '__len__') and hasattr(value, '__len__'): # Iterate over items
+            if len(key)==len(value):
+                for valind,thiskey in enumerate(key): 
+                    self.__setitem__(thiskey, value[valind])
+            else:
+                OrderedDict.__setitem__(self, key, value)
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
