@@ -660,24 +660,28 @@ class odict(OrderedDict):
         elif type(key)==slice:
             startind = self.__slicekey(key.start, 'start')
             stopind = self.__slicekey(key.stop, 'stop')
-            if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            enumerator = enumerate(range(startind,stopind))
-            slicelen = len(range(startind,stopind))
+            if stopind<startind: 
+                errormsg = 'Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind)
+                raise Exception(errormsg)
+            slicerange = range(startind,stopind)
+            enumerator = enumerate(slicerange)
+            slicelen = len(slicerange)
             if hasattr(value, '__len__'):                    
                 if len(value)==slicelen:
                     for valind,index in enumerator: 
                         self.__setitem__(index, value[valind])
                 else:
-                    raise Exception('Setitem for slice(%s) with mismatched value %s' % (key, value))
+                    errormsg = 'Slice "%s" and values "%s" have different lengths! (%i, %i)' % (slicerange, value, slicelen, len(value))
+                    raise Exception(errormsg)
             else: 
-                for valind,index in enumerator: # +1 since otherwise confusing with names
-                    self.__setitem__(index, value)
+                self.__setitem__(key, value)
         elif hasattr(key, '__len__') and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 
                     self.__setitem__(thiskey, value[valind])
             else:
-                OrderedDict.__setitem__(self, key, value)
+                errormsg = 'Keys "%s" and values "%s" have different lengths! (%i, %i)' % (key, value, len(key), len(value))
+                raise Exception(errormsg)
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
