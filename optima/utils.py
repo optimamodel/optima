@@ -625,7 +625,7 @@ class odict(OrderedDict):
         shift = int(slice_end=='stop')
         if type(key) is int: return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
-        elif key is None: return 0
+        elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
 
     def __getitem__(self, key):
