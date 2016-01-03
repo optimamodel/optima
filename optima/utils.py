@@ -641,7 +641,7 @@ class odict(OrderedDict):
             slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
             try: return array(slicevals) # Try to convert to an array
             except: return slicevals
-        elif hasattr(key, '__len__'): # Iterate over items
+        elif type(key)==list or type(key)==type(array([])): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)
             except: return listvals
@@ -675,7 +675,7 @@ class odict(OrderedDict):
                     raise Exception(errormsg)
             else: 
                 self.__setitem__(key, value)
-        elif hasattr(key, '__len__') and hasattr(value, '__len__'): # Iterate over items
+        elif (type(key)==list or type(key)==type(array([]))) and (type(value)==list or type(value)==type(array([]))): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 
                     self.__setitem__(thiskey, value[valind])
