@@ -670,7 +670,7 @@ class odict(OrderedDict):
             slicerange = range(startind,stopind)
             enumerator = enumerate(slicerange)
             slicelen = len(slicerange)
-            if self.__is_odict_iterable(value):
+            if hasattr(value, '__len__'):
                 if len(value)==slicelen:
                     for valind,index in enumerator:
                         self.__setitem__(index, value[valind])
@@ -679,7 +679,7 @@ class odict(OrderedDict):
                     raise Exception(errormsg)
             else: 
                 self.__setitem__(key, value)
-        elif self.__is_odict_iterable(key) and self.__is_odict_iterable(value): # Iterate over items
+        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 
                     self.__setitem__(thiskey, value[valind])
