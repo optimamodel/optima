@@ -5,7 +5,7 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2015dec29 by cliffk
+Version: 2016jan04 by cliffk
 """
 
 
@@ -101,7 +101,7 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None)
+    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, niters=100, inds=None)
     results = P.runsim('autofit')
     
     from gui import pygui

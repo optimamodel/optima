@@ -209,39 +209,39 @@ def makepars(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, bestindex, popkeys, by='pop', manual='pop') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', manual='exp')
+    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, bestindex, popkeys, by='pop', manual='pop', auto='init') # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', manual='exp', auto='popsize')
     
     # Epidemilogy parameters -- most are data
-    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop', manual='meta') # STI prevalence
-    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, by='pop', manual='meta')  # Death rates
-    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, by='pop', manual='meta') # TB prevalence
+    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop', manual='meta', auto='other') # STI prevalence
+    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, by='pop', manual='meta', auto='other')  # Death rates
+    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, by='pop', manual='meta', auto='other') # TB prevalence
     
     # Testing parameters -- most are data
-    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, by='pop', manual='meta') # HIV testing rates
-    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, by='tot', manual='meta') # AIDS testing rates
-    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, by='tot', manual='meta') # Number of people on first-line treatment -- WARNING, will need to change
+    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, by='pop', manual='meta', auto='test') # HIV testing rates
+    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, by='tot', manual='meta', auto='test') # AIDS testing rates
+    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, by='tot', manual='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
-    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, by='tot', manual='meta')
-    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, by='tot', manual='meta')  
-    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, by='pop', manual='meta')
+    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, by='tot', manual='meta', auto='other')
+    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, by='tot', manual='meta', auto='other')  
+    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, by='pop', manual='meta', auto='other')
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
     # Circumcision parameters
-    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, by='pop', manual='meta') # Circumcision percentage
+    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, by='pop', manual='meta', auto='other') # Circumcision percentage
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
     # Drug behavior parameters
-    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, by='tot', manual='meta')
-    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, by='pop', manual='meta')
+    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, by='tot', manual='meta', auto='other')
+    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, by='pop', manual='meta', auto='other')
     
     # Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, by='pop', manual='meta')
+    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, by='pop', manual='meta', auto='other')
     
     # Constants
     pars['const'] = odict() # WARNING, actually use Parameters class?
@@ -253,8 +253,8 @@ def makepars(data, verbose=2):
         pars['const'][parname] = Constant(name=parname, short=parname, limits=[low, high], y=best, by='tot', manual='const', auto='const')
 
     # Initialize metaparameters
-    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', manual='pop') # Create structure
-    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), by='pop', manual='pop') # Create structure
+    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', manual='pop', auto='force') # Create structure
+    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), by='pop', manual='pop', auto='inhomo') # Create structure
     for key in popkeys:
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
