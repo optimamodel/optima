@@ -95,8 +95,16 @@ class Project(object):
         output += '============================================================'
         return output
     
-    
-    
+               
+    def __getattr__(self, key):
+        ''' Allows for keywords to be called like attributes and run user functions (e.g. "show" for listing attributes) '''
+        
+        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
+        if key.startswith('__') and key.endswith('__'):
+            return super(Project, self).__getattr__(key)
+        if key == 'show':
+            return self.__dict__.keys()
+        return self.__getitem__(key)
     
     
     #######################################################################################################
