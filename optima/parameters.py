@@ -20,9 +20,9 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, short, data, index, keys, by=None, manual='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, short, data, index, keys, by=None, manual='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short=short, y=odict(), by=by, manual=manual) # Create structure
+    par = Constant(name=name, short=short, y=odict(), by=by, manual=manual, auto=auto) # Create structure
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -30,9 +30,9 @@ def data2prev(name, short, data, index, keys, by=None, manual='', blh=0): # WARN
 
 
 
-def data2popsize(name, short, data, keys, by=None, manual='', blh=0):
+def data2popsize(name, short, data, keys, by=None, manual='', auto='', blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=name, short=short, m=1, by=by, manual=manual)
+    par = Popsizepar(name=name, short=short, m=1, by=by, manual=manual, auto=auto)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -86,9 +86,9 @@ def data2popsize(name, short, data, keys, by=None, manual='', blh=0):
 
 
 
-def data2timepar(name, short, data, keys, by=None, manual=''):
+def data2timepar(name, short, data, keys, by=None, manual='', auto=''):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, manual=manual) # Create structure
+    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, manual=manual, auto=auto) # Create structure
     for row,key in enumerate(keys):
         validdata = ~isnan(data[short][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
@@ -473,7 +473,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, ind=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
@@ -482,7 +482,9 @@ class Parameterset(object):
         if keys is None: keys = modelkeys
         
         simparslist = []
-        for ind in range(len(self.pars)):
+        if type(inds)==int or type(inds)==float: inds = [inds]
+        if inds is None:inds = range(len(self.pars))
+        for ind in inds:
             pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
             simpars = odict() # Used to be called M
             simpars['parsetname'] = self.name
