@@ -423,8 +423,8 @@ class Constant(Par):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
-        output += '    y: %s\n'    % self.y
-        output += '   by: %s\n'    % self.by
+        output += '     y: %s\n'    % self.y
+        output += '    by: "%s"\n'    % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
