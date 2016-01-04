@@ -307,6 +307,40 @@ def makepars(data, verbose=2):
 
 
 
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    ''' 
+    A function for taking a single set of parameters and returning the interpolated versions -- used
+    very directly in Parameterset.
+    
+    Version: 2016jan04 by cliffk
+    '''
+    
+    # Handle inputs and initialization
+    simpars = odict() # Used to be called M
+    generalkeys = ['male', 'female', 'popkeys']
+    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
+    if keys is None: keys = modelkeys
+    if tvec is not None: simpars['tvec'] = tvec
+    else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+    
+    # Copy default keys by default
+    for key in generalkeys: simpars[key] = dcp(pars[key])
+    
+    # Loop over requested keys
+    for key in keys:
+        if key=='const': # Handle constants separately
+            simpars['const'] = odict()
+            for subkey in pars['const'].keys():
+                simpars['const'][subkey] = pars['const'][subkey].interp()
+        else: # Handle all other parameters
+            try: 
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
+            except: 
+                errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                raise Exception(errormsg)
+    
+    return simpars
+
 
 
 
@@ -477,38 +511,14 @@ class Parameterset(object):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
-        generalkeys = ['male', 'female', 'popkeys']
-        modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
-        if keys is None: keys = modelkeys
-        
         simparslist = []
         if type(inds)==int or type(inds)==float: inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
-            pars = self.pars[ind] # Shorten name of parameters thing -- and only pull out a single parameter set
-            simpars = odict() # Used to be called M
+            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose)
             simpars['parsetname'] = self.name
             simpars['parsetuuid'] = self.uuid
-            if tvec is not None: simpars['tvec'] = tvec
-            else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
-            simpars['popkeys'] = dcp(self.popkeys)
-            
-            # Copy default keys by default
-            for key in generalkeys: simpars[key] = dcp(pars[key])
-            for key in keys:
-                if key=='const': # Handle constants separately
-                    simpars['const'] = odict()
-                    for subkey in pars['const'].keys():
-                        simpars['const'][subkey] = pars['const'][subkey].interp()
-                else: # Handle all other parameters
-                    try: 
-                        simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-                    except: 
-                        errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                        raise Exception(errormsg)
-    
-            # Wrap up
-            simparslist.append(simpars)
+            simparslist.append(simpars) # Wrap up
         
         printv('...done making model parameters.', 2, verbose)
         return simparslist

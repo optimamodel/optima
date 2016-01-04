@@ -72,7 +72,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(project=None, name=None, what='force', maxtime=None, niters=100, inds=0):
+def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0):
     ''' 
     Function to automatically fit parameters
     
@@ -82,11 +82,14 @@ def autofit(project=None, name=None, what='force', maxtime=None, niters=100, ind
     # Initialization
     parset = dcp(project.parsets[name]) # Copy the original parameter set
     npars = len(parset.pars)
+    if what is None: what = ['force'] # By default, automatically fit force-of-infection only
     if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(npars)
     if max(inds)>npars: raise Exception('Index %i exceeds length of parameters %i' % (max(inds), npars))
     origpars = dcp(parset.pars)
     parset.pars = [] # Clear out in preparation for fitting
+    
+    # Populate lists of what to fit
     
     # Loop over each pars
     for ind in inds:
@@ -99,7 +102,7 @@ def autofit(project=None, name=None, what='force', maxtime=None, niters=100, ind
         
         
         # Perform fit
-        simparslist = self.parsets[name].interp(start=start, end=end, dt=dt)
+        simparslist = self.parsets[name].interp(start=project.data['datastart'], end=project.data['dataend'])
         raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
         results = Resultset(self, simparslist, rawlist) # Create structure for storing results
         results.make() # Generate derived results
