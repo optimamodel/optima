@@ -263,14 +263,15 @@ class Project(object):
         
         
     def manualfit(self, name='manualfit', orig='default', ind=0): # orig=default or orig=0?
-        ''' Function to perform manual fitting'''
+        ''' Function to perform manual fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualfit(self, name=name, ind=ind) # Actually run manual fitting
         return None
         
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None):
+        ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
-        TMP = autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds)
-        return TMP
+        autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds)
+        return None
     
