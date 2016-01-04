@@ -66,7 +66,6 @@ class Project(object):
         except:
             self.gitbranch = 'Git branch information not retrivable'
             self.gitversion = 'Git version information not retrivable'
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -272,6 +271,6 @@ class Project(object):
         
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None):
         self.copyparset(orig=orig, new=name) # Store parameters
-        autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds)
-        return None
+        TMP = autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds)
+        return TMP
     
