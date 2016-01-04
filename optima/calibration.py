@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import dcp, perturb, Parameterset
+from optima import Parameterset, Resultset, dcp, perturb, makesimpars, model
 from numpy import median
 
 
@@ -81,12 +81,12 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     
     # Initialization
     parset = dcp(project.parsets[name]) # Copy the original parameter set
-    npars = len(parset.pars)
+    origparlist = dcp(parset.pars)
+    lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
     if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
-    if inds is None: inds = range(npars)
-    if max(inds)>npars: raise Exception('Index %i exceeds length of parameters %i' % (max(inds), npars))
-    origpars = dcp(parset.pars)
+    if inds is None: inds = range(lenparlist)
+    if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
     
     # Populate lists of what to fit
@@ -95,16 +95,16 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     for ind in inds:
         
         # Get this set of parameters
-        try: pars = origpars[ind]
+        try: pars = origparlist[ind]
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         # Pull out parameters to fit
         
         
         # Perform fit
-        simpars = self.parsets[name].interp(start=project.data['datastart'], end=project.data['dataend'])
-        raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
-        results = Resultset(self, simparslist, rawlist) # Create structure for storing results
+        simpars = makesimpars(pars, start=project.data['datastart'], end=project.data['dataend'])
+        raw = model(simpars, project.settings) # THIS IS SPINAL OPTIMA
+        results = Resultset(project, simpars, raw) # Create structure for storing results
         results.make() # Generate derived results
         
         # Save
