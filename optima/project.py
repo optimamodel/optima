@@ -114,7 +114,7 @@ class Project(object):
         
         ## If parameter set of that name doesn't exist, create it
         if name not in self.parsets:
-            parset = Parameterset()
+            parset = Parameterset(name=name)
             parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset) # Store parameters
         return None

@@ -102,7 +102,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         
         
         # Perform fit
-        simparslist = self.parsets[name].interp(start=project.data['datastart'], end=project.data['dataend'])
+        simpars = self.parsets[name].interp(start=project.data['datastart'], end=project.data['dataend'])
         raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
         results = Resultset(self, simparslist, rawlist) # Create structure for storing results
         results.make() # Generate derived results

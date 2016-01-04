@@ -481,7 +481,7 @@ class Constant(Par):
 class Parameterset(object):
     ''' A full set of all parameters, possibly including multiple uncertainty runs '''
     
-    def __init__(self, name='default', id=None):
+    def __init__(self, name='default'):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uuid = uuid() # ID
         self.created = today() # Date created
@@ -494,15 +494,15 @@ class Parameterset(object):
         output = objectid(self)
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
-        if self.created: output += '      Date created: %s\n'    % getdate(self.created)
-        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '              UUID: %s\n'    % self.uuid
         return output
     
     
     
     def makepars(self, data, verbose=2):
-        self.pars.append(makepars(data, verbose=verbose))
+        self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
         self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
         return None
 

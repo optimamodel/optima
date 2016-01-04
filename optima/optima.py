@@ -27,7 +27,7 @@ from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, ob
 from settings import Settings # Inter-project definitions, e.g. health states
 from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
 from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
-from parameters import Timepar, Popsizepar, Parameterset # Parameter and Parameterset classes
+from parameters import Timepar, Popsizepar, Parameterset, makepars, makesimpars # Parameter and Parameterset classes
 from results import Result, Resultset # Result and Results classes
 from model import model # The thing that actually runs the model
 from programs import Program, Programset # Define programs
