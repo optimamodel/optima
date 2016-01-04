@@ -72,34 +72,35 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(project=None, orig=None, what='force', maxtime=None, niters=100, inds=None):
+def autofit(project=None, name=None, what='force', maxtime=None, niters=100, inds=0):
     ''' 
     Function to automatically fit parameters
-    
-    Inputs:
-        orig = parset to perturb
-        ncopies = number of perturbed copies of pars to produce
-        what = which parameters to perturb
-        span = how much to perturb
-        ind = index of pars to start from
-    Outputs:
-        parset = perturbed parameter set with ncopies sets of pars
     
     Version: 2016jan04 by cliffk
     '''
     
-    # Validate input
-    if inds is None: inds = [0]
-    elif type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
+    # Initialization
+    parset = dcp(project.parsets[name]) # Copy the original parameter set
+    npars = len(parset.pars)
+    if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
+    if inds is None: inds = range(npars)
+    if max(inds)>npars: raise Exception('Index %i exceeds length of parameters %i' % (max(inds), npars))
+    origpars = dcp(parset.pars)
+    parset.pars = [] # Clear out in preparation for fitting
     
-    # Copy things
-    parset = dcp(orig) # Copy the original parameter set
+    # Loop over each pars
     for ind in inds:
-        try: origpars = dcp(parset.pars[ind])
-        except:
-            errormsg = 'Could not load 
-            raise Exception(errormsg)
-        parset.pars = []
+        
+        # Get this set of parameters
+        try: pars = origpars[ind]
+        except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
+        
+        # Pull out parameters to fit
+        
+        # Perform fit
+        
+        # Save
+        
         for n in range(ncopies):
             parset.pars.append(dcp(origpars))
         popkeys = origpars['popkeys']
