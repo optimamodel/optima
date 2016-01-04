@@ -13,7 +13,8 @@ Version: 2015dec29 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'sensitivity',
-'manualfit',
+#'manualfit',
+'autofit',
 ]
 
 
@@ -84,6 +85,27 @@ if 'manualfit' in tests:
     
     P = Project(spreadsheet='test7pops.xlsx')
     P.manualfit(orig='default', name='manual')
+    
+    done(t)
+
+
+
+
+
+
+## Autofit test
+if 'autofit' in tests:
+    t = tic()
+
+    print('Running autofit test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test7pops.xlsx')
+    P.autofit(orig='default', name='autofit', n=10, span=0.5)
+    results = P.runsim('autofit')
+    
+    from gui import pygui
+    pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 

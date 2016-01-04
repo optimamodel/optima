@@ -321,10 +321,10 @@ class Par(object):
         ''' Print out useful information when called'''
         output = objectid(self)
         output += '  name: "%s"\n'    % self.name
-        if hasattr(self, 'short'): output += ' short: "%s"\n'    % self.short
-        if hasattr(self, 'limits'): output += 'limits: %s\n'      % str(self.limits)
-        if hasattr(self, 'manual'): output += 'manual: "%s"\n'    % self.manual
-        if hasattr(self, 'auto'): output += '  auto: "%s"\n'    % self.auto
+        output += ' short: "%s"\n'    % self.short
+        output += 'limits: %s\n'      % str(self.limits)
+        output += 'manual: "%s"\n'    % self.manual
+        output += '  auto: "%s"\n'    % self.auto
         return output
 
 
