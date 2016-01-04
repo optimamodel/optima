@@ -10,7 +10,7 @@ from optima import *
 
 The __init__.py file imports all functions and classes defined in this file..
 
-Version: 2015dec29
+Version: 2016jan04 by cliffk
 """
 
 ## Load general modules
@@ -39,8 +39,8 @@ try: from gui import pygui # Handle the Python plotting
 except: pygui = 'Import failed'
 try: from gui import browser # Handle the browser-based plotting
 except: browser = 'Import failed'
-try: from manualfit import manualgui # Do manual fitting
-except: manualgui = 'Import failed'
+try: from manualgui import manualfit # Do manual fitting
+except: manualfit = 'Import failed'
 
 ## Finally, import the Project class that ties everything together
 from project import Project, version # Project class

@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import dcp, perturb, Parameterset
+from optima import dcp, perturb, Project, Parameterset
 from numpy import median
 
 
@@ -72,7 +72,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(orig=None, what='force', maxtime=None, niters=100, inds=None):
+def autofit(project=None, orig=None, what='force', maxtime=None, niters=100, inds=None):
     ''' 
     Function to automatically fit parameters
     
@@ -91,8 +91,8 @@ def autofit(orig=None, what='force', maxtime=None, niters=100, inds=None):
     # Validate input
     if inds is None: inds = [0]
     elif type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
-    if type(orig)!=Parameterset:
-        raise Exception('First argument to autofit() must be a parameter set')
+    if type(project)!=Project:
+        raise Exception('First argument to autofit() must be a project')
     
     # Copy things
     parset = dcp(orig) # Copy the original parameter set

@@ -1,5 +1,5 @@
 from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, \
-runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualgui, autofit
+runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualfit, autofit
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -267,10 +267,11 @@ class Project(object):
         ''' Function to perform manual fitting'''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualgui(self, name=name, ind=0) # Actually run manual fitting
+        manualfit(self, name=name, ind=ind) # Actually run manual fitting
         return None
         
-    def autofit(self, name='autofit', orig=None, what='force', maxtime=None, niters=100, inds=None):
+    def autofit(self, name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None):
         self.copyparset(orig=orig, new=name) # Store parameters
-        autofit
+        autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds)
+        return None
     

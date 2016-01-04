@@ -101,7 +101,7 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(orig='default', name='autofit', n=10, span=0.5)
+    P.autofit(name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None)
     results = P.runsim('autofit')
     
     from gui import pygui

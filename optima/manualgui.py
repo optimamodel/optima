@@ -6,7 +6,7 @@ import gui # Need low-level functions so need to import directly
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*10
 
-def manualgui(project=None, name='default', ind=0, verbose=4):
+def manualfit(project=None, name='default', ind=0, verbose=4):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
