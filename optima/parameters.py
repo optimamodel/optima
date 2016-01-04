@@ -307,7 +307,7 @@ def makepars(data, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uuid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -317,6 +317,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     
     # Handle inputs and initialization
     simpars = odict() # Used to be called M
+    simpars['parsetname'] = name
+    simpars['parsetuuid'] = uuid
     generalkeys = ['male', 'female', 'popkeys']
     modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
     if keys is None: keys = modelkeys
@@ -515,9 +517,7 @@ class Parameterset(object):
         if type(inds)==int or type(inds)==float: inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose)
-            simpars['parsetname'] = self.name
-            simpars['parsetuuid'] = self.uuid
+            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uuid=self.uuid)
             simparslist.append(simpars) # Wrap up
         
         printv('...done making model parameters.', 2, verbose)

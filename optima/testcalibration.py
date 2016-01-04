@@ -101,8 +101,8 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, niters=100, inds=None)
-    results = P.runsim('autofit')
+    results = P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, niters=100, inds=None)
+#    results = P.runsim('autofit')
     
     from gui import pygui
     pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
