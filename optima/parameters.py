@@ -477,7 +477,7 @@ class Parameterset(object):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
-        generalkeys = ['male', 'female', 'popkeys', 'force', 'inhomo']
+        generalkeys = ['male', 'female', 'popkeys']
         modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
         if keys is None: keys = modelkeys
         
