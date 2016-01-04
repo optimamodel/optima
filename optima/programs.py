@@ -13,25 +13,23 @@ import abc
 from pylab import figure
 from matplotlib.ticker import MaxNLocator
 
+
 class Programset(object):
 
-    def __init__(self, name='default', programs=None):
+    def __init__(self, name='default', programs=None, default_interaction='random'):
         ''' Initialize '''
         self.name = name
         self.id = uuid()
+        self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
-        self.gettargetpops()
-        self.gettargetpars()
-        self.gettargetpartypes()
-        self.initialize_covout()
         self.created = today()
         self.modified = today()
 
     def __repr__(self):
         ''' Print out useful information'''
         output = '\n'
-        output += '       Response name: %s\n'    % self.name
+        output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
         output += '        Date created: %s\n'    % getdate(self.created)
@@ -40,7 +38,7 @@ class Programset(object):
         return output
 
     def gettargetpops(self):
-        '''Lists populations targeted by some program in the response'''
+        '''Update populations targeted by some program in the response'''
         self.targetpops = []
         if self.programs:
             for prog in self.programs.values():
@@ -48,14 +46,14 @@ class Programset(object):
             self.targetpops = list(set(self.targetpops))
 
     def gettargetpars(self):
-        '''Lists model parameters targeted by some program in the response'''
+        '''Update model parameters targeted by some program in the response'''
         self.targetpars = []
         if self.programs:
             for thisprog in self.programs.values():
                 for thispop in thisprog.targetpars: self.targetpars.append(thispop)
 
     def gettargetpartypes(self):
-        '''Lists model parameter types targeted by some program in the response'''
+        '''Update model parameter types targeted by some program in the response'''
         self.targetpartypes = []
         if self.programs:
             for thisprog in self.programs.values():
@@ -63,57 +61,71 @@ class Programset(object):
             self.targetpartypes = list(set(self.targetpartypes))
 
     def initialize_covout(self):
-        '''Initializes the required coverage-outcome curves.
-           Parameters for actually defining these should be added using
+        '''Sets up the required coverage-outcome curves.
+           Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
-        self.gettargetpops()
-        self.covout = odict()
-        for targetpartype in self.targetpartypes:
-            self.covout[targetpartype] = odict()
-            for thispop in self.progs_by_targetpar(targetpartype).keys():
-                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]
-                initccoparams = {k: [] for k in targetingprogs}
-                initccoparams['t'],initccoparams['intercept'] = [], []
-                self.covout[targetpartype][thispop] = Covout(initccoparams)
+        if not self.__dict__.get('covout'): self.covout = odict()
 
-    def addprograms(self,newprograms):
+        for targetpartype in self.targetpartypes: # Loop over parameter types
+            if not self.covout.get(targetpartype): self.covout[targetpartype] = {} # Initialize if it's not there already
+            for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
+                if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
+                    ccopars = self.covout[targetpartype][thispop].ccopars 
+                else: # ... or if not, set it up
+                    ccopars = {}
+                    ccopars['intercept'] = []
+                    ccopars['t'] = []
+                targetingprogs = [x.name for x in self.progs_by_targetpar(targetpartype)[thispop]]
+                for tp in targetingprogs:
+                    if not ccopars.get(tp): ccopars[tp] = []
+                
+                # Delete any stored programs that are no longer needed (if removing a program)
+                progccopars = dcp(ccopars)
+                try: del progccopars['t'], progccopars['intercept']
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                for prog in progccopars.keys(): 
+                    if prog not in targetingprogs: del ccopars[prog]
+
+                self.covout[targetpartype][thispop] = Covout(ccopars=ccopars,interaction=self.default_interaction)
+
+        # Delete any stored effects that aren't needed (if removing a program)
+        for tpt in self.covout.keys():
+            if tpt not in self.targetpartypes: del self.covout[tpt]
+            else: 
+                for tp in self.covout[tpt].keys():
+                    if type(tp)==str and tp not in self.targetpops: del self.covout[tpt][tp]
+
+    def addprograms(self, newprograms, verbose=2):
         ''' Add new programs'''
         if type(newprograms)==Program: newprograms = [newprograms]
         if type(newprograms)==list:
-            for newprogram in newprograms:
-                if newprogram not in self.programs:
+            for newprogram in newprograms: 
+                if newprogram not in self.programs.values():
                     self.programs[newprogram.name] = newprogram
-                    self.gettargetpops()
-                    self.gettargetpartypes()
-                    self.initialize_covout()
                     print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
                 else:
                     raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
-        elif type(newprograms)==dict:
-            for newprogram in newprograms.values():
-                if newprogram not in self.programs:
-                    self.programs[newprogram.name] = newprogram
-                    self.gettargetpops()
-                    self.gettargetpartypes()
-                    self.initialize_covout()
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.name, self.name, [p.name for p in self.programs.values()]))
-                else:
-                    raise Exception('Program "%s" is already present in programset "%s".' % (newprogram.name, self.name))
-
-    def rmprogram(self,program):
+        self.gettargetpars()
+        self.gettargetpartypes()
+        self.gettargetpops()
+        self.initialize_covout()
+                   
+    def rmprogram(self,program,verbose=2):
         ''' Remove a program. Expects type(program) in [Program,str]'''
-        if not type(program)==str: program = program.name
+        if not type(program) == str: program = program.name
         if program not in self.programs:
-            raise Exception('You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (program, self.name, [p for p in self.programs]))
+            errormsg = 'You have asked to remove program "%s", but there is no program by this name in programset "%s". Available programs are' % (program, self.name, [p for p in self.programs])
+            raise Exception(errormsg)
         else:
             self.programs.pop(program)
+            self.gettargetpars()
             self.gettargetpops()
             self.gettargetpartypes()
             self.initialize_covout()
-            print('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [p.name for p in self.programs.values()]))
+            printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [p.name for p in self.programs.values()]), 4, verbose)
 
     def optimizable(self):
-        return [True if prog.targetpars else False for prog in self.programs.values()]
+        return [True if prog.optimizable() else False for prog in self.programs.values()]
 
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
@@ -151,12 +163,12 @@ class Programset(object):
             for prog in self.progs_by_targetpartype(thispartype):
                 targetpars = prog.targetpars if prog.targetpars else None
                 for targetpar in targetpars:
-                    if thispartype==targetpar['param']: progs_by_targetpar[thispartype][targetpar['pop']].append(prog)
+                    if thispartype == targetpar['param']: progs_by_targetpar[thispartype][targetpar['pop']].append(prog)
             progs_by_targetpar[thispartype] = dict(progs_by_targetpar[thispartype])
         if filter_partype: return dict(progs_by_targetpar)[filter_partype]
         else: return dict(progs_by_targetpar)
 
-    def getprogcoverage(self,budget,t,parset,proportion=False,perturb=False,verbose=2):
+    def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
         coverage = {}
         for thisprog in self.programs.keys():
@@ -170,7 +182,7 @@ class Programset(object):
             else: coverage[thisprog] = None
         return coverage
 
-    def getprogbudget(self,coverage,t,parset,proportion=False,perturb=False,verbose=2):
+    def getprogbudget(self, coverage, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
         budget = {}
         for thisprog in self.programs.keys():
@@ -184,7 +196,7 @@ class Programset(object):
             else: budget[thisprog] = None
         return budget
 
-    def getpopcoverage(self,budget,t,parset,perturb=False,verbose=2):
+    def getpopcoverage(self, budget, t, parset, perturb=False, verbose=2):
         '''Get the number of people from each population covered by each program...'''
         popcoverage = {}
         for thisprog in self.programs.keys():
@@ -198,14 +210,12 @@ class Programset(object):
             else: popcoverage[thisprog] = None
         return popcoverage
 
-    def getoutcomes(self,forwhat,t,parset,forwhattype='budget',interaction='random',perturb=False):
-        ''' Get the model parameters corresponding to a budget or coverage vector'''
+    def getoutcomes(self,coverage,t,parset,perturb=False):
+        ''' Get the model parameters corresponding to dictionary of coverage values'''
         nyrs = len(t)
         outcomes = odict()
-
-        if forwhattype=='coverage':
-            budget = self.getprogbudget(coverage=forwhat,t=t,parset=parset)
-        else: budget = forwhat
+        
+        budget = self.getprogbudget(coverage=coverage,t=t,parset=parset,proportion=False)
 
         for thispartype in self.targetpartypes: # Loop over parameter types
             outcomes[thispartype] = odict()
@@ -214,25 +224,27 @@ class Programset(object):
                 delta, thiscov = odict(), odict()
 
                 for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
+                    if type(thispop)==tuple: thiscovpop = thisprog.targetpops[0] # If it's a partnership parameters, get the target population separately
+                    else: thiscovpop = None
                     if not self.covout[thispartype][thispop].ccopars[thisprog.name]:
                         print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.name))
                         outcomes[thispartype][thispop] = None
                     else:
                         outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                         x = budget[thisprog.name]
-                        try: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
-                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                        delta[thisprog.name] = self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name]
+                        if thiscovpop: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thiscovpop]
+                        else: thiscov[thisprog.name] = thisprog.getcoverage(x=x,t=t,parset=parset,proportion=True,total=False)[thispop]
+                        delta[thisprog.name] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.name][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
 
-                if interaction == 'additive':
+                if self.covout[thispartype][thispop].interaction == 'additive':
                         # Outcome += c1*delta_out1 + c2*delta_out2
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
                         if not self.covout[thispartype][thispop].ccopars[thisprog.name]:
                             print('WARNING: no coverage-outcome parameters defined for program  "%s", population "%s" and parameter "%s". Skipping over... ' % (thisprog.name, thispop, thispartype))
                             outcomes[thispartype][thispop] = None
-                        else: outcomes[thispartype][thispop] += thiscov[thisprog.name]*delta[thisprog.name]
-
-                elif interaction == 'nested':
+                        else: outcomes[thispartype][thispop] += thiscov[thisprog.name]*delta[thisprog.name]         
+                        
+                elif self.covout[thispartype][thispop].interaction == 'nested':
                     # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
                     for yr in range(nyrs):
                         cov,delt = [],[]
@@ -243,44 +255,46 @@ class Programset(object):
                         for j in range(len(cov_tuple)): # For each entry in here
                             if j == 0: c1 = cov_tuple[j][0]
                             else: c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
-                            outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])
-
-                elif interaction == 'random':
+                            outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
+            
+                elif self.covout[thispartype][thispop].interaction == 'random':
                     # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
 
-                    for prog1 in thiscov.keys():
-                        product = ones(thiscov[prog1].shape)
-                        for prog2 in thiscov.keys():
-                            if prog1 != prog2:
-                                product *= (1-thiscov[prog2])
-
-                        outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product
-
-                    # Recursion over overlap levels
-                    def overlap_calc(indexes,target_depth):
-                        if len(indexes) < target_depth:
-                            accum = 0
-                            for j in range(indexes[-1]+1,len(thiscov)):
-                                accum += overlap_calc(indexes+[j],target_depth)
-                            return thiscov.values()[indexes[-1]]*accum
-                        else:
-                            return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
-
-                    # Iterate over overlap levels
-                    for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
-                        for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                            outcomes[thispartype][thispop] += overlap_calc([j],i)
-
-                    # All programs together
-                    outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
-
-                else: raise Exception('Unknown reachability type "%s"',interaction)
-
+                    if all(self.covout[thispartype][thispop].ccopars.values()):
+                
+                        for prog1 in thiscov.keys():
+                            product = ones(thiscov[prog1].shape)
+                            for prog2 in thiscov.keys():
+                                if prog1 != prog2:
+                                    product *= (1-thiscov[prog2])
+            
+                            outcomes[thispartype][thispop] += delta[prog1]*thiscov[prog1]*product 
+    
+                        # Recursion over overlap levels
+                        def overlap_calc(indexes,target_depth):
+                            if len(indexes) < target_depth:
+                                accum = 0
+                                for j in range(indexes[-1]+1,len(thiscov)):
+                                    accum += overlap_calc(indexes+[j],target_depth)
+                                return thiscov.values()[indexes[-1]]*accum
+                            else:
+                                return thiscov.values()[indexes[-1]]* max([delta.values()[x] for x in [0]],0)
+    
+                        # Iterate over overlap levels
+                        for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
+                            for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
+                                outcomes[thispartype][thispop] += overlap_calc([j],i)
+    
+                        # All programs together
+                        outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
+                
+                else: raise Exception('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
+        
         return outcomes
-
-    def getparset(self,forwhat,t,parset,forwhattype='budget',newparsetname='programpars',interaction='random',perturb=False):
+        
+    def getparset(self,coverage,t,parset,newparsetname='programpars',perturb=False):
         ''' Make a parset'''
-        outcomes = self.getoutcomes(forwhat=forwhat,t=t,parset=parset,interaction=interaction,perturb=perturb)
+        outcomes = self.getoutcomes(coverage=coverage,t=t,parset=parset,perturb=perturb)
         progparset = dcp(parset)
         progparset.name = newparsetname
         progparset.created = today()
@@ -307,22 +321,31 @@ class Programset(object):
 
         return cost_coverage_figures
 
+
 class Program(object):
-    ''' Defines a single program.
+    '''
+    Defines a single program. 
     Can be initialized with:
     ccpars, e.g. {'t': [2015,2016], 'saturation': [.90,1.], 'unitcost': [40,30]}
-    modelpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]'''
+    targetpars, e.g. [{'param': 'hivtest', 'pop': 'FSW'}, {'param': 'hivtest', 'pop': 'MSM'}]
+    targetpops, e.g. ['FSW','MSM']
+    '''
 
-    def __init__(self,name,targetpars=None,targetpops=None,ccopars=None,costcovdata=None,nonhivdalys=0):
+    def __init__(self, name, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
+        category='No category', short_name=''):
         '''Initialize'''
         self.name = name
         self.id = uuid()
-        self.targetpars = targetpars if targetpars else []
+        if targetpars:
+            self.targetpars = targetpars
+        else: self.targetpars = []
         self.targetpops = targetpops if targetpops else []
         self.targetpartypes = list(set([thispar['param'] for thispar in targetpars])) if targetpars else []
         self.optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
+        self.category = category
+        self.short_name = short_name
 
     def __repr__(self):
         ''' Print out useful info'''
@@ -336,34 +359,36 @@ class Program(object):
     def optimizable(self):
         return True if self.targetpars else False
 
-    def addtargetpar(self,targetpar):
+    def addtargetpar(self, targetpar, verbose=2):
         '''Add a model parameter to be targeted by this program'''
-        if targetpar not in self.targetpars:
+        if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             self.targetpars.append(targetpar)
-            self.optimizable
-            print('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
+            printv('\nAdded target parameter "%s" to the list of target parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars), 4, verbose)
         else:
-            raise Exception('The target parameter you are trying to add is already present in the list of target parameters affected by this program:%s.' % self.targetpars)
+            index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
+            self.targetpars[index] = targetpar # overwrite
+        self.optimizable
         return None
 
-    def rmtargetpar(self,targetpar):
+    def rmtargetpar(self, targetpar, verbose=2):
         '''Remove a model parameter from those targeted by this program'''
-        if targetpar not in self.targetpars:
+        if (targetpar['param'],targetpar['pop']) not in [(tp['param'],tp['pop']) for tp in self.targetpars]:
             errormsg = 'The target parameter "%s" you have selected for removal is not in the list of target parameters affected by this program:%s.' % (targetpar, self.targetpars)
             raise Exception(errormsg)
         else:
-            self.targetpars.pop(self.targetpars.index(targetpar))
+            index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
+            self.targetpars.pop(index)
             self.optimizable
-            print('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars))
+            printv('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.name, self.targetpars), 4, verbose)
         return None
 
-    def addcostcovdatum(self,costcovdatum,overwrite=False):
+    def addcostcovdatum(self, costcovdatum, overwrite=False, verbose=2):
         '''Add cost-coverage data point'''
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
             self.costcovdata['cost'].append(costcovdatum['cost'])
             self.costcovdata['coverage'].append(costcovdatum['coverage'])
-            print('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.name, self.costcovdata))
+            printv('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.name, self.costcovdata), 4, verbose)
         else:
             if overwrite:
                 ind = self.costcovdata['t'].index(int(costcovdatum['t']))
@@ -372,21 +397,23 @@ class Program(object):
                 self.costcovdata['cost'][ind] = costcovdatum['cost']
                 self.costcovdata['coverage'][ind] = costcovdatum['coverage']
                 newcostcovdatum = {'t':self.costcovdata['t'][ind],'cost':self.costcovdata['cost'][ind],'coverage':self.costcovdata['coverage'][ind]}
-                print('\nModified cc data from "%s" to "%s" for program: "%s". \nCC data for this program are: %s' % (oldcostcovdatum, newcostcovdatum, self.name, self.costcovdata))
+                printv('\nModified cc data from "%s" to "%s" for program: "%s". \nCC data for this program are: %s' % (oldcostcovdatum, newcostcovdatum, self.name, self.costcovdata), 4, verbose)
             else:
-                raise Exception('You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t'])
+                errormsg = 'You have already entered cost and/or coverage data for the year %s .' % costcovdatum['t']
+                raise Exception(errormsg)
 
-    def rmcostcovdatum(self,year):
+    def rmcostcovdatum(self, year, verbose=2):
         '''Remove cost-coverage data point. The point to be removed can be specified by year (int or float).'''
         if int(year) in self.costcovdata['t']:
             self.costcovdata['cost'].pop(self.costcovdata['t'].index(int(year)))
             self.costcovdata['coverage'].pop(self.costcovdata['t'].index(int(year)))
             self.costcovdata['t'].pop(self.costcovdata['t'].index(int(year)))
-            print('\nRemoved cc data in year "%s" from program: "%s". \nCC data for this program are: %s' % (year, self.name, self.costcovdata))
+            printv('\nRemoved cc data in year "%s" from program: "%s". \nCC data for this program are: %s' % (year, self.name, self.costcovdata), 4, verbose)
         else:
-            raise Exception('You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata))
+            errormsg = 'You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata)
+            raise Exception(errormsg)
 
-    def gettargetpopsize(self,t,parset,total=True):
+    def gettargetpopsize(self, t, parset, total=True):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Figure out input data type, transform if necessary
@@ -399,16 +426,15 @@ class Program(object):
         for targetpop in self.targetpops:
             targetpopsize[targetpop] = allpops[targetpop]
 
-
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
-    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False):
+    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
 
-        poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
+        poptargeted = self.gettargetpopsize(t=t, parset=parset, total=False)
         totaltargeted = sum(poptargeted.values())
-        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,toplot=toplot)
+        totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,toplot=toplot,bounds=bounds)
 
         popreached = {}
         if not total and not targetpopprop: # calculate targeting since it hasn't been provided
@@ -421,26 +447,31 @@ class Program(object):
         if total: return totalreached/totaltargeted if proportion else totalreached
         else: return popreached
 
-    def getbudget(self,x,t,parset,proportion=False,toplot=False):
+    def getbudget(self,x,t,parset,proportion=False,toplot=False,bounds=None):
         '''Returns budget for a coverage vector'''
 
-        poptargeted = self.gettargetpopsize(t=t,parset=parset,total=False)
+        poptargeted = self.gettargetpopsize(t=t, parset=parset, total=False)
         totaltargeted = sum(poptargeted.values())
-        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False)
-        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False)
+        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
+        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
         return reqbudget
 
-    def plotcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,randseed=None,bounds=None):
+    def plotcoverage(self, t, parset, xupperlim=None, targetpopprop=None, existingFigure=None, 
+        randseed=None, bounds=None):
         ''' Plot the cost-coverage curve for a single program'''
         plotdata = {}
         if xupperlim is None: xupperlim = 10e6
         x = linspace(0,xupperlim,100)
         plotdata['xlinedata'] = x
         try:
-            y = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True)
+            y_l = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds='l')
+            y_m = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds=None)
+            y_u = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds='u')
         except:
-            y = None
-        plotdata['ylinedata'] = y
+            y_l,y_m,y_u = None,None,None
+        plotdata['ylinedata_l'] = y_l
+        plotdata['ylinedata_m'] = y_m
+        plotdata['ylinedata_u'] = y_u
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Number covered'
 
@@ -448,14 +479,26 @@ class Program(object):
         cost_coverage_figure.hold(True)
         axis = cost_coverage_figure.gca()
 
-        if y is not None:
-            for yr in range(y.shape[0]):
+        if y_m is not None:
+            for yr in range(y_m.shape[0]):
                 axis.plot(
                     x,
-                    y[yr],
+                    y_m[yr],
                     linestyle='-',
                     linewidth=2,
                     color='#a6cee3')
+                axis.plot(
+                    x,
+                    y_l[yr],
+                    linestyle='--',
+                    linewidth=2,
+                    color='#000000')
+                axis.plot(
+                    x,
+                    y_u[yr],
+                    linestyle='--',
+                    linewidth=2,
+                    color='#000000')
         axis.scatter(
             self.costcovdata['cost'],
             self.costcovdata['coverage'],
@@ -471,34 +514,38 @@ class Program(object):
 
         return cost_coverage_figure
 
+
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self,ccopars=None):
-        self.ccopars = ccopars
+    def __init__(self,ccopars=None,interaction=None):
+        self.ccopars = ccopars if ccopars else {}
+        self.interaction = interaction
 
     def __repr__(self):
         ''' Print out useful info'''
         output = '\n'
         output += 'Programmatic parameters: %s\n'    % self.ccopars
+        output += '            Interaction: %s\n'    % self.interaction
         output += '\n'
         return output
 
-    def addccopar(self,ccopar,overwrite=False):
+    def addccopar(self, ccopar, overwrite=False, verbose=2):
         ''' Add or replace parameters for cost-coverage functions'''
 
-        if ccopar.get('unitcost') and not ccopar.get('saturation'): ccopar['saturation'] = 1.
+        # Fill in the missing information for cost-coverage curves
+        if ccopar.get('unitcost'):
+            if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
 
-        if self.ccopars is None:
-            self.ccopars = {}
+        if not self.ccopars:
             for ccopartype in ccopar.keys():
                 self.ccopars[ccopartype] = [ccopar[ccopartype]]
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
                     self.ccopars[ccopartype].append(ccopar[ccopartype])
-                print('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars))
+                printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
@@ -506,30 +553,30 @@ class CCOF(object):
                     for ccopartype in self.ccopars.keys():
                         oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
                         self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    print('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars))
+                    printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
                 else:
-                    raise Exception('You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t'])
+                    errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']
+                    raise Exception(errormsg)
         return None
 
-    def rmccopar(self,t):
+    def rmccopar(self, t, verbose=2):
         '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
         if isinstance(t,int) or isinstance(t,float):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
                 for ccopartype in self.ccopars.keys():
                     self.ccopars[ccopartype].pop(ind)
-                print('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars))
+                printv('\nRemoved CCO parameters in year "%s". \nCCO parameters are: %s' % (t, self.ccopars), 4, verbose)
             else:
-                raise Exception('You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars))
+                errormsg = 'You have asked to remove CCO parameters for the year %s, but no data was added for that year. Available parameters are: %s' % (t, self.ccopars)
+                raise Exception(errormsg)
         return None
 
-    def getccopar(self,t,verbose=1,randseed=None,bounds=None):
+    def getccopar(self, t, verbose=2, randseed=None, bounds=None):
         '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
 
         # Error checks
         if not self.ccopars:
-            raise Exception('Need parameters for at least one year before function can be evaluated.')
-        elif not self.ccopars['t']:
             raise Exception('Need parameters for at least one year before function can be evaluated.')
         if randseed and bounds:
             raise Exception('Either select bounds or specify randseed')
@@ -540,6 +587,23 @@ class CCOF(object):
         nyrs = len(t)
         ccopars_no_t = dcp(self.ccopars)
         del ccopars_no_t['t']
+        
+        # Deal with bounds
+        if not bounds:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = (parvalue[j][0]+parvalue[j][1])/2
+        elif bounds in ['upper','u','up','high','h']:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = parvalue[j][1]
+        elif bounds in ['lower','l','low']:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = parvalue[j][0]
+        else:
+            raise Exception('Unrecognised bounds.')
+            
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
         allt = arange(1900,2100)
@@ -555,12 +619,11 @@ class CCOF(object):
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
             j += 1
 
-        # Finsh, return
         ccopar['t'] = t
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self,x,popsize,t,toplot,inverse=False,randseed=None,bounds=None):
+    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
         if (not toplot) and (not len(x)==len(t)): raise Exception('x needs to be the same length as t, we assume one spending amount per time point.')
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
@@ -571,18 +634,19 @@ class CCOF(object):
         pass
 
     @abc.abstractmethod # This method must be defined by the derived class
-    def function(self,x,ccopar,popsize):
+    def function(self, x, ccopar, popsize):
         pass
 
     @abc.abstractmethod # This method must be defined by the derived class
-    def inversefunction(self,x,ccopar,popsize):
+    def inversefunction(self, x, ccopar, popsize):
         pass
+
 
 ######## SPECIFIC CCOF IMPLEMENTATIONS
 class Costcov(CCOF):
     '''Cost-coverage objects'''
 
-    def function(self,x,ccopar,popsize):
+    def function(self, x, ccopar, popsize):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
@@ -596,11 +660,11 @@ class Costcov(CCOF):
                 y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
             return y
 
-    def inversefunction(self,x,ccopar,popsize):
+    def inversefunction(self, x, ccopar, popsize):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
-        if isinstance(popsize,(float,int)): popsize = array([popsize])
+        if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
         if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(x/popsize+s)-1)
@@ -617,23 +681,16 @@ class Covout(CCOF):
     '''Coverage-outcome objects'''
 
     def function(self,x,ccopar,popsize):
-        '''Returns single-program outcome in a given year for a given spending amount. Currently assumes coverage is a proportion.'''
-        i = array(ccopar['intercept'])
-        g = array(ccopar['gradient'])
-        if isinstance(popsize,(float,int)): popsize = array([popsize])
-        y = array([min(j,1) for j in (i + (x*g)/popsize)])
-        return y
+        pass
 
-    def inversefunction(self,x,ccopar,popsize):
+    def inversefunction(self, x, ccopar, popsize):
         pass
 
     def emptypars(self):
         ccopars = {}
         ccopars['intercept'] = None
-        ccopars['gradient'] = None
         ccopars['t'] = None
         return ccopars
-
 
 #######################################################
 # What needs to happen to get population sizes...
@@ -645,7 +702,9 @@ def getpopsizes(parset, years, ind=0, filter_pop=None):
     if type(years) in [float, int]: years = array([[years]])
     elif type(years)==list: years = array([years])
 
-    initpopsizes = parset.interp(ind=0, tvec=years, verbose=0)['popsize']
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#    initpopsizes = parset.interp(ind=0, keys='popsize', tvec=years, verbose=0)
+    initpopsizes = parset.pars[0]['popsize'].interp(tvec=years)
     popsizes = {}
 
     for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):

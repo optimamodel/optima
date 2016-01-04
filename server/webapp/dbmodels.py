@@ -11,6 +11,8 @@ from sqlalchemy.orm import deferred
 from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json
 
+import optima as op
+
 
 @swagger.model
 class UserDb(db.Model):
@@ -117,9 +119,7 @@ class ProjectDb(db.Model):
         return self.project_data.updated if self.project_data else None
 
     def hydrate(self):
-        from optima.project import Project
-        from optima.utils import loads
-        project_entry = Project()
+        project_entry = op.Project()
         project_entry.uuid = self.id
         project_entry.name = self.name
         project_entry.created = (
@@ -127,30 +127,77 @@ class ProjectDb(db.Model):
         )
         project_entry.modified = self.updated
         if self.data:
-            project_entry.data = loads(self.data)
+            project_entry.data = op.loads(self.data)
         if self.settings:
-            project_entry.settings = loads(self.settings)
+            project_entry.settings = op.loads(self.settings)
         if self.parsets:
             for parset_record in self.parsets:
                 parset_entry = parset_record.hydrate()
                 project_entry.addparset(parset_entry.name, parset_entry)
+        if self.progsets:
+            for progset_record in self.progsets:
+                progset_entry = progset_record.hydrate()
+                project_entry.addprogset(progset_entry.name, progset_entry)
         return project_entry
+
+    def as_file(self, loaddir, filename=None):
+        import os
+        from optima.utils import save
+
+        be_project = self.hydrate()
+        if filename is None:
+            filename = '{}.prj'.format(self.name)
+        server_filename = os.path.join(loaddir, filename)
+
+        save(server_filename, be_project)
+
+        return filename
 
     def restore(self, project):
 
         from datetime import datetime
         import dateutil
-        from optima.utils import saves
 
         self.name = project.name
         self.created = project.created
         self.updated = datetime.now(dateutil.tz.tzutc())
-        self.settings = saves(project.settings)
-        self.data = saves(project.data)
+        self.settings = op.saves(project.settings)
+        self.data = op.saves(project.data)
         if project.parsets:
             from server.webapp.utils import update_or_create_parset
             for name, parset in project.parsets.iteritems():
                 update_or_create_parset(self.id, name, parset)
+
+        # Expects that progsets or programs should not be deleted from restoring a project
+        # This is the same behaviour as with parsets.
+        if project.progsets:
+            from server.webapp.utils import update_or_create_progset, update_or_create_program
+            from server.webapp.programs import program_list
+
+            for name, progset in project.progsets.iteritems():
+                progset_record = update_or_create_progset(self.id, name, progset)
+
+                # only active programs are hydrated
+                # therefore we need to retrieve the default list of programs
+                loaded_programs = set()
+                for program in program_list:
+                    program_name = program['name']
+                    if program_name in progset.programs:
+                        loaded_programs.add(program_name)
+                        program = progset.programs[program_name].__dict__
+                        program['parameters'] = program.get('targetpars', [])
+                        active = True
+                    else:
+                        active = False
+
+                    update_or_create_program(self.id, progset_record.id, program_name, program, active)
+
+                # In case programs from prj are not in the defaults
+                for program_name, program in progset.programs.iteritems():
+                    if program_name not in loaded_programs:
+                        program = program.__dict__
+                        program['parameters'] = program.get('targetpars', [])
+                        update_or_create_program(self.id, progset_record.id, program_name, program, True)
 
     def recursive_delete(self):
 
@@ -189,14 +236,12 @@ class ParsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        from optima.parameters import Parameterset
-        from optima.utils import loads
-        parset_entry = Parameterset()
+        parset_entry = op.Parameterset()
         parset_entry.name = self.name
         parset_entry.uuid = self.id
         parset_entry.created = self.created
         parset_entry.modified = self.updated
-        parset_entry.pars = loads(self.pars)
+        parset_entry.pars = op.loads(self.pars)
         return parset_entry
 
 
@@ -280,6 +325,7 @@ class ProgramsDb(db.Model):
         'progset_id': Uuid,
         'project_id': Uuid,
         'category': fields.String,
+        'short_name': fields.String,
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
@@ -298,12 +344,12 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name, category, active=False, pars=None, created=None, updated=None, id=None):
+    def __init__(self, project_id, progset_id, name, short_name='', category='No category', active=False, pars=None, created=None, updated=None, id=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
         self.name = name
-        self.short_name = short_name
+        self.short_name = short_name if short_name is not None else name
         self.category = category
         self.pars = pars
         self.active = active
@@ -313,6 +359,17 @@ class ProgramsDb(db.Model):
             self.updated = updated
         if id:
             self.id = id
+
+    def hydrate(self):
+        from optima.programs import Program
+        program_entry = Program(
+            self.name,
+            targetpars=self.pars,
+            short_name=self.short_name,
+            category=self.category
+        )
+        program_entry.id = self.id
+        return program_entry
 
 
 @swagger.model
@@ -347,10 +404,14 @@ class ProgsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        from optima.programs import Programset
-        progset_entry = Programset(
+        # In BE, programs don't have an "active" flag
+        # therefore only hydrating active programs
+        progset_entry = op.Programset(
             name=self.name,
-            programs=None
+            programs=[
+                program.hydrate()
+                for program in self.programs if program.active
+            ]
         )
 
         return progset_entry
@@ -369,3 +430,7 @@ class ProgsetsDb(db.Model):
                 **kwargs
             )
             db.session.add(program_entry)
+
+    def recursive_delete(self):
+        db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete()
+        db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete()

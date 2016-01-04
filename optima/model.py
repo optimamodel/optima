@@ -1,7 +1,7 @@
 ## Imports
 from math import pow as mpow
-from numpy import array, zeros, exp, maximum, minimum, hstack, inf
-from optima import printv, tic, toc, dcp, Resultset, findinds
+from numpy import zeros, exp, maximum, minimum, hstack, inf
+from optima import printv, tic, toc, dcp, odict, findinds
 
 
 def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
@@ -38,16 +38,15 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     inhomo     = zeros(npops)    # Inhomogeneity calculations
     
     # Initialize arrays
-    results         = Resultset()    # Sim output structure
-    results.tvec    = simpars['tvec']   # Append time vector
-    results.sexinci = zeros((npops, npts)) # Incidence through sex
-    results.injinci = zeros((npops, npts)) # Incidence through injecting
-    results.inci    = zeros((npops, npts)) # Total incidence
-    results.births  = zeros((1, npts))     # Number of births
-    results.mtct    = zeros((1, npts))     # Number of mother-to-child transmissions
-    results.dx      = zeros((npops, npts)) # Number diagnosed per timestep
-    results.newtx   = zeros((npops, npts)) # Number initiating ART1 per timestep
-    results.death   = zeros((npops, npts)) # Number of deaths per timestep
+    raw             = odict()    # Sim output structure
+    raw['sexinci']  = zeros((npops, npts)) # Incidence through sex
+    raw['injinci']  = zeros((npops, npts)) # Incidence through injecting
+    raw['inci']     = zeros((npops, npts)) # Total incidence
+    raw['births']   = zeros((1, npts))     # Number of births
+    raw['mtct']     = zeros((1, npts))     # Number of mother-to-child transmissions
+    raw['diag']     = zeros((npops, npts)) # Number diagnosed per timestep
+    raw['newtreat'] = zeros((npops, npts)) # Number initiating ART1 per timestep
+    raw['death']    = zeros((npops, npts)) # Number of deaths per timestep
     
     # Biological and failure parameters -- death etc
     prog = simpars['const']['progacute':'proggt50']
@@ -218,7 +217,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, results.tvec[t]))
+            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, raw['tvec'][t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             effcare = sum(dxfactor * people[care,pop,t]) # the diagnosis efficacy also applies to those in care?? MK
@@ -298,7 +297,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        results.inci[:,t] = (newinfections)/float(dt)  # Store new infections AND new MTCT births
+        raw['inci'][:,t] = (newinfections)/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         for cd4 in range(ncd4):
@@ -316,8 +315,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
-            results.dx[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            results.death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
+            raw['diag'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
+            raw['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
@@ -336,7 +335,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) #MK some go immediately into care after testing
             outflows = progout + hivdeaths + otherdeaths + currentdiagnosed[cd4,:]*linktocare[:,t] #MK diagnosed moving into care
             dD.append(inflows - outflows)
-            results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
 
         #MK
         ## In-Care
@@ -360,10 +359,11 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
             newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dC.append(inflows - outflows - newtreat1[cd4])
-            results.newtx[:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
-            results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
-
-        ## 1st-line treatment
+            raw['newtreat'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
+            raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+        
+        #MK
+        ## Unsuppressed Viral Load (having begun treatment)
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
                 recovin = dt*recov[cd4-1]*people[tx[cd4+1],:,t]
@@ -379,7 +379,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             inflows = recovin + newtreat1[cd4]
             outflows = recovout + hivdeaths + otherdeaths + virallysuppressed
             dUSVL.append(inflows - outflows)
-            results.death[:,t] += hivdeaths/dt # Save annual HIV deaths 
+            raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
         
         #MK
         ## Suppressed Viral Load
@@ -401,7 +401,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             outflows = recovout + hivdeaths + otherdeaths + stopincare + stoplost[cd4]
             dSVL.append(inflows - outflows)
             dC[cd4] += stopincare    # stopping ART, back to care
-            results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
 
         # MK
         ## Lost to follow-up
@@ -419,7 +419,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
             inflows = progin + stoplost[cd4] + leavingcare[cd4] #MK some go immediately into care after testing
             outflows = progout + hivdeaths + otherdeaths
             dL.append(inflows - outflows)
-            results.death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
 
         # check for negative people here
         for cd4 in range(ncd4):
@@ -465,7 +465,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
                             people[errstate,errpop,t+1] = 0 # Reset
                 
     # Append final people array to sim output
-    results.people = people
+    raw['people'] = people
     
 
 
@@ -474,4 +474,4 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
 
     printv('  ...done running model.', 2, verbose)
     if benchmark: toc(starttime)
-    return results
+    return raw # Return raw results

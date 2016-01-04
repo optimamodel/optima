@@ -32,7 +32,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
         // success
         function (response) {
           if (response.id) {
-            $scope.success = 'User details successfully updated.';
+            $scope.success = 'User details successfully updated (reload page to see changes).';
             $timeout(function() {
               $scope.success = '';
             }, 5000);

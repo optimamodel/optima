@@ -9,20 +9,18 @@ from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 
-from optima.makespreadsheet import default_dataend, default_datastart, makespreadsheet
-from optima.project import version
+import optima as op
 
 from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import (ParsetsDb, ProjectDataDb, ProjectDb,
-                                    ResultsDb, WorkingProjectDb, ProgsetsDb, ProgramsDb)
+from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb
 
 from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid
 
 from server.webapp.utils import (load_project, verify_admin_request,
-                                 delete_spreadsheet, RequestParser, model_as_bunch, model_as_dict, allowed_file)
+                                 delete_spreadsheet, RequestParser)
 
 
 class ProjectBase(Resource):
@@ -51,8 +49,8 @@ population_parser.add_arguments({
 project_parser = RequestParser()
 project_parser.add_arguments({
     'name': {'required': True, 'type': secure_filename_input},
-    'datastart': {'type': int, 'default': default_datastart},
-    'dataend': {'type': int, 'default': default_dataend},
+    'datastart': {'type': int, 'default': op.default_datastart},
+    'dataend': {'type': int, 'default': op.default_dataend},
     # FIXME: programs should be a "SubParser" with its own Parser
     # 'populations': {'type': (population_parser), 'required': True},
     'populations': {'type': dict, 'required': True, 'action': 'append'},
@@ -87,6 +85,12 @@ class ProjectsAll(ProjectBase):
         return super(ProjectsAll, self).get()
 
 
+bulk_project_parser = RequestParser()
+bulk_project_parser.add_arguments({
+    'projects': {'required': True, 'action': 'append'},
+})
+
+
 class Projects(ProjectBase):
     """
     A collection of projects for the given user.
@@ -113,7 +117,7 @@ class Projects(ProjectBase):
     @login_required
     def post(self):
         current_app.logger.info(
-            "create request: {} {}".format(request, request.data))
+            "create request: {} {}".format(request, request.data, request.headers))
 
         args = project_parser.parse_args()
         user_id = current_user.id
@@ -125,7 +129,7 @@ class Projects(ProjectBase):
             args['name'], user_id, current_user.email))
         project_entry = ProjectDb(
             user_id=user_id,
-            version=version,
+            version=op.version,
             created=datetime.utcnow(),
             **args
         )
@@ -138,10 +142,10 @@ class Projects(ProjectBase):
             project_entry.name, project_entry.user_id))
         db.session.add(project_entry)
         db.session.commit()
-        new_project_template = args['name']
+        new_project_template = "{}.xlsx".format(args['name'])
 
-        path = templatepath(args['name'])
-        makespreadsheet(
+        path = templatepath(new_project_template)
+        op.makespreadsheet(
             path,
             pops=args['populations'],
             datastart=args['datastart'],
@@ -155,6 +159,39 @@ class Projects(ProjectBase):
         response.headers['X-project-id'] = project_entry.id
         response.status_code = 201
         return response
+
+    @swagger.operation(
+        summary="Bulk delete for project with the provided ids",
+        parameters=bulk_project_parser.swagger_parameters()
+    )
+    def delete(self):
+        # dirty hack in case the wsgi layer didn't put json data where it belongs
+        from flask import request
+        import json
+
+        class FakeRequest:
+            def __init__(self, data):
+                self.json = json.loads(data)
+
+        try:
+            req = FakeRequest(request.data)
+        except ValueError:
+            req = request
+        # end of dirty hack
+
+        args = bulk_project_parser.parse_args(req=req)
+
+        projects = [
+            load_project(id, raise_exception=True)
+            for id in args['projects']
+        ]
+
+        for project in projects:
+            project.recursive_delete()
+
+        db.session.commit()
+
+        return '', 204
 
 
 class Project(Resource):
@@ -354,7 +391,7 @@ class ProjectSpreadsheet(Resource):
             # makeworkbook(wb_name, project_entry.populations, project_entry.programs, \
             #     project_entry.datastart, project_entry.dataend)
             path = templatepath(wb_name)
-            makespreadsheet(
+            op.makespreadsheet(
                 path,
                 pops=project_entry.populations,
                 datastart=project_entry.datastart,
@@ -510,21 +547,14 @@ class ProjectData(Resource):
     )
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/data" % project_id)
-        project_entry = load_project(project_id)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
-
-        new_project = project_entry.hydrate()
+        project_entry = load_project(project_id, raise_exception=True)
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
-        filename = project_entry.name + '.prj'
-        server_filename = os.path.join(loaddir, filename)
 
-        from optima.utils import save
-        save(server_filename, new_project)
+        filename = project_entry.as_file(loaddir)
 
         return helpers.send_from_directory(loaddir, filename)
 
@@ -571,6 +601,10 @@ project_upload_form_parser.add_arguments({
 })
 
 
+project_upload_resource = file_resource.copy()
+project_upload_resource['id'] = Uuid
+
+
 class ProjectFromData(Resource):
     """
     Import of a new project from pickled format.
@@ -581,7 +615,7 @@ class ProjectFromData(Resource):
         summary='Creates a project & uploads data to initialize it.',
         parameters=project_upload_form_parser.swagger_parameters()
     )
-    @marshal_with(file_resource)
+    @marshal_with(project_upload_resource)
     def post(self):
         from optima.project import version
         user_id = current_user.id
@@ -619,13 +653,19 @@ class ProjectFromData(Resource):
             pops,
             version=version)
 
+        # New project ID needs to be generated before calling restore
+        db.session.add(project_entry)
+        db.session.flush()
+
         project_entry.restore(new_project)
         project_entry.name = project_name
-
-        db.session.add(project_entry)
         db.session.commit()
 
-        reply = {'file': source_filename, 'result': 'Project %s is created' % project_name}
+        reply = {
+            'file': source_filename,
+            'result': 'Project %s is created' % project_name,
+            'id': str(project_entry.id)
+        }
         return reply
 
 
@@ -634,41 +674,43 @@ project_copy_fields = {
     'user': Uuid,
     'copy_id': Uuid
 }
+project_copy_parser = RequestParser()
+project_copy_parser.add_arguments({
+    'to': {'required': True, 'type': secure_filename_input},
+})
 
 
 class ProjectCopy(Resource):
 
     @swagger.operation(
-        responseClass=ProjectDb.__name__,
-        summary='Copy a Project'
+        summary='Copies the given project to a different name',
+        parameters=project_copy_parser.swagger_parameters()
     )
     @marshal_with(project_copy_fields)
     @login_required
     def post(self, project_id):
-        """
-        Copies the given project to a different name
-        usage: /api/project/copy/<project_id>?to=<new_project_name>
-        """
         from sqlalchemy.orm.session import make_transient
         # from server.webapp.dataio import projectpath
-        new_project_name = request.args.get('to')
-        if not new_project_name:
-            abort(400)
+        args = project_copy_parser.parse_args()
+        new_project_name = args['to']
+
         # Get project row for current user with project name
-        project_entry = load_project(project_id, all_data=True)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
+        project_entry = load_project(project_id, all_data=True, raise_exception=True)
         project_user_id = project_entry.user_id
 
-        # force load the existing data, parset and result
-        project_data_exists = project_entry.project_data
-        project_parset_exists = project_entry.parsets
+        be_project = project_entry.hydrate()
+
+        # force load the existing result
         project_result_exists = project_entry.results
 
         db.session.expunge(project_entry)
         make_transient(project_entry)
 
         project_entry.id = None
+        db.session.add(project_entry)
+        db.session.flush()  # this updates the project ID to the new value
+
+        project_entry.restore(be_project)
         project_entry.name = new_project_name
 
         # change the creation and update time
@@ -677,24 +719,7 @@ class ProjectCopy(Resource):
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
-        db.session.add(project_entry)
-        db.session.flush()  # this updates the project ID to the new value
         new_project_id = project_entry.id
-
-        if project_data_exists:
-            # copy the project data
-            db.session.expunge(project_entry.project_data)
-            make_transient(project_entry.project_data)
-            db.session.add(project_entry.project_data)
-
-        if project_parset_exists:
-            # copy each parset
-            for parset in project_entry.parsets:
-                db.session.expunge(parset)
-                make_transient(parset)
-                # set the id to None to ensure no duplicate ID
-                parset.id = None
-                db.session.add(parset)
 
         if project_result_exists:
             # copy each result
@@ -713,3 +738,40 @@ class ProjectCopy(Resource):
             'copy_id': new_project_id
         }
         return payload
+
+
+class Portfolio(Resource):
+
+    @swagger.operation(
+        produces='application/x-zip',
+        summary='Download data for projects with the given ids as a zip file',
+        parameters=bulk_project_parser.swagger_parameters()
+    )
+    @login_required
+    def post(self):
+        from zipfile import ZipFile
+        from uuid import uuid4
+
+        for arg in bulk_project_parser.args:
+            print('{} location: {}'.format(arg.name, arg.location))
+
+        current_app.logger.debug("Download Portfolio (/api/project/portfolio)")
+        args = bulk_project_parser.parse_args()
+        current_app.logger.debug("Portfolio requested for projects {}".format(args['projects']))
+
+        loaddir = upload_dir_user(TEMPLATEDIR)
+        if not loaddir:
+            loaddir = TEMPLATEDIR
+
+        projects = [
+            load_project(id, raise_exception=True).as_file(loaddir)
+            for id in args['projects']
+        ]
+
+        zipfile_name = '{}.zip'.format(uuid4())
+        zipfile_server_name = os.path.join(loaddir, zipfile_name)
+        with ZipFile(zipfile_server_name, 'w') as portfolio:
+            for project in projects:
+                portfolio.write(os.path.join(loaddir, project), 'portfolio/{}'.format(project))
+
+        return helpers.send_from_directory(loaddir, zipfile_name)

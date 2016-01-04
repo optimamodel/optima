@@ -54,15 +54,20 @@ def printarr(arr, arrformat='%0.2f  '):
 
 def sigfig(x, sigfigs=3):
     """ Return a string representation of variable x with sigfigs number of significant figures """
-    from numpy import log10, floor
-    magnitude = floor(log10(abs(x)))
-    factor = 10**(sigfigs-magnitude-1)
-    x = round(x*factor)/float(factor)
-    digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
-    decimals = int(max(0,-magnitude+sigfigs-1))
-    strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
-    string = strformat % x
-    return string
+    try:
+        if x==0: return '0'
+        from numpy import log10, floor
+        magnitude = floor(log10(abs(x)))
+        factor = 10**(sigfigs-magnitude-1)
+        x = round(x*factor)/float(factor)
+        digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+        decimals = int(max(0,-magnitude+sigfigs-1))
+        strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+        string = strformat % x
+        return string
+    except:
+        return str(x)
+    
 
     
 
@@ -273,7 +278,6 @@ def perturb(n=1, span=0.5, randseed=None):
     from numpy.random import rand, seed
     if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
-    output = output.tolist() # Otherwise, convert to a list
     return output
 
 
@@ -616,6 +620,19 @@ class odict(OrderedDict):
     
     Version: 2015nov21 by cliffk
     """
+
+    def __slicekey(self, key, slice_end):
+        shift = int(slice_end=='stop')
+        if type(key) is int: return key
+        elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
+        elif key is None: return (len(self) if shift else 0)
+        else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
+
+
+    def __is_odict_iterable(self, v):
+        return type(v)==list or type(v)==type(array([]))
+
+
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str: # Treat like a normal dict
@@ -623,22 +640,19 @@ class odict(OrderedDict):
         elif type(key) in [int, float]: # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
-            if type(key.start) is int: startind = key.start
-            elif type(key.start) is str: startind = self.index(key.start)
-            elif key.start is None: startind = 0
-            else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
-            if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
-            elif key.stop is None: stopind = len(self)
-            else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
+            startind = self.__slicekey(key.start, 'start')
+            stopind = self.__slicekey(key.stop, 'stop')
             if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            return array([self.__getitem__(i) for i in range(startind,stopind)])
-        elif type(key)==list: # Iterate over items
-            return [self.__getitem__(item) for item in key]
+            slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+            try: return array(slicevals) # Try to convert to an array
+            except: return slicevals
+        elif self.__is_odict_iterable(key): # Iterate over items
+            listvals = [self.__getitem__(item) for item in key]
+            try: return array(listvals)
+            except: return listvals
         else: # Try to convert to a list if it's an array or something
             return OrderedDict.__getitem__(self, key)
 
-        
         
     def __setitem__(self, key, value):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
@@ -648,32 +662,33 @@ class odict(OrderedDict):
             thiskey = self.keys()[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
-            if type(key.start) is int: startind = key.start
-            elif type(key.start) is str: startind = self.index(key.start)
-            elif key.start is None: startind = 0
-            else: raise Exception('To use a slice, start must be either int or str (%s)' % key.start)
-            if type(key.stop) is int: stopind = key.stop
-            elif type(key.stop) is str: stopind = self.index(key.stop)+1 # +1 since otherwise confusing with names
-            elif key.stop is None: stopind = len(self)
-            else: raise Exception('To use a slice, stop must be either int or str (%s)' % key.stop)
-            if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            enumerator = enumerate(range(startind,stopind))
-            try:
-                slicelen = len(range(startind,stopind+1))
+            startind = self.__slicekey(key.start, 'start')
+            stopind = self.__slicekey(key.stop, 'stop')
+            if stopind<startind:
+                errormsg = 'Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind)
+                raise Exception(errormsg)
+            slicerange = range(startind,stopind)
+            enumerator = enumerate(slicerange)
+            slicelen = len(slicerange)
+            if hasattr(value, '__len__'):
                 if len(value)==slicelen:
-                    for valind,index in enumerator: 
-                        self.__setitem__(index, value[valind])
-                else: 
                     for valind,index in enumerator:
-                        self.__setitem__(index, value)
-            except:
-                for valind,index in enumerator: # +1 since otherwise confusing with names
-                    self.__setitem__(index, value)
+                        self.__setitem__(index, value[valind])
+                else:
+                    errormsg = 'Slice "%s" and values "%s" have different lengths! (%i, %i)' % (slicerange, value, slicelen, len(value))
+                    raise Exception(errormsg)
+            else: 
+                self.__setitem__(key, value)
+        elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
+            if len(key)==len(value):
+                for valind,thiskey in enumerate(key): 
+                    self.__setitem__(thiskey, value[valind])
+            else:
+                errormsg = 'Keys "%s" and values "%s" have different lengths! (%i, %i)' % (key, value, len(key), len(value))
+                raise Exception(errormsg)
         else:
             OrderedDict.__setitem__(self, key, value)
         return None
-    
-    
     
     
     def __repr__(self):
