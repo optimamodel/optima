@@ -247,7 +247,10 @@ def makepars(data, verbose=2):
     pars['const'] = odict() # WARNING, actually use Parameters class?
     for parname in data['const'].keys():
         printv('Converting data parameter %s...' % parname, 3, verbose)
-        pars['const'][parname] = data['const'][parname][0] # Taking best value only, hence the 0
+        best = data['const'][parname][0] # Taking best value only, hence the 0
+        low = data['const'][parname][1]
+        high = data['const'][parname][2]
+        pars['const'][parname] = Constant(name=parname, short=parname, limits=[low, high], y=best, by='tot', manual='const', auto='const')
 
     # Initialize metaparameters
     pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', manual='pop') # Create structure
@@ -426,7 +429,7 @@ class Constant(Par):
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        if len(self.y)==1: # Just a simple constant
+        if type(self.y)==int or type(self.y)==float or len(self.y)==1: # Just a simple constant
             output = self.y
         else: # No, it has keys, return as an array
             keys = self.y.keys()
@@ -474,8 +477,8 @@ class Parameterset(object):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
-        generalkeys = ['male', 'female', 'popkeys', 'const', 'force', 'inhomo']
-        modelkeys = ['initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
+        generalkeys = ['male', 'female', 'popkeys', 'force', 'inhomo']
+        modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
         if keys is None: keys = modelkeys
         
         simparslist = []
