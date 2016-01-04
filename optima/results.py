@@ -29,6 +29,10 @@ class Resultset(object):
         self.uuid = uuid()
         self.created = today()
         
+        # Turn inputs into lists if not already
+        if type(simparslist)!=list: simparslist = [simparslist] # Force into being a list
+        if type(rawlist)!=list: rawlist = [rawlist] # Force into being a list
+        
         # Fundamental quantities -- populated by project.runsim()
         self.raw = rawlist
         self.project = dcp(project) # ...and just copy the whole project

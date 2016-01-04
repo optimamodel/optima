@@ -97,19 +97,14 @@ def autofit(project=None, name=None, what='force', maxtime=None, niters=100, ind
         
         # Pull out parameters to fit
         
+        
         # Perform fit
+        simparslist = self.parsets[name].interp(start=start, end=end, dt=dt)
+        raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
+        results = Resultset(self, simparslist, rawlist) # Create structure for storing results
+        results.make() # Generate derived results
         
         # Save
-        
-        for n in range(ncopies):
-            parset.pars.append(dcp(origpars))
-        popkeys = origpars['popkeys']
-        
-        if what=='force':
-            for n in range(ncopies):
-                for key in popkeys:
-                    parset.pars[n]['force'].y[key] = perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
-        else:
-            raise Exception('Sorry, only "force" is implemented currently')
+
     
-    return parset
+    return None
