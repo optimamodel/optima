@@ -72,7 +72,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(orig=None, what='force', iterations=100, inds=None):
+def autofit(orig=None, what='force', maxtime=None, niters=100, inds=None):
     ''' 
     Function to automatically fit parameters
     
@@ -85,7 +85,7 @@ def autofit(orig=None, what='force', iterations=100, inds=None):
     Outputs:
         parset = perturbed parameter set with ncopies sets of pars
     
-    Version: 2015dec29 by cliffk
+    Version: 2016jan04 by cliffk
     '''
     
     # Validate input

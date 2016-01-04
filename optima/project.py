@@ -1,5 +1,5 @@
 from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, \
-runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualgui
+runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualgui, autofit
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -256,17 +256,21 @@ class Project(object):
     
     
     
-    def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
+    def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
         return None
         
         
-    def manualfit(self, orig='default', name='manual', ind=0): # orig=default or orig=0?
+    def manualfit(self, name='manualfit', orig='default', ind=0): # orig=default or orig=0?
         ''' Function to perform manual fitting'''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualgui(self, name=name, ind=0) # Actually run manual fitting
         return None
+        
+    def autofit(self, name='autofit', orig=None, what='force', maxtime=None, niters=100, inds=None):
+        self.copyparset(orig=orig, new=name) # Store parameters
+        autofit
     
