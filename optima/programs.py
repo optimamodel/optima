@@ -702,8 +702,6 @@ def getpopsizes(parset, years, ind=0, filter_pop=None):
     if type(years) in [float, int]: years = array([[years]])
     elif type(years)==list: years = array([years])
 
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-#    initpopsizes = parset.interp(ind=0, keys='popsize', tvec=years, verbose=0)
     initpopsizes = parset.pars[0]['popsize'].interp(tvec=years)
     popsizes = {}
 

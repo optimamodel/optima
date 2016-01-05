@@ -143,6 +143,13 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     data['pops']['female'] = [] # Store whether or not population is female
     data['pops']['age'] = [] # Store the age range for this population
     
+    ## Initialize partnerships
+    data['pships'] = odict() # Initialize to empty list
+    data['pships']['reg'] = [] # Store regular partnerships
+    data['pships']['cas'] = [] # Store casual partnerships
+    data['pships']['com'] = [] # Store commercial partnerships
+    data['pships']['inj'] = [] # Store injecting partnerships
+
     ## Initialize constants
     data['const'] = odict() # Initialize to empty list
     
@@ -254,6 +261,19 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             raise Exception(errormsg)
     
     
+    # Store tuples of partnerships
+    for row in range(data['npops']):
+        for col in range(data['npops']):
+            if data['partreg'][row][col]:
+                data['pships']['reg'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            if data['partcas'][row][col]:
+                data['pships']['cas'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            if data['partcom'][row][col]:
+                data['pships']['com'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            if data['partinj'][row][col]:
+                data['pships']['inj'].append((data['pops']['short'][row],data['pops']['short'][col]))
+    
+
     printv('...done loading data.', 2, verbose)
     return data
 
