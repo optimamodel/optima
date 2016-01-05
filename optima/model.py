@@ -84,7 +84,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
-    numtx    = simpars['numtx']       # 1st line treatement (N) -- tx already used for index of people on treatment
+    numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     circum = simpars['circum']
@@ -391,7 +391,7 @@ def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.
     from optima import makesimpars, Resultset
     if simpars is None:
         if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, start=start, end=end, name=name, uuid=uuid)
+        simpars = makesimpars(pars, start=start, end=end, dt=dt, name=name, uuid=uuid)
     if settings is None:
         if project is not None: settings = project.settings
         else: settings = Settings()
