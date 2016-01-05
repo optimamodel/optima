@@ -72,7 +72,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0):
+def autofit(project=None, name=None, whattofit=None, maxtime=None, niters=100, inds=0):
     ''' 
     Function to automatically fit parameters
     
@@ -83,13 +83,21 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     parset = dcp(project.parsets[name]) # Copy the original parameter set
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
-    if what is None: what = ['force'] # By default, automatically fit force-of-infection only
+    if whattofit is None: whattofit = ['force'] # By default, automatically fit force-of-infection only
     if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
     
     # Populate lists of what to fit
+    partypes = []
+    parkeys = []
+    for parname in origparlist[0]: # Just use first one, since all the same
+        par = origparlist[0][parname]
+        if par.auto in whattofit: # It's in the list of 
+            if par.auto in ['force','other']:
+                partypes.append(par.auto)
+                parkeys.append(par.short)
     
     # Loop over each pars
     for ind in inds:
@@ -99,6 +107,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         # Pull out parameters to fit
+        for par in pars: pass
+            
         
         
         # Perform fit

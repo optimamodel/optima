@@ -275,11 +275,11 @@ def makepars(data, verbose=2):
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
-        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship', manual='meta') # Create structure
+        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship', manual='meta', auto='other') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
-        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship', manual='meta') # Create structure
+        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship', manual='meta', auto='other') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
