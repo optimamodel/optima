@@ -1,10 +1,10 @@
 ## Imports
 from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
-from optima import printv, tic, toc, dcp, odict, findinds
+from optima import printv, tic, toc, dcp, odict, findinds, Settings
 
 
-def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
+def model(simpars, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
@@ -30,6 +30,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     tvec       = simpars['tvec']
     dt         = tvec[1]-tvec[0]      # Shorten dt
     npts       = len(tvec) # Number of time points
+    if settings is None: settings = Settings() # Create if not supplied
     ncd4       = settings.ncd4      # Shorten number of CD4 states
     nstates    = settings.ncomparts   # Shorten number of health states
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
@@ -379,12 +380,15 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
 
 
 
-def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uuid=None):
+def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uuid=None, project=None, data=None):
     from optima import makesimpars, Resultset
     if simpars is None:
-        if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither provided')
+        if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, start=start, end=end, name=name, uuid=uuid)
+    if settings is None:
+        if project is not None: settings = project.settings
+        else: settings = Settings()
     raw = model(simpars, settings) # THIS IS SPINAL OPTIMA
-    results = Resultset(project, simpars, raw) # Create structure for storing results
+    results = Resultset(simpars=simpars, raw=raw, project=project, data=data) # Create structure for storing results
     results.make() # Generate derived results
     return results
