@@ -102,10 +102,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         
         
         # Perform fit
-        simpars = makesimpars(pars, start=project.data['years'][0], end=project.data['years'][-1], name=parset.name, uuid=parset.uuid)
-        raw = model(simpars, project.settings) # THIS IS SPINAL OPTIMA
-        results = Resultset(project, simpars, raw) # Create structure for storing results
-        results.make() # Generate derived results
+        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], name=parset.name, uuid=parset.uuid)
         
         # Save
 

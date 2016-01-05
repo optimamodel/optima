@@ -369,11 +369,20 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     # Append final people array to sim output
     raw['people'] = people
     
-
-
-    
-
-
     printv('  ...done running model.', 2, verbose)
     if benchmark: toc(starttime)
     return raw # Return raw results
+
+
+
+
+
+def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uuid=None):
+    from optima import makesimpars, Resultset
+    if simpars is None:
+        if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither provided')
+        simpars = makesimpars(pars, start=start, end=end, name=name, uuid=uuid)
+    raw = model(simpars, settings) # THIS IS SPINAL OPTIMA
+    results = Resultset(project, simpars, raw) # Create structure for storing results
+    results.make() # Generate derived results
+    return results
