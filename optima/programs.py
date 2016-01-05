@@ -332,7 +332,7 @@ class Program(object):
     '''
 
     def __init__(self, name, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', short_name=''):
+        category='No category', short_name='', criteria=None):
         '''Initialize'''
         self.name = name
         self.id = uuid()
@@ -346,6 +346,7 @@ class Program(object):
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
         self.short_name = short_name
+        self.criteria = criteria if criteria else {'positive': False, 'pregnant': False}
 
     def __repr__(self):
         ''' Print out useful info'''
