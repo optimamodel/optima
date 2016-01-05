@@ -71,7 +71,7 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectData, ProjectFromData, Portfolio)
 from server.webapp.resources.project_constants import Parameters, Predefined
 from server.webapp.resources.project_progsets import Progsets, Progset
-from server.webapp.resources.project_parsets import Parsets
+from server.webapp.resources.project_parsets import Parsets, ParsetsDetail
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -98,6 +98,7 @@ api.add_resource(Parameters, '/api/project/parameters')
 api.add_resource(Predefined, '/api/project/predefined')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 app.register_blueprint(api_bp, url_prefix='')
 
 
