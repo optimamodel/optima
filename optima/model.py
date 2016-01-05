@@ -39,6 +39,8 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
     
     # Initialize arrays
     raw             = odict()    # Sim output structure
+    raw['tvec']     = tvec
+    raw['popkeys']  = popkeys
     raw['sexinci']  = zeros((npops, npts)) # Incidence through sex
     raw['injinci']  = zeros((npops, npts)) # Incidence through injecting
     raw['inci']     = zeros((npops, npts)) # Total incidence
@@ -200,7 +202,7 @@ def model(simpars, settings, verbose=2, safetymargin=0.8, benchmark=False):
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, raw['tvec'][t]))
+            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
