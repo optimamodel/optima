@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import Parameterset, Resultset, dcp, perturb, makesimpars, model
+from optima import Parameterset, dcp, perturb, runmodel
 from numpy import median
 
 

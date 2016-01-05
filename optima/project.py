@@ -256,8 +256,7 @@ class Project(object):
             rawlist.append(raw)
         
         # Store results
-        results = Resultset(self, simparslist, rawlist) # Create structure for storing results
-        results.make() # Generate derived results
+        results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         
         return results
     

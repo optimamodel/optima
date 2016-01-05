@@ -4,11 +4,11 @@ from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import printv, tic, toc, dcp, odict, findinds, Settings
 
 
-def model(simpars, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
+def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
-    Version: 2015dec21 by cliffk
+    Version: 2016jan05 by cliffk
     """
     
     printv('Running model...', 1, verbose, newline=False)
@@ -24,15 +24,16 @@ def model(simpars, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
+    if simpars is None: raise Exception('model() requires simpars as an input')
+    if settings is None: settings = Settings() # Create if not supplied
     popkeys    = simpars['popkeys']
     npops      = len(popkeys)
     simpars    = dcp(simpars)
     tvec       = simpars['tvec']
     dt         = tvec[1]-tvec[0]      # Shorten dt
     npts       = len(tvec) # Number of time points
-    if settings is None: settings = Settings() # Create if not supplied
     ncd4       = settings.ncd4      # Shorten number of CD4 states
-    nstates    = settings.ncomparts   # Shorten number of health states
+    nstates    = settings.nstates   # Shorten number of health states
     people     = zeros((nstates, npops, npts)) # Matrix to hold everything
     allpeople  = zeros((npops, npts)) # Population sizes
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
@@ -112,7 +113,7 @@ def model(simpars, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     
     # Shorten key variables
-    initpeople = zeros((settings.ncomparts,npops)) 
+    initpeople = zeros((nstates, npops)) 
     allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
@@ -380,7 +381,13 @@ def model(simpars, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
 
 
 
-def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uuid=None, project=None, data=None):
+def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uuid=None, project=None, data=None, verbose=2):
+    ''' 
+    Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
+    requires input of either "project" or "data". All other inputs are optional.
+    
+    Version: 2016jan05 by cliffk    
+    '''
     from optima import makesimpars, Resultset
     if simpars is None:
         if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
@@ -388,7 +395,6 @@ def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.
     if settings is None:
         if project is not None: settings = project.settings
         else: settings = Settings()
-    raw = model(simpars, settings) # THIS IS SPINAL OPTIMA
-    results = Resultset(simpars=simpars, raw=raw, project=project, data=data) # Create structure for storing results
-    results.make() # Generate derived results
+    raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
+    results = Resultset(raw=raw, simpars=simpars, project=project, data=data) # Create structure for storing results
     return results

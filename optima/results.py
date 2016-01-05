@@ -24,22 +24,23 @@ class Result(object):
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, simparslist, rawlist, project=None, data=None, parset=None):
+    def __init__(self, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
         # Basic info
         self.uuid = uuid()
         self.created = today()
         
         # Turn inputs into lists if not already
-        if type(simparslist)!=list: simparslist = [simparslist] # Force into being a list
-        if type(rawlist)!=list: rawlist = [rawlist] # Force into being a list
+        if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
+        if type(simpars)!=list: simpars = [simpars] # Force into being a list
+        if type(raw)!=list: raw = [raw] # Force into being a list
         
         # Fundamental quantities -- populated by project.runsim()
-        self.raw = rawlist
-        self.simpars = simparslist # ...and sim parameters
-        self.tvec = rawlist[0]['tvec']
-        self.popkeys = rawlist[0]['popkeys']
+        self.raw = raw
+        self.simpars = simpars # ...and sim parameters
+        self.tvec = raw[0]['tvec']
+        self.popkeys = raw[0]['popkeys']
         if project is not None:
-            if parset is None: parset = project.parsets[simparslist[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
+            if parset is None: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
             if data is None: data = project.data # Copy data if not supplied
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = dcp(project) # ...and just copy the whole project
@@ -68,6 +69,8 @@ class Resultset(object):
 #        self.numcircum = Result()
 #        self.reqcircum = Result()
 #        self.sexinci = Result()
+        
+        if domake: self.make()
 #    
     
     
