@@ -22,6 +22,7 @@ MASTER = [
 'testmodel',
 'testscenarios',
 'testcalibration',
+'testoptimization',
 'testgui',
 'testworkflow',
 ]
