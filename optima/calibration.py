@@ -176,10 +176,10 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
 
         printv(parvec, 4, verbose)
         
-        pars = options['pars']
-        parlist = options['parlist']
-        pars = convert(pars, parlist, parvec)
-        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][0], verbose=verbose)
+#        pars = options['pars']
+#        parlist = options['parlist']
+#        pars = convert(pars, parlist, parvec)
+#        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][0], verbose=verbose)
         return sum(abs(parvec))
 
 
