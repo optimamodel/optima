@@ -47,8 +47,10 @@ class Resultset(object):
         self.tvec = raw[0]['tvec']
         self.popkeys = raw[0]['popkeys']
         if project is not None:
-            if parset is None: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
-            if data is None: data = project.data # Copy data if not supplied
+            if parset is None:
+                try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
+                except: pass # Don't really worry if the parset can't be populated
+            if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = dcp(project) # ...and just copy the whole project
         self.parset = parset # Store parameters

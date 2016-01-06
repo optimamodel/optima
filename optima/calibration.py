@@ -192,13 +192,13 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         
         pars = options['pars']
         parlist = options['parlist']
+        project = options['project']
         pars = convert(pars, parlist, parvec)
-        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], verbose=verbose)
+        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0)
         
         ## Loop over all results
         allmismatches = []
         mismatch = 0
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for key in results.main: # The results! e.g. key='prev'
             this = results.main[key] 
             for attr in ['tot', 'pops']: # Loop over either total or by population denominators
@@ -206,15 +206,21 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
                 if tmpdata is not None: # If it actually exists, proceed
                     tmpmodel = getattr(this, attr) # Get this result, e.g. results.main['prev'].tot
                     datarows = tmpdata[bestindex] # Pull out data without uncertainty
-                    modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index)
-                    for row in range(len(datarows)): # Loop over each available row
-                        datax, datay = extractdata(results.datayears, datarows) # Pull out the not-NaN values
-                        for col in datax: # Loop over each data point available
-                            modelx = findinds(results.tvec, col) # Find the index of the corresponding time point
-                            modely = modelrows[modelx] # Finally, extract the model result!
-                            thismismatch = abs(modely - datay) / mean(datay+eps)
+                    modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- WARNING, should be another index!
+                    nrows = len(datarows)
+                    for row in range(nrows): # Loop over each available row
+                        datarow = datarows[row]
+                        if nrows==1: modelrow = modelrows # WARNING, kludgy, should have the same shape!
+                        else: modelrow = modelrows[row]
+                        datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
+                        for i,year in enumerate(datax): # Loop over each data point available
+                            modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
+                            try: modely = modelrow[modelx] # Finally, extract the model result!
+                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            thismismatch = abs(modely - datay[i]) / mean(datay+eps)
                             allmismatches.append(thismismatch)
-                            mismatch += thismismatch
+                            try: mismatch += thismismatch
+                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
         return mismatch
@@ -239,7 +245,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         
         # Perform fit
         parvec = convert(pars, parlist)
-        options = {'pars':pars, 'parlist':parlist}
+        options = {'pars':pars, 'parlist':parlist, 'project':project}
         parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=niters, verbose=verbose)
         
         # Save
