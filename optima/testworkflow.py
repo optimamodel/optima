@@ -92,11 +92,12 @@ if 'makeprograms' in tests:
     R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
     R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
     R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.8,0.85), 'FSW_programs':(0.6,0.65)})
-    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.8,0.85), 'MSM_programs':(0.6,0.65)})
-    R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.8,0.85)})
-    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.8,0.85)})
-    R.covout['hivtest']['M 0-14'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.2,0.25)})
-    R.covout['hivtest']['F 0-14'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.2,0.25)})
+    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.8,0.85), 'MSM_programs':(0.6,0.65)})
+    R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.8,0.85)})
+    R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.8,0.85)})
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.8,0.85)})
+    R.covout['hivtest']['M 0-14'].addccopar({'intercept': (0.001,0.001), 't': 2016.0, 'HTC': (0.001,0.001)}) # Should remove these later
+    R.covout['hivtest']['F 0-14'].addccopar({'intercept': (0.001,0.001), 't': 2016.0, 'HTC': (0.001,0.001)}) # Should remove these later
 
     from numpy import array
     budget={'Condoms':array([1e7]),
