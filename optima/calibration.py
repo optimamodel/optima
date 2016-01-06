@@ -74,9 +74,9 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0):
     ''' 
-    Function to automatically fit parameters
+    Function to automatically fit parameters.
     
-    Version: 2016jan04 by cliffk
+    Version: 2016jan05 by cliffk
     '''
     
     # Initialization
@@ -92,7 +92,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     
     
     
-    ## WARNING -- the following three functions must be updated together! Annoying, I know...
+    ## WARNING -- the following two functions must be updated together! Annoying, I know...
     
     
     # Populate lists of what to fit
@@ -125,14 +125,48 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         return parlist
     
     
-    def parstovec(pars, parlist):
+    def convert(pars, parlist, parvec=None):
         ''' 
-        Take a parameter set (e.g. P.parsets[0].pars[0]), a list of "types" 
-        (e.g. 'force'), and a list of keys (e.g. 'hivtest'), and return a
-        vector of values, e.g. "dehydrate" them. 
+        If parvec is not supplied:
+            Take a parameter set (e.g. P.parsets[0].pars[0]), a list of "types" 
+            (e.g. 'force'), and a list of keys (e.g. 'hivtest'), and return a
+            vector of values, e.g. "dehydrate" them.
+        
+        If parvec is supplied:
+            Take a vector of parameter values and "hydrate" them into a pars object
+            using a list of "types" (e.g. 'force'), and a list of keys (e.g. 'hivtest').
+        
+        Relies on the structure of makeparlist() above...
+        '''
+        
+        # Handle inputs
+        nfitpars = len(parlist)
+        if parvec is None: 
+            tv = False # tv = to vector
+            parvec = zeros(nfitpars)
+        else: tv = True
+        
+        # Do the loop
+        for p in range(nfitpars):
+            thistype = parlist[p]['type'] # Should match up with par.fittable
+            thisname = parlist[p]['name']
+            thisind = parlist[p]['ind']
+            if thistype in ['force', 'pop']: 
+                if tv: parvec[p] = pars[thisname].y[thisind]
+                else:  pars[thisname].y[thisind] = parvec[p]
+            elif thistype=='popsize': 
+                if tv: parvec[p] = pars[thisname].p[thisind]
+            elif thistype=='meta': parvec[p] = pars[thisname].m
+            elif thistype=='const': parvec[p] = pars['const'][thisind].y
+            else: raise Exception('Parameter type "%s" not understood' % thistype)
+        return parvec
+    
+    
+    def vectopars(parvec, parlist, pars):
+        '''
+        
         '''
         nfitpars = len(parlist)
-        parvec = zeros(nfitpars)
         for p in range(nfitpars):
             thistype = parlist[p]['type'] # Should match up with par.fittable
             thisname = parlist[p]['name']
@@ -143,13 +177,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
             elif thistype=='const': parvec[p] = pars['const'][thisind].y
             else: raise Exception('Parameter type "%s" not understood' % thistype)
         return parvec
-    
-    
-    def vectopars(parvec, parlist, pars):
-        '''
-        Take a vector of parameter values and "hydrate" them into a pars object
-        using a list of "types" (e.g. 'force'), and a list of keys (e.g. 'hivtest').
-        '''
+        
         return pars
     
     # Create the list of parameters to be fitted
