@@ -13,7 +13,7 @@ from sqlalchemy.schema import (
     ForeignKeyConstraint,
     DropConstraint,
 )
-from server.tests.factories import (UserFactory, ProjectFactory,
+from server.tests.factories import (UserFactory, ProjectFactory, ParsetFactory,
                                     ProgsetsFactory, ProgramsFactory, make_password)
 
 
@@ -111,7 +111,8 @@ class OptimaTestCase(unittest.TestCase):
         user = UserDb.query.filter(UserDb.email == email).first()
         return str(user.id)
 
-    def create_project(self, return_instance=False, progsets_count=0, programs_per_progset=2, **kwargs):
+    def create_project(self, return_instance=False, progsets_count=0,
+                       programs_per_progset=2, parset_count=0, **kwargs):
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
         project = self.create_record_with(ProjectFactory, **kwargs)
@@ -125,6 +126,9 @@ class OptimaTestCase(unittest.TestCase):
                     progset_id=progset.id,
                     active=True
                 )
+        for x in range(parset_count):
+            self.create_record_with(ParsetFactory, project_id=project.id)
+
         if return_instance:
             return project
         return str(project.id)
