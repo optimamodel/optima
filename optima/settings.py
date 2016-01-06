@@ -3,7 +3,7 @@ SETTINGS
 
 Store all the static data for a project that won't change except between Optima versions.
 
-Version: 2015nov22 by cliffk
+Version: 2016jan06 by cliffk
 """
 
 from numpy import arange, array, concatenate as cat
