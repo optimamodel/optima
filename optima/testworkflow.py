@@ -23,22 +23,22 @@ tests = [
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
-from optima import tic, toc, blank, pd, odict # analysis:ignore
+from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
+
 blank()
 print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
-
-doplot = False
 
 
 ##############################################################################
@@ -65,7 +65,7 @@ if 'makeproject' in tests:
 
 
 #####################################################################################################
-if 'gui' in tests:
+if 'gui' in tests and doplot:
     t = tic()
 
     print('Running GUI test...')

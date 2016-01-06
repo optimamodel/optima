@@ -42,13 +42,13 @@ define([
             return localStorage[project.getProjectKeyFor(user)];
           },
           getProjectForCurrentUser: function (user) {
-            const openProjectStr = this.getProjectFor(UserManager.data);
+            var openProjectStr = this.getProjectFor(UserManager.data);
             return openProjectStr ? JSON.parse(openProjectStr) : void 0;
           },
           getProjectIdForCurrentUser: function (user) {
-            const openProjectStr = this.getProjectFor(UserManager.data);
-            const openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
-            return openProject.id;
+            var openProjectStr = this.getProjectFor(UserManager.data);
+            var openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
+            return openProject ? openProject.id : void 0;
           },
           ifActiveResetFor: function (projectName, projectId, user) {
             // If projectName is active, reset it for the given user.

@@ -20,24 +20,18 @@ tests = [
 'runsim',
 ]
 
-numericalassertions = True # Whether or not to actually run things and test their values
-doplot = True # Whether or not to show diagnostic plots
-
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
-from optima import tic, toc, blank
+from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
-
-
-
-
 
 blank()
 print('Running tests:')
@@ -102,8 +96,7 @@ if 'loadspreadsheet' in tests:
     Q = Project()
     Q.loadspreadsheet('test.xlsx')
     
-    if numericalassertions:
-        assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
+    assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
     
     done(t)
 

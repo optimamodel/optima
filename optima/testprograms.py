@@ -19,22 +19,22 @@ tests = [
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
-from optima import tic, toc, blank, pd, odict # analysis:ignore
+from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
+
 blank()
 print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
-
-doplot = False
 
 
 ##############################################################################
@@ -249,6 +249,8 @@ if 'makeprograms' in tests:
 
     # 15. Example use of program scenarios
     if doplot:
+        print('HIIIIIII!')
+        print doplot
         P.parsets['progparset1'] = progparset1
         results0 = P.runsim('default')
         results1 = P.runsim('progparset1')
