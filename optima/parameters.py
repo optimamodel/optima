@@ -3,12 +3,12 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2015dec21 by cliffk
+Version: 2016jan05 by cliffk
 """
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, settings
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -209,39 +209,39 @@ def makepars(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, popkeys, index=bestindex, by='pop', fittable='pop', auto='init') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', fittable='exp', auto='popsize')
+    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, popkeys, index=bestindex, limits=(0,1), by='pop', fittable='pop', auto='init') # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, limits=(0,'maxpopsize'), by='pop', fittable='exp', auto='popsize')
     
     # Epidemilogy parameters -- most are data
-    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop', fittable='meta', auto='other') # STI prevalence
-    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, by='pop', fittable='meta', auto='other')  # Death rates
-    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, by='pop', fittable='meta', auto='other') # TB prevalence
+    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # STI prevalence
+    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='other')  # Death rates
+    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, limits=(0,1), popkeys, by='pop', fittable='meta', auto='other') # TB prevalence
     
     # Testing parameters -- most are data
-    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, by='pop', fittable='meta', auto='test') # HIV testing rates
-    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, by='tot', fittable='meta', auto='test') # AIDS testing rates
-    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, by='tot', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
+    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='test') # HIV testing rates
+    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, limits=(0,'maxrate'), by='tot', fittable='meta', auto='test') # AIDS testing rates
+    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
-    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, by='tot', fittable='meta', auto='other')
-    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, by='tot', fittable='meta', auto='other')  
-    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, by='pop', fittable='meta', auto='other')
+    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='other')
+    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, limits=(0,1), by='tot', fittable='meta', auto='other')  
+    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='other')
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
     # Circumcision parameters
-    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, by='pop', fittable='meta', auto='other') # Circumcision percentage
+    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # Circumcision percentage
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
     # Drug behavior parameters
-    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, by='tot', fittable='meta', auto='other')
-    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, by='pop', fittable='meta', auto='other')
+    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='other')
+    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other')
     
     # Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, by='pop', fittable='meta', auto='other')
+    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other')
     
     # Constants
     pars['const'] = odict() # WARNING, actually use Parameters class?
@@ -253,14 +253,14 @@ def makepars(data, verbose=2):
         pars['const'][parname] = Constant(name=parname, short=parname, limits=[low, high], y=best, by='tot', fittable='const', auto='const')
 
     # Initialize metaparameters
-    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', fittable='pop', auto='force') # Create structure
-    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), by='pop', fittable='pop', auto='inhomo') # Create structure
+    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), limits=(0,'maxmeta'), by='pop', fittable='pop', auto='force') # Create structure
+    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), limits=(0,'maxmeta'), by='pop', fittable='pop', auto='inhomo') # Create structure
     for key in popkeys:
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
     
     # Risk-related population transitions
-    pars['transit'] = Constant(name='Transitions', short='transit', y=odict(), by='array', fittable='no', auto='no')
+    pars['transit'] = Constant(name='Transitions', short='transit', y=odict(), limits=(0,'maxrate'), by='array', fittable='no', auto='no')
     for i,key1 in enumerate(popkeys):
         for j,key2 in enumerate(popkeys):
             pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
@@ -275,11 +275,11 @@ def makepars(data, verbose=2):
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
-        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship', fittable='meta', auto='other') # Create structure
+        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), limits=(0,'maxacts'), by='pship', fittable='meta', auto='other') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
-        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship', fittable='meta', auto='other') # Create structure
+        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), limits=(0,1), by='pship', fittable='meta', auto='other') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -421,7 +421,7 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None, fittable='', auto=''):
+    def __init__(self, name=None, short=None, limits=(0,1e9), p=None, m=1, start=2000, by=None, fittable='', auto=''):
         Par.__init__(self, name, short, limits, fittable, auto)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
@@ -454,7 +454,7 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=None, y=None, by=None, fittable='', auto=''):
+    def __init__(self, name=None, short=None, limits=(0,1), y=None, by=None, fittable='', auto=''):
         Par.__init__(self, name, short, limits, fittable, auto)
         self.y = y # y-value data, e.g. [0.3, 0.7]
         self.by = by # By pops, by none, etc.
