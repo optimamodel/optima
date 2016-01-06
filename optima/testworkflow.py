@@ -19,6 +19,7 @@ Version: 2015dec29 by cliffk
 tests = [
 'makeproject',
 'gui',
+'makeprograms'
 ]
 
 
@@ -71,6 +72,20 @@ if 'gui' in tests and doplot:
     print('Running GUI test...')
     from gui import pygui
     pygui(results)
+    
+    done(t)
+
+
+#####################################################################################################
+if 'makeprograms' in tests:
+    t = tic()
+
+    print('Making a default set of program...')
+    from defaultprograms import defaultprograms
+    defaultprograms = defaultprograms(P)
+    
+    # Select a few
+    
     
     done(t)
 
