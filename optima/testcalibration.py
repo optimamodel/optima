@@ -10,9 +10,9 @@ Version: 2016jan05 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'attributes',
-'sensitivity',
-'manualfit',
+#'attributes',
+#'sensitivity',
+#'manualfit',
 'autofit',
 ]
 
@@ -112,13 +112,13 @@ if 'autofit' in tests:
     
     P = Project(spreadsheet='test7pops.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=3, span=0.5) # Create MC initialization
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, niters=20, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, niters=30, inds=None) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
         from gui import plotresults
-        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops']) # WARNING, can't display 2 GUIs at the same time, ugh!
+        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
