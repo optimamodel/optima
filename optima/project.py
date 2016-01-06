@@ -1,5 +1,5 @@
 from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, \
-runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualgui
+runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualfit, autofit
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -66,7 +66,6 @@ class Project(object):
         except:
             self.gitbranch = 'Git branch information not retrivable'
             self.gitversion = 'Git version information not retrivable'
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -119,8 +118,8 @@ class Project(object):
         
         ## If parameter set of that name doesn't exist, create it
         if name not in self.parsets:
-            parset = Parameterset()
-            parset.makeparsfromdata(self.data) # Create parameters
+            parset = Parameterset(name=name)
+            parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset) # Store parameters
         return None
     
@@ -254,24 +253,29 @@ class Project(object):
             rawlist.append(raw)
         
         # Store results
-        results = Resultset(self, simparslist, rawlist) # Create structure for storing results
-        results.make() # Generate derived results
+        results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         
         return results
     
     
     
-    def sensitivity(self, orig='default', name='perturb', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
-        ''' Function to perform sensitivit yanalysis over the parameters as a proxy for "uncertainty"'''
+    def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
+        ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
         return None
         
         
-    def manualfit(self, orig='default', name='manual', ind=0): # orig=default or orig=0?
-        ''' Function to perform manual fitting'''
+    def manualfit(self, name='manualfit', orig='default', ind=0): # orig=default or orig=0?
+        ''' Function to perform manual fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualgui(self, name=name, ind=0) # Actually run manual fitting
+        manualfit(self, name=name, ind=ind) # Actually run manual fitting
+        return None
+        
+    def autofit(self, name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None):
+        ''' Function to perform automatic fitting '''
+        self.copyparset(orig=orig, new=name) # Store parameters
+        autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds)
         return None
     
