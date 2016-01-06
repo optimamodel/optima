@@ -169,70 +169,70 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         if tv: return parvec
         else:  return pars
     
-    
 
 
-
-    def errorcalc(parvec):
+    def errorcalc(parvec, options):
         ''' Calculate the error between the model and the data '''
 
-        printv(Flist, 4, verbose)
-
-        F = list2dict(D['F'][0], Flist)
-        F = unnormalizeF(F, origM, origG) # CK: Convert from normalized to unnormalized F (NB, Madhura)
-        S = model(D['G'], D['M'], F, D['opt'], verbose=verbose)
-
-
-        # Pull out Prevalence data
-
-        prev = [dict() for p in range(D['G']['npops'])]
-        for p in xrange(D['G']['npops']):
-            prev[p]['data'] = dict()
-            prev[p]['model'] = dict()
-            prev[p]['data']['x'], prev[p]['data']['y'] = extractdata(D['G']['datayears'], D['data']['key']['hivprev'][0][p]) # The first 0 is for "best"
-            prev[p]['model']['x'] = S['tvec']
-            prev[p]['model']['y'] = S['people'][1:,p,:].sum(axis=0) / S['people'][:,p,:].sum(axis=0) # This is prevalence
-
-        [death, newtreat, numtest, numinfect, dx] = [[dict()], [dict()], [dict()], [dict()], [dict()]]
+        printv(parvec, 4, verbose)
+        
+        pars = options['pars']
+        parlist = options['parlist']
+        pars = convert(pars, parlist, parvec)
+        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][0], verbose=verbose)
+        return sum(abs(parvec))
 
 
-        # Pull out other indicators data
-        mismatch = 0
-        allmismatches = []
-
-
-        for base in [death, newtreat, numtest, numinfect, dx]:
-            base[0]['data'] = dict()
-            base[0]['model'] = dict()
-            base[0]['model']['x'] = S['tvec']
-            if base == death:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['death'][0])
-                base[0]['model']['y'] = S['death'].sum(axis=0)
-            elif base == newtreat:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['newtreat'][0])
-                base[0]['model']['y'] = S['newtx1'].sum(axis=0) + S['newtx2'].sum(axis=0)
-            elif base == numtest:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numtest'][0])
-                base[0]['model']['y'] = D['M']['hivtest'].sum(axis=0)*S['people'].sum(axis=0).sum(axis=0) #testing rate x population
-            elif base == numinfect:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numinfect'][0])
-                base[0]['model']['y'] = S['inci'].sum(axis=0)
-            elif base == dx:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numdiag'][0])
-                base[0]['model']['y'] = S['dx'].sum(axis=0)
-
-        for base in [death, newtreat, numtest, numinfect, dx, prev]:
-            for ind in range(len(base)):
-                for y,year in enumerate(base[ind]['data']['x']):
-                    modelind = findinds(S['tvec'], year)
-
-
-                    if len(modelind)>0: # TODO Cliff check
-                        thismismatch = abs(base[ind]['model']['y'][modelind] - base[ind]['data']['y'][y]) / mean(base[ind]['data']['y']+eps)
-                        allmismatches.append(thismismatch)
-                        mismatch += thismismatch
-        printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
-        return mismatch
+#        # Pull out Prevalence data
+#
+#        prev = [dict() for p in range(D['G']['npops'])]
+#        for p in xrange(D['G']['npops']):
+#            prev[p]['data'] = dict()
+#            prev[p]['model'] = dict()
+#            prev[p]['data']['x'], prev[p]['data']['y'] = extractdata(D['G']['datayears'], D['data']['key']['hivprev'][0][p]) # The first 0 is for "best"
+#            prev[p]['model']['x'] = S['tvec']
+#            prev[p]['model']['y'] = S['people'][1:,p,:].sum(axis=0) / S['people'][:,p,:].sum(axis=0) # This is prevalence
+#
+#        [death, newtreat, numtest, numinfect, dx] = [[dict()], [dict()], [dict()], [dict()], [dict()]]
+#
+#
+#        # Pull out other indicators data
+#        mismatch = 0
+#        allmismatches = []
+#
+#
+#        for base in [death, newtreat, numtest, numinfect, dx]:
+#            base[0]['data'] = dict()
+#            base[0]['model'] = dict()
+#            base[0]['model']['x'] = S['tvec']
+#            if base == death:
+#                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['death'][0])
+#                base[0]['model']['y'] = S['death'].sum(axis=0)
+#            elif base == newtreat:
+#                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['newtreat'][0])
+#                base[0]['model']['y'] = S['newtx1'].sum(axis=0) + S['newtx2'].sum(axis=0)
+#            elif base == numtest:
+#                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numtest'][0])
+#                base[0]['model']['y'] = D['M']['hivtest'].sum(axis=0)*S['people'].sum(axis=0).sum(axis=0) #testing rate x population
+#            elif base == numinfect:
+#                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numinfect'][0])
+#                base[0]['model']['y'] = S['inci'].sum(axis=0)
+#            elif base == dx:
+#                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numdiag'][0])
+#                base[0]['model']['y'] = S['dx'].sum(axis=0)
+#
+#        for base in [death, newtreat, numtest, numinfect, dx, prev]:
+#            for ind in range(len(base)):
+#                for y,year in enumerate(base[ind]['data']['x']):
+#                    modelind = findinds(S['tvec'], year)
+#
+#
+#                    if len(modelind)>0: # TODO Cliff check
+#                        thismismatch = abs(base[ind]['model']['y'][modelind] - base[ind]['data']['y'][y]) / mean(base[ind]['data']['y']+eps)
+#                        allmismatches.append(thismismatch)
+#                        mismatch += thismismatch
+#        printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
+#        return mismatch
 
 
 
@@ -255,7 +255,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         
         # Perform fit
         parvec = convert(pars, parlist)
-        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=niters, verbose=verbose)
+        options = {'pars':pars, 'parlist':parlist}
+        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=niters, verbose=verbose)
         
         # Save
         pars = convert(pars, parlist, parvecnew)        
