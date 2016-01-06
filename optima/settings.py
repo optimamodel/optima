@@ -25,12 +25,13 @@ class Settings():
         self.treat  = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, on treatment
         
         # Original states by CD4 count
-        self.acute = array([2,8,14]) 
-        self.gt500 = array([3,9,15]) 
-        self.gt350 = array([4,10,16]) 
-        self.gt200 = array([5,11,17]) 
-        self.gt50  = array([6,12,18]) 
-        self.aids  = array([7,13,19]) 
+        spacing = array([0,1,2])*self.ncd4 
+        self.acute = 2 + spacing
+        self.gt500 = 3 + spacing
+        self.gt350 = 4 + spacing
+        self.gt200 = 5 + spacing
+        self.gt50  = 6 + spacing
+        self.aids  = 7 + spacing 
 
         # Combined states
         self.alluninf = cat([self.uncirc, self.circ]) # All uninfected
