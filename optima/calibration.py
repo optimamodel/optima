@@ -4,8 +4,8 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import Parameterset, Par, dcp, perturb, runmodel, asd, printv
-from numpy import median, zeros, array
+from optima import Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds
+from numpy import median, zeros, array, mean
 
 
 
@@ -178,6 +178,9 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         does.
         '''
         
+        bestindex = 0 # WARNING, KLUDGY -- discard upper and lower limits for the data
+        eps = 0.001 # Absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
+        
         def extractdata(xdata, ydata):
             ''' Return the x and y data values for non-nan y data '''
             from numpy import isnan, array
@@ -193,63 +196,27 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], verbose=verbose)
         
         ## Loop over all results
+        allmismatches = []
+        mismatch = 0
         for key in results.main: # The results! e.g. key='prev'
             this = results.main[key] 
-            for attr in ['datatot', 'datapop']: # Loop over either total or by population denominators
-                data = getattr(this, attr) # Pull out data
-                nonnanx, nonnany = extractdata(
-
-        # Pull out Prevalence data
-
-        prev = [dict() for p in range(D['G']['npops'])]
-        for p in xrange(D['G']['npops']):
-            prev[p]['data'] = dict()
-            prev[p]['model'] = dict()
-            prev[p]['data']['x'], prev[p]['data']['y'] = extractdata(D['G']['datayears'], D['data']['key']['hivprev'][0][p]) # The first 0 is for "best"
-            prev[p]['model']['x'] = S['tvec']
-            prev[p]['model']['y'] = S['people'][1:,p,:].sum(axis=0) / S['people'][:,p,:].sum(axis=0) # This is prevalence
-
-        [death, newtreat, numtest, numinfect, dx] = [[dict()], [dict()], [dict()], [dict()], [dict()]]
-
-
-        # Pull out other indicators data
-        mismatch = 0
-        allmismatches = []
-
-
-        for base in [death, newtreat, numtest, numinfect, dx]:
-            base[0]['data'] = dict()
-            base[0]['model'] = dict()
-            base[0]['model']['x'] = S['tvec']
-            if base == death:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['death'][0])
-                base[0]['model']['y'] = S['death'].sum(axis=0)
-            elif base == newtreat:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['newtreat'][0])
-                base[0]['model']['y'] = S['newtx1'].sum(axis=0) + S['newtx2'].sum(axis=0)
-            elif base == numtest:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numtest'][0])
-                base[0]['model']['y'] = D['M']['hivtest'].sum(axis=0)*S['people'].sum(axis=0).sum(axis=0) #testing rate x population
-            elif base == numinfect:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numinfect'][0])
-                base[0]['model']['y'] = S['inci'].sum(axis=0)
-            elif base == dx:
-                base[0]['data']['x'], base[0]['data']['y'] = extractdata(D['G']['datayears'], D['data']['opt']['numdiag'][0])
-                base[0]['model']['y'] = S['dx'].sum(axis=0)
-
-        for base in [death, newtreat, numtest, numinfect, dx, prev]:
-            for ind in range(len(base)):
-                for y,year in enumerate(base[ind]['data']['x']):
-                    modelind = findinds(S['tvec'], year)
-
-
-                    if len(modelind)>0: # TODO Cliff check
-                        thismismatch = abs(base[ind]['model']['y'][modelind] - base[ind]['data']['y'][y]) / mean(base[ind]['data']['y']+eps)
-                        allmismatches.append(thismismatch)
-                        mismatch += thismismatch
+            for attr in ['tot', 'pops']: # Loop over either total or by population denominators
+                tmpdata = getattr(this, 'data'+attr) # Get this data, e.g. results.main['prev'].datatot
+                if tmpdata is not None: # If it actually exists, proceed
+                    tmpmodel = getattr(this, attr) # Get this result, e.g. results.main['prev'].tot
+                    datarows = tmpdata[bestindex] # Pull out data without uncertainty
+                    modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index)
+                    for row in range(len(datarows)): # Loop over each available row
+                        datax, datay = extractdata(results.datayears, datarows) # Pull out the not-NaN values
+                        for col in datax: # Loop over each data point available
+                            modelx = findinds(results.tvec, col) # Find the index of the corresponding time point
+                            modely = modelrows[modelx] # Finally, extract the model result!
+                            thismismatch = abs(modely - datay) / mean(datay+eps)
+                            allmismatches.append(thismismatch)
+                            mismatch += thismismatch
+        
         printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
         return mismatch
-
 
 
 
