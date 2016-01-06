@@ -198,6 +198,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         ## Loop over all results
         allmismatches = []
         mismatch = 0
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for key in results.main: # The results! e.g. key='prev'
             this = results.main[key] 
             for attr in ['tot', 'pops']: # Loop over either total or by population denominators
