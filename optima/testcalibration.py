@@ -117,9 +117,9 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from gui import pygui
-#        pygui(results1, which=['prev-tot', 'prev-pops', 'numinci-pops']) # WARNING, can't display 2 GUIs at the same time, ugh!
-        pygui(results2, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+        from gui import plotresults
+        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops']) # WARNING, can't display 2 GUIs at the same time, ugh!
+        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
