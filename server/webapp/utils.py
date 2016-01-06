@@ -347,14 +347,16 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
             category=program.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
-            pars=program.get('parameters', []),
+            pars=program.get('targetpars', []),
+            targetpops=program.get('targetpops', []),
             active=active
         )
 
         db.session.add(program_record)
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.pars = program.get('parameters', [])
+        program_record.pars = program.get('targetpars', [])
+        program_record.targetpops = program.get('targetpops', [])
         program_record.short_name = program.get('short_name', '')
         program_record.category = program.get('category', '')
         program_record.active = active

@@ -10,7 +10,7 @@
         Name
       </div>
       <div class="8 1++">
-        <input class="txbox __block" ng-model="program.name" required autofocus>
+        <input class="txbox __block" ng-model="program.name" required autofocus name="programName">
         <div class="error-hint" ng-show="isUniqueName(program.name, programForm)"> A program set with this name already exists, please choose a different one. </div>
       </div>
     </div>
@@ -32,6 +32,22 @@
         <select class="txbox"
                 ng-model="program.category"
                 ng-options="category for category in allCategories"></select>
+      </div>
+    </div>
+
+    <div class="section grid">
+      <h3>
+        Populations
+      </h3>
+      <div class="section_dashed_border">
+        <span class="option">
+          <input type="checkbox" ng-click="selectAllPopulations()" ng-model="selectAll">
+          <span>All populations</span>
+        </span>
+        <span ng-repeat="population in populations" class="option">
+          <input type="checkbox" ng-model="population.active" />
+          <span>{{population.name}}</span>
+        </span>
       </div>
     </div>
 
@@ -70,11 +86,18 @@
         </div>
 
         <div class="section grid">
-          <div class="++1 10 1++">
-            Population
-          </div>
-          <div class="++1 10 1++">
-            <select class="txbox" ng-model="entry.value.pops" ng-options="population.value as population.label for population in populations"></select>
+          <h3>
+            Populations
+          </h3>
+          <div class="section_dashed_border">
+        <span class="option">
+          <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
+          <span>All populations</span>
+        </span>
+        <span ng-repeat="population in entry.value.pops" class="option">
+          <input type="checkbox" ng-model="population.active" />
+          <span>{{population.name}}</span>
+        </span>
           </div>
         </div>
       </div>
