@@ -111,7 +111,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if (!openProject) {
         errorMessage = 'Open project before proceeding.';
       } else if (!$scope.activeProgramSet || !$scope.activeProgramSet.name) {
-        errorMessage = 'Please add program set name before proceeding.';
+        errorMessage = 'Please create a new program set before trying to save it.';
       }
       if (errorMessage) {
         modalService.informError([{message: errorMessage}]);

@@ -19,7 +19,14 @@ class Result(object):
         self.tot = tot # The model result total, if available
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
-        
+    
+
+    def __getattr__(self, key):
+        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
+        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
+        if key.startswith('__') and key.endswith('__'): return super(Result, self).__getattr__(key)
+        if key == 'att': return self.__dict__.keys()
+        return self.__getitem__(key)    
 
 
 class Resultset(object):
@@ -71,6 +78,13 @@ class Resultset(object):
         output += '              UUID: %s\n'    % self.uuid
         return output
     
+    
+    def __getattr__(self, key):
+        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
+        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
+        if key.startswith('__') and key.endswith('__'): return super(Resultset, self).__getattr__(key)
+        if key == 'att': return self.__dict__.keys()
+        return self.__getitem__(key)
     
     
     def make(self, quantiles=None, verbose=2):
