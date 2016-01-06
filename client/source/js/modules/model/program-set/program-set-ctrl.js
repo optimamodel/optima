@@ -135,8 +135,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           modalService.inform(
             function (){},
             'Okay',
-            'Project set saved successfully',
-            'Project set saved'
+            'Program set saved successfully',
+            'Program set saved'
           );
         });
       }
