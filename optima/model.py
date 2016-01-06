@@ -55,8 +55,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Biological and failure parameters -- death etc
     prog = simpars['const']['progacute':'proggt50']
     recov = simpars['const']['recovgt500':'recovgt50']
-    death = simpars['const']['deathacute':'deathaids']
-    cd4trans = simpars['const']['cd4transacute':'cd4transaids']
+    death = simpars['const']['deathacute':'deathlt50']
+    cd4trans = simpars['const']['cd4transacute':'cd4translt50']
     deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
     
     # Calculate other things outside the loop
@@ -136,7 +136,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([prog, simpars['const']['deathaids']]) # For last rate, use AIDS death as dominant rate
+        progratios = hstack([prog, simpars['const']['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
         recovratios = hstack([inf, recov, efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize

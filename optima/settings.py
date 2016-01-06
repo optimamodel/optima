@@ -14,7 +14,7 @@ class Settings():
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
-        self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
+        self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.ncd4 = len(self.hivstates)
         
         # Original states by diagnosis
@@ -31,7 +31,7 @@ class Settings():
         self.gt350 = 4 + spacing
         self.gt200 = 5 + spacing
         self.gt50  = 6 + spacing
-        self.aids  = 7 + spacing 
+        self.lt50  = 7 + spacing
 
         # Combined states
         self.alluninf = cat([self.uncirc, self.circ]) # All uninfected

@@ -98,7 +98,7 @@ def defaultprograms(P, addpars=False, filterprograms=None):
     PEP = Program(name='PEP',
                   category='Care and treatment',
                   short_name='PEP',
-                  criteria = {'hivstatus': ['aids', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
                   
     HTC = Program(name='HTC',
                   targetpars=[{'param': 'hivtest', 'pop': pop} for pop in pops],
@@ -112,7 +112,7 @@ def defaultprograms(P, addpars=False, filterprograms=None):
                   targetpops=pops,
                   category='Care and treatment',
                   short_name='ART',
-                  criteria = {'hivstatus': ['aids', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
     
     PMTCT = Program(name='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': pop} for pop in femalepops] + [{'param': 'numpmtct', 'pop': pop} for pop in femalepops],
@@ -129,7 +129,7 @@ def defaultprograms(P, addpars=False, filterprograms=None):
     Other_care = Program(name='Other_care',
                   category='Care and treatment',
                   short_name='Other care',
-                  criteria = {'hivstatus': ['aids', 'gt50', 'gt200'], 'pregnant': False})
+                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})
     
     MGMT = Program(name='MGMT',
                   category='Management and administration',
