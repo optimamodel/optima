@@ -5,9 +5,6 @@ Version: 2016jan05 by robynstuart
 """
 from optima import Program, Programset
 
-#from optima import Project
-#P = Project(spreadsheet='test7pops.xlsx')
-
 def defaultprograms(P, addpars=False, filterprograms=None):
     ''' Make some default programs'''
     
@@ -47,7 +44,7 @@ def defaultprograms(P, addpars=False, filterprograms=None):
                   targetpops=malepops,
                   category='Prevention',
                   short_name='VMMC',
-                  criteria = {'hivstatus': 'alluninf', 'pregnant': False})              
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
     FSW_programs = Program(name='FSW_programs',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in [x for x in compships if 'FSW' in x]] + [{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'FSW' in x]] + [{'param': 'hivtest', 'pop': 'FSW'}],
@@ -163,59 +160,59 @@ def defaultprograms(P, addpars=False, filterprograms=None):
                   short_name='Other')
                   
     if addpars:
-        Condoms.costcovfn.addccopar({'saturation': (0.75,0.85),
+        Condoms.costcovfn.addccopar({'saturation': (0.75,0.75),
                                  't': 2016.0,
                                  'unitcost': (30,40)})
     
-        SBCC.costcovfn.addccopar({'saturation': (0.55,0.65),
+        SBCC.costcovfn.addccopar({'saturation': (0.6,0.6),
                                  't': 2016.0,
                                  'unitcost': (20,30)})
     
-        STI.costcovfn.addccopar({'saturation': (0.55,0.65),
+        STI.costcovfn.addccopar({'saturation': (0.6,0.6),
                                  't': 2016.0,
                                  'unitcost': (30,40)})
                                  
-        VMMC.costcovfn.addccopar({'saturation': (0.25,0.35),
+        VMMC.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (50,80)})
                                  
-        FSW_programs.costcovfn.addccopar({'saturation': (0.85,0.95),
+        FSW_programs.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (50,80)})
                                  
-        MSM_programs.costcovfn.addccopar({'saturation': (0.85,0.95),
+        MSM_programs.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (60,90)})
                                  
-        PWID_programs.costcovfn.addccopar({'saturation': (0.25,0.35),
+        PWID_programs.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (60,90)})
                                  
-        OST.costcovfn.addccopar({'saturation': (0.25,0.35),
+        OST.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (600,1000)})
                                  
-        NSP.costcovfn.addccopar({'saturation': (0.25,0.35),
+        NSP.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (60,100)})
                                  
-        Cash_transfers.costcovfn.addccopar({'saturation': (0.25,0.35),
+        Cash_transfers.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (600,800)})
                                  
-        PrEP.costcovfn.addccopar({'saturation': (0.25,0.35),
+        PrEP.costcovfn.addccopar({'saturation': (0.3,0.3),
                                  't': 2016.0,
                                  'unitcost': (100,200)})
                                  
-        HTC.costcovfn.addccopar({'saturation': (0.5,0.6),
+        HTC.costcovfn.addccopar({'saturation': (0.55,0.55),
                                  't': 2016.0,
                                  'unitcost': (10,20)})
                                  
-        ART.costcovfn.addccopar({'saturation': (0.8,0.95),
+        ART.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (200,400)})
                                  
-        PMTCT.costcovfn.addccopar({'saturation': (0.9,0.95),
+        PMTCT.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
                                  'unitcost': (600,800)})
                                  
@@ -225,7 +222,6 @@ def defaultprograms(P, addpars=False, filterprograms=None):
         finalprograms = [prog for prog in allprograms if prog.name in filterprograms]
     
     return finalprograms if filterprograms else allprograms
-
     
 def defaultprogset(P, addpars=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
