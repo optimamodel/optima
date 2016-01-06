@@ -21,7 +21,7 @@ from copy import deepcopy as dcp
 ## Load non-Optima-specific custom functions
 from asd import asd
 from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
-from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, objectid, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, save, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
+from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, objectid, objectatt, objectmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, save, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
 
 ## Load Optima functions and classes
 from settings import Settings # Inter-project definitions, e.g. health states

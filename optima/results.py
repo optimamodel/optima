@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015dec25 by cliffk -- merry christmas!
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, objectid, dcp
+from optima import uuid, today, getdate, quantile, printv, odict, objectid, objectatt, objectmeth, dcp
 from numpy import array, nan, zeros
 
 
@@ -20,41 +20,30 @@ class Result(object):
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
     
-
-    def __getattr__(self, key):
-        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
-        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
-        if key.startswith('__') and key.endswith('__'): return super(Result, self).__getattr__(key)
-        if key == 'att': return self.__dict__.keys()
-        return self.__getitem__(key)    
+    def __repr__(self):
+        ''' Print out useful information when called '''
+        output = objectid(self)
+        output += '============================================================\n'
+        output += objectatt(self)
+        output += '============================================================\n'
+        return output
 
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
+    def __init__(self, project, simparslist, rawlist):
         # Basic info
         self.uuid = uuid()
         self.created = today()
         
-        # Turn inputs into lists if not already
-        if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
-        if type(simpars)!=list: simpars = [simpars] # Force into being a list
-        if type(raw)!=list: raw = [raw] # Force into being a list
-        
         # Fundamental quantities -- populated by project.runsim()
-        self.raw = raw
-        self.simpars = simpars # ...and sim parameters
-        self.tvec = raw[0]['tvec']
-        self.popkeys = raw[0]['popkeys']
-        if project is not None:
-            if parset is None:
-                try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
-                except: pass # Don't really worry if the parset can't be populated
-            if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
-        self.datayears = data['years'] if data is not None else None # Only get data years if data available
+        self.raw = rawlist
         self.project = dcp(project) # ...and just copy the whole project
-        self.parset = parset # Store parameters
-        self.data = data # Store data
+        self.parset = project.parsets[simparslist[0]['parsetname']] # Store parameters -- WARNING, ugly!
+        self.simpars = simparslist # ...and sim parameters
+        self.tvec = simparslist[0]['tvec']
+        self.datayears = project.data['years']
+        self.popkeys = simparslist[0]['popkeys']
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
@@ -78,26 +67,22 @@ class Resultset(object):
 #        self.numcircum = Result()
 #        self.reqcircum = Result()
 #        self.sexinci = Result()
-        
-        if domake: self.make()
 #    
     
     
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
         output = objectid(self)
-        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
+        output += '============================================================\n'
+        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else 'N/A')
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '              UUID: %s\n'    % self.uuid
+        output += '============================================================\n'
+        output += objectatt(self)
+        output += '============================================================\n'
+        output += objectmeth(self)
+        output += '============================================================\n'
         return output
-    
-    
-    def __getattr__(self, key):
-        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
-        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
-        if key.startswith('__') and key.endswith('__'): return super(Resultset, self).__getattr__(key)
-        if key == 'att': return self.__dict__.keys()
-        return self.__getitem__(key)
     
     
     def make(self, quantiles=None, verbose=2):
@@ -130,32 +115,31 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        data = self.data
+        data = self.project.data
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if data is not None: 
-            self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
-            self.main['prev'].datatot = processdata(data['optprev'])
+        self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
+        self.main['prev'].datatot = processdata(data['optprev'])
         
         self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+        self.main['numplhiv'].datatot = processdata(data['optplhiv'])
         
         self.main['numinci'].pops = quantile(allinci, quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numinci'].datatot = processdata(data['optnuminfect'])
+        self.main['numinci'].datatot = processdata(data['optnuminfect'])
 
         self.main['force'].pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
         self.main['force'].tot = quantile(allinci.sum(axis=1) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
         self.main['numdeath'].pops = quantile(alldeaths, quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numdeath'].datatot = processdata(data['optdeath'])
+        self.main['numdeath'].datatot = processdata(data['optdeath'])
 
         self.main['numdiag'].pops = quantile(alldiag, quantiles=quantiles)
         self.main['numdiag'].tot = quantile(alldiag.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
+        self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
 
 # WARNING, need to implement

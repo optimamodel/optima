@@ -6,19 +6,19 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // in order to not perform changes directly on the final value here is created a copy
     var programCopy = angular.copy(program);
     if(programCopy.name && !programCopy.id) {
-      programCopy.name = programCopy.name + ' - Copy';
+      programCopy.name = programCopy.name + ' - Copy'
     }
 
     // Initializes relevant attributes
     var initialize = function () {
       $scope.isNew = !programCopy.name;
-      $scope.selectAll = false;
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = angular.copy(populations);
-
+      $scope.selectAll = true;
       _.forEach($scope.populations, function(population) {
         if(programCopy.populations) {
-          population.active = programCopy.populations.indexOf(population.short_name) > -1;
+          population.active = (programCopy.populations.length==0) || (programCopy.populations.indexOf(population.short_name) > -1);
+          if (!population.active) $scope.selectAll = false;
         }
       });
 
@@ -31,9 +31,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
         oldPops = entry.value.pops;
+        if (oldPops.length==1 && oldPops[0] == "") oldPops = [];
+        entry.selectAll = true;
         entry.value.pops = angular.copy(populations);
         _.each(entry.value.pops, function(pop) {
-          pop.active = oldPops.indexOf(pop.short_name) > -1;
+          pop.active = (oldPops.length==0) || (oldPops.indexOf(pop.short_name) > -1);
+          if (!pop.active) entry.selectAll = false;
         });
       });
 

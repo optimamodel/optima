@@ -3,29 +3,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.factory('programSetModalService', ['$modal', function ($modal) {
 
-    /*
-     * Returns a collection of entries where all non-active antries are filtered
-     * out and the active attribute is removed from each of these entries.
-     */
-    var toCleanArray = function (collection) {
-      return _(collection).chain()
-        .where({ active: true })
-        .map(function (item) {
-          var cl = _(item).omit(['active', '$$hashKey']);
-          if (cl.parameters) {
-            cl.parameters = _(cl.parameters).chain()
-              .where({ active: true })
-              .map(function (param) {
-                return _(param).omit(['active', '$$hashKey']);
-              })
-              .value();
-            if (cl.parameters === 0) delete cl.parameters;
-          }
-          return cl;
-        })
-        .value();
-    };
-
     return {
 
       /**
@@ -74,7 +51,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       /**
        * This function opens a modal for creating, editing and copying a program.
        */
-      openProgramModal: function (program, predefined, availableParameters) {
+      openProgramModal: function (program, populations, availableParameters, programList) {
         return $modal.open({
           templateUrl: 'js/modules/model/program-set/program-modal.html',
           controller: 'ProgramSetModalController',
@@ -83,11 +60,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             program: function () {
               return program;
             },
+            programList: function () {
+              return programList;
+            },
             availableParameters: function () {
               return availableParameters;
             },
             populations: function () {
-              return toCleanArray(predefined.categories);
+              return populations;
             }
           }
         });
