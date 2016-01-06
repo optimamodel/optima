@@ -4,8 +4,8 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import Parameterset, dcp, perturb, runmodel
-from numpy import median
+from optima import Parameterset, Par, dcp, perturb, runmodel
+from numpy import median, zeros
 
 
 
@@ -88,16 +88,73 @@ def autofit(project=None, name=None, whattofit=None, maxtime=None, niters=100, i
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
+    pars = origparlist[0] # Just get a copy of the pars for parsing
+    
+    
+    ### WARNING -- the following three functions must be updated together! Annoying, I know...
     
     # Populate lists of what to fit
-    partypes = []
-    parkeys = []
-    for parname in origparlist[0]: # Just use first one, since all the same
-        par = origparlist[0][parname]
-        if par.auto in whattofit: # It's in the list of 
-            if par.auto in ['force','other']:
-                partypes.append(par.auto)
-                parkeys.append(par.short)
+    def makeparlist(pars, whattofit):
+        ''' 
+        This uses the "auto" attribute to decide whether or not to automatically calibrate it, and
+        if so, it uses the "manual" attribute to decide what to calibrate (e.g., just the metaparameter
+        or all the values.
+        '''
+        
+        parlist = []
+        for parname in pars: # Just use first one, since all the same
+            par = pars[parname]
+            if type(par)==Par:
+                if par.auto in whattofit: # It's in the list of things to fit
+                    if par.auto in ['init','popsize','force','other']:
+                        if par.manual=='meta':
+                            parlist.append({'name':par.short, 'type':par.manual, 'ind':None})
+                        elif par.manual in ['pop', 'force']:
+                            for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.manual, 'ind':i})
+                        elif par.manual=='exp':
+                            for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.manual, 'ind':i})
+                    elif par.auto=='const': pass
+                    else:
+                        raise Exception('Parameter type "%s" not understood' % par.auto)
+            elif parname=='const' and 'const' in whattofit:
+                for constname in pars['const']:
+                    for i in range(len(pars['const'])): parlist.append({'name':par.short, 'type':'const', 'ind':constname})
+            else: pass # It's like popkeys or something
+        return parlist
+    
+    
+    
+    def keystovec(pars, parlist):
+        ''' 
+        Take a parameter set (e.g. P.parsets[0].pars[0]), a list of "types" 
+        (e.g. 'force'), and a list of keys (e.g. 'hivtest'), and return a
+        vector of values, e.g. "dehydrate" them. 
+        '''
+        nfitpars = len(parlist)
+        parvec = zeros(nfitpars)
+        for p in range(nfitpars):
+            thistype = parlist[p]['type'] # Should match up with par.manual
+            thisname = parlist[p]['name']
+            thisind = parlist[p]['ind']
+            if thistype in ['force', 'pop']:
+                parvec[p] = pars[thisname].y[thisind]
+            elif thistype=='popsize':
+                parvec[p] = pars[thisname].p[thisind]
+            if thistype=='meta':
+                parvec[p] = pars[thisname].m
+            elif thistype=='const':
+                parvec[p] = pars['const'][thisind].y
+        
+        
+        
+        return parvec
+    
+    def vectokeys(parvec, pars, partypes, parkeys):
+        '''
+        Take a vector of parameter values and "hydrate" them into a pars object
+        using a list of "types" (e.g. 'force'), and a list of keys (e.g. 'hivtest').
+        '''
+        return pars
     
     # Loop over each pars
     for ind in inds:

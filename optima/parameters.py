@@ -20,7 +20,7 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, short, data, index, keys, by=None, manual='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, short, data, keys, index=0, by=None, manual='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Constant(name=name, short=short, y=odict(), by=by, manual=manual, auto=auto) # Create structure
     for row,key in enumerate(keys):
@@ -209,7 +209,7 @@ def makepars(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, bestindex, popkeys, by='pop', manual='pop', auto='init') # Pull out first available HIV prevalence point
+    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, popkeys, index=bestindex, by='pop', manual='pop', auto='init') # Pull out first available HIV prevalence point
     pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', manual='exp', auto='popsize')
     
     # Epidemilogy parameters -- most are data
