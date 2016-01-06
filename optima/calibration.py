@@ -142,30 +142,32 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         # Handle inputs
         nfitpars = len(parlist)
         if parvec is None: 
-            tovec = True # to vector
+            tv = True # to vector
             parvec = zeros(nfitpars)
-        else: tovec = False
-        
-        def assign(tmpvec, tmppar):
-            ''' Tiny function to assign A to B or B to A, relying on Python's pass-by-reference functionality '''
-            if tovec: tmpvec = tmppar
-            else:     tmppar = tmpvec
-            return None
+        else: tv = False
         
         # Do the loop
-        for p in range(nfitpars):
-            thistype = parlist[p]['type'] # Should match up with par.fittable
-            thisname = parlist[p]['name']
-            thisind = parlist[p]['ind']
-            if thistype in ['force', 'pop']: assign(parvec[p], pars[thisname].y[thisind])
-            elif thistype=='popsize': assign(parvec[p], pars[thisname].p[thisind])
-            elif thistype=='meta': assign(parvec[p], pars[thisname].m)
-            elif thistype=='const': assign(parvec[p], pars['const'][thisind].y)
+        for i in range(nfitpars):
+            thistype = parlist[i]['type'] # Should match up with par.fittable
+            thisname = parlist[i]['name']
+            thisind = parlist[i]['ind']
+            if thistype in ['force', 'pop']: 
+                if tv: parvec[i] = pars[thisname].y[thisind]
+                else:  pars[thisname].y[thisind] = parvec[i]
+            elif thistype=='popsize': 
+                if tv: parvec[i] = pars[thisname].p[thisind]
+                else:  pars[thisname].p[thisind] = parvec[i]
+            elif thistype=='meta': 
+                if tv: parvec[i] = pars[thisname].m
+                else:  pars[thisname].m = parvec[i]
+            elif thistype=='const': 
+                if tv: parvec[i] = pars['const'][thisind].y
+                else:  pars['const'][thisind].y = parvec[i]
             else: raise Exception('Parameter type "%s" not understood' % thistype)
         
         # Decide which to return
-        if tovec: return parvec
-        else:     return pars
+        if tv: return parvec
+        else:  return pars
     
     
 
