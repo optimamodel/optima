@@ -142,43 +142,33 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         # Handle inputs
         nfitpars = len(parlist)
         if parvec is None: 
-            tv = False # tv = to vector
+            tovec = True # to vector
             parvec = zeros(nfitpars)
-        else: tv = True
+        else: tovec = False
+        
+        def assign(tmpvec, tmppar):
+            ''' Tiny function to assign A to B or B to A, relying on Python's pass-by-reference functionality '''
+            if tovec: tmpvec = tmppar
+            else:     tmppar = tmpvec
+            return None
         
         # Do the loop
         for p in range(nfitpars):
             thistype = parlist[p]['type'] # Should match up with par.fittable
             thisname = parlist[p]['name']
             thisind = parlist[p]['ind']
-            if thistype in ['force', 'pop']: 
-                if tv: parvec[p] = pars[thisname].y[thisind]
-                else:  pars[thisname].y[thisind] = parvec[p]
-            elif thistype=='popsize': 
-                if tv: parvec[p] = pars[thisname].p[thisind]
-            elif thistype=='meta': parvec[p] = pars[thisname].m
-            elif thistype=='const': parvec[p] = pars['const'][thisind].y
+            if thistype in ['force', 'pop']: assign(parvec[p], pars[thisname].y[thisind])
+            elif thistype=='popsize': assign(parvec[p], pars[thisname].p[thisind])
+            elif thistype=='meta': assign(parvec[p], pars[thisname].m)
+            elif thistype=='const': assign(parvec[p], pars['const'][thisind].y)
             else: raise Exception('Parameter type "%s" not understood' % thistype)
-        return parvec
+        
+        # Decide which to return
+        if tovec: return parvec
+        else:     return pars
     
     
-    def vectopars(parvec, parlist, pars):
-        '''
-        
-        '''
-        nfitpars = len(parlist)
-        for p in range(nfitpars):
-            thistype = parlist[p]['type'] # Should match up with par.fittable
-            thisname = parlist[p]['name']
-            thisind = parlist[p]['ind']
-            if thistype in ['force', 'pop']: parvec[p] = pars[thisname].y[thisind]
-            elif thistype=='popsize': parvec[p] = pars[thisname].p[thisind]
-            elif thistype=='meta': parvec[p] = pars[thisname].m
-            elif thistype=='const': parvec[p] = pars['const'][thisind].y
-            else: raise Exception('Parameter type "%s" not understood' % thistype)
-        return parvec
-        
-        return pars
+
     
     # Create the list of parameters to be fitted
     parlist = makeparlist(pars, what)
@@ -190,7 +180,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         try: pars = origparlist[ind]
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
         
-        parvec = parstovec(pars, parlist)
+        parvec = convert(pars, parlist)
         
         # Perform fit
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], name=parset.name, uuid=parset.uuid)
