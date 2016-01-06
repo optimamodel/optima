@@ -1,5 +1,7 @@
 #!/bin/bash
 
+migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
+
 if [ ! -d "./p-env/" ]; then
   if [ "$1" == "--system" ]; then
     virtualenv --system-site-packages p-env

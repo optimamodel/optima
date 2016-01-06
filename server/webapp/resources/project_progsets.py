@@ -100,7 +100,7 @@ class Progset(Resource):
     )
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
-        current_app.logger.info("/api/project/%s/progsets/%s" % (project_id, progset_id))
+        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)

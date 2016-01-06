@@ -1,1 +1,1 @@
-ALTER TABLE programs ADD COLUMN targetpops varchar(30)[];
+ALTER TABLE programs ADD COLUMN targetpops text[];
