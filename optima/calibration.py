@@ -91,7 +91,9 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     pars = origparlist[0] # Just get a copy of the pars for parsing
     
     
-    ### WARNING -- the following three functions must be updated together! Annoying, I know...
+    
+    ## WARNING -- the following three functions must be updated together! Annoying, I know...
+    
     
     # Populate lists of what to fit
     def makeparlist(pars, what):
@@ -103,7 +105,6 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         "what" options (see parameters.py, especially listparattributes()): 
         ['init','popsize','test','treat','force','other','const']
         '''
-        
         parlist = []
         for parname in pars: # Just use first one, since all the same
             par = pars[parname]
@@ -124,8 +125,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         return parlist
     
     
-    
-    def keystovec(pars, parlist):
+    def parstovec(pars, parlist):
         ''' 
         Take a parameter set (e.g. P.parsets[0].pars[0]), a list of "types" 
         (e.g. 'force'), and a list of keys (e.g. 'hivtest'), and return a
@@ -137,25 +137,23 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
             thistype = parlist[p]['type'] # Should match up with par.fittable
             thisname = parlist[p]['name']
             thisind = parlist[p]['ind']
-            if thistype in ['force', 'pop']:
-                parvec[p] = pars[thisname].y[thisind]
-            elif thistype=='popsize':
-                parvec[p] = pars[thisname].p[thisind]
-            if thistype=='meta':
-                parvec[p] = pars[thisname].m
-            elif thistype=='const':
-                parvec[p] = pars['const'][thisind].y
-        
-        
-        
+            if thistype in ['force', 'pop']: parvec[p] = pars[thisname].y[thisind]
+            elif thistype=='popsize': parvec[p] = pars[thisname].p[thisind]
+            elif thistype=='meta': parvec[p] = pars[thisname].m
+            elif thistype=='const': parvec[p] = pars['const'][thisind].y
+            else: raise Exception('Parameter type "%s" not understood' % thistype)
         return parvec
     
-    def vectokeys(parvec, pars, partypes, parkeys):
+    
+    def vectopars(parvec, parlist, pars):
         '''
         Take a vector of parameter values and "hydrate" them into a pars object
         using a list of "types" (e.g. 'force'), and a list of keys (e.g. 'hivtest').
         '''
         return pars
+    
+    # Create the list of parameters to be fitted
+    parlist = makeparlist(pars, what)
     
     # Loop over each pars
     for ind in inds:
@@ -164,15 +162,12 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         try: pars = origparlist[ind]
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
         
-        # Pull out parameters to fit
-        for par in pars: pass
-            
-        
+        parvec = parstovec(pars, parlist)
         
         # Perform fit
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], name=parset.name, uuid=parset.uuid)
         
         # Save
-
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     return results

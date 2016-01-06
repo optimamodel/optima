@@ -39,7 +39,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
             if tmppars[key].fittable is not 'no':
                 keylist.append(key) # e.g. "initprev"
                 namelist.append(tmppars[key].name) # e.g. "HIV prevalence"
-                typelist.append(tmppars[key].manual) # e.g. 'pop'
+                typelist.append(tmppars[key].fittable) # e.g. 'pop'
     nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
     ## Convert to the full list of parameters to be fitted
