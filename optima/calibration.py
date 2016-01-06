@@ -172,7 +172,11 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
 
 
     def errorcalc(parvec, options):
-        ''' Calculate the error between the model and the data '''
+        ''' 
+        Calculate the mismatch between the model and the data -- may or may not be
+        related to the likelihood. Either way, it's very uncertain what this function
+        does.
+        '''
 
         printv(parvec, 4, verbose)
         
