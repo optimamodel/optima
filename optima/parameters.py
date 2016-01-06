@@ -20,9 +20,9 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, short, data, keys, index=0, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, short, data, keys, index=0, limits=None, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short=short, y=odict(), by=by, fittable=fittable, auto=auto) # Create structure
+    par = Constant(name=name, short=short, y=odict(), limits=limits, by=by, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -30,9 +30,9 @@ def data2prev(name, short, data, keys, index=0, by=None, fittable='', auto='', b
 
 
 
-def data2popsize(name, short, data, keys, by=None, fittable='', auto='', blh=0):
+def data2popsize(name, short, data, keys, limits=None, by=None, fittable='', auto='', blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=name, short=short, m=1, by=by, fittable=fittable, auto=auto)
+    par = Popsizepar(name=name, short=short, m=1, limits=limits, by=by, fittable=fittable, auto=auto)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -86,9 +86,9 @@ def data2popsize(name, short, data, keys, by=None, fittable='', auto='', blh=0):
 
 
 
-def data2timepar(name, short, data, keys, by=None, fittable='', auto=''):
+def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto=''):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, fittable=fittable, auto=auto) # Create structure
+    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, limits=limits, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
         validdata = ~isnan(data[short][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
@@ -105,7 +105,7 @@ def data2timepar(name, short, data, keys, by=None, fittable='', auto=''):
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, popsizepar=None):
+def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
