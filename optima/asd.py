@@ -1,12 +1,11 @@
-def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
+def asd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 1e-3, TolX = None, StallIterLimit = 100, \
     fulloutput = True, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 10):
     """
-    Optimization using the Bayesian adaptive locally linear stochastic descent 
-    algorithm.
+    Optimization using the adaptive stochastic descent algorithm.
     
-    X, FVAL, EXITFLAG, OUTPUT = ballsd(FUN,X0) starts at X0 and attempts to find a 
+    X, FVAL, EXITFLAG, OUTPUT = asd(FUN,X0) starts at X0 and attempts to find a 
     local minimizer X of the function FUN. FUN accepts input X and returns a scalar 
     function value F evaluated  at X. X0 can be a scalar, list, or Numpy array of 
     any size. The outputs are:
@@ -26,7 +25,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
                   fval -- Value of objective function at each iteration
                      x -- Vector of parameter values at each iteration
     
-    ballsd() has the following options that can be set using keyword arguments. Their
+    asd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
     
                    stepsize {0.1} -- Initial step size as a fraction of each parameter
@@ -53,12 +52,12 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
   
     
     Example:
-        from ballsd import ballsd
+        from asd import asd
         from pylab import norm
-        x, fval, exitflag, output = ballsd(norm, [1, 2, 3])
+        x, fval, exitflag, output = asd(norm, [1, 2, 3])
     
     
-    Version: 2015mar01 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2016jan05 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
     from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero
@@ -105,7 +104,6 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     ## Loop
     start = time()
     while 1:
-        sleep(0.1) # no tight loops please
         if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step

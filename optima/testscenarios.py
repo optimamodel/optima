@@ -13,20 +13,17 @@ tests = [
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
 from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
-
-
-
-
 
 blank()
 print('Running tests:')
@@ -82,7 +79,8 @@ if 'standardscen' in tests:
      
 #    from gui import gui
 #    gui([results1, results2])
-    from plotpeople import plotpeople
-    plotpeople(allresults)
+    if doplot:
+        from plotpeople import plotpeople
+        plotpeople(allresults)
 
     done(t)

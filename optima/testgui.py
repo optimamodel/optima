@@ -18,20 +18,17 @@ tests = [
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
 from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
-
-
-
-
 
 blank()
 print('Running tests:')
@@ -52,7 +49,7 @@ T = tic()
 
 
 ## mpld3 test
-if 'browser' in tests:
+if 'browser' in tests and doplot:
     t = tic()
 
     print('Running browser test...')
@@ -70,7 +67,7 @@ if 'browser' in tests:
 
 
 ## Python GUI test
-if 'gui' in tests:
+if 'gui' in tests and doplot:
     t = tic()
 
     print('Running GUI test...')
