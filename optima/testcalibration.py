@@ -5,7 +5,7 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan04 by cliffk
+Version: 2016jan05 by cliffk
 """
 
 

@@ -80,7 +80,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     '''
     
     # Initialization
-    parset = dcp(project.parsets[name]) # Copy the original parameter set
+    parset = project.parsets[name] # Copy the original parameter set
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
