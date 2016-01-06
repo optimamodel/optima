@@ -12,6 +12,7 @@ Version: 2016jan04 by cliffk
 
 ## Define tests to run here!!!
 tests = [
+#'attributes',
 #'sensitivity',
 #'manualfit',
 'autofit',
@@ -48,6 +49,19 @@ blank()
 T = tic()
 
 
+
+
+## Attributes test
+if 'attributes' in tests:
+    t = tic()
+
+    print('Running attributes test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test.xlsx')
+    P.parsets[0].listattributes()
+
+    done(t)
 
 
 

@@ -35,8 +35,8 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
     origpars = dcp(tmppars)
 
     for key in tmppars.keys():
-        if hasattr(tmppars[key],'manual'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-            if tmppars[key].manual is not '':
+        if hasattr(tmppars[key],'fittable'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+            if tmppars[key].fittable is not 'no':
                 keylist.append(key) # e.g. "initprev"
                 namelist.append(tmppars[key].name) # e.g. "HIV prevalence"
                 typelist.append(tmppars[key].manual) # e.g. 'pop'

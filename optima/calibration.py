@@ -72,7 +72,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(project=None, name=None, whattofit=None, maxtime=None, niters=100, inds=0):
+def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0):
     ''' 
     Function to automatically fit parameters
     
@@ -83,7 +83,7 @@ def autofit(project=None, name=None, whattofit=None, maxtime=None, niters=100, i
     parset = dcp(project.parsets[name]) # Copy the original parameter set
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
-    if whattofit is None: whattofit = ['force'] # By default, automatically fit force-of-infection only
+    if what is None: what = ['force'] # By default, automatically fit force-of-infection only
     if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
@@ -94,32 +94,33 @@ def autofit(project=None, name=None, whattofit=None, maxtime=None, niters=100, i
     ### WARNING -- the following three functions must be updated together! Annoying, I know...
     
     # Populate lists of what to fit
-    def makeparlist(pars, whattofit):
+    def makeparlist(pars, what):
         ''' 
         This uses the "auto" attribute to decide whether or not to automatically calibrate it, and
-        if so, it uses the "manual" attribute to decide what to calibrate (e.g., just the metaparameter
+        if so, it uses the "fittable" attribute to decide what to calibrate (e.g., just the metaparameter
         or all the values.
+        
+        "what" options (see parameters.py, especially listparattributes()): 
+        ['init','popsize','test','treat','force','other','const']
         '''
         
         parlist = []
         for parname in pars: # Just use first one, since all the same
             par = pars[parname]
-            if type(par)==Par:
-                if par.auto in whattofit: # It's in the list of things to fit
-                    if par.auto in ['init','popsize','force','other']:
-                        if par.manual=='meta':
-                            parlist.append({'name':par.short, 'type':par.manual, 'ind':None})
-                        elif par.manual in ['pop', 'force']:
-                            for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.manual, 'ind':i})
-                        elif par.manual=='exp':
-                            for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.manual, 'ind':i})
-                    elif par.auto=='const': pass
+            if issubclass(type(par), Par): # Check if it's a parameter
+                if par.auto in what: # It's in the list of things to fit
+                    if par.fittable=='meta':
+                        parlist.append({'name':par.short, 'type':par.fittable, 'ind':None})
+                    elif par.fittable=='pop':
+                        for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'ind':i})
+                    elif par.fittable=='exp':
+                        for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.fittable, 'ind':i})
                     else:
-                        raise Exception('Parameter type "%s" not understood' % par.auto)
-            elif parname=='const' and 'const' in whattofit:
+                        raise Exception('Parameter "fittable" type "%s" not understood' % par.fittable)
+            elif parname=='const' and 'const' in what: # Or check if it's a constant
                 for constname in pars['const']:
                     for i in range(len(pars['const'])): parlist.append({'name':par.short, 'type':'const', 'ind':constname})
-            else: pass # It's like popkeys or something
+            else: pass # It's like popkeys or something -- don't worry, be happy
         return parlist
     
     
@@ -133,7 +134,7 @@ def autofit(project=None, name=None, whattofit=None, maxtime=None, niters=100, i
         nfitpars = len(parlist)
         parvec = zeros(nfitpars)
         for p in range(nfitpars):
-            thistype = parlist[p]['type'] # Should match up with par.manual
+            thistype = parlist[p]['type'] # Should match up with par.fittable
             thisname = parlist[p]['name']
             thisind = parlist[p]['ind']
             if thistype in ['force', 'pop']:

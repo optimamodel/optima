@@ -20,9 +20,9 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, short, data, keys, index=0, by=None, manual='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, short, data, keys, index=0, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short=short, y=odict(), by=by, manual=manual, auto=auto) # Create structure
+    par = Constant(name=name, short=short, y=odict(), by=by, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -30,9 +30,9 @@ def data2prev(name, short, data, keys, index=0, by=None, manual='', auto='', blh
 
 
 
-def data2popsize(name, short, data, keys, by=None, manual='', auto='', blh=0):
+def data2popsize(name, short, data, keys, by=None, fittable='', auto='', blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=name, short=short, m=1, by=by, manual=manual, auto=auto)
+    par = Popsizepar(name=name, short=short, m=1, by=by, fittable=fittable, auto=auto)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -86,9 +86,9 @@ def data2popsize(name, short, data, keys, by=None, manual='', auto='', blh=0):
 
 
 
-def data2timepar(name, short, data, keys, by=None, manual='', auto=''):
+def data2timepar(name, short, data, keys, by=None, fittable='', auto=''):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, manual=manual, auto=auto) # Create structure
+    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
         validdata = ~isnan(data[short][row])
         if sum(validdata): # There's at least one data point -- WARNING, is this ok?
@@ -209,39 +209,39 @@ def makepars(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, popkeys, index=bestindex, by='pop', manual='pop', auto='init') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', manual='exp', auto='popsize')
+    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, popkeys, index=bestindex, by='pop', fittable='pop', auto='init') # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, by='pop', fittable='exp', auto='popsize')
     
     # Epidemilogy parameters -- most are data
-    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop', manual='meta', auto='other') # STI prevalence
-    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, by='pop', manual='meta', auto='other')  # Death rates
-    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, by='pop', manual='meta', auto='other') # TB prevalence
+    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, by='pop', fittable='meta', auto='other') # STI prevalence
+    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, by='pop', fittable='meta', auto='other')  # Death rates
+    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, by='pop', fittable='meta', auto='other') # TB prevalence
     
     # Testing parameters -- most are data
-    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, by='pop', manual='meta', auto='test') # HIV testing rates
-    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, by='tot', manual='meta', auto='test') # AIDS testing rates
-    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, by='tot', manual='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
+    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, by='pop', fittable='meta', auto='test') # HIV testing rates
+    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, by='tot', fittable='meta', auto='test') # AIDS testing rates
+    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, by='tot', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
-    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, by='tot', manual='meta', auto='other')
-    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, by='tot', manual='meta', auto='other')  
-    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, by='pop', manual='meta', auto='other')
+    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, by='tot', fittable='meta', auto='other')
+    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, by='tot', fittable='meta', auto='other')  
+    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, by='pop', fittable='meta', auto='other')
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
     # Circumcision parameters
-    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, by='pop', manual='meta', auto='other') # Circumcision percentage
+    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, by='pop', fittable='meta', auto='other') # Circumcision percentage
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
     # Drug behavior parameters
-    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, by='tot', manual='meta', auto='other')
-    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, by='pop', manual='meta', auto='other')
+    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, by='tot', fittable='meta', auto='other')
+    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, by='pop', fittable='meta', auto='other')
     
     # Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, by='pop', manual='meta', auto='other')
+    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, by='pop', fittable='meta', auto='other')
     
     # Constants
     pars['const'] = odict() # WARNING, actually use Parameters class?
@@ -250,17 +250,17 @@ def makepars(data, verbose=2):
         best = data['const'][parname][0] # Taking best value only, hence the 0
         low = data['const'][parname][1]
         high = data['const'][parname][2]
-        pars['const'][parname] = Constant(name=parname, short=parname, limits=[low, high], y=best, by='tot', manual='const', auto='const')
+        pars['const'][parname] = Constant(name=parname, short=parname, limits=[low, high], y=best, by='tot', fittable='const', auto='const')
 
     # Initialize metaparameters
-    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', manual='pop', auto='force') # Create structure
-    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), by='pop', manual='pop', auto='inhomo') # Create structure
+    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), by='pop', fittable='pop', auto='force') # Create structure
+    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), by='pop', fittable='pop', auto='inhomo') # Create structure
     for key in popkeys:
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
     
     # Risk-related population transitions
-    pars['transit'] = Constant(name='Transitions', short='transit', y=odict(), by='pop', manual='')
+    pars['transit'] = Constant(name='Transitions', short='transit', y=odict(), by='array', fittable='no', auto='no')
     for i,key1 in enumerate(popkeys):
         for j,key2 in enumerate(popkeys):
             pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
@@ -275,11 +275,11 @@ def makepars(data, verbose=2):
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
-        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship', manual='meta', auto='other') # Create structure
+        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), by='pship', fittable='meta', auto='other') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
-        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship', manual='meta', auto='other') # Create structure
+        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), by='pship', fittable='meta', auto='other') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -304,6 +304,9 @@ def makepars(data, verbose=2):
     
     return pars
 
+
+    
+        
 
 
 
@@ -349,21 +352,21 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), manual='', auto=''):
+    def __init__(self, name=None, short=None, limits=(0,1), fittable='', auto=''):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
-        self.manual = manual # Whether or not this parameter can be manually fitted: options are '', 'meta', 'full'
-        self.auto = auto # Whether or not this parameter can be automatically fitted: options are '', 'meta', 'full'
+        self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
+        self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
-        output += '  name: "%s"\n'    % self.name
-        output += ' short: "%s"\n'    % self.short
-        output += 'limits: %s\n'      % str(self.limits)
-        output += 'manual: "%s"\n'    % self.manual
-        output += '  auto: "%s"\n'    % self.auto
+        output += '    name: "%s"\n'    % self.name
+        output += '   short: "%s"\n'    % self.short
+        output += '  limits: %s\n'      % str(self.limits)
+        output += 'fittable: "%s"\n'    % self.fittable
+        output += '    auto: "%s"\n'    % self.auto
         return output
 
 
@@ -376,8 +379,8 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, manual='', auto=''):
-        Par.__init__(self, name, short, limits, manual, auto)
+    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, fittable='', auto=''):
+        Par.__init__(self, name, short, limits, fittable, auto)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
@@ -388,11 +391,11 @@ class Timepar(Par):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
-        output += '     t: \n%s\n'    % self.t
-        output += '     y: \n%s\n'    % self.y
-        output += '     m: %s\n'    % self.m
-        output += '    by: "%s"\n'    % self.by
-        output += '  keys: %s\n'    % self.y.keys()
+        output += '       t: \n%s\n'  % self.t
+        output += '       y: \n%s\n'  % self.y
+        output += '       m: %s\n'    % self.m
+        output += '      by: "%s"\n'  % self.by
+        output += '    keys: %s\n'    % self.y.keys()
         return output
     
     def interp(self, tvec, smoothness=20):
@@ -418,8 +421,8 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None, manual='', auto=''):
-        Par.__init__(self, name, short, limits, manual, auto)
+    def __init__(self, name=None, short=None, limits=None, p=None, m=1, start=2000, by=None, fittable='', auto=''):
+        Par.__init__(self, name, short, limits, fittable, auto)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -429,10 +432,10 @@ class Popsizepar(Par):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = Par.__repr__(self)
-        output += '  start: %s\n'    % self.start
-        output += '      p: %s\n'    % self.p
-        output += '      m: %s\n'    % self.m
-        output += '   keys: %s\n'    % self.p.keys()
+        output += '   start: %s\n'    % self.start
+        output += '       p: %s\n'    % self.p
+        output += '       m: %s\n'    % self.m
+        output += '    keys: %s\n'    % self.p.keys()
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
@@ -451,16 +454,16 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=None, y=None, by=None, manual='', auto=''):
-        Par.__init__(self, name, short, limits, manual, auto)
+    def __init__(self, name=None, short=None, limits=None, y=None, by=None, fittable='', auto=''):
+        Par.__init__(self, name, short, limits, fittable, auto)
         self.y = y # y-value data, e.g. [0.3, 0.7]
         self.by = by # By pops, by none, etc.
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
-        output += '     y: %s\n'    % self.y
-        output += '    by: "%s"\n'    % self.by
+        output += '       y: %s\n'    % self.y
+        output += '      by: "%s"\n'  % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
@@ -522,3 +525,59 @@ class Parameterset(object):
         
         printv('...done making model parameters.', 2, verbose)
         return simparslist
+
+
+    def listattributes(self):
+        ''' Go through all the parameters and make a list of their possible attributes '''
+        
+        maxlen = 20
+        pars = self.pars[0]
+        
+        print('\n\n\n')
+        print('PARAMETER TYPES:')
+        partypes = []
+        for key in pars: partypes.append(type(pars[key]))
+        partypes = set(partypes)
+        count = 0
+        for partype in set(partypes): 
+            print('  ..%s' % str(partype))
+            for key in pars:
+                if type(pars[key])==partype:
+                    count += 1
+                    print('      %i.... %s' % (count, str(key)))
+        
+        print('\n\n\n')
+        print('ATTRIBUTES:')
+        attributes = {}
+        for key in pars:
+            if issubclass(type(pars[key]), Par):
+                theseattr = pars[key].__dict__.keys()
+                for attr in theseattr:
+                    if attr not in attributes.keys(): attributes[attr] = []
+                    attributes[attr].append(getattr(pars[key], attr))
+            elif key=='const':
+                for key2 in pars['const']:
+                    theseattr = pars['const'][key2].__dict__.keys()
+                    for attr in theseattr:
+                        if attr not in attributes.keys(): attributes[attr] = []
+                        attributes[attr].append(getattr(pars['const'][key2], attr))
+        for key in attributes:
+            print('  ..%s' % key)
+        print('\n\n')
+        for key in attributes:
+            count = 0
+            print('  ..%s' % key)
+            items = []
+            for item in attributes[key]:
+                try: 
+                    string = str(item)
+                    if string not in items: 
+                        if len(string)>maxlen: string = string[:maxlen]
+                        items.append(string) 
+                except: 
+                    items.append('Failed to append item')
+            for item in items:
+                count += 1
+                try: print('      %i....%s' % (count, str(item)))
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        return None
