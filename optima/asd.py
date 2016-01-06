@@ -104,7 +104,6 @@ def asd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 
     ## Loop
     start = time()
     while 1:
-        sleep(0.1) # no tight loops please
         if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
