@@ -4,8 +4,8 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import Parameterset, Par, dcp, perturb, runmodel
-from numpy import median, zeros
+from optima import Parameterset, Par, dcp, perturb, runmodel, asd
+from numpy import median, zeros, array
 
 
 
@@ -72,7 +72,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0):
+def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0, verbose=2):
     ''' 
     Function to automatically fit parameters.
     
@@ -111,11 +111,11 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
             if issubclass(type(par), Par): # Check if it's a parameter
                 if par.auto in what: # It's in the list of things to fit
                     if par.fittable=='meta':
-                        parlist.append({'name':par.short, 'type':par.fittable, 'ind':None})
+                        parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
                     elif par.fittable=='pop':
-                        for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'ind':i})
+                        for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     elif par.fittable=='exp':
-                        for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.fittable, 'ind':i})
+                        for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     else:
                         raise Exception('Parameter "fittable" type "%s" not understood' % par.fittable)
             elif parname=='const' and 'const' in what: # Or check if it's a constant
@@ -172,8 +172,10 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     
 
     
-    # Create the list of parameters to be fitted
+    # Create the list of parameters to be fitted and set the limits
     parlist = makeparlist(pars, what)
+    parlower  = array([item['limits'][0] for item in parlist])
+    parhigher = array([item['limits'][1] for item in parlist])
     
     # Loop over each pars
     for ind in inds:
@@ -182,12 +184,12 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         try: pars = origparlist[ind]
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
         
-        parvec = convert(pars, parlist)
-        
         # Perform fit
-        results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], name=parset.name, uuid=parset.uuid)
+        parvec = convert(pars, parlist)
+        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=niters, verbose=verbose)
         
         # Save
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        pars = convert(pars, parlist, parvecnew)        
+        parset.pars.append(pars)
     
-    return results
+    return parset

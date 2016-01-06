@@ -10,7 +10,7 @@ from optima import *
 
 The __init__.py file imports all functions and classes defined in this file..
 
-Version: 2016jan04 by cliffk
+Version: 2016jan05 by cliffk
 """
 
 ## Load general modules
@@ -19,7 +19,7 @@ from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
 ## Load non-Optima-specific custom functions
-from ballsd import ballsd
+from asd import asd
 from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 from utils import blank, checkmem, dataindex, findinds, getdate, load, loads, objectid, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, save, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
 
