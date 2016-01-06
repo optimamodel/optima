@@ -378,11 +378,31 @@ class ProgramsDb(db.Model):
         if id:
             self.id = id
 
+    def pars_to_program_pars(self):
+        parameters = [
+            {
+                'param': param['inputkey'],
+                'pop': tuple(param['pops'])
+            } for param in self.pars
+        ]
+        return parameters
+
+    @classmethod
+    def program_pars_to_pars(cls, targetpars):
+        pars = [
+            {
+                'active': True,
+                'inputkey': param['param'],
+                'pops': list(param['pop']) if type(param['pop']) == tuple else [param['pop']]
+            } for param in targetpars
+        ]
+        return pars
+
     def hydrate(self):
         from optima.programs import Program
         program_entry = Program(
             self.name,
-            targetpars=self.pars,
+            targetpars=self.pars_to_program_pars(),
             short_name=self.short_name,
             category=self.category,
             targetpops=self.targetpops
