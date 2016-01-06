@@ -8,7 +8,7 @@ Version: 2016jan05 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, settings
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -215,7 +215,7 @@ def makepars(data, verbose=2):
     # Epidemilogy parameters -- most are data
     pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # STI prevalence
     pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='other')  # Death rates
-    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, limits=(0,1), popkeys, by='pop', fittable='meta', auto='other') # TB prevalence
+    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # TB prevalence
     
     # Testing parameters -- most are data
     pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='test') # HIV testing rates
