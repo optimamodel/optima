@@ -21,6 +21,35 @@ def objectid(obj):
     return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
 
 
+def createcollist(oldkeys, title, strlen = 18, ncol = 3):
+    ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
+    from numpy import ceil
+    nrow = int(ceil(float(len(oldkeys))/ncol))
+    newkeys = []
+    for x in xrange(nrow):
+        newkeys += oldkeys[x::nrow]
+    
+    attstring = title + ':'
+    c = 0    
+    for x in newkeys:
+        if c%ncol == 0: attstring += '\n  '
+        if len(x) > strlen: x = x[:strlen-3] + '...'
+        attstring += '%-*s  ' % (strlen,x)
+        c += 1
+    attstring += '\n'
+    return attstring
+    
+def objectatt(obj, strlen = 18, ncol = 3):
+    ''' Return a sorted string of object attributes for the Python __repr__ method '''
+    oldkeys = sorted(obj.__dict__.keys())
+    return createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
+    
+def objectmeth(obj, strlen = 18, ncol = 3):
+    ''' Return a sorted string of object methods for the Python __repr__ method '''
+    oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
+    return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
+
+
 def printarr(arr, arrformat='%0.2f  '):
     """ 
     Print a numpy array nicely.

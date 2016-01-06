@@ -1,5 +1,5 @@
 from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, \
-runcommand, getdate, today, uuid, dcp, objectid, sensitivity, manualgui
+runcommand, getdate, today, uuid, dcp, objectid, objectatt, objectmeth, sensitivity, manualgui
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -93,16 +93,12 @@ class Project(object):
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
         output += '              UUID: %s\n'    % self.uuid
-        output += '============================================================'
+        output += '============================================================\n'
+        output += objectatt(self)
+        output += '============================================================\n'
+        output += objectmeth(self)
+        output += '============================================================\n'
         return output
-    
-               
-    def __getattr__(self, key):
-        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
-        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
-        if key.startswith('__') and key.endswith('__'): return super(Project, self).__getattr__(key)
-        if key == 'att': return self.__dict__.keys()
-        return self.__getitem__(key)
     
     
     #######################################################################################################

@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015dec25 by cliffk -- merry christmas!
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, objectid, dcp
+from optima import uuid, today, getdate, quantile, printv, odict, objectid, objectatt, objectmeth, dcp
 from numpy import array, nan, zeros
 
 
@@ -20,13 +20,13 @@ class Result(object):
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
     
-
-    def __getattr__(self, key):
-        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
-        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
-        if key.startswith('__') and key.endswith('__'): return super(Result, self).__getattr__(key)
-        if key == 'att': return self.__dict__.keys()
-        return self.__getitem__(key)    
+    def __repr__(self):
+        ''' Print out useful information when called '''
+        output = objectid(self)
+        output += '============================================================\n'
+        output += objectatt(self)
+        output += '============================================================\n'
+        return output
 
 
 class Resultset(object):
@@ -73,18 +73,16 @@ class Resultset(object):
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
         output = objectid(self)
+        output += '============================================================\n'
         output += '      Project name: %s\n'    % (self.project.name if self.project is not None else 'N/A')
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '              UUID: %s\n'    % self.uuid
+        output += '============================================================\n'
+        output += objectatt(self)
+        output += '============================================================\n'
+        output += objectmeth(self)
+        output += '============================================================\n'
         return output
-    
-    
-    def __getattr__(self, key):
-        ''' Allows for keywords to be called like attributes and run user functions (e.g. "att" for listing attributes) '''
-        # This hack means that Project can still be pickled (provided no future attributes use __<name>__ format).
-        if key.startswith('__') and key.endswith('__'): return super(Resultset, self).__getattr__(key)
-        if key == 'att': return self.__dict__.keys()
-        return self.__getitem__(key)
     
     
     def make(self, quantiles=None, verbose=2):
