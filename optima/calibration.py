@@ -177,6 +177,13 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         related to the likelihood. Either way, it's very uncertain what this function
         does.
         '''
+        
+        def extractdata(xdata, ydata):
+            ''' Return the x and y data values for non-nan y data '''
+            from numpy import isnan, array
+            nonnanx = array(xdata)[~isnan(array(ydata))]
+            nonnany = array(ydata)[~isnan(array(ydata))]
+            return nonnanx, nonnany
 
         printv(parvec, 4, verbose)
         
@@ -184,10 +191,13 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         parlist = options['parlist']
         pars = convert(pars, parlist, parvec)
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], verbose=verbose)
-        return sum(abs(parvec))
         
-        
-
+        ## Loop over all results
+        for key in results.main: # The results! e.g. key='prev'
+            this = results.main[key] 
+            for attr in ['datatot', 'datapop']: # Loop over either total or by population denominators
+                data = getattr(this, attr) # Pull out data
+                nonnanx, nonnany = extractdata(
 
         # Pull out Prevalence data
 
