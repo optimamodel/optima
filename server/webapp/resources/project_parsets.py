@@ -105,6 +105,8 @@ class ParsetsCalibration(Resource):
         # get manual parameters
         parset_instance = parset.hydrate()
         parameters = parset_instance.manualfitlists()
+        # REMARK: this returns the dictionary of lists to be compatible with how Cliff uses it in gui.py
+        # but I suggest we convert this into per-variable dictionary (TODO)
 
         project_entry = load_project(parset.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
@@ -112,13 +114,15 @@ class ParsetsCalibration(Resource):
         results = project_instance.runsim(simpars=simparslist)  # TODO: read from DB ?
         graphs = op.epiplot(results)
 
-        jsons = [] # List for storing the converted JSONs
-        for graph in graphs: # Loop over each plot
-            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
-            jsons.append(mpld3.fig_to_dict(graphs[graph])) # Save to JSON
+        jsons = []
+        # TODO: refactor this?
+        for graph in graphs:
+            # Add necessary plugins here
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+            jsons.append(mpld3.fig_to_dict(graphs[graph]))
 
         return {
             "parset_id": parset_id,
             "parameters": parameters,
-            "graphs": jsons     
+            "graphs": jsons
         }
