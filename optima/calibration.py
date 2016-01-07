@@ -84,7 +84,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
-    if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
+    if type(inds) in [int, float]: inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
