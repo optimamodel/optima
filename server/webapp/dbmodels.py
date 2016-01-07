@@ -218,7 +218,7 @@ class ParsetsDb(db.Model):
     __tablename__ = 'parsets'
 
     resource_fields = {
-        'id': Uuid,
+        'id': Uuid(attribute='uuid'),
         'project_id': Uuid,
         'name': fields.String,
         'created': fields.DateTime,

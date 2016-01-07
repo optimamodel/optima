@@ -558,28 +558,30 @@ class Parameterset(object):
         valuelist = mflists['values']
         labellist = mflists['labels']
 
+        print "tmppars", tmppars
         for key in tmppars.keys():
             par = tmppars[key]
-            if (not hasattr(tmppars[par],'fittable')) or (tmppars[par].fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+            print "key", key, "par", par
+            if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
                 continue
-            if key.manual == 'meta':
+            if par.fittable == 'meta':
                 keylist.append(key)
                 subkeylist.append(None)
-                typelist.append(key.manual)
+                typelist.append(par.fittable)
                 valuelist.append(par.m)
                 labellist.append('{} -- meta'.format(par.name))
-            elif key.manual in ['pop', 'pship']:
+            elif par.fittable in ['pop', 'pship']:
                 for subkey in par.y.keys():
                     keylist.append(key)
                     subkeylist.append(subkey)
-                    typelist.append(key.manual)
+                    typelist.append(par.fittable)
                     valuelist.append(par.y[subkey])
                     labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            elif key.manual == 'exp':
+            elif par.fittable == 'exp':
                 for subkey in par.p.keys():
                     keylist.append(key)
                     subkeylist.append(subkey)
-                    typelist.append(key.manual)
+                    typelist.append(par.fittable)
                     valuelist.append(par.p[subkey][0])
                     labellist.append('{} -- {}'.format(par.name, str(subkey)))
             else:
