@@ -10,10 +10,11 @@ added along the way. Extremely un-Pythonic, I know.
 Version: 2016jan06 by cliffk
 """
 
+## Initialization
 from time import time as TIME # Use caps to distinguish 'global' variables
-
 doplot = False # When running all tests, don't try to run the GUIs
 
+## Define master list of tests to run
 MASTER = [
 'testutils',
 'testproject',
@@ -22,11 +23,19 @@ MASTER = [
 'testmodel',
 'testscenarios',
 'testcalibration',
-'testoptimization',
+#'testoptimization',
+]
+
+## Other tests, for completeness
+OTHER = [
 'testgui',
 'testworkflow',
 ]
 
+## Optionally run everything
+#MASTER += OTHER
+
+## Run the tests in a loop
 VARIABLES = []
 STARTTIME = TIME()
 FAILED = []
@@ -48,4 +57,4 @@ if len(FAILED):
     for FAIL in FAILED: print('  %s' % FAIL)
 else:
     print('All %i tests passed!!! You are the best!!' % len(MASTER))
-    print('Elapsed time: %0.1f s.' % (TIME()-STARTTIME))
+print('Elapsed time: %0.1f s.' % (TIME()-STARTTIME))

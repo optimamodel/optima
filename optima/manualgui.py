@@ -58,7 +58,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                 fulltypelist.append(typelist[k])
                 fullvallist.append(tmppars[key].m)
                 fulllabellist.append(namelist[k] + ' -- meta')
-            elif typelist[k]=='pop' or typelist[k]=='pship':
+            elif typelist[k] in ['pop', 'pship']:
                 for subkey in tmppars[key].y.keys():
                     fullkeylist.append(key)
                     fullsubkeylist.append(subkey)

@@ -5,15 +5,16 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan05 by cliffk
+Version: 2016jan06 by cliffk
 """
 
 ## Define tests to run here!!!
 tests = [
-#'attributes',
-#'sensitivity',
-#'manualfit',
+'attributes',
+'sensitivity',
+'manualfit',
 'autofit',
+#'longfit',
 ]
 
 
@@ -122,6 +123,36 @@ if 'autofit' in tests:
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
+
+
+
+
+
+## Autofit test
+if 'longfit' in tests:
+    t = tic()
+
+    print('Running long autofit test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test7pops.xlsx')
+    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], niters=1000, inds=None, verbose=2) # Run automatic fitting
+    results1 = P.runsim('default', end=2015) # Generate results
+    results2 = P.runsim('autofit', end=2015)
+    
+    if doplot:
+        from gui import plotresults
+        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    
+    done(t)
+
+
+
+
+
+
+
 
 
 

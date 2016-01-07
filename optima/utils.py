@@ -7,8 +7,8 @@ def printv(string, thisverbose=1, verbose=2, newline=True):
     ''' Optionally print a message and automatically indent '''
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose # Create automatic indenting
-        if newline: print(indents+string) # Actually print
-        else: print(indents+string), # Actually print
+        if newline: print(indents+str(string)) # Actually print
+        else: print(indents+str(string)), # Actually print
 
 
 def blank(n=3):
@@ -652,7 +652,7 @@ class odict(OrderedDict):
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
-        if type(key) is int: return key
+        if isinstance(key, (int, float)): return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
@@ -666,7 +666,7 @@ class odict(OrderedDict):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str: # Treat like a normal dict
             return OrderedDict.__getitem__(self,key)
-        elif type(key) in [int, float]: # Convert automatically from float...dangerous?
+        elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
             startind = self.__slicekey(key.start, 'start')
@@ -687,7 +687,7 @@ class odict(OrderedDict):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str:
             OrderedDict.__setitem__(self, key, value)
-        elif type(key) in [int, float]: # Convert automatically from float...dangerous?
+        elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
@@ -743,7 +743,7 @@ class odict(OrderedDict):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if type(oldkey) in [int, float]: 
+        if isinstance(oldkey, (int, float)): 
             index = oldkey
             keystr = self.keys()[index]
         elif type(oldkey) is str: 

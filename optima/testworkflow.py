@@ -10,7 +10,7 @@ python -i tests.py
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2015dec29 by cliffk
+Version: 2016jan06 by cliffk
 """
 
 
@@ -18,8 +18,8 @@ Version: 2015dec29 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
-'gui',
-'makeprograms'
+'autofit',
+#'makeprograms',
 ]
 
 
@@ -66,12 +66,16 @@ if 'makeproject' in tests:
 
 
 #####################################################################################################
-if 'gui' in tests and doplot:
+if 'autofit' in tests:
     t = tic()
 
-    print('Running GUI test...')
-    from gui import pygui
-    pygui(results)
+    print('Running autofit test...')
+    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, niters=200, inds=None) # Run automatic fitting
+    results = P.runsim('autofit', end=2015)
+    
+    if doplot:
+        from gui import plotresults
+        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
@@ -108,13 +112,9 @@ if 'makeprograms' in tests:
             'HR':array([5e5]),
             'Other':array([5e5])}
             
-    coverage=R.getprogcoverage(budget=budget,
-                      t=[2016],
-                      parset=P.parsets['default'])
+    coverage = R.getprogcoverage(budget=budget, t=[2016], parset=P.parsets['default'])
 
-    outcomes = R.getoutcomes(coverage=coverage,
-                                t=[2016],
-                                parset=P.parsets['default'])
+    outcomes = R.getoutcomes(coverage=coverage, t=[2016], parset=P.parsets['default'])
 
     progparset = R.getparset(coverage=coverage,
                   t=[2016],

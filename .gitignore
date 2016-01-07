@@ -9,10 +9,9 @@ server/config.py
 \~\$*
 *.iml
 *.pyc
-*.prj
 *.bin
 *.npz
-*.json
+*.npy
 *.db
-
+*.prj
 *.xlsx

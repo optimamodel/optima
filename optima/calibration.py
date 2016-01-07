@@ -84,7 +84,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
-    if type(inds)==int or type(inds)==float: inds = [inds] # # Turn into a list if necessary
+    if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
@@ -120,7 +120,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
                         raise Exception('Parameter "fittable" type "%s" not understood' % par.fittable)
             elif parname=='const' and 'const' in what: # Or check if it's a constant
                 for constname in pars['const']:
-                    for i in range(len(pars['const'])): parlist.append({'name':par.short, 'type':'const', 'ind':constname})
+                    const = pars['const'][constname]
+                    parlist.append({'name':const.short, 'type':'const', 'limits':const.limits, 'ind':constname})
             else: pass # It's like popkeys or something -- don't worry, be happy
         return parlist
     
@@ -154,9 +155,9 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
             if thistype in ['force', 'pop']: 
                 if tv: parvec[i] = pars[thisname].y[thisind]
                 else:  pars[thisname].y[thisind] = parvec[i]
-            elif thistype=='popsize': 
-                if tv: parvec[i] = pars[thisname].p[thisind]
-                else:  pars[thisname].p[thisind] = parvec[i]
+            elif thistype=='exp': 
+                if tv: parvec[i] = pars[thisname].p[thisind][0] # Don't change growth rates
+                else:  pars[thisname].p[thisind][0] = parvec[i]
             elif thistype=='meta': 
                 if tv: parvec[i] = pars[thisname].m
                 else:  pars[thisname].m = parvec[i]
@@ -215,12 +216,10 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
                         datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
                         for i,year in enumerate(datax): # Loop over each data point available
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
-                            try: modely = modelrow[modelx] # Finally, extract the model result!
-                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            modely = modelrow[modelx] # Finally, extract the model result!
                             thismismatch = abs(modely - datay[i]) / mean(datay+eps)
                             allmismatches.append(thismismatch)
-                            try: mismatch += thismismatch
-                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            mismatch += thismismatch
         
         printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
         return mismatch
