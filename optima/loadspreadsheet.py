@@ -34,7 +34,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         
         # Check that only numeric data have been entered
         for column,datum in enumerate(thesedata):
-            if type(datum) not in [float, int]:
+            if not isinstance(datum, [float, int]):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'

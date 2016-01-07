@@ -468,8 +468,10 @@ class Constant(Par):
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        if type(self.y) in [int, float] or len(self.y)==1: # Just a simple constant
-            output = self.y
+        try: 
+            if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
+                output = self.y
+        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
@@ -517,7 +519,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         simparslist = []
-        if type(inds) in [int, float]: inds = [inds]
+        if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
             simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uuid=self.uuid)
