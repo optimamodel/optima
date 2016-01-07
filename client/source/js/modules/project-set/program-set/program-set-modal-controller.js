@@ -42,6 +42,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.isNew) { $scope.program.category = 'Other'; }
     };
 
+    $scope.eligibility = {};
+    $scope.setEligibility = function(selectedEligibility) {
+      if(selectedEligibility === 'everyone') {
+        $scope.eligibility.acuteInfections = false;
+        $scope.eligibility.gt500 = false;
+        $scope.eligibility.gt350 = false;
+        $scope.eligibility.gt200 = false;
+        $scope.eligibility.gt50 = false;
+        $scope.eligibility.aids = false;
+      } else {
+        $scope.eligibility.everyone = false;
+      }
+    };
+
     $scope.selectAllPopulations = function() {
       _.forEach($scope.populations, function(population) {
         population.active = $scope.selectAll;
