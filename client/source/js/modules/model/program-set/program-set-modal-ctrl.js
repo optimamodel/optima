@@ -16,6 +16,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.populations = angular.copy(populations);
       $scope.selectAll = true;
       _.forEach($scope.populations, function(population) {
+        // if populations are empty, that means all populations by default are enabled for that program (by convention)
+        // if no populations are enabled for the program, then it cannot be active (because it's not used :) )
         if(programCopy.populations) {
           population.active = (programCopy.populations.length==0) || (programCopy.populations.indexOf(population.short_name) > -1);
           if (!population.active) $scope.selectAll = false;
@@ -35,6 +37,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         entry.selectAll = true;
         entry.value.pops = angular.copy(populations);
         _.each(entry.value.pops, function(pop) {
+          // same here: if pops is empty => all populations are enabled (by convention)
+          // and if parameter is active, either one or all populations should be enabled
+          // (unless its target populations aren't included in the project populations :) )
           pop.active = (oldPops.length==0) || (oldPops.indexOf(pop.short_name) > -1);
           if (!pop.active) entry.selectAll = false;
         });
@@ -94,6 +99,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.addParameter = function () {
       var entry = {value: {signature: [], pops: angular.copy(populations)}, active: true};
+      entry.selectAll = true;
+      _.each(entry.value.pops, function(pop) {
+          // enable every population by default, there is no additional info in the parameter anyway
+          pop.active = true;
+        });
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
     };
