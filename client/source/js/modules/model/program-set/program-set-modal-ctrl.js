@@ -19,6 +19,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         if(programCopy.populations) {
           population.active = (programCopy.populations.length==0) || (programCopy.populations.indexOf(population.short_name) > -1);
           if (!population.active) $scope.selectAll = false;
+        } else {
+          $scope.selectAll = false;
         }
       });
 
