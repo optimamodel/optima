@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, concatenate as cat
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, concatenate as cat
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel
 from collections import defaultdict
 import abc
 from pylab import figure
@@ -430,23 +430,30 @@ class Program(object):
     
             else: # If it's a program for HIV+ people, need to run the sim to find the number of positives
                 settings = Settings()
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) #TEMP
-                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
-    
-        # ... or if it's a program for pregnant/breastfeeding women.
+                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
+                results = runmodel(pars=parset.pars[ind])
+                eligplhiv = results.raw[0]['people'][cd4index,:,:].sum(axis=0)
+                for yr in t:
+                    initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
+                
+        # ... or if it's a program for pregnant women.
         else:
             if self.criteria['hivstatus']=='allstates': # All pregnant women
-                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t) #TEMP
+                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
+
             else: # HIV+ pregnant women
                 initpopsizes = parset.pars[0]['popsize'].interp(tvec=t) #TEMP
+                settings = Settings()
+                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
+                results = runmodel(pars=parset.pars[ind])
+                for yr in t:
+                    initpopsizes = parset.pars[0]['popsize'].interp(tvec=[yr])*parset.pars[0]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
         for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
             popsizes[pop] = initpopsizes[popnumber,:]
         for targetpop in self.targetpops:
             targetpopsize[targetpop] = popsizes[targetpop]
                     
-        
-        
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 

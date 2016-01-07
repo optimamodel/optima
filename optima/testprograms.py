@@ -249,7 +249,6 @@ if 'makeprograms' in tests:
 
     # 15. Example use of program scenarios
     if doplot:
-        print('HIIIIIII!')
         print doplot
         P.parsets['progparset1'] = progparset1
         results0 = P.runsim('default')

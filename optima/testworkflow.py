@@ -18,8 +18,8 @@ Version: 2016jan06 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
-'autofit',
-#'makeprograms',
+#'autofit',
+'makeprograms',
 ]
 
 
