@@ -349,7 +349,8 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
             updated=datetime.now(dateutil.tz.tzutc()),
             pars=ProgramsDb.program_pars_to_pars(program.get('targetpars', [])),
             targetpops=program.get('targetpops', []),
-            active=active
+            active=active,
+            criteria=program.get('criteria', None)
         )
 
         db.session.add(program_record)
@@ -360,7 +361,10 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
         program_record.short_name = program.get('short_name', '')
         program_record.category = program.get('category', '')
         program_record.active = active
+        program_record.criteria = program.get('criteria', None)
 
+    if program.get('short_name') == 'PWID programs':
+        raise Exception(program_record.__dict__)
 
 def init_login_manager(login_manager):
 

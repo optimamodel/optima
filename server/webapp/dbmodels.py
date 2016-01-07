@@ -343,6 +343,7 @@ class ProgramsDb(db.Model):
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
         'populations': fields.List(fields.String, attribute='targetpops'),
+        'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
     }
@@ -356,12 +357,13 @@ class ProgramsDb(db.Model):
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
+    criteria = db.Column(JSON)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short_name='',
             category='No category', active=False, pars=None, created=None,
-            updated=None, id=None, targetpops=[]):
+            updated=None, id=None, targetpops=[], criteria=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -371,6 +373,7 @@ class ProgramsDb(db.Model):
         self.pars = pars
         self.active = active
         self.targetpops = targetpops
+        self.criteria = criteria
         if created:
             self.created = created
         if updated:
@@ -379,21 +382,32 @@ class ProgramsDb(db.Model):
             self.id = id
 
     def pars_to_program_pars(self):
+        """From API Program to BE Program"""
+
+        if self.pars is None:
+            return []
+
         parameters = [
             {
                 'param': param['inputkey'],
                 'pop': tuple(param['pops'])
-            } for param in self.pars
+                    if len(param['pops']) != 1
+                    else str(param['pops'][0])
+            } for param in self.pars if param.active
         ]
         return parameters
 
     @classmethod
     def program_pars_to_pars(cls, targetpars):
+        """From BE Program to API Program"""
+
         pars = [
             {
                 'active': True,
-                'inputkey': param['param'],
-                'pops': list(param['pop']) if type(param['pop']) == tuple else [param['pop']]
+                'param': param['param'],
+                'pops': [param['pop']]
+                    if type(param['pop']) == str
+                    else list(param['pop']),
             } for param in targetpars
         ]
         return pars
@@ -405,7 +419,8 @@ class ProgramsDb(db.Model):
             targetpars=self.pars_to_program_pars(),
             short_name=self.short_name,
             category=self.category,
-            targetpops=self.targetpops
+            targetpops=self.targetpops,
+            criteria=self.criteria
         )
         program_entry.id = self.id
         return program_entry
