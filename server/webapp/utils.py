@@ -335,8 +335,11 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
     from server.webapp.dbmodels import ProgramsDb
 
     program_record = ProgramsDb.query \
-        .filter_by(name=name, project_id=project_id, progset_id=progset_id) \
-        .first()
+        .filter_by(
+            short_name=program.get('short_name', None),
+            project_id=project_id,
+            progset_id=progset_id
+        ).first()
 
     if program_record is None:
         program_record = ProgramsDb(
@@ -363,8 +366,6 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
         program_record.active = active
         program_record.criteria = program.get('criteria', None)
 
-    if program.get('short_name') == 'PWID programs':
-        raise Exception(program_record.__dict__)
 
 def init_login_manager(login_manager):
 
