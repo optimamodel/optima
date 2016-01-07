@@ -136,7 +136,7 @@ if 'longfit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], niters=1000, inds=None, verbose=10) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], niters=1000, inds=None, verbose=2) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     

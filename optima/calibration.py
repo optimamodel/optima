@@ -121,7 +121,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
             elif parname=='const' and 'const' in what: # Or check if it's a constant
                 for constname in pars['const']:
                     const = pars['const'][constname]
-                    for i in range(len(pars['const'])): parlist.append({'name':const.short, 'type':'const', 'limits':const.limits, 'ind':constname})
+                    parlist.append({'name':const.short, 'type':'const', 'limits':const.limits, 'ind':constname})
             else: pass # It's like popkeys or something -- don't worry, be happy
         return parlist
     
@@ -216,12 +216,10 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
                         datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
                         for i,year in enumerate(datax): # Loop over each data point available
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
-                            try: modely = modelrow[modelx] # Finally, extract the model result!
-                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            modely = modelrow[modelx] # Finally, extract the model result!
                             thismismatch = abs(modely - datay[i]) / mean(datay+eps)
                             allmismatches.append(thismismatch)
-                            try: mismatch += thismismatch
-                            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            mismatch += thismismatch
         
         printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
         return mismatch
