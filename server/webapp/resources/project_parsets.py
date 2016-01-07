@@ -36,7 +36,7 @@ class Parsets(Resource):
         project_entry = load_project(project_id, raise_exception=True)
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        return [item.hydrate() for item in reply]
+        return [item.hydrate() for item in reply]  # TODO: project_id should be not null
 
 
 class ParsetsDetail(Resource):
@@ -94,6 +94,8 @@ class ParsetsCalibration(Resource):
     )
     @marshal_with(calibration_fields, envelope="calibration")
     def get(self, parset_id):
+        import mpld3
+        import json
         current_app.logger.debug("/api/parsets/{}/calibration/manual".format(parset_id))
 
         parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
@@ -103,8 +105,20 @@ class ParsetsCalibration(Resource):
         # get manual parameters
         parset_instance = parset.hydrate()
         parameters = parset_instance.manualfitlists()
+
+        project_entry = load_project(parset.project_id, raise_exception=True)
+        project_instance = project_entry.hydrate()
+        simparslist = parset_instance.interp()
+        results = project_instance.runsim(simpars=simparslist)  # TODO: read from DB ?
+        graphs = op.epiplot(results)
+
+        jsons = [] # List for storing the converted JSONs
+        for graph in graphs: # Loop over each plot
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
+            jsons.append(mpld3.fig_to_dict(graphs[graph])) # Save to JSON
+
         return {
             "parset_id": parset_id,
             "parameters": parameters,
-            "graphs": {}
+            "graphs": jsons     
         }
