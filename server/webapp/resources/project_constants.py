@@ -50,22 +50,22 @@ class Predefined(Resource):
     @login_required
     @report_exception
     def get(self):
-        from server.webapp.programs import programs, program_categories
+        from server.webapp.programs import get_default_programs, program_categories
         from server.webapp.populations import populations
 
-        programs = programs()
+        programs = get_default_programs()
         populations = populations()
         program_categories = program_categories()
         for p in populations:
             p['active'] = False
         for p in programs:
             p['active'] = False
-            new_parameters = [
-                dict([
-                    ('value', parameter),
-                    ('active', True)]) for parameter in p['parameters']]
-            if new_parameters:
-                p['parameters'] = new_parameters
+#            new_parameters = [
+#                dict([
+#                    ('value', parameter),
+#                    ('active', True)]) for parameter in p['parameters']]
+#            if new_parameters:
+#                p['parameters'] = new_parameters
         payload = {
             "programs": programs,
             "populations": populations,
