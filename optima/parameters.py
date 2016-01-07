@@ -560,7 +560,7 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            if (not hasattr(tmppars[par],'manual')) or (not tmppars[par].manual): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+            if (not hasattr(tmppars[par],'fittable')) or (tmppars[par].fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
                 continue
             if key.manual == 'meta':
                 keylist.append(key)
