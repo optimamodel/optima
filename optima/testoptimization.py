@@ -47,14 +47,14 @@ T = tic()
 
 
 ## Minimize money test
-if 'minimizemoney' in tests:
+if 'minimizeoutcomes' in tests:
     t = tic()
 
-    print('Running minimize money test...')
+    print('Running minimize outcomes test...')
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results = P.minmoney(parset='default', progset='default', alloc=[1e6,1e6])
+    results = P.minoutcomes(parset='default', progset='default', alloc=[1e6,1e6])
     
     if doplot:
         from gui import plotresults

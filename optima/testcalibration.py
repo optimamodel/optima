@@ -10,11 +10,11 @@ Version: 2016jan06 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-#'attributes',
-#'sensitivity',
-#'manualfit',
-#'autofit',
-'longfit',
+'attributes',
+'sensitivity',
+'manualfit',
+'autofit',
+#'longfit',
 ]
 
 
