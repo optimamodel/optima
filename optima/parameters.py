@@ -10,14 +10,12 @@ Version: 2016jan05 by cliffk
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
 from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
-
+eps = 1e-3  # TODO WARNING KLUDGY avoid divide-by-zero
 
 
 def popgrow(exppars, tvec):
     ''' Return a time vector for a population growth '''
-    return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
-
+    return exppars[0]*exp(tvec*exppars[1])  # Simple exponential growth
 
 
 def data2prev(name, data, keys, index=0, limits=None, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
@@ -27,7 +25,6 @@ def data2prev(name, data, keys, index=0, limits=None, by=None, fittable='', auto
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
     return par
-
 
 
 def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', blh=0):
@@ -80,11 +77,7 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
         thispopsize = sanitizedy[key][0]
         largestthatyear = popgrow(largestpars, thisyear-startyear)
         par.p[key] = [largestpars[0]*thispopsize/largestthatyear, largestpars[0]]
-
     return par
-
-
-
 
 def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto=''):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
@@ -114,9 +107,6 @@ def totpar2poppar(name, short, totpar, poppar, keys, by=None, limits=None, fitta
         par.t[key] = tvec
 
     return par
-
-
-
 
 
 ## Acts
@@ -170,27 +160,17 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         thispoint = zeros((npops,npops));
         for pop1 in range(npops):
             for pop2 in range(npops):
-                if which=='numacts':
+                if which == 'numacts':
                     balanced = (smatrix[pop1,pop2] * psize[pop1] + smatrix[pop2,pop1] * psize[pop2])/(psize[pop1]+psize[pop2]) # here are two estimates for each interaction; reconcile them here
                     thispoint[pop2,pop1] = balanced/psize[pop2] # Divide by population size to get per-person estimate
                     thispoint[pop1,pop2] = balanced/psize[pop1] # ...and for the other population
-                if which=='condom':
+                if which == 'condom':
                     thispoint[pop1,pop2] = (tmpsim[pop1,t]+tmpsim[pop2,t])/2.0
                     thispoint[pop2,pop1] = thispoint[pop1,pop2]
 
         output[:,:,t] = thispoint
 
     return output, ctrlpts
-
-
-
-
-
-
-
-
-
-
 
 def makepars(data, verbose=2):
     """
@@ -203,7 +183,6 @@ def makepars(data, verbose=2):
     """
 
     printv('Converting data to parameters...', 1, verbose)
-
 
     ###############################################################################
     ## Loop over quantities
@@ -310,20 +289,9 @@ def makepars(data, verbose=2):
                         pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                         pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
 
-
-
-
-
-
-
     printv('...done converting data to parameters.', 2, verbose)
 
     return pars
-
-
-
-
-
 
 
 def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uuid=None):
@@ -363,9 +331,6 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     return simpars
 
 
-
-
-
 class Par(object):
     ''' The base class for parameters '''
     def __init__(self, name=None, short=None, limits=(0,1), fittable='', auto=''):
@@ -384,12 +349,6 @@ class Par(object):
         output += 'fittable: "%s"\n'    % self.fittable
         output += '    auto: "%s"\n'    % self.auto
         return output
-
-
-
-
-
-
 
 
 class Timepar(Par):
@@ -430,10 +389,6 @@ class Timepar(Par):
         else: return output
 
 
-
-
-
-
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
 
@@ -464,9 +419,6 @@ class Popsizepar(Par):
         return output
 
 
-
-
-
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
 
@@ -495,10 +447,6 @@ class Constant(Par):
         return output
 
 
-
-
-
-
 class Parameterset(object):
     ''' A full set of all parameters, possibly including multiple uncertainty runs '''
 
@@ -520,8 +468,6 @@ class Parameterset(object):
         output += '              UUID: %s\n'    % self.uuid
         return output
 
-
-
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
         self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
@@ -541,7 +487,6 @@ class Parameterset(object):
 
         printv('...done making model parameters.', 2, verbose)
         return simparslist
-
 
     def listattributes(self):
         ''' Go through all the parameters and make a list of their possible attributes '''
@@ -597,3 +542,82 @@ class Parameterset(object):
                 try: print('      %i....%s' % (count, str(item)))
                 except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return None
+
+    def manualfitlists(self, ind=0):
+        if not self.pars:
+            raise Exception("No parameters available!")
+        elif len(self.pars)<=ind:
+            raise Exception("Parameter with index {} not found!".format(ind))
+
+        tmppars = self.pars[ind]
+
+        mflists = {'keys':[], 'subkeys':[], 'types':[], 'values':[], 'labels':[]}
+        keylist = mflists['keys']
+        subkeylist = mflists['subkeys']
+        typelist = mflists['types']
+        valuelist = mflists['values']
+        labellist = mflists['labels']
+
+        for key in tmppars.keys():
+            par = tmppars[key]
+            if (not hasattr(tmppars[par],'manual')) or (not tmppars[par].manual): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                continue
+            if key.manual == 'meta':
+                keylist.append(key)
+                subkeylist.append(None)
+                typelist.append(key.manual)
+                valuelist.append(par.m)
+                labellist.append('{} -- meta'.format(par.name))
+            elif key.manual in ['pop', 'pship']:
+                for subkey in par.y.keys():
+                    keylist.append(key)
+                    subkeylist.append(subkey)
+                    typelist.append(key.manual)
+                    valuelist.append(par.y[subkey])
+                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
+            elif key.manual == 'exp':
+                for subkey in par.p.keys():
+                    keylist.append(key)
+                    subkeylist.append(subkey)
+                    typelist.append(key.manual)
+                    valuelist.append(par.p[subkey][0])
+                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
+            else:
+                print 'Parameter type "%s" not implemented!' % key.manual
+
+        return mflists
+
+    ## Define update step
+    def update(self, mflists, ind=0):
+        from optima import printv
+        ''' Update Parameterset with new results '''
+        if not self.pars:
+            raise Exception("No parameters available!")
+        elif len(self.pars)<=ind:
+            raise Exception("Parameter with index {} not found!".format(ind))
+
+        tmppars = self.pars[ind]
+
+        keylist = mflists['keys']
+        subkeylist = mflists['subkeys']
+        typelist = mflists['types']
+        valuelist = mflists['values']
+
+        ## Loop over all parameters and update them
+        for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
+            if ptype == 'meta': # Metaparameters
+                vtype = type(tmppars[key].m)
+                tmppars[key].m = vtype(value)
+                printv('%s.m = %s' % (key, value), 4, verbose=verbose)
+            elif ptype in ['pop', 'pship']: # Populations or partnerships
+                vtype = type(tmppars[key].y[subkey])
+                tmppars[key].y[subkey] = vtype(value)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose=verbose)
+            elif ptype == 'exp': # Population growth
+                vtype = type(tmppars[key].p[subkey][0])
+                tmppars[key].p[subkey][0] = vtype(value)
+                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose=verbose)
+            else:
+                print('Parameter type "%s" not implemented!' % ptype)
+
+        # parset.interp() and calculate results are supposed to be called from the outside
