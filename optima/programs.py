@@ -582,7 +582,7 @@ class CCOF(object):
 
     def rmccopar(self, t, verbose=2):
         '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
-        if isinstance(t,int) or isinstance(t,float):
+        if isinstance(t, (int,float)):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
                 for ccopartype in self.ccopars.keys():

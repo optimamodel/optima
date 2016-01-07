@@ -468,10 +468,8 @@ class Constant(Par):
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        try: 
-            if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-                output = self.y
-        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
+            output = self.y
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
