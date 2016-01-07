@@ -19,7 +19,7 @@ Version: 2016jan06 by cliffk
 tests = [
 'makeproject',
 'autofit',
-'makeprograms',
+#'makeprograms',
 ]
 
 
@@ -70,11 +70,8 @@ if 'autofit' in tests:
     t = tic()
 
     print('Running autofit test...')
-    from optima import Project
-    
-    P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, niters=30, inds=None) # Run automatic fitting
-    result2 = P.runsim('autofit', end=2015)
+    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, niters=200, inds=None) # Run automatic fitting
+    results = P.runsim('autofit', end=2015)
     
     if doplot:
         from gui import plotresults

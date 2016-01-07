@@ -20,26 +20,26 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, short, data, keys, index=0, limits=None, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(name, data, keys, index=0, limits=None, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short=short, y=odict(), limits=limits, by=by, fittable=fittable, auto=auto) # Create structure
+    par = Constant(name=name, short='initprev', y=odict(), limits=limits, by=by, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
-        par.y[key] = sanitize(data[short][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
+        par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
     return par
 
 
 
-def data2popsize(name, short, data, keys, limits=None, by=None, fittable='', auto='', blh=0):
+def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', blh=0):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=name, short=short, m=1, limits=limits, by=by, fittable=fittable, auto=auto)
+    par = Popsizepar(name=name, short='popsize', m=1, limits=limits, by=by, fittable=fittable, auto=auto)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
     for row,key in enumerate(keys):
-        sanitizedy[key] = sanitize(data[short][blh][row]) # Store each extant value
-        sanitizedt[key] = array(data['years'])[~isnan(data[short][blh][row])] # Store each year
+        sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
+        sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
 
     largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
     
@@ -209,8 +209,8 @@ def makepars(data, verbose=2):
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('Initial HIV prevalence', 'hivprev', data, popkeys, index=bestindex, limits=(0,1), by='pop', fittable='pop', auto='init') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('Population size', 'popsize', data, popkeys, limits=(0,'maxpopsize'), by='pop', fittable='exp', auto='popsize')
+    pars['initprev'] = data2prev('Initial HIV prevalence', data, popkeys, index=bestindex, limits=(0,1), by='pop', fittable='pop', auto='init') # Pull out first available HIV prevalence point
+    pars['popsize'] = data2popsize('Population size', data, popkeys, limits=(0,'maxpopsize'), by='pop', fittable='exp', auto='popsize')
     
     # Epidemilogy parameters -- most are data
     pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # STI prevalence
