@@ -1,20 +1,16 @@
 """
-Test script to see if Optima works.
+Test optimization
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan06 by cliffk
+Version: 2016jan05 by cliffk
 """
-
-
 
 ## Define tests to run here!!!
 tests = [
-'plot',
-'browser',
-'gui',
+'minimizeoutcomes',
 ]
 
 
@@ -47,53 +43,24 @@ T = tic()
 
 
 
-## Python GUI test
-if 'plot' in tests and doplot:
+
+
+
+## Minimize money test
+if 'minimizemoney' in tests:
     t = tic()
 
-    print('Running plot test...')
-    from optima import Project, plotresults
+    print('Running minimize money test...')
+    from optima import Project
     
-    P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
-    plotresults(results, figsize=(14,10))
-
-    done(t)
-
-
-
-
-## mpld3 test
-if 'browser' in tests and doplot:
-    t = tic()
-
-    print('Running browser test...')
-    from optima import Project, browser
+    P = Project(spreadsheet='test.xlsx')
+    results = P.minmoney(parset='default', progset='default', alloc=[1e6,1e6])
     
-    P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
-    browser(results)
-
-    done(t)
-
-
-
-
-
-
-## Python GUI test
-if 'gui' in tests and doplot:
-    t = tic()
-
-    print('Running GUI test...')
-    from optima import Project, pygui
+    if doplot:
+        from gui import plotresults
+        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
-    P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
-    pygui(results)
-
     done(t)
-
 
 
 

@@ -7,10 +7,10 @@ Run all tests, skipping GUI ones by default (doplot = False).
 It runs everything in the same namespace, but deletes variables that get
 added along the way. Extremely un-Pythonic, I know.
 
-Version: 2016jan05 by cliffk
+Version: 2016jan06 by cliffk
 """
 
-from time import time
+from time import time as TIME # Use caps to distinguish 'global' variables
 
 doplot = False # When running all tests, don't try to run the GUIs
 
@@ -22,12 +22,13 @@ MASTER = [
 'testmodel',
 'testscenarios',
 'testcalibration',
+'testoptimization',
 'testgui',
 'testworkflow',
 ]
 
 VARIABLES = []
-STARTTIME = time()
+STARTTIME = TIME()
 FAILED = []
 for TEST in MASTER:
     try:
@@ -47,4 +48,4 @@ if len(FAILED):
     for FAIL in FAILED: print('  %s' % FAIL)
 else:
     print('All %i tests passed!!! You are the best!!' % len(MASTER))
-    print('Elapsed time: %0.1f s.' % (time()-STARTTIME))
+    print('Elapsed time: %0.1f s.' % (TIME()-STARTTIME))

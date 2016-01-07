@@ -35,6 +35,8 @@ from makeplots import epiplot # Create the plots
 from calibration import sensitivity, autofit # Calibration functions
 
 ## Load optional plotting functions
+try: from gui import plotresults
+except: plotresults = 'Import failed'
 try: from gui import pygui # Handle the Python plotting
 except: pygui = 'Import failed'
 try: from gui import browser # Handle the browser-based plotting

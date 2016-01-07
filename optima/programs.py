@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, concatenate as cat
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings
 from collections import defaultdict
 import abc
 from pylab import figure
@@ -332,7 +332,7 @@ class Program(object):
     '''
 
     def __init__(self, name, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', short_name=''):
+        category='No category', short_name='', criteria=None):
         '''Initialize'''
         self.name = name
         self.id = uuid()
@@ -346,6 +346,7 @@ class Program(object):
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
         self.short_name = short_name
+        self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
 
     def __repr__(self):
         ''' Print out useful info'''
@@ -413,19 +414,39 @@ class Program(object):
             errormsg = 'You have asked to remove data for the year %s, but no data was added for that year. Cost coverage data are: %s' % (year, self.costcovdata)
             raise Exception(errormsg)
 
-    def gettargetpopsize(self, t, parset, total=True):
+    def gettargetpopsize(self, t, parset, ind=0, total=True):
         '''Returns target population size in a given year for a given spending amount.'''
 
-        # Figure out input data type, transform if necessary
+        # Initialise, figure out input data type, transform if necessary
         if type(t) in [float,int]: t = array([t])
         elif type(t)==list: t = array(t)
-
-        # Sum the target populations
+        popsizes = {}
         targetpopsize = {}
-        allpops = getpopsizes(parset=parset,years=t,filter_pop=None)
-        for targetpop in self.targetpops:
-            targetpopsize[targetpop] = allpops[targetpop]
 
+        # If it's a program for everyone... 
+        if not self.criteria['pregnant']:
+            if self.criteria['hivstatus']=='allstates':
+                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
+    
+            else: # If it's a program for HIV+ people, need to run the sim to find the number of positives
+                settings = Settings()
+                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) #TEMP
+                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
+    
+        # ... or if it's a program for pregnant/breastfeeding women.
+        else:
+            if self.criteria['hivstatus']=='allstates': # All pregnant women
+                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t) #TEMP
+            else: # HIV+ pregnant women
+                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t) #TEMP
+
+        for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
+            popsizes[pop] = initpopsizes[popnumber,:]
+        for targetpop in self.targetpops:
+            targetpopsize[targetpop] = popsizes[targetpop]
+                    
+        
+        
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
@@ -691,25 +712,3 @@ class Covout(CCOF):
         ccopars['intercept'] = None
         ccopars['t'] = None
         return ccopars
-
-#######################################################
-# What needs to happen to get population sizes...
-#######################################################
-
-def getpopsizes(parset, years, ind=0, filter_pop=None):
-    '''Get population sizes in given years from a parset.'''
-
-    if type(years) in [float, int]: years = array([[years]])
-    elif type(years)==list: years = array([years])
-
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-#    initpopsizes = parset.interp(ind=0, keys='popsize', tvec=years, verbose=0)
-    initpopsizes = parset.pars[0]['popsize'].interp(tvec=years)
-    popsizes = {}
-
-    for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
-        popsizes[pop] = initpopsizes[popnumber,:]
-
-    if filter_pop: return {filter_pop: popsizes[filter_pop]}
-    else: return popsizes
-
