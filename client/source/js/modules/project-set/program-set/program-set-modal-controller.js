@@ -28,12 +28,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
       _(programCopy.parameters).each(function(entry) {
-        entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
+        //entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
-        oldPops = entry.value.pops;
-        entry.value.pops = angular.copy(populations);
-        _.each(entry.value.pops, function(pop) {
-          pop.active = oldPops.indexOf(pop.short_name) > -1;
+        oldPops = entry.pops;
+        if (oldPops.length==1 && oldPops[0] == "") oldPops = [];
+        entry.selectAll = true;
+        entry.pops = angular.copy(populations);
+        _.each(entry.pops, function(pop) {
+          pop.active = (oldPops.length==0) || (oldPops.indexOf(pop.short_name) > -1);
+          if (!pop.active) entry.selectAll = false;
         });
       });
 
@@ -70,7 +73,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.selectAllEntryPopulations = function(entry) {
-      _.forEach(entry.value.pops, function(population) {
+      _.forEach(entry.pops, function(population) {
         population.active = entry.selectAll;
       });
     };
@@ -89,7 +92,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     */
     var findParameters = function(parameters, keys) {
       return _(parameters).find(function(parameterEntry) {
-        return areEqualArrays(parameterEntry.keys, keys);
+        // todo: return areEqualArrays(parameterEntry.keys, keys);
+        return true;
       });
     };
 
@@ -111,7 +115,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.addParameter = function () {
-      var entry = {value: {signature: [], pops: angular.copy(populations)}, active: true};
+      var entry = {param: '', pops: angular.copy(populations), active: true};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
     };
@@ -144,12 +148,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }
         $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           delete item.selectAll;
-          item.value.pops = _.filter(item.value.pops, function(population) {
+          item.pops = _.filter(item.pops, function(population) {
             return population.active;
           }).map(function(population) {
             return population.short_name;
           });
-          return item.value.signature.length && item.value.pops.length;
+          return item.param && item.pops.length;
         });
 
         $modalInstance.close($scope.program);
