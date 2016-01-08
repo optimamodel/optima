@@ -109,14 +109,14 @@ def defaultprograms(P, addpars=False, filterprograms=None):
     
     ART = Program(name='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
-                  targetpops=pops,
+                  targetpops=['tot'],
                   category='Care and treatment',
                   short_name='ART',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
     
     PMTCT = Program(name='PMTCT',
-                  targetpars=[{'param': 'numtx', 'pop': pop} for pop in femalepops] + [{'param': 'numpmtct', 'pop': pop} for pop in femalepops],
-                  targetpops=femalepops,
+                  targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
+                  targetpops=['tot'],
                   category='Care and treatment',
                   short_name='PMTCT',
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
