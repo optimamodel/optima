@@ -104,7 +104,10 @@ class ParsetsCalibration(Resource):
 
         # get manual parameters
         parset_instance = parset.hydrate()
-        parameters = parset_instance.manualfitlists()
+        mflists = parset_instance.manualfitlists()
+        parameters = [{"key": key, "label": label, "subkey": subkey, "value": value, "type": ptype}
+                      for (key, label, subkey, value, ptype) in
+                      zip(mflists['keys'], mflists['labels'], mflists['subkeys'], mflists['values'], mflists['types'])]
         # REMARK: this returns the dictionary of lists to be compatible with how Cliff uses it in gui.py
         # but I suggest we convert this into per-variable dictionary (TODO)
 
