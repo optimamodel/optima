@@ -18,8 +18,8 @@ Version: 2016jan06 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
-'autofit',
-#'makeprograms',
+#'autofit',
+'makeprograms',
 ]
 
 
@@ -86,9 +86,13 @@ if 'makeprograms' in tests:
 
     print('Making a default programset...')
     from defaultprograms import defaultprogset
-    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
+    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
 
     # Add coverage-outcome parameters
+    R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
+    R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
+    R.updateprogset()
+
     R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
     R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
     R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM_programs':(0.75,0.85)})
@@ -100,14 +104,17 @@ if 'makeprograms' in tests:
     R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.8,0.85)})
     R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.8,0.85)})
     R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.8,0.85)})
-    R.covout['hivtest']['M 0-14'].addccopar({'intercept': (0.001,0.001), 't': 2016.0, 'HTC': (0.001,0.001)}) # Should remove these later
-    R.covout['hivtest']['F 0-14'].addccopar({'intercept': (0.001,0.001), 't': 2016.0, 'HTC': (0.001,0.001)}) # Should remove these later
+    R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+
 
     from numpy import array
     budget={'Condoms':array([1e7]),
             'FSW_programs':array([1e6]),
             'MSM_programs':array([2e6]),
             'HTC':array([2e7]),
+            'ART':array([5e7]),
+            'PMTCT':array([4e6]),
             'MGMT':array([1e7]),
             'HR':array([5e5]),
             'Other':array([5e5])}

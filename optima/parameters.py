@@ -101,6 +101,21 @@ def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', aut
     return par
 
 
+def totpar2poppar(name, short, totpar, poppar, keys, by=None, limits=None, fittable='', auto=''):
+    """ Take an array of data and turn it into default parameters -- here, just take the means """
+    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, limits=limits, fittable=fittable, auto=auto) # Create structure
+    tvec = totpar.t.values()[0]
+
+    for keyno,key in enumerate(keys):
+        popshares = poppar.interp(tvec=tvec)[keyno]/sum(poppar.interp(tvec=tvec))
+        total = totpar.y[0]
+        popvals = popshares*total
+        par.y[key] = popvals
+        par.t[key] = tvec
+    
+    return par
+
+
 
 
 
@@ -221,6 +236,7 @@ def makepars(data, verbose=2):
     pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='test') # HIV testing rates
     pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, limits=(0,'maxrate'), by='tot', fittable='meta', auto='test') # AIDS testing rates
     pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
+    pars['numtxpop'] = totpar2poppar('Number on treatment', 'numtx', pars['numtx'], pars['popsize'], popkeys, limits=(0,'maxpopsize'), by='pop', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
     pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='other')
@@ -323,7 +339,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuuid'] = uuid
     generalkeys = ['male', 'female', 'popkeys']
-    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
+    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numtxpop', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
     if keys is None: keys = modelkeys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters

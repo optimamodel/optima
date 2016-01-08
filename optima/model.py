@@ -158,7 +158,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
     
-    
     ###############################################################################
     ## Compute the effective numbers of acts outside the time loop
     ###############################################################################
