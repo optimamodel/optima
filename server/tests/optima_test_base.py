@@ -60,32 +60,27 @@ class OptimaTestCase(unittest.TestCase):
     progset_test_data = {
         'name': 'Progset',
         'programs': [
-        {
-            'active': True,
-            'category': 'Prevention',
-            'name': 'Condom promotion and distribution',
-            'parameters': [
-                {
-                    'active': True,
-                    'value': {
-                        'pops': [
-                            '',
-                        ],
-                        'signature': [
-                            'condom',
-                            'cas',
-                        ],
+            {
+                'active': True,
+                'category': 'Prevention',
+                'name': 'Condom promotion and distribution',
+                'parameters': [
+                    {
+                        'active': True,
+                        'pops': ['MSM'],
+                        'param': 'condcas'
                     },
-                },
-            ],
-        'short_name': 'Condoms',
-        }, {
-            'active': False,
-            'category': 'Care and treatment',
-            'name': 'Post-exposure prophylaxis',
-            'parameters': [],
-            "short_name": "PEP",
-        },
+                ],
+                'short_name': 'Condoms',
+                'criteria': {'hivstatus': 'allstates', 'pregnant': False},
+            }, {
+                'active': False,
+                'category': 'Care and treatment',
+                'name': 'Post-exposure prophylaxis',
+                'parameters': [],
+                "short_name": "PEP",
+                'criteria': {'hivstatus': 'allstates', 'pregnant': False},
+            },
         ],
     }
 

@@ -393,7 +393,7 @@ class ProgramsDb(db.Model):
                 'pop': tuple(param['pops'])
                     if len(param['pops']) != 1
                     else str(param['pops'][0])
-            } for param in self.pars if param.active
+            } for param in self.pars if param.get('active', False)
         ]
         return parameters
 
