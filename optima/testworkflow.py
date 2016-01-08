@@ -86,7 +86,7 @@ if 'makeprograms' in tests:
 
     print('Making a default programset...')
     from defaultprograms import defaultprogset
-    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
+    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
 
     # Add coverage-outcome parameters
     R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})

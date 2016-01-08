@@ -157,7 +157,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             raise Exception(err)
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
-    
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     ###############################################################################
     ## Compute the effective numbers of acts outside the time loop
