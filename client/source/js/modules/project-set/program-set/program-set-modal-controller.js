@@ -39,13 +39,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.program = programCopy;
       $scope.program.active = true;
+      if (!$scope.program.criteria) {
+        $scope.program.criteria = {pregnant: false};
+      }
       if ($scope.isNew) { $scope.program.category = 'Other'; }
+      $scope.eligibility = {
+        everyone: true,
+        pregnantFalse: !$scope.program.criteria.pregnant,
+        hivstatus: ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids']
+      };
     };
 
-    $scope.eligibility = {};
     $scope.setEligibility = function(selectedEligibility) {
       if(selectedEligibility === 'everyone') {
-        $scope.eligibility.acuteInfections = false;
+        $scope.eligibility.acute = false;
         $scope.eligibility.gt500 = false;
         $scope.eligibility.gt350 = false;
         $scope.eligibility.gt200 = false;
@@ -128,6 +135,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         });
 
         $scope.program.populations = selected_populations;
+        if($scope.eligibility.everyone) {
+          $scope.program.criteria.hivstatus = 'allstates';
+        } else {
+          $scope.program.criteria.hivstatus = _.filter($scope.eligibility.hivstatus, function(state) {
+            return $scope.eligibility[state];
+          });
+        }
         $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           delete item.selectAll;
           item.value.pops = _.filter(item.value.pops, function(population) {

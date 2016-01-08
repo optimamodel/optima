@@ -65,9 +65,9 @@
             <span><input type="checkbox" ng-model="eligibility.aids" ng-click="setEligibility('aids')"/><span>CD4 <50</span></span>
           </span>
           <span class="section-flex-spaced">
-            <span><input type="checkbox" ng-click="eligibility.pregnantTrue = false" ng-model="eligibility.pregnantFalse"/><span>Everyone</span></span>
+            <span><input type="checkbox" ng-click="program.criteria.pregnant = false" ng-model="eligibility.pregnantFalse"/><span>Everyone</span></span>
             <span>OR</span>
-            <span><input type="checkbox" ng-click="eligibility.pregnantFalse = false" ng-model="eligibility.pregnantTrue"/><span>Pregnant and breastfeeding mothers</span></span>
+            <span><input type="checkbox" ng-click="eligibility.pregnantFalse = false" ng-model="program.criteria.pregnant"/><span>Pregnant and breastfeeding mothers</span></span>
           </span>
         </div>
       </div>
