@@ -58,10 +58,23 @@
           $(that).find('.mpld3-coordinates').each(function () {
             $(this).attr('y', parseInt($(that).attr('height')) + 7);
           });
+          $(that).find('.mpld3-toolbar').each(function () {
+            $(this).remove();
+          });
         });
       });
     } else {
       setTimeout(fix_mouse_pointer, 150);
+    }
+  }
+  function remove_default_plugin() {
+    var svgGraphFigures = $('mpld3-toolbar');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function () {
+        $(this).remove();
+      });
+    } else {
+      setTimeout(remove_default_plugin, 150);
     }
   }
 
