@@ -125,7 +125,6 @@ define(['./module', 'underscore'], function (module, _) {
     var retrieveAndUpdateGraphs = function (model) {
       resetCharts();
 
-      $http.post('/api/model/costcoverage', model).success(function (response) {
 
         effects = response.effectnames;
         $scope.state.coParams = costCoverageHelpers.setUpCoParamsFromEffects(effects);
