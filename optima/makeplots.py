@@ -96,7 +96,7 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
             # Configure plot
             currentylims = ylim()
-            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+            legendsettings = {'loc':'upper right', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
             ax.set_xlabel('Year')
             # ax.legend(loc='upper left', fancybox=True, title='')
             ax.set_title(results.main[datatype].name)
