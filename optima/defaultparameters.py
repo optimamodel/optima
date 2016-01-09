@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sat Jan  9 10:24:09 2016
+Standard parameters that can be affected by programs or targeted in scenarios
 
+Created on Sat Jan  9 10:24:09 2016
 @author: robynstuart
 """
+# TODO: 
+# 1. Add documentation!
+# 2. Do something about circum
+
 
 long_names = [
 'Condoms | Proportion of sexual acts in which condoms are used with commercial partners',
@@ -145,24 +149,4 @@ None,
 None,
 None,
 'random'
-]
-
-parameter_type = [
-'condcom',
-'condcas',
-'condreg',
-'actscom',
-'actscas',
-'actsreg',
-'circum',
-'numcircum',
-'stiprev',
-'hivtest',
-'numtx',
-'prep',
-'actsinj',
-'sharing',
-'numost',
-'numpmtct',
-'breast'
 ]
