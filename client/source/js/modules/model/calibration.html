@@ -1,58 +1,78 @@
-  <script>
-  function move_year() {
-      console.log('trying to move year');
-      var al = $('.mpld3-baseaxes').length;
-      var dl = $('div.fig').length
-      if (al === dl) {
-          $('.mpld3-baseaxes > text').each(function() {
-              var value = $(this).text();
-              console.log("!!!");
-              if (value === 'Year') {
-                  console.log('found year');
-                  $(this).attr('y', parseInt($(this).attr('y'))+10);
-                  console.log($(this).attr('y'));
-              }
-          });
-      } else {
-          setTimeout(move_year, 150);
-      }
-  }
+<script>
+/*  function move_year() {
+    var al = $('.mpld3-baseaxes').length;
+    var dl = $('div.fig').length;
+    if ($('.mpld3-baseaxes > text').length > 0) {
+      $('.mpld3-baseaxes > text').each(function() {
+        var value = $(this).text();
+        if (value === 'Year') {
+          $(this).attr('y', parseInt($(this).attr('y'))+10);
+        }
+      });
+    } else {
+      setTimeout(move_year, 150);
+    }
+  }*/
   function format_xaxis() {
-      var axes = $('.mpld3-xaxis');
-      var al = axes.length;
-      var dl = $('div.fig').length;
-      if (al === dl) {
-          $(axes).find('g.tick > text').each(function() {
-              $(this).text($(this).text().replace(',',''));
-          });
-      } else {
-          setTimeout(format_xaxis, 150);
-      }
+    var axes = $('.mpld3-xaxis');
+    if (axes.length > 0) {
+      $(axes).find('g.tick > text').each(function() {
+        $(this).text($(this).text().replace(',',''));
+      });
+    } else {
+      setTimeout(format_xaxis, 150);
+    }
   }
   function add_lines_to_legends() {
-      console.log('adding lines to legends');
-      var al = $('.mpld3-baseaxes').length;
-      var dl = $('div.fig').length
-      if (al === dl) {
-          $('div.fig').each(function() {
-              var paths = $(this).find('.mpld3-baseaxes > text');
-              if (paths) {
-                  var legend_length = paths.length - 2;
-                  var lines = $(this).find('.mpld3-axes > path');
-                  var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
-                  $(this).find('.mpld3-baseaxes').append(lines_to_copy);
-              }
-          });
-      } else {
-          setTimeout(add_lines_to_legends, 150);
-      }
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function() {
+        var paths = $(this).find('.mpld3-baseaxes > text');
+        if (paths) {
+          var legend_length = paths.length - 2;
+          var lines = $(this).find('.mpld3-axes > path');
+          var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+          $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+        }
+      });
+    } else {
+      setTimeout(add_lines_to_legends, 150);
+    }
   }
+  function set_overflow_visible() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function() {
+        $(this).css('overflow', 'visible');
+      });
+    } else {
+      setTimeout(set_overflow_visible, 150);
+    }
+  }
+  function fix_mouse_pointer() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function () {
+        var that = this;
+        $(that).on('mouseover', function() {
+          $(that).find('.mpld3-coordinates').each(function () {
+            $(this).attr('y', parseInt($(that).attr('height')) + 7);
+          });
+        });
+      });
+    } else {
+      setTimeout(fix_mouse_pointer, 150);
+    }
+  }
+
   $(document).ready(function() {
-      format_xaxis();
-      move_year();
-      add_lines_to_legends();
+    format_xaxis();
+    move_year();
+    add_lines_to_legends();
+    set_overflow_visible();
+    fix_mouse_pointer();
   });
-  </script>
+</script>
 <div class="page rich">
   <div class="3">
     <label for="programSet-selection">Select a parset:</label>
