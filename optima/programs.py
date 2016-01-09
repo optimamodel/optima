@@ -13,6 +13,7 @@ import abc
 from pylab import figure
 from matplotlib.ticker import MaxNLocator
 
+coveragepars=['numtx','numpmtct','numost','numcircum']
 
 class Programset(object):
 
@@ -129,6 +130,9 @@ class Programset(object):
     def optimizable(self):
         return [True if prog.optimizable() else False for prog in self.programs.values()]
 
+    def coveragepar(self, coveragepars=coveragepars):
+        return [True if par in coveragepars else False for par in self.targetpartypes]
+
     def progs_by_targetpop(self, filter_pop=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
@@ -212,7 +216,7 @@ class Programset(object):
             else: popcoverage[thisprog] = None
         return popcoverage
 
-    def getoutcomes(self,coverage,t,parset,perturb=False,coverage_pars=['numtx','numpmtct','numost']):
+    def getoutcomes(self,coverage,t,parset,perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
         nyrs = len(t)
         outcomes = odict()
@@ -224,7 +228,7 @@ class Programset(object):
             
             for thispop in self.progs_by_targetpar(thispartype).keys(): # Loop over the populations associated with this parameter type
 
-                if thispartype in coverage_pars and thispop.lower() in ['total','tot','all']:
+                if thispartype in coveragepars and thispop.lower() in ['total','tot','all']:
                     outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                         outcomes[thispartype][thispop] += coverage[thisprog.name]
