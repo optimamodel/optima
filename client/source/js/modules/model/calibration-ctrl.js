@@ -4,14 +4,38 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ModelCalibrationController', function ($scope, $http, $interval,
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService) {
 
+    console.log('info', info);
+
     // In case there is no model data the controller only needs to show the
     // warning that the user should upload a spreadsheet with data.
-    if (!info.has_data) {
+
+    var activeProjectInfo = info.data;
+
+    if (!activeProjectInfo.has_data) {
       $scope.missingModelData = true;
       return;
     }
 
-    // $http.get('/api/project/<project_id>/parsets')
+    $http.get('/api/project/' + activeProjectInfo.id + '/parsets').
+      success(function (response) {
+        var parsets = response.parsets;
+        if(parsets) {
+          parsets.forEach(function(parset) {
+            console.log('parset', parset);
+            $http.get('/api/parset/' + parset.id + '/calibration').
+            then(function (response) {
+              console.log('response1', response);
+              $scope.chart = response.calibration.graph[0];
+              console.log('plotted chart');
+            },function(response) {
+              console.log('response2', response);
+              $scope.chart = response.calibration.graph[0];
+              console.log('plotted chart');
+            })
+            ;
+          });
+        }
+      });
 
     var defaultChartOptions = {
       title: 'Title',
@@ -27,9 +51,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var initialize = function() {
-      $scope.projectInfo = info;
+      $scope.projectInfo = activeProjectInfo;
       $scope.canDoFitting = false;
-      $scope.hasSpreadsheet = info.data_upload_time ? true : false;
+      $scope.hasSpreadsheet = activeProjectInfo.data_upload_time ? true : false;
 
       $scope.types = typeSelector.types;
 
@@ -66,7 +90,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             'Testing rate slope parameter'
           ]
         },
-        meta: meta.data
+        // meta: meta.data
       };
       angular.extend($scope.parameters, calibration.toScopeParameters(parameters));
 
@@ -81,7 +105,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var message = "Sorry, this project was created without uploading a spreadsheet and therefore can not be reloaded.";
         modalService.inform(undefined, undefined, message);
       } else {
-        $http.get('/api/model/reloadSpreadsheet/' + info.id)
+        $http.get('/api/model/reloadSpreadsheet/' + activeProjectInfo.id)
           .success(function (response) {
             window.location.reload();
           });
@@ -325,8 +349,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.simulate = function () {
-      $http.post('/api/model/view', $scope.simulationOptions)
-        .success(storeSavedCalibrationAndUpdate);
+    //  $http.post('/api/model/view', $scope.simulationOptions)
+    //    .success(storeSavedCalibrationAndUpdate);
     };
 
     var autoCalibrationTimer;

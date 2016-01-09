@@ -84,6 +84,7 @@
       <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
       <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
       <div class="grid">
+        <div mpld3-chart="chart" id="{{ chart }}"></div>
         <div>
           <div class="chart-container __small" ng-repeat="chart in charts">
             <div ng-if="chart.type == 'lineAreaScatterChart'" line-area-scatter-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" normalise-height></div>

@@ -28,7 +28,7 @@ define([
           controller: 'ModelCalibrationController',
           resolve: {
             parameters: function (Model) {
-              // return Model.getCalibrateParameters().$promise;
+              //return Model.getCalibrateParameters().$promise;
             },
             meta: function (Model) {
               // return Model.getKeyDataMeta().$promise;
