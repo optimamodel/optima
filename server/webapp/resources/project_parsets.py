@@ -108,21 +108,26 @@ class ParsetsCalibration(Resource):
         parameters = [{"key": key, "label": label, "subkey": subkey, "value": value, "type": ptype}
                       for (key, label, subkey, value, ptype) in
                       zip(mflists['keys'], mflists['labels'], mflists['subkeys'], mflists['values'], mflists['types'])]
-        # REMARK: this returns the dictionary of lists to be compatible with how Cliff uses it in gui.py
-        # but I suggest we convert this into per-variable dictionary (TODO)
+        # REMARK: manualfitlists() in parset returns the lists compatible with usage on BE,
+        # but for FE we prefer list of dicts
 
         project_entry = load_project(parset.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
-        simparslist = parset_instance.interp()
-        results = project_instance.runsim(simpars=simparslist)  # TODO: read from DB ?
-        graphs = op.epiplot(results, figsize=(4, 3))
+        existing_result = [item for item in project_entry.results if item.parset_id == parset_id]
+        if existing_result:
+            results = existing_result[0].hydrate()
+        else:
+            simparslist = parset_instance.interp()
+            results = project_instance.runsim(simpars=simparslist)
+        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
 
         jsons = []
         # TODO: refactor this?
         for graph in graphs:
             # Add necessary plugins here
             mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN','null')
+            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
             jsons.append(json.loads(json_string))
 
         return {

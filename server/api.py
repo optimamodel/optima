@@ -42,12 +42,9 @@ from server.webapp.jsonhelper import OptimaJSONEncoder
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
-    print "data", data
     inner = json.dumps(data, cls=OptimaJSONEncoder)
-    print "inner", inner
     resp = make_response(inner, code)
     resp.headers.extend(headers or {})
-    print "resp", resp
     return resp
 
 

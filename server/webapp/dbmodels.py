@@ -272,6 +272,8 @@ class ResultsDb(db.Model):
         if id:
             self.id = id
 
+    def hydrate(self):
+        return op.loads(self.blob)
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
 
