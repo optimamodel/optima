@@ -121,6 +121,7 @@ class ParsetsCalibration(Resource):
         # TODO: refactor this?
         for graph in graphs:
             # Add necessary plugins here
+            mpld3.plugins.clear(graphs[graph]);
             mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
             json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN','null')
             jsons.append(json.loads(json_string))
