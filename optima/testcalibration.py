@@ -5,7 +5,7 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan06 by cliffk
+Version: 2016jan09 by cliffk
 """
 
 ## Define tests to run here!!!
@@ -14,6 +14,7 @@ tests = [
 'sensitivity',
 'manualfit',
 'autofit',
+#'autofitmulti',
 #'longfit',
 ]
 
@@ -112,8 +113,7 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.sensitivity(orig='default', name='sensitivity', n=3, span=0.5) # Create MC initialization
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, niters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, niters=30, inds=None) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
@@ -123,6 +123,39 @@ if 'autofit' in tests:
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
+
+
+
+
+
+
+
+## Autofit test
+if 'autofitmulti' in tests:
+    t = tic()
+
+    print('Running autofitmulti test...')
+    from optima import Project
+    
+    P = Project(spreadsheet='test7pops.xlsx')
+    P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5) # Create MC initialization
+    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, niters=100, inds=None) # Run automatic fitting
+    results1 = P.runsim('default', end=2015) # Generate results
+    results2 = P.runsim('autofit', end=2015)
+    
+    if doplot:
+        from gui import plotresults
+        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    
+    done(t)
+
+
+
+
+
+
+
 
 
 
