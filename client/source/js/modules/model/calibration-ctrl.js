@@ -11,6 +11,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return;
     }
 
+    // $http.get('/api/project/<project_id>/parsets')
+
     var defaultChartOptions = {
       title: 'Title',
       height: 200,

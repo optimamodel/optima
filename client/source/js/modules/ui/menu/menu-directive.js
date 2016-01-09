@@ -28,16 +28,19 @@ define(['jquery', 'underscore', './module'], function ($, _, module) {
 
         // open dropdowns on hover
         elem.on('mouseenter', '.dropdown', function () {
+          console.log('open menu');
           $(this).addClass('open');
         });
 
         // hide dropdowns on hover
         elem.on('mouseleave', '.dropdown', function () {
+          console.log('close menu');
           $(this).removeClass('open');
         });
 
         // hide dropdowns on click
         elem.on('click', function () {
+          console.log('close menu on click');
           $(this).find('.dropdown').removeClass('open');
         });
       },
