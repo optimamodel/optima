@@ -19,7 +19,7 @@ class Programset(object):
     def __init__(self, name='default', programs=None, default_interaction='random'):
         ''' Initialize '''
         self.name = name
-        self.id = uuid()
+        self.uid = uuid()
         self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
@@ -34,7 +34,7 @@ class Programset(object):
         output += 'Targeted populations: %s\n'    % self.targetpops
         output += '        Date created: %s\n'    % getdate(self.created)
         output += '       Date modified: %s\n'    % getdate(self.modified)
-        output += '                  ID: %s\n'    % self.id
+        output += '                 UID: %s\n'    % self.uid
         return output
 
     def gettargetpops(self):
@@ -345,7 +345,7 @@ class Program(object):
         category='No category', short_name='', criteria=None):
         '''Initialize'''
         self.name = name
-        self.id = uuid()
+        self.uid = uuid()
         if targetpars:
             self.targetpars = targetpars
         else: self.targetpars = []
