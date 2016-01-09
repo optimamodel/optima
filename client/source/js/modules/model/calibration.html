@@ -1,5 +1,59 @@
+  <script>
+  function move_year() {
+      console.log('trying to move year');
+      var al = $('.mpld3-baseaxes').length;
+      var dl = $('div.fig').length
+      if (al === dl) {
+          $('.mpld3-baseaxes > text').each(function() {
+              var value = $(this).text();
+              console.log("!!!");
+              if (value === 'Year') {
+                  console.log('found year');
+                  $(this).attr('y', parseInt($(this).attr('y'))+10);
+                  console.log($(this).attr('y'));
+              }
+          });
+      } else {
+          setTimeout(move_year, 150);
+      }
+  }
+  function format_xaxis() {
+      var axes = $('.mpld3-xaxis');
+      var al = axes.length;
+      var dl = $('div.fig').length;
+      if (al === dl) {
+          $(axes).find('g.tick > text').each(function() {
+              $(this).text($(this).text().replace(',',''));
+          });
+      } else {
+          setTimeout(format_xaxis, 150);
+      }
+  }
+  function add_lines_to_legends() {
+      console.log('adding lines to legends');
+      var al = $('.mpld3-baseaxes').length;
+      var dl = $('div.fig').length
+      if (al === dl) {
+          $('div.fig').each(function() {
+              var paths = $(this).find('.mpld3-baseaxes > text');
+              if (paths) {
+                  var legend_length = paths.length - 2;
+                  var lines = $(this).find('.mpld3-axes > path');
+                  var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+                  $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+              }
+          });
+      } else {
+          setTimeout(add_lines_to_legends, 150);
+      }
+  }
+  $(document).ready(function() {
+      format_xaxis();
+      move_year();
+      add_lines_to_legends();
+  });
+  </script>
 <div class="page rich">
-
   <div class="3">
     <label for="programSet-selection">Select a parset:</label>
   </div>

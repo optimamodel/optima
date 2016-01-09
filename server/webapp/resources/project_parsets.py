@@ -115,7 +115,7 @@ class ParsetsCalibration(Resource):
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
         results = project_instance.runsim(simpars=simparslist)  # TODO: read from DB ?
-        graphs = op.epiplot(results, figsize=(3,2))
+        graphs = op.epiplot(results, figsize=(4, 3))
 
         jsons = []
         # TODO: refactor this?
