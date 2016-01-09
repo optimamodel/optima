@@ -67,7 +67,7 @@
 
   $(document).ready(function() {
     format_xaxis();
-    move_year();
+    //move_year();
     add_lines_to_legends();
     set_overflow_visible();
     fix_mouse_pointer();
@@ -86,7 +86,7 @@
     </select>
   </div>
 
-  <div ng-repeat="chart in calibrationChart" class="chart-container">
+  <div ng-repeat="chart in calibrationChart" class="chart-container __small">
     <div mpld3-chart="chart" id="{{ chart.id }}"></div>
     <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
   </div>
