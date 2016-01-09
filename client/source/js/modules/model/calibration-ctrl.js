@@ -22,10 +22,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(parsets) {
           parsets.forEach(function(parset) {
             console.log('parset', parset);
-            $http.get('/api/parset/' + parset.id + '/calibration',{
-          responseType:'blob'}).
+            $http.get('/api/parset/' + parset.id + '/calibration').
             then(function (response) {
-              console.log('response1', response);
+              console.log('response1', response.data);
+
               $scope.chart = response.calibration.graph[0];
               console.log('plotted chart');
             },function(response) {
