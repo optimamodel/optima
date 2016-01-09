@@ -1,8 +1,9 @@
+import json
 import os
 import sys
 import logging
 
-from flask import Flask, redirect, Blueprint, g, session
+from flask import Flask, redirect, Blueprint, g, session, make_response
 
 from flask_restful import Api
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -36,6 +37,16 @@ login_manager.init_app(app)
 from server.webapp.utils import init_login_manager
 init_login_manager(login_manager)
 
+from server.webapp.jsonhelper import OptimaJSONEncoder
+
+
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    inner = json.dumps(data, cls=OptimaJSONEncoder)
+    resp = make_response(inner, code)
+    resp.headers.extend(headers or {})
+    return resp
+
 
 @api_bp.before_request
 def before_request():
@@ -57,6 +68,7 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectData, ProjectFromData, Portfolio)
 from server.webapp.resources.project_constants import Parameters, Predefined
 from server.webapp.resources.project_progsets import Progsets, Progset
+from server.webapp.resources.project_parsets import Parsets, ParsetsDetail, ParsetsCalibration
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -81,6 +93,10 @@ api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset
 api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/parameters')
 api.add_resource(Predefined, '/api/project/predefined')
+
+api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
+api.add_resource(ParsetsCalibration, '/api/parset/<uuid:parset_id>/calibration')
 app.register_blueprint(api_bp, url_prefix='')
 
 

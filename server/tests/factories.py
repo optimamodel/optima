@@ -1,28 +1,15 @@
 import factory
 import hashlib
+from optima.utils import saves
 
 from factory import Sequence, fuzzy
 from factory.alchemy import SQLAlchemyModelFactory
 
-from server.webapp.dbmodels import ParsetsDb
-from server.webapp.dbmodels import ProgramsDb
-from server.webapp.dbmodels import ProjectDataDb
-from server.webapp.dbmodels import ProjectDb, ProgsetsDb
-from server.webapp.dbmodels import ResultsDb
-from server.webapp.dbmodels import UserDb
-from server.webapp.dbmodels import WorkLogDb
-from server.webapp.dbmodels import WorkingProjectDb
-
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import scoped_session, sessionmaker
-
-# engine = create_engine('postgresql+psycopg2://test:test@localhost:5432/optima_test')
-# session = scoped_session(sessionmaker(bind=engine))
-
-
-# class BaseFactory(SQLAlchemyModelFactory):
-#     class Meta:
-#         sqlalchemy_session = session
+from server.webapp.dbmodels import (ParsetsDb, ProgramsDb, ProjectDataDb,
+                                    ProjectDb, ProgsetsDb, ResultsDb, UserDb,
+                                    WorkLogDb, WorkingProjectDb)
+from server.webapp.parameters import parameter_list
+from server.webapp.populations import populations
 
 
 def make_password(password="test"):
@@ -49,25 +36,12 @@ class ProjectFactory(SQLAlchemyModelFactory):
     name = fuzzy.FuzzyText(prefix='project_')
     datastart = 2000
     dataend = 2030
-    populations = [
-        {"name": "Female sex workers", "short_name": "FSW", "sexworker": True, "injects": False,
-         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False},
-        {"name": "Clients of sex workers", "short_name": "Clients", "sexworker": False, "injects": False,
-         "sexmen": False, "client": True, "female": False, "male": True, "sexwomen": True},
-        {"name": "Men who have sex with men", "short_name": "MSM", "sexworker": False, "injects": False,
-         "sexmen": True, "client": False, "female": False, "male": True, "sexwomen": False},
-        {"name": "Males who inject drugs", "short_name": "Male PWID", "sexworker": False, "injects": True,
-         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
-        {"name": "Other males [enter age]", "short_name": "Other males", "sexworker": False, "injects": False,
-         "sexmen": False, "client": False, "female": False, "male": True, "sexwomen": True},
-        {"name": "Other females [enter age]", "short_name": "Other females", "sexworker": False, "injects": False,
-         "sexmen": True, "client": False, "female": True, "male": False, "sexwomen": False}
-    ]
+    populations = populations()
     version = '{}'
 
     @factory.lazy_attribute
     def user_id(self):
-        return UserDb.query.filter_by(is_admin=False).first().value(UserDb.id)
+        return UserDb.query.filter_by(is_admin=False).first().id
 
 
 class ParsetFactory(SQLAlchemyModelFactory):
@@ -75,8 +49,8 @@ class ParsetFactory(SQLAlchemyModelFactory):
     class Meta:
         model = ParsetsDb
 
-    project = factory.SubFactory(ProjectFactory)
     name = factory.Faker('name')
+    pars = saves(parameter_list)
 
 
 class ResultFactory(SQLAlchemyModelFactory):

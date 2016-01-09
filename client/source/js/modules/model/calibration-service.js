@@ -54,12 +54,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     var toScopeParameters = function(parameters) {
 
-      var fParameters = parameters.F[0] ? parameters.F[0] : {};
+      /* var fParameters = parameters.F[0] ? parameters.F[0] : {};
 
       return {
         f: angular.copy(fParameters),
         m: angular.copy(parameters.M)
-      };
+      };*/
     };
 
     var storeLastSavedResponse = function (calibrationResponse) {
