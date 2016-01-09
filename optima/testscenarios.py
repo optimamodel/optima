@@ -11,7 +11,7 @@ tests = [
 'standardscen',
 ]
 
-doplot=False
+doplot=True
 ##############################################################################
 ## Initialization -- same for every test script
 ##############################################################################
@@ -101,7 +101,8 @@ if 'standardscen' in tests:
            {'Condoms':array([2e7]),
             'FSW_programs':array([1e6])},
             ],
-          'coveragelevels': None},
+          'coveragelevels': None,
+          't': [2016]},
          {'name': 'A million people covered by the condom program',
           'parset': P.parsets['default'],
           'type': 'program',
@@ -112,7 +113,8 @@ if 'standardscen' in tests:
             'FSW_programs':array([15352.67106128])},
            {'Condoms':array([1e6]),
             'FSW_programs':array([15352.67106128])},
-            ]}
+            ],
+          't': [2016]}
         ]
     
     from scenarios import runscenarios

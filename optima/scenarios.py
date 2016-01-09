@@ -19,7 +19,7 @@ def runscenarios(scenlist=None, default_parset=None, verbose=2, debug=False):
     
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(scenlist,verbose=verbose)
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()    
+
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
@@ -69,8 +69,8 @@ def makescenarios(scenlist, verbose=2):
             if scen['budgets']:
                 for budget in scen['budgets']:
                     thisprogset = scen['progset']
-                    thiscoverage = thisprogset.getprogcoverage(budget=budget, t=[2016], parset=scen['parset'])
-                    thisparset = thisprogset.getparset(coverage=thiscoverage, t=[2016], parset=scen['parset'], newparsetname=scen['name'])
+                    thiscoverage = thisprogset.getprogcoverage(budget=budget, t=scen['t'], parset=scen['parset'])
+                    thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
             if scen['coveragelevels']:
                 for coveragelevel in scen['coveragelevels']:
                     thisprogset = scen['progset']
