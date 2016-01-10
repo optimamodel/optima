@@ -145,7 +145,7 @@ user_login_parser.add_arguments({
 
 
 class CurrentUser(Resource):
-    method_decorators = [login_required, ]
+    method_decorators = [login_required]
 
     @swagger.operation(
         responseClass=UserDb.__name__,
@@ -191,7 +191,7 @@ class UserLogin(Resource):
 
 
 class UserLogout(Resource):
-    method_decorators = [login_required, ]
+    method_decorators = [login_required]
 
     @swagger.operation(
         summary='Log the current user out'

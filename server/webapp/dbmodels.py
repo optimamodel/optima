@@ -217,6 +217,15 @@ class ParsetsDb(db.Model):
 
     __tablename__ = 'parsets'
 
+    resource_fields = {
+        'id': Uuid(attribute='uuid'),
+        'project_id': Uuid,
+        'name': fields.String,
+        'created': fields.DateTime,
+        'updated': fields.DateTime,
+        'pars': Json,
+    }
+
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.Text)
@@ -263,6 +272,8 @@ class ResultsDb(db.Model):
         if id:
             self.id = id
 
+    def hydrate(self):
+        return op.loads(self.blob)
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
 

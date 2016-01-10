@@ -101,21 +101,6 @@ def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', aut
     return par
 
 
-def totpar2poppar(name, short, totpar, poppar, keys, by=None, limits=None, fittable='', auto=''):
-    """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, limits=limits, fittable=fittable, auto=auto) # Create structure
-    tvec = totpar.t.values()[0]
-
-    for keyno,key in enumerate(keys):
-        popshares = poppar.interp(tvec=tvec)[keyno]/sum(poppar.interp(tvec=tvec))
-        total = totpar.y[0]
-        popvals = popshares*total
-        par.y[key] = popvals
-        par.t[key] = tvec
-    
-    return par
-
-
 
 
 
@@ -236,7 +221,6 @@ def makepars(data, verbose=2):
     pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='test') # HIV testing rates
     pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, limits=(0,'maxrate'), by='tot', fittable='meta', auto='test') # AIDS testing rates
     pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
-    pars['numtxpop'] = totpar2poppar('Number on treatment', 'numtx', pars['numtx'], pars['popsize'], popkeys, limits=(0,'maxpopsize'), by='pop', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
 
     # MTCT parameters
     pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='other')
@@ -339,7 +323,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys']
-    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numtxpop', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
+    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
     if keys is None: keys = modelkeys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
@@ -597,3 +581,84 @@ class Parameterset(object):
                 try: print('      %i....%s' % (count, str(item)))
                 except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return None
+
+    def manualfitlists(self, ind=0):
+        if not self.pars:
+            raise Exception("No parameters available!")
+        elif len(self.pars)<=ind:
+            raise Exception("Parameter with index {} not found!".format(ind))
+
+        tmppars = self.pars[ind]
+
+        mflists = {'keys':[], 'subkeys':[], 'types':[], 'values':[], 'labels':[]}
+        keylist = mflists['keys']
+        subkeylist = mflists['subkeys']
+        typelist = mflists['types']
+        valuelist = mflists['values']
+        labellist = mflists['labels']
+
+        print "tmppars", tmppars
+        for key in tmppars.keys():
+            par = tmppars[key]
+            print "key", key, "par", par
+            if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                continue
+            if par.fittable == 'meta':
+                keylist.append(key)
+                subkeylist.append(None)
+                typelist.append(par.fittable)
+                valuelist.append(par.m)
+                labellist.append('{} -- meta'.format(par.name))
+            elif par.fittable in ['pop', 'pship']:
+                for subkey in par.y.keys():
+                    keylist.append(key)
+                    subkeylist.append(subkey)
+                    typelist.append(par.fittable)
+                    valuelist.append(par.y[subkey])
+                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
+            elif par.fittable == 'exp':
+                for subkey in par.p.keys():
+                    keylist.append(key)
+                    subkeylist.append(subkey)
+                    typelist.append(par.fittable)
+                    valuelist.append(par.p[subkey][0])
+                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
+            else:
+                print 'Parameter type "%s" not implemented!' % key.manual
+
+        return mflists
+
+    ## Define update step
+    def update(self, mflists, ind=0):
+        from optima import printv
+        ''' Update Parameterset with new results '''
+        if not self.pars:
+            raise Exception("No parameters available!")
+        elif len(self.pars)<=ind:
+            raise Exception("Parameter with index {} not found!".format(ind))
+
+        tmppars = self.pars[ind]
+
+        keylist = mflists['keys']
+        subkeylist = mflists['subkeys']
+        typelist = mflists['types']
+        valuelist = mflists['values']
+
+        ## Loop over all parameters and update them
+        for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
+            if ptype == 'meta': # Metaparameters
+                vtype = type(tmppars[key].m)
+                tmppars[key].m = vtype(value)
+                printv('%s.m = %s' % (key, value), 4, verbose=verbose)
+            elif ptype in ['pop', 'pship']: # Populations or partnerships
+                vtype = type(tmppars[key].y[subkey])
+                tmppars[key].y[subkey] = vtype(value)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose=verbose)
+            elif ptype == 'exp': # Population growth
+                vtype = type(tmppars[key].p[subkey][0])
+                tmppars[key].p[subkey][0] = vtype(value)
+                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose=verbose)
+            else:
+                print('Parameter type "%s" not implemented!' % ptype)
+
+        # parset.interp() and calculate results are supposed to be called from the outside        

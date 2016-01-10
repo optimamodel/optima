@@ -24,49 +24,19 @@ define([
       $stateProvider
         .state('model', {
           url: '/model',
-          abstract: true,
-          template: '<div ui-view></div>',
-          resolve: {
-            info: function (projectApiService) {
-              projectApiService.getActiveProject();
-            }
-          }
-        })
-        .state('model.view', {
-          url: '/view',
           templateUrl: 'js/modules/model/calibration.html',
           controller: 'ModelCalibrationController',
           resolve: {
             parameters: function (Model) {
-              return Model.getCalibrateParameters().$promise;
+              //return Model.getCalibrateParameters().$promise;
             },
             meta: function (Model) {
-              return Model.getKeyDataMeta().$promise;
-            }
-          }
-        })
-        .state('model.manageProgramSet', {
-          url: '/programs',
-          templateUrl: 'js/modules/model/program-set/program-set.html',
-          controller: 'ProgramSetController',
-          resolve: {
-            availableParameters: function(projectApiService) {
-              return projectApiService.getParameters();
+              // return Model.getKeyDataMeta().$promise;
             },
-            predefined: function(projectApiService) {
-              return projectApiService.getPredefined();
+            info: function (projectApiService) {
+              return projectApiService.getActiveProject();
             }
           }
         })
-        .state('model.define-cost-coverage-outcome', {
-          url: '/define-cost-coverage-outcome',
-          controller: 'ModelCostCoverageController',
-          templateUrl: 'js/modules/model/cost-coverage.html',
-          resolve: {
-            programsResource: function(Model) {
-              return Model.getPrograms().$promise;
-            }
-          }
-        });
     });
 });
