@@ -17,7 +17,7 @@ from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsD
 
 from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.fields import Uuid
+from server.webapp.fields import Uuid, Json
 
 from server.webapp.utils import (load_project, verify_admin_request, report_exception,
                                  delete_spreadsheet, RequestParser)
@@ -754,3 +754,29 @@ class Portfolio(Resource):
                 portfolio.write(os.path.join(loaddir, project), 'portfolio/{}'.format(project))
 
         return helpers.send_from_directory(loaddir, zipfile_name)
+
+defaults_fields = {
+    "categories": Json,
+    "programs": Json
+}
+
+class Defaults(Resource):
+    @swagger.operation(
+        summary="""Gives default programs, program categories and program parameters
+                for the given program"""
+    )
+    @marshal_with(defaults_fields)
+    @login_required
+    def get(self, project_id):
+        from server.webapp.programs import get_default_programs, program_categories
+
+        project = load_project(project_id, raise_exception=True)
+        programs = get_default_programs(project)
+        program_categories = program_categories(project)
+        for p in programs:
+            p['active'] = False
+        payload = {
+            "programs": programs,
+            "categories": program_categories
+        }
+        return payload

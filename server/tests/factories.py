@@ -8,7 +8,6 @@ from factory.alchemy import SQLAlchemyModelFactory
 from server.webapp.dbmodels import (ParsetsDb, ProgramsDb, ProjectDataDb,
                                     ProjectDb, ProgsetsDb, ResultsDb, UserDb,
                                     WorkLogDb, WorkingProjectDb)
-from server.webapp.parameters import parameter_list
 from server.webapp.populations import populations
 
 
@@ -50,7 +49,7 @@ class ParsetFactory(SQLAlchemyModelFactory):
         model = ParsetsDb
 
     name = factory.Faker('name')
-    pars = saves(parameter_list)
+    # pars = saves(parameter_list)
 
 
 class ResultFactory(SQLAlchemyModelFactory):

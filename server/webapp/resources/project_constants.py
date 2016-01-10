@@ -34,41 +34,29 @@ class Parameters(Resource):
         return project_parameters
 
 
-predefined_fields = {
-    "programs": Json,
-    "populations": Json,
-    "categories": Json
+populations_fields = {
+    "active": fields.Boolean,
+    "age_from": fields.Integer,
+    "age_to": fields.Integer,
+    "female": fields.Boolean,
+    "male": fields.Boolean,
+    "name": fields.String,
+    "short_name": fields.String,
 }
 
 
-class Predefined(Resource):
+class Populations(Resource):
 
     @swagger.operation(
-        summary='Gives back default populations and programs'
+        summary='Gives back default populations'
     )
-    @marshal_with(predefined_fields)
+    @marshal_with(populations_fields, envelope='populations')
     @login_required
     @report_exception
-    def get(self):
-        from server.webapp.programs import get_default_programs, program_categories
+    def get(self, project_id):
         from server.webapp.populations import populations
 
-        programs = get_default_programs()
         populations = populations()
-        program_categories = program_categories()
         for p in populations:
             p['active'] = False
-        for p in programs:
-            p['active'] = False
-#            new_parameters = [
-#                dict([
-#                    ('value', parameter),
-#                    ('active', True)]) for parameter in p['parameters']]
-#            if new_parameters:
-#                p['parameters'] = new_parameters
-        payload = {
-            "programs": programs,
-            "populations": populations,
-            "categories": program_categories
-        }
-        return payload
+        return populations

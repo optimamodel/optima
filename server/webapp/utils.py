@@ -137,7 +137,16 @@ def load_project(project_id, all_data=False, raise_exception=False):
     from sqlalchemy.orm import undefer, defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
     cu = current_user
-    current_app.logger.debug("getting project %s for user %s (admin:%s)" % (project_id, cu.id, cu.is_admin))
+    current_app.logger.debug("getting project {} for user {} (admin:{})".format(
+        project_id,
+        cu.id if not cu.is_anonymous() else None,
+        cu.is_admin if not cu.is_anonymous else False
+    ))
+    if cu.is_anonymous():
+        if raise_exception:
+            abort(401)
+        else:
+            return None
     if cu.is_admin:
         query = ProjectDb.query.filter_by(id=project_id)
     else:

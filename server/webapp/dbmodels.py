@@ -172,7 +172,7 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.utils import update_or_create_progset, update_or_create_program
-            from server.webapp.programs import program_list
+            # from server.webapp.programs import program_list
 
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset(self.id, name, progset)
@@ -180,24 +180,24 @@ class ProjectDb(db.Model):
                 # only active programs are hydrated
                 # therefore we need to retrieve the default list of programs
                 loaded_programs = set()
-                for program in program_list:
-                    program_name = program['name']
-                    if program_name in progset.programs:
-                        loaded_programs.add(program_name)
-                        program = progset.programs[program_name].__dict__
-                        program['parameters'] = program.get('targetpars', [])
-                        active = True
-                    else:
-                        active = False
+                # for program in program_list:
+                #     program_name = program['name']
+                #     if program_name in progset.programs:
+                #         loaded_programs.add(program_name)
+                #         program = progset.programs[program_name].__dict__
+                #         program['parameters'] = program.get('targetpars', [])
+                #         active = True
+                #     else:
+                #         active = False
 
-                    update_or_create_program(self.id, progset_record.id, program_name, program, active)
+                #     update_or_create_program(self.id, progset_record.id, program_name, program, active)
 
-                # In case programs from prj are not in the defaults
-                for program_name, program in progset.programs.iteritems():
-                    if program_name not in loaded_programs:
-                        program = program.__dict__
-                        program['parameters'] = program.get('targetpars', [])
-                        update_or_create_program(self.id, progset_record.id, program_name, program, True)
+                # # In case programs from prj are not in the defaults
+                # for program_name, program in progset.programs.iteritems():
+                #     if program_name not in loaded_programs:
+                #         program = program.__dict__
+                #         program['parameters'] = program.get('targetpars', [])
+                #         update_or_create_program(self.id, progset_record.id, program_name, program, True)
 
     def recursive_delete(self):
 
@@ -250,7 +250,8 @@ class ParsetsDb(db.Model):
         parset_entry.uid = self.id
         parset_entry.created = self.created
         parset_entry.modified = self.updated
-        parset_entry.pars = op.loads(self.pars)
+        if self.pars:
+            parset_entry.pars = op.loads(self.pars)
         return parset_entry
 
 
