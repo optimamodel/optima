@@ -310,7 +310,7 @@ def makepars(data, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uuid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -321,7 +321,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     # Handle inputs and initialization
     simpars = odict() # Used to be called M
     simpars['parsetname'] = name
-    simpars['parsetuuid'] = uuid
+    simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys']
     modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
     if keys is None: keys = modelkeys
@@ -488,7 +488,7 @@ class Parameterset(object):
     
     def __init__(self, name='default'):
         self.name = name # Name of the parameter set, e.g. 'default'
-        self.uuid = uuid() # ID
+        self.uid = uuid() # ID
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
@@ -501,7 +501,7 @@ class Parameterset(object):
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '              UUID: %s\n'    % self.uuid
+        output += '               UID: %s\n'    % self.uid
         return output
     
     
@@ -520,7 +520,7 @@ class Parameterset(object):
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uuid=self.uuid)
+            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         printv('...done making model parameters.', 2, verbose)

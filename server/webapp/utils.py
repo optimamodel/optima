@@ -284,7 +284,7 @@ def update_or_create_parset(project_id, name, parset):
     from optima.utils import saves
 
     parset_record = ParsetsDb.query \
-        .filter_by(id=parset.uuid, project_id=project_id) \
+        .filter_by(id=parset.uid, project_id=project_id) \
         .first()
 
     if parset_record is None:
