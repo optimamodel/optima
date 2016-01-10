@@ -70,6 +70,7 @@ def makescenarios(scenlist, verbose=2):
                 for budget in scen['budgets']:
                     thisprogset = scen['progset']
                     thiscoverage = thisprogset.getprogcoverage(budget=budget, t=scen['t'], parset=scen['parset'])
+#                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
             if scen['coveragelevels']:
                 for coveragelevel in scen['coveragelevels']:

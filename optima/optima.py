@@ -33,6 +33,7 @@ from model import model, runmodel # The thing that actually runs the model
 from programs import Program, Programset # Define programs
 from makeplots import epiplot # Create the plots
 from calibration import sensitivity, autofit # Calibration functions
+from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 
 ## Load optional plotting functions
 try: from gui import plotresults
