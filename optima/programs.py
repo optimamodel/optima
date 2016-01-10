@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, concatenate as cat
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, concatenate as cat
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize
 from collections import defaultdict
 import abc
 from pylab import figure
@@ -174,6 +174,35 @@ class Programset(object):
         if filter_partype: return dict(progs_by_targetpar)[filter_partype]
         else: return dict(progs_by_targetpar)
 
+    def getdefaultbudget(self, tvec=None, verbose=2):
+        ''' Extract the budget if cost data has been provided'''
+        
+        if type(tvec) in [int, float]: tvec = [tvec]
+        totalbudget, lastbudget, selectbudget = dict(), dict(), dict()
+        settings = Settings()
+        start = settings.start
+        end = settings.end
+        allt = arange(start,end)
+        emptyarray = array([nan]*len(allt))
+        
+        for program in self.programs:
+            totalbudget[program] = dcp(emptyarray)
+            selectbudget[program] = []
+            if self.programs[program].costcovdata['t']:
+                for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
+                    yrindex = findinds(allt,yr)
+                    totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
+                    lastbudget[program] = array([sanitize(totalbudget[program])[-1]])
+            else: 
+                printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
+                lastbudget[program] = array([nan])
+            if tvec:
+                for yr in tvec:
+                    yrindex = findinds(allt,yr)
+                    selectbudget[program].append(totalbudget[program][yrindex][0])
+
+        return selectbudget if tvec else lastbudget
+
     def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
         coverage = {}
@@ -218,6 +247,8 @@ class Programset(object):
 
     def getoutcomes(self,coverage,t,parset,perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
+
+        if type(t) in [int,float]: t = [t]
         nyrs = len(t)
         outcomes = odict()
         
@@ -480,6 +511,11 @@ class Program(object):
 
     def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
+
+        if type(x) in [int,float]: x = [x]
+        if type(t) in [int,float]: t = [t]
+        if type(x) == list: x = array(x)
+        if type(t) == list: t = array(t)
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, total=False)
         totaltargeted = sum(poptargeted.values())
@@ -747,3 +783,9 @@ class Covout(CCOF):
         ccopars['intercept'] = None
         ccopars['t'] = None
         return ccopars
+
+
+########################################################
+# Other functions...
+########################################################
+
