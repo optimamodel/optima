@@ -1,0 +1,1 @@
+ALTER TABLE parsets ALTER COLUMN created SET DEFAULT 'now()';
