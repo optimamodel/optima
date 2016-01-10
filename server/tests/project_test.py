@@ -416,6 +416,37 @@ class ProjectTestCase(OptimaTestCase):
         be_project = load(project_file)
         self.assertEqual(be_project.name, projects[0].name)
 
+    def test_parset_get(self):
+        from server.webapp.dbmodels import ProjectDb
+        parset_count = 2
+
+        project_id = self.create_project(parset_count=parset_count)
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(len(project.parsets), parset_count)
+
+        response = self.client.get('/api/project/{}/parsets'.format(project.id))
+        self.assertEqual(response.status_code, 200, response.data)
+
+        parset_data = json.loads(response.data)
+        self.assertIn('parsets', parset_data)
+        self.assertEqual(len(parset_data['parsets']), parset_count)
+
+    def test_parset_delete(self):
+        from server.webapp.dbmodels import ProjectDb
+        parset_count = 2
+
+        project_id = self.create_project(parset_count=parset_count)
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(len(project.parsets), parset_count)
+
+        response = self.client.delete('/api/project/{}/parsets/{}'.format(
+            project.id, project.parsets[0].id
+        ))
+        self.assertEqual(response.status_code, 204, response.data)
+
+        project = ProjectDb.query.filter_by(id=project_id).first()
+        self.assertEqual(len(project.parsets), parset_count - 1)
+
 
 if __name__ == '__main__':
     unittest.main()

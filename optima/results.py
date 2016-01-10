@@ -33,7 +33,7 @@ class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
     def __init__(self, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
         # Basic info
-        self.uuid = uuid()
+        self.uid = uuid()
         self.created = today()
         
         # Turn inputs into lists if not already
@@ -89,7 +89,7 @@ class Resultset(object):
         output += '============================================================\n'
         output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
         output += '      Date created: %s\n'    % getdate(self.created)
-        output += '              UUID: %s\n'    % self.uuid
+        output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
         output += objectatt(self)
         output += '============================================================\n'

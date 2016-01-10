@@ -19,12 +19,12 @@ from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStora
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid
 
-from server.webapp.utils import (load_project, verify_admin_request,
+from server.webapp.utils import (load_project, verify_admin_request, report_exception,
                                  delete_spreadsheet, RequestParser)
 
 
 class ProjectBase(Resource):
-    method_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     def get_query(self):
         return ProjectDb.query
@@ -198,7 +198,7 @@ class Project(Resource):
     """
     An individual project.
     """
-    method_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
@@ -356,7 +356,7 @@ class ProjectSpreadsheet(Resource):
     """
     Spreadsheet upload and download for the given project.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -482,15 +482,15 @@ class ProjectSpreadsheet(Resource):
             parset_records_map = {record.id: record for record in project_entry.parsets}
             # may be SQLAlchemy can do stuff like this already?
             for (parset_name, parset_entry) in new_project.parsets.iteritems():
-                parset_record = parset_records_map.get(parset_entry.uuid)
+                parset_record = parset_records_map.get(parset_entry.uid)
                 if not parset_record:
                     parset_record = ParsetsDb(
                         project_id=project_entry.id,
                         name=parset_name,
-                        id=parset_entry.uuid
+                        id=parset_entry.uid
                     )
                 if parset_record.name == "default":
-                    result_parset_id = parset_entry.uuid
+                    result_parset_id = parset_entry.uid
                 parset_record.pars = saves(parset_entry.pars)
                 db.session.add(parset_record)
 
@@ -535,7 +535,7 @@ class ProjectData(Resource):
     """
     Export and import of the existing project in / from pickled format.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         produces='application/x-gzip',
@@ -609,7 +609,7 @@ class ProjectFromData(Resource):
     """
     Import of a new project from pickled format.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         summary='Creates a project & uploads data to initialize it.',
@@ -688,6 +688,7 @@ class ProjectCopy(Resource):
     )
     @marshal_with(project_copy_fields)
     @login_required
+    @report_exception
     def post(self, project_id):
         from sqlalchemy.orm.session import make_transient
         # from server.webapp.dataio import projectpath
@@ -748,6 +749,7 @@ class Portfolio(Resource):
         parameters=bulk_project_parser.swagger_parameters()
     )
     @login_required
+    @report_exception
     def post(self):
         from zipfile import ZipFile
         from uuid import uuid4

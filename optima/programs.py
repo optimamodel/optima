@@ -20,7 +20,7 @@ class Programset(object):
     def __init__(self, name='default', programs=None, default_interaction='random'):
         ''' Initialize '''
         self.name = name
-        self.id = uuid()
+        self.uid = uuid()
         self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
@@ -35,7 +35,7 @@ class Programset(object):
         output += 'Targeted populations: %s\n'    % self.targetpops
         output += '        Date created: %s\n'    % getdate(self.created)
         output += '       Date modified: %s\n'    % getdate(self.modified)
-        output += '                  ID: %s\n'    % self.id
+        output += '                 UID: %s\n'    % self.uid
         return output
 
     def gettargetpops(self):
@@ -380,12 +380,16 @@ class Program(object):
         category='No category', short_name='', criteria=None):
         '''Initialize'''
         self.name = name
-        self.id = uuid()
+        self.uid = uuid()
         if targetpars:
             self.targetpars = targetpars
         else: self.targetpars = []
         self.targetpops = targetpops if targetpops else []
-        self.targetpartypes = list(set([thispar['param'] for thispar in targetpars])) if targetpars else []
+        try:
+            self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars])) if self.targetpars else []
+        except:
+            print("Error while initializing targetpartypes in program %s for targetpars %s" % (name, self.targetpars))
+            self.targetpartypes = []
         self.optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}

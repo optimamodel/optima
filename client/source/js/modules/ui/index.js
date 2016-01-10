@@ -78,33 +78,33 @@ define([
             title: 'View data & model calibration',
             id: 'create-load',
             click: function() {
-              ifActiveProject($state, 'model.view', activeProject);
+              ifActiveProject($state, 'model', activeProject);
             },
             state: {
-              name: 'model.view'
+              name: 'model'
             }
           },
           {
             title: 'Create/manage project set',
             id: 'manage-responses',
-            matchingState: 'model',
+            matchingState: 'project-set',
             subitems: [
               {
                 title: 'Define programs',
                 click: function() {
-                  ifActiveProject($state, 'model.manageProgramSet', activeProject);
+                  ifActiveProject($state, 'project-set.manageProgramSet', activeProject);
                 },
                 state: {
-                  name: 'model.view'
+                  name: 'project-set.manageProgramSet'
                 }
               },
               {
                 title: 'Define cost and outcome functions',
                 click: function() {
-                  ifActiveProject($state, 'model.define-cost-coverage-outcome', activeProject);
+                  ifActiveProject($state, 'project-set.define-cost-coverage-outcome', activeProject);
                 },
                 state:{
-                  name: 'model.define-cost-coverage-outcome'
+                  name: 'project-set.define-cost-coverage-outcome'
                 }
               }
             ]

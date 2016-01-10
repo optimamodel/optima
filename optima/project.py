@@ -55,7 +55,7 @@ class Project(object):
         self.data = {} # Data from the spreadsheet
         
         ## Define metadata
-        self.uuid = uuid()
+        self.uid = uuid()
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
@@ -92,7 +92,7 @@ class Project(object):
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
-        output += '              UUID: %s\n'    % self.uuid
+        output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
         output += objectatt(self)
         output += '============================================================\n'

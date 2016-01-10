@@ -23,7 +23,7 @@ def runscenarios(scenlist=None, default_parset=None, verbose=2, debug=False):
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        allresults.append(runmodel(pars=scenparsets[scen].pars[0]))
+        allresults.append(runmodel(pars=scenparsets[scen].pars[0], verbose=1)) # Don't bother printing out model run because it's obvious
         printv('Scenario: %i/%i' % (scenno+1, nscenarios), 2, verbose)
     
     printv('...done running scenarios.', 2, verbose)

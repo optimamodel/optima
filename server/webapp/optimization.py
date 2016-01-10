@@ -30,7 +30,7 @@ optimization = Blueprint('optimization',  __name__, static_folder = '../static')
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def getOptimizationParameters():
     """ retrieve list of optimizations defined by the user, with parameters """
     current_app.logger.debug("/api/analysis/optimization/list")
@@ -57,7 +57,7 @@ def getOptimizationParameters():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def startOptimization():
     """ Start optimization """
     data = json.loads(request.data)
@@ -110,7 +110,7 @@ def stopCalibration():
 @optimization.route('/working')
 @login_required
 @check_project_name
-@report_exception()
+@report_exception
 def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
     """ Returns the working model for optimization. """
     import datetime
@@ -180,7 +180,7 @@ def getWorkingModel(): # pylint: disable=R0912, R0914, R0915
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def saveModel():
     """ Saves working model as the default model """
     # get project name
@@ -194,7 +194,7 @@ def saveModel():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def revertWorkingModel():
     """ Revert working model to the default model """
     # get project name
@@ -212,7 +212,7 @@ def revertWorkingModel():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def removeOptimizationSet(name):
     """ Removes given optimization from the optimization set """
     from sim.optimize import removeoptimization
@@ -229,7 +229,7 @@ def removeOptimizationSet(name):
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def create_optimization():
     """ Creates a new optimization from the optimization set """
     data = json.loads(request.data)

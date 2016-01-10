@@ -120,7 +120,7 @@ class ProjectDb(db.Model):
 
     def hydrate(self):
         project_entry = op.Project()
-        project_entry.uuid = self.id
+        project_entry.uid = self.id
         project_entry.name = self.name
         project_entry.created = (
             self.created or datetime.now(dateutil.tz.tzutc())
@@ -217,6 +217,15 @@ class ParsetsDb(db.Model):
 
     __tablename__ = 'parsets'
 
+    resource_fields = {
+        'id': Uuid(attribute='uid'),
+        'project_id': Uuid,
+        'name': fields.String,
+        'created': fields.DateTime,
+        'updated': fields.DateTime,
+        'pars': Json,
+    }
+
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.Text)
@@ -238,7 +247,7 @@ class ParsetsDb(db.Model):
     def hydrate(self):
         parset_entry = op.Parameterset()
         parset_entry.name = self.name
-        parset_entry.uuid = self.id
+        parset_entry.uid = self.id
         parset_entry.created = self.created
         parset_entry.modified = self.updated
         parset_entry.pars = op.loads(self.pars)
@@ -263,6 +272,8 @@ class ResultsDb(db.Model):
         if id:
             self.id = id
 
+    def hydrate(self):
+        return op.loads(self.blob)
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
 

@@ -1,10 +1,10 @@
-define ['angular-mocks', 'Source/modules/model/cost-coverage-service'], ->
-  describe 'costCoverageHelpers service in app.model', ->
+define ['angular-mocks', 'Source/modules/project-set/cost-coverage-service'], ->
+  describe 'costCoverageHelpers service in app.project-set', ->
 
     helpers = null
 
     beforeEach ->
-      module 'app.model'
+      module 'app.project-set'
 
       inject (costCoverageHelpers) ->
         helpers = costCoverageHelpers

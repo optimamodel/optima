@@ -1,10 +1,10 @@
-define ['angular-mocks', 'Source/modules/model/cost-coverage-ctrl'], ->
-  describe 'ModelCostCoverageController in app.model', ->
+define ['angular-mocks', 'Source/modules/project-set/cost-coverage-ctrl'], ->
+  describe 'ModelCostCoverageController in app.project-set', ->
     scope = null
     subject = null
 
     beforeEach ->
-      module 'app.model'
+      module 'app.project-set'
 
       inject ($rootScope, $controller, costCoverageHelpers) ->
         meta = {

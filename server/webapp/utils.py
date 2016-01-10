@@ -5,7 +5,7 @@ import traceback
 from dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
 
 from flask import helpers, current_app, abort
-from flask import request, jsonify
+from flask import request, jsonify, Response, make_response
 from werkzeug.datastructures import FileStorage
 
 from flask.ext.login import current_user
@@ -33,7 +33,7 @@ def check_project_name(api_call):
             exception = traceback.format_exc()
             current_app.logger.error("Exception during request %s: %s" % (request, exception))
             reply = {'reason': 'No project is open', 'exception': exception}
-            return jsonify(reply), 500
+            return jsonify(reply), 400
     return _check_project_name
 
 
@@ -47,28 +47,28 @@ def check_project_exists(api_call):
             error_msg = 'Project %s(%s) does not exist' % (project_id, project_name)
             current_app.logger.error(error_msg)
             reply = {'reason': error_msg}
-            return jsonify(reply), 500
+            return jsonify(reply), 404
         else:
             return api_call(*args, **kwargs)
     return _check_project_exists
 
 
-def report_exception(reason=None):
-    def _report_exception(api_call):
-        @wraps(api_call)
-        def __report_exception(*args, **kwargs):
-            try:
-                return api_call(*args, **kwargs)
-            except Exception:
-                exception = traceback.format_exc()
-                # limiting the exception information to 10000 characters maximum
-                # (to prevent monstrous sqlalchemy outputs)
-                current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
-                reply = {'exception': exception}
-                if reason:
-                    reply['reason'] = reason
-                return jsonify(reply), 500
-        return __report_exception
+def report_exception(api_call):
+    @wraps(api_call)
+    def _report_exception(*args, **kwargs):
+        from werkzeug.exceptions import HTTPException
+        try:
+            return api_call(*args, **kwargs)
+        except Exception, e:
+            exception = traceback.format_exc()
+            # limiting the exception information to 10000 characters maximum
+            # (to prevent monstrous sqlalchemy outputs)
+            current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
+            if isinstance(e, HTTPException):
+                raise
+            code = 500
+            reply = {'exception': exception}
+            return make_response(jsonify(reply), code)
     return _report_exception
 
 
@@ -284,7 +284,7 @@ def update_or_create_parset(project_id, name, parset):
     from optima.utils import saves
 
     parset_record = ParsetsDb.query \
-        .filter_by(id=parset.uuid, project_id=project_id) \
+        .filter_by(id=parset.uid, project_id=project_id) \
         .first()
 
     if parset_record is None:

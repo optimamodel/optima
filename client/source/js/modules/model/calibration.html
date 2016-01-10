@@ -1,163 +1,106 @@
+<script>
+/*  function move_year() {
+    var al = $('.mpld3-baseaxes').length;
+    var dl = $('div.fig').length;
+    if ($('.mpld3-baseaxes > text').length > 0) {
+      $('.mpld3-baseaxes > text').each(function() {
+        var value = $(this).text();
+        if (value === 'Year') {
+          $(this).attr('y', parseInt($(this).attr('y'))+10);
+        }
+      });
+    } else {
+      setTimeout(move_year, 150);
+    }
+  }*/
+  function format_xaxis() {
+    var axes = $('.mpld3-xaxis');
+    if (axes.length > 0) {
+      $(axes).find('g.tick > text').each(function() {
+        $(this).text($(this).text().replace(',',''));
+      });
+    } else {
+      setTimeout(format_xaxis, 150);
+    }
+  }
+  function add_lines_to_legends() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function() {
+        var paths = $(this).find('.mpld3-baseaxes > text');
+        if (paths) {
+          var legend_length = paths.length - 2;
+          var lines = $(this).find('.mpld3-axes > path');
+          var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+          $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+        }
+      });
+    } else {
+      setTimeout(add_lines_to_legends, 150);
+    }
+  }
+  function set_overflow_visible() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function() {
+        $(this).css('overflow', 'visible');
+      });
+    } else {
+      setTimeout(set_overflow_visible, 150);
+    }
+  }
+  function fix_mouse_pointer() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function () {
+        var that = this;
+        $(that).on('mouseover', function() {
+          $(that).find('.mpld3-coordinates').each(function () {
+            $(this).attr('y', parseInt($(that).attr('height')) + 7);
+          });
+          $(that).find('.mpld3-toolbar').each(function () {
+            $(this).remove();
+          });
+        });
+      });
+    } else {
+      setTimeout(fix_mouse_pointer, 150);
+    }
+  }
+  function remove_default_plugin() {
+    var svgGraphFigures = $('mpld3-toolbar');
+    if (svgGraphFigures.length > 0) {
+      svgGraphFigures.each(function () {
+        $(this).remove();
+      });
+    } else {
+      setTimeout(remove_default_plugin, 150);
+    }
+  }
+
+  $(document).ready(function() {
+    format_xaxis();
+    //move_year();
+    add_lines_to_legends();
+    set_overflow_visible();
+    fix_mouse_pointer();
+  });
+</script>
 <div class="page rich">
-
-  <div ng-if="missingModelData">
-    <spreadsheet-upload-hint></spreadsheet-upload-hint>
+  <div class="3">
+    <label for="programSet-selection">Select a parameter set:</label>
+  </div>
+  <div style="display: flex;justify-content: flex-start;">
+    <select id="programSet-selection" name="programSet-selection" class="txbox"
+            ng-model="selectedParset"
+            ng-change="displayGraphs()"
+            ng-options="parset.name for parset in parsets"
+            style="width: 20%;">
+    </select>
   </div>
 
-  <div ng-if="!missingModelData">
-
-    <div class="page_header">
-      <div class="section grid">
-        <div class="12">
-
-          <div class="elastic __fluid">
-            <div class="elastic_col __va-middle">
-              <a class="btn" ng-click="reloadSpreadsheet()">Reload spreadsheet</a>
-            </div>
-            <div class="elastic_col __va-middle">
-              <a class="btn" href="http://optimamodel.com/files/optima-parameter-priors.pdf" target="_blank">View parameter priors (PDF)</a>
-            </div>
-            <div class="elastic_col __va-middle">
-              <label class="checkbox-inline">
-                <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableAutomaticCalibration">
-                Automatic calibration
-              </label>
-            </div>
-            <div class="elastic_col __va-middle">
-              <label class="checkbox-inline">
-                <input type="checkbox" ng-disabled="!canDoFitting" ng-model="enableManualCalibration">
-                Manual calibration
-              </label>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-
-    <div class="section" ng-if="enableAutomaticCalibration">
-      <div class="section">
-        <h2>Automatic calibration</h2>
-
-        <div class="elastic_col __va-middle text-right">
-          <div class="elastic __fluid float-right">
-            <div class="elastic_col __shrink">
-              <label>
-                Maximum time limit:
-                <select class="txbox __inline" style="width: 120px" ng-model="simulationOptions.timelimit">
-                  <option value="10">10 seconds</option>
-                  <option value="30">30 seconds</option>
-                  <option value="60">1 minute</option>
-                  <option value="300">5 minutes</option>
-                  <option value="600">10 minutes</option>
-                  <option value="1800">30 minutes</option>
-                  <option value="3600">1 hour</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="elastic_col __shrink">
-              <button class="btn __green" ng-click="startAutoCalibration()">Start calibration</button>
-            </div>
-            <div class="elastic_col __shrink">
-              <button class="btn __red" ng-click="stopAutoCalibration()" ng-disabled="!calibrationStatus">Stop calibration</button>
-            </div>
-            <div class="elastic_col __shrink">
-              <button class="btn" ng-click="saveCalibration()" ng-disabled="calibrationStatus || errorText">Save calibration</button>
-            </div>
-            <div class="elastic_col __shrink">
-              <button class="btn" ng-click="revertCalibration()" ng-disabled="calibrationStatus">Revert</button>
-            </div>
-          </div>
-        </div>
-        <div class="info-hint" ng-show="calibrationStatus">
-          {{reportCalibrationStatus()}}
-        </div>
-        <div class="error-hint" ng-show="errorText">
-            <pre>{{errorText}}</pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="section __inline calibration-charts" ng-class="{'calibration-charts--full':enableManualCalibration===false}" ng-if="charts.length > 0" >
-      <export-all-charts name="Model calibration" ng-if="charts"></export-all-charts>
-      <export-all-data name="Model calibration" charts="charts" ng-if="charts"></export-all-data>
-      <div class="grid">
-        <div>
-          <div class="chart-container __small" ng-repeat="chart in charts">
-            <div ng-if="chart.type == 'lineAreaScatterChart'" line-area-scatter-chart ng-if="chart.type != 'stackAreaChart'" data="chart.data" options="chart.options" normalise-height></div>
-            <chart-toolbar chart-type="d3" d3-chart-data="chart.data"></chart-toolbar>
-            <div ng-if="chart.type == 'stackedAreaChart'" stacked-area-chart data="chart.data" options="chart.options" normalise-height></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="__inline manual-calibration" ng-if="enableManualCalibration">
-      <h2>Manual calibration</h2>
-      <table class="section table table-bordered">
-        <thead>
-        <tr>
-          <td><b>Parameter</b></td>
-          <td style="width:35%"><b>Value</b></td>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat="parameter in parameters.m">
-          <td>{{ ::parameter.title }}</td>
-          <td>
-            <span editable-input="parameter.data" on-save="doneEditingParameter"></span>
-          </td>
-        </tr>
-        <!-- Force -->
-        <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
-          <td>{{ ::parameters.types.force }} {{ ::population }}</td>
-          <td>
-            <span editable-input="parameters.f.force[$index]" on-save="doneEditingParameter"></span>
-          </td>
-        </tr>
-        <!-- Inhomo -->
-        <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
-          <td>{{ ::parameters.types.inhomo }} {{ ::population }}</td>
-          <td>
-            <span editable-input="parameters.f.inhomo[$index]" on-save="doneEditingParameter"></span>
-          </td>
-        </tr>
-        <!-- Init -->
-        <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
-          <td>{{ ::parameters.types.init }} {{ ::population }}</td>
-          <td>
-            <span editable-input="parameters.f.init[$index]" on-save="doneEditingParameter"></span>
-          </td>
-        </tr>
-        <!-- Popsize -->
-        <tr ng-repeat="population in ::parameters.meta.pops.short track by $index">
-          <td>{{ ::parameters.types.popsize }} {{ ::population }}</td>
-          <td>
-            <span editable-input="parameters.f.popsize[$index]" on-save="doneEditingParameter"></span>
-          </td>
-        </tr>
-        <!-- Testing Rate -->
-        <tr ng-repeat="i in [0, 1, 2, 3] track by $index">
-          <td>{{ ::parameters.types.dx[i] }}</td>
-          <td>
-            <span editable-input="parameters.f.dx[i]" on-save="doneEditingParameter"></span>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-
-      <div class="elastic __fluid">
-        <div class="elastic_col">
-          <button class="btn" ng-click="saveManualCalibration()">Save calibration</button>
-        </div>
-        <div class="elastic_col">
-          <button class="btn" ng-click="revertManualCalibration()">Revert</button>
-        </div>
-      </div>
-    </div>
-
+  <div ng-repeat="chart in calibrationChart" class="chart-container __small">
+    <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+    <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
   </div>
-
 </div>
