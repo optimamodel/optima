@@ -131,7 +131,7 @@ def init_logger():
 if __name__ == '__main__':
     init_logger()
     init_db()
-    app.run(threaded=True, debug=True)
+    app.run(threaded=True, debug=True, use_debugger=False)
 else:
     init_logger()
     init_db()

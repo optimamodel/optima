@@ -5,7 +5,7 @@ from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 
 from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser
+from server.webapp.utils import load_project, RequestParser, report_exception
 from server.webapp.exceptions import RecordDoesNotExist, ProjectDoesNotExist
 
 from server.webapp.dbconn import db
@@ -35,7 +35,7 @@ class Progsets(Resource):
     """
     Progsets for a given project.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Download progsets for the project with the given id.',
@@ -88,7 +88,7 @@ class Progset(Resource):
     """
     An individual progset.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Download progset with the given id.',
