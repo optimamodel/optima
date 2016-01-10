@@ -5,7 +5,7 @@ from flask_restful import Resource, marshal_with, abort
 from flask_restful_swagger import swagger
 
 from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser
+from server.webapp.utils import load_project, RequestParser, report_exception
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from server.webapp.dbconn import db
@@ -19,7 +19,7 @@ class Parsets(Resource):
     """
     Parsets for a given project.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Download parsets for the project with the given id.',
@@ -43,7 +43,7 @@ class ParsetsDetail(Resource):
     """
     Single Parset.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Delete parset with the given id.',
@@ -84,7 +84,7 @@ class ParsetsCalibration(Resource):
     Calibration info for the Parset.
     """
 
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Provides calibration information for the given parset',
