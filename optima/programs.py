@@ -354,7 +354,11 @@ class Program(object):
             self.targetpars = targetpars
         else: self.targetpars = []
         self.targetpops = targetpops if targetpops else []
-        self.targetpartypes = list(set([thispar['param'] for thispar in targetpars])) if targetpars else []
+        try:
+            self.targetpartypes = list(set([thispar['param'] for thispar in self.targetpars])) if self.targetpars else []
+        except:
+            print("Error while initializing targetpartypes in program %s for targetpars %s" % (name, self.targetpars))
+            self.targetpartypes = []
         self.optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
