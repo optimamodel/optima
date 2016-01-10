@@ -482,15 +482,15 @@ class ProjectSpreadsheet(Resource):
             parset_records_map = {record.id: record for record in project_entry.parsets}
             # may be SQLAlchemy can do stuff like this already?
             for (parset_name, parset_entry) in new_project.parsets.iteritems():
-                parset_record = parset_records_map.get(parset_entry.uuid)
+                parset_record = parset_records_map.get(parset_entry.uid)
                 if not parset_record:
                     parset_record = ParsetsDb(
                         project_id=project_entry.id,
                         name=parset_name,
-                        id=parset_entry.uuid
+                        id=parset_entry.uid
                     )
                 if parset_record.name == "default":
-                    result_parset_id = parset_entry.uuid
+                    result_parset_id = parset_entry.uid
                 parset_record.pars = saves(parset_entry.pars)
                 db.session.add(parset_record)
 
