@@ -107,22 +107,19 @@ if 'makeprograms' in tests:
     R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
     R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
+    R.programs['Condoms'].addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
+    R.programs['FSW_programs'].addcostcovdatum({'t':2016,'cost':1e6,'coverage':15000})
+    R.programs['MSM_programs'].addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+    R.programs['HTC'].addcostcovdatum({'t':2016,'cost':2e7,'coverage':1.3e6})
+    R.programs['ART'].addcostcovdatum({'t':2016,'cost':5e7,'coverage':17000})
+    R.programs['PMTCT'].addcostcovdatum({'t':2016,'cost':4e6,'coverage':5500})
+    R.programs['MGMT'].addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+    R.programs['HR'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
+    R.programs['Other'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
 
-    from numpy import array
-    budget={'Condoms':array([1e7]),
-            'FSW_programs':array([1e6]),
-            'MSM_programs':array([2e6]),
-            'HTC':array([2e7]),
-            'ART':array([5e7]),
-            'PMTCT':array([4e6]),
-            'MGMT':array([1e7]),
-            'HR':array([5e5]),
-            'Other':array([5e5])}
-            
+    budget = R.getdefaultbudget()
     coverage = R.getprogcoverage(budget=budget, t=[2016], parset=P.parsets['default'])
-
     outcomes = R.getoutcomes(coverage=coverage, t=[2016], parset=P.parsets['default'])
-
     progparset = R.getparset(coverage=coverage,
                   t=[2016],
                   parset=P.parsets['default'],

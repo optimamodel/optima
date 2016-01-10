@@ -192,10 +192,10 @@ class Programset(object):
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(allt,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
-                    lastbudget[program] = sanitize(totalbudget[program])[-1]
+                    lastbudget[program] = array([sanitize(totalbudget[program])[-1]])
             else: 
                 printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                lastbudget[program] = nan
+                lastbudget[program] = array([nan])
             if tvec:
                 for yr in tvec:
                     yrindex = findinds(allt,yr)
@@ -505,6 +505,11 @@ class Program(object):
 
     def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
+
+        if type(x) in [int,float]: x = [x]
+        if type(t) in [int,float]: t = [t]
+        if type(x) == list: x = array(x)
+        if type(t) == list: t = array(t)
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, total=False)
         totaltargeted = sum(poptargeted.values())
