@@ -74,7 +74,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0, verbose=2):
+def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds=0, verbose=2):
     ''' 
     Function to automatically fit parameters.
     
@@ -249,7 +249,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         # Perform fit
         parvec = convert(pars, parlist)
         options = {'pars':pars, 'parlist':parlist, 'project':project}
-        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=niters, verbose=verbose)
+        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
         pars = convert(pars, parlist, parvecnew)        

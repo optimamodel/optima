@@ -70,7 +70,7 @@ if 'autofit' in tests:
     t = tic()
 
     print('Running autofit test...')
-    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, niters=200, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, maxiters=200, inds=None) # Run automatic fitting
     results = P.runsim('autofit', end=2015)
     
     if doplot:

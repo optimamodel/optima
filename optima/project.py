@@ -270,9 +270,9 @@ class Project(object):
         manualfit(self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
         return None
         
-    def autofit(self, name='autofit', orig='default', what='force', maxtime=None, niters=100, inds=None, verbose=2):
+    def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
-        autofit(self, name=name, what=what, maxtime=maxtime, niters=niters, inds=inds, verbose=verbose)
+        autofit(self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None
     
