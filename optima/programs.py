@@ -247,6 +247,8 @@ class Programset(object):
 
     def getoutcomes(self,coverage,t,parset,perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
+
+        if type(t) in [int,float]: t = [t]
         nyrs = len(t)
         outcomes = odict()
         

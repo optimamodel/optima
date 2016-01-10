@@ -118,8 +118,8 @@ if 'makeprograms' in tests:
     R.programs['Other'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
 
     budget = R.getdefaultbudget()
-    coverage = R.getprogcoverage(budget=budget, t=[2016], parset=P.parsets['default'])
-    outcomes = R.getoutcomes(coverage=coverage, t=[2016], parset=P.parsets['default'])
+    coverage = R.getprogcoverage(budget=budget, t=2016, parset=P.parsets['default'])
+    outcomes = R.getoutcomes(coverage=coverage, t=2016, parset=P.parsets['default'])
     progparset = R.getparset(coverage=coverage,
                   t=[2016],
                   parset=P.parsets['default'],
