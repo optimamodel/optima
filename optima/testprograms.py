@@ -24,7 +24,6 @@ tests = [
 
 from optima import tic, toc, blank, pd # analysis:ignore
 
-doplot = False
 if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
