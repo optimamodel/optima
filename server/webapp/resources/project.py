@@ -415,7 +415,7 @@ class ProjectSpreadsheet(Resource):
         # TODO replace this with app.config
         DATADIR = current_app.config['UPLOAD_FOLDER']
 
-        current_app.logger.debug("api/project/update")
+        current_app.logger.debug("PUT /api/project/%s/spreadsheet" % project_id)
 
         project_entry = load_project(project_id)
         if project_entry is None:
