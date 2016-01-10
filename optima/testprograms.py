@@ -24,6 +24,7 @@ tests = [
 
 from optima import tic, toc, blank, pd # analysis:ignore
 
+doplot = False
 if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
@@ -59,7 +60,10 @@ if 'makeprograms' in tests:
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
     HTC = Program(name='HTC',
                   targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
-                  targetpops=['F 15-49'])
+                  targetpops=['F 15-49'],
+                  costcovdata = {'t':[2013],
+                                 'cost':[1e6],
+                                 'coverage':[3e5]})
 
     SBCC = Program(name='SBCC',
                    targetpars=[{'param': 'condcas', 'pop': ('F 15-49','M 15-49')},
@@ -84,11 +88,11 @@ if 'makeprograms' in tests:
     HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
 
-    # 3. Add historical cost-coverage data point
-    HTC.addcostcovdatum({'t':2013,
-                         'cost':1e6,
-                         'coverage':3e5})
-    HTC.addcostcovdatum({'t':2014,
+    # 3. Add historical cost-coverage data point                         
+    SBCC.addcostcovdatum({'t':2011,
+                         'cost':2e7,
+                         'coverage':8e5})
+    SBCC.addcostcovdatum({'t':2014,
                          'cost':4e7,
                          'coverage':10e5})
     HTC.addcostcovdatum({'t':2015,
@@ -181,6 +185,8 @@ if 'makeprograms' in tests:
     coverage={'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
               'MGT': None,
               'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])}
+              
+    defaultbudget = R.getdefaultbudget()
             
     R.getprogcoverage(budget=budget,
                       t=[2015,2016,2020],
@@ -257,6 +263,7 @@ if 'makeprograms' in tests:
         plotpeople([results0, results1])
 
     done(t)
+    
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
