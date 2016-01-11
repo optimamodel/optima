@@ -494,15 +494,16 @@ class Constant(Par):
 class Parameterset(object):
     ''' A full set of all parameters, possibly including multiple uncertainty runs '''
     
-    def __init__(self, name='default'):
+    def __init__(self, name='default', project=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
+        self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
         self.resultsref = None # Store pointer to results
-        self.project = project # Store pointer for the project
+        
     
     def __repr__(self):
         ''' Print out useful information when called'''
