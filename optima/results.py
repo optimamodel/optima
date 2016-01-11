@@ -114,13 +114,11 @@ class Resultset(object):
                 best = dcp(rawdata)
                 low = dcp(rawdata)
                 high = dcp(rawdata)
-            try:
-                for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
-                    for p in range(len(thisdata)):
-                        if len(array(thisdata[p]))!=len(self.datayears):
-                            thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
-                processed = array([best, low, high]) # For plotting uncertainties
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            for thisdata in [best, low, high]: # Combine in loop, but actual operate on these -- thanks, pass-by-reference!
+                for p in range(len(thisdata)):
+                    if len(array(thisdata[p]))!=len(self.datayears):
+                        thisdata[p] = nan+zeros(len(self.datayears)) # Replace with NaN if an assumption
+            processed = array([best, low, high]) # For plotting uncertainties
             return processed
         
         # Initialize

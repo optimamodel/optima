@@ -106,7 +106,7 @@ def pygui(tmpresults, which=None):
         pygui(results, [which])
     
     where results is the output of e.g. runsim() and which is an optional list of form e.g.
-        which = ['prev-tot', 'numinci-pops']
+        which = ['prev-tot', 'inci-pops']
     
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
@@ -176,23 +176,18 @@ def browser(results, which=None, doplot=True):
         browser(results, [which])
     
     where results is the output of e.g. runsim() and which is an optional list of form e.g.
-        which = ['prev-tot', 'numinci-pops']
+        which = ['prev-tot', 'inci-pops']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
-    Version: 1.1 (2016jan11) by cliffk
+    Version: 1.1 (2015dec29) by cliffk
     '''
-    from optima import tic, toc
-    tt = tic()
-    
     import mpld3 # Only import this if needed, since might not always be available
     import json
     if doplot: from webserver import serve # For launching in a browser
-    
+
     wasinteractive = isinteractive() # Get current state of interactivity so the screen isn't flooded with plots
     if wasinteractive: ioff()
-    
-    toc(tt, label='imports')
     
     
     ## Specify the div style, and create the HTML template we'll add the data to
@@ -264,11 +259,8 @@ def browser(results, which=None, doplot=True):
     '''
 
     ## Create the figures to plot
-    tt = tic()
     jsons = [] # List for storing the converted JSONs
     plots = epiplot(results, which) # Generate the plots
-    toc(tt, label='makefigs')
-    tt = tic()
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
@@ -277,10 +269,7 @@ def browser(results, which=None, doplot=True):
         jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
         close(fig) # Close
     
-    toc(tt, label='mpld3')
-    
     ## Create div and JSON strings to replace the placeholers above
-    tt = tic()
     divstr = ''
     jsonstr = ''
     for p in range(nplots):
@@ -288,7 +277,6 @@ def browser(results, which=None, doplot=True):
         jsonstr += 'mpld3.draw_figure("fig%i", %s);\n' % (p, jsons[p]) # Add the JSON representation of each figure -- THIS IS KEY!
     html = html.replace('!MAKE DIVS!',divstr) # Populate div information
     html = html.replace('!DRAW FIGURES!',jsonstr) # Populate figure information
-    toc(tt, label='create html')
     
     ## Launch a server or return the HTML representation
     if doplot: serve(html)
