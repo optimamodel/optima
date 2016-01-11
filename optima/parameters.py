@@ -501,6 +501,7 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
+        self.resultsref = None # Pointer to results
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -513,6 +514,13 @@ class Parameterset(object):
         return output
     
     
+    def results(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None:
+            getresults(parent, se
+        else:
+            print('WARNING, no results associated with this parameter set')
+            return None
     
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry

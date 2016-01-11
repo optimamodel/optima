@@ -8,6 +8,31 @@ from optima import uuid, today, getdate, quantile, printv, odict, objectid, obje
 from numpy import array, nan, zeros, arange
 
 
+def getresults(project=None, pointer=None):
+    '''
+    A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
+    a string representation of the UID, the actual pointer to the results, or a function to return the
+    results.
+    
+    Example:
+        results = P.parsets[0].results()
+        calls
+        getresults(P, P.parsets[0].resultsref)
+        which returns
+        P.results[P.parsets[0].resultsref]
+    
+    Version: 2016jan11
+    '''
+    if type(pointer)==str: return project.results[pointer]
+    elif type(pointer)==type(uuid()): return project.results[str(pointer)]
+    elif type(pointer)==Resultset: return pointer
+    else:
+        try: 
+            return pointer() # Try calling as function
+        except:
+            errormsg = 'Could not understand results pointer "%s" for project "%s"' % (pointer, project.name)
+            raise Exception(errormsg)
+
 
 
 class Result(object):
@@ -27,6 +52,7 @@ class Result(object):
         output += objectatt(self)
         output += '============================================================\n'
         return output
+
 
 
 class Resultset(object):
