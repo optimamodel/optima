@@ -48,6 +48,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.projects = _.filter($scope.projects, function(project) {
               return !project.selected;
             });
+            var activeProjectId = activeProject.getProjectIdForCurrentUser();
+            _.each(selectedProjects, function(project) {
+              if(activeProjectId === project.id) {
+                activeProject.resetFor(UserManager.data);
+              }
+            });
           });
       };
 
