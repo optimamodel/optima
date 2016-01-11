@@ -267,6 +267,8 @@ def browser(results, which=None, doplot=True):
     tt = tic()
     jsons = [] # List for storing the converted JSONs
     plots = epiplot(results, which) # Generate the plots
+    toc(tt, label='makefigs')
+    tt = tic()
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
@@ -275,7 +277,7 @@ def browser(results, which=None, doplot=True):
         jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
         close(fig) # Close
     
-    toc(tt, label='makefigs')
+    toc(tt, label='mpld3')
     
     ## Create div and JSON strings to replace the placeholers above
     tt = tic()
