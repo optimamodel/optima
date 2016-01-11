@@ -51,6 +51,8 @@ def makescenarios(scenlist, verbose=2):
                         pops = [par['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
                     elif type(par['for'])==int: #... if its a population.
                         pops = range(npops) if par['for'] > npops else [par['for']]
+                    elif type(par['for'])==list: #... if its a population.
+                        pops = par['for']
                     else: 
                         errormsg = 'Unrecognized population or partnership type.'
                         raise Exception(errormsg)
@@ -71,11 +73,13 @@ def makescenarios(scenlist, verbose=2):
                 thiscoverage = thisprogset.getprogcoverage(budget=scen['programs'], t=scen['t'], parset=scen['parset'])
             elif scen['progscenariotype']=='coverage':
                 thiscoverage = scen['programs']
+
+            thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
+
         else: 
             errormsg = 'Unrecognized program scenario type.'
             raise Exception(errormsg)
             
-            thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
 
         scenparsets[scen['name']] = thisparset
 

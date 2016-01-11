@@ -86,7 +86,7 @@ if 'makeprograms' in tests:
 
     print('Making a default programset...')
     from defaultprograms import defaultprogset
-    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
 
     # Add coverage-outcome parameters
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
@@ -114,6 +114,17 @@ if 'makeprograms' in tests:
                   t=[2016],
                   parset=P.parsets['default'],
                   newparsetname='progparset')
+
+    # Run results
+    from optima import runmodel
+    allresults = []
+    allresults.append(runmodel(pars=P.parsets['default'].pars[0], verbose=1)) 
+    allresults.append(runmodel(pars=progparset.pars[0], verbose=1)) 
+
+    if doplot:
+        from plotpeople import plotpeople
+        plotpeople(allresults)
+
     
     done(t)
 

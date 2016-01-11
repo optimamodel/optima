@@ -230,7 +230,7 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
         Cash_transfers.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
         PrEP.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
         HTC.addcostcovdatum({'t':2016,'cost':2e7,'coverage':1.3e6})
-        ART.addcostcovdatum({'t':2016,'cost':1e7,'coverage':17000})
+        ART.addcostcovdatum({'t':2016,'cost':1e6,'coverage':3308.})
         PMTCT.addcostcovdatum({'t':2016,'cost':4e6,'coverage':5500})
 
         OVC.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
