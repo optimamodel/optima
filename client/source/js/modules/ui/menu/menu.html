@@ -55,11 +55,11 @@
       <i class="fa fa-angle-down" ng-if="showAccountHelpMenu"></i>
     </div>
     <div ng-if="showAccountHelpMenu" class="menu-dropdown" style="width: 150px;">
-      <div>Edit details</div>
-      <div>Website</div>
-      <div>Help</div>
-      <div>Feedback</div>
-      <div>Logout</div>
+      <div ui-sref="edit">Edit details</div>
+      <div><a href="http://optimamodel.com" target="_blank" style="color: black; text-decoration: none">Website</a></div>
+      <div ui-sref="help">Help</div>
+      <div ui-sref="contact">Feedback</div>
+      <div ng-click="logout()">Logout</div>
     </div>
   </div>
 </div>
