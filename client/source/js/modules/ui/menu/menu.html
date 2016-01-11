@@ -1,17 +1,17 @@
 <div class="menu">
-  <div ng-if="isAdmin">
-    <div ng-click="showAdminMenu = !showAdminMenu" class="btn __blue">
-      Create/open project
+  <div ng-if="isAdmin" ng-click="showAdminMenu = !showAdminMenu">
+    <div class="btn __blue">
+      Admin
       <i class="fa fa-angle-up" ng-if="!showAdminMenu"></i>
       <i class="fa fa-angle-down" ng-if="showAdminMenu"></i>
     </div>
     <div ng-if="showAdminMenu" class="menu-dropdown" style="width: 200px;">
-      <div ui-sref="admin.manage-users">Manage users</div>
-      <div ui-sref="admin.manage-projects">Manage user projects</div>
+      <div ui-sref="admin.manage-users" ng-click="updateMenuSelection('showAdminMenu')">Manage users</div>
+      <div ui-sref="admin.manage-projects" ng-click="updateMenuSelection('showAdminMenu')">Manage user projects</div>
     </div>
   </div>
-  <div>
-    <div ng-click="showProjectMenu = !showProjectMenu" class="btn __blue">
+  <div ng-click="showProjectMenu = !showProjectMenu">
+    <div class="btn __blue">
       Create/open project
       <i class="fa fa-angle-up" ng-if="!showProjectMenu"></i>
       <i class="fa fa-angle-down" ng-if="showProjectMenu"></i>
@@ -26,8 +26,8 @@
   <div>
     <div class="btn __blue" ng-click="goIfProjectActive('model')">View data & model calibration</div>
   </div>
-  <div>
-    <div ng-click="showProjectSetMenu = !showProjectSetMenu" class="btn __blue">
+  <div ng-click="showProjectSetMenu = !showProjectSetMenu">
+    <div class="btn __blue">
       Create/manage project set
       <i class="fa fa-angle-up" ng-if="!showProjectSetMenu"></i>
       <i class="fa fa-angle-down" ng-if="showProjectSetMenu"></i>
@@ -37,8 +37,8 @@
       <div ng-click="goIfProjectActive('project-set.define-cost-coverage-outcome')">Define cost and outcome functions</div>
     </div>
   </div>
-  <div>
-    <div ng-click="showAnalysisMenu = !showAnalysisMenu" class="btn __blue">
+  <div ng-click="showAnalysisMenu = !showAnalysisMenu">
+    <div class="btn __blue">
       Analysis
       <i class="fa fa-angle-up" ng-if="!showAnalysisMenu"></i>
       <i class="fa fa-angle-down" ng-if="showAnalysisMenu"></i>

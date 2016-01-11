@@ -43,7 +43,8 @@ define(['./module'], function (module) {
                 'Cannot proceed'
               );
             }
-          }
+          };
+
         }
       ]
     };
