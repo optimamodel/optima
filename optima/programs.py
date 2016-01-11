@@ -377,7 +377,7 @@ class Program(object):
     '''
 
     def __init__(self, name, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', short_name='', criteria=None):
+        category='No category', short='', criteria=None):
         '''Initialize'''
         self.name = name
         self.uid = uuid()
@@ -394,7 +394,7 @@ class Program(object):
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
-        self.short_name = short_name
+        self.short = short
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
 
     def __repr__(self):

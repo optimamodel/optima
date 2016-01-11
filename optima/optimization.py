@@ -1,7 +1,7 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan09 by cliffk
+Version: 2016jan10 by cliffk
 """
 
 from optima import printv, dcp, asd
@@ -31,7 +31,7 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         options = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
-        budgetvecnew, fval, exitflag, output = asd(errorcalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     
     return results
