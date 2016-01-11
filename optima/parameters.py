@@ -645,6 +645,7 @@ class Parameterset(object):
         valuelist = mflists['values']
 
         ## Loop over all parameters and update them
+        verbose = 2
         for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
             if ptype == 'meta': # Metaparameters
                 vtype = type(tmppars[key].m)
