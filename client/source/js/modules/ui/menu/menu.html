@@ -12,7 +12,7 @@
   </div>
   <div ng-click="showProjectMenu = !showProjectMenu">
     <div class="btn __blue">
-      Create/open project
+      Manage project
       <i class="fa fa-angle-up" ng-if="!showProjectMenu"></i>
       <i class="fa fa-angle-down" ng-if="showProjectMenu"></i>
     </div>
@@ -24,11 +24,11 @@
     </div>
   </div>
   <div>
-    <div class="btn __blue" ng-click="goIfProjectActive('model')">View data & model calibration</div>
+    <div class="btn __blue" ng-click="goIfProjectActive('model')">Calibrate parameters</div>
   </div>
   <div ng-click="showProjectSetMenu = !showProjectSetMenu">
     <div class="btn __blue">
-      Create/manage project set
+      Define programs
       <i class="fa fa-angle-up" ng-if="!showProjectSetMenu"></i>
       <i class="fa fa-angle-down" ng-if="showProjectSetMenu"></i>
     </div>
@@ -39,13 +39,27 @@
   </div>
   <div ng-click="showAnalysisMenu = !showAnalysisMenu">
     <div class="btn __blue">
-      Analysis
+      Perform Analysis
       <i class="fa fa-angle-up" ng-if="!showAnalysisMenu"></i>
       <i class="fa fa-angle-down" ng-if="showAnalysisMenu"></i>
     </div>
     <div ng-if="showAnalysisMenu" class="menu-dropdown" style="width: 150px;">
       <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analyses</div>
       <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analyses</div>
+    </div>
+  </div>
+  <div ng-click="showAccountHelpMenu = !showAccountHelpMenu">
+    <div class="btn __blue">
+      Account and help
+      <i class="fa fa-angle-up" ng-if="!showAccountHelpMenu"></i>
+      <i class="fa fa-angle-down" ng-if="showAccountHelpMenu"></i>
+    </div>
+    <div ng-if="showAccountHelpMenu" class="menu-dropdown" style="width: 150px;">
+      <div>Edit details</div>
+      <div>Website</div>
+      <div>Help</div>
+      <div>Feedback</div>
+      <div>Logout</div>
     </div>
   </div>
 </div>
