@@ -19,6 +19,7 @@ class Project(object):
         2. progsets -- an odict of program sets
         3. scens -- an odict of scenario structures
         4. optims -- an odict of optimization structures
+        4. results -- an odict of results associated with parsets, scens, and optims
     
     In addition, an Optima project contains:
         1. data -- loaded from the spreadsheet
@@ -31,7 +32,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
     
-    Version: 2016jan10 by cliffk
+    Version: 2016jan11 by cliffk
     """
     
     
@@ -44,10 +45,11 @@ class Project(object):
         ''' Initialize the project ''' 
 
         ## Define the structure sets
-        self.parsets = odict()
+        self.parsets  = odict()
         self.progsets = odict()
-        self.scens = odict()
-        self.optims = odict()
+        self.scens    = odict()
+        self.optims   = odict()
+        self.results  = odict()
         
         ## Define other quantities
         self.name = name
@@ -85,6 +87,7 @@ class Project(object):
         output += '      Program sets: %i\n'    % len(self.progsets)
         output += '     Scenario sets: %i\n'    % len(self.scens)
         output += ' Optimization sets: %i\n'    % len(self.optims)
+        output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
         output += '    Optima version: %0.1f\n' % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
