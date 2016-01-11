@@ -7,19 +7,17 @@ Version: 2016jan10 by cliffk
 from optima import printv, dcp, asd, runmodel
 
 
-def runonebudget():
-    
-    return results
 
 def objectivecalc(budgetvec, options):
     parset = options['pars']
     progset = options['progs']
     project = options['project']
-    objectives = options['objectives']
-    constraints = options['constraints']
+#    objectives = options['objectives']
+#    constraints = options['constraints']
     
     # Convert budgetvec to budget
     print('temp')
+    budget = budgetvec    
     
     # Define years
     print('temp')
@@ -33,8 +31,12 @@ def objectivecalc(budgetvec, options):
     
     # Calculate outcome
     print('temp')
+    outcome = results
     
     return outcome
+
+
+
 
 def minoutcome(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None):
     
@@ -54,6 +56,9 @@ def minoutcome(project=None, name=None, parset=None, progset=None, inds=0, objec
         
         # Calculate limits
         print('temp')
+        budgetvec = objectives['budget'][:]
+        budgetlower = budgetvec*0
+        budgethigher = budgetvec*100
         
         options = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)

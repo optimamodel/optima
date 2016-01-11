@@ -178,7 +178,7 @@ class Programset(object):
         ''' Extract the budget if cost data has been provided'''
         
         if type(tvec) in [int, float]: tvec = [tvec]
-        totalbudget, lastbudget, selectbudget = dict(), dict(), dict()
+        totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
         settings = Settings()
         start = settings.start
         end = settings.end
@@ -205,7 +205,7 @@ class Programset(object):
 
     def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
-        coverage = {}
+        coverage = odict()
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
