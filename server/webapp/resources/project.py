@@ -301,7 +301,7 @@ class Project(Resource):
         new_project_template = project_entry.name
 
         path = templatepath(project_entry.name)
-        makespreadsheet(
+        op.makespreadsheet(
             path,
             pops=args['populations'],
             datastart=project_entry.datastart,
