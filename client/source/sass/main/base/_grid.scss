@@ -33,7 +33,7 @@ $grid-gutter-half: $layout-gutter / 2;
   min-height: 1px;
 
   @if $grid-gutter-half != 0 {
-    padding-left: $grid-gutter-half;
+    //padding-left: $grid-gutter-half;
     padding-right: $grid-gutter-half;
   }
 }
@@ -46,7 +46,7 @@ $grid-gutter-half: $layout-gutter / 2;
 
   $escaped: nth($grid-columns, $i);
 
-  .#{$escaped} {
+  .cols-#{$escaped} {
     @extend %grid-columns-all;
     width: $i * $grid-column-width;
   }

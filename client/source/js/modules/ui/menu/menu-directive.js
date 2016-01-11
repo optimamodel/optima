@@ -1,6 +1,6 @@
 define(['./module'], function (module) {
 
-  module.directive('menu', function ($state, UserManager, fileUpload, activeProject, modalService, $state) {
+  module.directive('menu', function ($state, UserManager, fileUpload, activeProject, modalService, $http) {
     return {
       restrict: 'A',
       scope: {
@@ -43,7 +43,15 @@ define(['./module'], function (module) {
                 'Cannot proceed'
               );
             }
-          }
+          };
+
+          $scope.logout = function() {
+            $http.get('/api/user/logout').
+              success(function() {
+                window.location.reload();
+              });
+          };
+
         }
       ]
     };
