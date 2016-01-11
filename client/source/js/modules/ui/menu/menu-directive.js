@@ -15,12 +15,21 @@ define(['./module'], function (module) {
           $scope.isAdmin = UserManager.isAdmin;
 
           $scope.uploadSpreadsheet = function() {
-            angular
-              .element('<input type="file">')
-              .change(function (event) {
-                fileUpload.uploadDataSpreadsheet($scope, event.target.files[0]);
-              })
-              .click();
+            if(activeProject.isSet()){
+              angular
+                .element('<input type="file">')
+                .change(function (event) {
+                  fileUpload.uploadDataSpreadsheet($scope, event.target.files[0]);
+                })
+                .click();
+            } else {
+              modalService.inform(
+                function (){ },
+                'Okay',
+                'Create or open a project first.',
+                'Cannot proceed'
+              );
+            }
           };
 
           $scope.goIfProjectActive = function(stateName) {
