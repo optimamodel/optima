@@ -12,7 +12,7 @@
     </div>
 
     <div class="section grid">
-      <div class="++1 2" style="padding-left: 6px">
+      <div class="++1 2">
         Short name
       </div>
       <div class="5 4++">
@@ -22,48 +22,14 @@
 
 
     <div class="section grid">
-      <div class="++5 5 2++">
-        <label>
-          <input type="checkbox" ng-model="population.male">
-          Male
-        </label>
+      <div class="row">
+        <div class="cols-2">Age from</div>
+        <div class="cols-2">Age to</div>
       </div>
-      <div class="++5 5 2++">
-        <label>
-          <input type="checkbox" ng-model="population.female">
-          Female
-        </label>
+      <div class="row">
+        <div class="cols-2"><input class="txbox __block" type="text" ng-model="population.age_from" value="{{population.age_from}}" required></div>
+        <div class="cols-2"><input class="txbox __block" type="text" ng-model="population.age_to" value="{{population.age_to}}" required></div>
       </div>
-      <div class="++5 5 2++">
-          <label>
-              <input type="checkbox" ng-model="population.sexmen">
-              Has sex with men
-          </label>
-      </div>
-      <div class="++5 5 2++">
-          <label>
-              <input type="checkbox" ng-model="population.sexwomen">
-              Has sex with women
-          </label>
-      </div>
-      <div class="++5 5 2++">
-        <label>
-          <input type="checkbox" ng-model="population.injects">
-          Injects drugs
-        </label>
-      </div>
-        <div class="++5 5 2++">
-            <label>
-                <input type="checkbox" ng-model="population.sexworker">
-                Commercial sex provider
-            </label>
-        </div>
-        <div class="++5 5 2++">
-            <label>
-                <input type="checkbox" ng-model="population.client">
-                Commercial sex client
-            </label>
-        </div>
     </div>
 
     <div class="section text-center">
