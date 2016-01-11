@@ -50,9 +50,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
             var activeProjectId = activeProject.getProjectIdForCurrentUser();
             _.each(selectedProjects, function(project) {
-              if(activeProjectId === project.id) {
-                activeProject.resetFor(UserManager.data);
-              }
+              activeProject.ifActiveResetFor(null, project, UserManager.data);
             });
           });
       };
