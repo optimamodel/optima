@@ -19,7 +19,7 @@ define(['./module'], function (module) {
               angular
                 .element('<input type="file">')
                 .change(function (event) {
-                  fileUpload.uploadDataSpreadsheet($scope, event.target.files[0]);
+                  fileUpload.uploadDataSpreadsheet($scope, event.target.files[0], undefined, false);
                 })
                 .click();
             } else {
