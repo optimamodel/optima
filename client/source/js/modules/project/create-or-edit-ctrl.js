@@ -218,7 +218,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var promise;
       if ($scope.editParams.isEdit) {
-        params = _($scope.projectParams).omit('name');
+        params = angular.copy($scope.projectParams);
         params.populations = selectedPopulations;
         promise = projectApiService.updateProject($scope.projectInfo.id, params);
       } else {
