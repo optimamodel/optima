@@ -1,3 +1,6 @@
+from datetime import datetime
+import dateutil
+
 from flask import current_app
 
 from flask.ext.login import login_required
@@ -9,7 +12,7 @@ from server.webapp.utils import load_project, RequestParser, report_exception
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb
+from server.webapp.dbmodels import ParsetsDb, ResultsDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
@@ -136,12 +139,12 @@ class ParsetsCalibration(Resource):
         args = calibration_parser.parse_args()
         which = args.get('which')
 
-        parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset is None:
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_entry is None:
             raise ParsetDoesNotExist(id=parset_id)
 
         # get manual parameters
-        parset_instance = parset.hydrate()
+        parset_instance = parset_entry.hydrate()
         mflists = parset_instance.manualfitlists()
         parameters = [{"key": key, "label": label, "subkey": subkey, "value": value, "type": ptype}
                       for (key, label, subkey, value, ptype) in
@@ -149,11 +152,12 @@ class ParsetsCalibration(Resource):
         # REMARK: manualfitlists() in parset returns the lists compatible with usage on BE,
         # but for FE we prefer list of dicts
 
-        project_entry = load_project(parset.project_id, raise_exception=True)
+        project_entry = load_project(parset_entry.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
-        existing_result = [item for item in project_entry.results if item.parset_id == parset_id]
-        if existing_result:
-            result = existing_result[0].hydrate()
+        result_entry = [item for item in project_entry.results if
+                        item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+        if result_entry:
+            result = result_entry[0].hydrate()
         else:
             simparslist = parset_instance.interp()
             result = project_instance.runsim(simpars=simparslist)
@@ -174,14 +178,15 @@ class ParsetsCalibration(Resource):
         args = calibration_update_parser.parse_args()
         parameters = args.get('parameters', [])
         which = args.get('which')
+        doSave = args.get('doSave')
         # TODO save if doSave=true
 
-        parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset is None:
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_entry is None:
             raise ParsetDoesNotExist(id=parset_id)
 
         # get manual parameters
-        parset_instance = parset.hydrate()
+        parset_instance = parset_entry.hydrate()
         mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
         for param in parameters:
             mflists['keys'].append(param['key'])
@@ -191,10 +196,29 @@ class ParsetsCalibration(Resource):
             mflists['values'].append(param['value'])
         parset_instance.update(mflists)
         # recalculate
-        project_entry = load_project(parset.project_id, raise_exception=True)
+        project_entry = load_project(parset_entry.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
         result = project_instance.runsim(simpars=simparslist)
+
+        if doSave:  # save the updated results
+            parset_entry.pars = op.saves(parset_instance.pars)
+            parset_entry.updated = datetime.now(dateutil.tz.tzutc())
+            db.session.add(parset_entry)
+            result_entry = [item for item in project_entry.results if
+                            item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+            if result_entry:
+                result_entry = result_entry[0]
+                result_entry.blob = op.saves(result)
+            else:
+                result_entry = ResultsDb(
+                    parset_id=parset_id,
+                    project_id=project_entry.id,
+                    calculation_type=ResultsDb.CALIBRATION_TYPE,
+                    blob=op.saves(result)
+                )
+            db.session.add(result_entry)
+            db.session.commit()
 
         selectors = self._selectors_from_result(result, which)
         which = which or self._which_from_selectors(selectors)

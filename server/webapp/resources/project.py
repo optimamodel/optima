@@ -387,6 +387,7 @@ class ProjectSpreadsheet(Resource):
 
         # TODO replace this with app.config
         DATADIR = current_app.config['UPLOAD_FOLDER']
+        CALIBRATION_TYPE = 'calibration'
 
         current_app.logger.debug("PUT /api/project/%s/spreadsheet" % project_id)
 
@@ -468,16 +469,17 @@ class ProjectSpreadsheet(Resource):
                 db.session.add(parset_record)
 
             # update results (after runsim is invoked)
-            results_map = {
-                (record.parset_id, record.calculation_type): record
-                for record in project_entry.results
-            }
-            result_record = results_map.get((result_parset_id, "simulation"))
+            result_record = [item for item in project_entry.results if
+                             item.parset_id == result_parset_id and
+                             item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+            if result_record:
+                result_record = result_record[0]
+                result_record.blob = saves(result)
             if not result_record:
                 result_record = ResultsDb(
                     parset_id=result_parset_id,
                     project_id=project_entry.id,
-                    calculation_type="simulation",
+                    calculation_type=ResultsDb.CALIBRATION_TYPE,
                     blob=saves(result)
                 )
             db.session.add(result_record)
