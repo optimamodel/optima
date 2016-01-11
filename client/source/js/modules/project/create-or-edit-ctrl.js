@@ -5,14 +5,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $timeout, $http, activeProject, defaultsResponse,
     UserManager, modalService,projects, projectApiService, info) {
 
-    $scope.allProjectNames = _(projects.projects).map(function(project){
-      return project.name;
-    });
+    var allProjects = projects.data.projects;
 
-    $scope.projectExists = function(){
-      var exists = isEditMode()? false:_($scope.allProjectNames).contains($scope.projectParams.name);
-      $scope.CreateOrEditProjectForm.ProjectName.$setValidity("projectExists", !exists);
-      return exists;
+    $scope.projectExists = function () {
+      return _.some(allProjects, function (project) {
+        return $scope.projectParams.name === project.name && $scope.projectParams.id !== project.id;
+      });
     };
 
     $scope.projectParams = {
@@ -218,7 +216,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var promise;
       if ($scope.editParams.isEdit) {
-        params = _($scope.projectParams).omit('name');
+        params = angular.copy($scope.projectParams);
         params.populations = selectedPopulations;
         promise = projectApiService.updateProject($scope.projectInfo.id, params);
       } else {
