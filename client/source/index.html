@@ -46,8 +46,8 @@
         <div class="header_logo logo"></div>
         <div data-menu ng-if="userLogged()"></div>
         <div ng-cloak ng-if="userLogged()" style="max-width: 250px;overflow: hidden">
-            Logged in as: <b>{{ user.username }}</b>
-            <b ng-show="user.displayName">{{ ' (' + user.displayName + ')' }}</b>
+            <div>Logged in as: <b>{{ user.username }}</b></div>
+            <div ng-show="user.displayName">{{ ' (' + user.displayName + ')' }}</div>
             <div ng-show="activeProject.isSet()">
                 Project: <b>{{ activeProject.name }}</b>
             </div>
