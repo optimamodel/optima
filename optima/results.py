@@ -8,8 +8,6 @@ from optima import uuid, today, getdate, quantile, printv, odict, objectid, obje
 from numpy import array, nan, zeros
 
 
-
-
 class Result(object):
     ''' A tiny class just to hold overall and by-population results '''
     def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
@@ -19,7 +17,7 @@ class Result(object):
         self.tot = tot # The model result total, if available
         self.datapops = datapops # The input data by population, if available
         self.datatot = datatot # The input data total, if available
-    
+
     def __repr__(self):
         ''' Print out useful information when called '''
         output = objectid(self)
@@ -35,7 +33,7 @@ class Resultset(object):
         # Basic info
         self.uid = uuid()
         self.created = today()
-        
+
         # Turn inputs into lists if not already
         if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
         if type(simpars)!=list: simpars = [simpars] # Force into being a list
@@ -78,11 +76,9 @@ class Resultset(object):
 #        self.numcircum = Result()
 #        self.reqcircum = Result()
 #        self.sexinci = Result()
-        
+
         if domake: self.make()
-#    
-    
-    
+        
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
         output = objectid(self)
@@ -96,8 +92,6 @@ class Resultset(object):
         output += objectmeth(self)
         output += '============================================================\n'
         return output
-    
-    
     
     def make(self, quantiles=None, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
@@ -156,7 +150,6 @@ class Resultset(object):
         self.main['numdiag'].tot = quantile(alldiag.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-
 # WARNING, need to implement
 #        disutils = [D[self.pars['const']['disutil'][key] for key in D['G['healthstates']]
 #        tmpdalypops = allpeople[:,concatenate([D['G['tx1'], D['G['tx2']]),:,:].sum(axis=1) * D['P['const['disutil['tx']
@@ -167,10 +160,31 @@ class Resultset(object):
 #            tmpdalytot += allpeople[:,healthstates,:,:].sum(axis=(1,2)) * disutils[h]
 #        self.daly.pops = quantile(tmpdalypops, quantiles=quantiles)
 #        self.daly.tot = quantile(tmpdalytot, quantiles=quantiles)
-        
-        return None # make()
-        
 
-    
-    
-    
+        return None  # make()
+
+    def make_graph_selectors(self, which = None):
+        ## Define options for graph selection
+        truebydefault = 2
+        self.graph_selectors = {'keys':[], 'names':[], 'checks':[]}
+        checkboxes = self.graph_selectors['keys'] # e.g. 'prev-tot'
+        checkboxnames = self.graph_selectors['names'] # e.g. 'HIV prevalence (%) -- total'
+        defaultchecks = self.graph_selectors['checks']
+        epikeys = self.main.keys()
+        epinames = [thing.name for thing in self.main.values()]
+        episubkeys = ['tot', 'pops'] # Would be best not to hard-code this...
+        episubnames = ['total', 'by population']
+
+        if which is None:  # assume there is at least one epikey )
+            which = ["{}-{}".format(epikeys[0], subkey) for subkey in episubkeys]
+
+        for key in epikeys: # e.g. 'prev'
+            for subkey in episubkeys: # e.g. 'tot'
+                boxkey = "{}-{}".format(key, subkey)
+                checkboxes.append(boxkey)
+                defaultchecks.append(boxkey in which)
+        for name in epinames: # e.g. 'HIV prevalence'
+            for subname in episubnames: # e.g. 'total'
+                checkboxnames.append(name+' -- '+subname)
+
+        return self.graph_selectors
