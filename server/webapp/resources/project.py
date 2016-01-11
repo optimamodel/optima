@@ -32,6 +32,8 @@ class ProjectBase(Resource):
     @marshal_with(ProjectDb.resource_fields, envelope='projects')
     def get(self):
         projects = self.get_query().all()
+        for p in projects:
+            p.has_data_now = p.has_data()
         return projects
 
 
@@ -211,7 +213,7 @@ class Project(Resource):
         if not current_user.is_admin and \
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
-
+        project_entry.has_data_now = project_entry.has_data()  # no other way to make it work for methods and not attributes?
         return project_entry
 
     @swagger.operation(
