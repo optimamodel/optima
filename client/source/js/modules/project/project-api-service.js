@@ -8,7 +8,9 @@ define(['./module'], function (module) {
       return {
         getActiveProject: function () {
           var projectId = activeProject.getProjectIdForCurrentUser();
-          return $http.get('/api/project/' + projectId);
+          if (projectId) {
+            return $http.get('/api/project/' + projectId);
+          }
         },
         createProject: function(data) {
           return $http.post('/api/project', data, {

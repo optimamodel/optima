@@ -6,15 +6,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Check if come project is currently open, else show error message
     var openProject = activeProject.getProjectForCurrentUser();
-
     var openProjectData;
-    projectApiService.getActiveProject().success(function(response) {
-      openProjectData = response;
-    });
 
     if(!openProject) {
       modalService.informError([{message: 'There is no project open currently.'}]);
     } else {
+      projectApiService.getActiveProject().success(function (response) {
+        openProjectData = response;
+      });
+
       // Get the list of saved programs from DB and set the first one as active
       $http.get('/api/project/' + openProject.id + '/progsets' )
         .success(function (response) {

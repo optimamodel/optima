@@ -43,38 +43,19 @@
 
 <div class="actionbar">
     <div class="elastic header">
-        <div ng-cloak ng-if="userLogged()" class="header_left">
-            Logged in as: <b>{{ user.username }}</b>
-            <b ng-show="user.displayName">{{ ' (' + user.displayName + ')' }}</b>
+        <div class="header_logo logo"></div>
+        <div data-menu ng-if="userLogged()"></div>
+        <div ng-cloak ng-if="userLogged()" style="max-width: 250px;overflow: hidden">
+            <div>Logged in as: <b>{{ user.username }}</b></div>
+            <div ng-show="user.displayName">{{ ' (' + user.displayName + ')' }}</div>
             <div ng-show="activeProject.isSet()">
                 Project: <b>{{ activeProject.name }}</b>
             </div>
         </div>
-        <div class="header_right">
-          <a class="btn __blue" ui-sref="contact">Feedback</a>
-        </div>
-        <div class="header_right">
-          <a class="btn __blue" ui-sref="help">Help</a>
-        </div>
-        <div class="header_right">
-          <a class="btn __blue" href="http://optimamodel.com" target="_blank">Website</a>
-        </div>
-        <div ng-cloak ng-if="userLogged()" class="header_right">
-            <a class="btn __blue" ui-sref="edit">Edit details</a>
-        </div>
-        <div ng-cloak ng-if="userLogged()" class="header_right">
-          <form action="/api/user/logout">
-            <button class="btn __blue" type="submit">Log out</button>
-          </form>
-        </div>
-        <div ng-cloak ng-if="!userLogged()" class="header_right">
+        <div ng-cloak ng-if="!userLogged()">
           <a class="btn __blue" ui-sref="login">Login</a>
         </div>
-        <div class="header_center">
-            <i class="header_logo logo"></i>
-        </div>
     </div>
-    <div data-menu></div>
 </div>
 
 
