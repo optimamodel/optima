@@ -25,12 +25,7 @@ define([
         .state('project-set', {
           url: '/project-set',
           abstract: true,
-          template: '<div ui-view></div>',
-          resolve: {
-            info: function (projectApiService) {
-              return projectApiService.getActiveProject();
-            }
-          }
+          template: '<div ui-view></div>'
         })
         .state('project-set.manageProgramSet', {
           url: '/programs',
@@ -52,6 +47,9 @@ define([
           resolve: {
             programsResource: function(Model) {
               return Model.getPrograms().$promise;
+            },
+            info: function (projectApiService) {
+              return projectApiService.getActiveProject();
             }
           }
         });
