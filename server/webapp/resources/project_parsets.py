@@ -1,6 +1,3 @@
-import mpld3
-import json
-
 from flask import current_app
 
 from flask.ext.login import login_required
@@ -96,6 +93,19 @@ class ParsetsCalibration(Resource):
 
     method_decorators = [report_exception, login_required]
 
+    def _results_to_jsons(self, results):
+        import mpld3
+        import json
+        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
+        jsons = []
+        for graph in graphs:
+            # Add necessary plugins here
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
+            jsons.append(json.loads(json_string))
+        return jsons
+
     @swagger.operation(
         description='Provides calibration information for the given parset',
         notes="""
@@ -127,21 +137,13 @@ class ParsetsCalibration(Resource):
         else:
             simparslist = parset_instance.interp()
             results = project_instance.runsim(simpars=simparslist)
-        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
 
-        jsons = []
-        # TODO: refactor this?
-        for graph in graphs:
-            # Add necessary plugins here
-            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
-            jsons.append(json.loads(json_string))
+        graphs = self._results_to_jsons(results)
 
         return {
             "parset_id": parset_id,
             "parameters": parameters,
-            "graphs": jsons
+            "graphs": graphs
         }
 
     def put(self, parset_id):
@@ -170,19 +172,10 @@ class ParsetsCalibration(Resource):
         simparslist = parset_instance.interp()
         results = project_instance.runsim(simpars=simparslist)
 
-        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
-
-        jsons = []
-        # TODO: refactor this?
-        for graph in graphs:
-            # Add necessary plugins here
-            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
-            jsons.append(json.loads(json_string))
+        graphs = self._results_to_jsons(results)
 
         return {
             "parset_id": parset_id,
             "parameters": args['parameters'],
-            "graphs": jsons
+            "graphs": graphs
         }
