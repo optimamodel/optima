@@ -74,14 +74,11 @@
             <i class="header_logo logo"></i>
         </div>
     </div>
+    <div data-menu ng-if="userLogged()"></div>
 </div>
 
 
 <div class="elastic layout">
-    <div class="elastic_col layout_aside __shrink" style="min-width: 265px" ng-if="userLogged()">
-        <div data-menu="asideMenuSettings" template="accordion">
-        </div>
-    </div>
     <div class="elastic_col layout_cnt">
         <div ui-view></div>
     </div>

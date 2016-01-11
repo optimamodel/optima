@@ -1,7 +1,7 @@
 define(['angular'], function (angular) {
   'use strict';
 
-  return angular.module('app.auth', [])
+  return angular.module('app.auth', ['app.active-project'])
     .config(function ($stateProvider) {
       $stateProvider
         .state('login', {

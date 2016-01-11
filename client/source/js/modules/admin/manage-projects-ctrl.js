@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService) {
+  module.controller('AdminManageProjectsController', function ($scope, $http, projects, users, activeProject, UserManager, modalService, projectApiService, $state) {
     $scope.users = users.data.users;
     $scope.users = _.compact(_.map(_(projects.data.projects).groupBy(function (p) {return p.user_id;}), function (projects, userId) {
       var user = _.findWhere($scope.users, {id: userId});
@@ -29,7 +29,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
      */
     $scope.edit = function (name, id) {
       activeProject.setActiveProjectFor(name, id, UserManager.data);
-      window.location = '/#/project/edit';
+      $state.go('project.edit');
     };
 
     /**

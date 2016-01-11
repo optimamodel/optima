@@ -1,7 +1,7 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
 
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector, $state) {
 
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
@@ -238,7 +238,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.gotoViewCalibrate = function() {
-          $window.location.href = '#/model/view';
+          $state.go('model');;
         };
 
         // The graphs are shown/hidden after updating the graph type checkboxes.
