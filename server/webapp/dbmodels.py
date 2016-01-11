@@ -388,29 +388,31 @@ class ProgramsDb(db.Model):
         if self.pars is None:
             return []
 
-        parameters = [
-            {
-                'param': param['inputkey'],
-                'pop': tuple(param['pops'])
-                    if len(param['pops']) != 1
-                    else str(param['pops'][0])
-            } for param in self.pars if param.get('active', False)
-        ]
+        parameters = []
+
+        for param in self.pars:
+            if param.get('active', False):
+                parameters.extend([{
+                    'param': param['param'],
+                    'pop': pop
+                } for pop in param['pops']])
+
         return parameters
 
     @classmethod
     def program_pars_to_pars(cls, targetpars):
         """From BE Program to API Program"""
 
-        pars = [
-            {
+        parameters = defaultdict(list)
+        for parameter in targetpars:
+            parameters[parameter['param']].append(parameter['pop'])
+
+        pars = [{
                 'active': True,
-                'param': param['param'],
-                'pops': [param['pop']]
-                    if type(param['pop']) == str
-                    else list(param['pop']),
-            } for param in targetpars
-        ]
+                'param': short_name,
+                'pops': pop,
+            } for short_name, pop in parameters.iteritems()]
+
         return pars
 
     def hydrate(self):

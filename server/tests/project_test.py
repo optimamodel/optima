@@ -351,26 +351,39 @@ class ProjectTestCase(OptimaTestCase):
     #     self.assertIsNotNone(program)
     #     self.assertEqual(program.pars, pars)
 
-    # def test_default_programs_for_project_restore(self):
-    #     from server.webapp.dbmodels import ProgramsDb
-    #     from server.webapp.programs import program_list
+    def test_default_programs_for_project_restore(self):
+        from server.webapp.dbmodels import ProgramsDb
+        from server.webapp.programs import get_default_programs
+        from server.webapp.populations import populations
 
-    #     project = self.create_project(
-    #         progsets_count=1,
-    #         programs_per_progset=0,
-    #         return_instance=True
-    #     )
-    #     progset_id = str(project.progsets[0].id)
+        project = self.create_project(
+            progsets_count=1,
+            programs_per_progset=0,
+            return_instance=True,
+            populations=populations()
+        )
+        progset_id = str(project.progsets[0].id)
 
-    #     program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
-    #     self.assertEqual(program_count, 0)
+        example_excel_file_name = 'test.xlsx'
+        file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+        example_excel = open(file_path)
+        response = self.client.post(
+            'api/project/{}/spreadsheet'.format(project.id),
+            data=dict(file=example_excel)
+        )
+        example_excel.close()
+        self.assertEqual(response.status_code, 200, response.data)
 
-    #     be_project = project.hydrate()
-    #     project.restore(be_project)
+        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
+        self.assertEqual(program_count, 0)
 
-    #     program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
+        be_project = project.hydrate()
+        project.restore(be_project)
 
-    #     self.assertEqual(program_count, len(program_list))
+        program_list = get_default_programs(be_project)
+        program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
+
+        self.assertEqual(program_count, len(program_list))
 
     def test_bulk_delete(self):
         from server.webapp.dbmodels import ProjectDb
