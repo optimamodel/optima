@@ -1,3 +1,6 @@
+import mpld3
+import json
+
 from flask import current_app
 
 from flask.ext.login import login_required
@@ -79,6 +82,13 @@ calibration_fields = {
 }
 
 
+calibration_parser = RequestParser()
+calibration_parser.add_arguments({
+    'parameters': {'required': True, 'type': dict, 'action': 'append'},
+    'doSave': {'default': False, 'type': bool, 'location': 'args'}
+})
+
+
 class ParsetsCalibration(Resource):
     """
     Calibration info for the Parset.
@@ -94,8 +104,6 @@ class ParsetsCalibration(Resource):
     )
     @marshal_with(calibration_fields, envelope="calibration")
     def get(self, parset_id):
-        import mpld3
-        import json
         current_app.logger.debug("/api/parsets/{}/calibration/manual".format(parset_id))
 
         parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
@@ -133,5 +141,48 @@ class ParsetsCalibration(Resource):
         return {
             "parset_id": parset_id,
             "parameters": parameters,
+            "graphs": jsons
+        }
+
+    def put(self, parset_id):
+        current_app.logger.debug("PUT /api/parsets/{}/calibration/manual".format(parset_id))
+        args = calibration_parser.parse_args()
+        parameters = args.get('parameters', [])
+        # TODO save if doSave=true
+
+        parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset is None:
+            raise ParsetDoesNotExist(id=parset_id)
+
+        # get manual parameters
+        parset_instance = parset.hydrate()
+        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
+        for param in parameters:
+            mflists['keys'].append(param['key'])
+            mflists['subkeys'].append(param['subkey'])
+            mflists['types'].append(param['type'])
+            mflists['labels'].append(param['label'])
+            mflists['values'].append(param['value'])
+        parset_instance.update(mflists)
+        # recalculate
+        project_entry = load_project(parset.project_id, raise_exception=True)
+        project_instance = project_entry.hydrate()
+        simparslist = parset_instance.interp()
+        results = project_instance.runsim(simpars=simparslist)
+
+        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
+
+        jsons = []
+        # TODO: refactor this?
+        for graph in graphs:
+            # Add necessary plugins here
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
+            jsons.append(json.loads(json_string))
+
+        return {
+            "parset_id": parset_id,
+            "parameters": args['parameters'],
             "graphs": jsons
         }
