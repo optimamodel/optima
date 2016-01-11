@@ -13,8 +13,8 @@ Version: 2016jan06 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'plot',
-#'browser',
-'gui',
+'browser',
+#'gui',
 ]
 
 
@@ -72,7 +72,9 @@ if 'browser' in tests and doplot:
     
     P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
-    browser(results, which=['prev-tot'], doplot=False)
+    html = browser(results, which=['prev-tot'], doplot=False)
+    
+    print(len(html))
 
     done(t)
 

@@ -99,7 +99,7 @@ class Resultset(object):
     
     
     
-    def make(self, quantiles=None, annual=True, verbose=2):
+    def make(self, quantiles=None, annual=False, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
         printv('Making derived results...', 3, verbose)
@@ -128,7 +128,7 @@ class Resultset(object):
         if annual is False:
             indices = arange(len(self.tvec)) # Use all indices
         else: 
-            indices = arange(0, len(self.tvec), int(1.0/(self.tvec[1]-self.tvec[0]))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
+            indices = arange(0, len(self.tvec), int(round(1.0/(self.tvec[1]-self.tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
             self.tvec = self.tvec[indices] # Subsample time vector too
         allpeople = array([self.raw[i]['people'] for i in range(len(self.raw))])
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])

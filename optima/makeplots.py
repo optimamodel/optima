@@ -75,7 +75,7 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             for l in range(nlines):
                 if uncertainty:
                     fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
-                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
+                plot(results.tvec, factor*best[l], lw=lw, c=colors[l], marker='s', markersize=3, markeredgewidth=0) # Actually do the plot
 
             # Plot data points with uncertainty
             for l in range(nlines):
