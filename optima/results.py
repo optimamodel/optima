@@ -99,7 +99,7 @@ class Resultset(object):
     
     
     
-    def make(self, quantiles=None, annual=False, verbose=2):
+    def make(self, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
         printv('Making derived results...', 3, verbose)

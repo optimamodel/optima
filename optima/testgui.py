@@ -72,7 +72,7 @@ if 'browser' in tests and doplot:
     
     P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
-    html = browser(results, which=['prev-tot'], doplot=False)
+    html = browser(results, which=['prev-tot', 'prev-pops', 'numinci-tot', 'numinci-pops'], doplot=False)
     
     print(len(html))
 
