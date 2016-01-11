@@ -1,5 +1,5 @@
 ## Imports
-from numpy import append # array, isnan, zeros, shape, argmax, log, polyfit, exp, arange
+from numpy import append, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
 from optima import dcp, today, odict, printv, findinds, runmodel #, sanitize, uuid, getdate, smoothinterp
 
 def runscenarios(scenlist=None, default_parset=None, verbose=2, debug=False):
@@ -36,7 +36,7 @@ def makescenarios(scenlist, verbose=2):
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        if scen['type']=='parameter':
+        if scen['scenariotype']=='parameter':
         
             thisparset = dcp(scen['parset'])
             thisparset.modified = today()
@@ -64,21 +64,19 @@ def makescenarios(scenlist, verbose=2):
                             thispar.t[pop] = append(thispar.t[pop], par['endyear'])
                             thispar.y[pop] = append(thispar.y[pop], par['endval'])
     
-        elif scen['type']=='program':
+        elif scen['scenariotype']=='program':
             
-            if scen['budgets']:
-                for budget in scen['budgets']:
-                    thisprogset = scen['progset']
-                    thiscoverage = thisprogset.getprogcoverage(budget=budget, t=scen['t'], parset=scen['parset'])
-                    thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
-            if scen['coveragelevels']:
-                for coveragelevel in scen['coveragelevels']:
-                    thisprogset = scen['progset']
-                    thisparset = thisprogset.getparset(coverage=thiscoverage, t=[2016], parset=scen['parset'], newparsetname=scen['name'])
+            thisprogset = scen['progset']
+            if scen['progscenariotype']=='budget':
+                thiscoverage = thisprogset.getprogcoverage(budget=scen['programs'], t=scen['t'], parset=scen['parset'])
+            elif scen['progscenariotype']=='coverage':
+                thiscoverage = scen['programs']
         else: 
-            errormsg = 'Unrecognized scenario type.'
+            errormsg = 'Unrecognized program scenario type.'
             raise Exception(errormsg)
             
+            thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
+
         scenparsets[scen['name']] = thisparset
 
     return scenparsets

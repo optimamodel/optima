@@ -48,7 +48,7 @@ if 'standardscen' in tests:
     from numpy import array
     
     P = Project(spreadsheet='test7pops.xlsx')
-    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs'])
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs'])
     R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
     R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
     R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65)})
@@ -61,11 +61,11 @@ if 'standardscen' in tests:
     scenlist = [
         {'name': 'Current conditions',
                  'parset': P.parsets['default'],
-                 'type': 'parameter',
+                 'scenariotype': 'parameter',
                  'pars': []},
         {'name': 'Less casual condom use',
          'parset': P.parsets['default'],
-         'type': 'parameter',
+         'scenariotype': 'parameter',
          'pars': [{'endval': 0.1,
             'endyear': 2015,
             'name': 'condcas',
@@ -74,7 +74,7 @@ if 'standardscen' in tests:
             'startyear': 2005}]},
          {'name': 'More casual acts',
           'parset': P.parsets['default'],
-          'type': 'parameter',
+          'scenariotype': 'parameter',
           'pars': [{'endval': 100.,
             'endyear': 2015,
             'name': 'actscas',
@@ -83,44 +83,42 @@ if 'standardscen' in tests:
             'startyear': 2005}]},
          {'name': 'Increased STI prevalence in women',
           'parset': P.parsets['default'],
-          'type': 'parameter',
+          'scenariotype': 'parameter',
           'pars': [{'endval': 0.5,
             'endyear': 2015,
             'name': 'stiprev',
             'for': 1,
             'startval': 0.5,
             'startyear': 2005}]},
+         {'name': 'Keep current investment in condom program',
+          'parset': P.parsets['default'],
+          'scenariotype': 'program',
+          'progscenariotype': 'budget',
+          'progset': R,
+          't': [2016,2020],
+          'programs': {'Condoms': array([1e7,1e7]),
+                       'FSW_programs':array([1e6,1e6])}},
          {'name': 'Double investment in condom program',
           'parset': P.parsets['default'],
-          'type': 'program',
+          'scenariotype': 'program',
+          'progscenariotype': 'budget',
           'progset': R,
-          'budgets': [
-           {'Condoms':array([1e7]),
-            'FSW_programs':array([1e6])},
-           {'Condoms':array([2e7]),
-            'FSW_programs':array([1e6])},
-            ],
-          'coveragelevels': None,
-          't': [2016]},
+          't': [2016,2020],
+          'programs': {'Condoms': array([1e7,2e7]),
+                       'FSW_programs':array([1e6,1e6])}},
          {'name': 'A million people covered by the condom program',
           'parset': P.parsets['default'],
-          'type': 'program',
+          'scenariotype': 'program',
+          'progscenariotype': 'coverage',
           'progset': R,
-          'budgets': None,
-          'coveragelevels': [
-           {'Condoms':array([285706.84495908]),
-            'FSW_programs':array([15352.67106128])},
-           {'Condoms':array([1e6]),
-            'FSW_programs':array([15352.67106128])},
-            ],
-          't': [2016]}
+          't': [2016,2020],
+          'programs': {'Condoms': array([285706.,1e6]),
+                       'FSW_programs':array([15352.,15352.])}}
         ]
     
     from scenarios import runscenarios
     allresults = runscenarios(scenlist=scenlist)
      
-#    from gui import gui
-#    gui([results1, results2])
     if doplot:
         from plotpeople import plotpeople
         plotpeople(allresults)
