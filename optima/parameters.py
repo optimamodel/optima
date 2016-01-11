@@ -501,7 +501,8 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
-        self.resultsref = None # Pointer to results
+        self.resultsref = None # Store pointer to results
+        self.project = project # Store pointer for the project
     
     def __repr__(self):
         ''' Print out useful information when called'''
