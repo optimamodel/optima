@@ -4,17 +4,39 @@ Functions for running optimizations.
 Version: 2016jan10 by cliffk
 """
 
-from optima import printv, dcp, asd
+from optima import printv, dcp, asd, runmodel
 
 
 def runonebudget():
+    
     return results
 
-def objectivecalc():
-    runonebudget()
+def objectivecalc(budgetvec, options):
+    parset = options['pars']
+    progset = options['progs']
+    project = options['project']
+    objectives = options['objectives']
+    constraints = options['constraints']
+    
+    # Convert budgetvec to budget
+    print('temp')
+    
+    # Define years
+    print('temp')
+    year = 2016
+    startyear = 2000
+    endyear = 2030
+    
+    thiscoverage = progset.getprogcoverage(budget=budget, t=year, parset=parset)
+    thisparset = progset.getparset(coverage=thiscoverage, t=year, parset=parset)
+    results = runmodel(pars=thisparset.pars[0], start=startyear, end=endyear, project=project, verbose=0)
+    
+    # Calculate outcome
+    print('temp')
+    
     return outcome
 
-def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None):
+def minoutcome(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None):
     
     printv('Running outcomes optimization...', 1, verbose)
     
@@ -29,6 +51,9 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
     for ind in inds:
         try: pars = origparlist[ind]
         except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
+        
+        # Calculate limits
+        print('temp')
         
         options = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
