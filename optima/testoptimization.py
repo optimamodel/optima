@@ -92,14 +92,14 @@ if 'tmp' in tests:
     scenlist = [
          {'name': 'Double investment in condom program',
           'parset': P.parsets['default'],
+          'progset': P.progsets['default'],
           'type': 'program',
-          'progset': R,
           'budgets': [
            {'Condoms':array([2e9]),
             'FSW_programs':array([1e9])},
             ],
           'coveragelevels': None,
-          't': [2010]},
+          't': [2016]},
         ]
     
     

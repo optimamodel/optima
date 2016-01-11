@@ -15,8 +15,8 @@ class Project(object):
     The main Optima project class. Almost all Optima functionality is provided by this class.
     
     An Optima project is based around 4 major lists:
-        1. parsets -- an odict of parameter structures
-        2. progsets -- an odict of response structures
+        1. parsets -- an odict of parameter sets
+        2. progsets -- an odict of program sets
         3. scens -- an odict of scenario structures
         4. optims -- an odict of optimization structures
     
@@ -31,7 +31,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
     
-    Version: 2015dec17 by cliffk
+    Version: 2016jan10 by cliffk
     """
     
     
@@ -82,7 +82,7 @@ class Project(object):
         output += '      Project name: %s\n'    % self.name
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
-        output += '     Response sets: %i\n'    % len(self.progsets)
+        output += '      Program sets: %i\n'    % len(self.progsets)
         output += '     Scenario sets: %i\n'    % len(self.scens)
         output += ' Optimization sets: %i\n'    % len(self.optims)
         output += '\n'

@@ -85,23 +85,31 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
 
 
 
+def getvalidyears(years, validdata, defaultind=0):
+    ''' Return the years that are valid based on the validity of the input data '''
+    if sum(validdata): # There's at least one data point entered
+        if len(years)==len(validdata): # They're the same length: use for logical indexing
+            validyears = array(array(years)[validdata]) # Store each year
+        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
+            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
+    return validyears
 
-def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto=''):
+
+
+def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto='', defaultind=0):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, limits=limits, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
         validdata = ~isnan(data[short][row])
-        if sum(validdata): # There's at least one data point -- WARNING, is this ok?
-            par.y[key] = sanitize(data[short][row]) # Store each extant value
-            par.t[key] = array(data['years'])[~isnan(data[short][row])] # Store each year
-        else: # Blank, assume zero -- WARNING, is this ok?
-            par.y[key] = array([0])
-            par.t[key] = array([0])
+        par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+        if sum(validdata): 
+            par.y[key] = sanitize(data[short][row])
+        else:
+            print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
+            par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
     
     return par
-
-
-
 
 
 ## Acts
@@ -122,8 +130,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []
-    for row in range(npops):
-        yearstouse.append(array(data['years'])[~isnan(data[which+act][row])]   )
+    for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point
@@ -409,7 +416,8 @@ class Timepar(Par):
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                try: output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         if npops==1: return output[0,:]
         else: return output
 
