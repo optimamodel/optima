@@ -2,8 +2,8 @@
   <div ng-if="isAdmin" ng-click="showAdminMenu = !showAdminMenu">
     <div class="btn __blue">
       Admin
-      <i class="fa fa-angle-up" ng-if="!showAdminMenu"></i>
-      <i class="fa fa-angle-down" ng-if="showAdminMenu"></i>
+      <i class="fa fa-angle-up" ng-if="showAdminMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showAdminMenu"></i>
     </div>
     <div ng-if="showAdminMenu" class="menu-dropdown" style="width: 200px;">
       <div ui-sref="admin.manage-users" ng-click="updateMenuSelection('showAdminMenu')">Manage users</div>
@@ -13,8 +13,8 @@
   <div ng-click="showProjectMenu = !showProjectMenu">
     <div class="btn __blue">
       Manage project
-      <i class="fa fa-angle-up" ng-if="!showProjectMenu"></i>
-      <i class="fa fa-angle-down" ng-if="showProjectMenu"></i>
+      <i class="fa fa-angle-up" ng-if="showProjectMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showProjectMenu"></i>
     </div>
     <div ng-if="showProjectMenu" class="menu-dropdown" style="width: 200px;">
       <div ui-sref="project.create">Create new project</div>
@@ -29,8 +29,8 @@
   <div ng-click="showProjectSetMenu = !showProjectSetMenu">
     <div class="btn __blue">
       Define programs
-      <i class="fa fa-angle-up" ng-if="!showProjectSetMenu"></i>
-      <i class="fa fa-angle-down" ng-if="showProjectSetMenu"></i>
+      <i class="fa fa-angle-up" ng-if="showProjectSetMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showProjectSetMenu"></i>
     </div>
     <div ng-if="showProjectSetMenu" class="menu-dropdown" style="width: 250px;">
       <div ng-click="goIfProjectActive('project-set.manageProgramSet')">Define programs</div>
@@ -40,8 +40,8 @@
   <div ng-click="showAnalysisMenu = !showAnalysisMenu">
     <div class="btn __blue">
       Perform Analysis
-      <i class="fa fa-angle-up" ng-if="!showAnalysisMenu"></i>
-      <i class="fa fa-angle-down" ng-if="showAnalysisMenu"></i>
+      <i class="fa fa-angle-up" ng-if="showAnalysisMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showAnalysisMenu"></i>
     </div>
     <div ng-if="showAnalysisMenu" class="menu-dropdown" style="width: 150px;">
       <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analyses</div>
@@ -51,8 +51,8 @@
   <div ng-click="showAccountHelpMenu = !showAccountHelpMenu">
     <div class="btn __blue">
       Account and help
-      <i class="fa fa-angle-up" ng-if="!showAccountHelpMenu"></i>
-      <i class="fa fa-angle-down" ng-if="showAccountHelpMenu"></i>
+      <i class="fa fa-angle-up" ng-if="showAccountHelpMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showAccountHelpMenu"></i>
     </div>
     <div ng-if="showAccountHelpMenu" class="menu-dropdown" style="width: 150px;">
       <div ui-sref="edit">Edit details</div>
