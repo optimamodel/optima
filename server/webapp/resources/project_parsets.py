@@ -79,11 +79,15 @@ calibration_fields = {
     "selectors": Json
 }
 
-
 calibration_parser = RequestParser()
-calibration_parser.add_arguments({
+calibration_parser.add_argument('which', location='args', default=None, action='append')
+
+
+calibration_update_parser = RequestParser()
+calibration_update_parser.add_arguments({
+    'which': {'default': None, 'action': 'append'},
     'parameters': {'required': True, 'type': dict, 'action': 'append'},
-    'doSave': {'default': False, 'type': bool, 'location': 'args'}
+    'doSave': {'default': False, 'type': bool, 'location': 'args'},
 })
 
 
@@ -94,10 +98,10 @@ class ParsetsCalibration(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    def _result_to_jsons(self, result):
+    def _result_to_jsons(self, result, which):
         import mpld3
         import json
-        graphs = op.epiplot(result, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
+        graphs = op.epiplot(result, figsize=(4, 3), which = which)  # TODO: store if that becomes an efficiency issue
         jsons = []
         for graph in graphs:
             # Add necessary plugins here
@@ -107,25 +111,30 @@ class ParsetsCalibration(Resource):
             jsons.append(json.loads(json_string))
         return jsons
 
-    def _selectors_from_result(self, result):
-        graph_selectors = result.make_graph_selectors()
+    def _selectors_from_result(self, result, which):
+        graph_selectors = result.make_graph_selectors(which)
         keys = graph_selectors['keys']
         names = graph_selectors['names']
         checks = graph_selectors['checks']
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
-        print ("selectors", selectors)
         return selectors
+
+    def _which_from_selectors(self, graph_selectors):
+        return [item['key'] for item in graph_selectors if item['checked']]
 
     @swagger.operation(
         description='Provides calibration information for the given parset',
         notes="""
         Returns data suitable for manual calibration and the set of corresponding graphs.
-        """
+        """,
+        parameters=calibration_parser.swagger_parameters()
     )
     @marshal_with(calibration_fields, envelope="calibration")
     def get(self, parset_id):
         current_app.logger.debug("/api/parsets/{}/calibration/manual".format(parset_id))
+        args = calibration_parser.parse_args()
+        which = args.get('which')
 
         parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
         if parset is None:
@@ -149,8 +158,9 @@ class ParsetsCalibration(Resource):
             simparslist = parset_instance.interp()
             result = project_instance.runsim(simpars=simparslist)
 
-        graphs = self._result_to_jsons(result)
-        selectors = self._selectors_from_result(result)
+        selectors = self._selectors_from_result(result, which)
+        which = which or self._which_from_selectors(selectors)
+        graphs = self._result_to_jsons(result, which)
 
         return {
             "parset_id": parset_id,
@@ -161,8 +171,9 @@ class ParsetsCalibration(Resource):
 
     def put(self, parset_id):
         current_app.logger.debug("PUT /api/parsets/{}/calibration/manual".format(parset_id))
-        args = calibration_parser.parse_args()
+        args = calibration_update_parser.parse_args()
         parameters = args.get('parameters', [])
+        which = args.get('which')
         # TODO save if doSave=true
 
         parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
@@ -185,8 +196,9 @@ class ParsetsCalibration(Resource):
         simparslist = parset_instance.interp()
         result = project_instance.runsim(simpars=simparslist)
 
-        graphs = self._result_to_jsons(result)
-        selectors = self._selectors_from_result(result)
+        selectors = self._selectors_from_result(result, which)
+        which = which or self._which_from_selectors(selectors)
+        graphs = self._result_to_jsons(result, which)
 
         return {
             "parset_id": parset_id,
