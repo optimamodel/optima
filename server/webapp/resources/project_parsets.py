@@ -75,7 +75,8 @@ class ParsetsDetail(Resource):
 calibration_fields = {
     "parset_id": Uuid,
     "parameters": Json,
-    "graphs": Json
+    "graphs": Json,
+    "selectors": Json
 }
 
 
@@ -93,10 +94,10 @@ class ParsetsCalibration(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    def _results_to_jsons(self, results):
+    def _result_to_jsons(self, result):
         import mpld3
         import json
-        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
+        graphs = op.epiplot(result, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
         jsons = []
         for graph in graphs:
             # Add necessary plugins here
@@ -105,6 +106,16 @@ class ParsetsCalibration(Resource):
             json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
             jsons.append(json.loads(json_string))
         return jsons
+
+    def _selectors_from_result(self, result):
+        graph_selectors = result.make_graph_selectors()
+        keys = graph_selectors['keys']
+        names = graph_selectors['names']
+        checks = graph_selectors['checks']
+        selectors = [{'key': key, 'name': name, 'checked': checked}
+                     for (key, name, checked) in zip(keys, names, checks)]
+        print ("selectors", selectors)
+        return selectors
 
     @swagger.operation(
         description='Provides calibration information for the given parset',
@@ -133,17 +144,19 @@ class ParsetsCalibration(Resource):
         project_instance = project_entry.hydrate()
         existing_result = [item for item in project_entry.results if item.parset_id == parset_id]
         if existing_result:
-            results = existing_result[0].hydrate()
+            result = existing_result[0].hydrate()
         else:
             simparslist = parset_instance.interp()
-            results = project_instance.runsim(simpars=simparslist)
+            result = project_instance.runsim(simpars=simparslist)
 
-        graphs = self._results_to_jsons(results)
+        graphs = self._result_to_jsons(result)
+        selectors = self._selectors_from_result(result)
 
         return {
             "parset_id": parset_id,
             "parameters": parameters,
-            "graphs": graphs
+            "graphs": graphs,
+            "selectors": selectors
         }
 
     def put(self, parset_id):
@@ -170,12 +183,14 @@ class ParsetsCalibration(Resource):
         project_entry = load_project(parset.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
-        results = project_instance.runsim(simpars=simparslist)
+        result = project_instance.runsim(simpars=simparslist)
 
-        graphs = self._results_to_jsons(results)
+        graphs = self._result_to_jsons(result)
+        selectors = self._selectors_from_result(result)
 
         return {
             "parset_id": parset_id,
             "parameters": args['parameters'],
-            "graphs": graphs
+            "graphs": graphs,
+            "selectors": selectors
         }
