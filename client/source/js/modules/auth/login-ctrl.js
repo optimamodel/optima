@@ -2,7 +2,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
 
   'use strict';
 
-  return module.controller('LoginController', function ($scope, $window, User) {
+  return module.controller('LoginController', function ($scope, $window, User, activeProject) {
 
     $scope.error = '';
 
@@ -22,6 +22,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
       },
         // success
         function (response) {
+          activeProject.removeProjectForUserId(response.id);
           $window.location = '/';
         },
         // error
