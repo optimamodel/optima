@@ -13,8 +13,8 @@ Version: 2016jan06 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'plot',
-'browser',
-#'gui',
+#'browser',
+'gui',
 ]
 
 

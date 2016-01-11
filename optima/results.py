@@ -5,7 +5,7 @@ Version: 2015dec25 by cliffk -- merry christmas!
 """
 
 from optima import uuid, today, getdate, quantile, printv, odict, objectid, objectatt, objectmeth, dcp
-from numpy import array, nan, zeros
+from numpy import array, nan, zeros, arange
 
 
 
@@ -99,7 +99,7 @@ class Resultset(object):
     
     
     
-    def make(self, quantiles=None, verbose=2):
+    def make(self, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
         
         printv('Making derived results...', 3, verbose)
@@ -125,35 +125,40 @@ class Resultset(object):
         
         # Initialize
         if quantiles is None: quantiles = [0.5, 0.25, 0.75] # Can't be a kwarg since mutable
+        if annual is False:
+            indices = arange(len(self.tvec)) # Use all indices
+        else: 
+            indices = arange(0, len(self.tvec), int(1.0/(self.tvec[1]-self.tvec[0]))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
+            self.tvec = self.tvec[indices] # Subsample time vector too
         allpeople = array([self.raw[i]['people'] for i in range(len(self.raw))])
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
         data = self.data
         
-        self.main['prev'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1) / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['prev'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
         
-        self.main['numinci'].pops = quantile(allinci, quantiles=quantiles)
-        self.main['numinci'].tot = quantile(allinci.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
+        self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numinci'].datatot = processdata(data['optnuminfect'])
 
-        self.main['force'].pops = quantile(allinci / allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['force'].tot = quantile(allinci.sum(axis=1) / allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         
-        self.main['numdeath'].pops = quantile(alldeaths, quantiles=quantiles)
-        self.main['numdeath'].tot = quantile(alldeaths.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdeath'].pops = quantile(alldeaths[:,:,indices], quantiles=quantiles)
+        self.main['numdeath'].tot = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdeath'].datatot = processdata(data['optdeath'])
 
-        self.main['numdiag'].pops = quantile(alldiag, quantiles=quantiles)
-        self.main['numdiag'].tot = quantile(alldiag.sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        self.main['numdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
+        self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
 
