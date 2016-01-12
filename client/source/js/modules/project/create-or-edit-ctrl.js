@@ -24,7 +24,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.projectInfo = info ? info.data : void 0;
 
     $scope.submit = "Create project & Optima template";
-    $scope.populations = populations.data;
+    $scope.populations = [populations.data.populations];
 
     function isEditMode(){
       return $state.current.name == "project.edit";
