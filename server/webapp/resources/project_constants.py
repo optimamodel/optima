@@ -53,7 +53,7 @@ class Populations(Resource):
     @marshal_with(populations_fields, envelope='populations')
     @login_required
     @report_exception
-    def get(self, project_id):
+    def get(self):
         from server.webapp.populations import populations
 
         populations = populations()
