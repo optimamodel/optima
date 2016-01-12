@@ -769,7 +769,7 @@ class Defaults(Resource):
         project = load_project(project_id, raise_exception=True)
         be_project = project.hydrate()
         programs = get_default_programs(be_project)
-        program_categories = program_categories(project)
+        program_categories = program_categories(be_project)
         for p in programs:
             p['active'] = False
         payload = {
