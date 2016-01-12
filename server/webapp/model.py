@@ -36,7 +36,7 @@ def add_calibration_parameters(project_instance, result=None):
     """
     from parameters import parameters
     if not project_instance.parsets:
-        raise Exception("No parsets are present for the project %s" % project_instance.uuid)
+        raise Exception("No parsets are present for the project %s" % project_instance.uid)
 
 #    from optima.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
