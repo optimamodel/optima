@@ -53,8 +53,8 @@ define(['./module'], function (module) {
         getAllProjectList: function () {
           return $http.get('/api/project/all');
         },
-        getPredefined: function () {
-          return $http.get('/api/project/predefined');
+        getPopulations: function () {
+          return $http.get('/api/project/populations');
         },
         getParameters: function () {
           return $http.get('/api/project/parameters');

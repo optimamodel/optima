@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
-    $timeout, $http, activeProject, defaultsResponse,
+    $timeout, $http, activeProject, populations,
     UserManager, modalService,projects, projectApiService, info) {
 
     var allProjects = projects.data.projects;
@@ -23,11 +23,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.projectInfo = info ? info.data : void 0;
 
-    var availableDefaults = defaultsResponse.data;
-
     $scope.submit = "Create project & Optima template";
-    $scope.populations = availableDefaults.populations;
-    $scope.categories = availableDefaults.categories;
+    $scope.populations = populations.data;
 
     function isEditMode(){
       return $state.current.name == "project.edit";

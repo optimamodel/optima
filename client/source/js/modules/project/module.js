@@ -30,8 +30,8 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            defaultsResponse: function(projectApiService) {
-              return projectApiService.getPredefined();
+            populations: function(projectApiService) {
+              return projectApiService.getPopulations();
             },
             info: function() {
               return undefined;
@@ -49,8 +49,8 @@ define([
             parametersResponse: function(projectApiService) {
               return projectApiService.getParameters();
             },
-            defaultsResponse: function(projectApiService) {
-              return projectApiService.getPredefined();
+            populations: function(projectApiService) {
+              return projectApiService.getPopulations();
             },
             info: function (projectApiService) {
               return projectApiService.getActiveProject();
