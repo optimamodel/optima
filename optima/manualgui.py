@@ -6,7 +6,7 @@ import gui # Need low-level functions so need to import directly
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist = [None]*10
 
-def manualgui(project=None, name='default', ind=0, verbose=4):
+def manualfit(project=None, name='default', ind=0, verbose=4):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -35,11 +35,11 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
     origpars = dcp(tmppars)
 
     for key in tmppars.keys():
-        if hasattr(tmppars[key],'manual'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-            if tmppars[key].manual is not '':
+        if hasattr(tmppars[key],'fittable'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+            if tmppars[key].fittable is not 'no':
                 keylist.append(key) # e.g. "initprev"
                 namelist.append(tmppars[key].name) # e.g. "HIV prevalence"
-                typelist.append(tmppars[key].manual) # e.g. 'pop'
+                typelist.append(tmppars[key].fittable) # e.g. 'pop'
     nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
     ## Convert to the full list of parameters to be fitted
@@ -58,7 +58,7 @@ def manualgui(project=None, name='default', ind=0, verbose=4):
                 fulltypelist.append(typelist[k])
                 fullvallist.append(tmppars[key].m)
                 fulllabellist.append(namelist[k] + ' -- meta')
-            elif typelist[k]=='pop' or typelist[k]=='pship':
+            elif typelist[k] in ['pop', 'pship']:
                 for subkey in tmppars[key].y.keys():
                     fullkeylist.append(key)
                     fullsubkeylist.append(subkey)

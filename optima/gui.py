@@ -19,6 +19,37 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     return None
 
 
+
+def plotresults(results, toplot=None, fig=None, **kwargs):
+    ''' 
+    Like update() for pygui, but just open a new window
+    Keyword arguments if supplied are passed on to figure().
+    
+    Usage:
+        results = P.runsim('default')
+        plotresults(results)
+    '''
+    if toplot is None: toplot = ['prev-tot', 'prev-pops', 'numinci-pops']
+    if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
+    nplots = len(toplot) # Calculate rows and columns of subplots
+    nrows = int(ceil(sqrt(nplots)))
+    ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
+    
+    # Do plotting
+    wasinteractive = isinteractive()
+    if wasinteractive: ioff()
+    width,height = fig.get_size_inches()
+    
+    # Actually create plots
+    plots = epiplot(results, which=toplot, figsize=(width, height))
+    for p in range(len(plots)): addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
+    if wasinteractive: ion()
+    show()
+
+
+
+
+
 def closegui(event=None):
     ''' Close all GUI windows '''
     global plotfig, panelfig

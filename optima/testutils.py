@@ -4,7 +4,7 @@ TESTUTILS
 
 A little script for testing various utilities.
 
-Version: 2015nov21 by cliffk
+Version: 2016jan05 by cliffk
 """
 
 
@@ -17,20 +17,17 @@ tests = [
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
-from utils import tic, toc, blank, pd # analysis:ignore
+from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
-
-
-
-
 
 blank()
 print('Running tests:')
@@ -74,7 +71,7 @@ if 'odict' in tests:
 
 
 ## gridcolormap test
-if 'gridcolormap' in tests:
+if 'gridcolormap' in tests and doplot:
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     t = tic()
     

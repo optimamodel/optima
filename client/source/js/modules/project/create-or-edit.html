@@ -7,7 +7,7 @@
           <h1>Project details</h1>
 
          <b>Project name</b>
-        <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" ng-disabled="editParams.isEdit" required>
+        <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
       </div>
     </div>
@@ -15,11 +15,11 @@
     <div class="section grid">
       <div class="3">
           <b>First year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" ng-disabled="editParams.isEdit" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
       </div>
       <div class="3">
           <b>Final year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.dataend" ng-disabled="editParams.isEdit" required>
+        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.dataend" required>
       </div>
     </div>
 

@@ -20,7 +20,7 @@ def record_params(setup_state):
 @scenarios.route('/parameters')
 @login_required
 @check_project_name
-@report_exception()
+@report_exception
 def get_scenario_parameters():
     from sim.parameters import parameters
     from sim.scenarios import getparvalues
@@ -48,7 +48,7 @@ def get_scenario_parameters():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def list_scenarios():
     """
     Returns a list of scenarios defined by the user, or the default scenario list

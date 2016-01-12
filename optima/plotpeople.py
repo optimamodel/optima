@@ -11,7 +11,10 @@ from pylab import hold, shape, subplot, figure, title, ylabel, plot, maximum
 def plotpeople(resultslist, normalized=True):
     if type(resultslist) is not list: resultslist = [resultslist]
     ppl = resultslist[0].raw[0]['people']
-    settings = resultslist[0].project.settings
+    if resultslist[0].project: settings = resultslist[0].project.settings
+    else:
+        from optima import Settings
+        settings = Settings()
     statelabels = []
     statelabels.append('sus1')
     statelabels.append('sus2')
@@ -27,7 +30,7 @@ def plotpeople(resultslist, normalized=True):
     count = 0
     figh = figure(figsize=(24,16), facecolor='w')
     figh.subplots_adjust(left=0.02, right=0.99, top=0.97, bottom=0.03, wspace=0.00, hspace=0.00) # Less space
-    
+
     mpl.rcParams.update({'font.size': 8})
     eps = 1e-9
     for s in range(nstates):

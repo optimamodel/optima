@@ -34,7 +34,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         
         # Check that only numeric data have been entered
         for column,datum in enumerate(thesedata):
-            if type(datum) not in [float, int]:
+            if not isinstance(datum, (int, float)):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'
@@ -95,12 +95,12 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
-                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4transaids'],
+                           ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
-                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathaids', 'deathtreat', 'deathtb'],
+                           ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
                            ['efftx', 'effpmtct', 'effprep','effcondom', 'effcirc', 'effost', 'effdx', 'effsti'],
-                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutilaids','disutiltx']]
+                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
     
 
     
@@ -143,6 +143,13 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     data['pops']['female'] = [] # Store whether or not population is female
     data['pops']['age'] = [] # Store the age range for this population
     
+    ## Initialize partnerships
+    data['pships'] = odict() # Initialize to empty list
+    data['pships']['reg'] = [] # Store regular partnerships
+    data['pships']['cas'] = [] # Store casual partnerships
+    data['pships']['com'] = [] # Store commercial partnerships
+    data['pships']['inj'] = [] # Store injecting partnerships
+
     ## Initialize constants
     data['const'] = odict() # Initialize to empty list
     
@@ -254,6 +261,19 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             raise Exception(errormsg)
     
     
+    # Store tuples of partnerships
+    for row in range(data['npops']):
+        for col in range(data['npops']):
+            if data['partreg'][row][col]:
+                data['pships']['reg'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            if data['partcas'][row][col]:
+                data['pships']['cas'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            if data['partcom'][row][col]:
+                data['pships']['com'].append((data['pops']['short'][row],data['pops']['short'][col]))
+            if data['partinj'][row][col]:
+                data['pships']['inj'].append((data['pops']['short'][row],data['pops']['short'][col]))
+    
+
     printv('...done loading data.', 2, verbose)
     return data
 

@@ -47,6 +47,10 @@ class ProjectDoesNotExist(RecordDoesNotExist):
     _model = 'project'
 
 
+class ParsetDoesNotExist(RecordDoesNotExist):
+    _model = 'parset'
+
+
 class InvalidCredentials(BaseRESTException):
     code = 401
     description = 'The user or password provided are incorrect'

@@ -4,7 +4,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectOpenController',
-    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager, projectApiService) {
+    function ($scope, $http, activeProject, projects, modalService, fileUpload, UserManager, projectApiService, $state) {
 
       $scope.sortType = 'name'; // set the default sort type
       $scope.sortReverse = false;  // set the default sort order
@@ -48,6 +48,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.projects = _.filter($scope.projects, function(project) {
               return !project.selected;
             });
+            var activeProjectId = activeProject.getProjectIdForCurrentUser();
+            _.each(selectedProjects, function(project) {
+              activeProject.ifActiveResetFor(null, project, UserManager.data);
+            });
           });
       };
 
@@ -70,7 +74,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
        */
       $scope.open = function (name, id) {
         activeProject.setActiveProjectFor(name, id, UserManager.data);
-        window.location = '/';
+        $state.go('home');
       };
 
 
@@ -98,7 +102,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
        */
       $scope.edit = function (name, id) {
         activeProject.setActiveProjectFor(name, id, UserManager.data);
-        window.location = '/#/project/edit';
+        $state.go('project.edit');
       };
 
       /**

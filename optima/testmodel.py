@@ -20,20 +20,17 @@ tests = [
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
 from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
-
-
-
-
 
 blank()
 print('Running tests:')
@@ -71,8 +68,9 @@ if 'force' in tests:
     for i in range(len(P.parsets[0].popkeys)): P.parsets['forcetest'].pars[0]['force'].y[i] *= 3 # WARNING, TEMP
     results2 = P.runsim('forcetest')
     
-    from plotpeople import plotpeople
-    plotpeople([results1, results2])
+    if doplot:
+        from plotpeople import plotpeople
+        plotpeople([results1, results2])
 
     done(t)
 
@@ -94,8 +92,9 @@ if 'treatment' in tests:
     treatpar.y['tot'][treatpar.t['tot']>=2010] *= 3
     results2 = P.runsim('treatment')
     
-    from plotpeople import plotpeople
-    plotpeople([results1, results2])
+    if doplot:
+        from plotpeople import plotpeople
+        plotpeople([results1, results2])
 
     done(t)
 

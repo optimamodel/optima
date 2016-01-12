@@ -1,37 +1,57 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, availableParameters, populations, modalService) {
+  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, availableParameters, populations, programList, modalService) {
 
     // in order to not perform changes directly on the final value here is created a copy
     var programCopy = angular.copy(program);
+    if(programCopy.name && !programCopy.id) {
+      programCopy.name = programCopy.name + ' - Copy';
+    }
 
     // Initializes relevant attributes
     var initialize = function () {
       $scope.isNew = !programCopy.name;
-
+      $scope.selectAll = false;
       $scope.availableParameters = angular.copy(availableParameters);
-      $scope.populations = _(populations).map(function(population) {
-        return {label: population.name, value: [population.short_name]};
+      $scope.populations = angular.copy(populations);
+
+      _.forEach($scope.populations, function(population) {
+        if(programCopy.populations) {
+          population.active = programCopy.populations.indexOf(population.short_name) > -1;
+        }
       });
-      $scope.populations.unshift({label: 'All selected populations', value: ['']});
 
       $scope.initializeAllCategories();
 
+      var oldPops;
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
       _(programCopy.parameters).each(function(entry) {
         entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
-        var foundPopulation = findPopulation($scope.populations, entry.value.pops);
-        if (foundPopulation) {
-          entry.value.pops = foundPopulation.value;
-        }
+        oldPops = entry.value.pops;
+        entry.value.pops = angular.copy(populations);
+        _.each(entry.value.pops, function(pop) {
+          pop.active = oldPops.indexOf(pop.short_name) > -1;
+        });
       });
 
       $scope.program = programCopy;
       $scope.program.active = true;
       if ($scope.isNew) { $scope.program.category = 'Other'; }
+    };
+
+    $scope.selectAllPopulations = function() {
+      _.forEach($scope.populations, function(population) {
+        population.active = $scope.selectAll;
+      });
+    };
+
+    $scope.selectAllEntryPopulations = function(entry) {
+      _.forEach(entry.value.pops, function(population) {
+        population.active = entry.selectAll;
+      });
     };
 
     /*
@@ -52,13 +72,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    /*
-    * Finds a population entry based on the value
-    */
-    var findPopulation = function(populations, value) {
-      return _(populations).find(function(population) {
-        return areEqualArrays(population.value, value);
+    $scope.isUniqueName = function (name, programForm) {
+      var exists = _(programList).some(function(program) {
+        return program.name == name && program.id !== $scope.program.id;
       });
+      programForm.programName.$setValidity("programExists", !exists);
+      return exists;
     };
 
     $scope.initializeAllCategories = function () {
@@ -71,7 +90,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.addParameter = function () {
-      var entry = {value: {signature: [], pops: []}, active: true};
+      var entry = {value: {signature: [], pops: angular.copy(populations)}, active: true};
       $scope.program.parameters = $scope.program.parameters || [];
       $scope.program.parameters.push(entry);
     };
@@ -88,7 +107,20 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.inform(undefined,undefined,'Please fill in the form correctly');
       } else {
         // filter out empty parameters
+        var selected_populations = _.filter($scope.populations, function(population) {
+          return population.active;
+        }).map(function(population) {
+          return population.short_name;
+        });
+
+        $scope.program.populations = selected_populations;
         $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
+          delete item.selectAll;
+          item.value.pops = _.filter(item.value.pops, function(population) {
+            return population.active;
+          }).map(function(population) {
+            return population.short_name;
+          });
           return item.value.signature.length && item.value.pops.length;
         });
 

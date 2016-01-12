@@ -36,7 +36,7 @@ def add_calibration_parameters(project_instance, result=None):
     """
     from parameters import parameters
     if not project_instance.parsets:
-        raise Exception("No parsets are present for the project %s" % project_instance.uuid)
+        raise Exception("No parsets are present for the project %s" % project_instance.uid)
 
 #    from optima.nested import getnested
     calibrate_parameters = [p for p in parameters() if 'calibration' in p and p['calibration']]
@@ -67,7 +67,7 @@ def record_params(setup_state):
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def doAutoCalibration():
     """
     Uses provided parameters to auto calibrate the model (update it with these data)
@@ -120,7 +120,7 @@ def stopCalibration():
 @model.route('/working')
 @login_required
 @check_project_name
-@report_exception()
+@report_exception
 def getWorkingModel():
     """ Returns the working model of project. """
     # TODO: this would not make sense anymore, because we'd only need results for a specific parset.
@@ -158,7 +158,7 @@ def getWorkingModel():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def saveCalibrationModel():
     """ Saves working model as the default model """
     # TODO: we no longer need to save the whole project, only the results for the specific parset.
@@ -175,7 +175,7 @@ def saveCalibrationModel():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def revertCalibrationModel():
     """ Revert working model to the default model """
     # TODO: we would only need to delete temporary result corresponding to the given project / parset.
@@ -192,7 +192,7 @@ def revertCalibrationModel():
 @login_required
 @check_project_name
 @check_project_exists
-@report_exception()
+@report_exception
 def doManualCalibration():
     # TODO: we can do that once we know which data we are going to save and where they would go
     # most probably this will be done as a Parset update.
@@ -288,7 +288,7 @@ def getModelSubGroup(key, subkey):
 @model.route('/data/<key>', methods=['POST'])
 @login_required
 @check_project_name
-@report_exception()
+@report_exception
 def setModelGroup(key):
     # TODO: this should be part of DataKey CRUD
     """ Stores the provided data as a subset with the given key for the D (model) in the open project. """
@@ -305,7 +305,7 @@ def setModelGroup(key):
 @model.route('/view', methods=['POST'])
 @login_required
 @check_project_name
-@report_exception()
+@report_exception
 def doRunSimulation():
     # TODO: this should have the "parset id" and "project id" parameters.
     # the flow:
@@ -458,7 +458,7 @@ def doCostCoverageEffect():
 @model.route('/reloadSpreadsheet/<project_id>', methods=['GET'])
 @login_required
 @check_project_name
-@report_exception()
+@report_exception
 def reloadSpreadsheet(project_id):
     """
     Reload the excel spreadsheet and re-run the simulations.

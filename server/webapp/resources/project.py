@@ -19,12 +19,12 @@ from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStora
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid
 
-from server.webapp.utils import (load_project, verify_admin_request,
+from server.webapp.utils import (load_project, verify_admin_request, report_exception,
                                  delete_spreadsheet, RequestParser)
 
 
 class ProjectBase(Resource):
-    method_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     def get_query(self):
         return ProjectDb.query
@@ -61,12 +61,10 @@ project_parser.add_arguments({
 project_update_parser = RequestParser()
 project_update_parser.add_arguments({
     'name': {'type': secure_filename_input},
-    # FIXME: programs should be a "SubParser" with its own Parser
-    # 'populations': {'type': SubParser(population_parser)},
     'populations': {'type': dict, 'action': 'append'},
     'canUpdate': {'type': bool, 'default': False},
-    # FIXME: programs should be a "SubParser" with its own Parser
-    'programs': {'type': dict, 'action': 'append'}
+    'datastart': {'type': int, 'default': None},
+    'dataend': {'type': int, 'default': None}
 })
 
 
@@ -198,7 +196,7 @@ class Project(Resource):
     """
     An individual project.
     """
-    method_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         responseClass=ProjectDb.__name__,
@@ -239,13 +237,18 @@ class Project(Resource):
             "project %s is in edit mode" % project_id)
         current_app.logger.debug(args)
 
-        can_update = args.pop('canUpdate', False)
+#        can_update = args.pop('canUpdate', False) we'll calculate it based on DB info + request info
         current_app.logger.debug("updateProject data: %s" % args)
 
         # Check whether we are editing a project
         project_entry = load_project(project_id) if project_id else None
         if not project_entry:
             raise ProjectDoesNotExist(id=project_id)
+
+        current_populations = project_entry.populations
+        new_populations = args.get('populations', {})
+        can_update = (current_populations == new_populations)
+        current_app.logger.debug("can_update %s: %s" % (project_id, can_update))
 
         for name, value in args.iteritems():
             if value is not None:
@@ -255,42 +258,12 @@ class Project(Resource):
             "Editing project %s by user %s:%s" % (
                 project_entry.name, current_user.id, current_user.email))
 
-        # makeproject is supposed to return the name of the existing file...
-        # D = makeproject(**makeproject_args)
-        # D should have inputprograms and inputpopulations corresponding to the
-        # entered data now
-        # project_entry.model = tojson(D)
-        # WorkingProjectDb.query.filter_by(id=project_entry.id).delete()
-        # if can_update and project_entry.project_data is not None and project_entry.project_data.meta is not None:
-        #     from dataio import projectpath
+        # because programs no longer apply here, we don't seem to have to recalculate the results
+        # not sure what to do with startdate and enddate though... let's see how it goes )
 
-        #     # try to reload the data
-        #     loaddir = upload_dir_user(DATADIR)
-        #     if not loaddir:
-        #         loaddir = DATADIR
-        #     filename = args['name'] + '.xlsx'
-        #     server_filename = os.path.join(loaddir, filename)
-        #     filedata = open(server_filename, 'wb')
-        #     filedata.write(project_entry.project_data.meta)
-        #     filedata.close()
-        #     D = model_as_bunch(project_entry.model)
-        #     # resave relevant metadata
-        #     D['G']['projectname'] = project_entry.name
-        #     D['G']['projectfilename'] = projectpath(project_entry.name+'.prj')
-        #     D['G']['workbookname'] = D['G']['projectname'] + '.xlsx'
-        #     D['G']['inputprograms'] = deepcopy(project_entry.programs)
-        #     D['G']['inputpopulations'] = deepcopy(project_entry.populations)
-        #     # TODO fix after v2
-        #     # D = updatedata(
-        #     # D, input_programs = project_entry.programs, savetofile = False)
-        #     # and now, because workbook was uploaded, we have to correct the
-        #     # programs and populations
-        #     model = model_as_dict(D)
-        #     project_entry.model = model
-        #     getPopsAndProgsFromModel(project_entry, trustInputMetadata=False)
-        # else:
-        #     ProjectDataDb.query.filter_by(
-        #         id=project_entry.id).delete()
+        if not can_update:
+            db.session.query(ProjectDataDb).filter_by(id=project_entry.id).delete()
+            db.session.commit()
 
         # Save to db
         current_app.logger.debug("About to persist project %s for user %s" % (
@@ -301,7 +274,7 @@ class Project(Resource):
         new_project_template = project_entry.name
 
         path = templatepath(project_entry.name)
-        makespreadsheet(
+        op.makespreadsheet(
             path,
             pops=args['populations'],
             datastart=project_entry.datastart,
@@ -356,7 +329,7 @@ class ProjectSpreadsheet(Resource):
     """
     Spreadsheet upload and download for the given project.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -415,7 +388,7 @@ class ProjectSpreadsheet(Resource):
         # TODO replace this with app.config
         DATADIR = current_app.config['UPLOAD_FOLDER']
 
-        current_app.logger.debug("api/project/update")
+        current_app.logger.debug("PUT /api/project/%s/spreadsheet" % project_id)
 
         project_entry = load_project(project_id)
         if project_entry is None:
@@ -482,15 +455,15 @@ class ProjectSpreadsheet(Resource):
             parset_records_map = {record.id: record for record in project_entry.parsets}
             # may be SQLAlchemy can do stuff like this already?
             for (parset_name, parset_entry) in new_project.parsets.iteritems():
-                parset_record = parset_records_map.get(parset_entry.uuid)
+                parset_record = parset_records_map.get(parset_entry.uid)
                 if not parset_record:
                     parset_record = ParsetsDb(
                         project_id=project_entry.id,
                         name=parset_name,
-                        id=parset_entry.uuid
+                        id=parset_entry.uid
                     )
                 if parset_record.name == "default":
-                    result_parset_id = parset_entry.uuid
+                    result_parset_id = parset_entry.uid
                 parset_record.pars = saves(parset_entry.pars)
                 db.session.add(parset_record)
 
@@ -535,7 +508,7 @@ class ProjectData(Resource):
     """
     Export and import of the existing project in / from pickled format.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         produces='application/x-gzip',
@@ -609,7 +582,7 @@ class ProjectFromData(Resource):
     """
     Import of a new project from pickled format.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         summary='Creates a project & uploads data to initialize it.',
@@ -688,6 +661,7 @@ class ProjectCopy(Resource):
     )
     @marshal_with(project_copy_fields)
     @login_required
+    @report_exception
     def post(self, project_id):
         from sqlalchemy.orm.session import make_transient
         # from server.webapp.dataio import projectpath
@@ -748,6 +722,7 @@ class Portfolio(Resource):
         parameters=bulk_project_parser.swagger_parameters()
     )
     @login_required
+    @report_exception
     def post(self):
         from zipfile import ZipFile
         from uuid import uuid4

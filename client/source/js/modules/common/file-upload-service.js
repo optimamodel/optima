@@ -11,7 +11,7 @@ define([
   .factory('fileUpload', ['$http', '$upload', 'modalService', 'activeProject', 'projectApiService', function ($http, $upload, modalService, activeProject, projectApiService) {
     var uploadDataSpreadsheet = function(scope, file, url, reload) {
       if (url === undefined) {
-        const projectId = activeProject.getProjectIdForCurrentUser();
+        var projectId = activeProject.getProjectIdForCurrentUser();
         url = projectApiService.getSpreadsheetUrl(projectId);
       }
       if (reload === undefined ) {

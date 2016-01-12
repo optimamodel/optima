@@ -5,7 +5,7 @@ from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 
 from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser
+from server.webapp.utils import load_project, RequestParser, report_exception
 from server.webapp.exceptions import RecordDoesNotExist, ProjectDoesNotExist
 
 from server.webapp.dbconn import db
@@ -19,7 +19,8 @@ program_parser.add_arguments({
     'short_name': {'required': True, 'location': 'json'},
     'category': {'required': True, 'location': 'json'},
     'active': {'type': bool, 'default': False, 'location': 'json'},
-    'parameters': {'type': dict, 'action': 'append', 'dest': 'pars', 'location': 'json'},
+    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
+    'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
 })
 
 
@@ -34,7 +35,7 @@ class Progsets(Resource):
     """
     Progsets for a given project.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Download progsets for the project with the given id.',
@@ -87,7 +88,7 @@ class Progset(Resource):
     """
     An individual progset.
     """
-    class_decorators = [login_required]
+    method_decorators = [report_exception, login_required]
 
     @swagger.operation(
         description='Download progset with the given id.',
@@ -99,7 +100,7 @@ class Progset(Resource):
     )
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
-        current_app.logger.info("/api/project/%s/progsets/%s" % (project_id, progset_id))
+        current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)

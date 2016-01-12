@@ -4,7 +4,7 @@ import dateutil
 from flask_restful_swagger import swagger
 from flask_restful import fields
 
-from sqlalchemy.dialects.postgresql import JSON, UUID
+from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
@@ -120,7 +120,7 @@ class ProjectDb(db.Model):
 
     def hydrate(self):
         project_entry = op.Project()
-        project_entry.uuid = self.id
+        project_entry.uid = self.id
         project_entry.name = self.name
         project_entry.created = (
             self.created or datetime.now(dateutil.tz.tzutc())
@@ -217,6 +217,15 @@ class ParsetsDb(db.Model):
 
     __tablename__ = 'parsets'
 
+    resource_fields = {
+        'id': Uuid(attribute='uid'),
+        'project_id': Uuid,
+        'name': fields.String,
+        'created': fields.DateTime,
+        'updated': fields.DateTime,
+        'pars': Json,
+    }
+
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.Text)
@@ -238,7 +247,7 @@ class ParsetsDb(db.Model):
     def hydrate(self):
         parset_entry = op.Parameterset()
         parset_entry.name = self.name
-        parset_entry.uuid = self.id
+        parset_entry.uid = self.id
         parset_entry.created = self.created
         parset_entry.modified = self.updated
         parset_entry.pars = op.loads(self.pars)
@@ -263,6 +272,8 @@ class ResultsDb(db.Model):
         if id:
             self.id = id
 
+    def hydrate(self):
+        return op.loads(self.blob)
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
 
@@ -329,6 +340,7 @@ class ProgramsDb(db.Model):
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
+        'populations': fields.List(fields.String, attribute='targetpops'),
         'created': fields.DateTime,
         'updated': fields.DateTime,
     }
@@ -341,10 +353,13 @@ class ProgramsDb(db.Model):
     short_name = db.Column(db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
+    targetpops = db.Column(ARRAY(db.String), default=[])
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name='', category='No category', active=False, pars=None, created=None, updated=None, id=None):
+    def __init__(self, project_id, progset_id, name, short_name='',
+            category='No category', active=False, pars=None, created=None,
+            updated=None, id=None, targetpops=[]):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -353,6 +368,7 @@ class ProgramsDb(db.Model):
         self.category = category
         self.pars = pars
         self.active = active
+        self.targetpops = targetpops
         if created:
             self.created = created
         if updated:
@@ -366,7 +382,8 @@ class ProgramsDb(db.Model):
             self.name,
             targetpars=self.pars,
             short_name=self.short_name,
-            category=self.category
+            category=self.category,
+            targetpops=self.targetpops
         )
         program_entry.id = self.id
         return program_entry
@@ -419,14 +436,13 @@ class ProgsetsDb(db.Model):
     def create_programs_from_list(self, programs):
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short_name', 'category']:
+            for field in ['name', 'short_name', 'category', 'targetpops', 'pars']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
                 self.project_id,
                 self.id,
                 active=program.get('active', False),
-                pars=program.get('parameters', None),
                 **kwargs
             )
             db.session.add(program_entry)

@@ -10,7 +10,7 @@ python -i tests.py
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2015dec29 by cliffk
+Version: 2016jan06 by cliffk
 """
 
 
@@ -18,27 +18,28 @@ Version: 2015dec29 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
-'gui',
+#'autofit',
+'makeprograms',
 ]
 
 
 ##############################################################################
-## Initialization
+## Initialization -- same for every test script
 ##############################################################################
 
-from optima import tic, toc, blank, pd, odict # analysis:ignore
+from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
 
 def done(t=0):
     print('Done.')
     toc(t)
     blank()
-    
+
 blank()
 print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
-
-doplot = False
 
 
 ##############################################################################
@@ -65,12 +66,64 @@ if 'makeproject' in tests:
 
 
 #####################################################################################################
-if 'gui' in tests:
+if 'autofit' in tests:
     t = tic()
 
-    print('Running GUI test...')
-    from gui import pygui
-    pygui(results)
+    print('Running autofit test...')
+    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, niters=200, inds=None) # Run automatic fitting
+    results = P.runsim('autofit', end=2015)
+    
+    if doplot:
+        from gui import plotresults
+        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    
+    done(t)
+
+
+#####################################################################################################
+if 'makeprograms' in tests:
+    t = tic()
+
+    print('Making a default programset...')
+    from defaultprograms import defaultprogset
+    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
+
+    # Add coverage-outcome parameters
+    R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
+    R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
+    R.updateprogset()
+
+    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM_programs':(0.75,0.85)})
+    R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
+    R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.8,0.85), 'FSW_programs':(0.6,0.65)})
+    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.8,0.85), 'MSM_programs':(0.6,0.65)})
+    R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.8,0.85)})
+    R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.8,0.85)})
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.8,0.85)})
+    R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+
+    R.programs['Condoms'].addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
+    R.programs['FSW_programs'].addcostcovdatum({'t':2016,'cost':1e6,'coverage':15000})
+    R.programs['MSM_programs'].addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+    R.programs['HTC'].addcostcovdatum({'t':2016,'cost':2e7,'coverage':1.3e6})
+    R.programs['ART'].addcostcovdatum({'t':2016,'cost':5e7,'coverage':17000})
+    R.programs['PMTCT'].addcostcovdatum({'t':2016,'cost':4e6,'coverage':5500})
+    R.programs['MGMT'].addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+    R.programs['HR'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
+    R.programs['Other'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
+
+    budget = R.getdefaultbudget()
+    coverage = R.getprogcoverage(budget=budget, t=2016, parset=P.parsets['default'])
+    outcomes = R.getoutcomes(coverage=coverage, t=2016, parset=P.parsets['default'])
+    progparset = R.getparset(coverage=coverage,
+                  t=[2016],
+                  parset=P.parsets['default'],
+                  newparsetname='progparset')
     
     done(t)
 
