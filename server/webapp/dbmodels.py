@@ -256,6 +256,8 @@ class ParsetsDb(db.Model):
 
 class ResultsDb(db.Model):
 
+    CALIBRATION_TYPE = 'calibration'  # todo make enum when all types are known
+
     __tablename__ = 'results'
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)

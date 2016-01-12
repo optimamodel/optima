@@ -1,3 +1,6 @@
+from datetime import datetime
+import dateutil
+
 from flask import current_app
 
 from flask.ext.login import login_required
@@ -9,7 +12,7 @@ from server.webapp.utils import load_project, RequestParser, report_exception
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb
+from server.webapp.dbmodels import ParsetsDb, ResultsDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
@@ -75,8 +78,20 @@ class ParsetsDetail(Resource):
 calibration_fields = {
     "parset_id": Uuid,
     "parameters": Json,
-    "graphs": Json
+    "graphs": Json,
+    "selectors": Json
 }
+
+calibration_parser = RequestParser()
+calibration_parser.add_argument('which', location='args', default=None, action='append')
+
+
+calibration_update_parser = RequestParser()
+calibration_update_parser.add_arguments({
+    'which': {'default': None, 'action': 'append'},
+    'parameters': {'required': True, 'type': dict, 'action': 'append'},
+    'doSave': {'default': False, 'type': bool, 'location': 'args'},
+})
 
 
 class ParsetsCalibration(Resource):
@@ -86,24 +101,50 @@ class ParsetsCalibration(Resource):
 
     method_decorators = [report_exception, login_required]
 
+    def _result_to_jsons(self, result, which):
+        import mpld3
+        import json
+        graphs = op.epiplot(result, figsize=(4, 3), which = which)  # TODO: store if that becomes an efficiency issue
+        jsons = []
+        for graph in graphs:
+            # Add necessary plugins here
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
+            jsons.append(json.loads(json_string))
+        return jsons
+
+    def _selectors_from_result(self, result, which):
+        graph_selectors = result.make_graph_selectors(which)
+        keys = graph_selectors['keys']
+        names = graph_selectors['names']
+        checks = graph_selectors['checks']
+        selectors = [{'key': key, 'name': name, 'checked': checked}
+                     for (key, name, checked) in zip(keys, names, checks)]
+        return selectors
+
+    def _which_from_selectors(self, graph_selectors):
+        return [item['key'] for item in graph_selectors if item['checked']]
+
     @swagger.operation(
         description='Provides calibration information for the given parset',
         notes="""
         Returns data suitable for manual calibration and the set of corresponding graphs.
-        """
+        """,
+        parameters=calibration_parser.swagger_parameters()
     )
     @marshal_with(calibration_fields, envelope="calibration")
     def get(self, parset_id):
-        import mpld3
-        import json
         current_app.logger.debug("/api/parsets/{}/calibration/manual".format(parset_id))
+        args = calibration_parser.parse_args()
+        which = args.get('which')
 
-        parset = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset is None:
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_entry is None:
             raise ParsetDoesNotExist(id=parset_id)
 
         # get manual parameters
-        parset_instance = parset.hydrate()
+        parset_instance = parset_entry.hydrate()
         mflists = parset_instance.manualfitlists()
         parameters = [{"key": key, "label": label, "subkey": subkey, "value": value, "type": ptype}
                       for (key, label, subkey, value, ptype) in
@@ -111,27 +152,82 @@ class ParsetsCalibration(Resource):
         # REMARK: manualfitlists() in parset returns the lists compatible with usage on BE,
         # but for FE we prefer list of dicts
 
-        project_entry = load_project(parset.project_id, raise_exception=True)
+        project_entry = load_project(parset_entry.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
-        existing_result = [item for item in project_entry.results if item.parset_id == parset_id]
-        if existing_result:
-            results = existing_result[0].hydrate()
+        result_entry = [item for item in project_entry.results if
+                        item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+        if result_entry:
+            result = result_entry[0].hydrate()
         else:
             simparslist = parset_instance.interp()
-            results = project_instance.runsim(simpars=simparslist)
-        graphs = op.epiplot(results, figsize=(4, 3))  # TODO: store if that becomes an efficiency issue
+            result = project_instance.runsim(simpars=simparslist)
 
-        jsons = []
-        # TODO: refactor this?
-        for graph in graphs:
-            # Add necessary plugins here
-            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
-            jsons.append(json.loads(json_string))
+        selectors = self._selectors_from_result(result, which)
+        which = which or self._which_from_selectors(selectors)
+        graphs = self._result_to_jsons(result, which)
 
         return {
             "parset_id": parset_id,
             "parameters": parameters,
-            "graphs": jsons
+            "graphs": graphs,
+            "selectors": selectors
+        }
+
+    @marshal_with(calibration_fields, envelope="calibration")
+    def put(self, parset_id):
+        current_app.logger.debug("PUT /api/parsets/{}/calibration/manual".format(parset_id))
+        args = calibration_update_parser.parse_args()
+        parameters = args.get('parameters', [])
+        which = args.get('which')
+        doSave = args.get('doSave')
+        # TODO save if doSave=true
+
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_entry is None:
+            raise ParsetDoesNotExist(id=parset_id)
+
+        # get manual parameters
+        parset_instance = parset_entry.hydrate()
+        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
+        for param in parameters:
+            mflists['keys'].append(param['key'])
+            mflists['subkeys'].append(param['subkey'])
+            mflists['types'].append(param['type'])
+            mflists['labels'].append(param['label'])
+            mflists['values'].append(param['value'])
+        parset_instance.update(mflists)
+        # recalculate
+        project_entry = load_project(parset_entry.project_id, raise_exception=True)
+        project_instance = project_entry.hydrate()
+        simparslist = parset_instance.interp()
+        result = project_instance.runsim(simpars=simparslist)
+
+        if doSave:  # save the updated results
+            parset_entry.pars = op.saves(parset_instance.pars)
+            parset_entry.updated = datetime.now(dateutil.tz.tzutc())
+            db.session.add(parset_entry)
+            result_entry = [item for item in project_entry.results if
+                            item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+            if result_entry:
+                result_entry = result_entry[0]
+                result_entry.blob = op.saves(result)
+            else:
+                result_entry = ResultsDb(
+                    parset_id=parset_id,
+                    project_id=project_entry.id,
+                    calculation_type=ResultsDb.CALIBRATION_TYPE,
+                    blob=op.saves(result)
+                )
+            db.session.add(result_entry)
+            db.session.commit()
+
+        selectors = self._selectors_from_result(result, which)
+        which = which or self._which_from_selectors(selectors)
+        graphs = self._result_to_jsons(result, which)
+
+        return {
+            "parset_id": parset_id,
+            "parameters": args['parameters'],
+            "graphs": graphs,
+            "selectors": selectors
         }
