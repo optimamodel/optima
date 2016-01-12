@@ -23,6 +23,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/parset/' + $scope.selectedParset.id + '/calibration').
       success(function (response) {
         $scope.calibrationChart = response.calibration.graphs;
+        $scope.selectors = response.calibration.selectors;
       });
     }
 

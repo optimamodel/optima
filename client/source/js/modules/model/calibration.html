@@ -86,7 +86,7 @@
     fix_mouse_pointer();
   });
 </script>
-<div class="page rich">
+<div class="rich" style="margin: 0 -20px;">
   <div class="3">
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
@@ -99,8 +99,18 @@
     </select>
   </div>
 
-  <div ng-repeat="chart in calibrationChart" class="chart-container __small">
-    <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-    <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+  <div style="display: flex;margin-top: 20px;">
+    <div class="small_bordered_list">
+      <div ng-repeat="selector in selectors">
+        <span><input type="checkbox" ng-model="selector.checked"/></span>
+        <span>{{selector.name}}</span>
+      </div>
+    </div>
+    <div>
+      <div ng-repeat="chart in calibrationChart" class="chart-container __small">
+        <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+      </div>
+    </div>
   </div>
 </div>
