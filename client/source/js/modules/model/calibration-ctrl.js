@@ -48,7 +48,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.calibrationChart = calibration.graphs;
       $scope.selectors = calibration.selectors;
       defaultParameters = calibration.parameters;
-      $scope.parameters = copy(response.calibration.parameters);
+      $scope.parameters = angular.copy(calibration.parameters);
     };
 
     $scope.resetParameters = function() {
