@@ -43,3 +43,26 @@
     }
   }
 }
+
+.small_bordered_list {
+  width: 275px;
+
+  div {
+    padding: 10px 5px;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    margin: 0 10px;
+  }
+
+  div:first-of-type {
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid black;
+  }
+
+  div:last-of-type {
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid black;
+  }
+}
