@@ -78,7 +78,7 @@ class Resultset(object):
                 except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
-        self.project = dcp(project) # ...and just copy the whole project
+        self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.data = data # Store data
         

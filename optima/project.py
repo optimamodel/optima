@@ -268,8 +268,10 @@ class Project(object):
         
         # Store results
         results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-#        results.project = self # Will this work?
+        results.project = self # Use hard reference
         self.addresult(result=results)
+        if simpars is None: self.parsets[name].resultsref = results.uid
+        
         
         return results
     
