@@ -14,6 +14,13 @@ from server.webapp.populations import populations
 def make_password(password="test"):
     return hashlib.sha224("test").hexdigest()
 
+def test_populations():
+    pops = populations()
+    for i in range(2):
+        for j in range(len(pops)):
+            pops[j]['active'] = True
+    return pops
+
 
 class UserFactory(SQLAlchemyModelFactory):
 
@@ -35,7 +42,7 @@ class ProjectFactory(SQLAlchemyModelFactory):
     name = fuzzy.FuzzyText(prefix='project_')
     datastart = 2000
     dataend = 2030
-    populations = populations()
+    populations = test_populations()
     version = '{}'
 
     @factory.lazy_attribute
