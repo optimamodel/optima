@@ -518,8 +518,8 @@ class Parameterset(object):
     
     def results(self):
         ''' A little method for getting the results '''
-        if self.resultsref is not None:
-            getresults(parent, se
+        if self.resultsref is not None and self.project is not None:
+            getresults(self.project, self.resultsref)
         else:
             print('WARNING, no results associated with this parameter set')
             return None

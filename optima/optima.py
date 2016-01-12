@@ -10,7 +10,7 @@ from optima import *
 
 The __init__.py file imports all functions and classes defined in this file..
 
-Version: 2016jan05 by cliffk
+Version: 2016jan11 by cliffk
 """
 
 ## Load general modules
@@ -28,7 +28,7 @@ from settings import Settings # Inter-project definitions, e.g. health states
 from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
 from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars # Parameter and Parameterset classes
-from results import Result, Resultset # Result and Results classes
+from results import Result, Resultset, getresults # Result and Results classes
 from model import model, runmodel # The thing that actually runs the model
 from programs import Program, Programset # Define programs
 from makeplots import epiplot # Create the plots

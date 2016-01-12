@@ -1,5 +1,6 @@
-from optima import odict, Settings, Parameterset, Resultset, loadspreadsheet, model, \
-runcommand, getdate, today, uuid, dcp, objectid, objectatt, objectmeth, sensitivity, manualfit, autofit
+from optima import Settings, Parameterset, Programset, Resultset # Import classes
+from optima import odict, getdate, today, uuid, dcp, objectid, objectatt, objectmeth, printv # Import utilities
+from optima import loadspreadsheet, model, runcommand, sensitivity, manualfit, autofit # Import functions
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -134,18 +135,25 @@ class Project(object):
     #######################################################################################################
     
     
-    def getwhat(self, what=None):
+    def getwhat(self, item=None, what=None):
         ''' 
         Figure out what kind of structure list is being requested, e.g.
             structlist = getwhat('parameters')
         will return P.parset.
         '''
-        if what is None: raise Exception('No structure list provided')
-        elif what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
-        elif what in ['r', 'pr', 'progs', 'progset', 'progsets']: structlist = self.progsets # WARNING, inconsistent terminology!
-        elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
-        elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
-        else: raise Exception('Structure list "%s" not understood' % what)
+        if item is None and what is None: raise Exception('No inputs provided')
+        if what is not None: # Explicitly define the type, item be damned
+            if what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
+            elif what in ['pr', 'progs', 'progset', 'progsets']: structlist = self.progsets # WARNING, inconsistent terminology!
+            elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
+            elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
+            elif what in ['r', 'res', 'result', 'results']: structlist = self.results
+            else: raise Exception('Structure list "%s" not understood' % what)
+        else: # Figure out the type based on the input
+            if type(item)==Parameterset: structlist = self.parsets
+            elif type(item)==Programset: structlist = self.progsets
+            elif type(item)==Resultset: structlist = self.results
+            else: raise Exception('Structure list "%s" not understood' % str(type(item)))
         return structlist
     
     
@@ -161,13 +169,13 @@ class Project(object):
         return None
     
     
-    def add(self, what=None, name='default', item=None, overwrite=False):
+    def add(self, name='default', item=None, what=None, overwrite=False):
         ''' Add an entry to a structure list '''
-        structlist = self.getwhat(what)
-        self.checkname(what, checkabsent=name, overwrite=overwrite)
+        structlist = self.getwhat(item, what)
+        self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         structlist[name].name = name # Make sure names are consistent
-        print('Item "%s" added to structure list "%s"' % (name, what))
+        printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
         return None
     
     
@@ -176,7 +184,7 @@ class Project(object):
         structlist = self.getwhat(what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        print('Item "%s" removed from structure list "%s"' % (name, what))
+        printv('Item "%s" removed from structure list "%s"' % (name, what), 1, self.settings.verbose)
         return None
     
     
@@ -186,7 +194,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
         structlist[new].name = new # Update name
-        print('Item "%s" copied to structure list "%s"' % (new, what))
+        printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
         return None
     
     
@@ -196,7 +204,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        print('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what))
+        printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
         return None
 
     
@@ -205,15 +213,16 @@ class Project(object):
     ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
     
-    def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset, overwrite=overwrite)
-    def addprogset(self,  name='default', progset=None, overwrite=False): self.add(what='progset',   name=name, item=progset, overwrite=overwrite)
-    def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen, overwrite=overwrite)
-    def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim, overwrite=overwrite)
- 
+    def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
+    def addprogset(self,  name='default', progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
+    def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
+    def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
+    
     def rmparset(self,   name): self.remove(what='parset',   name=name)
-    def rmprogset(self, name):  self.remove(what='progset', name=name)
+    def rmprogset(self,  name): self.remove(what='progset',  name=name)
     def rmscen(self,     name): self.remove(what='scen',     name=name)
     def rmoptim(self,    name): self.remove(what='optim',    name=name)
+    
     
     def copyparset(self,   orig='default', new='new', overwrite=False): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
     def copyprogset(self,  orig='default', new='new', overwrite=False): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
@@ -224,6 +233,9 @@ class Project(object):
     def renameprogset(self,  orig='default', new='new', overwrite=False): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    
+    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result)
+    def rmresult(self, index=-1):      self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
 
     
 
@@ -255,6 +267,8 @@ class Project(object):
         
         # Store results
         results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+#        results.project = self # Will this work?
+        self.addresult(result=results)
         
         return results
     
