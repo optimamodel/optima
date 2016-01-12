@@ -47,11 +47,13 @@
 .small_bordered_list {
   margin: 2px;
   padding: 5px;
-  border: 1px solid black;
-  height: 100%;
-  overflow: scroll;
 
-  div {
+  .option_list {
+    border: 1px solid black;
+    overflow: scroll;
+  }
+
+  .option {
     padding: 10px 2px;
     display: flex;
   }

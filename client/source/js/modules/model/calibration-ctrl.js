@@ -5,6 +5,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService) {
 
     var activeProjectInfo = info.data;
+    var defaultParameters;
 
     $scope.parsets = [];
     $scope.selectedParset = undefined;
@@ -20,12 +21,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
     $scope.displayGraphs = function() {
+      var data = {};
+      if($scope.parameters) {
+        data.parameters = $scope.parameters;
+      }
+      if($scope.selectors) {
+        var selectors = _.filter($scope.selectors, function(selector) {
+          return selector.checked;
+        }).map(function(selector) {
+          return selector.key;
+        });
+        if(selectors && selectors.length > 0) {
+          data.which = selectors;
+        }
+      }
+
+      //$http.put('/api/parset/' + $scope.selectedParset.id + '/calibration', data).
+
       $http.get('/api/parset/' + $scope.selectedParset.id + '/calibration').
       success(function (response) {
         $scope.calibrationChart = response.calibration.graphs;
         $scope.selectors = response.calibration.selectors;
-        $scope.parameters = response.calibration.parameters;
+        defaultParameters = response.calibration.parameters;
+        $scope.parameters = angular.copy(response.calibration.parameters);
       });
+    };
+
+    $scope.resetParameters = function() {
+      $scope.parameters = angular.copy(defaultParameters);
     }
 
   });
