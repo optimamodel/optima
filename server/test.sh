@@ -26,4 +26,5 @@ mkdir -p /tmp/uploads
 cp ../optima/test.xlsx /tmp/uploads
 mkdir -p static
 cp ../optima/test.xlsx static
-NOSE_NOCAPTURE=1 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests $@
+
+OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests -c nose.cfg $@
