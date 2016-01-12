@@ -15,7 +15,7 @@ define ['angular-mocks', 'Source/modules/project-set/program-set/program-set-ctr
 
       inject ($rootScope, $controller) ->
         scope = $rootScope.$new()
-        subject = $controller 'ProgramSetController', { $scope: scope, $window: null, User: null, predefined: {data: {}}, availableParameters: null }
+        subject = $controller 'ProgramSetController', { $scope: scope, $window: null, User: null, predefined: {data: {}}, availableParameters: null, currentProject:null }
 
     it 'should have loaded the subject', ->
       expect(subject).toBeDefined()
