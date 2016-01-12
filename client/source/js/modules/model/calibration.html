@@ -13,7 +13,7 @@
       setTimeout(move_year, 150);
     }
   }*/
-  function format_xaxis() {
+  /* function format_xaxis() {
     var axes = $('.mpld3-xaxis');
     if (axes.length > 0) {
       $(axes).find('g.tick > text').each(function() {
@@ -22,7 +22,7 @@
     } else {
       setTimeout(format_xaxis, 150);
     }
-  }
+  } */
   function add_lines_to_legends() {
     var svgGraphFigures = $('svg.mpld3-figure');
     if (svgGraphFigures.length > 0) {
@@ -78,27 +78,27 @@
     }
   }
   function reset_xaxis() {
-    var svgGraphFigures = $('svg.mpld3-figure');
-    if (svgGraphFigures.length > 0) {
-      svgGraphFigures.each(function () {
-        var that = this;
-        $(that).on('click', function() {
-          setTimeout(format_xaxis);
-        });
-        $(that).on('mouseup', function() {
-          setTimeout(format_xaxis);
-        });
-        $(that).on('mousemove', function() {
-          setTimeout(format_xaxis);
-        });
-      });
-    } else {
-      setTimeout(reset_xaxis, 150);
-    }
+    // var svgGraphFigures = $('svg.mpld3-figure');
+    // if (svgGraphFigures.length > 0) {
+    //   svgGraphFigures.each(function () {
+    //     var that = this;
+    //     $(that).on('click', function() {
+    //       setTimeout(format_xaxis);
+    //     });
+    //     $(that).on('mouseup', function() {
+    //       setTimeout(format_xaxis);
+    //     });
+    //     $(that).on('mousemove', function() {
+    //       setTimeout(format_xaxis);
+    //     });
+    //   });
+    // } else {
+    //   setTimeout(reset_xaxis, 150);
+    // }
   }
 
   $(document).ready(function() {
-    format_xaxis();
+    //format_xaxis();
     //move_year();
     add_lines_to_legends();
     set_overflow_visible();
