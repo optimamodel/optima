@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PGPASSWORD=test psql -h 127.0.0.1 -d optima_test -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' -U test
+
 if [ ! -d "./p-env/" ]; then
   if [ "$1" == "--system" ]; then
     virtualenv --system-site-packages p-env
