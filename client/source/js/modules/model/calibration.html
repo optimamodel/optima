@@ -1,28 +1,4 @@
 <script>
-/*  function move_year() {
-    var al = $('.mpld3-baseaxes').length;
-    var dl = $('div.fig').length;
-    if ($('.mpld3-baseaxes > text').length > 0) {
-      $('.mpld3-baseaxes > text').each(function() {
-        var value = $(this).text();
-        if (value === 'Year') {
-          $(this).attr('y', parseInt($(this).attr('y'))+10);
-        }
-      });
-    } else {
-      setTimeout(move_year, 150);
-    }
-  }*/
-  function format_xaxis() {
-    var axes = $('.mpld3-xaxis');
-    if (axes.length > 0) {
-      $(axes).find('g.tick > text').each(function() {
-        $(this).text($(this).text().replace(',',''));
-      });
-    } else {
-      setTimeout(format_xaxis, 150);
-    }
-  }
   function add_lines_to_legends() {
     var svgGraphFigures = $('svg.mpld3-figure');
     if (svgGraphFigures.length > 0) {
@@ -79,8 +55,6 @@
   }
 
   $(document).ready(function() {
-    format_xaxis();
-    //move_year();
     add_lines_to_legends();
     set_overflow_visible();
     fix_mouse_pointer();
