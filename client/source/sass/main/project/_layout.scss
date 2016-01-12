@@ -45,10 +45,10 @@
 }
 
 .small_bordered_list {
-  margin: 2px;
-  padding: 5px;
 
   .option_list {
+    margin: 2px;
+    padding: 5px;
     border: 1px solid black;
     overflow: scroll;
   }

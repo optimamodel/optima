@@ -111,7 +111,7 @@
         <input type="button" value="Update" class="btn" ng-click="displayGraphs()"/>
       </div>
     </div>
-    <div style="height: 100%;overflow: scroll;">
+    <div class="chart_wrapper">
       <div ng-repeat="chart in calibrationChart" class="chart-container __small">
         <div mpld3-chart="chart" id="{{ chart.id }}"></div>
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
