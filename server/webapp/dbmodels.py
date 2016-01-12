@@ -177,7 +177,7 @@ class ProjectDb(db.Model):
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
         if project.progsets:
-            from server.webapp.utils import update_or_create_progset, update_or_create_program
+            from server.webapp.utils import update_or_create_progset
             from server.webapp.programs import get_default_programs
 
             if project.data != {}:
@@ -187,28 +187,7 @@ class ProjectDb(db.Model):
 
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset(self.id, name, progset)
-
-                # only active programs are hydrated
-                # therefore we need to retrieve the default list of programs
-                loaded_programs = set()
-                for program in program_list:
-                    program_name = program['name']
-                    if program_name in progset.programs:
-                        loaded_programs.add(program_name)
-                        program = progset.programs[program_name].__dict__
-                        program['parameters'] = program.get('targetpars', [])
-                        active = True
-                    else:
-                        active = False
-
-                    update_or_create_program(self.id, progset_record.id, program_name, program, active)
-
-                # In case programs from prj are not in the defaults
-                for program_name, program in progset.programs.iteritems():
-                    if program_name not in loaded_programs:
-                        program = program.__dict__
-                        program['parameters'] = program.get('targetpars', [])
-                        update_or_create_program(self.id, progset_record.id, program_name, program, True)
+                progset_record.restore(progset, program_list)
 
     def recursive_delete(self):
 
@@ -288,6 +267,7 @@ class ResultsDb(db.Model):
 
     def hydrate(self):
         return op.loads(self.blob)
+
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
 
@@ -419,10 +399,10 @@ class ProgramsDb(db.Model):
             parameters[parameter['param']].append(parameter['pop'])
 
         pars = [{
-                'active': True,
-                'param': short_name,
-                'pops': pop,
-            } for short_name, pop in parameters.iteritems()]
+            'active': True,
+            'param': short_name,
+            'pops': pop,
+        } for short_name, pop in parameters.iteritems()]
 
         return pars
 
@@ -483,6 +463,32 @@ class ProgsetsDb(db.Model):
         )
 
         return progset_entry
+
+    def restore(self, progset, program_list):
+        from server.webapp.utils import update_or_create_program
+
+        self.name = progset.name
+        # only active programs are hydrated
+        # therefore we need to retrieve the default list of programs
+        loaded_programs = set()
+        for program in program_list:
+            program_name = program['name']
+            if program_name in progset.programs:
+                loaded_programs.add(program_name)
+                program = progset.programs[program_name].__dict__
+                program['parameters'] = program.get('targetpars', [])
+                active = True
+            else:
+                active = False
+
+            update_or_create_program(self.project.id, self.id, program_name, program, active)
+
+        # In case programs from prj are not in the defaults
+        for program_name, program in progset.programs.iteritems():
+            if program_name not in loaded_programs:
+                program = program.__dict__
+                program['parameters'] = program.get('targetpars', [])
+                update_or_create_program(self.project.id, self.id, program_name, program, True)
 
     def create_programs_from_list(self, programs):
         for program in programs:

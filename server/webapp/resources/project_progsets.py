@@ -24,7 +24,6 @@ program_parser.add_arguments({
     'active': {'type': bool, 'default': False, 'location': 'json'},
     'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
     'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
-    'criteria': {'type': dict, 'location': 'json'},
 })
 
 
@@ -82,10 +81,6 @@ class Progsets(Resource):
         db.session.commit()
 
         return progset_entry, 201
-
-
-class ProgsetDoesNotExist(RecordDoesNotExist):
-    _model = 'progset'
 
 
 class Progset(Resource):
@@ -178,3 +173,44 @@ class ProgsetData(Resource):
         filename = progset_entry.as_file(loaddir)
 
         return helpers.send_from_directory(loaddir, filename)
+
+    @swagger.operation(
+        summary='Uploads data for already created progset',
+        parameters=file_upload_form_parser.swagger_parameters()
+    )
+    @marshal_with(file_resource)
+    def post(self, project_id, progset_id):
+        """
+        Uploads Data file, uses it to update the progrset and program models.
+        Precondition: model should exist.
+        """
+        from server.webapp.programs import get_default_programs
+
+        current_app.logger.debug("POST /api/project/{}/progsets/{}/data".format(project_id, progset_id))
+
+        args = file_upload_form_parser.parse_args()
+        uploaded_file = args['file']
+
+        source_filename = uploaded_file.source_filename
+
+        progset_entry = load_progset(project_id, progset_id)
+
+        project_entry = load_project(project_id)
+        project = project_entry.hydrate()
+        if project.data != {}:
+            program_list = get_default_programs(project)
+        else:
+            program_list = []
+
+        from optima.utils import load
+        new_progset = load(uploaded_file)
+        progset_entry.restore(new_progset, program_list)
+        db.session.add(progset_entry)
+
+        db.session.commit()
+
+        reply = {
+            'file': source_filename,
+            'result': 'Progset %s is updated' % progset_entry.name,
+        }
+        return reply
