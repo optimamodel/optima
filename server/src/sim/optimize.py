@@ -234,13 +234,13 @@ def optimize(D, objectives=None, constraints=None, maxiters=1000, timelimit=None
     
     # Fix to avoid programs having less than "minreq" funding WITHIN optimisation process.
     # Transfers money over from any available program with "2*minreq" funding or more.
-    minreq = 10000
+    minreq = 1000
     print(origalloc)
     for x in xrange(len(origalloc)):
         if origalloc[x] < minreq and opttrue[x]:
             for y in xrange(len(origalloc)):
                 if origalloc[y] >= 2*minreq and opttrue[x]:
-                    sharedamount = origalloc[y]/2
+                    sharedamount = minreq
                     origalloc[x] += sharedamount
                     origalloc[y] -= sharedamount
                     break
