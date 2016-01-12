@@ -159,7 +159,8 @@ class Project(object):
     
     def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=False):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
-        structlist = self.getwhat(what)
+        if type(what)==odict: structlist=what # It's already a structlist
+        else: structlist = self.getwhat(what)
         if checkabsent is not None and overwrite==False:
             if checkabsent in structlist:
                 raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
