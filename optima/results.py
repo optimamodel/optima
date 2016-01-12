@@ -8,7 +8,7 @@ from optima import uuid, today, getdate, quantile, printv, odict, objectid, obje
 from numpy import array, nan, zeros, arange
 
 
-def getresults(project=None, pointer=None):
+def getresults(pointer=None, project=None):
     '''
     A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
@@ -23,8 +23,12 @@ def getresults(project=None, pointer=None):
     
     Version: 2016jan11
     '''
-    if type(pointer)==str: return project.results[pointer]
-    elif type(pointer)==type(uuid()): return project.results[str(pointer)]
+    if type(pointer) in [str, int, float]:
+        if project is not None: return project.results[pointer]
+        else: raise Exception('To get results using a key or index, getresults() must be given the project')
+    elif type(pointer)==type(uuid()): 
+        if project is not None: return project.results[str(pointer)]
+        else: raise Exception('To get results using a UID, getresults() must be given the project')
     elif type(pointer)==Resultset: return pointer
     else:
         try: 
