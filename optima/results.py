@@ -200,6 +200,29 @@ class Resultset(object):
         return None # make()
         
 
-    
-    
-    
+
+    def make_graph_selectors(self, which = None):
+        ## Define options for graph selection
+        truebydefault = 2
+        self.graph_selectors = {'keys':[], 'names':[], 'checks':[]}
+        checkboxes = self.graph_selectors['keys'] # e.g. 'prev-tot'
+        checkboxnames = self.graph_selectors['names'] # e.g. 'HIV prevalence (%) -- total'
+        defaultchecks = self.graph_selectors['checks']
+        epikeys = self.main.keys()
+        epinames = [thing.name for thing in self.main.values()]
+        episubkeys = ['tot', 'pops'] # Would be best not to hard-code this...
+        episubnames = ['total', 'by population']
+
+        if which is None:  # assume there is at least one epikey )
+            which = ["{}-{}".format(epikeys[0], subkey) for subkey in episubkeys]
+
+        for key in epikeys: # e.g. 'prev'
+            for subkey in episubkeys: # e.g. 'tot'
+                boxkey = "{}-{}".format(key, subkey)
+                checkboxes.append(boxkey)
+                defaultchecks.append(boxkey in which)
+        for name in epinames: # e.g. 'HIV prevalence'
+            for subname in episubnames: # e.g. 'total'
+                checkboxnames.append(name+' -- '+subname)
+
+        return self.graph_selectors

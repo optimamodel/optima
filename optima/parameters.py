@@ -616,7 +616,6 @@ class Parameterset(object):
         valuelist = mflists['values']
         labellist = mflists['labels']
 
-        print "tmppars", tmppars
         for key in tmppars.keys():
             par = tmppars[key]
             print "key", key, "par", par
@@ -664,19 +663,20 @@ class Parameterset(object):
         valuelist = mflists['values']
 
         ## Loop over all parameters and update them
+        verbose = 0
         for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
             if ptype == 'meta': # Metaparameters
                 vtype = type(tmppars[key].m)
                 tmppars[key].m = vtype(value)
-                printv('%s.m = %s' % (key, value), 4, verbose=verbose)
+                printv('%s.m = %s' % (key, value), verbose=verbose)
             elif ptype in ['pop', 'pship']: # Populations or partnerships
                 vtype = type(tmppars[key].y[subkey])
                 tmppars[key].y[subkey] = vtype(value)
-                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose=verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, value), verbose=verbose)
             elif ptype == 'exp': # Population growth
                 vtype = type(tmppars[key].p[subkey][0])
                 tmppars[key].p[subkey][0] = vtype(value)
-                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose=verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, value), verbose=verbose)
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
 

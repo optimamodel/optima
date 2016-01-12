@@ -32,6 +32,8 @@ class ProjectBase(Resource):
     @marshal_with(ProjectDb.resource_fields, envelope='projects')
     def get(self):
         projects = self.get_query().all()
+        for p in projects:
+            p.has_data_now = p.has_data()
         return projects
 
 
@@ -211,7 +213,7 @@ class Project(Resource):
         if not current_user.is_admin and \
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
-
+        project_entry.has_data_now = project_entry.has_data()  # no other way to make it work for methods and not attributes?
         return project_entry
 
     @swagger.operation(
@@ -387,6 +389,7 @@ class ProjectSpreadsheet(Resource):
 
         # TODO replace this with app.config
         DATADIR = current_app.config['UPLOAD_FOLDER']
+        CALIBRATION_TYPE = 'calibration'
 
         current_app.logger.debug("PUT /api/project/%s/spreadsheet" % project_id)
 
@@ -468,16 +471,17 @@ class ProjectSpreadsheet(Resource):
                 db.session.add(parset_record)
 
             # update results (after runsim is invoked)
-            results_map = {
-                (record.parset_id, record.calculation_type): record
-                for record in project_entry.results
-            }
-            result_record = results_map.get((result_parset_id, "simulation"))
+            result_record = [item for item in project_entry.results if
+                             item.parset_id == result_parset_id and
+                             item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+            if result_record:
+                result_record = result_record[0]
+                result_record.blob = saves(result)
             if not result_record:
                 result_record = ResultsDb(
                     parset_id=result_parset_id,
                     project_id=project_entry.id,
-                    calculation_type="simulation",
+                    calculation_type=ResultsDb.CALIBRATION_TYPE,
                     blob=saves(result)
                 )
             db.session.add(result_record)

@@ -70,7 +70,7 @@ class ProjectDb(db.Model):
         'creation_time': fields.DateTime(attribute='created'),
         'updated_time': fields.DateTime(attribute='updated'),
         'data_upload_time': fields.DateTime,
-        'has_data': fields.Boolean,
+        'has_data': fields.Boolean(attribute='has_data_now'),
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -109,7 +109,7 @@ class ProjectDb(db.Model):
         self.results = results or []
 
     def has_data(self):
-        return self.data is not None
+        return self.data is not None and len(self.data)
 
     def has_model_parameters(self):
         return self.parsets is not None
@@ -255,6 +255,8 @@ class ParsetsDb(db.Model):
 
 
 class ResultsDb(db.Model):
+
+    CALIBRATION_TYPE = 'calibration'  # todo make enum when all types are known
 
     __tablename__ = 'results'
 
