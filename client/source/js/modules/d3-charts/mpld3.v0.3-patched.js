@@ -330,7 +330,12 @@
     if (this.props.tickvalues) {
       tick_labels = d3.scale.threshold().domain(this.props.tickvalues.slice(1)).range(this.props.tickformat);
     } else {
-      tick_labels = null;
+      if (this.props.position === 'bottom') {
+        // force format to >=4 digits rounded number
+        tick_labels = d3.format('04r');
+      } else {
+        tick_labels = null;
+      }
     }
     this.axis = d3.svg.axis().scale(this.scale).orient(this.props.position).ticks(this.props.nticks).tickValues(this.props.tickvalues).tickFormat(tick_labels);
     this.elem = this.ax.baseaxes.append("g").attr("transform", this.transform).attr("class", this.cssclass).call(this.axis);
@@ -734,7 +739,7 @@
       this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.xlim).range(this.props.xdomain.map(Number)), this.xdom);
     }
     if (this.props.yscale === "date") {
-      this.x = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
+      this.y = mpld3.multiscale(d3.scale.linear().domain(this.props.ylim).range(this.props.ydomain.map(Number)), this.ydom);
     }
     var axes = this.props.axes;
     for (var i = 0; i < axes.length; i++) {
