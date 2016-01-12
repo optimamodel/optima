@@ -2,30 +2,31 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    $timeout, modalService, predefined, availableParameters, UserManager, activeProject, projectApiService) {
+    modalService, predefined, availableParameters, currentProject) {
 
-    // Check if come project is currently open, else show error message
-    var openProject = activeProject.getProjectForCurrentUser();
-    var openProjectData;
+    var openProjectData = currentProject.data;
 
-    if(!openProject) {
-      modalService.informError([{message: 'There is no project open currently.'}]);
-    } else {
-      projectApiService.getActiveProject().success(function (response) {
-        openProjectData = response;
-      });
-
-      // Get the list of saved programs from DB and set the first one as active
-      $http.get('/api/project/' + openProject.id + '/progsets' )
-        .success(function (response) {
-          if(response.progsets) {
-            $scope.programSetList = response.progsets;
-            if (response.progsets && response.progsets.length > 0) {
-              $scope.setActiveProgramSet(response.progsets[0]);
-            }
-          }
-        });
+    if (!openProjectData.has_data) {
+      modalService.inform(
+        function (){ },
+        'Okay',
+        'Please upload spreadsheet to proceed.',
+        'Cannot proceed'
+      );
+      $scope.missingData = true;
+      return;
     }
+
+    // Get the list of saved programs from DB and set the first one as active
+    $http.get('/api/project/' + openProjectData.id + '/progsets' )
+      .success(function (response) {
+        if(response.progsets) {
+          $scope.programSetList = response.progsets;
+          if (response.progsets && response.progsets.length > 0) {
+            $scope.setActiveProgramSet(response.progsets[0]);
+          }
+        }
+      });
 
     // Initialize scope params
     $scope.activeProgramSet = {};
@@ -78,7 +79,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            $http.delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id);
+            $http.delete('/api/project/' + openProjectData.id +  '/progsets' + '/' + $scope.activeProgramSet.id);
           }
           $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
             return programSet.name !== $scope.activeProgramSet.name;
@@ -113,16 +114,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Save a programSet to DB
     $scope.saveProgramSet = function() {
       var errorMessage;
-      if (!openProject) {
-        errorMessage = 'Open project before proceeding.';
-      } else if (!$scope.activeProgramSet || !$scope.activeProgramSet.name) {
+      if (!$scope.activeProgramSet || !$scope.activeProgramSet.name) {
         errorMessage = 'Please create a new program set before trying to save it.';
       }
       if (errorMessage) {
         modalService.informError([{message: errorMessage}]);
       } else {
         $http({
-          url: '/api/project/' + openProject.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
+          url: '/api/project/' + openProjectData.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
           method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
           data: {
             name: $scope.activeProgramSet.name,
