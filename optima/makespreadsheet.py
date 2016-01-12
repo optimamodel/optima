@@ -113,7 +113,7 @@ def make_years_range(name, params, data_start, data_end):
 def make_populations_range(name, items):
     """ 
     every populations item is a dictionary is expected to have the following fields:
-    short, name, male, female, age_from, age_to
+    short_name, name, male, female, age_from, age_to
     (3x str, 2x bool, 2x int)
     """
     column_names = ['Short name','Long name','Male','Female','Age from', 'Age to']
@@ -122,19 +122,19 @@ def make_populations_range(name, items):
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            short = item.get('short', abbreviate(item_name))
+            short_name = item.get('short_name', abbreviate(item_name))
             male = item.get('male', False)
             female = item.get('female', False)
             age_from = item.get('age_from',15)
             age_to = item.get('age_to',49)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            short = abbreviate(item_name)
+            short_name = abbreviate(item_name)
             male = False
             female = False
             age_from = 15
             age_to = 49
-        coded_params.append([short, item_name, male, female, age_from, age_to])
+        coded_params.append([short_name, item_name, male, female, age_from, age_to])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data, low_data, high_data):
