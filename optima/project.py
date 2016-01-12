@@ -19,12 +19,13 @@ class Project(object):
         2. progsets -- an odict of program sets
         3. scens -- an odict of scenario structures
         4. optims -- an odict of optimization structures
-        4. results -- an odict of results associated with parsets, scens, and optims
+        5. results -- an odict of results associated with parsets, scens, and optims
     
     In addition, an Optima project contains:
         1. data -- loaded from the spreadsheet
-        2. metadata -- project name, creation date, etc.
-        3. settings -- timestep, indices, etc.
+        2. settings -- timestep, indices, etc.
+        3. various kinds of metadata -- project name, creation date, etc.
+        
     
     Methods for structure lists:
         1. add -- add a new structure to the odict
