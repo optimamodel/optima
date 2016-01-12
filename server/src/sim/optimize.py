@@ -133,7 +133,7 @@ def objectivecalc(optimparams, options):
             else:
                 thisoutcome = R[key]['total']['total'][0][options['outindices']].sum() # Special case for costann
                 tmpplotdata.append(R[key]['total']['total'][0][options['outindices']]) # TEMP
-            outcome += thisoutcome * options['weights'][key] / float(options['normalizations'][key]) * options['D']['opt']['dt'] # Calculate objective
+            outcome += thisoutcome * options['weights'][key] / (1.0+0*float(options['normalizations'][key])) * options['D']['opt']['dt'] # Calculate objective # WARNING, disabled normalization
             print
 #    print('DEBUGGING....................................................................................')
 #    from matplotlib.pylab import figure, plot, hold, subplot, show, close, pie
