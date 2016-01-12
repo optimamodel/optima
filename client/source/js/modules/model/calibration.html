@@ -86,7 +86,7 @@
     fix_mouse_pointer();
   });
 </script>
-<div class="rich" style="margin: 0 -20px;">
+<div class="rich" style="margin: 0 -25px;">
   <div class="3">
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
@@ -99,17 +99,23 @@
     </select>
   </div>
 
-  <div style="display: flex;margin-top: 20px;">
-    <div class="small_bordered_list">
+  <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 550px">
+    <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
       <div ng-repeat="selector in selectors">
         <span><input type="checkbox" ng-model="selector.checked"/></span>
-        <span>{{selector.name}}</span>
+        <span style="margin-left: 10px">{{selector.name}}</span>
       </div>
     </div>
-    <div>
+    <div style="height: 100%;overflow: scroll;">
       <div ng-repeat="chart in calibrationChart" class="chart-container __small">
         <div mpld3-chart="chart" id="{{ chart.id }}"></div>
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+      </div>
+    </div>
+    <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
+      <div ng-repeat="parameter in parameters" style="justify-content: space-around">
+        <span style="width: 45%">{{parameter.label}}</span>
+        <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
       </div>
     </div>
   </div>

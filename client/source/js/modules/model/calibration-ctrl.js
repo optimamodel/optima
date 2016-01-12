@@ -24,6 +24,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       success(function (response) {
         $scope.calibrationChart = response.calibration.graphs;
         $scope.selectors = response.calibration.selectors;
+        $scope.parameters = response.calibration.parameters;
       });
     }
 
