@@ -3,10 +3,13 @@ from flask import current_app
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
+from flask import helpers
 
 from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser, report_exception
+from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
+from server.webapp.utils import load_project, load_progset, RequestParser, report_exception
 from server.webapp.exceptions import RecordDoesNotExist, ProjectDoesNotExist
+from server.webapp.resources.common import file_resource, file_upload_form_parser
 
 from server.webapp.dbconn import db
 
@@ -102,11 +105,7 @@ class Progset(Resource):
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-        if progset_entry.project_id != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
+        progset_entry = load_progset(project_id, progset_id)
         return progset_entry
 
     @swagger.operation(
@@ -120,13 +119,8 @@ class Progset(Resource):
     @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
 
-        if progset_entry.project_id != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
-
+        progset_entry = load_progset(project_id, progset_id)
         args = progset_parser.parse_args()
         progset_entry.name = args['name']
         db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
@@ -158,3 +152,29 @@ class Progset(Resource):
         db.session.delete(progset_entry)
         db.session.commit()
         return '', 204
+
+
+class ProgsetData(Resource):
+
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        produces='application/x-gzip',
+        description='Download progset with the given id as Binary.',
+        notes="""
+            if progset exists, returns it
+            if progset does not exist, returns an error.
+        """,
+
+    )
+    def get(self, project_id, progset_id):
+        current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
+        progset_entry = load_progset(project_id, progset_id)
+
+        loaddir = upload_dir_user(TEMPLATEDIR)
+        if not loaddir:
+            loaddir = TEMPLATEDIR
+
+        filename = progset_entry.as_file(loaddir)
+
+        return helpers.send_from_directory(loaddir, filename)

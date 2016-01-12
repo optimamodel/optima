@@ -15,6 +15,21 @@ from server.webapp.fields import Uuid, Json
 import optima as op
 
 
+def db_model_as_file(model, loaddir, filename, name_field, extension):
+    import os
+    from optima.utils import save
+
+    be_object = model.hydrate()
+    if filename is None:
+        filename = '{}.{}'.format(getattr(model, name_field), extension)
+    server_filename = os.path.join(loaddir, filename)
+
+    save(server_filename, be_object)
+
+    return filename
+
+
+
 @swagger.model
 class UserDb(db.Model):
 
@@ -142,17 +157,7 @@ class ProjectDb(db.Model):
         return project_entry
 
     def as_file(self, loaddir, filename=None):
-        import os
-        from optima.utils import save
-
-        be_project = self.hydrate()
-        if filename is None:
-            filename = '{}.prj'.format(self.name)
-        server_filename = os.path.join(loaddir, filename)
-
-        save(server_filename, be_project)
-
-        return filename
+        return db_model_as_file(self, loaddir, filename, 'name', 'prj')
 
     def restore(self, project):
 
@@ -496,3 +501,6 @@ class ProgsetsDb(db.Model):
     def recursive_delete(self):
         db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete()
         db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete()
+
+    def as_file(self, loaddir, filename=None):
+        return db_model_as_file(self, loaddir, filename, 'name', 'progset')

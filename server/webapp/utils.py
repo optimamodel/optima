@@ -164,6 +164,32 @@ def load_project(project_id, all_data=False, raise_exception=False):
     return project
 
 
+def load_progset(project_id, progset_id, raise_exception=True):
+    from server.webapp.dbmodels import ProgsetsDb
+    from server.webapp.exceptions import ProgsetDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting progset {} for user {}".format(progset_id, cu.id))
+
+    progset_entry = db.session.query(ProgsetsDb).get(progset_id)
+    if progset_entry is None:
+        if raise_exception:
+            raise ProgsetDoesNotExist(id=progset_id)
+        return None
+
+    if progset_entry.project_id != project_id:
+        if raise_exception:
+            raise ProgsetDoesNotExist(id=progset_id)
+        return None
+
+    if not cu.is_admin and progset_entry.project.user_id != cu.id:
+        if raise_exception:
+            raise ProgsetDoesNotExist(id=progset_id)
+        return None
+
+    return progset_entry
+
+
 def save_data_spreadsheet(name, folder=None):
     if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
