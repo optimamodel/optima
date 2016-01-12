@@ -16,7 +16,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(parsets) {
           $scope.parsets = parsets;
           $scope.selectedParset = parsets[0];
-          $scope.displayGraphs();
+          $http.get('/api/parset/' + $scope.selectedParset.id + '/calibration').
+          success(function (response) {
+            $scope.calibrationChart = response.calibration.graphs;
+            $scope.selectors = response.calibration.selectors;
+            defaultParameters = response.calibration.parameters;
+            $scope.parameters = angular.copy(response.calibration.parameters);
+          });
         }
       });
 
@@ -36,11 +42,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       }
 
-      //$http.put('/api/parset/' + $scope.selectedParset.id + '/calibration', data).
-
-      $http.get('/api/parset/' + $scope.selectedParset.id + '/calibration').
+      $http.put('/api/parset/' + $scope.selectedParset.id + '/calibration', data).
       success(function (response) {
         $scope.calibrationChart = response.calibration.graphs;
+          console.log('$scope.calibrationChart', $scope.calibrationChart.length);
         $scope.selectors = response.calibration.selectors;
         defaultParameters = response.calibration.parameters;
         $scope.parameters = angular.copy(response.calibration.parameters);
