@@ -60,21 +60,24 @@
     fix_mouse_pointer();
   });
 </script>
-<div class="page rich">
-  <div class="3">
-    <label for="programSet-selection">Select a parameter set:</label>
-  </div>
-  <div style="display: flex;justify-content: flex-start;">
-    <select id="programSet-selection" name="programSet-selection" class="txbox"
-            ng-model="selectedParset"
-            ng-change="displayGraphs()"
-            ng-options="parset.name for parset in parsets"
-            style="width: 20%;">
-    </select>
-  </div>
+<div class="page">
+  <h2 style="margin: 10px 0;">Manage parameter set</h2>
+  <div ng-if="!missingData">
+    <div class="3">
+      <label for="programSet-selection">Select a saved parameter set:</label>
+    </div>
+    <div style="display: flex;justify-content: flex-start;">
+      <select id="programSet-selection" name="programSet-selection" class="txbox"
+              ng-model="selectedParset"
+              ng-change="displayGraphs()"
+              ng-options="parset.name for parset in parsets"
+              style="width: 20%;">
+      </select>
+    </div>
 
-  <div ng-repeat="chart in calibrationChart" class="chart-container __small">
-    <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-    <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+    <div ng-repeat="chart in calibrationChart" class="chart-container __small">
+      <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+      <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+    </div>
   </div>
 </div>

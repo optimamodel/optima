@@ -6,6 +6,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var activeProjectInfo = info.data;
 
+    if (!activeProjectInfo.has_data) {
+      modalService.inform(
+        function (){ },
+        'Okay',
+        'Please upload spreadsheet to proceed.',
+        'Cannot proceed'
+      );
+      $scope.missingData = true;
+      return;
+    }
+
     $scope.parsets = [];
     $scope.selectedParset = undefined;
 

@@ -37,6 +37,9 @@ define([
             },
             predefined: function(projectApiService) {
               return projectApiService.getPredefined();
+            },
+            currentProject: function(projectApiService) {
+              return projectApiService.getActiveProject();
             }
           }
         })
