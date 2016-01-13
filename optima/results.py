@@ -1,10 +1,10 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015dec25 by cliffk -- merry christmas!
+Version: 2015jan12 by cliffk
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, objectid, objectatt, objectmeth, dcp
+from optima import uuid, today, getdate, quantile, printv, odict, objectid, objatt, objmeth, dcp
 from numpy import array, nan, zeros, arange
 
 
@@ -53,7 +53,7 @@ class Result(object):
         ''' Print out useful information when called '''
         output = objectid(self)
         output += '============================================================\n'
-        output += objectatt(self)
+        output += objatt(self)
         output += '============================================================\n'
         return output
 
@@ -121,9 +121,9 @@ class Resultset(object):
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objectatt(self)
+        output += objatt(self)
         output += '============================================================\n'
-        output += objectmeth(self)
+        output += objmeth(self)
         output += '============================================================\n'
         return output
     

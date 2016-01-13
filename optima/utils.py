@@ -16,11 +16,6 @@ def blank(n=3):
     print('\n'*n)
 
 
-def objectid(obj):
-    ''' Return the object ID as per the default Python __repr__ method '''
-    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
-
-
 def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
     from numpy import ceil
@@ -38,13 +33,20 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
         c += 1
     attstring += '\n'
     return attstring
-    
-def objectatt(obj, strlen = 18, ncol = 3):
+
+
+def objectid(obj):
+    ''' Return the object ID as per the default Python __repr__ method '''
+    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+
+
+def objatt(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
     return createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    
-def objectmeth(obj, strlen = 18, ncol = 3):
+
+
+def objmeth(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
     return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)

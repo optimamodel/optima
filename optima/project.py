@@ -1,5 +1,5 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
-from optima import odict, getdate, today, uuid, dcp, objectid, objectatt, objectmeth, printv # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
 from optima import loadspreadsheet, model, runcommand, sensitivity, manualfit, autofit # Import functions
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
@@ -99,9 +99,9 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objectatt(self)
+        output += objatt(self)
         output += '============================================================\n'
-        output += objectmeth(self)
+        output += objmeth(self)
         output += '============================================================\n'
         return output
     
