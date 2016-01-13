@@ -71,11 +71,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           if ($scope.activeProgramSet.id) {
             $http.delete('/api/project/' + openProjectData.id +  '/progsets' + '/' + $scope.activeProgramSet.id).
               success(function() {
-                $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
-                  return programSet.name !== $scope.activeProgramSet.name;
-                });
-                $scope.programSetList && $scope.programSetList.length > 0 ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
+                deleteProgramSetFromPage();
               });
+          } else {
+            deleteProgramSetFromPage();
           }
         };
         modalService.confirm(
@@ -86,6 +85,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           'Are you sure you want to permanently remove program set "' + $scope.activeProgramSet.name + '"?',
           'Delete program set'
         );
+      }
+    };
+
+    var deleteProgramSetFromPage = function() {
+      $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
+        return programSet.name !== $scope.activeProgramSet.name;
+      });
+      if($scope.programSetList && $scope.programSetList.length > 0) {
+        $scope.setActiveProgramSet($scope.programSetList[0]);
+      } else {
+        $scope.setActiveProgramSet(undefined);
       }
     };
 
@@ -115,10 +125,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $http({
           url: '/api/project/' + openProjectData.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
           method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
-          data: {
-            name: $scope.activeProgramSet.name,
-            programs: $scope.programs
-          }
+          data: $scope.activeProgramSet
         }).success(function (response) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
