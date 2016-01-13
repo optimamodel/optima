@@ -35,46 +35,31 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.categories = angular.copy(response.categories);
       });
 
-    // Initialize scope params
-    $scope.activeProgramSet = {};
-    $scope.programSetList = [];
-
-    // Reset programs to defaults
-    var resetPrograms = function() {
-      $scope.programs = angular.copy(defaults.programs);
-      console.log('$scope.programs', $scope.programs);
-    };
-
     // The function sets the current active program to the program passed
-    $scope.setActiveProgramSet = function(program) {
-      $scope.activeProgramSet = program;
-      if (program.programs) {
-        $scope.programs = program.programs;
-      } else {
-        console.log('reset programs');
-        resetPrograms();
-      }
+    $scope.setActiveProgramSet = function(programSet) {
+      $scope.activeProgramSetName = programSet.name;
+      $scope.activeProgramSet = programSet;
     };
 
     // Open pop-up to add new programSet name, it will also reset programs
     $scope.addProgramSet = function () {
       var add = function (name) {
-        var addedProgramSet = {name:name};
+        var addedProgramSet = {name:name, programs: angular.copy(defaults.programs)};
         $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = addedProgramSet;
         $scope.setActiveProgramSet(addedProgramSet);
       };
-      programSetModalService.openProgramSetModal(null, add, $scope.programSetList, 'Add program set', true);
+      programSetModalService.openProgramSetModal(null, add, $scope.programSetList, 'Add program set');
     };
 
     // Open pop-up to edit progSet name
-    $scope.editProgramSet = function () {
+    $scope.renameProgramSet = function () {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var edit = function (name) {
           $scope.activeProgramSet.name = name;
         };
-        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, edit, $scope.programSetList, 'Edit program set');
+        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, edit, $scope.programSetList, 'Edit program set', true);
       }
     };
 
@@ -85,12 +70,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            $http.delete('/api/project/' + openProjectData.id +  '/progsets' + '/' + $scope.activeProgramSet.id);
+            $http.delete('/api/project/' + openProjectData.id +  '/progsets' + '/' + $scope.activeProgramSet.id).
+              success(function() {
+                $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
+                  return programSet.name !== $scope.activeProgramSet.name;
+                });
+                $scope.programSetList && $scope.programSetList.length > 0 ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
+              });
           }
-          $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
-            return programSet.name !== $scope.activeProgramSet.name;
-          });
-          $scope.programSetList && $scope.programSetList.length > 0 ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
         };
         modalService.confirm(
           function () {
@@ -113,7 +100,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.setActiveProgramSet(copiedProgramSet);
         };
-        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, copy, $scope.programSetList, 'Copy program set');
+        programSetModalService.openProgramSetModal($scope.activeProgramSet.name + ' copy', copy, $scope.programSetList, 'Copy program set');
       }
     };
 
