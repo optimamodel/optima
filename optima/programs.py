@@ -527,7 +527,7 @@ class Program(object):
             for targetpop in self.targetpops:
                 targetpopprop[targetpop] = poptargeted[targetpop]/totaltargeted
                 popreached[targetpop] = totalreached*targetpopprop[targetpop]
-                if proportion: popreached[targetpop] /= totaltargeted
+                if proportion: popreached[targetpop] /= poptargeted[targetpop]
 
         if total: return totalreached/totaltargeted if proportion else totalreached
         else: return popreached
