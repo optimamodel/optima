@@ -56,8 +56,8 @@ define(['./module'], function (module) {
         getPopulations: function () {
           return $http.get('/api/project/populations');
         },
-        getParameters: function () {
-          return $http.get('/api/project/parameters');
+        getDefault: function (projectId) {
+          return $http.get('/api/project/' + projectId + '/defaults');
         },
         getSpreadsheetUrl: function(id) {
           return '/api/project/' + id + '/spreadsheet';

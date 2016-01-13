@@ -46,9 +46,6 @@ define([
           templateUrl: 'js/modules/project/create-or-edit.html',
           controller: 'ProjectCreateOrEditController',
           resolve: {
-            parametersResponse: function(projectApiService) {
-              return projectApiService.getParameters();
-            },
             populations: function(projectApiService) {
               return projectApiService.getPopulations();
             },

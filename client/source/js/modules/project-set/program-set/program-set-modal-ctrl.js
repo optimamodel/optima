@@ -3,23 +3,19 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, availableParameters, populations, programList, modalService) {
 
-    // in order to not perform changes directly on the final value here is created a copy
-    var programCopy = angular.copy(program);
-    if(programCopy.name && !programCopy.id) {
-      programCopy.name = programCopy.name + ' - Copy'
-    }
+    var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
 
     // Initializes relevant attributes
     var initialize = function () {
-      $scope.isNew = !programCopy.name;
+      $scope.isNew = !program.name;
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = angular.copy(populations);
       $scope.selectAll = true;
       _.forEach($scope.populations, function(population) {
         // if populations are empty, that means all populations by default are enabled for that program (by convention)
         // if no populations are enabled for the program, then it cannot be active (because it's not used :) )
-        if(programCopy.populations) {
-          population.active = (programCopy.populations.length==0) || (programCopy.populations.indexOf(population.short_name) > -1);
+        if(program.populations) {
+          population.active = (program.populations.length==0) || (program.populations.indexOf(population.short_name) > -1);
           if (!population.active) $scope.selectAll = false;
         }
       });
@@ -29,8 +25,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       var oldPops;
       // make sure the names are exactly the objects as in the list for the
       // select to show the initial entries (angular compares with ===)
-      _(programCopy.parameters).each(function(entry) {
-        entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
+      _(program.parameters).each(function(entry) {
+        /* entry.value.signature = findParameters($scope.availableParameters, entry.value.signature).keys;
 
         oldPops = entry.value.pops;
         if (oldPops.length==1 && oldPops[0] == "") oldPops = [];
@@ -42,12 +38,38 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           // (unless its target populations aren't included in the project populations :) )
           pop.active = (oldPops.length==0) || (oldPops.indexOf(pop.short_name) > -1);
           if (!pop.active) entry.selectAll = false;
-        });
+        });*/
       });
 
-      $scope.program = programCopy;
+      $scope.program = program;
       $scope.program.active = true;
       if ($scope.isNew) { $scope.program.category = 'Other'; }
+
+
+      $scope.eligibility = {
+        pregnantFalse: !$scope.program.criteria.pregnant
+      };
+
+      if($scope.program.criteria.hivstatus && $scope.program.criteria.hivstatus === 'allstates') {
+        $scope.eligibility.allstates = true;
+      } else if($scope.program.criteria.hivstatus.length > 0) {
+        _.each($scope.program.criteria.hivstatus, function(state) {
+          $scope.eligibility[state] = true;
+        });
+      }
+    };
+
+    $scope.setEligibility = function(selectedEligibility) {
+      if(selectedEligibility === 'allstates') {
+        $scope.eligibility.acute = false;
+        $scope.eligibility.gt500 = false;
+        $scope.eligibility.gt350 = false;
+        $scope.eligibility.gt200 = false;
+        $scope.eligibility.gt50 = false;
+        $scope.eligibility.aids = false;
+      } else {
+        $scope.eligibility.allstates = false;
+      }
     };
 
     $scope.selectAllPopulations = function() {
@@ -112,7 +134,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
      * Removes the parameter at the given index (without asking for confirmation).
      */
     $scope.removeParameter = function ($index) {
-      programCopy.parameters.splice($index,1);
+      program.parameters.splice($index,1);
     };
 
     $scope.submit = function (form) {
@@ -126,8 +148,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return population.short_name;
         });
 
+        $scope.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
+          return $scope.eligibility[state];
+        }).map(function(state) {
+          return state;
+        });
+
         $scope.program.populations = selected_populations;
-        $scope.program.parameters = _($scope.program.parameters).filter(function (item) {
+        /*$scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           delete item.selectAll;
           item.value.pops = _.filter(item.value.pops, function(population) {
             return population.active;
@@ -135,7 +163,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             return population.short_name;
           });
           return item.value.signature.length && item.value.pops.length;
-        });
+        });*/
+
+        console.log('$scope.program', $scope.program);
 
         $modalInstance.close($scope.program);
       }
