@@ -16,7 +16,7 @@
       <button ng-click="deleteProgramSet()" type="button" class="btn" style="margin-left:2%">Delete program set</button>
       <button ng-click="copyProgramSet()" type="button" class="btn" style="margin-left:2%">Copy program set</button>
     </div>
-    <div class="6">
+    <div class="6" ng-if="programs && programs.length > 0">
       <h3>Manage programs</h3>
 
       <div class="section" ng-repeat="category in categories">
@@ -53,7 +53,7 @@
       <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
     </div>
     <div class="section" style="margin-top: 20px">
-      <button class="btn __green" type="submit" ng-click="saveProgramSet()">Save program set</button>
+      <button class="btn __green" type="submit" ng-click="saveProgramSet()" ng-disabled="!activeProgramSet">Save program set</button>
     </div>
   </div>
 </div>

@@ -33,7 +33,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       .success(function (response) {
         defaults = response;
         $scope.categories = angular.copy(response.categories);
-        $scope.programs = angular.copy(response.programs);
       });
 
     // Initialize scope params
@@ -43,6 +42,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Reset programs to defaults
     var resetPrograms = function() {
       $scope.programs = angular.copy(defaults.programs);
+      console.log('$scope.programs', $scope.programs);
     };
 
     // The function sets the current active program to the program passed
@@ -51,6 +51,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if (program.programs) {
         $scope.programs = program.programs;
       } else {
+        console.log('reset programs');
         resetPrograms();
       }
     };
