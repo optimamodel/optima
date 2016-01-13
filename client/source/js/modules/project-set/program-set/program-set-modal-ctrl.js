@@ -4,19 +4,22 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, availableParameters, populations, programList, modalService) {
 
     var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
+    $scope.state = {
+      selectAll: true
+    }
 
     // Initializes relevant attributes
     var initialize = function () {
       $scope.isNew = !program.name;
       $scope.availableParameters = angular.copy(availableParameters);
       $scope.populations = angular.copy(populations);
-      $scope.selectAll = true;
+      $scope.state.selectAll = true;
       _.forEach($scope.populations, function(population) {
         // if populations are empty, that means all populations by default are enabled for that program (by convention)
         // if no populations are enabled for the program, then it cannot be active (because it's not used :) )
         if(program.populations) {
           population.active = (program.populations.length==0) || (program.populations.indexOf(population.short_name) > -1);
-          if (!population.active) $scope.selectAll = false;
+          if (!population.active) $scope.state.selectAll = false;
         }
       });
 
@@ -80,7 +83,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.selectAllPopulations = function() {
       _.forEach($scope.populations, function(population) {
-        population.active = $scope.selectAll;
+        population.active = $scope.state.selectAll;
+      });
+    };
+
+    $scope.setSelectAll = function() {
+      $scope.state.selectAll = true;
+      _.forEach($scope.populations, function(population) {
+        if(!population.active) {
+          $scope.state.selectAll = false;
+        }
       });
     };
 
