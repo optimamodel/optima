@@ -46,16 +46,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.isNew) { $scope.program.category = 'Other'; }
 
 
-      $scope.eligibility = {
-        pregnantFalse: !$scope.program.criteria.pregnant
-      };
+      $scope.eligibility = {};
 
-      if($scope.program.criteria.hivstatus && $scope.program.criteria.hivstatus === 'allstates') {
-        $scope.eligibility.allstates = true;
-      } else if($scope.program.criteria.hivstatus.length > 0) {
-        _.each($scope.program.criteria.hivstatus, function(state) {
-          $scope.eligibility[state] = true;
-        });
+      if($scope.program.criteria) {
+        $scope.eligibility.pregnantFalse = !$scope.program.criteria.pregnant
+        if($scope.program.criteria.hivstatus && $scope.program.criteria.hivstatus === 'allstates') {
+          $scope.eligibility.allstates = true;
+        } else if($scope.program.criteria.hivstatus.length > 0) {
+          _.each($scope.program.criteria.hivstatus, function(state) {
+            $scope.eligibility[state] = true;
+          });
+        }
       }
     };
 
