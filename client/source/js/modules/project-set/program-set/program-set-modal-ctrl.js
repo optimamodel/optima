@@ -46,17 +46,22 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.isNew) { $scope.program.category = 'Other'; }
 
 
-      $scope.eligibility = {};
+      $scope.eligibility = {
+        pregnantFalse: true,
+        allstates: true
+      };
 
       if($scope.program.criteria) {
-        $scope.eligibility.pregnantFalse = !$scope.program.criteria.pregnant
-        if($scope.program.criteria.hivstatus && $scope.program.criteria.hivstatus === 'allstates') {
-          $scope.eligibility.allstates = true;
-        } else if($scope.program.criteria.hivstatus.length > 0) {
+        $scope.eligibility.pregnantFalse = !$scope.program.criteria.pregnant;
+        if($scope.program.criteria.hivstatus && $scope.program.criteria.hivstatus.length > 0
+          && $scope.program.criteria.hivstatus !== 'allstates') {
           _.each($scope.program.criteria.hivstatus, function(state) {
             $scope.eligibility[state] = true;
           });
+          $scope.eligibility.allstates = false;
         }
+      } else {
+        $scope.program.criteria = {}
       }
     };
 
@@ -149,13 +154,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return population.short_name;
         });
 
-        var hivstatus = _.filter(hivstatus, function(state) {
+        $scope.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
           return $scope.eligibility[state];
         }).map(function(state) {
           return state;
         });
 
-        $scope.program.criteria = {hivstatus: hivstatus};
         $scope.program.populations = selected_populations;
         /*$scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           delete item.selectAll;

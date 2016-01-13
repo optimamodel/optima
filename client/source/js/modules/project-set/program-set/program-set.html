@@ -31,7 +31,7 @@
             <td>&nbsp;</td>
             <td>&nbsp;</td>
           </tr>
-          <tr ng-repeat="program in activeProgramSet.programs" ng-if="program.category==category.category">
+          <tr ng-repeat="program in activeProgramSet.programs | orderBy : 'name'" ng-if="program.category==category.category">
             <td class="text-center" style="width: 50px" update-checkbox-on-click>
               <input type="checkbox" ng-model="program.active">
             </td>

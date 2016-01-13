@@ -26,7 +26,7 @@
 
     <div class="section grid">
       <div class="++1 2" style="padding-left: 6px">
-        Category
+        Category{{program.parameters.length}}
       </div>
       <div class="5 1++">
         <select class="txbox"
@@ -35,93 +35,96 @@
       </div>
     </div>
 
-    <div class="section grid">
-      <h3>
-        Populations
-      </h3>
-      <div class="section_dashed_border">
-        <div>
-          <span class="option">
-            <input type="checkbox" ng-click="selectAllPopulations()" ng-model="selectAll">
-            <span>All populations</span>
-          </span>
-          <span ng-repeat="population in populations" class="option">
-            <input type="checkbox" ng-model="population.active" />
-            <span>{{population.name}}</span>
-          </span>
-        </div>
-        <div>
-          <span class="option">
-            <span>Eligibility</span>
-          </span>
-          <span class="section-flex-spaced">
-            <span><input type="checkbox" ng-model="eligibility.allstates" ng-click="setEligibility('allstates')"/><span>Everyone</span></span>
-            <span>OR</span>
-            <span><input type="checkbox" ng-model="eligibility.acuteInfections" ng-click="setEligibility('acuteInfections')"/><span>Acute infections</span></span>
-            <span><input type="checkbox" ng-model="eligibility.gt500" ng-click="setEligibility('gt500')"/><span>CD4>500</span></span>
-            <span><input type="checkbox" ng-model="eligibility.gt350" ng-click="setEligibility('gt350')"/><span>CD4 350-500</span></span>
-            <span><input type="checkbox" ng-model="eligibility.gt200" ng-click="setEligibility('gt200')"/><span>CD4 200-350</span></span>
-            <span><input type="checkbox" ng-model="eligibility.gt50" ng-click="setEligibility('gt50')"/><span>CD4 50-200</span></span>
-            <span><input type="checkbox" ng-model="eligibility.aids" ng-click="setEligibility('aids')"/><span>CD4 <50</span></span>
-          </span>
-          <span class="section-flex-spaced">
-            <span><input type="checkbox" ng-click="program.criteria.pregnant = false" ng-model="eligibility.pregnantFalse"/><span>Everyone</span></span>
-            <span>OR</span>
-            <span><input type="checkbox" ng-click="eligibility.pregnantFalse = false" ng-model="program.criteria.pregnant"/><span>Pregnant and breastfeeding mothers</span></span>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="section grid">
-      <h3>
-        Parameters in model influenced by this program
-      </h3>
-    </div>
-
-    <div ng-repeat="entry in program.parameters">
-
-
-      <div class="section well" style="margin: 10px 0">
-
-        <button type="button"
-                class="btn __white"
-                style="float: right; text-align: right; margin-top: 10px"
-                ng-click="removeParameter($index)">Remove</button>
-
-        <div class="section grid">
-          <div class="++1 10 1++">
-            <label>
-              <input type="checkbox" ng-model="entry.active">
-              Active
-            </label>
-          </div>
-        </div>
-
-        <div class="section grid">
-          <div class="++1 10 1++">
-            Parameters
-          </div>
-          <div class="++1 10 1++">
-            <select class="txbox" ng-model="entry.param" ng-options="param.keys as param.name for param in availableParameters"></select>
-          </div>
-        </div>
-
-        <div class="section grid">
-          <h3>
-            Populations
-          </h3>
-          <div class="section_dashed_border">
+    <div ng-if="(program.populations && program.populations.length > 0) || (program.parameters && program.parameters.length > 0)">
+      <div class="section grid">
+        <h3>
+          Populations
+        </h3>
+        <div class="section_dashed_border">
+          <div>
             <span class="option">
-              <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
+              <input type="checkbox" ng-click="selectAllPopulations()" ng-model="selectAll">
               <span>All populations</span>
             </span>
-            <span ng-repeat="population in entry.pops" class="option">
+            <span ng-repeat="population in populations" class="option">
               <input type="checkbox" ng-model="population.active" />
               <span>{{population.name}}</span>
             </span>
           </div>
+          <div>
+            <span class="option">
+              <span>Eligibility</span>
+            </span>
+            <span class="section-flex-spaced">
+              <span><input type="checkbox" ng-model="eligibility.allstates" ng-click="setEligibility('allstates')"/><span>Everyone</span></span>
+              <span>OR</span>
+              <span><input type="checkbox" ng-model="eligibility.acute" ng-click="setEligibility('acute')"/><span>Acute infections</span></span>
+              <span><input type="checkbox" ng-model="eligibility.gt500" ng-click="setEligibility('gt500')"/><span>CD4>500</span></span>
+              <span><input type="checkbox" ng-model="eligibility.gt350" ng-click="setEligibility('gt350')"/><span>CD4 350-500</span></span>
+              <span><input type="checkbox" ng-model="eligibility.gt200" ng-click="setEligibility('gt200')"/><span>CD4 200-350</span></span>
+              <span><input type="checkbox" ng-model="eligibility.gt50" ng-click="setEligibility('gt50')"/><span>CD4 50-200</span></span>
+              <span><input type="checkbox" ng-model="eligibility.aids" ng-click="setEligibility('aids')"/><span>CD4 <50</span></span>
+            </span>
+            <span class="section-flex-spaced">
+              <span><input type="checkbox" ng-click="program.criteria.pregnant = false" ng-model="eligibility.pregnantFalse"/><span>Everyone</span></span>
+              <span>OR</span>
+              <span><input type="checkbox" ng-click="eligibility.pregnantFalse = false" ng-model="program.criteria.pregnant"/><span>Pregnant and breastfeeding mothers</span></span>
+            </span>
+          </div>
         </div>
+      </div>
+
+      <div class="section grid">
+        <h3>
+          Parameters in model influenced by this program
+        </h3>
+      </div>
+
+      <div ng-repeat="entry in program.parameters">
+
+
+        <div class="section well" style="margin: 10px 0">
+
+          <button type="button"
+                  class="btn __white"
+                  style="float: right; text-align: right; margin-top: 10px"
+                  ng-click="removeParameter($index)">Remove</button>
+
+          <div class="section grid">
+            <div class="++1 10 1++">
+              <label>
+                <input type="checkbox" ng-model="entry.active">
+                Active
+              </label>
+            </div>
+          </div>
+
+          <div class="section grid">
+            <div class="++1 10 1++">
+              Parameters
+            </div>
+            <div class="++1 10 1++">
+              <select class="txbox" ng-model="entry.param" ng-options="param.keys as param.name for param in availableParameters"></select>
+            </div>
+          </div>
+
+          <div class="section grid">
+            <h3>
+              Populations
+            </h3>
+            <div class="section_dashed_border">
+              <span class="option">
+                <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
+                <span>All populations</span>
+              </span>
+              <span ng-repeat="population in entry.pops" class="option">
+                <input type="checkbox" ng-model="population.active" />
+                <span>{{population.name}}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>
