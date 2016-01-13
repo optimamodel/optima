@@ -8,7 +8,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       /**
        * This function opens a modal for creating, editing and copying a programSet.
        */
-      openProgramSetModal: function (programSetName, callback, programSetList, title, isEdit) {
+      openProgramSetModal: function (callback, title, programSetList, programSetName, isRename) {
 
         var onModalKeyDown = function (event) {
           if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -32,7 +32,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
                     return item.name == $scope.name;
                   }) && $scope.name !== programSetName && $scope.name !== $scope.newProgramSetName;
 
-              if(isEdit) {
+              if(isRename) {
                 programSetForm.programSetName.$setValidity("programSetUpdated", $scope.name !== programSetName);
               }
               programSetForm.programSetName.$setValidity("programSetExists", !exists);
