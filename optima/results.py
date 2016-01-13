@@ -21,7 +21,7 @@ def getresults(pointer=None, project=None):
         which returns
         P.results[P.parsets[0].resultsref]
     
-    Version: 2016jan11
+    Version: 2016jan12
     '''
     if type(pointer) in [str, int, float]:
         if project is not None: return project.results[pointer]

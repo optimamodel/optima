@@ -160,7 +160,7 @@ class Project(object):
     def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=False):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
-        else: structlist = self.getwhat(what)
+        else: structlist = self.getwhat(what=what)
         if checkabsent is not None and overwrite==False:
             if checkabsent in structlist:
                 raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
@@ -172,7 +172,7 @@ class Project(object):
     
     def add(self, name='default', item=None, what=None, overwrite=False):
         ''' Add an entry to a structure list '''
-        structlist = self.getwhat(item, what)
+        structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         structlist[name].name = name # Make sure names are consistent
@@ -182,7 +182,7 @@ class Project(object):
     
     def remove(self, what=None, name=None):
         ''' Remove an entry from a structure list by name '''
-        structlist = self.getwhat(what)
+        structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
         printv('Item "%s" removed from structure list "%s"' % (name, what), 1, self.settings.verbose)
@@ -191,7 +191,7 @@ class Project(object):
     
     def copy(self, what=None, orig='default', new='copy', overwrite=False):
         ''' Copy an entry in a structure list '''
-        structlist = self.getwhat(what)
+        structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
         structlist[new].name = new # Update name
@@ -201,7 +201,7 @@ class Project(object):
     
     def rename(self, what=None, orig='default', new='new', overwrite=False):
         ''' Rename an entry in a structure list '''
-        structlist = self.getwhat(what)
+        structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
