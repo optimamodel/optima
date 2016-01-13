@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, predefined, availableParameters, currentProject) {
+    modalService, currentProject, projectApiService) {
 
     var openProjectData = currentProject.data;
     var defaults;
@@ -29,7 +29,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
-    projectApiService.getDefault(openProject.id)
+    projectApiService.getDefault(openProjectData.id)
       .success(function (response) {
         defaults = response;
         $scope.categories = angular.copy(response.categories);
