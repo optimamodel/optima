@@ -6,8 +6,8 @@
     </div>
     <div style="display: flex;justify-content: flex-start;">
       <select id="programSet-selection" name="programSet-selection" class="txbox"
-              ng-model="activeProgramSetName"
-              ng-change="setActiveProgramSet(activeProgramSetName)"
+              ng-model="activeProgramSet"
+              ng-change="setActiveProgramSet(activeProgramSet)"
               ng-options="res.name for res in programSetList"
               style="width: 20%;">
       </select>

@@ -37,7 +37,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // The function sets the current active program to the program passed
     $scope.setActiveProgramSet = function(programSet) {
-      $scope.activeProgramSetName = programSet.name;
       $scope.activeProgramSet = programSet;
     };
 
