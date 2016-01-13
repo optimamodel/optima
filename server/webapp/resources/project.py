@@ -468,19 +468,20 @@ class ProjectSpreadsheet(Resource):
             db.session.add(parset_record)
 
         # update results (after runsim is invoked)
-        results_map = {
-            (record.parset_id, record.calculation_type): record
-            for record in project_entry.results
-        }
-        result_record = results_map.get((result_parset_id, "simulation"))
-        if not result_record:
-            result_record = ResultsDb(
-                parset_id=result_parset_id,
-                project_id=project_entry.id,
-                calculation_type="simulation",
-                blob=saves(result)
-            )
-        db.session.add(result_record)
+            result_record = [item for item in project_entry.results if
+                             item.parset_id == result_parset_id and
+                             item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+            if result_record:
+                result_record = result_record[0]
+                result_record.blob = saves(result)
+            if not result_record:
+                result_record = ResultsDb(
+                    parset_id=result_parset_id,
+                    project_id=project_entry.id,
+                    calculation_type=ResultsDb.CALIBRATION_TYPE,
+                    blob=saves(result)
+                )
+            db.session.add(result_record)
 
         # update existing
         if projdata is not None:
@@ -755,6 +756,7 @@ defaults_fields = {
     "categories": Json,
     "programs": Json
 }
+
 
 class Defaults(Resource):
     @swagger.operation(

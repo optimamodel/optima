@@ -14,6 +14,7 @@ from server.webapp.populations import populations
 def make_password(password="test"):
     return hashlib.sha224("test").hexdigest()
 
+
 def test_populations():
     pops = populations()
     for i in range(2):
@@ -66,7 +67,7 @@ class ResultFactory(SQLAlchemyModelFactory):
 
     parset = factory.SubFactory(ParsetFactory)
     project = factory.SubFactory(ProjectFactory)
-    calculation_type = 'simulation'
+    calculation_type = ResultsDb.CALIBRATION_TYPE
 
 
 class WorkingProjectFactory(SQLAlchemyModelFactory):
