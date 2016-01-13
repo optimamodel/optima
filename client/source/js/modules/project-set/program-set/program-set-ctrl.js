@@ -150,7 +150,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Opens a modal for editing an existing program.
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
-      return programSetModalService.openProgramModal(editProgram, openProject.populations, null, $scope.activeProgramSet.programs).result.then(
+      return programSetModalService.openProgramModal(editProgram, openProject.populations, $scope.activeProgramSet.programs).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
         }
@@ -164,7 +164,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProject.populations, null, $scope.activeProgramSet.programs).result.then(
+      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         }
@@ -180,7 +180,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.name = program.name + ' copy';
       program.short_name = program.short_name + ' copy';
 
-      return programSetModalService.openProgramModal(program, openProject.populations, null, $scope.activeProgramSet.programs).result.then(
+      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         }

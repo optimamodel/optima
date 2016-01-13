@@ -1,7 +1,7 @@
 <div>
   <div class="modal-header">
     <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
-    <h4 class="modal-title">{{ isNew ? 'Create' : 'Edit'}} program</h4>
+    <h4 class="modal-title">{{ state.isNew ? 'Create' : 'Edit'}} program</h4>
   </div>
 
   <form class="modal-body" name="programForm" novalidate="novalidate" ng-submit="submit(programForm)">
@@ -10,8 +10,8 @@
         Name
       </div>
       <div class="8 1++">
-        <input class="txbox __block" ng-model="program.name" required autofocus name="programName">
-        <div class="error-hint" ng-show="isUniqueName(program.name, programForm)"> A program set with this name already exists, please choose a different one. </div>
+        <input class="txbox __block" ng-model="state.program.name" required autofocus name="programName">
+        <div class="error-hint" ng-show="isUniqueName(state.program.name, programForm)"> A program set with this name already exists, please choose a different one. </div>
       </div>
     </div>
 
@@ -20,22 +20,22 @@
         Short name
       </div>
       <div class="5 4++">
-        <input class="txbox __block" ng-model="program.short_name" required>
+        <input class="txbox __block" ng-model="state.program.short_name" required>
       </div>
     </div>
 
     <div class="section grid">
       <div class="++1 2" style="padding-left: 6px">
-        Category{{program.parameters.length}}
+        Category
       </div>
       <div class="5 1++">
         <select class="txbox"
-                ng-model="program.category"
-                ng-options="category for category in allCategories"></select>
+                ng-model="state.program.category"
+                ng-options="category for category in state.categories"></select>
       </div>
     </div>
 
-    <div ng-if="(program.populations && program.populations.length > 0) || (program.parameters && program.parameters.length > 0)">
+    <div ng-if="(state.program.populations && state.program.populations.length > 0) || (state.program.parameters && state.program.parameters.length > 0)">
       <div class="section grid">
         <h3>
           Populations
@@ -46,29 +46,29 @@
               <input type="checkbox" ng-click="selectAllPopulations()" ng-model="state.selectAll">
               <span>All populations</span>
             </span>
-            <span ng-repeat="population in populations" class="option">
+            <span ng-repeat="population in state.populations" class="option">
               <input type="checkbox" ng-model="population.active" ng-click="setSelectAll(population.active)"/>
               <span>{{population.name}}</span>
             </span>
           </div>
           <div>
             <span class="option">
-              <span>Eligibility</span>
+              <span>state.eligibility</span>
             </span>
             <span class="section-flex-spaced">
-              <span><input type="checkbox" ng-model="eligibility.allstates" ng-click="setEligibility('allstates')"/><span>Everyone</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.allstates" ng-click="setEligibility('allstates')"/><span>Everyone</span></span>
               <span>OR</span>
-              <span><input type="checkbox" ng-model="eligibility.acute" ng-click="setEligibility('acute')"/><span>Acute infections</span></span>
-              <span><input type="checkbox" ng-model="eligibility.gt500" ng-click="setEligibility('gt500')"/><span>CD4>500</span></span>
-              <span><input type="checkbox" ng-model="eligibility.gt350" ng-click="setEligibility('gt350')"/><span>CD4 350-500</span></span>
-              <span><input type="checkbox" ng-model="eligibility.gt200" ng-click="setEligibility('gt200')"/><span>CD4 200-350</span></span>
-              <span><input type="checkbox" ng-model="eligibility.gt50" ng-click="setEligibility('gt50')"/><span>CD4 50-200</span></span>
-              <span><input type="checkbox" ng-model="eligibility.aids" ng-click="setEligibility('aids')"/><span>CD4 <50</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.acute" ng-click="setEligibility('acute')"/><span>Acute infections</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.gt500" ng-click="setEligibility('gt500')"/><span>CD4>500</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.gt350" ng-click="setEligibility('gt350')"/><span>CD4 350-500</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.gt200" ng-click="setEligibility('gt200')"/><span>CD4 200-350</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.gt50" ng-click="setEligibility('gt50')"/><span>CD4 50-200</span></span>
+              <span><input type="checkbox" ng-model="state.eligibility.aids" ng-click="setEligibility('aids')"/><span>CD4 <50</span></span>
             </span>
             <span class="section-flex-spaced">
-              <span><input type="checkbox" ng-click="program.criteria.pregnant = false" ng-model="eligibility.pregnantFalse"/><span>Everyone</span></span>
+              <span><input type="checkbox" ng-click="state.program.criteria.pregnant = false" ng-model="state.eligibility.pregnantFalse"/><span>Everyone</span></span>
               <span>OR</span>
-              <span><input type="checkbox" ng-click="eligibility.pregnantFalse = false" ng-model="program.criteria.pregnant"/><span>Pregnant and breastfeeding mothers</span></span>
+              <span><input type="checkbox" ng-click="state.eligibility.pregnantFalse = false" ng-model="state.program.criteria.pregnant"/><span>Pregnant and breastfeeding mothers</span></span>
             </span>
           </div>
         </div>
@@ -80,7 +80,7 @@
         </h3>
       </div>
 
-      <div ng-repeat="entry in program.parameters">
+      <div ng-repeat="entry in state.program.parameters">
 
 
         <div class="section well" style="margin: 10px 0">
