@@ -407,6 +407,7 @@ class Timepar(Par):
     
     def interp(self, tvec, smoothness=20):
         """ Take parameters and turn them into model parameters """
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         keys = self.y.keys()
         npops = len(keys)
         if self.by=='pship': # Have odict
@@ -447,7 +448,8 @@ class Popsizepar(Par):
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
-        """ Take population size parameter and turn it into a model parameters """  
+        """ Take population size parameter and turn it into a model parameters """
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         keys = self.p.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
@@ -476,6 +478,7 @@ class Constant(Par):
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
             output = self.y
         else: # No, it has keys, return as an array
@@ -536,6 +539,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         simparslist = []
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
