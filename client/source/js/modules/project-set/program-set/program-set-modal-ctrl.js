@@ -149,12 +149,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return population.short_name;
         });
 
-        $scope.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
+        var hivstatus = _.filter(hivstatus, function(state) {
           return $scope.eligibility[state];
         }).map(function(state) {
           return state;
         });
 
+        $scope.program.criteria = {hivstatus: hivstatus};
         $scope.program.populations = selected_populations;
         /*$scope.program.parameters = _($scope.program.parameters).filter(function (item) {
           delete item.selectAll;

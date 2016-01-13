@@ -149,7 +149,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Opens a modal for editing an existing program.
     $scope.openEditProgramModal = function ($event, program) {
-      return programSetModalService.openProgramModal(program, openProject.populations, null, $scope.programs);
+      var editProgram = angular.copy(program);
+      return programSetModalService.openProgramModal(editProgram, openProject.populations, null, $scope.programs).result.then(
+        function (newProgram) {
+          $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
+        }
+      );
     };
 
     // Creates a new program and opens a modal for editing.
