@@ -2,11 +2,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, predefined, availableParameters, currentProject) {
+    modalService, currentProject, projectApiService) {
 
-    var openProjectData = currentProject.data;
+    var openProject = currentProject.data;
+    var defaults;
 
-    if (!openProjectData.has_data) {
+    // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
+    if (!openProject.has_data) {
       modalService.inform(
         function (){ },
         'Okay',
@@ -18,73 +20,64 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     // Get the list of saved programs from DB and set the first one as active
-    $http.get('/api/project/' + openProjectData.id + '/progsets' )
+    $http.get('/api/project/' + openProject.id + '/progsets' )
       .success(function (response) {
         if(response.progsets) {
           $scope.programSetList = response.progsets;
           if (response.progsets && response.progsets.length > 0) {
-            $scope.setActiveProgramSet(response.progsets[0]);
+            $scope.activeProgramSet = response.progsets[0];
           }
         }
       });
 
-    // Initialize scope params
-    $scope.activeProgramSet = {};
-    $scope.categories = angular.copy(predefined.data.categories);
-    $scope.programs = angular.copy(predefined.data.programs);
-    $scope.programSetList = [];
+    // Fetching default categories and programs for the open project
+    projectApiService.getDefault(openProject.id)
+      .success(function (response) {
+        defaults = response;
+        $scope.categories = response.categories;
+      });
 
-    // Reset programs to defaults
-    var resetPrograms = function() {
-      $scope.programs = angular.copy(predefined.data.programs);
-    };
-    resetPrograms();
-
-    // The function sets the current active program to the program passed
-    $scope.setActiveProgramSet = function(program) {
-      $scope.activeProgramSet = program;
-      if (program.programs) {
-        $scope.programs = program.programs;
-      } else {
-        resetPrograms();
-      }
+    // This method is called by <select> to change current active program
+    $scope.setActiveProgramSet = function(activeProgramSet) {
+      $scope.activeProgramSet = activeProgramSet;
     };
 
-    // Open pop-up to add new programSet name, it will also reset programs
+    // Open pop-up to add new programSet
     $scope.addProgramSet = function () {
       var add = function (name) {
-        var addedProgramSet = {name:name};
-        $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = addedProgramSet;
-        $scope.setActiveProgramSet(addedProgramSet);
+        var newProgramSet = {name:name, programs: angular.copy(defaults.programs)};
+        $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = newProgramSet;
+        $scope.activeProgramSet = newProgramSet;
       };
-      programSetModalService.openProgramSetModal(null, add, $scope.programSetList, 'Add program set', true);
+      programSetModalService.openProgramSetModal(add, 'Add program set', $scope.programSetList, null);
     };
 
-    // Open pop-up to edit progSet name
-    $scope.editProgramSet = function () {
+    // Open pop-up to re-name programSet
+    $scope.renameProgramSet = function () {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
-        var edit = function (name) {
+        var rename = function (name) {
           $scope.activeProgramSet.name = name;
         };
-        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, edit, $scope.programSetList, 'Edit program set');
+        programSetModalService.openProgramSetModal(rename, 'Rename program set', $scope.programSetList, $scope.activeProgramSet.name, true);
       }
     };
 
-    // Delete a progSet from $scope.programSetList and also DB.
+    // Delete a programSet from $scope.programSetList and also from DB is it was saved.
     $scope.deleteProgramSet = function () {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            $http.delete('/api/project/' + openProjectData.id +  '/progsets' + '/' + $scope.activeProgramSet.id);
+            $http.delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id).
+              success(function() {
+                deleteProgramSetFromPage();
+              });
+          } else {
+            deleteProgramSetFromPage();
           }
-          $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
-            return programSet.name !== $scope.activeProgramSet.name;
-          });
-          $scope.programSetList && $scope.programSetList.length > 0 ? $scope.setActiveProgramSet($scope.programSetList[0]) : void 0;
         };
         modalService.confirm(
           function () {
@@ -97,7 +90,18 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Copy a progSet
+    var deleteProgramSetFromPage = function() {
+      $scope.programSetList = _.filter($scope.programSetList, function (programSet) {
+        return programSet.name !== $scope.activeProgramSet.name;
+      });
+      if($scope.programSetList && $scope.programSetList.length > 0) {
+        $scope.activeProgramSet = $scope.programSetList[0];
+      } else {
+        $scope.activeProgramSet = undefined;
+      }
+    };
+
+    // Copy a program-set
     $scope.copyProgramSet = function () {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
@@ -105,9 +109,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         var copy = function (name) {
           var copiedProgramSet = {name: name, programs: $scope.activeProgramSet.programs};
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
-          $scope.setActiveProgramSet(copiedProgramSet);
+          $scope.activeProgramSet = copiedProgramSet;
         };
-        programSetModalService.openProgramSetModal($scope.activeProgramSet.name, copy, $scope.programSetList, 'Copy program set');
+        programSetModalService.openProgramSetModal(copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy');
       }
     };
 
@@ -118,15 +122,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         errorMessage = 'Please create a new program set before trying to save it.';
       }
       if (errorMessage) {
-        modalService.informError([{message: errorMessage}]);
+        modalService.inform(
+          function (){ },
+          'Okay',
+          errorMessage,
+          'Cannot proceed'
+        );
       } else {
         $http({
-          url: '/api/project/' + openProjectData.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
+          url: '/api/project/' + openProject.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
           method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
-          data: {
-            name: $scope.activeProgramSet.name,
-            programs: $scope.programs
-          }
+          data: $scope.activeProgramSet
         }).success(function (response) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
@@ -143,52 +149,40 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Opens a modal for editing an existing program.
     $scope.openEditProgramModal = function ($event, program) {
-      if ($event) {
-        $event.preventDefault();
-      }
-
-      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters, $scope.programs).result.then(
+      var editProgram = angular.copy(program);
+      return programSetModalService.openProgramModal(editProgram, openProject.populations, $scope.activeProgramSet.programs).result.then(
         function (newProgram) {
-          _(program).extend(newProgram);
+          $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
         }
       );
     };
 
-    /*
-     * Creates a new program and opens a modal for editing.
-     *
-     * The entry is only pushed to the list of programs if editing in the modal
-     * ended with a successful save.
-     */
+    // Creates a new program and opens a modal for editing.
     $scope.openAddProgramModal = function ($event) {
       if ($event) {
         $event.preventDefault();
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters, $scope.programs).result.then(
+      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs).result.then(
         function (newProgram) {
-          $scope.programs.push(newProgram);
+          $scope.activeProgramSet.programs.push(newProgram);
         }
       );
     };
 
-    /*
-     * Makes a copy of an existing program and opens a modal for editing.
-     *
-     * The entry is only pushed to the list of programs if editing in the modal
-     * ended with a successful save.
-     */
+    // Makes a copy of an existing program and opens a modal for editing.
     $scope.copyProgram = function ($event, existingProgram) {
       if ($event) {
         $event.preventDefault();
       }
       var program = angular.copy(existingProgram);
-      delete program.id;
+      program.name = program.name + ' copy';
+      program.short_name = program.short_name + ' copy';
 
-      return programSetModalService.openProgramModal(program, openProjectData.populations, availableParameters.data.parameters, $scope.programs).result.then(
+      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs).result.then(
         function (newProgram) {
-          $scope.programs.push(newProgram);
+          $scope.activeProgramSet.programs.push(newProgram);
         }
       );
     };
