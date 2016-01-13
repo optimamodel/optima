@@ -31,7 +31,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function findByName(arr,obj){
-        return _.findWhere(arr, {short_name: obj.short_name});
+        return _.findWhere(arr, {short_name: obj.short_name, name: obj.name});
     }
 
     if (isEditMode()) {
