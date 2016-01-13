@@ -385,6 +385,7 @@ class ProjectTestCase(OptimaTestCase):
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
+        # this will now restore default programs as well
         response = self.client.post(
             'api/project/{}/spreadsheet'.format(project.id),
             data=dict(file=example_excel)
@@ -392,13 +393,8 @@ class ProjectTestCase(OptimaTestCase):
         example_excel.close()
         self.assertEqual(response.status_code, 200, response.data)
 
-        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
-        self.assertEqual(program_count, 0)
-
-        # reload from db
         project = ProjectDb.query.filter_by(id=project.id).first()
         be_project = project.hydrate()
-        project.restore(be_project)
 
         program_list = get_default_programs(be_project)
         program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()

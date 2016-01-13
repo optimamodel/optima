@@ -417,31 +417,47 @@ class ProjectSpreadsheet(Resource):
         current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
         from optima.utils import saves  # , loads
         # from optima.parameters import Parameterset
-        new_project = project_entry.hydrate()
-        new_project.loadspreadsheet(server_filename)
-        new_project.modified = datetime.now(dateutil.tz.tzutc())
-        current_app.logger.info("after spreadsheet uploading: %s" % new_project)
-        # TODO: figure out whether we still have to do anything like that
-        #   D['G']['inputpopulations'] = deepcopy(project_entry.populations)
-
-        # Is this the first time? if so then we have to run simulations
-        #   should_re_run = 'S' not in D
-
-        # TODO call new_project.runsim instead
-        result = new_project.runsim()
+        project_instance = project_entry.hydrate()
+        project_instance.loadspreadsheet(server_filename)
+        project_instance.modified = datetime.now(dateutil.tz.tzutc())
+        current_app.logger.info("after spreadsheet uploading: %s" % project_instance)
+        result = project_instance.runsim()
         current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
 
-        # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
         #   now, update relevant project_entry fields
-        project_entry.settings = saves(new_project.settings)
-        project_entry.data = saves(new_project.data)
-        project_entry.created = new_project.created
-        project_entry.updated = new_project.modified
-
-        # update the programs and populations based on the data TODO: yes or no?
-        #   getPopsAndProgsFromModel(project_entry, trustInputMetadata = False)
+        project_entry.restore(project_instance)
 
         db.session.add(project_entry)
+
+        # find relevant parset for the result
+        project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
+        for p in project_parsets:
+            print "PARSET RECORD:", p.name, p.id
+        default_parset = [item for item in project_parsets if item.name == 'default']
+        if default_parset:
+            default_parset = default_parset[0]
+        else:
+            raise Exception("Default parset not generated for the project {}!".format(project_id))
+        result_parset_id = default_parset.id
+        parset_records_map = {record.id: record for record in project_entry.parsets}
+
+    # update results (after runsim is invoked)
+        project_results = db.session.query(ResultsDb).filter_by(project_id=project_id)
+
+        result_record = [item for item in project_results if
+                         item.parset_id == result_parset_id and
+                         item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+        if result_record:
+            result_record = result_record[0]
+            result_record.blob = saves(result)
+        if not result_record:
+            result_record = ResultsDb(
+                parset_id=result_parset_id,
+                project_id=project_entry.id,
+                calculation_type=ResultsDb.CALIBRATION_TYPE,
+                blob=saves(result)
+            )
+        db.session.add(result_record)
 
         # save data upload timestamp
         data_upload_time = datetime.now(dateutil.tz.tzutc())
@@ -449,39 +465,6 @@ class ProjectSpreadsheet(Resource):
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project_entry.id)
-
-        # update parsets
-        result_parset_id = None
-        parset_records_map = {record.id: record for record in project_entry.parsets}
-        # may be SQLAlchemy can do stuff like this already?
-        for (parset_name, parset_entry) in new_project.parsets.iteritems():
-            parset_record = parset_records_map.get(parset_entry.uid)
-            if not parset_record:
-                parset_record = ParsetsDb(
-                    project_id=project_entry.id,
-                    name=parset_name,
-                    id=parset_entry.uid
-                )
-            if parset_record.name == "default":
-                result_parset_id = parset_entry.uid
-            parset_record.pars = saves(parset_entry.pars)
-            db.session.add(parset_record)
-
-        # update results (after runsim is invoked)
-            result_record = [item for item in project_entry.results if
-                             item.parset_id == result_parset_id and
-                             item.calculation_type == ResultsDb.CALIBRATION_TYPE]
-            if result_record:
-                result_record = result_record[0]
-                result_record.blob = saves(result)
-            if not result_record:
-                result_record = ResultsDb(
-                    parset_id=result_parset_id,
-                    project_id=project_entry.id,
-                    calculation_type=ResultsDb.CALIBRATION_TYPE,
-                    blob=saves(result)
-                )
-            db.session.add(result_record)
 
         # update existing
         if projdata is not None:
@@ -555,8 +538,8 @@ class ProjectData(Resource):
             raise ProjectDoesNotExist(project_id)
 
         from optima.utils import load
-        new_project = load(uploaded_file)
-        project_entry.restore(new_project)
+        project_instance = load(uploaded_file)
+        project_entry.restore(project_instance)
         db.session.add(project_entry)
 
         db.session.commit()
@@ -601,25 +584,12 @@ class ProjectFromData(Resource):
         source_filename = uploaded_file.source_filename
 
         from optima.utils import load
-        new_project = load(uploaded_file)
+        project_instance = load(uploaded_file)
 
-        if new_project.data:
-            datastart = int(new_project.data['years'][0])
-            dataend = int(new_project.data['years'][-1])
-            pops = []
-            project_pops = new_project.data['pops']
-            for i in range(len(project_pops['short'])):
-                new_pop = {
-                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
-                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
-                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
-                }
-                pops.append(new_pop)
-        else:
-            from optima.makespreadsheet import default_datastart, default_dataend
-            datastart = default_datastart
-            dataend = default_dataend
-            pops = {}
+        from optima.makespreadsheet import default_datastart, default_dataend
+        datastart = default_datastart
+        dataend = default_dataend
+        pops = {}
 
         project_entry = ProjectDb(
             project_name, user_id, datastart,
@@ -631,7 +601,7 @@ class ProjectFromData(Resource):
         db.session.add(project_entry)
         db.session.flush()
 
-        project_entry.restore(new_project)
+        project_entry.restore(project_instance)
         project_entry.name = project_name
         db.session.commit()
 

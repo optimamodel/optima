@@ -156,15 +156,42 @@ class ProjectDb(db.Model):
 
     def restore(self, project):
 
+        # Attention: this method adds only dependent objects to the session
         from datetime import datetime
         import dateutil
 
+        same_project = str(project.uid) == str(self.id)
+        print "same_project:", same_project, project.uid, self.id
+        if not same_project:
+            str_project_id = str(self.id)
+            db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+            db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+            db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
+            db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
+
         self.name = project.name
         self.created = project.created
-        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.updated = project.modified or datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
         self.data = op.saves(project.data)
+        if project.data:
+            self.datastart = int(project.data['years'][0])
+            self.dataend = int(project.data['years'][-1])
+            self.populations = []
+            project_pops = project.data['pops']
+            for i in range(len(project_pops['short'])):
+                new_pop = {
+                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
+                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
+                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
+                }
+                self.populations.append(new_pop)
+        else:
+            self.datastart = op.default_datastart
+            self.dataend = op.default_dataend
+            self.populations = {}
         if project.parsets:
+            # TODO delete existing parsets
             from server.webapp.utils import update_or_create_parset
             for name, parset in project.parsets.iteritems():
                 update_or_create_parset(self.id, name, parset)
@@ -172,6 +199,7 @@ class ProjectDb(db.Model):
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
         if project.progsets:
+            # TODO delete existing progsets if applicable
             from server.webapp.utils import update_or_create_progset, update_or_create_program
             from server.webapp.programs import get_default_programs
 

@@ -292,22 +292,22 @@ def update_or_create_parset(project_id, name, parset):
     from server.webapp.dbmodels import ParsetsDb
     from optima.utils import saves
 
-    parset_record = ParsetsDb.query \
-        .filter_by(id=parset.uid, project_id=project_id) \
-        .first()
+    parset_record = ParsetsDb.query.filter_by(id=parset.uid).first()  # same parset cannot be present in two projects
 
     if parset_record is None:
         parset_record = ParsetsDb(
+            id=parset.uid,
             project_id=project_id,
             name=name,
             created=parset.created or datetime.now(dateutil.tz.tzutc()),
-            updated=datetime.now(dateutil.tz.tzutc()),
+            updated=parset.modified or datetime.now(dateutil.tz.tzutc()),
             pars=saves(parset.pars)
         )
 
         db.session.add(parset_record)
     else:
         parset_record.updated = datetime.now(dateutil.tz.tzutc())
+        parset_record.name = name
         parset_record.pars = saves(parset.pars)
 
 
@@ -318,7 +318,7 @@ def update_or_create_progset(project_id, name, progset):
     from server.webapp.dbmodels import ProgsetsDb
 
     progset_record = ProgsetsDb.query \
-        .filter_by(name=progset.name, project_id=project_id) \
+        .filter_by(project_id=project_id, name=name) \
         .first()
 
     if progset_record is None:
