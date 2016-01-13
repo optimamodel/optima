@@ -1,4 +1,28 @@
 <script>
+/*  function move_year() {
+    var al = $('.mpld3-baseaxes').length;
+    var dl = $('div.fig').length;
+    if ($('.mpld3-baseaxes > text').length > 0) {
+      $('.mpld3-baseaxes > text').each(function() {
+        var value = $(this).text();
+        if (value === 'Year') {
+          $(this).attr('y', parseInt($(this).attr('y'))+10);
+        }
+      });
+    } else {
+      setTimeout(move_year, 150);
+    }
+  }*/
+  function format_xaxis() {
+    var axes = $('.mpld3-xaxis');
+    if (axes.length > 0) {
+      $(axes).find('g.tick > text').each(function() {
+        $(this).text($(this).text().replace(',',''));
+      });
+    } else {
+      setTimeout(format_xaxis, 150);
+    }
+  }
   function add_lines_to_legends() {
     var svgGraphFigures = $('svg.mpld3-figure');
     if (svgGraphFigures.length > 0) {
@@ -55,29 +79,55 @@
   }
 
   $(document).ready(function() {
+    format_xaxis();
+    //move_year();
     add_lines_to_legends();
     set_overflow_visible();
     fix_mouse_pointer();
   });
 </script>
-<div class="page">
-  <h2 style="margin: 10px 0;">Manage parameter set</h2>
-  <div ng-if="!missingData">
-    <div class="3">
-      <label for="programSet-selection">Select a saved parameter set:</label>
-    </div>
-    <div style="display: flex;justify-content: flex-start;">
-      <select id="programSet-selection" name="programSet-selection" class="txbox"
-              ng-model="selectedParset"
-              ng-change="displayGraphs()"
-              ng-options="parset.name for parset in parsets"
-              style="width: 20%;">
-      </select>
-    </div>
+<div class="rich" style="margin: 0 -25px;">
+  <div class="3">
+    <label for="programSet-selection">Select a parameter set:</label>
+  </div>
+  <div style="display: flex;justify-content: flex-start;">
+    <select id="programSet-selection" name="programSet-selection" class="txbox"
+            ng-model="selectedParset"
+            ng-change="displayGraphs()"
+            ng-options="parset.name for parset in parsets"
+            style="width: 20%;">
+    </select>
+  </div>
 
-    <div ng-repeat="chart in calibrationChart" class="chart-container __small">
-      <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-      <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+  <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 550px">
+    <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
+      <div class="option_list" style="height:450px">
+        <div ng-repeat="selector in selectors" class="option">
+          <span><input type="checkbox" ng-model="selector.checked"/></span>
+          <span style="margin-left: 10px">{{selector.name}}</span>
+        </div>
+      </div>
+      <div style="display: flex;justify-content: center; margin-top: 25px">
+        <input type="button" value="Update" class="btn" ng-click="displayGraphs()"/>
+      </div>
+    </div>
+    <div class="chart_wrapper">
+      <div ng-repeat="chart in calibrationChart" class="chart-container __small">
+        <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+      </div>
+    </div>
+    <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
+      <div class="option_list" style="height:450px">
+        <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
+          <span style="width: 45%">{{parameter.label}}</span>
+          <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
+        </div>
+      </div>
+      <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
+        <input type="button" value="Update" class="btn" ng-click="displayGraphs()"/>
+        <input type="button" value="Reset" class="btn" ng-click="resetParameters()"/>
+      </div>
     </div>
   </div>
 </div>

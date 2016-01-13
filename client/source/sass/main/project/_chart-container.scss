@@ -6,9 +6,10 @@
 
   &.__small {
     float: left;
-    width: 450px;
-    margin: 10px;
-    padding: 60px 10px 10px;
+    width: 415px;
+    height: 340px;
+    margin: 2px;
+    padding: 45px 5px 5px;
   }
 
   &.__large {
@@ -50,4 +51,13 @@
   top: 4px;
   display: inline-block;
 
+}
+
+.chart_wrapper {
+  height: 100%;
+  overflow: scroll;
+  display: flex;
+  width: 60%;
+  flex-wrap: wrap;
+  justify-content: space-around;
 }
