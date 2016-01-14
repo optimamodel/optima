@@ -537,37 +537,23 @@ def runcommand(command, printinput=False, printoutput=False):
 ##############################################################################
 
 
-def saveobj(filename, obj):
+def save(filename, obj):
     ''' Save an object to file '''
-    try: 
-        from dill import dump # First try dill, which is most flexible
-        module = 'dill'
-    except:
-        try: 
-            from cPickle import dump # Next try Python2 pickle
-            module = 'cPickle'
-        except: 
-            from pickle import dump # Fine, try Python3 pickle and/or legacy Python2 pickle
-            module = 'pickle'
+    try: import cPickle as pickle # For Python 2 compatibility
+    except: import pickle
     from gzip import GzipFile
     
-    with GzipFile(filename, 'wb') as fileobj: dump(obj, fileobj, protocol=2, byref=False)
-    print('Object saved to "%s" using module "%s"' % (filename, module))
+    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    print('Object saved to "%s"' % filename)
     return None
 
 
-def loadobj(filename):
+def load(filename):
     ''' Load a saved file '''
-    try: 
-        from dill import load # First try dill, which is most flexible
-        module = 'dill'
+    try:
+        import cPickle as pickle  # For Python 2 compatibility
     except:
-        try: 
-            from cPickle import load # Next try Python2 pickle
-            module = 'cPickle'
-        except: 
-            from pickle import load # Fine, try Python3 pickle and/or legacy Python2 pickle
-            module = 'pickle'
+        import pickle
     from gzip import GzipFile
 
     # Handle loading of either filename or file object
@@ -575,9 +561,8 @@ def loadobj(filename):
     else: argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
 
-    # Actually load
-    with GzipFile(**kwargs) as fileobj: obj = load(fileobj)
-    print('Object loaded from "%s" using module "%s"' % (filename, module))
+    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
+    print('Object loaded from "%s"' % filename)
     return obj
 
 
