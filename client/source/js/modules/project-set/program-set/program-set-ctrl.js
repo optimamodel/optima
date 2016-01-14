@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, currentProject, projectApiService) {
+    modalService, currentProject, projectApiService, $upload) {
 
     var openProject = currentProject.data;
     var defaults;
@@ -49,7 +49,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = newProgramSet;
         $scope.activeProgramSet = newProgramSet;
       };
-      programSetModalService.openProgramSetModal(add, 'Add program set', $scope.programSetList, null);
+      programSetModalService.openProgramSetModal(add, 'Add program set', $scope.programSetList, null, 'Add');
     };
 
     // Open pop-up to re-name programSet
@@ -60,9 +60,33 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         var rename = function (name) {
           $scope.activeProgramSet.name = name;
         };
-        programSetModalService.openProgramSetModal(rename, 'Rename program set', $scope.programSetList, $scope.activeProgramSet.name, true);
+        programSetModalService.openProgramSetModal(rename, 'Rename program set', $scope.programSetList, $scope.activeProgramSet.name, 'Update', true);
       }
     };
+
+    // Download  project-set data
+    $scope.downloadProgramSet = function() {
+      $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id)
+        .success(function (response) {
+          var blob = new Blob([response], { type: 'application/octet-stream' });
+          saveAs(blob, ($scope.activeProgramSet.name + '.progset'));
+        });
+    };
+
+    // Upload project-set data
+    $scope.uploadProgramSet = function(name, id) {
+      angular
+        .element('<input type=\'file\'>')
+        .change(function(event){
+          $upload.upload({
+            url: '/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id,
+            file: event.target.files[0]
+          }).success(function () {
+            window.location.reload();
+          });
+        }).click();
+    };
+
 
     // Delete a programSet from $scope.programSetList and also from DB is it was saved.
     $scope.deleteProgramSet = function () {
@@ -111,7 +135,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.activeProgramSet = copiedProgramSet;
         };
-        programSetModalService.openProgramSetModal(copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy');
+        programSetModalService.openProgramSetModal(copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
       }
     };
 
