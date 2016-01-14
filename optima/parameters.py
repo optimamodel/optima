@@ -3,12 +3,12 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan05 by cliffk
+Version: 2016jan11 by cliffk
 """
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -85,23 +85,31 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
 
 
 
+def getvalidyears(years, validdata, defaultind=0):
+    ''' Return the years that are valid based on the validity of the input data '''
+    if sum(validdata): # There's at least one data point entered
+        if len(years)==len(validdata): # They're the same length: use for logical indexing
+            validyears = array(array(years)[validdata]) # Store each year
+        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
+            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
+    return validyears
 
-def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto=''):
+
+
+def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto='', defaultind=0):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, limits=limits, fittable=fittable, auto=auto) # Create structure
     for row,key in enumerate(keys):
         validdata = ~isnan(data[short][row])
-        if sum(validdata): # There's at least one data point -- WARNING, is this ok?
-            par.y[key] = sanitize(data[short][row]) # Store each extant value
-            par.t[key] = array(data['years'])[~isnan(data[short][row])] # Store each year
-        else: # Blank, assume zero -- WARNING, is this ok?
-            par.y[key] = array([0])
-            par.t[key] = array([0])
+        par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+        if sum(validdata): 
+            par.y[key] = sanitize(data[short][row])
+        else:
+            print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
+            par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
     
     return par
-
-
-
 
 
 ## Acts
@@ -122,8 +130,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
     yearstouse = []
-    for row in range(npops):
-        yearstouse.append(array(data['years'])[~isnan(data[which+act][row])]   )
+    for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
     minyear = Inf
     maxyear = -Inf
     npts = 1 # Don't use fewer than 1 point
@@ -173,6 +180,25 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
+def readpars(filename='parameters.tsv'):
+    ''' 
+    Function to read the parameter definitions file and return a structure that can be used to generate the parameters
+    WARNING -- not used currently, provides feature for later automation of parameter generation.
+    '''
+    rawpars = []
+    with open(filename) as f: alllines = f.readlines() # Load all data
+    for l in range(len(alllines)): alllines[l] = alllines[l].strip().split('\t') # Remove end characters and split from tabs
+    attrs = alllines.pop(0) # First line is attributes
+    for l in range(len(alllines)): # Loop over parameters
+        rawpars.append(odict()) # Create an odict to store attributes
+        for i,attr in enumerate(attrs): # Loop over attributes
+            rawpars[l][attr] = alllines[l][i] # Store attributes
+    return rawpars
+
+
+
+
+
 
 
 
@@ -184,7 +210,7 @@ def makepars(data, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2015dec17 by cliffk
+    Version: 2016jan14 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -193,6 +219,10 @@ def makepars(data, verbose=2):
     ###############################################################################
     ## Loop over quantities
     ###############################################################################
+    
+    # Read in parameters automatically -- WARNING, not currently implemented
+#    parfilename = 'parameters.tsv' # Define the name of the file that contains the parameter definitions
+#    rawpars = readpars(parfilename) # Read the parameters structure
     
     pars = odict()
     
@@ -352,21 +382,27 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), fittable='', auto=''):
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', visible=0, proginteract=None):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+        self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
+        self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
+        self.proginteract = proginteract # How multiple programs with this parameter interact
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
-        output += '    name: "%s"\n'    % self.name
-        output += '   short: "%s"\n'    % self.short
-        output += '  limits: %s\n'      % str(self.limits)
-        output += 'fittable: "%s"\n'    % self.fittable
-        output += '    auto: "%s"\n'    % self.auto
+        output += '        name: "%s"\n'    % self.name
+        output += '       short: "%s"\n'    % self.short
+        output += '      limits: %s\n'      % str(self.limits)
+        output += '          by: %s\n'      % self.by
+        output += '    fittable: "%s"\n'    % self.fittable
+        output += '        auto: "%s"\n'    % self.auto
+        output += '     visible: "%s"\n'    % self.visible
+        output += 'proginteract: "%s"\n'    % self.proginteract
         return output
 
 
@@ -380,13 +416,12 @@ class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
     def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, fittable='', auto=''):
-        Par.__init__(self, name, short, limits, fittable, auto)
+        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -394,12 +429,12 @@ class Timepar(Par):
         output += '       t: \n%s\n'  % self.t
         output += '       y: \n%s\n'  % self.y
         output += '       m: %s\n'    % self.m
-        output += '      by: "%s"\n'  % self.by
         output += '    keys: %s\n'    % self.y.keys()
         return output
     
     def interp(self, tvec, smoothness=20):
         """ Take parameters and turn them into model parameters """
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         keys = self.y.keys()
         npops = len(keys)
         if self.by=='pship': # Have odict
@@ -409,7 +444,8 @@ class Timepar(Par):
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                try: output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         if npops==1: return output[0,:]
         else: return output
 
@@ -422,12 +458,11 @@ class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
     def __init__(self, name=None, short=None, limits=(0,1e9), p=None, m=1, start=2000, by=None, fittable='', auto=''):
-        Par.__init__(self, name, short, limits, fittable, auto)
+        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
-        self.by = by # Whether it's by population, partnership, etc...
     
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -439,7 +474,8 @@ class Popsizepar(Par):
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
-        """ Take population size parameter and turn it into a model parameters """  
+        """ Take population size parameter and turn it into a model parameters """
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         keys = self.p.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
@@ -455,19 +491,18 @@ class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
     def __init__(self, name=None, short=None, limits=(0,1), y=None, by=None, fittable='', auto=''):
-        Par.__init__(self, name, short, limits, fittable, auto)
+        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
         self.y = y # y-value data, e.g. [0.3, 0.7]
-        self.by = by # By pops, by none, etc.
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
         output += '       y: %s\n'    % self.y
-        output += '      by: "%s"\n'  % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
             output = self.y
         else: # No, it has keys, return as an array
@@ -486,13 +521,16 @@ class Constant(Par):
 class Parameterset(object):
     ''' A full set of all parameters, possibly including multiple uncertainty runs '''
     
-    def __init__(self, name='default'):
+    def __init__(self, name='default', project=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
+        self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
+        self.results = None # Store pointer to results
+        
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -505,6 +543,14 @@ class Parameterset(object):
         return output
     
     
+    def getresults(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None and self.project is not None:
+            results = getresults(self.project, self.resultsref)
+            return results
+        else:
+            print('WARNING, no results associated with this parameter set')
+            return None
     
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
@@ -517,6 +563,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         simparslist = []
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
