@@ -180,6 +180,22 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
+def readpars(filename='parameters.tsv'):
+    ''' Function to read the parameter definitions file and return a structure that can be used to generate the parameters '''
+    rawpars = []
+    with open(filename) as f: alllines = f.readlines() # Load all data
+    for l in range(len(alllines)): alllines[l] = alllines[l].strip().split('\t') # Remove end characters and split from tabs
+    attrs = alllines.pop(0) # First line is attributes
+    for l in range(len(alllines)): # Loop over parameters
+        rawpars.append(odict()) # Create an odict to store attributes
+        for i,attr in enumerate(attrs): # Loop over attributes
+            rawpars[l][attr] = alllines[l][i] # Store attributes
+    return rawpars
+
+
+
+
+
 
 
 
@@ -200,6 +216,9 @@ def makepars(data, verbose=2):
     ###############################################################################
     ## Loop over quantities
     ###############################################################################
+    
+    parfilename = 'parameters.tsv' # Define the name of the file that contains the parameter definitions
+    rawpars = readpars(parfilename) # Read the parameters structure
     
     pars = odict()
     
@@ -359,21 +378,27 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), fittable='', auto=''):
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', visible=0, proginteract=None):
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
+        self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
+        self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
+        self.proginteract = proginteract # How multiple programs with this parameter interact
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
-        output += '    name: "%s"\n'    % self.name
-        output += '   short: "%s"\n'    % self.short
-        output += '  limits: %s\n'      % str(self.limits)
-        output += 'fittable: "%s"\n'    % self.fittable
-        output += '    auto: "%s"\n'    % self.auto
+        output += '        name: "%s"\n'    % self.name
+        output += '       short: "%s"\n'    % self.short
+        output += '      limits: %s\n'      % str(self.limits)
+        output += '          by: %s\n'      % self.by
+        output += '    fittable: "%s"\n'    % self.fittable
+        output += '        auto: "%s"\n'    % self.auto
+        output += '     visible: "%s"\n'    % self.visible
+        output += 'proginteract: "%s"\n'    % self.proginteract
         return output
 
 
@@ -387,13 +412,12 @@ class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
     def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, fittable='', auto=''):
-        Par.__init__(self, name, short, limits, fittable, auto)
+        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
-        self.by = by # Whether it's total ('tot'), by population ('pop'), or by partnership ('pship')
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -401,7 +425,6 @@ class Timepar(Par):
         output += '       t: \n%s\n'  % self.t
         output += '       y: \n%s\n'  % self.y
         output += '       m: %s\n'    % self.m
-        output += '      by: "%s"\n'  % self.by
         output += '    keys: %s\n'    % self.y.keys()
         return output
     
@@ -431,12 +454,11 @@ class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
     def __init__(self, name=None, short=None, limits=(0,1e9), p=None, m=1, start=2000, by=None, fittable='', auto=''):
-        Par.__init__(self, name, short, limits, fittable, auto)
+        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
-        self.by = by # Whether it's by population, partnership, etc...
     
     def __repr__(self):
         ''' Print out useful information when called '''
@@ -465,15 +487,13 @@ class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
     def __init__(self, name=None, short=None, limits=(0,1), y=None, by=None, fittable='', auto=''):
-        Par.__init__(self, name, short, limits, fittable, auto)
+        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
         self.y = y # y-value data, e.g. [0.3, 0.7]
-        self.by = by # By pops, by none, etc.
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = Par.__repr__(self)
         output += '       y: %s\n'    % self.y
-        output += '      by: "%s"\n'  % self.by
         return output
     
     def interp(self, tvec=None, smoothness=None):
