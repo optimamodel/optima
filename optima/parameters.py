@@ -181,7 +181,10 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 def readpars(filename='parameters.tsv'):
-    ''' Function to read the parameter definitions file and return a structure that can be used to generate the parameters '''
+    ''' 
+    Function to read the parameter definitions file and return a structure that can be used to generate the parameters
+    WARNING -- not used currently, provides feature for later automation of parameter generation.
+    '''
     rawpars = []
     with open(filename) as f: alllines = f.readlines() # Load all data
     for l in range(len(alllines)): alllines[l] = alllines[l].strip().split('\t') # Remove end characters and split from tabs
@@ -207,7 +210,7 @@ def makepars(data, verbose=2):
     the corresponding model (project). This method should be called before a 
     simulation is run.
     
-    Version: 2015dec17 by cliffk
+    Version: 2016jan14 by cliffk
     """
     
     printv('Converting data to parameters...', 1, verbose)
@@ -217,8 +220,9 @@ def makepars(data, verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    parfilename = 'parameters.tsv' # Define the name of the file that contains the parameter definitions
-    rawpars = readpars(parfilename) # Read the parameters structure
+    # Read in parameters automatically -- WARNING, not currently implemented
+#    parfilename = 'parameters.tsv' # Define the name of the file that contains the parameter definitions
+#    rawpars = readpars(parfilename) # Read the parameters structure
     
     pars = odict()
     
