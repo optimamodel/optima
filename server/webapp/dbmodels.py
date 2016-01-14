@@ -378,7 +378,7 @@ class ProgramsDb(db.Model):
         'progset_id': Uuid,
         'project_id': Uuid,
         'category': fields.String,
-        'short_name': fields.String,
+        'short_name': fields.String(attribute='short'),
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
@@ -393,7 +393,7 @@ class ProgramsDb(db.Model):
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     category = db.Column(db.String)
     name = db.Column(db.String)
-    short_name = db.Column(db.String)
+    short = db.Column(db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
@@ -401,14 +401,14 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name='',
+    def __init__(self, project_id, progset_id, name, short='',
                  category='No category', active=False, pars=None, created=None,
                  updated=None, id=None, targetpops=[], criteria=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
         self.name = name
-        self.short_name = short_name if short_name is not None else name
+        self.short = short if short is not None else name
         self.category = category
         self.pars = pars
         self.active = active
@@ -455,11 +455,10 @@ class ProgramsDb(db.Model):
         return pars
 
     def hydrate(self):
-        from optima.programs import Program
-        program_entry = Program(
+        program_entry = op.Program(
             self.name,
             targetpars=self.pars_to_program_pars(),
-            short_name=self.short_name,
+            short=self.short,
             category=self.category,
             targetpops=self.targetpops,
             criteria=self.criteria
@@ -515,7 +514,7 @@ class ProgsetsDb(db.Model):
     def create_programs_from_list(self, programs):
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short_name', 'category', 'targetpops', 'pars']:
+            for field in ['name', 'short', 'category', 'targetpops', 'pars']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
