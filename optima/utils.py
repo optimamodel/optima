@@ -539,30 +539,32 @@ def runcommand(command, printinput=False, printoutput=False):
 
 def saveobj(filename, obj):
     ''' Save an object to file '''
-    try: import cPickle as pickle # For Python 2 compatibility
-    except: import pickle
+    try: from dill import dump # First try dill, which is most flexible
+    except:
+        try: from cPickle import dump # Next try Python2 pickle
+        except: from pickle import dump # Fine, try Python3 pickle and/or legacy Python2 pickle
     from gzip import GzipFile
     
-    with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
+    with GzipFile(filename, 'wb') as fileobj: dump(obj, fileobj, protocol=2)
     print('Object saved to "%s"' % filename)
     return None
 
 
 def loadobj(filename):
     ''' Load a saved file '''
-    try:
-        import cPickle as pickle  # For Python 2 compatibility
+    try: from dill import load # First try dill, which is most flexible
     except:
-        import pickle
+        try: from cPickle import load # Next try Python2 pickle
+        except: from pickle import load # Fine, try Python3 pickle and/or legacy Python2 pickle
     from gzip import GzipFile
 
-    argtype = 'filename'
-    if not isinstance(filename, basestring):
-        argtype = 'fileobj'
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
 
-    with GzipFile(**kwargs) as fileobj:
-        obj = pickle.load(fileobj)
+    # Actually load
+    with GzipFile(**kwargs) as fileobj: obj = load(fileobj)
     print('Object loaded from "%s"' % filename)
     return obj
 
