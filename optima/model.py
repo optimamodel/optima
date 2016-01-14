@@ -385,7 +385,7 @@ def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
     
-    Version: 2016jan05 by cliffk    
+    Version: 2016jan14 by cliffk    
     '''
     from optima import makesimpars, Resultset
     if simpars is None:
@@ -395,5 +395,5 @@ def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.
         if project is not None: settings = project.settings
         else: settings = Settings()
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
-    results = Resultset(raw=raw, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
+    results = Resultset(raw=raw, pars=pars, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
     return results

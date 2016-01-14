@@ -203,7 +203,7 @@ def readpars(filename='parameters.tsv'):
 
 
 
-def makepars(data, verbose=2):
+def makepars(data, label='', verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -225,6 +225,7 @@ def makepars(data, verbose=2):
 #    rawpars = readpars(parfilename) # Read the parameters structure
     
     pars = odict()
+    pars['label'] = label # Set a label for this pars dict
     
     # Shorten information on which populations are male, which are female
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 

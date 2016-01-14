@@ -537,7 +537,7 @@ def runcommand(command, printinput=False, printoutput=False):
 ##############################################################################
 
 
-def save(filename, obj):
+def saveobj(filename, obj):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
@@ -548,21 +548,20 @@ def save(filename, obj):
     return None
 
 
-def load(filename):
+def loadobj(filename):
     ''' Load a saved file '''
     try:
         import cPickle as pickle  # For Python 2 compatibility
     except:
         import pickle
     from gzip import GzipFile
-
-    argtype = 'filename'
-    if not isinstance(filename, basestring):
-        argtype = 'fileobj'
+    
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
 
-    with GzipFile(**kwargs) as fileobj:
-        obj = pickle.load(fileobj)
+    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
     print('Object loaded from "%s"' % filename)
     return obj
 
