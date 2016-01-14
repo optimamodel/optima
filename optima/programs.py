@@ -356,7 +356,7 @@ class Programset(object):
 
         return progparset
 
-    def plotallcoverage(self,t,parset,xupperlim=None,targetcomposition=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
+    def plotallcoverage(self,t,parset,xupperlim=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
 
         cost_coverage_figures = {}
@@ -365,7 +365,7 @@ class Programset(object):
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
-                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,targetcomposition=targetcomposition,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
+                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
 
         return cost_coverage_figures
 
@@ -555,7 +555,7 @@ class Program(object):
         else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
         return reqbudget
 
-    def plotcoverage(self, t, parset, xupperlim=None, targetcomposition=None, existingFigure=None, 
+    def plotcoverage(self, t, parset, xupperlim=None, existingFigure=None, 
         randseed=None, bounds=None):
         ''' Plot the cost-coverage curve for a single program'''
         plotdata = {}
@@ -636,7 +636,6 @@ class CCOF(object):
         # Fill in the missing information for cost-coverage curves
         if ccopar.get('unitcost'):
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
-            if not ccopar.get('fixed'): ccopar['fixed'] = (0.,0.)
 
         if not self.ccopars:
             for ccopartype in ccopar.keys():

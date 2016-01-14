@@ -19,7 +19,7 @@ Version: 2016jan11 by cliffk
 tests = [
 'makeproject',
 #'autofit',
-'makeprograms',
+#'makeprograms',
 ]
 
 
