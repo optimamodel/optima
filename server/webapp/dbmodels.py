@@ -165,12 +165,13 @@ class ProjectDb(db.Model):
         print "same_project:", same_project, project.uid, self.id
         db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
-        if not same_project:
+        if same_project:
+            self.name = project.name
+        else:
             db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
             db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
         db.session.flush()
 
-        self.name = project.name
         self.created = project.created
         self.updated = project.modified or datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
