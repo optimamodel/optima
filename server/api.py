@@ -65,8 +65,9 @@ from server.webapp.resources.user import (User, UserDetail, CurrentUser,
                                           UserLogin, UserLogout)
 from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectCopy, ProjectSpreadsheet,
-                                             ProjectData, ProjectFromData, Portfolio)
-from server.webapp.resources.project_constants import Parameters, Predefined
+                                             ProjectData, ProjectFromData, Portfolio,
+                                             Defaults)
+from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset
 from server.webapp.resources.project_parsets import Parsets, ParsetsDetail, ParsetsCalibration
 
@@ -92,7 +93,8 @@ api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/parameters')
-api.add_resource(Predefined, '/api/project/predefined')
+api.add_resource(Populations, '/api/project/populations')
+api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')

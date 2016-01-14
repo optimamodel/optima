@@ -141,6 +141,11 @@ th {
       background-color: $table-bg-accent;
     }
   }
+  tr.highlighted {
+    > td {
+      background-color: #e5ffee !important;
+    }
+  }
 }
 
 // Hover effect

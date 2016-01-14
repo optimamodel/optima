@@ -16,11 +16,6 @@ def blank(n=3):
     print('\n'*n)
 
 
-def objectid(obj):
-    ''' Return the object ID as per the default Python __repr__ method '''
-    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
-
-
 def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
     from numpy import ceil
@@ -38,13 +33,20 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
         c += 1
     attstring += '\n'
     return attstring
-    
-def objectatt(obj, strlen = 18, ncol = 3):
+
+
+def objectid(obj):
+    ''' Return the object ID as per the default Python __repr__ method '''
+    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+
+
+def objatt(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
     return createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    
-def objectmeth(obj, strlen = 18, ncol = 3):
+
+
+def objmeth(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
     return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
@@ -669,12 +671,18 @@ class odict(OrderedDict):
         elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
-            startind = self.__slicekey(key.start, 'start')
-            stopind = self.__slicekey(key.stop, 'stop')
-            if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-            try: return array(slicevals) # Try to convert to an array
-            except: return slicevals
+            try:
+                startind = self.__slicekey(key.start, 'start')
+                stopind = self.__slicekey(key.stop, 'stop')
+                if stopind<startind:
+                    print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
+                    raise Exception
+                slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+                try: return array(slicevals) # Try to convert to an array
+                except: return slicevals
+            except:
+                print('Invalid odict slice... returning empty list...')
+                return []
         elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)

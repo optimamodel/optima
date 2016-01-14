@@ -135,7 +135,7 @@ class ParsetsCalibration(Resource):
     )
     @marshal_with(calibration_fields, envelope="calibration")
     def get(self, parset_id):
-        current_app.logger.debug("/api/parsets/{}/calibration/manual".format(parset_id))
+        current_app.logger.debug("/api/parsets/{}/calibration".format(parset_id))
         args = calibration_parser.parse_args()
         which = args.get('which')
 
@@ -175,7 +175,7 @@ class ParsetsCalibration(Resource):
 
     @marshal_with(calibration_fields, envelope="calibration")
     def put(self, parset_id):
-        current_app.logger.debug("PUT /api/parsets/{}/calibration/manual".format(parset_id))
+        current_app.logger.debug("PUT /api/parsets/{}/calibration".format(parset_id))
         args = calibration_update_parser.parse_args()
         parameters = args.get('parameters', [])
         which = args.get('which')
