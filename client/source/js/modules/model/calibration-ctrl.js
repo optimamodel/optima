@@ -5,6 +5,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     Model, parameters, meta, info, CONFIG, typeSelector, cfpLoadingBar, calibration, modalService) {
 
     var activeProjectInfo = info.data;
+    var defaultParameters;
+
+    if (!activeProjectInfo.has_data) {
+      modalService.inform(
+        function (){ },
+        'Okay',
+        'Please upload spreadsheet to proceed.',
+        'Cannot proceed'
+      );
+      $scope.missingData = true;
+      return;
+    }
 
     $scope.parsets = [];
     $scope.selectedParset = undefined;
@@ -15,17 +27,43 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(parsets) {
           $scope.parsets = parsets;
           $scope.selectedParset = parsets[0];
-          $scope.displayGraphs();
+          $http.get('/api/parset/' + $scope.selectedParset.id + '/calibration').
+          success(function (response) {
+            setCalibrationData(response.calibration);
+          });
         }
       });
 
     $scope.displayGraphs = function() {
-      $http.get('/api/parset/' + $scope.selectedParset.id + '/calibration').
+      var data = {};
+      if($scope.parameters) {
+        data.parameters = $scope.parameters;
+      }
+      if($scope.selectors) {
+        var selectors = _.filter($scope.selectors, function(selector) {
+          return selector.checked;
+        }).map(function(selector) {
+          return selector.key;
+        });
+        if(selectors && selectors.length > 0) {
+          data.which = selectors;
+        }
+      }
+      $http.put('/api/parset/' + $scope.selectedParset.id + '/calibration', data).
       success(function (response) {
-        $scope.calibrationChart = response.calibration.graphs;
-        $scope.selectors = response.calibration.selectors;
-        $scope.parameters = response.calibration.parameters;
+        setCalibrationData(response.calibration);
       });
+    };
+
+    var setCalibrationData = function(calibration) {
+      $scope.calibrationChart = calibration.graphs;
+      $scope.selectors = calibration.selectors;
+      defaultParameters = calibration.parameters;
+      $scope.parameters = angular.copy(calibration.parameters);
+    };
+
+    $scope.resetParameters = function() {
+      $scope.parameters = angular.copy(defaultParameters);
     }
 
   });

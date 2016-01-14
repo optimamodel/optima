@@ -173,6 +173,7 @@ class ParsetsCalibration(Resource):
             "selectors": selectors
         }
 
+    @marshal_with(calibration_fields, envelope="calibration")
     def put(self, parset_id):
         current_app.logger.debug("PUT /api/parsets/{}/calibration/manual".format(parset_id))
         args = calibration_update_parser.parse_args()
