@@ -40,16 +40,14 @@
     </style>
 </head>
 <body ng-controller="MainCtrl">
-
 <div class="actionbar">
     <div class="elastic header">
         <div class="header_logo logo"></div>
         <div data-menu ng-if="userLogged()"></div>
-        <div ng-cloak ng-if="userLogged()" style="max-width: 250px;overflow: hidden">
-            <div>Logged in as: <b>{{ user.username }}</b></div>
-            <div ng-show="user.displayName">{{ ' (' + user.displayName + ')' }}</div>
+        <div ng-cloak ng-if="userLogged()" class="logged-in">{{state}}
+            <div><span>User:</span> <b><span ng-show="user.displayName">{{ user.displayName }}</span><span ng-show="!user.displayName">{{ user.username }}</span></b></div>
             <div ng-show="activeProject.isSet()">
-                Project: <b>{{ activeProject.name }}</b>
+                <span>Project:</span> <b>{{ activeProject.name }}</b>
             </div>
         </div>
         <div ng-cloak ng-if="!userLogged()">
