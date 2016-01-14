@@ -34,7 +34,7 @@ for par in allpars:
         thisparprops['type'] = type(par).__name__
     allparprops.append(thisparprops)
 
-fmt = '%25s,'
+fmt = '%25s\t'
 out = ''
 for at in attrs:
     out += fmt % at
