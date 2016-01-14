@@ -3,12 +3,12 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan11 by cliffk
+Version: 2016jan14 by cliffk
 """
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, getresults
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -536,11 +536,17 @@ class Parameterset(object):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
+        output += '============================================================\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objatt(self)
+        output += '============================================================\n'
+        output += objmeth(self)
+        output += '============================================================\n'
         return output
     
     
