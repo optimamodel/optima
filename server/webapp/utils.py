@@ -397,6 +397,8 @@ def save_result(project_id, result, parset_name='default'):
                      item.parset_id == result_parset_id and
                      item.calculation_type == ResultsDb.CALIBRATION_TYPE]
     if result_record:
+        if len(result_record) > 1:
+            abort(500, "Found multiple records for result")
         result_record = result_record[0]
         result_record.blob = op.saves(result)
     if not result_record:
