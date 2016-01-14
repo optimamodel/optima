@@ -1,5 +1,3 @@
-// ProjectOpenController deals with loading and removing projects
-
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
@@ -8,6 +6,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.sortType = 'name'; // set the default sort type
       $scope.sortReverse = false;  // set the default sort order
+      $scope.activeProjectId = activeProject.getProjectIdForCurrentUser();
 
       $scope.filterByName = function (project) {
         if ($scope.searchTerm) {
@@ -33,24 +32,23 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.selectAll = function() {
         _.forEach($scope.projects, function(project) {
-          projects.selected = $scope.allSelected;
-        })
+          project.selected = $scope.allSelected;
+        });
       };
 
       $scope.deleteSelected = function() {
-        const selectedProjects = _.filter($scope.projects, function(project) {
+        const selectedProjectIds = _.filter($scope.projects, function(project) {
           return project.selected;
         }).map(function(project) {
           return project.id;
         });
-        projectApiService.deleteSelectedProjects(selectedProjects)
-          .success(function (response, status, headers, config) {
+        projectApiService.deleteSelectedProjects(selectedProjectIds)
+          .success(function () {
             $scope.projects = _.filter($scope.projects, function(project) {
               return !project.selected;
             });
-            var activeProjectId = activeProject.getProjectIdForCurrentUser();
-            _.each(selectedProjects, function(project) {
-              activeProject.ifActiveResetFor(null, project, UserManager.data);
+            _.each(selectedProjectIds, function(projectId) {
+              activeProject.ifActiveResetFor(projectId, UserManager.data);
             });
           });
       };
@@ -62,15 +60,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           return project.id;
         });
         projectApiService.downloadSelectedProjects(selectedProjectsIds)
-          .success(function (response, status, headers, config) {
+          .success(function (response) {
             saveAs(new Blob([response], { type: "application/octet-stream", responseType: 'arraybuffer' }), 'portfolio.zip');
           });
       };
 
       /**
-       * Opens an existing project using `name`
-       *
-       * Alerts the user if it cannot do it.
+       * Opens an existing project using name and id.
        */
       $scope.open = function (name, id) {
         activeProject.setActiveProjectFor(name, id, UserManager.data);
@@ -79,9 +75,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
 
       /**
-       * Copy an existing project using `name`
-       *
-       * Prompts for the new project name.
+       * Copy an existing project using name and id.
        */
       $scope.copy = function(name, id) {
         modalService.showPrompt(
@@ -89,16 +83,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           "New project name",
           function(newName) {
             projectApiService.copyProject(id, newName).success(function (response) {
-                window.location.reload();
-              });
+              window.location.reload();
+            });
           }
         );
       };
 
       /**
-       * Opens to edit an existing project using `name` in /project/create screen
-       *
-       * Alerts the user if it cannot do it.
+       * Opens to edit an existing project using name and id in /project/create screen.
        */
       $scope.edit = function (name, id) {
         activeProject.setActiveProjectFor(name, id, UserManager.data);
@@ -106,9 +98,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       /**
-       * Regenerates workbook for the given project `name`
-       * Alerts the user if it cannot do it.
-       *
+       * Regenerates workbook for the given project.
        */
       $scope.workbook = function (name, id) {
         // read that this is the universal method which should work everywhere in
@@ -117,7 +107,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       /**
-       * Gets the data for the given project `name` as <name>.json  file
+       * Gets the data for the given project `name` as <name>.json  file.
        */
       $scope.getData = function (name, id) {
         projectApiService.getProjectData(id)
@@ -127,6 +117,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
       };
 
+      /**
+       * Upload data spreadsheet for a project.
+       */
       $scope.setData = function (name, id, file) {
         var message = 'Warning: This will overwrite ALL data in the project ' + name + '. Are you sure you wish to continue?';
         modalService.confirm(
@@ -139,6 +132,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         );
       };
 
+      /**
+       * Upload project data.
+       */
       $scope.preSetData = function(name, id) {
         angular
           .element('<input type=\'file\'>')
@@ -148,18 +144,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       /**
-       * Removes the project
-       *
-       * If the removed project is the active one it will reset it alerts the user
-       * in case of failure.
+       * Removes the project.
        */
-      var removeNoQuestionsAsked = function (name, id, index) {
+      var removeProject = function (name, id, index) {
         projectApiService.deleteProject(id).success(function (response) {
-            $scope.projects = _($scope.projects).filter(function (item) {
-              return item.id != id;
-            });
-            activeProject.ifActiveResetFor(name, id, UserManager.data);
+          $scope.projects = _($scope.projects).filter(function (item) {
+            return item.id != id;
           });
+          activeProject.ifActiveResetFor(id, UserManager.data);
+        });
       };
 
       /**
@@ -171,7 +164,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if ($event) { $event.preventDefault(); }
         var message = 'Are you sure you want to permanently remove project "' + name + '"?';
         modalService.confirm(
-          function (){ removeNoQuestionsAsked(name, id, index); },
+          function (){ removeProject(name, id, index); },
           function (){  },
           'Yes, remove this project',
           'No',
