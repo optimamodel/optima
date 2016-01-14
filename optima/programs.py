@@ -181,7 +181,7 @@ class Programset(object):
         ''' Extract the budget if cost data has been provided'''
         
         if type(tvec) in [int, float]: tvec = [tvec]
-        totalbudget, lastbudget, selectbudget = dict(), dict(), dict()
+        totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
         settings = Settings()
         start = settings.start
         end = settings.end
@@ -208,7 +208,7 @@ class Programset(object):
 
     def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
-        coverage = {}
+        coverage = odict()
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
@@ -380,7 +380,7 @@ class Program(object):
     '''
 
     def __init__(self, name, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', short_name='', criteria=None):
+        category='No category', short='', criteria=None):
         '''Initialize'''
         self.name = name
         self.uid = uuid()
@@ -397,7 +397,7 @@ class Program(object):
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
-        self.short_name = short_name
+        self.short = short
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
 
     def __repr__(self):

@@ -12,7 +12,9 @@ from flask.ext.login import current_user
 from flask_restful.reqparse import RequestParser as OrigReqParser
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, UserDb
+from server.webapp.dbmodels import ProjectDb, UserDb, ResultsDb, ParsetsDb
+
+import optima as op
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj'}
@@ -292,23 +294,23 @@ def update_or_create_parset(project_id, name, parset):
     from server.webapp.dbmodels import ParsetsDb
     from optima.utils import saves
 
-    parset_record = ParsetsDb.query \
-        .filter_by(id=parset.uid, project_id=project_id) \
-        .first()
-
+    parset_record = ParsetsDb.query.filter_by(id=parset.uid, project_id=project_id).first()
     if parset_record is None:
         parset_record = ParsetsDb(
+            id=parset.uid,
             project_id=project_id,
             name=name,
             created=parset.created or datetime.now(dateutil.tz.tzutc()),
-            updated=datetime.now(dateutil.tz.tzutc()),
+            updated=parset.modified or datetime.now(dateutil.tz.tzutc()),
             pars=saves(parset.pars)
         )
 
         db.session.add(parset_record)
     else:
         parset_record.updated = datetime.now(dateutil.tz.tzutc())
+        parset_record.name = name
         parset_record.pars = saves(parset.pars)
+        db.session.add(parset_record)
 
 
 def update_or_create_progset(project_id, name, progset):
@@ -318,7 +320,7 @@ def update_or_create_progset(project_id, name, progset):
     from server.webapp.dbmodels import ProgsetsDb
 
     progset_record = ProgsetsDb.query \
-        .filter_by(name=progset.name, project_id=project_id) \
+        .filter_by(project_id=project_id, name=name) \
         .first()
 
     if progset_record is None:
@@ -333,6 +335,7 @@ def update_or_create_progset(project_id, name, progset):
         db.session.flush()
     else:
         progset_record.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.add(progset_record)
 
     return progset_record
 
@@ -374,6 +377,38 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
         program_record.category = program.get('category', '')
         program_record.active = active
         program_record.criteria = program.get('criteria', None)
+        db.session.add(program_record)
+
+
+def save_result(project_id, result, parset_name='default'):
+    # find relevant parset for the result
+    project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
+    default_parset = [item for item in project_parsets if item.name == parset_name]
+    if default_parset:
+        default_parset = default_parset[0]
+    else:
+        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
+    result_parset_id = default_parset.id
+
+    # update results (after runsim is invoked)
+    project_results = db.session.query(ResultsDb).filter_by(project_id=project_id)
+
+    result_record = [item for item in project_results if
+                     item.parset_id == result_parset_id and
+                     item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+    if result_record:
+        if len(result_record) > 1:
+            abort(500, "Found multiple records for result")
+        result_record = result_record[0]
+        result_record.blob = op.saves(result)
+    if not result_record:
+        result_record = ResultsDb(
+            parset_id=result_parset_id,
+            project_id=project_id,
+            calculation_type=ResultsDb.CALIBRATION_TYPE,
+            blob=op.saves(result)
+        )
+    return result_record
 
 
 def init_login_manager(login_manager):
