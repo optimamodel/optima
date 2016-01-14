@@ -1,5 +1,6 @@
 #from optima import Settings, Parameterset, Programset, Resultset # Import classes
-from optima import Settings # Import classes
+import optima as op
+from op import Settings # Import classes
 from optima import Parameterset # Import classes
 from optima import Programset # Import classes
 from optima import Resultset # Import classes
