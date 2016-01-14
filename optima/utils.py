@@ -537,7 +537,7 @@ def runcommand(command, printinput=False, printoutput=False):
 ##############################################################################
 
 
-def save(filename, obj):
+def saveobj(filename, obj):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
@@ -548,7 +548,7 @@ def save(filename, obj):
     return None
 
 
-def load(filename):
+def loadobj(filename):
     ''' Load a saved file '''
     try:
         import cPickle as pickle  # For Python 2 compatibility
