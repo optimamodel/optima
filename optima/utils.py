@@ -669,12 +669,18 @@ class odict(OrderedDict):
         elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
-            startind = self.__slicekey(key.start, 'start')
-            stopind = self.__slicekey(key.stop, 'stop')
-            if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-            try: return array(slicevals) # Try to convert to an array
-            except: return slicevals
+            try:
+                startind = self.__slicekey(key.start, 'start')
+                stopind = self.__slicekey(key.stop, 'stop')
+                if stopind<startind:
+                    print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
+                    raise Exception
+                slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+                try: return array(slicevals) # Try to convert to an array
+                except: return slicevals
+            except:
+                print('Invalid odict slice... returning empty list...')
+                return []
         elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)

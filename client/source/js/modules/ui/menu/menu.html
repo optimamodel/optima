@@ -1,5 +1,5 @@
 <div class="menu">
-  <div ng-if="isAdmin" ng-click="showAdminMenu = !showAdminMenu">
+  <div ng-if="isAdmin" ng-click="showAdminMenu = !showAdminMenu" ng-mouseleave="showAdminMenu = false">
     <div class="btn __blue">
       Admin
       <i class="fa fa-angle-up" ng-if="showAdminMenu"></i>
@@ -10,7 +10,7 @@
       <div ui-sref="admin.manage-projects" ng-click="updateMenuSelection('showAdminMenu')">Manage user projects</div>
     </div>
   </div>
-  <div ng-click="showProjectMenu = !showProjectMenu">
+  <div ng-click="showProjectMenu = !showProjectMenu" ng-mouseleave="showProjectMenu = false">
     <div class="btn __blue">
       Manage project
       <i class="fa fa-angle-up" ng-if="showProjectMenu"></i>
@@ -26,7 +26,7 @@
   <div>
     <div class="btn __blue" ng-click="goIfProjectActive('model')">Calibrate parameters</div>
   </div>
-  <div ng-click="showProjectSetMenu = !showProjectSetMenu">
+  <div ng-click="showProjectSetMenu = !showProjectSetMenu" ng-mouseleave="showProjectSetMenu = false">
     <div class="btn __blue">
       Define programs
       <i class="fa fa-angle-up" ng-if="showProjectSetMenu"></i>
@@ -37,7 +37,7 @@
       <div ng-click="goIfProjectActive('project-set.define-cost-coverage-outcome')">Define cost and outcome functions</div>
     </div>
   </div>
-  <div ng-click="showAnalysisMenu = !showAnalysisMenu">
+  <div ng-click="showAnalysisMenu = !showAnalysisMenu" ng-mouseleave="showAnalysisMenu = false">
     <div class="btn __blue">
       Perform Analysis
       <i class="fa fa-angle-up" ng-if="showAnalysisMenu"></i>
@@ -48,7 +48,7 @@
       <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analyses</div>
     </div>
   </div>
-  <div ng-click="showAccountHelpMenu = !showAccountHelpMenu">
+  <div ng-click="showAccountHelpMenu = !showAccountHelpMenu" ng-mouseleave="showAccountHelpMenu = false">
     <div class="btn __blue">
       Account and help
       <i class="fa fa-angle-up" ng-if="showAccountHelpMenu"></i>

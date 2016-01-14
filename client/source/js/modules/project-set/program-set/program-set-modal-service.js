@@ -8,7 +8,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       /**
        * This function opens a modal for creating, editing and copying a programSet.
        */
-      openProgramSetModal: function (programSetName, callback, programSetList, title, isAdd) {
+      openProgramSetModal: function (callback, title, programSetList, programSetName, isRename) {
 
         var onModalKeyDown = function (event) {
           if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
@@ -18,24 +18,25 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           templateUrl: 'js/modules/project-set/program-set/program-set-modal.html',
           controller: ['$scope', '$document', function ($scope, $document) {
 
-            $scope.isEdit = true;
-
             $scope.title = title;
-
             $scope.name = programSetName;
 
-            $scope.updateProgramSet = function (name) {
-              $scope.newProgramSetName = name;
-              callback(name);
+            $scope.updateProgramSet = function () {
+              $scope.newProgramSetName = $scope.name;
+              callback($scope.name);
               modalInstance.close();
             };
 
-            $scope.isUniqueName = function (name, editProgramSetForm) {
+            $scope.isUniqueName = function (programSetForm) {
               var exists = _(programSetList).some(function(item) {
-                    return item.name == name;
-                  }) && name !== programSetName && name !== $scope.newProgramSetName;
-              editProgramSetForm.programSetName.$setValidity("programSetListExists", !exists);
-              !isAdd && editProgramSetForm.programSetName.$setValidity("programSetListUpdated", name !== programSetName);
+                    return item.name == $scope.name;
+                  }) && $scope.name !== programSetName && $scope.name !== $scope.newProgramSetName;
+
+              if(isRename) {
+                programSetForm.programSetName.$setValidity("programSetUpdated", $scope.name !== programSetName);
+              }
+              programSetForm.programSetName.$setValidity("programSetExists", !exists);
+
               return exists;
             };
 
@@ -51,7 +52,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       /**
        * This function opens a modal for creating, editing and copying a program.
        */
-      openProgramModal: function (program, populations, availableParameters, programList) {
+      openProgramModal: function (program, populations, programList) {
         return $modal.open({
           templateUrl: 'js/modules/project-set/program-set/program-modal.html',
           controller: 'ProgramSetModalController',
@@ -62,9 +63,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             },
             programList: function () {
               return programList;
-            },
-            availableParameters: function () {
-              return availableParameters;
             },
             populations: function () {
               return populations;

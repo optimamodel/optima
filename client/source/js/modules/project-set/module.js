@@ -32,12 +32,6 @@ define([
           templateUrl: 'js/modules/project-set/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
-            availableParameters: function(projectApiService) {
-              return projectApiService.getParameters();
-            },
-            predefined: function(projectApiService) {
-              return projectApiService.getPredefined();
-            },
             currentProject: function(projectApiService) {
               return projectApiService.getActiveProject();
             }
