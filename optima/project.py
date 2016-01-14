@@ -1,4 +1,8 @@
-from optima import Settings, Parameterset, Programset, Resultset # Import classes
+#from optima import Settings, Parameterset, Programset, Resultset # Import classes
+from optima import Settings # Import classes
+from optima import Parameterset # Import classes
+from optima import Programset # Import classes
+from optima import Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
 from optima import loadspreadsheet, model, runcommand, sensitivity, manualfit, autofit # Import functions
 
