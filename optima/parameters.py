@@ -8,7 +8,7 @@ Version: 2016jan05 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objectatt, objectmeth
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -497,11 +497,17 @@ class Parameterset(object):
     def __repr__(self):
         ''' Print out useful information when called'''
         output = objectid(self)
+        output += '============================================================\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objectatt(self)
+        output += '============================================================\n'
+        output += objectmeth(self)
+        output += '============================================================\n'
         return output
     
     
