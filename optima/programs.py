@@ -353,7 +353,7 @@ class Programset(object):
 
         return progparset
 
-    def plotallcoverage(self,t,parset,xupperlim=None,targetpopprop=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
+    def plotallcoverage(self,t,parset,xupperlim=None,targetcomposition=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
 
         cost_coverage_figures = {}
@@ -362,7 +362,7 @@ class Programset(object):
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
-                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,targetpopprop=targetpopprop,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
+                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,targetcomposition=targetcomposition,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
 
         return cost_coverage_figures
 
@@ -377,7 +377,7 @@ class Program(object):
     '''
 
     def __init__(self, name, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', short_name='', criteria=None):
+        category='No category', short_name='', criteria=None, targetcomposition=None):
         '''Initialize'''
         self.name = name
         self.uid = uuid()
@@ -396,6 +396,7 @@ class Program(object):
         self.category = category
         self.short_name = short_name
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
+        self.targetcomposition = targetcomposition
 
     def __repr__(self):
         ''' Print out useful info'''
@@ -475,28 +476,28 @@ class Program(object):
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
             if self.criteria['hivstatus']=='allstates':
-                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
+                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
     
             else: # If it's a program for HIV+ people, need to run the sim to find the number of positives
                 settings = Settings()
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
                 results = runmodel(pars=parset.pars[ind])
-                eligplhiv = results.raw[0]['people'][cd4index,:,:].sum(axis=0)
+                eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
                 for yr in t:
                     initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
                 
         # ... or if it's a program for pregnant women.
         else:
             if self.criteria['hivstatus']=='allstates': # All pregnant women
-                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
+                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
 
             else: # HIV+ pregnant women
-                initpopsizes = parset.pars[0]['popsize'].interp(tvec=t) #TEMP
+                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t) #TEMP
                 settings = Settings()
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
                 results = runmodel(pars=parset.pars[ind])
                 for yr in t:
-                    initpopsizes = parset.pars[0]['popsize'].interp(tvec=[yr])*parset.pars[0]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
+                    initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
         for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
             popsizes[pop] = initpopsizes[popnumber,:]
@@ -509,7 +510,18 @@ class Program(object):
         if total: return sum(targetpopsize.values())
         else: return targetpopsize
 
-    def getcoverage(self,x,t,parset,targetpopprop=None,total=True,proportion=False,toplot=False,bounds=None):
+    def gettargetcomposition(self, t, parset, total=True):
+        '''Tells you the proportion of the total population targeted by a program that is comprised of members from each sub-population group.'''
+        targetcomposition = {}
+
+        poptargeted = self.gettargetpopsize(t=t, parset=parset, total=False)
+        totaltargeted = sum(poptargeted.values())
+
+        for targetpop in self.targetpops:
+            targetcomposition[targetpop] = poptargeted[targetpop]/totaltargeted
+        return targetcomposition
+
+    def getcoverage(self,x,t,parset,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
 
         if type(x) in [int,float]: x = [x]
@@ -522,11 +534,10 @@ class Program(object):
         totalreached = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,toplot=toplot,bounds=bounds)
 
         popreached = {}
-        if not total and not targetpopprop: # calculate targeting since it hasn't been provided
-            targetpopprop = {}
+        if not total:
+            targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
             for targetpop in self.targetpops:
-                targetpopprop[targetpop] = poptargeted[targetpop]/totaltargeted
-                popreached[targetpop] = totalreached*targetpopprop[targetpop]
+                popreached[targetpop] = totalreached*targetcomposition[targetpop]
                 if proportion: popreached[targetpop] /= poptargeted[targetpop]
 
         if total: return totalreached/totaltargeted if proportion else totalreached
@@ -541,7 +552,7 @@ class Program(object):
         else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
         return reqbudget
 
-    def plotcoverage(self, t, parset, xupperlim=None, targetpopprop=None, existingFigure=None, 
+    def plotcoverage(self, t, parset, xupperlim=None, targetcomposition=None, existingFigure=None, 
         randseed=None, bounds=None):
         ''' Plot the cost-coverage curve for a single program'''
         plotdata = {}
@@ -549,9 +560,9 @@ class Program(object):
         x = linspace(0,xupperlim,100)
         plotdata['xlinedata'] = x
         try:
-            y_l = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds='l')
-            y_m = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds=None)
-            y_u = self.getcoverage(x=x,t=t,parset=parset,targetpopprop=None,total=True,proportion=False,toplot=True,bounds='u')
+            y_l = self.getcoverage(x=x,t=t,parset=parset,total=True,proportion=False,toplot=True,bounds='l')
+            y_m = self.getcoverage(x=x,t=t,parset=parset,total=True,proportion=False,toplot=True,bounds=None)
+            y_u = self.getcoverage(x=x,t=t,parset=parset,total=True,proportion=False,toplot=True,bounds='u')
         except:
             y_l,y_m,y_u = None,None,None
         plotdata['ylinedata_l'] = y_l
@@ -622,10 +633,7 @@ class CCOF(object):
         # Fill in the missing information for cost-coverage curves
         if ccopar.get('unitcost'):
             if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)
-
-        # Fill in the missing information for coverage-only curves
-        if ccopar.get('intercept'):
-            if not ccopar.get('saturation'): ccopar['saturation'] = (1.,1.)        
+            if not ccopar.get('fixed'): ccopar['fixed'] = (0.,0.)
 
         if not self.ccopars:
             for ccopartype in ccopar.keys():
@@ -688,11 +696,13 @@ class CCOF(object):
         elif bounds in ['upper','u','up','high','h']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = parvalue[j][1]
+                    if parname=='saturation': ccopars_no_t[parname][j] = parvalue[j][0]
+                    else: ccopars_no_t[parname][j] = parvalue[j][1]
         elif bounds in ['lower','l','low']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = parvalue[j][0]
+                    if parname=='saturation': ccopars_no_t[parname][j] = parvalue[j][1]
+                    else: ccopars_no_t[parname][j] = parvalue[j][0]
         else:
             raise Exception('Unrecognised bounds.')
             

@@ -18,6 +18,7 @@ tests = [
 from optima import tic, toc, blank, pd # analysis:ignore
 
 if 'doplot' not in locals(): doplot = True
+showstats = True
 
 def done(t=0):
     print('Done.')
