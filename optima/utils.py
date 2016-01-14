@@ -539,23 +539,35 @@ def runcommand(command, printinput=False, printoutput=False):
 
 def saveobj(filename, obj):
     ''' Save an object to file '''
-    try: from dill import dump # First try dill, which is most flexible
+    try: 
+        from dill import dump # First try dill, which is most flexible
+        module = 'dill'
     except:
-        try: from cPickle import dump # Next try Python2 pickle
-        except: from pickle import dump # Fine, try Python3 pickle and/or legacy Python2 pickle
+        try: 
+            from cPickle import dump # Next try Python2 pickle
+            module = 'cPickle'
+        except: 
+            from pickle import dump # Fine, try Python3 pickle and/or legacy Python2 pickle
+            module = 'pickle'
     from gzip import GzipFile
     
     with GzipFile(filename, 'wb') as fileobj: dump(obj, fileobj, protocol=2)
-    print('Object saved to "%s"' % filename)
+    print('Object saved to "%s" using module "%s"' % (filename, module))
     return None
 
 
 def loadobj(filename):
     ''' Load a saved file '''
-    try: from dill import load # First try dill, which is most flexible
+    try: 
+        from dill import load # First try dill, which is most flexible
+        module = 'dill'
     except:
-        try: from cPickle import load # Next try Python2 pickle
-        except: from pickle import load # Fine, try Python3 pickle and/or legacy Python2 pickle
+        try: 
+            from cPickle import load # Next try Python2 pickle
+            module = 'cPickle'
+        except: 
+            from pickle import load # Fine, try Python3 pickle and/or legacy Python2 pickle
+            module = 'pickle'
     from gzip import GzipFile
 
     # Handle loading of either filename or file object
@@ -565,7 +577,7 @@ def loadobj(filename):
 
     # Actually load
     with GzipFile(**kwargs) as fileobj: obj = load(fileobj)
-    print('Object loaded from "%s"' % filename)
+    print('Object loaded from "%s" using module "%s"' % (filename, module))
     return obj
 
 
