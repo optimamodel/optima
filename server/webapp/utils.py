@@ -348,7 +348,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
 
     program_record = ProgramsDb.query \
         .filter_by(
-            short_name=program.get('short_name', None),
+            short=program.get('short', None),
             project_id=project_id,
             progset_id=progset_id
         ).first()
@@ -358,7 +358,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
             project_id=project_id,
             progset_id=progset_id,
             name=name,
-            short_name=program.get('short_name', ''),
+            short=program.get('short', ''),
             category=program.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
@@ -373,7 +373,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
         program_record.updated = datetime.now(dateutil.tz.tzutc())
         program_record.pars = ProgramsDb.program_pars_to_pars(program.get('targetpars', []))
         program_record.targetpops = program.get('targetpops', [])
-        program_record.short_name = program.get('short_name', '')
+        program_record.short = program.get('short', '')
         program_record.category = program.get('category', '')
         program_record.active = active
         program_record.criteria = program.get('criteria', None)
