@@ -456,9 +456,9 @@ class ProgramsDb(db.Model):
 
     def hydrate(self):
         program_entry = op.Program(
-            self.name,
+            self.short,
             targetpars=self.pars_to_program_pars(),
-            short=self.short,
+            name=self.name,
             category=self.category,
             targetpops=self.targetpops,
             criteria=self.criteria
