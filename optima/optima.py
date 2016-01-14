@@ -45,5 +45,8 @@ except: browser = 'Import failed'
 try: from manualgui import manualfit # Do manual fitting
 except: manualfit = 'Import failed'
 
-## Finally, import the Project class that ties everything together
+## Import the Project class that ties everything together
 from project import Project, version # Project class
+
+## Finally, load high-level modules
+import asd, colortools, utils, settings, makespreadsheet, loadspreadsheet, results, parameters, model, programs, makeplots, calibration, scenarios, gui, manualgui, project
