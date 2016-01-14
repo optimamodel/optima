@@ -20,7 +20,7 @@ from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid, Json
 
 from server.webapp.utils import (load_project, verify_admin_request, report_exception,
-                                 delete_spreadsheet, RequestParser)
+                                 save_result, delete_spreadsheet, RequestParser)
 
 
 class ProjectBase(Resource):
@@ -421,42 +421,15 @@ class ProjectSpreadsheet(Resource):
         project_instance.loadspreadsheet(server_filename)
         project_instance.modified = datetime.now(dateutil.tz.tzutc())
         current_app.logger.info("after spreadsheet uploading: %s" % project_instance)
+
         result = project_instance.runsim()
         current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
 
         #   now, update relevant project_entry fields
-        project_entry.restore(project_instance)
-
+        project_entry.restore(project_instance)  # this adds to db.session all dependent entries
         db.session.add(project_entry)
 
-        # find relevant parset for the result
-        project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
-        for p in project_parsets:
-            print "PARSET RECORD:", p.name, p.id
-        default_parset = [item for item in project_parsets if item.name == 'default']
-        if default_parset:
-            default_parset = default_parset[0]
-        else:
-            raise Exception("Default parset not generated for the project {}!".format(project_id))
-        result_parset_id = default_parset.id
-        parset_records_map = {record.id: record for record in project_entry.parsets}
-
-    # update results (after runsim is invoked)
-        project_results = db.session.query(ResultsDb).filter_by(project_id=project_id)
-
-        result_record = [item for item in project_results if
-                         item.parset_id == result_parset_id and
-                         item.calculation_type == ResultsDb.CALIBRATION_TYPE]
-        if result_record:
-            result_record = result_record[0]
-            result_record.blob = saves(result)
-        if not result_record:
-            result_record = ResultsDb(
-                parset_id=result_parset_id,
-                project_id=project_entry.id,
-                calculation_type=ResultsDb.CALIBRATION_TYPE,
-                blob=saves(result)
-            )
+        result_record = save_result(project_entry.id, result)
         db.session.add(result_record)
 
         # save data upload timestamp
@@ -539,8 +512,20 @@ class ProjectData(Resource):
 
         from optima.utils import load
         project_instance = load(uploaded_file)
+
+        if project_instance.data:
+            assert(project_instance.parsets)
+            result = project_instance.runsim()
+            current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
+
         project_entry.restore(project_instance)
         db.session.add(project_entry)
+        db.session.flush()
+
+        if project_instance.data:
+            assert(project_instance.parsets)
+            result_record = save_result(project_entry.id, result)
+            db.session.add(result_record)
 
         db.session.commit()
 
@@ -585,6 +570,7 @@ class ProjectFromData(Resource):
 
         from optima.utils import load
         project_instance = load(uploaded_file)
+        project_instance.name = project_name
 
         from optima.makespreadsheet import default_datastart, default_dataend
         datastart = default_datastart
@@ -601,8 +587,19 @@ class ProjectFromData(Resource):
         db.session.add(project_entry)
         db.session.flush()
 
+        if project_instance.data:
+            assert(project_instance.parsets)
+            result = project_instance.runsim()
+            current_app.logger.info("runsim result for project %s: %s" % (project_entry.id, result))
+
         project_entry.restore(project_instance)
-        project_entry.name = project_name
+        db.session.add(project_entry)
+        db.session.flush()
+
+        if project_instance.data:
+            result_record = save_result(project_entry.id, result)
+            db.session.add(result_record)
+
         db.session.commit()
 
         reply = {
@@ -657,10 +654,12 @@ class ProjectCopy(Resource):
 
         project_entry.restore(be_project)
         project_entry.name = new_project_name
-
+        db.session.add(project_entry)
         # change the creation and update time
         project_entry.created = datetime.now(dateutil.tz.tzutc())
         project_entry.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.flush()  # this updates the project ID to the new value
+
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
@@ -668,7 +667,17 @@ class ProjectCopy(Resource):
 
         if project_result_exists:
             # copy each result
+            new_parsets = db.session.query(ParsetsDb).filter_by(project_id=str(new_project_id))
+            print "BE parsets", be_project.parsets
             for result in project_entry.results:
+                if result.calculation_type!=ResultsDb.CALIBRATION_TYPE:
+                    continue
+                result_instance = op.loads(result.blob)
+                target_name = result_instance.parset.name
+                new_parset = [item for item in new_parsets if item.name == target_name]
+                if not new_parset:
+                    raise Exception("Could not find copied parset for result in copied project {}".format(project_id))
+                result.parset_id = new_parset[0].id
                 db.session.expunge(result)
                 make_transient(result)
                 # set the id to None to ensure no duplicate ID

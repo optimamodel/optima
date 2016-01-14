@@ -174,7 +174,7 @@ class ProjectTestCase(OptimaTestCase):
         # we need to get the project using the "regular" session instead of the "factory" session
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         project.name = 'Not test'
-        project.progsets[0].recursive_delete()
+        project.progsets[0].recursive_delete('fetch')
         db.session.commit()
 
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
@@ -314,9 +314,9 @@ class ProjectTestCase(OptimaTestCase):
                 'param': 'condcas',
                 'pops': ['MSM', 'MSF'],
                 'active': True
-            },{
+            }, {
                 'param': 'condcom',
-                'pops': [('MSM', 'MSF'),],
+                'pops': [('MSM', 'MSF'), ],
                 'active': True
             }
         ]
@@ -355,8 +355,8 @@ class ProjectTestCase(OptimaTestCase):
 
         program_names = [
             program.short_name
-            for program in ProgramsDb.query \
-                .filter_by(project_id=str(new_project.id), active=True) \
+            for program in ProgramsDb.query
+                .filter_by(project_id=str(new_project.id), active=True)
                 .all()
         ]
 
