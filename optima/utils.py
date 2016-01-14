@@ -555,7 +555,7 @@ def loadobj(filename):
     except:
         import pickle
     from gzip import GzipFile
-
+    
     # Handle loading of either filename or file object
     if isinstance(filename, basestring): argtype='filename'
     else: argtype = 'fileobj'
