@@ -166,8 +166,8 @@ class ProjectDb(db.Model):
         db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
         if not same_project:
-            db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
             db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+            db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
         db.session.flush()
 
         self.name = project.name
