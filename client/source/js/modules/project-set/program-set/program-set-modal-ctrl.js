@@ -13,6 +13,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         selectAll: false,
         isNew: !program.name,
         populations: angular.copy(populations),
+        // TODO: removing this hardcoding
         categories: ['Prevention', 'Care and treatment', 'Management and administration', 'Other'],
         program: program,
         eligibility: {

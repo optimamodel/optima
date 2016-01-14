@@ -87,7 +87,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
-
     // Delete a programSet from $scope.programSetList and also from DB is it was saved.
     $scope.deleteProgramSet = function () {
       if (!$scope.activeProgramSet) {
