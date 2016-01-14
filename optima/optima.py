@@ -51,7 +51,7 @@ except: pass # print('Failed at parameters')
 try: from model import model, runmodel # The thing that actually runs the model
 except: pass # print('Failed at model')
 try: from programs import Program, Programset # Define programs
-except: print('Failed at programs')
+except: pass # print('Failed at programs')
 try: from makeplots import epiplot # Create the plots
 except: pass # print('Failed at makeplots')
 try: from calibration import sensitivity, autofit # Calibration functions
