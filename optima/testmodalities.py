@@ -66,15 +66,15 @@ if 'modalities' in tests:
     testval_additive = 0.44181250
     
     # First set up some programs
-    HTC_clinics = Program(name='HTC_clinics',
+    HTC_clinics = Program(short='HTC_clinics',
                   targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
                   targetpops=['F 15-49'])
     
-    HTC_outreach = Program(name='HTC_outreach',
+    HTC_outreach = Program(short='HTC_outreach',
                   targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
                   targetpops=['F 15-49'])
                    
-    HTC_hometest = Program(name='HTC_hometest',
+    HTC_hometest = Program(short='HTC_hometest',
                   targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
                   targetpops=['F 15-49'])
     
