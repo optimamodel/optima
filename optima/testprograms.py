@@ -57,7 +57,8 @@ if 'makeprograms' in tests:
     P = Project(spreadsheet='test7pops.xlsx')
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
-    HTC = Program(name='HTC',
+    HTC = Program(short='HTC',
+                  name='HIV testing and counseling',
                   targetpars=[{'param': 'hivtest', 'pop': 'F 15+'},
                               {'param': 'hivtest', 'pop': 'M 15+'},
                               {'param': 'hivtest', 'pop': 'FSW'},
@@ -68,15 +69,16 @@ if 'makeprograms' in tests:
                                  'cost':[1e6],
                                  'coverage':[3e5]})
 
-    SBCC = Program(name='SBCC',
+    SBCC = Program(short='SBCC',
+                   name='Social and behaviour change communication',
                    targetpars=[{'param': 'condcas', 'pop': ('F 15+','M 15+')},
                                {'param': 'hivtest', 'pop': 'F 15+'}],
                    targetpops=['F 15+']) # CK: what should this be for a partnership?
                                            # RS: it should be the population that's targeted. E.g. if the condoms are distributed to the FSW, that's the target population.
 
-    MGT = Program('MGT')
+    MGT = Program(short='MGT')
 
-    ART = Program(name='ART',
+    ART = Program(short='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'Total'}],
                   targetpops=['Total'])
 
@@ -143,14 +145,13 @@ if 'makeprograms' in tests:
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace, array
     HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False,bounds=None)
-    targetcomposition = {'Clients': array([ 0.01]),
+    HTC.targetcomposition = {'Clients': array([ 0.01]),
                        'F 15+': array([ 0.3]),
                        'FSW': array([ 0.24]),
                        'M 15+': array([ 0.3]),
                        'MSM': [ 0.15]}
     
-    coverage = HTC.getcoverage(x=[2e7],t=[2016],parset=P.parsets['default'],targetcomposition=targetcomposition,total=False)
-
+    HTC.getcoverage(x=[2e7],t=[2016],parset=P.parsets['default'],total=False)
     HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
 
     # NB, if you want to evaluate it for a particular population size, can also do...
