@@ -551,7 +551,7 @@ def saveobj(filename, obj):
             module = 'pickle'
     from gzip import GzipFile
     
-    with GzipFile(filename, 'wb') as fileobj: dump(obj, fileobj, protocol=2)
+    with GzipFile(filename, 'wb') as fileobj: dump(obj, fileobj, protocol=2, byref=False)
     print('Object saved to "%s" using module "%s"' % (filename, module))
     return None
 
