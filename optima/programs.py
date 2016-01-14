@@ -8,7 +8,6 @@ Version: 2015nov04 by robynstuart
 
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, concatenate as cat
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize
-from collections import defaultdict
 import abc
 from pylab import figure
 from matplotlib.ticker import MaxNLocator
@@ -137,42 +136,46 @@ class Programset(object):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
-        progs_by_targetpop = defaultdict(list)
+        progs_by_targetpop = odict()
         for thisprog in self.programs.values():
             targetpops = thisprog.targetpops if thisprog.targetpops else None
             if targetpops:
                 for thispop in targetpops:
+                    if thispop not in progs_by_targetpop: progs_by_targetpop[thispop] = []
                     progs_by_targetpop[thispop].append(thisprog)
-        if filter_pop: return dict(progs_by_targetpop)[filter_pop]
-        else: return dict(progs_by_targetpop)
+        if filter_pop: return progs_by_targetpop[filter_pop]
+        else: return progs_by_targetpop
 
     def progs_by_targetpartype(self, filter_partype=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
-        progs_by_targetpartype = defaultdict(list)
+        progs_by_targetpartype = odict()
         for thisprog in self.programs.values():
             targetpartypes = thisprog.targetpartypes if thisprog.targetpartypes else None
             if targetpartypes:
-                for thispartype in targetpartypes :
+                for thispartype in targetpartypes:
+                    if thispartype not in progs_by_targetpartype: progs_by_targetpartype[thispartype] = []
                     progs_by_targetpartype[thispartype].append(thisprog)
-        if filter_partype: return dict(progs_by_targetpartype)[filter_partype]
-        else: return dict(progs_by_targetpartype)
+        if filter_partype: return progs_by_targetpartype[filter_partype]
+        else: return progs_by_targetpartype
 
     def progs_by_targetpar(self, filter_partype=None):
         '''Return a dictionary with:
              keys: all populations targeted by programs
              values: programs targeting that population '''
-        progs_by_targetpar = {}
+        progs_by_targetpar = odict()
         for thispartype in self.targetpartypes:
-            progs_by_targetpar[thispartype] = defaultdict(list)
+            progs_by_targetpar[thispartype] = odict()
             for prog in self.progs_by_targetpartype(thispartype):
                 targetpars = prog.targetpars if prog.targetpars else None
                 for targetpar in targetpars:
-                    if thispartype == targetpar['param']: progs_by_targetpar[thispartype][targetpar['pop']].append(prog)
-            progs_by_targetpar[thispartype] = dict(progs_by_targetpar[thispartype])
-        if filter_partype: return dict(progs_by_targetpar)[filter_partype]
-        else: return dict(progs_by_targetpar)
+                    if thispartype == targetpar['param']:
+                        if targetpar['pop'] not in progs_by_targetpar[thispartype]: progs_by_targetpar[thispartype][targetpar['pop']] = []
+                        progs_by_targetpar[thispartype][targetpar['pop']].append(prog)
+            progs_by_targetpar[thispartype] = progs_by_targetpar[thispartype]
+        if filter_partype: return progs_by_targetpar[filter_partype]
+        else: return progs_by_targetpar
 
     def getdefaultbudget(self, tvec=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''

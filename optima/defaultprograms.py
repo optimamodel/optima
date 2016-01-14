@@ -74,7 +74,7 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
                   short='OST',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    NSP = Program(name='PWID_programs',
+    NSP = Program(name='NSP',
                   targetpars=[{'param': 'sharing', 'pop': 'PWID'}],
                   targetpops=['PWID'],
                   category='Prevention',
