@@ -75,7 +75,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     care = settings.incare # in Care MK
     tx   = settings.treat  # Treatment -- 1st line
     svl  = settings.supp   # Suppressed Viral Load MK
-    lost = settings.lost   # Not on ART (anymore) and lost to follow-up
+    lost = settings.lost   # Not on ART (anymore) and lost to follow-up MK
 
     popsize = dcp(simpars['popsize']) # Population sizes
     
