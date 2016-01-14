@@ -92,8 +92,8 @@ class ProjectDb(db.Model):
     progsets = db.relationship('ProgsetsDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
-            created=None, updated=None, settings=None, data=None, parsets=None,
-            results=None):
+                 created=None, updated=None, settings=None, data=None, parsets=None,
+                 results=None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
@@ -156,17 +156,48 @@ class ProjectDb(db.Model):
 
     def restore(self, project):
 
+        # Attention: this method adds only dependent objects to the session
         from datetime import datetime
         import dateutil
 
-        self.name = project.name
+        same_project = str(project.uid) == str(self.id)
+        str_project_id = str(self.id)
+        print "same_project:", same_project, project.uid, self.id
+        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
+        if same_project:
+            self.name = project.name
+        else:
+            db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+            db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+        db.session.flush()
+
         self.created = project.created
-        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.updated = project.modified or datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
         self.data = op.saves(project.data)
+
+        if project.data:
+            self.datastart = int(project.data['years'][0])
+            self.dataend = int(project.data['years'][-1])
+            self.populations = []
+            project_pops = project.data['pops']
+            for i in range(len(project_pops['short'])):
+                new_pop = {
+                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
+                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
+                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
+                }
+                self.populations.append(new_pop)
+        else:
+            self.datastart = self.datastart or op.default_datastart
+            self.dataend = self.dataend or op.default_dataend
+            self.populations = self.populations or {}
         if project.parsets:
             from server.webapp.utils import update_or_create_parset
             for name, parset in project.parsets.iteritems():
+                if not same_project:
+                    parset.uid = op.uuid()  # so that we don't get same parset in two different projects
                 update_or_create_parset(self.id, name, parset)
 
         # Expects that progsets or programs should not be deleted from restoring a project
@@ -205,18 +236,19 @@ class ProjectDb(db.Model):
                         program['parameters'] = program.get('targetpars', [])
                         update_or_create_program(self.id, progset_record.id, program_name, program, True)
 
-    def recursive_delete(self):
+    def recursive_delete(self, synchronize_session=False):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
-        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.flush()
 
 
 class ParsetsDb(db.Model):
@@ -283,6 +315,7 @@ class ResultsDb(db.Model):
 
     def hydrate(self):
         return op.loads(self.blob)
+
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
 
@@ -369,8 +402,8 @@ class ProgramsDb(db.Model):
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short_name='',
-            category='No category', active=False, pars=None, created=None,
-            updated=None, id=None, targetpops=[], criteria=None):
+                 category='No category', active=False, pars=None, created=None,
+                 updated=None, id=None, targetpops=[], criteria=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -417,7 +450,7 @@ class ProgramsDb(db.Model):
                 'active': True,
                 'param': short_name,
                 'pops': pop,
-            } for short_name, pop in parameters.iteritems()]
+                } for short_name, pop in parameters.iteritems()]
 
         return pars
 
@@ -493,6 +526,7 @@ class ProgsetsDb(db.Model):
             )
             db.session.add(program_entry)
 
-    def recursive_delete(self):
-        db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete()
-        db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete()
+    def recursive_delete(self, synchronize_session=False):
+        db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete(synchronize_session)
+        db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete(synchronize_session)
+        db.session.flush()

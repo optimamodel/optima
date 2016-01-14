@@ -147,9 +147,9 @@ class ProjectTestCase(OptimaTestCase):
         new_project = ProjectDb.query.filter_by(id=str(new_project_id)).first()
         self.assertEquals(len(new_project.progsets), progsets_count)
 
-    def _create_project_and_download(self):
+    def _create_project_and_download(self, **kwargs):
         progsets_count = 3
-        project = self.create_project(name='test', return_instance=True, progsets_count=progsets_count)
+        project = self.create_project(name='test', return_instance=True, progsets_count=progsets_count, **kwargs)
 
         self.assertEqual(len(project.progsets), progsets_count)
 
@@ -174,7 +174,7 @@ class ProjectTestCase(OptimaTestCase):
         # we need to get the project using the "regular" session instead of the "factory" session
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         project.name = 'Not test'
-        project.progsets[0].recursive_delete()
+        project.progsets[0].recursive_delete('fetch')
         db.session.commit()
 
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
@@ -202,7 +202,7 @@ class ProjectTestCase(OptimaTestCase):
         progsets_count, project, response = self._create_project_and_download()
 
         upload_response = self.client.post(
-            '/api/project/data'.format(project.id),
+            '/api/project/data',
             data={
                 'name': 'upload_as_new',
                 'file': (BytesIO(response.data), 'project.prj'),
@@ -217,6 +217,48 @@ class ProjectTestCase(OptimaTestCase):
 
         project = ProjectDb.query.filter_by(id=data['id']).first()
         self.assertEqual(project.name, 'upload_as_new')
+        self.assertEqual(len(project.progsets), progsets_count)
+        self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
+
+    def test_download_upload_on_copied_project(self):
+        from server.webapp.dbmodels import ProjectDb
+        from io import BytesIO
+
+        progsets_count, project, response = self._create_project_and_download(populations=[
+            {
+                'age_to': 49,
+                'age_from': 15,
+                'name': "Female sex workers",
+                'short_name': "FSW",
+                'female': True,
+                'male': False
+            }, {
+                'age_to': 49,
+                'age_from': 15,
+                'name': "Clients of sex workers",
+                'short_name': "Clients",
+                'female': False,
+                'male': True
+            }
+        ])
+
+        copy_response = self.client.post('/api/project/{}/copy'.format(project.id), data={
+            'to': 'test_copy'
+        })
+        self.assertEqual(copy_response.status_code, 200)
+        copy_info = json.loads(copy_response.data)
+        new_project_id = copy_info['copy_id']
+
+        upload_response = self.client.post(
+            '/api/project/{}/data'.format(new_project_id),
+            data={
+                'file': (BytesIO(response.data), 'project.prj'),
+            }
+        )
+
+        self.assertEqual(upload_response.status_code, 200, upload_response.data)
+
+        project = ProjectDb.query.filter_by(id=new_project_id).first()
         self.assertEqual(len(project.progsets), progsets_count)
         self.assertNotEqual(project.progsets[0].programs[0].category, 'No category')
 
@@ -314,9 +356,9 @@ class ProjectTestCase(OptimaTestCase):
                 'param': 'condcas',
                 'pops': ['MSM', 'MSF'],
                 'active': True
-            },{
+            }, {
                 'param': 'condcom',
-                'pops': [('MSM', 'MSF'),],
+                'pops': [('MSM', 'MSF'), ],
                 'active': True
             }
         ]
@@ -355,8 +397,8 @@ class ProjectTestCase(OptimaTestCase):
 
         program_names = [
             program.short_name
-            for program in ProgramsDb.query \
-                .filter_by(project_id=str(new_project.id), active=True) \
+            for program in ProgramsDb.query
+                .filter_by(project_id=str(new_project.id), active=True)
                 .all()
         ]
 
@@ -385,6 +427,7 @@ class ProjectTestCase(OptimaTestCase):
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
+        # this will now restore default programs as well
         response = self.client.post(
             'api/project/{}/spreadsheet'.format(project.id),
             data=dict(file=example_excel)
@@ -392,13 +435,8 @@ class ProjectTestCase(OptimaTestCase):
         example_excel.close()
         self.assertEqual(response.status_code, 200, response.data)
 
-        program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
-        self.assertEqual(program_count, 0)
-
-        # reload from db
         project = ProjectDb.query.filter_by(id=project.id).first()
         be_project = project.hydrate()
-        project.restore(be_project)
 
         program_list = get_default_programs(be_project)
         program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
