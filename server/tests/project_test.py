@@ -371,7 +371,7 @@ class ProjectTestCase(OptimaTestCase):
         )
         progset_id = str(project.progsets[0].id)
         program = project.progsets[0].programs[0]
-        program_name = program.short_name
+        program_name = program.short
 
         progset = ProgsetsDb.query.get(progset_id)
         program_count = ProgramsDb.query \
@@ -396,17 +396,17 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(len(programs), programs_per_progset)
 
         program_names = [
-            program.short_name
+            program.short
             for program in ProgramsDb.query
-                .filter_by(project_id=str(new_project.id), active=True)
-                .all()
+            .filter_by(project_id=str(new_project.id), active=True)
+            .all()
         ]
 
         self.assertIn(program_name, program_names)
 
         program = ProgramsDb.query \
-                .filter_by(project_id=str(new_project.id), active=True) \
-                .filter_by(short_name=program_name).first()
+            .filter_by(project_id=str(new_project.id), active=True) \
+            .filter_by(short=program_name).first()
 
         self.assertIsNotNone(program)
         self.assertEqual(len(program.pars), len(pars))
