@@ -137,7 +137,16 @@ def load_project(project_id, all_data=False, raise_exception=False):
     from sqlalchemy.orm import undefer, defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
     cu = current_user
-    current_app.logger.debug("getting project %s for user %s (admin:%s)" % (project_id, cu.id, cu.is_admin))
+    current_app.logger.debug("getting project {} for user {} (admin:{})".format(
+        project_id,
+        cu.id if not cu.is_anonymous() else None,
+        cu.is_admin if not cu.is_anonymous else False
+    ))
+    if cu.is_anonymous():
+        if raise_exception:
+            abort(401)
+        else:
+            return None
     if cu.is_admin:
         query = ProjectDb.query.filter_by(id=project_id)
     else:
@@ -335,8 +344,11 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
     from server.webapp.dbmodels import ProgramsDb
 
     program_record = ProgramsDb.query \
-        .filter_by(name=name, project_id=project_id, progset_id=progset_id) \
-        .first()
+        .filter_by(
+            short_name=program.get('short_name', None),
+            project_id=project_id,
+            progset_id=progset_id
+        ).first()
 
     if program_record is None:
         program_record = ProgramsDb(
@@ -347,19 +359,21 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
             category=program.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
-            pars=program.get('targetpars', []),
+            pars=ProgramsDb.program_pars_to_pars(program.get('targetpars', [])),
             targetpops=program.get('targetpops', []),
-            active=active
+            active=active,
+            criteria=program.get('criteria', None)
         )
 
         db.session.add(program_record)
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.pars = program.get('targetpars', [])
+        program_record.pars = ProgramsDb.program_pars_to_pars(program.get('targetpars', []))
         program_record.targetpops = program.get('targetpops', [])
         program_record.short_name = program.get('short_name', '')
         program_record.category = program.get('category', '')
         program_record.active = active
+        program_record.criteria = program.get('criteria', None)
 
 
 def init_login_manager(login_manager):

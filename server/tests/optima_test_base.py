@@ -60,32 +60,27 @@ class OptimaTestCase(unittest.TestCase):
     progset_test_data = {
         'name': 'Progset',
         'programs': [
-        {
-            'active': True,
-            'category': 'Prevention',
-            'name': 'Condom promotion and distribution',
-            'parameters': [
-                {
-                    'active': True,
-                    'value': {
-                        'pops': [
-                            '',
-                        ],
-                        'signature': [
-                            'condom',
-                            'cas',
-                        ],
+            {
+                'active': True,
+                'category': 'Prevention',
+                'name': 'Condom promotion and distribution',
+                'parameters': [
+                    {
+                        'active': True,
+                        'pops': ['MSM'],
+                        'param': 'condcas'
                     },
-                },
-            ],
-        'short_name': 'Condoms',
-        }, {
-            'active': False,
-            'category': 'Care and treatment',
-            'name': 'Post-exposure prophylaxis',
-            'parameters': [],
-            "short_name": "PEP",
-        },
+                ],
+                'short_name': 'Condoms',
+                'criteria': {'hivstatus': 'allstates', 'pregnant': False},
+            }, {
+                'active': False,
+                'category': 'Care and treatment',
+                'name': 'Post-exposure prophylaxis',
+                'parameters': [],
+                "short_name": "PEP",
+                'criteria': {'hivstatus': 'allstates', 'pregnant': False},
+            },
         ],
     }
 
@@ -112,7 +107,8 @@ class OptimaTestCase(unittest.TestCase):
         return str(user.id)
 
     def create_project(self, return_instance=False, progsets_count=0,
-                       programs_per_progset=2, parset_count=0, **kwargs):
+                       programs_per_progset=2, parset_count=0, pars={},
+                       **kwargs):
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
         project = self.create_record_with(ProjectFactory, **kwargs)
@@ -124,7 +120,8 @@ class OptimaTestCase(unittest.TestCase):
                     ProgramsFactory,
                     project_id=project.id,
                     progset_id=progset.id,
-                    active=True
+                    active=True,
+                    pars=pars
                 )
         for x in range(parset_count):
             self.create_record_with(ParsetFactory, project_id=project.id)

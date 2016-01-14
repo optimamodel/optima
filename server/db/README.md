@@ -55,3 +55,18 @@ CAVEAT. If you applied the previous migrations manually, you have to update the 
     update migrate_version set version=<previous version>;
 
 I.e. if you want to apply migration 3 and your database already has all previous migrations, verify that migrate_version.version=2 before running migrations.
+
+
+Drop and re-create your database
+--------------------------------
+
+/!\ If you do this, you will loose the full content of the database
+
+First exit and db shell (psql) that might be running and stop the flask server. Then, from the repository's root directory, run the following commands:
+
+    dropdb optima
+    createdb optima -O optima
+    source server/p-env/bin/activate
+    migrate version_control postgresql://optima:optima@localhost:5432/optima server/db/
+    migrate upgrade postgresql://optima:optima@localhost:5432/optima server/db/
+

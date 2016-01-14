@@ -5,7 +5,7 @@ Version: 2016jan05 by robynstuart
 """
 from optima import Program, Programset
 
-def defaultprograms(P, addpars=False, filterprograms=None):
+def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
@@ -74,7 +74,7 @@ def defaultprograms(P, addpars=False, filterprograms=None):
                   short_name='OST',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    NSP = Program(name='PWID_programs',
+    NSP = Program(name='NSP',
                   targetpars=[{'param': 'sharing', 'pop': 'PWID'}],
                   targetpops=['PWID'],
                   category='Prevention',
@@ -216,6 +216,33 @@ def defaultprograms(P, addpars=False, filterprograms=None):
                                  't': 2016.0,
                                  'unitcost': (600,800)})
                                  
+    if addcostcov:
+        
+        Condoms.addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
+        SBCC.addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
+        STI.addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
+        VMMC.addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
+        FSW_programs.addcostcovdatum({'t':2016,'cost':1e6,'coverage':15000})
+        MSM_programs.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+        PWID_programs.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+        OST.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+        NSP.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+        Cash_transfers.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+        PrEP.addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
+        HTC.addcostcovdatum({'t':2016,'cost':2e7,'coverage':1.3e6})
+        ART.addcostcovdatum({'t':2016,'cost':1e6,'coverage':3308.})
+        PMTCT.addcostcovdatum({'t':2016,'cost':4e6,'coverage':5500})
+
+        OVC.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        Other_care.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        MGMT.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        HR.addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
+        ENV.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        SP.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        ME.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        INFR.addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
+        Other.addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
+        
     allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash_transfers, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
     if filterprograms:
@@ -223,8 +250,8 @@ def defaultprograms(P, addpars=False, filterprograms=None):
     
     return finalprograms if filterprograms else allprograms
     
-def defaultprogset(P, addpars=False, filterprograms=None):
+def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
-    programs = defaultprograms(P, addpars=addpars, filterprograms=filterprograms)
+    programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
     R = Programset(programs=programs)   
     return R

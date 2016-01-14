@@ -86,7 +86,7 @@ if 'makeprograms' in tests:
 
     print('Making a default programset...')
     from defaultprograms import defaultprogset
-    R = defaultprogset(P, addpars=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
 
     # Add coverage-outcome parameters
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
@@ -107,16 +107,6 @@ if 'makeprograms' in tests:
     R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
     R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
-    R.programs['Condoms'].addcostcovdatum({'t':2016,'cost':1e7,'coverage':3e5})
-    R.programs['FSW_programs'].addcostcovdatum({'t':2016,'cost':1e6,'coverage':15000})
-    R.programs['MSM_programs'].addcostcovdatum({'t':2016,'cost':2e6,'coverage':25000})
-    R.programs['HTC'].addcostcovdatum({'t':2016,'cost':2e7,'coverage':1.3e6})
-    R.programs['ART'].addcostcovdatum({'t':2016,'cost':5e7,'coverage':17000})
-    R.programs['PMTCT'].addcostcovdatum({'t':2016,'cost':4e6,'coverage':5500})
-    R.programs['MGMT'].addcostcovdatum({'t':2016,'cost':1e7,'coverage':None})
-    R.programs['HR'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
-    R.programs['Other'].addcostcovdatum({'t':2016,'cost':5e5,'coverage':None})
-
     budget = R.getdefaultbudget()
     coverage = R.getprogcoverage(budget=budget, t=2016, parset=P.parsets['default'])
     outcomes = R.getoutcomes(coverage=coverage, t=2016, parset=P.parsets['default'])
@@ -124,6 +114,17 @@ if 'makeprograms' in tests:
                   t=[2016],
                   parset=P.parsets['default'],
                   newparsetname='progparset')
+
+    # Run results
+    from optima import runmodel
+    allresults = []
+    allresults.append(runmodel(pars=P.parsets['default'].pars[0], verbose=1)) 
+    allresults.append(runmodel(pars=progparset.pars[0], verbose=1)) 
+
+    if doplot:
+        from plotpeople import plotpeople
+        plotpeople(allresults)
+
     
     done(t)
 

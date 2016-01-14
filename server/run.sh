@@ -1,7 +1,5 @@
 #!/bin/bash
 
-migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
-
 if [ ! -d "./p-env/" ]; then
   if [ "$1" == "--system" ]; then
     virtualenv --system-site-packages p-env
@@ -15,6 +13,8 @@ if [ ! -f "config.py" ]; then
 fi
 
 source ./p-env/bin/activate
+
+migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
 
 TMP_DEPS=/tmp/temp_deps_${RANDOM}
 pip freeze -l > ${TMP_DEPS}

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PGPASSWORD=test psql -h 127.0.0.1 -d optima_test -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' -U test
+
 if [ ! -d "./p-env/" ]; then
   if [ "$1" == "--system" ]; then
     virtualenv --system-site-packages p-env
@@ -24,4 +26,5 @@ mkdir -p /tmp/uploads
 cp ../optima/test.xlsx /tmp/uploads
 mkdir -p static
 cp ../optima/test.xlsx static
-NOSE_NOCAPTURE=1 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests $@
+
+OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests -c nose.cfg $@

@@ -306,16 +306,30 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(len(data['progsets']), progsets_count)
 
     def test_progset_can_hydrate_and_restore(self):
-        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+        from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ProjectDb
 
         programs_per_progset = 3
+        pars = [
+            {
+                'param': 'condcas',
+                'pops': ['MSM', 'MSF'],
+                'active': True
+            },{
+                'param': 'condcom',
+                'pops': [('MSM', 'MSF'),],
+                'active': True
+            }
+        ]
 
         project = self.create_project(
             progsets_count=1,
             programs_per_progset=programs_per_progset,
-            return_instance=True
+            return_instance=True,
+            pars=pars
         )
         progset_id = str(project.progsets[0].id)
+        program = project.progsets[0].programs[0]
+        program_name = program.short_name
 
         progset = ProgsetsDb.query.get(progset_id)
         program_count = ProgramsDb.query \
@@ -326,33 +340,67 @@ class ProjectTestCase(OptimaTestCase):
 
         self.assertIsNotNone(programset)
 
+        # reload from db
+        project = ProjectDb.query.filter_by(id=str(project.id)).first()
+
         be_project = project.hydrate()
         new_project = self.create_project(return_instance=True)
         new_project.restore(be_project)
 
-        program_count = ProgramsDb.query \
+        programs = ProgramsDb.query \
             .filter_by(project_id=str(new_project.id), active=True) \
-            .count()
+            .all()
 
-        self.assertEqual(program_count, programs_per_progset)
+        self.assertEqual(len(programs), programs_per_progset)
+
+        program_names = [
+            program.short_name
+            for program in ProgramsDb.query \
+                .filter_by(project_id=str(new_project.id), active=True) \
+                .all()
+        ]
+
+        self.assertIn(program_name, program_names)
+
+        program = ProgramsDb.query \
+                .filter_by(project_id=str(new_project.id), active=True) \
+                .filter_by(short_name=program_name).first()
+
+        self.assertIsNotNone(program)
+        self.assertEqual(len(program.pars), len(pars))
 
     def test_default_programs_for_project_restore(self):
-        from server.webapp.dbmodels import ProgramsDb
-        from server.webapp.programs import program_list
+        from server.webapp.dbmodels import ProgramsDb, ProjectDb
+        from server.webapp.programs import get_default_programs
+        from server.webapp.populations import populations
 
         project = self.create_project(
             progsets_count=1,
             programs_per_progset=0,
-            return_instance=True
+            return_instance=True,
+            populations=populations()
         )
         progset_id = str(project.progsets[0].id)
+
+        example_excel_file_name = 'test.xlsx'
+        file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
+        example_excel = open(file_path)
+        response = self.client.post(
+            'api/project/{}/spreadsheet'.format(project.id),
+            data=dict(file=example_excel)
+        )
+        example_excel.close()
+        self.assertEqual(response.status_code, 200, response.data)
 
         program_count = ProgramsDb.query.filter_by(progset_id=progset_id).count()
         self.assertEqual(program_count, 0)
 
+        # reload from db
+        project = ProjectDb.query.filter_by(id=project.id).first()
         be_project = project.hydrate()
         project.restore(be_project)
 
+        program_list = get_default_programs(be_project)
         program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
 
         self.assertEqual(program_count, len(program_list))

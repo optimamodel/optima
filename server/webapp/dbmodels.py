@@ -1,5 +1,6 @@
 from datetime import datetime
 import dateutil
+from collections import defaultdict
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
@@ -70,7 +71,7 @@ class ProjectDb(db.Model):
         'creation_time': fields.DateTime(attribute='created'),
         'updated_time': fields.DateTime(attribute='updated'),
         'data_upload_time': fields.DateTime,
-        'has_data': fields.Boolean,
+        'has_data': fields.Boolean(attribute='has_data_now'),
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -109,7 +110,7 @@ class ProjectDb(db.Model):
         self.results = results or []
 
     def has_data(self):
-        return self.data is not None
+        return self.data is not None and len(self.data)
 
     def has_model_parameters(self):
         return self.parsets is not None
@@ -172,7 +173,12 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.utils import update_or_create_progset, update_or_create_program
-            from server.webapp.programs import program_list
+            from server.webapp.programs import get_default_programs
+
+            if project.data != {}:
+                program_list = get_default_programs(project)
+            else:
+                program_list = []
 
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset(self.id, name, progset)
@@ -250,11 +256,14 @@ class ParsetsDb(db.Model):
         parset_entry.uid = self.id
         parset_entry.created = self.created
         parset_entry.modified = self.updated
-        parset_entry.pars = op.loads(self.pars)
+        if self.pars:
+            parset_entry.pars = op.loads(self.pars)
         return parset_entry
 
 
 class ResultsDb(db.Model):
+
+    CALIBRATION_TYPE = 'calibration'  # todo make enum when all types are known
 
     __tablename__ = 'results'
 
@@ -341,6 +350,7 @@ class ProgramsDb(db.Model):
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
         'populations': fields.List(fields.String, attribute='targetpops'),
+        'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
     }
@@ -354,12 +364,13 @@ class ProgramsDb(db.Model):
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
+    criteria = db.Column(JSON)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short_name='',
             category='No category', active=False, pars=None, created=None,
-            updated=None, id=None, targetpops=[]):
+            updated=None, id=None, targetpops=[], criteria=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -369,6 +380,7 @@ class ProgramsDb(db.Model):
         self.pars = pars
         self.active = active
         self.targetpops = targetpops
+        self.criteria = criteria
         if created:
             self.created = created
         if updated:
@@ -376,14 +388,48 @@ class ProgramsDb(db.Model):
         if id:
             self.id = id
 
+    def pars_to_program_pars(self):
+        """From API Program to BE Program"""
+
+        if self.pars is None:
+            return []
+
+        parameters = []
+
+        for param in self.pars:
+            if param.get('active', False):
+                parameters.extend([{
+                    'param': param['param'],
+                    'pop': pop if type(pop) in (str, unicode) else tuple(pop)
+                } for pop in param['pops']])
+
+        return parameters
+
+    @classmethod
+    def program_pars_to_pars(cls, targetpars):
+        """From BE Program to API Program"""
+
+        parameters = defaultdict(list)
+        for parameter in targetpars:
+            parameters[parameter['param']].append(parameter['pop'])
+
+        pars = [{
+                'active': True,
+                'param': short_name,
+                'pops': pop,
+            } for short_name, pop in parameters.iteritems()]
+
+        return pars
+
     def hydrate(self):
         from optima.programs import Program
         program_entry = Program(
             self.name,
-            targetpars=self.pars,
+            targetpars=self.pars_to_program_pars(),
             short_name=self.short_name,
             category=self.category,
-            targetpops=self.targetpops
+            targetpops=self.targetpops,
+            criteria=self.criteria
         )
         program_entry.id = self.id
         return program_entry

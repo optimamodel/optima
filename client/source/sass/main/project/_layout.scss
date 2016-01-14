@@ -43,3 +43,36 @@
     }
   }
 }
+
+.section-flex-spaced {
+  display: flex;
+  width: 100%;
+  justify-content: flex-start;
+  margin-top: 1%;
+
+  span:first-child {
+    margin-left: 0;
+  }
+
+  & > span {
+    margin-left: 25px;
+    & > span {
+      margin-left: 5px;
+    }
+  }
+}
+
+.small_bordered_list {
+
+  .option_list {
+    margin: 2px;
+    padding: 5px;
+    border: 1px solid black;
+    overflow: scroll;
+  }
+
+  .option {
+    padding: 10px 2px;
+    display: flex;
+  }
+}
