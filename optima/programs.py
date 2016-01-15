@@ -557,7 +557,7 @@ class Program(object):
         return reqbudget
 
     def plotcoverage(self, t, parset, plotoptions=None, existingFigure=None,
-        randseed=None, bounds=None):
+        randseed=None, bounds=None, npts=100, maxupperlim=1e8):
         ''' Plot the cost-coverage curve for a single program'''
 
         if type(t) in [int,float]: t = [t]
@@ -572,11 +572,11 @@ class Program(object):
             xupperlim = plotoptions['xupperlim']
         else: 
             if costdata: xupperlim = 1.5*max(costdata)
-            else: xupperlim = 1e8
-        xlinedata = linspace(0,xupperlim,100)
+            else: xupperlim = maxupperlim
+        xlinedata = linspace(0,xupperlim,npts)
 
         if plotoptions and plotoptions.get('perperson'):
-            xlinedata = linspace(0,xupperlim*self.gettargetpopsize(t[-1],parset),100)
+            xlinedata = linspace(0,xupperlim*self.gettargetpopsize(t[-1],parset),npts)
 
         # Create x line data and y line data
         try:
@@ -600,7 +600,7 @@ class Program(object):
             if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
                 if costdata: xupperlim = 1.5*max(costdata) 
                 else: xupperlim = 1e3
-            plotdata['xlinedata'] = linspace(0,xupperlim,100)
+            plotdata['xlinedata'] = linspace(0,xupperlim,npts)
         else:
             plotdata['xlinedata'] = xlinedata
             
@@ -643,6 +643,8 @@ class Program(object):
         axis.set_ylabel(plotdata['ylabel'], fontsize=11)
         axis.get_xaxis().set_major_locator(MaxNLocator(nbins=3))
         axis.set_title(self.short)
+        axis.get_xaxis().get_major_formatter().set_scientific(False)
+        axis.get_yaxis().get_major_formatter().set_scientific(False)
 
         return cost_coverage_figure
 
