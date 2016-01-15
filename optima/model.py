@@ -108,7 +108,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T) ... hivtest/aidstest should also be P/T?
     #treatmentrate = simpars['treatmentrate'] # treatment rate (N) wait this is the same as mtx1
     adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere (P)
-    leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up (P) WARNING average?
+    leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
     propstop      = simpars['propstop']      # Proportion of people on ART who stop taking ART per year (P/T)
     proploss      = simpars['proploss']      # Proportion of people who stop taking ART per year who are lost to follow-up (P)
 
@@ -361,7 +361,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             newtreat1[cd4] = newtreat1tot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
             hivdeaths   = dt * people[care[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[care[cd4],:,t] * background
-            leavingcare[cd4] = people[care[cd4],:,t] * leavecare #MK WARNING the number can't be repeated every time-step!
+            leavingcare[cd4] = dt * people[care[cd4],:,t] * leavecare
             inflows = progin + newdiagnoses[cd4]*immediatecare[:,t]
             outflows = progout + hivdeaths + otherdeaths + leavingcare[cd4]
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
