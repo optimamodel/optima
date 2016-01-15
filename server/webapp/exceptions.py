@@ -32,12 +32,13 @@ class RecordDoesNotExist(BaseRESTException):
     _message = 'The resource you are looking for does not exist'
     _model = 'Resource'
 
-    def __init__(self, id=None, model=None):
+    def __init__(self, id=None, model=None, project_id=None):
         super(RecordDoesNotExist, self).__init__()
         if id is not None or model != 'Resource':
             elements = [
                 'The {}'.format(model if model is not None else self._model),
-                'with id "{}"'.format(id) if id is not None else 'you are looking for',
+                'with id {}'.format(id) if id is not None else 'you are looking for',
+                'in project {}'.format(project_id) if project_id else '',
                 'does not exist'
             ]
             self.description = ' '.join(elements)

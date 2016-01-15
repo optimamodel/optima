@@ -42,6 +42,10 @@ class Parsets(Resource):
         return [item.hydrate() for item in reply]  # TODO: project_id should be not null
 
 
+rename_parser = RequestParser()
+rename_parser.add_argument('name', required=True)
+
+
 class ParsetsDetail(Resource):
     """
     Single Parset.
@@ -55,25 +59,55 @@ class ParsetsDetail(Resource):
             if parset does not exist, returns an error.
         """
     )
+    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def delete(self, project_id, parset_id):
 
-        current_app.logger.debug("/api/project/{}/parsets/{}".format(project_id, parset_id))
+        current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
         project_entry = load_project(project_id, raise_exception=True)
 
         parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
         if parset is None:
-            raise ParsetDoesNotExist(id=parset_id)
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
         # Is this how we should check for default parset?
         if parset.name == 'Default':  # TODO: it is lowercase
             abort(403)
 
         # TODO: also delete the corresponding calibration results
+        db.session.query(ResultsDb).filter_by(id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         db.session.query(ParsetsDb).filter_by(id=parset_id).delete()
         db.session.commit()
 
-        return '', 204
+        return [item.hydrate() for item in project_entry.parsets], 204
 
+    @swagger.operation(
+        description='Rename parset with the given id',
+        notes="""
+            if parset exists, rename it
+            if parset does not exist, return an error.
+            """
+    )
+    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
+    def put(self, project_id, parset_id):
+        """
+        For consistency, let's always return the updated parsets for operations on parsets
+        (so that FE doesn't need to perform another GET call)
+        """
+
+        current_app.logger.debug("PUT /api/project/{}/parsets/{}".format(project_id, parset_id))
+        args = rename_parser.parse_args()
+        name = args['name']
+
+        project_entry = load_project(project_id, raise_exception=True)
+        target_parset = [item for item in project_entry.parsets if item.id == parset_id]
+        if target_parset:
+            target_parset = target_parset[0]
+        if not target_parset:
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+        target_parset.name = name
+        db.session.add(target_parset)
+        db.session.commit()
+        return [item.hydrate() for item in project_entry.parsets]
 
 calibration_fields = {
     "parset_id": Uuid,
