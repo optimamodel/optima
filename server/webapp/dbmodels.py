@@ -393,7 +393,7 @@ class ProgramsDb(db.Model):
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     category = db.Column(db.String)
     name = db.Column(db.String)
-    short = db.Column(db.String)
+    short = db.Column('short_name', db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
