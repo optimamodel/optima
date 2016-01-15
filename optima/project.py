@@ -1,8 +1,7 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity # Import functions
-
-version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
+from optima import __version__ # Get current version
 
 
 #######################################################################################################
@@ -63,7 +62,7 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
-        self.version = version
+        self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
         
         ## Load spreadsheet, if available
