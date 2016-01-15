@@ -7,5 +7,5 @@ Version: 2016jan14 by cliffk
 '''
 
 import __builtin__
-__builtin__._printfailed = True
+__builtin__._failsilently = False
 import optima
