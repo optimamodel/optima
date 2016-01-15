@@ -165,10 +165,10 @@ if 'makeprograms' in tests:
                   'are included, both of them previously omitted in the reports.'
     plotoptions = {}
     plotoptions['caption'] = caption
-    plotoptions['xupperlim'] = 2e7
-    plotoptions['perperson'] = False
+    plotoptions['xupperlim'] = 2e9/HTC.gettargetpopsize(2015,P.parsets['default'])
+    plotoptions['perperson'] = True
 
-    if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],plotoptions=plotoptions)
+    if doplot: HTC.plotcoverage(t=2015,parset=P.parsets['default'],plotoptions=plotoptions)
 
     print('Running make programs set test...')
     # Initialise with or without programs
@@ -281,9 +281,9 @@ if 'makeprograms' in tests:
                   parset=P.parsets['default'],
                   newparsetname='progparset1')
 
-    # 14. Plot cost-coverage curves for all programs
-    if doplot: R.plotallcoverage(t=[2013,2015],
-                      parset=P.parsets['default'])
+#    # 14. Plot cost-coverage curves for all programs
+#    if doplot: R.plotallcoverage(t=[2013,2015],
+#                      parset=P.parsets['default'])
 
     done(t)
     

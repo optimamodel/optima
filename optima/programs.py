@@ -559,15 +559,15 @@ class Program(object):
     def plotcoverage(self, t, parset, plotoptions=None, existingFigure=None,
         randseed=None, bounds=None):
         ''' Plot the cost-coverage curve for a single program'''
+
+        if type(t) in [int,float]: t = [t]
         plotdata = {}
         
-        # Get caption details
+        # Get caption & scatter data 
         caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-
-        # Get cost data 
         costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else None
-                    
-        # Set upper limit for x axis 
+
+        # Make x data... 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
             xupperlim = plotoptions['xupperlim']
         else: 
@@ -575,21 +575,10 @@ class Program(object):
             else: xupperlim = 1e8
         xlinedata = linspace(0,xupperlim,100)
 
-        # Flag to indicate whether we will adjust by population or not
-        perperson = False
         if plotoptions and plotoptions.get('perperson'):
-            if costdata:
-                for yrno, yr in enumerate(self.costcovdata['t']):
-                    targetpopsize = self.gettargetpopsize(self, t=yr, parset=parset)
-                    costdata[yrno] /= targetpopsize
+            xlinedata = linspace(0,xupperlim*self.gettargetpopsize(2015,parset),100)
 
-        xlinedataplot = dcp(xlinedata)
-        if perperson:
-            for yr in t:
-                xlinedataplot = xlindataplot*self.gettargetpopsize(self, t=yr, parset=parset)
-        
         # Create x line data and y line data
-        plotdata['xlinedata'] = xlinedata
         try:
             y_l = self.getcoverage(x=xlinedata, t=t, parset=parset, total=True, proportion=False,toplot=True, bounds='l')
             y_m = self.getcoverage(x=xlinedata, t=t, parset=parset, total=True, proportion=False,toplot=True, bounds=None)
@@ -602,6 +591,21 @@ class Program(object):
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Number covered'
 
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
+        # Flag to indicate whether we will adjust by population or not
+        if plotoptions and plotoptions.get('perperson'):
+            if costdata:
+                for yrno, yr in enumerate(self.costcovdata['t']):
+                    targetpopsize = self.gettargetpopsize(t=yr, parset=parset)
+                    costdata[yrno] /= targetpopsize[0]
+            if not (plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim'])):
+                if costdata: xupperlim = 1.5*max(costdata) 
+                else: xupperlim = 1e3
+            plotdata['xlinedata'] = linspace(0,xupperlim,100)
+        else:
+            plotdata['xlinedata'] = xlinedata
+            
         cost_coverage_figure = existingFigure if existingFigure else figure()
         cost_coverage_figure.hold(True)
         axis = cost_coverage_figure.gca()
@@ -612,25 +616,25 @@ class Program(object):
         if y_m is not None:
             for yr in range(y_m.shape[0]):
                 axis.plot(
-                    xlinedata,
-                    y_m[yr],
+                    plotdata['xlinedata'],
+                    plotdata['ylinedata_m'][yr],
                     linestyle='-',
                     linewidth=2,
                     color='#a6cee3')
                 axis.plot(
-                    xlinedata,
-                    y_l[yr],
+                    plotdata['xlinedata'],
+                    plotdata['ylinedata_l'][yr],
                     linestyle='--',
                     linewidth=2,
                     color='#000000')
                 axis.plot(
-                    xlinedata,
-                    y_u[yr],
+                    plotdata['xlinedata'],
+                    plotdata['ylinedata_u'][yr],
                     linestyle='--',
                     linewidth=2,
                     color='#000000')
         axis.scatter(
-            self.costcovdata['cost'],
+            costdata,
             self.costcovdata['coverage'],
             color='#666666')
 
