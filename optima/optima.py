@@ -40,7 +40,7 @@ try: from asd import asd
 except: _failed('asd')
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 except: _failed('colortools')
-try: from utils import blank, checkmem, dataindex, findinds, getdate, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
+try: from utils import blank, checkmem, dataindex, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
 except: _failed('utils')
 
 ## Load Optima functions and classes

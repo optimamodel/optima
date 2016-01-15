@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, model, runcommand, sensitivity, manualfit, autofit # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit # Import functions
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -64,13 +64,7 @@ class Project(object):
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
         self.version = version
-        try:
-            self.gitbranch = runcommand('git rev-parse --abbrev-ref HEAD').rstrip('\n')
-            self.gitversion = runcommand('git rev-parse HEAD').rstrip('\n')
-        except:
-            self.gitbranch = 'Git branch information not retrivable'
-            self.gitversion = 'Git version information not retrivable'
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        self.gitbranch, self.gitversion = gitinfo()
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
