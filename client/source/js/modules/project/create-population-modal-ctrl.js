@@ -18,12 +18,8 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.isFormValid = function(){
-      if(!$scope.populationExists('name') && !$scope.populationExists('short_name')){
-        if($scope.PopulationForm.$invalid){
-          return false;  
-        }else{
-          return true;
-        }
+      if(!$scope.populationExists('name') && !$scope.populationExists('short_name') && !$scope.PopulationForm.$invalid){
+        return true;  
       }else{
         return false;
       }
