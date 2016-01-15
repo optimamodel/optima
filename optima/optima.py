@@ -26,7 +26,7 @@ __version__ = 2.0
 
 
 ## Housekeeping
-_silent = False # WARNING: I think this should be True -- since most of the modules below import from this file, shouldn't the imports fail after the module in question?
+_silent = True # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
 def _failed(msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if not _silent: print('Optima failed to import "%s"' % msg)
@@ -88,23 +88,31 @@ except: _failed('scenarios')
 
 
 
-## Load optional plotting functions
+## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
-except: _failed('gui')
+except: 
+    def plotresults(**kwargs): print('plotresults could not be imported')
+    _failed('plotresults')
 
 try: from gui import pygui # Handle the Python plotting
-except: _failed('pygui')
+except: 
+    def pygui(**kwargs): print('pygui could not be imported')
+    _failed('pygui')
 
 try: from gui import browser # Handle the browser-based plotting
-except: _failed('browser')
+except: 
+    def browser(**kwargs): print('browser could not be imported')
+    _failed('browser')
 
 try: from manualgui import manualfit # Do manual fitting
-except: _failed('manualfit')
+except: 
+    def manualfit(**kwargs): print('manualfit could not be imported')
+    _failed('manualfit')
 
 
 
 ## Import the Project class that ties everything together
-try: from project import Project, version # Project class
+try: from project import Project # Project class
 except: _failed('project')
 
 
