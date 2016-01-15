@@ -276,15 +276,6 @@ if 'makeprograms' in tests:
                       parset=P.parsets['default'],
                       xupperlim=1e8)
 
-    # 15. Example use of program scenarios
-    if doplot:
-        print doplot
-        P.parsets['progparset1'] = progparset1
-        results0 = P.runsim('default')
-        results1 = P.runsim('progparset1')
-        from plotpeople import plotpeople
-        plotpeople([results0, results1])
-
     done(t)
     
 
