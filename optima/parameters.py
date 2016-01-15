@@ -28,8 +28,8 @@ Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	1	random
 Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	1	1	random
 Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
 Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	1	random
-Birth rate (births/woman/year)	birth	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-Male circumcision prevalence (%)	circum	(0, 1)	pop	timepar	meta	other	0	1	random
+Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	1	random
+Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	1	random
 Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
 Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	1	random
 Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	1	random
@@ -197,13 +197,17 @@ def data2timepar(name=None, short=None, data=None, keys=None, defaultind=0, **de
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
-        validdata = ~isnan(data[short][row])
-        par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
-        if sum(validdata): 
-            par.y[key] = sanitize(data[short][row])
-        else:
-            print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
-            par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
+        try:
+            validdata = ~isnan(data[short][row])
+            par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+            if sum(validdata): 
+                par.y[key] = sanitize(data[short][row])
+            else:
+                print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
+                par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
+        except:
+            errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
+            raise Exception(errormsg)
     
     return par
 
@@ -319,19 +323,22 @@ def makepars(data, label=None, verbose=2):
     
     
     # Read in parameters automatically -- WARNING, not currently implemented
-    rawpars = readpars() # Read the parameters structure
+    rawpars = readpars(partable) # Read the parameters structure
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
         # Shorten key variables
-        partype = rawpar.pop(rawpar['partype'])
+        partype = rawpar.pop('partype')
         parname = rawpar['short']
         by = rawpar['by']
         
         # Decide what the keys are
         if by=='tot': keys = totkey
         elif by=='pop': keys = popkeys
-        else: by=None
+        elif by=='fpop': keys = fpopkeys
+        elif by=='mpop': keys = mpopkeys
+        else: keys = None # They're not necessarily none, e.g. by partnership, but too complicated to figure out here
+        if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
         
         # Decide how to handle it based on parameter type
         if partype=='initprev': # Initialize prevalence only
@@ -339,7 +346,7 @@ def makepars(data, label=None, verbose=2):
         elif partype=='popsize': # Population size only
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
         elif partype=='timepar': # It's a normal time parameter, e.g. hivtest
-            pars[parname] = data2timepar(data=data, keys=keys, limits=(0,1), **rawpar)
+            pars[parname] = data2timepar(data=data, keys=keys, **rawpar)
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] 
             low = data['const'][parname][1] 
@@ -444,13 +451,14 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
+        self.coverage = coverage # Whether or not this is a coverage parameter
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
     
@@ -463,6 +471,7 @@ class Par(object):
         output += '          by: %s\n'      % self.by
         output += '    fittable: "%s"\n'    % self.fittable
         output += '        auto: "%s"\n'    % self.auto
+        output += '    coverage: "%s"\n'    % self.coverage
         output += '     visible: "%s"\n'    % self.visible
         output += 'proginteract: "%s"\n'    % self.proginteract
         return output
