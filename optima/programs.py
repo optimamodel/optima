@@ -565,22 +565,28 @@ class Program(object):
         caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
 
         # Get cost data 
-        cost = self.costcovdata['cost'] if self.costcovdata.get('cost') else None
-            
-        # Flag to indicate whether we will adjust by population or not
-        perperson = False
-        if plotoptions and plotoptions.get('perperson'):
-            perperson = plotoptions['perperson']
-            targetpopsize = self.gettargetpopsize(self, t=t, parset=parset)
-            cost = cost/targetpopsize # TEMP, won't work yet
-        
+        costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else None
+                    
         # Set upper limit for x axis 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
             xupperlim = plotoptions['xupperlim']
         else: 
-            if cost: xupperlim = 1.5*max(cost)
+            if costdata: xupperlim = 1.5*max(costdata)
             else: xupperlim = 1e8
         xlinedata = linspace(0,xupperlim,100)
+
+        # Flag to indicate whether we will adjust by population or not
+        perperson = False
+        if plotoptions and plotoptions.get('perperson'):
+            if costdata:
+                for yrno, yr in enumerate(self.costcovdata['t']):
+                    targetpopsize = self.gettargetpopsize(self, t=yr, parset=parset)
+                    costdata[yrno] /= targetpopsize
+
+        xlinedataplot = dcp(xlinedata)
+        if perperson:
+            for yr in t:
+                xlinedataplot = xlindataplot*self.gettargetpopsize(self, t=yr, parset=parset)
         
         # Create x line data and y line data
         plotdata['xlinedata'] = xlinedata
