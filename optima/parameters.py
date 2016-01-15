@@ -348,7 +348,10 @@ def makepars(data, label=None, verbose=2):
             pars[parname] = Constant(y=odict(), **rawpar)
             
     
+
+    ###############################################################################
     ## Tidy up -- things that can't be converted automatically
+    ###############################################################################    
     
     # Births
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
@@ -361,17 +364,17 @@ def makepars(data, label=None, verbose=2):
         pars['circum'].t[key] = array([0])
     
     # Metaparameters
-    for key in popkeys:
+    for key in popkeys: # Define values
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
     
     # Transitions
-    for i,key1 in enumerate(popkeys):
+    for i,key1 in enumerate(popkeys): # Populate from spreadsheet verbatim
         for j,key2 in enumerate(popkeys):
             pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
     
     
-    # Sexual behavior parameters
+    # Balance partnerships parameters    
     tmpacts = odict()
     tmpcond = odict()
     tmpactspts = odict()
@@ -411,7 +414,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jan04 by cliffk
+    Version: 2016jan14 by cliffk
     '''
     
     # Handle inputs and initialization
@@ -419,8 +422,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys']
-    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
-    if keys is None: keys = modelkeys
+    if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     
@@ -428,18 +430,11 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     for key in generalkeys: simpars[key] = dcp(pars[key])
     
     # Loop over requested keys
-    for key in keys:
-        if key=='const': # Handle constants separately
-            simpars['const'] = odict()
-            for subkey in pars['const'].keys():
-                simpars['const'][subkey] = pars['const'][subkey].interp()
-        else: # Handle all other parameters
-            try: 
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-            except: 
-                errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                raise Exception(errormsg)
-    
+    for key in keys: # Loop over all keys
+        if issubclass(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
+            except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
+
     return simpars
 
 
@@ -566,9 +561,8 @@ class Constant(Par):
         output += '       y: %s\n'    % self.y
         return output
     
-    def interp(self, tvec=None, smoothness=None):
+    def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
             output = self.y
         else: # No, it has keys, return as an array
