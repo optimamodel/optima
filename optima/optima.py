@@ -21,58 +21,64 @@ I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 Version: 2016jan14 by cliffk
 """
 
+_silent = True
+
+def _failed(msg):
+    ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
+    if not _silent: _failed('"%s"' % msg)
+
 ## Load general modules
 try: from uuid import uuid4 as uuid
-except: pass # print('Failed at uuid')
+except: _failed('uuid')
 try: from datetime import datetime; today = datetime.today
-except: pass # print('Failed at datetime')
+except: _failed('datetime')
 try: from copy import deepcopy as dcp
-except: pass # print('Failed at copy')
+except: _failed('copy')
 
 ## Load non-Optima-specific custom functions
 try: from asd import asd
-except: pass # print('Failed at asd')
+except: _failed('asd')
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
-except: pass # print('Failed at colortools')
+except: _failed('colortools')
 try: from utils import blank, checkmem, dataindex, findinds, getdate, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
-except: pass # print('Failed at utils')
+except: _failed('utils')
 
 ## Load Optima functions and classes
 try: from settings import Settings # Inter-project definitions, e.g. health states
-except: pass # print('Failed at settings')
+except: _failed('settings')
 try: from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
-except: pass # print('Failed at makespreadsheet')
+except: _failed('makespreadsheet')
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
-except: pass # print('Failed at loadspreadsheet')
+except: _failed('loadspreadsheet')
 try: from results import Result, Resultset, getresults # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
-except: pass # print('Failed at results')
+except: _failed('results')
 try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars # Parameter and Parameterset classes
-except: pass # print('Failed at parameters')
+except: _failed('parameters')
 try: from model import model, runmodel # The thing that actually runs the model
-except: pass # print('Failed at model')
+except: _failed('model')
 try: from programs import Program, Programset # Define programs
-except: pass # print('Failed at programs')
+except: _failed('programs')
 try: from makeplots import epiplot # Create the plots
-except: pass # print('Failed at makeplots')
+except: _failed('makeplots')
 try: from calibration import sensitivity, autofit # Calibration functions
-except: pass # print('Failed at calibration')
+except: _failed('calibration')
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
-except: pass # print('Failed at scenarios')
+except: _failed('scenarios')
 
 ## Load optional plotting functions
 try: from gui import plotresults
-except: pass # print('Failed at gui')
+except: _failed('gui')
 try: from gui import pygui # Handle the Python plotting
-except: pass # print('Failed at pygui')
+except: _failed('pygui')
 try: from gui import browser # Handle the browser-based plotting
-except: pass # print('Failed at browser')
+except: _failed('browser')
 try: from manualgui import manualfit # Do manual fitting
-except: pass # print('Failed at manualfit')
+except: _failed('manualfit')
 
 ## Import the Project class that ties everything together
 try: from project import Project, version # Project class
-except: pass # print('Failed at project')
+except: _failed('project')
 
 ## Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
-except: pass # print('Failed at high-level modules')
+except: _failed('high-level modules')

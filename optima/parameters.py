@@ -7,16 +7,118 @@ Version: 2016jan14 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
 from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
+# Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters
+partable = '''
+name	short	limits	by	type	fittable	auto	coverage	visible	proginteract
+Initial HIV prevalence (%)	initprev	(0, 1)	pop	Constant	pop	init	None	0	None
+Population size	popsize	(0, 'maxpopsize')	pop	Popsizepar	exp	popsize	None	0	None
+Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	Constant	pop	force	None	0	random
+Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	Constant	pop	inhomo	None	0	random
+Transitions (% moving/year)	transit	(0, 'maxrate')	array	Constant	no	no	None	0	random
+STI prevalence (%)	stiprev	(0, 1)	pop	Timepar	meta	other	0	1	random
+Mortality rate (%/year)	death	(0, 'maxrate')	pop	Timepar	meta	other	0	1	random
+Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	Timepar	meta	other	0	1	random
+HIV testing rate (%/person/year)	hivtest	(0, 'maxrate')	pop	Timepar	meta	test	0	1	random
+AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	Timepar	meta	test	0	1	random
+Number of people on treatment	numtx	(0, 'maxpopsize')	tot	Timepar	meta	treat	1	1	random
+Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	Timepar	meta	other	1	1	random
+Proportion of women who breastfeed (%)	breast	(0, 1)	tot	Timepar	meta	other	0	1	random
+Birth rate (births/woman/year)	birth	(0, 'maxrate')	pop	Timepar	meta	other	0	1	random
+Male circumcision prevalence (%)	circum	(0, 1)	pop	Timepar	meta	other	0	1	random
+Number of PWID on OST	numost	(0, 'maxpopsize')	tot	Timepar	meta	other	1	1	random
+Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	Timepar	meta	other	0	1	random
+Proportion of people on PrEP (%)	prep	(0, 1)	pop	Timepar	meta	other	0	1	random
+Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	Timepar	meta	other	0	1	random
+Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	Timepar	meta	other	0	1	random
+Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	Timepar	meta	other	0	1	random
+Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	Timepar	meta	other	0	1	random
+Condom use for regular acts (%)	condreg	(0, 1)	pship	Timepar	meta	other	0	1	random
+Condom use for casual acts (%)	condcas	(0, 1)	pship	Timepar	meta	other	0	1	random
+Condom use for commercial acts (%)	condcom	(0, 1)	pship	Timepar	meta	other	0	1	random
+Male-female insertive transmissibility (per act)	transmfi	[0.0001, 0.0014]	tot	Constant	const	const	None	0	None
+Male-female receptive transmissibility (per act)	transmfr	[0.0006, 0.0011]	tot	Constant	const	const	None	0	None
+Male-male insertive transmissibility (per act)	transmmi	[0.0102, 0.0186]	tot	Constant	const	const	None	0	None
+Male-male receptive transmissibility (per act)	transmmr	[0.0004, 0.0028]	tot	Constant	const	const	None	0	None
+Injection-related transmissibility (per injection)	transinj	[0.0063, 0.024]	tot	Constant	const	const	None	0	None
+Mother-to-child breastfeeding transmissibility (%)	mtctbreast	[0.294, 0.44]	tot	Constant	const	const	None	0	None
+Mother-to-child no-breastfeeding transmissibility (%)	mtctnobreast	[0.14, 0.27]	tot	Constant	const	const	None	0	None
+Relative transmissibility for acute HIV (unitless)	cd4transacute	[2.0, 48.02]	tot	Constant	const	const	None	0	None
+Relative transmissibility for CD4>500 (unitless)	cd4transgt500	[1.0, 1.0]	tot	Constant	const	const	None	0	None
+Relative transmissibility for CD4>350 (unitless)	cd4transgt350	[1.0, 1.0]	tot	Constant	const	const	None	0	None
+Relative transmissibility for CD4>200 (unitless)	cd4transgt200	[1.0, 1.0]	tot	Constant	const	const	None	0	None
+Relative transmissibility for CD4>50 (unitless)	cd4transgt50	[1.76, 6.92]	tot	Constant	const	const	None	0	None
+Relative transmissibility for CD4<50 (unitless)	cd4translt50	[3.9, 12.08]	tot	Constant	const	const	None	0	None
+Progression rate for acute HIV (%/year)	progacute	[2.0, 9.76]	tot	Constant	const	const	None	0	None
+Progression rate for CD4>500 (%/year)	proggt500	[0.86, 1.61]	tot	Constant	const	const	None	0	None
+Progression rate for CD4>350 (%/year)	proggt350	[0.32, 0.35]	tot	Constant	const	const	None	0	None
+Progression rate for CD4>200 (%/year)	proggt200	[0.25, 0.29]	tot	Constant	const	const	None	0	None
+Progression rate for CD4>50 (%/year)	proggt50	[0.44, 0.88]	tot	Constant	const	const	None	0	None
+Treatment recovery rate into CD4>500 (%/year)	recovgt500	[0.14, 0.93]	tot	Constant	const	const	None	0	None
+Treatment recovery rate into CD4>350 (%/year)	recovgt350	[0.29, 1.11]	tot	Constant	const	const	None	0	None
+Treatment recovery rate into CD4>200 (%/year)	recovgt200	[0.33, 0.72]	tot	Constant	const	const	None	0	None
+Treatment recovery rate into CD4>50 (%/year)	recovgt50	[1.06, 1.96]	tot	Constant	const	const	None	0	None
+Death rate for acute HIV (%/year)	deathacute	[0.0029, 0.0044]	tot	Constant	const	const	None	0	None
+Death rate for CD4>500 (%/year)	deathgt500	[0.0029, 0.0044]	tot	Constant	const	const	None	0	None
+Death rate for CD4>350 (%/year)	deathgt350	[0.0048, 0.0071]	tot	Constant	const	const	None	0	None
+Death rate for CD4>200 (%/year)	deathgt200	[0.075, 0.0101]	tot	Constant	const	const	None	0	None
+Death rate for CD4>50 (%/year)	deathgt50	[0.054, 0.079]	tot	Constant	const	const	None	0	None
+Death rate for CD4<50 (%/year)	deathlt50	[0.296, 0.432]	tot	Constant	const	const	None	0	None
+Relative death rate on treatment (unitless)	deathtreat	[0.15, 0.3]	tot	Constant	const	const	None	0	None
+Relative death rate with tuberculosis (unitless)	deathtb	[1.27, 3.71]	tot	Constant	const	const	None	0	None
+Efficacy of treatment (%)	efftx	[0.5, 0.9]	tot	Constant	const	const	None	0	None
+Efficacy of PMTCT (%)	effpmtct	[0.82, 0.93]	tot	Constant	const	const	None	0	None
+Efficacy of PrEP (%)	effprep	[0.65, 0.8]	tot	Constant	const	const	None	0	None
+Efficacy of condoms (%)	effcondom	[0.8, 0.975]	tot	Constant	const	const	None	0	None
+Efficacy of circumcision (%)	effcirc	[0.47, 0.67]	tot	Constant	const	const	None	0	None
+Efficacy of OST (%)	effost	[0.33, 0.68]	tot	Constant	const	const	None	0	None
+Efficacy of diagnosis for behavior change (%)	effdx	[0.0, 0.68]	tot	Constant	const	const	None	0	None
+Relative transmissibility with STIs (unitless)	effsti	[1.35, 5.19]	tot	Constant	const	const	None	0	None
+Disutility of acute HIV (unitless)	disutilacute	[0.096, 0.205]	tot	Constant	const	const	None	0	None
+Disutility of CD4>500 (unitless)	disutilgt500	[0.005, 0.011]	tot	Constant	const	const	None	0	None
+Disutility of CD4>350 (unitless)	disutilgt350	[0.013, 0.029]	tot	Constant	const	const	None	0	None
+Disutility of CD4>200 (unitless)	disutilgt200	[0.048, 0.094]	tot	Constant	const	const	None	0	None
+Disutility of CD4>50 (unitless)	disutilgt50	[0.114, 0.474]	tot	Constant	const	const	None	0	None
+Disutility of CD4<50 (unitless)	disutillt50	[0.382, 0.715]	tot	Constant	const	const	None	0	None
+Disutility on treatment (unitless)	disutiltx	[0.034, 0.079]	tot	Constant	const	const	None	0	None
+'''
+
+
+def readpars():
+    ''' 
+    Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
+    '''
+    rawpars = []
+    alllines = partable.split('\n') # Load all data
+    for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
+    attrs = alllines.pop(0) # First line is attributes
+    for l in range(len(alllines)): # Loop over parameters
+        rawpars.append(odict()) # Create an odict to store attributes
+        for i,attr in enumerate(attrs): # Loop over attributes
+            rawpars[l][attr] = alllines[l][i] # Store attributes
+    return rawpars
 
 
 
 def popgrow(exppars, tvec):
     ''' Return a time vector for a population growth '''
     return exppars[0]*exp(tvec*exppars[1]) # Simple exponential growth
+
+
+
+def getvalidyears(years, validdata, defaultind=0):
+    ''' Return the years that are valid based on the validity of the input data '''
+    if sum(validdata): # There's at least one data point entered
+        if len(years)==len(validdata): # They're the same length: use for logical indexing
+            validyears = array(array(years)[validdata]) # Store each year
+        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
+            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
+    return validyears
 
 
 
@@ -66,8 +168,6 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
             errormsg = 'Fitting population size data for population "%s" failed' % key
             raise Exception(errormsg)
     
-    # ...do weighting based on number of data points and/or population size?
-    
     # Handle populations that have only a single data point
     only1datapoint = list(set(keys)-set(atleast2datapoints))
     for key in only1datapoint:
@@ -84,16 +184,6 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
     return par
 
 
-
-def getvalidyears(years, validdata, defaultind=0):
-    ''' Return the years that are valid based on the validity of the input data '''
-    if sum(validdata): # There's at least one data point entered
-        if len(years)==len(validdata): # They're the same length: use for logical indexing
-            validyears = array(array(years)[validdata]) # Store each year
-        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
-            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
-    return validyears
 
 
 
@@ -180,20 +270,6 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def readpars(filename='parameters.tsv'):
-    ''' 
-    Function to read the parameter definitions file and return a structure that can be used to generate the parameters
-    WARNING -- not used currently, provides feature for later automation of parameter generation.
-    '''
-    rawpars = []
-    with open(filename) as f: alllines = f.readlines() # Load all data
-    for l in range(len(alllines)): alllines[l] = alllines[l].strip().split('\t') # Remove end characters and split from tabs
-    attrs = alllines.pop(0) # First line is attributes
-    for l in range(len(alllines)): # Loop over parameters
-        rawpars.append(odict()) # Create an odict to store attributes
-        for i,attr in enumerate(attrs): # Loop over attributes
-            rawpars[l][attr] = alllines[l][i] # Store attributes
-    return rawpars
 
 
 
@@ -203,7 +279,8 @@ def readpars(filename='parameters.tsv'):
 
 
 
-def makepars(data, label='', verbose=2):
+
+def makepars(data, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -220,12 +297,9 @@ def makepars(data, label='', verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    # Read in parameters automatically -- WARNING, not currently implemented
-#    parfilename = 'parameters.tsv' # Define the name of the file that contains the parameter definitions
-#    rawpars = readpars(parfilename) # Read the parameters structure
+    
     
     pars = odict()
-    pars['label'] = label # Set a label for this pars dict
     
     # Shorten information on which populations are male, which are female
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
@@ -237,6 +311,12 @@ def makepars(data, label='', verbose=2):
     fpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['female'][i]]
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]]
     pars['popkeys'] = dcp(popkeys)
+    
+    
+    # Read in parameters automatically -- WARNING, not currently implemented
+    rawpars = readpars() # Read the parameters structure
+    for this in rawpars: # Iterate over all automatically read in parameters
+        print(this)
     
     # Key parameters
     bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
