@@ -38,11 +38,11 @@ class Settings():
         self.alldiag = cat([self.diag, self.treat]) # All people diagnosed
         self.allplhiv = cat([self.undiag, self.alldiag]) # All PLHIV
         self.allstates = cat([self.alluninf, self.allplhiv]) # All states
-
         self.nstates = len(self.allstates) # Total number of states
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
+        self.verbose = 2 # Default verbosity for how much to print out
     
     def __repr__(self):
         output =  '                  Optima settings\n'

@@ -54,38 +54,44 @@ if 'makeprograms' in tests:
     print('Running make programs test...')
     from optima import Project, Program, Programset
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
-    HTC = Program(name='HTC',
-                  targetpars=[{'param': 'hivtest', 'pop': 'F 15-49'}],
-                  targetpops=['F 15-49'],
+    HTC = Program(short='HTC',
+                  name='HIV testing and counseling',
+                  targetpars=[{'param': 'hivtest', 'pop': 'F 15+'},
+                              {'param': 'hivtest', 'pop': 'M 15+'},
+                              {'param': 'hivtest', 'pop': 'FSW'},
+                              {'param': 'hivtest', 'pop': 'MSM'},
+                              {'param': 'hivtest', 'pop': 'Clients'}],
+                  targetpops=['F 15+','FSW', 'Clients', 'MSM'],
                   costcovdata = {'t':[2013],
                                  'cost':[1e6],
                                  'coverage':[3e5]})
 
-    SBCC = Program(name='SBCC',
-                   targetpars=[{'param': 'condcas', 'pop': ('F 15-49','M 15-49')},
-                               {'param': 'hivtest', 'pop': 'F 15-49'}],
-                   targetpops=['F 15-49']) # CK: what should this be for a partnership?
+    SBCC = Program(short='SBCC',
+                   name='Social and behaviour change communication',
+                   targetpars=[{'param': 'condcas', 'pop': ('F 15+','M 15+')},
+                               {'param': 'hivtest', 'pop': 'F 15+'}],
+                   targetpops=['F 15+']) # CK: what should this be for a partnership?
                                            # RS: it should be the population that's targeted. E.g. if the condoms are distributed to the FSW, that's the target population.
 
-    MGT = Program('MGT')
+    MGT = Program(short='MGT')
 
-    ART = Program(name='ART',
+    ART = Program(short='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'Total'}],
                   targetpops=['Total'])
 
     # Testing methods of program class
     # 1. Adding a target parameter to a program
-    HTC.addtargetpar({'param': 'hivtest', 'pop': 'M 15-49'})
+    HTC.addtargetpar({'param': 'hivtest', 'pop': 'M 15+'})
     
     ## NOTE that adding a targeted parameter does NOT automatically add a targeted population! Do this separately, e.g.
-    HTC.targetpops.append('M 15-49')
+    HTC.targetpops.append('M 15+')
         
     # 2. Removing a target parameter from a program (then readding it)
-    HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
-    HTC.addtargetpar({'param': 'hivtest', 'pop': 'F 15-49'})
+    HTC.rmtargetpar({'param': 'hivtest', 'pop': 'F 15+'})
+    HTC.addtargetpar({'param': 'hivtest', 'pop': 'F 15+'})
 
     # 3. Add historical cost-coverage data point                         
     SBCC.addcostcovdatum({'t':2011,
@@ -137,8 +143,15 @@ if 'makeprograms' in tests:
     HTC.gettargetpopsize(t=[2013,2015],parset=P.parsets['default'])
 
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
-    from numpy import linspace
+    from numpy import linspace, array
     HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False,bounds=None)
+    HTC.targetcomposition = {'Clients': array([ 0.01]),
+                       'F 15+': array([ 0.3]),
+                       'FSW': array([ 0.24]),
+                       'M 15+': array([ 0.3]),
+                       'MSM': [ 0.15]}
+    
+    HTC.getcoverage(x=[2e7],t=[2016],parset=P.parsets['default'],total=False)
     HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
 
     # NB, if you want to evaluate it for a particular population size, can also do...
@@ -176,7 +189,6 @@ if 'makeprograms' in tests:
     R.progs_by_targetpar()
 
     # 7. Get a vector of coverage levels corresponding to a vector of program allocations
-    from numpy import array
     budget={'HTC':array([1e7,1.2e7,1.5e7]),
             'SBCC':array([1e6,1.2e6,1.5e6]),
             'MGT':array([2e5,3e5,3e5])}
@@ -200,41 +212,53 @@ if 'makeprograms' in tests:
                      parset=P.parsets['default'])
 
     # 8. Add parameters for defining coverage-outcome function.
-    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.25,0.35),
                                                     't': 2013.0,
                                                   'HTC': (0.85,0.95),
                                                  'SBCC': (0.35,0.45)})
                                                                                                     
-    R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.25,0.35),
+    R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.25,0.35),
                                                   't': 2016.0,
                                                   'HTC': (0.9,1.)})
                                                   
-    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.25,0.35),
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.25,0.35),
                                                     't': 2015.0,
                                                     'HTC': (0.75,0.85),
                                                     'SBCC':(0.4,0.5)})
                                                     
-    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.45),
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.35,0.45),
                                                     't': 2017.0,
                                                     'HTC': (0.8,0.85),
                                                     'SBCC':(0.6,0.65)})
 
-    R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': (0.3,0.35), 
+    R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45),
+                                                    't': 2017.0,
+                                                    'HTC': (0.8,0.85)})
+                                                    
+    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.35,0.45),
+                                                    't': 2017.0,
+                                                    'HTC': (0.8,0.85)})
+                                                    
+    R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45),
+                                                    't': 2017.0,
+                                                    'HTC': (0.8,0.85)})
+                                                    
+    R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept': (0.3,0.35), 
                                                     't': 2015.0,
                                                     'SBCC':(0.45,0.55)})
                                                     
     # 9. Overwrite parameters for defining coverage-outcome function.
-    R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.45),
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.35,0.45),
                                                     't': 2015.0,
                                                     'HTC': (0.85,0.95),
                                                     'SBCC':(0.55,0.65)},
                                                     overwrite=True)
 
     # 10. Remove parameters for defining coverage-outcome function.
-    R.covout['hivtest']['F 15-49'].rmccopar(2017)
+    R.covout['hivtest']['F 15+'].rmccopar(2017)
     
     # 11. Get parameters for defining cost-coverage function for any given year (even if not explicitly entered).
-    R.covout['hivtest']['F 15-49'].getccopar(2014)
+    R.covout['hivtest']['F 15+'].getccopar(2014)
 
     # 12. Get a dictionary of only the program-affected parameters corresponding to a dictionary of program allocations or coverage levels
     outcomes = R.getoutcomes(coverage=coverage,

@@ -9,7 +9,7 @@ from numpy import median, zeros, array, mean
 
 
 
-def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
+def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
     ''' 
     Function to perturb the parameters to get "uncertainties".
     
@@ -22,8 +22,10 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
     Outputs:
         parset = perturbed parameter set with ncopies sets of pars
     
-    Version: 2015dec29 by cliffk
+    Version: 2016jan10 by cliffk
     '''
+    
+    printv('Performing sensitivity analysis...', 1, verbose)
     
     # Validate input
     if span>1 or span<0:
@@ -72,12 +74,14 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0):
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0, verbose=2):
+def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds=0, verbose=2):
     ''' 
     Function to automatically fit parameters.
     
     Version: 2016jan05 by cliffk
     '''
+    
+    printv('Performing automatic fitting...', 1, verbose)
     
     # Initialization
     parset = project.parsets[name] # Copy the original parameter set
@@ -245,7 +249,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, niters=100, inds=0
         # Perform fit
         parvec = convert(pars, parlist)
         options = {'pars':pars, 'parlist':parlist, 'project':project}
-        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=niters, verbose=verbose)
+        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
         pars = convert(pars, parlist, parvecnew)        

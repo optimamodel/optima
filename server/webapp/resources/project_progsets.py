@@ -16,11 +16,12 @@ from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 program_parser = RequestParser()
 program_parser.add_arguments({
     'name': {'required': True, 'location': 'json'},
-    'short_name': {'required': True, 'location': 'json'},
+    'short': {'required': True, 'location': 'json'},
     'category': {'required': True, 'location': 'json'},
     'active': {'type': bool, 'default': False, 'location': 'json'},
     'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
     'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
+    'criteria': {'type': dict, 'location': 'json'},
 })
 
 

@@ -3,6 +3,8 @@
  * and tell you if there is any.
  */
 
+// todo: since now we do not keep project open after user session is complete, it makes sense to remove it from local-storage to cookie-storage
+
 define([
   'angular',
   '../common/local-storage-service' 
@@ -50,8 +52,7 @@ define([
             var openProject = openProjectStr ? JSON.parse(openProjectStr) : void 0;
             return openProject ? openProject.id : void 0;
           },
-          ifActiveResetFor: function (projectName, projectId, user) {
-            // If projectName is active, reset it for the given user.
+          ifActiveResetFor: function (projectId, user) {
             if (project.id === projectId) {
               project.resetFor(user);
             }

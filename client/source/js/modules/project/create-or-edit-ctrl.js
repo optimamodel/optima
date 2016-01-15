@@ -2,8 +2,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectCreateOrEditController', function ($scope, $state, $modal,
-    $timeout, $http, activeProject, defaultsResponse,
-    UserManager, modalService,projects, projectApiService, info) {
+    $timeout, $http, activeProject, populations,
+    UserManager, modalService, projects, projectApiService, info) {
 
     var allProjects = projects.data.projects;
 
@@ -23,36 +23,35 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.projectInfo = info ? info.data : void 0;
 
-    var availableDefaults = defaultsResponse.data;
-
     $scope.submit = "Create project & Optima template";
-    $scope.populations = availableDefaults.populations;
-    $scope.categories = availableDefaults.categories;
+    $scope.populations = populations.data.populations;
 
     function isEditMode(){
       return $state.current.name == "project.edit";
     }
 
     function findByName(arr,obj){
-        return _.findWhere(arr, {short_name: obj.short_name});
+        return _.findWhere(arr, {short_name: obj.short_name, name: obj.name});
     }
 
     if (isEditMode()) {
       // change submit button name
       $scope.submit = "Save project & Optima template";
 
+      console.log('info.data', info.data);
       $scope.editParams.isEdit = true;
-      $scope.oldProjectName =  $scope.projectInfo.name;
 
       if (activeProject.isSet()) {
         $scope.projectParams.id = $scope.projectInfo.id;
-        $scope.projectParams.name = $scope.oldProjectName;
+        $scope.projectParams.name = $scope.projectInfo.name;
         $scope.projectParams.datastart = $scope.projectInfo.dataStart;
         $scope.projectParams.dataend = $scope.projectInfo.dataEnd;
       }
 
-      $scope.populations = $scope.populations.concat(_($scope.projectInfo.populations).filter(function (population) {
-        return !findByName($scope.populations, population);
+      $scope.populations = $scope.populations.concat(_($scope.projectInfo.populations).filter(function (projectPopulation) {
+        return !_.find($scope.populations, function(population) {
+          return projectPopulation.name === population.name && projectPopulation.short_name === population.short_name;
+        });
       }));
 
       _($scope.populations).each(function(population){
@@ -123,6 +122,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $event.preventDefault();
       }
       var population = angular.copy(existingPopulation);
+      population.name = population.name + ' copy';
+      population.short_name = population.short_name + ' copy';
 
       return openPopulationModal(population).result.then(
         function (newPopulation) {

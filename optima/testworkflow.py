@@ -10,7 +10,7 @@ python -i tests.py
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2016jan06 by cliffk
+Version: 2016jan11 by cliffk
 """
 
 
@@ -19,7 +19,7 @@ Version: 2016jan06 by cliffk
 tests = [
 'makeproject',
 #'autofit',
-'makeprograms',
+#'makeprograms',
 ]
 
 
@@ -70,7 +70,7 @@ if 'autofit' in tests:
     t = tic()
 
     print('Running autofit test...')
-    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, niters=200, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, maxiters=200, inds=None) # Run automatic fitting
     results = P.runsim('autofit', end=2015)
     
     if doplot:

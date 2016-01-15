@@ -18,4 +18,29 @@
   &_center {
     text-align: center;
   }
+
+  .logged-in{
+    max-width: 350px;
+    overflow: hidden;
+    float: right;
+    white-space: nowrap;
+    margin-left: 10px;
+    margin-right: 20px;
+    &> div{
+      line-height: normal;
+      & > span{
+        float: left;
+        margin-right: 5px;
+      }
+    }
+    b{
+      max-width: 150px;
+      display: inline-block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      text-align: left;
+      width: 100%;
+    }
+  }
 }
