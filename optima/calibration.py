@@ -164,8 +164,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
                 if tv: parvec[i] = pars[thisname].m
                 else:  pars[thisname].m = parvec[i]
             elif thistype=='const': 
-                if tv: parvec[i] = pars['const'][thisind].y
-                else:  pars['const'][thisind].y = parvec[i]
+                if tv: parvec[i] = pars[thisname].y
+                else:  pars[thisname].y = parvec[i]
             else: raise Exception('Parameter type "%s" not understood' % thistype)
         
         # Decide which to return
