@@ -668,12 +668,6 @@ class Parameterset(object):
                 for attr in theseattr:
                     if attr not in attributes.keys(): attributes[attr] = []
                     attributes[attr].append(getattr(pars[key], attr))
-            elif key=='const':
-                for key2 in pars['const']:
-                    theseattr = pars['const'][key2].__dict__.keys()
-                    for attr in theseattr:
-                        if attr not in attributes.keys(): attributes[attr] = []
-                        attributes[attr].append(getattr(pars['const'][key2], attr))
         for key in attributes:
             print('  ..%s' % key)
         print('\n\n')
