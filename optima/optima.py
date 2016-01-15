@@ -21,64 +21,92 @@ I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 Version: 2016jan14 by cliffk
 """
 
+## Housekeeping
 _silent = True
-
 def _failed(msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if not _silent: _failed('"%s"' % msg)
 
+
 ## Load general modules
 try: from uuid import uuid4 as uuid
 except: _failed('uuid')
+
 try: from datetime import datetime; today = datetime.today
 except: _failed('datetime')
+
 try: from copy import deepcopy as dcp
 except: _failed('copy')
+
+
 
 ## Load non-Optima-specific custom functions
 try: from asd import asd
 except: _failed('asd')
+
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 except: _failed('colortools')
+
 try: from utils import blank, checkmem, dataindex, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
 except: _failed('utils')
+
 
 ## Load Optima functions and classes
 try: from settings import Settings # Inter-project definitions, e.g. health states
 except: _failed('settings')
+
 try: from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
 except: _failed('makespreadsheet')
+
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 except: _failed('loadspreadsheet')
+
 try: from results import Result, Resultset, getresults # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed('results')
+
 try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars # Parameter and Parameterset classes
 except: _failed('parameters')
+
 try: from model import model, runmodel # The thing that actually runs the model
 except: _failed('model')
+
 try: from programs import Program, Programset # Define programs
 except: _failed('programs')
+
 try: from makeplots import epiplot # Create the plots
 except: _failed('makeplots')
+
 try: from calibration import sensitivity, autofit # Calibration functions
 except: _failed('calibration')
+
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed('scenarios')
+
+
 
 ## Load optional plotting functions
 try: from gui import plotresults
 except: _failed('gui')
+
 try: from gui import pygui # Handle the Python plotting
 except: _failed('pygui')
+
 try: from gui import browser # Handle the browser-based plotting
 except: _failed('browser')
+
 try: from manualgui import manualfit # Do manual fitting
 except: _failed('manualfit')
+
+
 
 ## Import the Project class that ties everything together
 try: from project import Project, version # Project class
 except: _failed('project')
 
+
+
 ## Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-try: import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
+try: 
+    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
+    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
 except: _failed('high-level modules')
