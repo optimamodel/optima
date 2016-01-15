@@ -25,7 +25,7 @@ Version: 2016jan14 by cliffk
 _silent = False
 def _failed(msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
-    if not _silent: print("{} failed".format(msg))
+    if not _silent: print('Optima failed to import "%s" % msg)
 
 
 ## Load general modules
