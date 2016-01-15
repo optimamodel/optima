@@ -45,7 +45,7 @@ if 'standardscen' in tests:
 
     print('Running standard scenarios test...')
     from optima import Project
-    from defaultprograms import defaultprogset
+    from optima.defaultprograms import defaultprogset
     from numpy import array
     
     P = Project(spreadsheet='test7pops.xlsx')
@@ -156,11 +156,11 @@ if 'standardscen' in tests:
                        'ART':array([1e6,2e6])}}
         ]
     
-    from scenarios import runscenarios
+    from optima import runscenarios
     allresults = runscenarios(scenlist=scenlist)
      
     if doplot:
-        from plotpeople import plotpeople
+        from optima.plotpeople import plotpeople
         plotpeople(allresults)
 
     if showstats:

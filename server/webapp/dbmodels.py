@@ -143,14 +143,13 @@ class ProjectDb(db.Model):
 
     def as_file(self, loaddir, filename=None):
         import os
-        from optima.utils import save
 
         be_project = self.hydrate()
         if filename is None:
             filename = '{}.prj'.format(self.name)
         server_filename = os.path.join(loaddir, filename)
 
-        save(server_filename, be_project)
+        op.saveobj(server_filename, be_project)
 
         return filename
 
