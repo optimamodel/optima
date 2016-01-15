@@ -10,11 +10,3 @@ Usage
 -----
 
 See the scripts in the `tests` folder for usage examples. In particular, `testworkflow.py` shows typical usage examples.
-
-
-
-
-
-To install, from the main repo directory run:
-
-`python setup.py develop`

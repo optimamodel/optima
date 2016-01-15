@@ -21,6 +21,10 @@ I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 Version: 2016jan15 by cliffk
 """
 
+## Specify the version, for the purposes of figuring out which version was used to create a project
+__version__ = 2.0 
+
+
 ## Housekeeping
 _silent = False # WARNING: I think this should be True -- since most of the modules below import from this file, shouldn't the imports fail after the module in question?
 def _failed(msg):
