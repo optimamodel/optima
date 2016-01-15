@@ -15,24 +15,24 @@ class SIsuffix(ScalarFormatter):
     def __call__(self, x, pos=None):
         suffix = ''
         
-        exponents = [1e9, 1e6, 1e3]
+        exponents = [9, 6, 3]
         labels = ['b', 'm', 'k']
+        thisexponent = None
+        
+        # Get the original formatting
+        orig = ScalarFormatter.__call__(self, x, pos)
         
         for i,exponent in enumerate(exponents):
-            if x>=exponent: 
-#                x = round(x/exponent) if x>=exponent*10 else round(10*x/exponent)/10
-                x /= exponent
-                suffix = labels[i]
-
-        origlocs = dcp(self.locs)
-        self.locs = [loc/exponent for loc in self.locs]
-        orig = ScalarFormatter.__call__(self, x, pos)
-#        self.locs = origlocs
-        print('hi')
-        print x
-        print orig
-        print pos
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            if x>=10**exponent: 
+                if suffix=='': 
+                    thisexponent = exponent
+                    suffix = labels[i]
+#        killzeros = thisexponent
+#        while killzeros>0:
+#            if orig.find('.')==-1 and 
+#
+#        
+#        orig
         return orig+suffix
         
 
