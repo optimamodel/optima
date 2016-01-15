@@ -143,14 +143,13 @@ class ProjectDb(db.Model):
 
     def as_file(self, loaddir, filename=None):
         import os
-        from optima.utils import save
 
         be_project = self.hydrate()
         if filename is None:
             filename = '{}.prj'.format(self.name)
         server_filename = os.path.join(loaddir, filename)
 
-        save(server_filename, be_project)
+        op.saveobj(server_filename, be_project)
 
         return filename
 
@@ -393,7 +392,7 @@ class ProgramsDb(db.Model):
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     category = db.Column(db.String)
     name = db.Column(db.String)
-    short = db.Column(db.String)
+    short = db.Column('short_name', db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
@@ -456,9 +455,9 @@ class ProgramsDb(db.Model):
 
     def hydrate(self):
         program_entry = op.Program(
-            self.name,
+            self.short,
             targetpars=self.pars_to_program_pars(),
-            short=self.short,
+            name=self.name,
             category=self.category,
             targetpops=self.targetpops,
             criteria=self.criteria

@@ -129,7 +129,7 @@ class Projects(ProjectBase):
             args['name'], user_id, current_user.email))
         project_entry = ProjectDb(
             user_id=user_id,
-            version=op.version,
+            version=op.optima.__version__,
             created=datetime.utcnow(),
             **args
         )
@@ -213,7 +213,8 @@ class Project(Resource):
         if not current_user.is_admin and \
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
-        project_entry.has_data_now = project_entry.has_data()  # no other way to make it work for methods and not attributes?
+        project_entry.has_data_now = project_entry.has_data()
+        # no other way to make it work for methods and not attributes?
         return project_entry
 
     @swagger.operation(
@@ -510,8 +511,7 @@ class ProjectData(Resource):
         if project_entry is None:
             raise ProjectDoesNotExist(project_id)
 
-        from optima.utils import load
-        project_instance = load(uploaded_file)
+        project_instance = op.loadobj(uploaded_file)
 
         if project_instance.data:
             assert(project_instance.parsets)
@@ -559,7 +559,7 @@ class ProjectFromData(Resource):
     )
     @marshal_with(project_upload_resource)
     def post(self):
-        from optima.project import version
+        from optima.optima import __version__ as version
         user_id = current_user.id
 
         args = project_upload_form_parser.parse_args()
@@ -568,8 +568,7 @@ class ProjectFromData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        from optima.utils import load
-        project_instance = load(uploaded_file)
+        project_instance = op.loadobj(uploaded_file)
         project_instance.name = project_name
 
         from optima.makespreadsheet import default_datastart, default_dataend
@@ -670,7 +669,7 @@ class ProjectCopy(Resource):
             new_parsets = db.session.query(ParsetsDb).filter_by(project_id=str(new_project_id))
             print "BE parsets", be_project.parsets
             for result in project_entry.results:
-                if result.calculation_type!=ResultsDb.CALIBRATION_TYPE:
+                if result.calculation_type != ResultsDb.CALIBRATION_TYPE:
                     continue
                 result_instance = op.loads(result.blob)
                 target_name = result_instance.parset.name

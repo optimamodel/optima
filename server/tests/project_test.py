@@ -6,6 +6,7 @@ import json
 from server.api import app
 from flask import helpers
 from uuid import uuid4
+import optima as op
 
 
 class ProjectTestCase(OptimaTestCase):
@@ -476,7 +477,6 @@ class ProjectTestCase(OptimaTestCase):
         from io import BytesIO
         from zipfile import ZipFile
         from server.webapp.dbmodels import ProjectDb
-        from optima.utils import load
 
         project_count = 5
         projects = [
@@ -499,7 +499,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertIn(first_project_filename, zip_file.namelist())
 
         project_file = BytesIO(zip_file.read(first_project_filename))
-        be_project = load(project_file)
+        be_project = op.loadobj(project_file)
         self.assertEqual(be_project.name, projects[0].name)
 
     def test_parset_get(self):
