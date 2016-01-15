@@ -78,7 +78,7 @@ if 'sensitivity' in tests:
     results = P.runsim('sensitivity')
     
     if doplot:
-        from gui import pygui
+        from optima import pygui
         pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
@@ -118,7 +118,7 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from gui import plotresults
+        from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
@@ -174,7 +174,7 @@ if 'longfit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from gui import plotresults
+        from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
