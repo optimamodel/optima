@@ -313,7 +313,9 @@ class ParsetsDb(db.Model):
         return filename
 
     def restore(self, parset_instance):
-        self.name = parset_instance.name  # todo check with Robyn if it's needed
+        same_parset = (parset_instance.uid == self.id)
+        if same_parset:
+            self.name = parset_instance.name
         self.pars = op.saves(parset_instance.pars)
 
 
