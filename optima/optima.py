@@ -26,65 +26,68 @@ __version__ = 2.0
 
 
 ## Housekeeping
-_silent = True # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
-def _failed(msg):
+global _silent
+if '_silent' not in locals(): _silent = False # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
+if '_raiseexception' not in locals(): _raiseexception = True
+def _failed(E, msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if not _silent: print('Optima failed to import "%s"' % msg)
+    if _raiseexception: raise E
 
 
 ## Load general modules
 try: from uuid import uuid4 as uuid
-except: _failed('uuid')
+except Exception, E: _failed(E, 'uuid')
 
 try: from datetime import datetime; today = datetime.today
-except: _failed('datetime')
+except Exception, E: _failed(E, 'datetime')
 
 try: from copy import deepcopy as dcp
-except: _failed('copy')
+except Exception, E: _failed(E, 'copy')
 
 
 
 ## Load non-Optima-specific custom functions
 try: from asd import asd
-except: _failed('asd')
+except Exception, E: _failed(E, 'asd')
 
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
-except: _failed('colortools')
+except Exception, E: _failed(E, 'colortools')
 
 try: from utils import blank, checkmem, dataindex, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
-except: _failed('utils')
+except Exception, E: _failed(E, 'utils')
 
 
 ## Load Optima functions and classes
 try: from settings import Settings # Inter-project definitions, e.g. health states
-except: _failed('settings')
+except Exception, E: _failed(E, 'settings')
 
 try: from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
-except: _failed('makespreadsheet')
+except Exception, E: _failed(E, 'makespreadsheet')
 
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
-except: _failed('loadspreadsheet')
+except Exception, E: _failed(E, 'loadspreadsheet')
 
-try: from results import Result, Resultset, getresults # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
-except: _failed('results')
+try: from results import getresults, Result, Resultset  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+except Exception, E: _failed(E, 'results')
 
 try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars # Parameter and Parameterset classes
-except: _failed('parameters')
+except Exception, E: _failed(E, 'parameters')
 
 try: from model import model, runmodel # The thing that actually runs the model
-except: _failed('model')
+except Exception, E: _failed(E, 'model')
 
 try: from programs import Program, Programset # Define programs
-except: _failed('programs')
+except Exception, E: _failed(E, 'programs')
 
 try: from makeplots import epiplot # Create the plots
-except: _failed('makeplots')
+except Exception, E: _failed(E, 'makeplots')
 
 try: from calibration import sensitivity, autofit # Calibration functions
-except: _failed('calibration')
+except Exception, E: _failed(E, 'calibration')
 
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
-except: _failed('scenarios')
+except Exception, E: _failed(E, 'scenarios')
 
 
 
@@ -113,12 +116,12 @@ except:
 
 ## Import the Project class that ties everything together
 try: from project import Project # Project class
-except: _failed('project')
+except Exception, E: _failed(E, 'project')
 
 
 
 ## Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-try: 
-    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
-    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
-except: _failed('high-level modules')
+#try: 
+#    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
+#    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
+#except Exception, E: _failed(E, 'high-level modules')
