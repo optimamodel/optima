@@ -6,10 +6,11 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, concatenate as cat
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, concatenate as cat
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize
 import abc
-from pylab import figure
+import textwrap
+from pylab import figure, figtext
 from matplotlib.ticker import MaxNLocator
 
 coveragepars=['numtx','numpmtct','numost','numcircum']
@@ -356,7 +357,7 @@ class Programset(object):
 
         return progparset
 
-    def plotallcoverage(self,t,parset,xupperlim=None,existingFigure=None,verbose=2,randseed=None,bounds=None):
+    def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
 
         cost_coverage_figures = {}
@@ -365,7 +366,7 @@ class Programset(object):
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
-                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,xupperlim=xupperlim,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
+                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
 
         return cost_coverage_figures
 
@@ -555,17 +556,38 @@ class Program(object):
         else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
         return reqbudget
 
-    def plotcoverage(self, t, parset, xupperlim=None, existingFigure=None, 
+    def plotcoverage(self, t, parset, plotoptions=None, existingFigure=None,
         randseed=None, bounds=None):
         ''' Plot the cost-coverage curve for a single program'''
         plotdata = {}
-        if xupperlim is None: xupperlim = 10e6
-        x = linspace(0,xupperlim,100)
-        plotdata['xlinedata'] = x
+        
+        # Get caption details
+        caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
+
+        # Get cost data 
+        cost = self.costcovdata['cost'] if self.costcovdata.get('cost') else None
+            
+        # Flag to indicate whether we will adjust by population or not
+        perperson = False
+        if plotoptions and plotoptions.get('perperson'):
+            perperson = plotoptions['perperson']
+            targetpopsize = self.gettargetpopsize(self, t=t, parset=parset)
+            cost = cost/targetpopsize # TEMP, won't work yet
+        
+        # Set upper limit for x axis 
+        if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
+            xupperlim = plotoptions['xupperlim']
+        else: 
+            if cost: xupperlim = 1.5*max(cost)
+            else: xupperlim = 1e8
+        xlinedata = linspace(0,xupperlim,100)
+        
+        # Create x line data and y line data
+        plotdata['xlinedata'] = xlinedata
         try:
-            y_l = self.getcoverage(x=x,t=t,parset=parset,total=True,proportion=False,toplot=True,bounds='l')
-            y_m = self.getcoverage(x=x,t=t,parset=parset,total=True,proportion=False,toplot=True,bounds=None)
-            y_u = self.getcoverage(x=x,t=t,parset=parset,total=True,proportion=False,toplot=True,bounds='u')
+            y_l = self.getcoverage(x=xlinedata, t=t, parset=parset, total=True, proportion=False,toplot=True, bounds='l')
+            y_m = self.getcoverage(x=xlinedata, t=t, parset=parset, total=True, proportion=False,toplot=True, bounds=None)
+            y_u = self.getcoverage(x=xlinedata, t=t, parset=parset, total=True, proportion=False,toplot=True, bounds='u')
         except:
             y_l,y_m,y_u = None,None,None
         plotdata['ylinedata_l'] = y_l
@@ -578,22 +600,25 @@ class Program(object):
         cost_coverage_figure.hold(True)
         axis = cost_coverage_figure.gca()
 
+        axis.set_position((0, .4, 1., 1.)) # to make a bit of room for extra text
+        figtext(.0, .05, '\n'.join(textwrap.wrap(caption, width=100)))
+        
         if y_m is not None:
             for yr in range(y_m.shape[0]):
                 axis.plot(
-                    x,
+                    xlinedata,
                     y_m[yr],
                     linestyle='-',
                     linewidth=2,
                     color='#a6cee3')
                 axis.plot(
-                    x,
+                    xlinedata,
                     y_l[yr],
                     linestyle='--',
                     linewidth=2,
                     color='#000000')
                 axis.plot(
-                    x,
+                    xlinedata,
                     y_u[yr],
                     linestyle='--',
                     linewidth=2,
