@@ -1,7 +1,7 @@
 from datetime import datetime
 import dateutil
 
-from flask import current_app, helpers
+from flask import current_app, helpers, make_response
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
@@ -256,7 +256,9 @@ class ParsetsData(Resource):
         if not loaddir:
             loaddir = TEMPLATEDIR
 
-        filename = parset_entry.as_file(loaddir)
+        filename = "{}.par".format(parset_id)
+        response = make_response(parset_entry.pars)
+        response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
         # TODO: add filename to the response and add parset_id to filename
 
-        return helpers.send_from_directory(loaddir, filename)
+        return response

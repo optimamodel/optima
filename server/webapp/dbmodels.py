@@ -291,18 +291,6 @@ class ParsetsDb(db.Model):
             parset_instance.pars = op.loads(self.pars)
         return parset_instance
 
-    def as_file(self, loaddir, filename=None):
-        import os
-
-        if filename is None:
-            filename = '{}.par'.format(self.name)
-        server_filename = os.path.join(loaddir, filename)
-
-        with open(server_filename, 'w') as pfile:
-            pfile.write(self.pars)
-
-        return filename
-
 
 class ResultsDb(db.Model):
 
