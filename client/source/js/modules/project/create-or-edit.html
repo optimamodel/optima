@@ -65,7 +65,7 @@
     </div>
 
     <div class="section">
-      <button class="btn __green" type="submit">{{ submit }}</button>
+      <button class="btn __green" type="submit" ng-disabled="!isFormValid()">{{ submit }}</button>
     </div>
 
     <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">
