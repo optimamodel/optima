@@ -20,15 +20,20 @@ I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
 Version: 2016jan15 by cliffk
 """
+print('Welcome to Optima!\n')
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0 
 
 
 ## Housekeeping
+import __builtin__
 _E = None
-if '_printfailed' not in __builtins__(): _printfailed = True # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
-else: _printfailed = __builtins__._printfailed
+print('HIIIIII')
+print(type(__builtin__))
+
+if '_printfailed' not in __builtin__.__dict__.keys(): _printfailed = False # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
+
 def _failed(_E, msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if _printfailed: print('Optima failed to import "%s": "%s"' % (msg, _E))
@@ -47,7 +52,7 @@ except Exception, _E: _failed(_E, 'copy')
 
 
 ## Load non-Optima-specific custom functions
-try: from asd import asd
+try: from asd import asd, asdlfkdl
 except Exception, _E: _failed(_E, 'asd')
 
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
@@ -92,24 +97,24 @@ except Exception, _E: _failed(_E, 'scenarios')
 
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
-except: 
+except Exception, _E: 
     def plotresults(**kwargs): print('plotresults could not be imported')
-    _failed('plotresults')
+    _failed(_E, 'plotresults')
 
 try: from gui import pygui # Handle the Python plotting
-except: 
+except Exception, _E: 
     def pygui(**kwargs): print('pygui could not be imported')
-    _failed('pygui')
+    _failed(_E, 'pygui')
 
 try: from gui import browser # Handle the browser-based plotting
-except: 
+except Exception, _E: 
     def browser(**kwargs): print('browser could not be imported')
-    _failed('browser')
+    _failed(_E, 'browser')
 
 try: from manualgui import manualfit # Do manual fitting
-except: 
+except Exception, _E: 
     def manualfit(**kwargs): print('manualfit could not be imported')
-    _failed('manualfit')
+    _failed(_E, 'manualfit')
 
 
 
@@ -126,4 +131,6 @@ except Exception, _E: _failed(_E, 'project')
 #except Exception, _E: _failed(_E, 'high-level modules')
 
 ## Tidy up
-del _failed, _printfailed, _E
+del _failed, _E
+try: del _printfailed
+except: pass
