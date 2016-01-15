@@ -127,9 +127,9 @@ def getvalidyears(years, validdata, defaultind=0):
 
 
 
-def data2prev(name, data, keys, index=0, blh=0, **kwargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short='initprev', y=odict(), **kwargs) # Create structure
+    par = Constant(y=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -137,9 +137,9 @@ def data2prev(name, data, keys, index=0, blh=0, **kwargs): # WARNING, "blh" mean
 
 
 
-def data2popsize(name, data, keys, blh=0, **kwargs):
+def data2popsize(data=None, keys=None, blh=0, **defaultargs):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=name, short='popsize', m=1, **kwargs)
+    par = Popsizepar(m=1, **defaultargs)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -192,7 +192,7 @@ def data2popsize(name, data, keys, blh=0, **kwargs):
 
 
 
-def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
+def data2timepar(name=None, short=None, data=None, keys=None, defaultind=0, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
@@ -506,8 +506,8 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, fittable='', auto=''):
-        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
+    def __init__(self, t=None, y=None, m=1, **defaultargs):
+        Par.__init__(self, **defaultargs)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
@@ -548,8 +548,8 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, short=None, limits=(0,1e9), p=None, m=1, start=2000, by=None, fittable='', auto=''):
-        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
+    def __init__(self, p=None, m=1, start=2000, **defaultargs):
+        Par.__init__(self, **defaultargs)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -581,8 +581,8 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=(0,1), y=None, by=None, fittable='', auto=''):
-        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
+    def __init__(self, y=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
     def __repr__(self):
