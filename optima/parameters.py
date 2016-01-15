@@ -193,8 +193,15 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
 
 
 
-def data2timepar(name=None, short=None, data=None, keys=None, defaultind=0, **defaultargs):
+def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
+    # Check that at minimum, name and short were specified, since can't proceed otherwise
+    try: 
+        name, short = defaultargs['name'], defaultargs['short']
+    except: 
+        errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
+        raise Exception(errormsg)
+        
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         try:
@@ -466,12 +473,12 @@ class Par(object):
         output += '        name: "%s"\n'    % self.name
         output += '       short: "%s"\n'    % self.short
         output += '      limits: %s\n'      % str(self.limits)
-        output += '          by: %s\n'      % self.by
+        output += '          by: "%s"\n'    % self.by
         output += '    fittable: "%s"\n'    % self.fittable
         output += '        auto: "%s"\n'    % self.auto
-        output += '    coverage: "%s"\n'    % self.coverage
-        output += '     visible: "%s"\n'    % self.visible
-        output += 'proginteract: "%s"\n'    % self.proginteract
+        output += '    coverage: %s\n'      % self.coverage
+        output += '     visible: %s\n'      % self.visible
+        output += 'proginteract: %s\n'      % self.proginteract
         return output
 
 
@@ -655,17 +662,19 @@ class Parameterset(object):
         pars = self.pars[0]
         
         print('\n\n\n')
-        print('PARAMETER TYPES:')
+        print('CONTENTS OF PARS, BY TYPE:')
         partypes = []
         for key in pars: partypes.append(type(pars[key]))
         partypes = set(partypes)
-        count = 0
+        count1 = 0
+        count2 = 0
         for partype in set(partypes): 
-            print('  ..%s' % str(partype))
+            count1 += 1
+            print('  %i..%s' % (count1, str(partype)))
             for key in pars:
                 if type(pars[key])==partype:
-                    count += 1
-                    print('      %i.... %s' % (count, str(key)))
+                    count2 += 1
+                    print('      %i.... %s' % (count2, str(key)))
         
         print('\n\n\n')
         print('ATTRIBUTES:')

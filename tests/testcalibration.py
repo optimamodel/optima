@@ -54,7 +54,6 @@ if 'attributes' in tests:
 
     print('Running attributes test...')
     from optima import Project
-    
     P = Project(spreadsheet='test.xlsx')
     P.parsets[0].listattributes()
 
