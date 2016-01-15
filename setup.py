@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 
 from setuptools import setup, find_packages
-from optima import __version__
+from optima.project import version
 try:
     from pypandoc import convert
 except ImportError:
