@@ -8,6 +8,7 @@ Created on Fri Jan 15 16:22:42 2016
 from matplotlib.ticker import ScalarFormatter
 
 from pylab import *
+from copy import deepcopy as dcp
 
 class SIsuffix(ScalarFormatter):
     ''' Format axis tick values like 23k, 1.4m, etc. '''
@@ -23,11 +24,17 @@ class SIsuffix(ScalarFormatter):
                 x /= exponent
                 suffix = labels[i]
 
+        origlocs = dcp(self.locs)
+        self.locs = [loc/exponent for loc in self.locs]
         orig = ScalarFormatter.__call__(self, x, pos)
+#        self.locs = origlocs
         print('hi')
         print x
         print orig
+        print pos
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return orig+suffix
+        
 
 
 def setSIticks(axis=None, x=False, y=True):
@@ -42,7 +49,7 @@ def setSIticks(axis=None, x=False, y=True):
         
 
 fig = figure()
-plot([23.343293,23.522301])
+plot([23343293,23522301])
 axis = gca()
 setSIticks(axis)
 
