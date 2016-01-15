@@ -22,10 +22,10 @@ Version: 2016jan14 by cliffk
 """
 
 ## Housekeeping
-_silent = True
+_silent = False
 def _failed(msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
-    if not _silent: _failed('"%s"' % msg)
+    if not _silent: print("{} failed".format(msg))
 
 
 ## Load general modules
