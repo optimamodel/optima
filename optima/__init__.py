@@ -14,5 +14,4 @@ have to be imported from the individual modules.
 
 Version: 2015dec23
 """
-__version__ = '2.0'
 from optima import *
