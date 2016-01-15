@@ -165,8 +165,8 @@ if 'makeprograms' in tests:
                   'are included, both of them previously omitted in the reports.'
     plotoptions = {}
     plotoptions['caption'] = caption
-    plotoptions['xupperlim'] = 2e9/HTC.gettargetpopsize(2011,P.parsets['default'])
-    plotoptions['perperson'] = True
+    plotoptions['xupperlim'] = 2e9
+    plotoptions['perperson'] = False
 
     if doplot: HTC.plotcoverage(t=2015,parset=P.parsets['default'],plotoptions=plotoptions)
 
