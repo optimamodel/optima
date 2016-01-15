@@ -1,6 +1,6 @@
 import os
 import unittest
-from makespreadsheet import OptimaSpreadsheet, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
+from optima.makespreadsheet import OptimaSpreadsheet, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
 import xlsxwriter
 
 populations = [{"name": "Female sex workers", "short": "FSW", "female": True, "male": False, "are_from": 15, "age_to": 49}, \

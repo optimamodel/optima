@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, model, runcommand, sensitivity, manualfit, autofit # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity # Import functions
 
 version = 2.0 ## Specify the version, for the purposes of figuring out which version was used to create a project
 
@@ -34,7 +34,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
     
-    Version: 2016jan11 by cliffk
+    Version: 2016jan14 by cliffk
     """
     
     
@@ -64,13 +64,7 @@ class Project(object):
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
         self.version = version
-        try:
-            self.gitbranch = runcommand('git rev-parse --abbrev-ref HEAD').rstrip('\n')
-            self.gitversion = runcommand('git rev-parse HEAD').rstrip('\n')
-        except:
-            self.gitbranch = 'Git branch information not retrivable'
-            self.gitversion = 'Git version information not retrivable'
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        self.gitbranch, self.gitversion = gitinfo()
         
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -286,6 +280,7 @@ class Project(object):
         
     def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
+        from optima import manualfit
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualfit(self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
@@ -293,6 +288,7 @@ class Project(object):
         
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
+        from optima import autofit
         self.copyparset(orig=orig, new=name) # Store parameters
         autofit(self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None

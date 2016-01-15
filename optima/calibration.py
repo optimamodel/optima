@@ -120,12 +120,10 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
                         for i in range(len(par.y)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
                     elif par.fittable=='exp':
                         for i in range(len(par.p)): parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':i})
+                    elif par.fittable=='const':
+                        parlist.append({'name':par.short, 'type':'const', 'limits':par.limits, 'ind':None})
                     else:
                         raise Exception('Parameter "fittable" type "%s" not understood' % par.fittable)
-            elif parname=='const' and 'const' in what: # Or check if it's a constant
-                for constname in pars['const']:
-                    const = pars['const'][constname]
-                    parlist.append({'name':const.short, 'type':'const', 'limits':const.limits, 'ind':constname})
             else: pass # It's like popkeys or something -- don't worry, be happy
         return parlist
     
@@ -166,8 +164,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
                 if tv: parvec[i] = pars[thisname].m
                 else:  pars[thisname].m = parvec[i]
             elif thistype=='const': 
-                if tv: parvec[i] = pars['const'][thisind].y
-                else:  pars['const'][thisind].y = parvec[i]
+                if tv: parvec[i] = pars[thisname].y
+                else:  pars[thisname].y = parvec[i]
             else: raise Exception('Parameter type "%s" not understood' % thistype)
         
         # Decide which to return
