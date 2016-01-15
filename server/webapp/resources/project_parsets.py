@@ -1,14 +1,16 @@
 from datetime import datetime
 import dateutil
 
-from flask import current_app, helpers, make_response
+from flask import current_app, helpers, make_response, request
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser, report_exception, TEMPLATEDIR, upload_dir_user
+from server.webapp.inputs import SubParser, secure_filename_input, AllowedSafeFilenameStorage
+
+from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
+                                 upload_dir_user, save_result)
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from server.webapp.dbconn import db
@@ -267,6 +269,10 @@ class ParsetsCalibration(Resource):
         }
 
 
+file_upload_form_parser = RequestParser()
+file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)
+
+
 class ParsetsData(Resource):
     """
     Export and import of the existing parset in / from pickled format.
@@ -282,17 +288,61 @@ class ParsetsData(Resource):
         """
     )
     def get(self, project_id, parset_id):
-        current_app.logger.debug("/api/project/{0}/parset/{1}/data".format(project_id, parset_id))
+        current_app.logger.debug("GET /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
         parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
+        if parset_entry is None:
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
 
-        filename = "{}.par".format(parset_id)
-        response = make_response(parset_entry.pars)
+        filename = parset_entry.as_file(loaddir)
+
+        response = helpers.send_from_directory(loaddir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
-        # TODO: add filename to the response and add parset_id to filename
 
         return response
+
+    @swagger.operation(
+        summary='Upload data for the parset with the given id in project with the given id',
+        notes="""
+        if parset exists, updates it with data from the file
+        if parset does not exist, returns an error"""
+    )
+    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
+    def put(self, project_id, parset_id):
+        # TODO replace this with app.config
+        current_app.logger.debug("PUT /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
+
+        print request.files, request.args
+        args = file_upload_form_parser.parse_args()
+        uploaded_file = args['file']
+
+        source_filename = uploaded_file.source_filename
+
+        project_entry = load_project(project_id, raise_exception=True)
+
+        parset_entry = project_entry.find_parset(parset_id)
+        parset_instance = op.load(uploaded_file)
+
+        parset_entry.restore(parset_instance)
+        db.session.add(parset_entry)
+        db.session.flush()
+
+        # recalculate data (TODO: verify with Robyn if it's needed )
+        project_instance = project_entry.hydrate()
+        result = project_instance.runsim(parset_entry.name)
+        current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
+
+        db.session.add(project_entry)  # todo: do we need to log that project was updated?
+        db.session.flush()
+
+        result_record = save_result(project_entry.id, result, parset_entry.name)
+        db.session.add(result_record)
+
+        db.session.commit()
+
+        return [item.hydrate() for item in project_entry.parsets]
+        return reply
