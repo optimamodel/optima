@@ -159,18 +159,19 @@ if 'makeprograms' in tests:
 
     # 12. Plot cost-coverage function
     caption = 'Spending data includes all HTC spending. Global Fund spending on HTC in 2012 was $40,245. '\
-                  'In the reporting period total of 676 MARPs received VCT cervices, which makes cumulative '\
-                  'number of 1,102 MARPs that received HTC including provision of results. Due to changes in '\
+                  'In the reporting period, a total of 676 MARPs received HTC services, which makes a cumulative '\
+                  'total of 1,102 MARPs that received HTC including provision of results. Due to changes in '\
                   'the definition and focus of the indicator, PWID that received HTC in DST Centers and prisoners '\
                   'are included, both of them previously omitted in the reports.'
     plotoptions = {}
     plotoptions['caption'] = caption
-    plotoptions['xupperlim'] = 2e9/HTC.gettargetpopsize(2015,P.parsets['default'])
+    plotoptions['xupperlim'] = 2e9/HTC.gettargetpopsize(2011,P.parsets['default'])
     plotoptions['perperson'] = True
 
     if doplot: HTC.plotcoverage(t=2015,parset=P.parsets['default'],plotoptions=plotoptions)
 
     print('Running make programs set test...')
+
     # Initialise with or without programs
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])

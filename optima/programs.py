@@ -576,7 +576,7 @@ class Program(object):
         xlinedata = linspace(0,xupperlim,100)
 
         if plotoptions and plotoptions.get('perperson'):
-            xlinedata = linspace(0,xupperlim*self.gettargetpopsize(2015,parset),100)
+            xlinedata = linspace(0,xupperlim*self.gettargetpopsize(t[-1],parset),100)
 
         # Create x line data and y line data
         try:
@@ -590,8 +590,6 @@ class Program(object):
         plotdata['ylinedata_u'] = y_u
         plotdata['xlabel'] = 'USD'
         plotdata['ylabel'] = 'Number covered'
-
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Flag to indicate whether we will adjust by population or not
         if plotoptions and plotoptions.get('perperson'):
@@ -610,8 +608,8 @@ class Program(object):
         cost_coverage_figure.hold(True)
         axis = cost_coverage_figure.gca()
 
-        axis.set_position((0, .4, 1., 1.)) # to make a bit of room for extra text
-        figtext(.0, .05, '\n'.join(textwrap.wrap(caption, width=100)))
+        axis.set_position((0.1, 0.35, .8, .6)) # to make a bit of room for extra text
+        figtext(.1, .05, textwrap.fill(caption))
         
         if y_m is not None:
             for yr in range(y_m.shape[0]):
