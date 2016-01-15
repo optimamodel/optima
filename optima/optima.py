@@ -28,12 +28,19 @@ __version__ = 2.0
 
 
 ## Housekeeping -- discard errors by default, but enable them if _failsilently is defined (in builtins) and is True
-import __builtin__, sys
+delbuiltin = False
+delsys = False
+if '__builtin__' not in locals().keys(): 
+    import __builtin__
+    delbuiltin = True
+if 'sys' not in locals().keys(): 
+    import sys
+    delsys = True
 if '_failsilently' not in __builtin__.__dict__.keys(): _failsilently = True
 def _failed(doraise=True):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if not _failsilently: 
-        print('Optima failed to import "%s"' % msg)
+        print('Optima import failed: %s' % sys.exc_info()[1])
         if doraise: raise sys.exc_info()[1], None, sys.exc_info()[2]
 
 
@@ -50,7 +57,7 @@ except: _failed()
 
 
 ## Load non-Optima-specific custom functions
-try: from asd import asd, asdlfkdl
+try: from asd import asd
 except: _failed()
 
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
@@ -92,6 +99,9 @@ try: from scenarios import runscenarios, makescenarios, defaultscenarios, getpar
 except: _failed()
 
 
+## Want to add more modules to Optima? Do that here (unless they're non-essential plotting functions)
+
+
 
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
@@ -128,7 +138,12 @@ try:
     import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
 except: _failed()
 
-## Tidy up
+
+
+
+## Tidy up -- delete things we created for housekeeping purposes that we no lnger need
 del _failed # This must exist, delete it
 if '_failsilently' in __builtin__.__dict__.keys(): del __builtin__._failsilently # This may or may not exist here
 else: del _failsilently
+if delbuiltin: del __builtin__
+if delsys: del sys
