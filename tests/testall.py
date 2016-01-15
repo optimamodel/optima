@@ -16,6 +16,7 @@ doplot = False # When running all tests, don't try to run the GUIs
 
 ## Define master list of tests to run
 MASTER = [
+'testimports',
 'testutils',
 'testproject',
 'testprograms',
