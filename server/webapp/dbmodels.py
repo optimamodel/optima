@@ -143,14 +143,13 @@ class ProjectDb(db.Model):
 
     def as_file(self, loaddir, filename=None):
         import os
-        from optima.utils import save
 
         be_project = self.hydrate()
         if filename is None:
             filename = '{}.prj'.format(self.name)
         server_filename = os.path.join(loaddir, filename)
 
-        save(server_filename, be_project)
+        op.save(server_filename, be_project)
 
         return filename
 
@@ -283,14 +282,26 @@ class ParsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        parset_entry = op.Parameterset()
-        parset_entry.name = self.name
-        parset_entry.uid = self.id
-        parset_entry.created = self.created
-        parset_entry.modified = self.updated
+        parset_instance = op.Parameterset()
+        parset_instance.name = self.name
+        parset_instance.uid = self.id
+        parset_instance.created = self.created
+        parset_instance.modified = self.updated
         if self.pars:
-            parset_entry.pars = op.loads(self.pars)
-        return parset_entry
+            parset_instance.pars = op.loads(self.pars)
+        return parset_instance
+
+    def as_file(self, loaddir, filename=None):
+        import os
+
+        if filename is None:
+            filename = '{}.par'.format(self.name)
+        server_filename = os.path.join(loaddir, filename)
+
+        with open(server_filename, 'w') as pfile:
+            pfile.write(self.pars)
+
+        return filename
 
 
 class ResultsDb(db.Model):

@@ -1,14 +1,14 @@
 from datetime import datetime
 import dateutil
 
-from flask import current_app
+from flask import current_app, helpers
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
 from flask_restful_swagger import swagger
 
 from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser, report_exception
+from server.webapp.utils import load_project, RequestParser, report_exception, TEMPLATEDIR, upload_dir_user
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from server.webapp.dbconn import db
@@ -55,7 +55,7 @@ class ParsetsDetail(Resource):
             if parset does not exist, returns an error.
         """
     )
-    def delete(self, project_id, parset_id):  # TODO: we don't need project_id, because parset_id uniquely identifies the resourse
+    def delete(self, project_id, parset_id):
 
         current_app.logger.debug("/api/project/{}/parsets/{}".format(project_id, parset_id))
         project_entry = load_project(project_id, raise_exception=True)
@@ -231,3 +231,32 @@ class ParsetsCalibration(Resource):
             "graphs": graphs,
             "selectors": selectors
         }
+
+
+class ParsetsData(Resource):
+    """
+    Export and import of the existing parset in / from pickled format.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        produces='application/x-gzip',
+        summary='Download data for the parset with the given id from project with the given id',
+        notes="""
+        if parset exists, returns data for it
+        if parset does not exist, returns an error.
+        """
+    )
+    def get(self, project_id, parset_id):
+        current_app.logger.debug("/api/project/{0}/parset/{1}/data".format(project_id, parset_id))
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
+
+        # return result as a file
+        loaddir = upload_dir_user(TEMPLATEDIR)
+        if not loaddir:
+            loaddir = TEMPLATEDIR
+
+        filename = parset_entry.as_file(loaddir)
+        # TODO: add filename to the response and add parset_id to filename
+
+        return helpers.send_from_directory(loaddir, filename)
