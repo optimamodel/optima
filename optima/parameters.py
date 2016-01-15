@@ -357,7 +357,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
     if keys is None: keys = modelkeys
     if tvec is not None: simpars['tvec'] = tvec
-    else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+    else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
