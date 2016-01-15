@@ -297,6 +297,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         newdiagnoses = [0] * ncd4
         newtreat1    = [0] * ncd4
         leavingcare  = [0] * ncd4
+        virallysuppressed = [0] * ncd4
         stopUSlost   = [0] * ncd4
         stopSVLlost  = [0] * ncd4
         stopUSincare = [0] * ncd4
@@ -383,11 +384,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths         = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths       = dt * people[tx[cd4],:,t] * background
-            virallysuppressed =      people[tx[cd4],:,t] * adherenceprop[:,t] * (1.-biofailure)
-            stopUSincare[cd4] =      people[tx[cd4],:,t] * dt*propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
-            stopUSlost[cd4]   =      people[tx[cd4],:,t] * dt*propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
+            virallysuppressed[cd4] = people[tx[cd4],:,t] * adherenceprop[:,t] * (1.-biofailure)
+            stopUSincare[cd4] = dt * people[tx[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
+            stopUSlost[cd4]   = dt * people[tx[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + newtreat1[cd4]
-            outflows = recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysuppressed
+            outflows = recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysuppressed[cd4]
             dUSVL.append(inflows - outflows)
             raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
         
@@ -403,11 +404,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = dt*recov[cd4-2]*people[svl[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            hivdeaths   = dt * currentsuppressed[cd4,:] * death[cd4]
-            otherdeaths = dt * currentsuppressed[cd4,:] * background
-            stopSVLincare[cd4] = currentsuppressed[cd4,:] * dt*propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
-            stopSVLlost[cd4]   = currentsuppressed[cd4,:] * dt*propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
-            inflows = recovin + virallysuppressed
+            hivdeaths          = dt * currentsuppressed[cd4,:] * death[cd4]
+            otherdeaths        = dt * currentsuppressed[cd4,:] * background
+            stopSVLincare[cd4] = dt * currentsuppressed[cd4,:] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
+            stopSVLlost[cd4]   = dt * currentsuppressed[cd4,:] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
+            inflows = recovin + virallysuppressed[cd4]
             outflows = recovout + hivdeaths + otherdeaths + stopSVLincare[cd4] + stopSVLlost[cd4]
             dSVL.append(inflows - outflows)
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
