@@ -20,7 +20,6 @@ I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
 Version: 2016jan15 by cliffk
 """
-print('Welcome to Optima!\n')
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0 
@@ -29,11 +28,7 @@ __version__ = 2.0
 ## Housekeeping
 import __builtin__
 _E = None
-print('HIIIIII')
-print(type(__builtin__))
-
 if '_printfailed' not in __builtin__.__dict__.keys(): _printfailed = False # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
-
 def _failed(_E, msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if _printfailed: print('Optima failed to import "%s": "%s"' % (msg, _E))
@@ -124,13 +119,13 @@ except Exception, _E: _failed(_E, 'project')
 
 
 
-## Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-#try: 
-#    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
-#    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
-#except Exception, _E: _failed(_E, 'high-level modules')
+# Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
+try: 
+    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
+    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
+except Exception, _E: _failed(_E, 'high-level modules')
 
 ## Tidy up
-del _failed, _E
-try: del _printfailed
-except: pass
+del _failed, _E # These must exist, delete them
+if '_printfailed' in __builtin__.__dict__.keys(): del __builtin__._printfailed
+else: del _printfailed # This may or may not exist
