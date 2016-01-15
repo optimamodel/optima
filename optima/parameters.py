@@ -12,13 +12,14 @@ from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, 
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
-# Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here
+# Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
 partable = '''
+name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
 Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
 Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	None	0	None
 Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	None
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
-Transitions (% moving/year)	transit	(0, 'maxrate')	array	array	no	no	None	0	None
+Transitions (% moving/year)	transit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
 HIV testing rate (%/person/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
 AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
@@ -32,13 +33,13 @@ Male circumcision prevalence (%)	circum	(0, 1)	pop	timepar	meta	other	0	1	random
 Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
 Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	1	random
 Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	1	random
-Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	temp	meta	other	0	1	random
-Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	temp	meta	other	0	1	random
-Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	temp	meta	other	0	1	random
-Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	temp	meta	other	0	1	random
-Condom use for regular acts (%)	condreg	(0, 1)	pship	temp	meta	other	0	1	random
-Condom use for casual acts (%)	condcas	(0, 1)	pship	temp	meta	other	0	1	random
-Condom use for commercial acts (%)	condcom	(0, 1)	pship	temp	meta	other	0	1	random
+Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
+Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
+Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	None	0	None
@@ -689,7 +690,13 @@ class Parameterset(object):
                 except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return None
 
+
+
+
+
+
     def manualfitlists(self, ind=0):
+        ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise Exception("No parameters available!")
         elif len(self.pars)<=ind:
@@ -706,7 +713,6 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            print "key", key, "par", par
             if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
                 continue
             if par.fittable == 'meta':
@@ -730,7 +736,7 @@ class Parameterset(object):
                     valuelist.append(par.p[subkey][0])
                     labellist.append('{} -- {}'.format(par.name, str(subkey)))
             else:
-                print 'Parameter type "%s" not implemented!' % key.manual
+                print('Parameter type "%s" not implemented!' % par.fittable)
 
         return mflists
 
