@@ -52,7 +52,7 @@ try: from loadspreadsheet import loadspreadsheet # For loading a filled out spre
 except: _failed('loadspreadsheet')
 try: from results import Result, Resultset, getresults # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed('results')
-try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars # Parameter and Parameterset classes
+try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars # Parameter and Parameterset classes
 except: _failed('parameters')
 try: from model import model, runmodel # The thing that actually runs the model
 except: _failed('model')
