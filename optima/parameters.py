@@ -88,18 +88,24 @@ Disutility on treatment (unitless)	disutiltx	[0.034, 0.079]	tot	Constant	const	c
 '''
 
 
-def readpars():
+def readpars(partable):
     ''' 
     Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
     '''
     rawpars = []
-    alllines = partable.split('\n') # Load all data
+    alllines = partable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
     for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
     attrs = alllines.pop(0) # First line is attributes
     for l in range(len(alllines)): # Loop over parameters
         rawpars.append(odict()) # Create an odict to store attributes
         for i,attr in enumerate(attrs): # Loop over attributes
-            rawpars[l][attr] = alllines[l][i] # Store attributes
+            try:
+                if alllines[l][i]=='None': alllines[l][i] = None # Turn 'None' values to actual None
+                if attr=='limits': alllines[l][i] = eval(alllines[l][i]) # Turn into an actual tuple
+                rawpars[l][attr] = alllines[l][i] # Store attributes
+            except:
+                errormsg = 'Error processing parameter line "%s"' % alllines[l]
+                raise Exception(errormsg)
     return rawpars
 
 
