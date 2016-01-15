@@ -18,14 +18,14 @@ print statements.
 
 I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
-Version: 2016jan14 by cliffk
+Version: 2016jan15 by cliffk
 """
 
 ## Housekeeping
-_silent = False
+_silent = False # WARNING: I think this should be True -- since most of the modules below import from this file, shouldn't the imports fail after the module in question?
 def _failed(msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
-    if not _silent: print('Optima failed to import "%s" % msg)
+    if not _silent: print('Optima failed to import "%s"' % msg)
 
 
 ## Load general modules
