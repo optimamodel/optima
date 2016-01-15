@@ -7,7 +7,7 @@ Run all tests, skipping GUI ones by default (doplot = False).
 It runs everything in the same namespace, but deletes variables that get
 added along the way. Extremely un-Pythonic, I know.
 
-Version: 2016jan06 by cliffk
+Version: 2016jan14 by cliffk
 """
 
 ## Initialization
@@ -26,7 +26,7 @@ MASTER = [
 #'testoptimization',
 ]
 
-## Other tests, for completeness
+## Other tests, for completeness -- not run by default since a subset of the other tests and/or does not make sense to run in batch
 OTHER = [
 'testgui',
 'testworkflow',
