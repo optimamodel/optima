@@ -337,7 +337,7 @@ def makepars(data, label=None, verbose=2):
         elif by=='pop': keys = popkeys
         elif by=='fpop': keys = fpopkeys
         elif by=='mpop': keys = mpopkeys
-        else: keys = None # They're not necessarily none, e.g. by partnership, but too complicated to figure out here
+        else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
         if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
         
         # Decide how to handle it based on parameter type
@@ -348,10 +348,8 @@ def makepars(data, label=None, verbose=2):
         elif partype=='timepar': # It's a normal time parameter, e.g. hivtest
             pars[parname] = data2timepar(data=data, keys=keys, **rawpar)
         elif partype=='constant': # The constants, e.g. transmfi
-            best = data['const'][parname][0] 
-            low = data['const'][parname][1] 
-            high = data['const'][parname][2]
-            pars[parname] = Constant(limits=[low, high], y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
+            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
             
@@ -439,7 +437,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     
     # Loop over requested keys
     for key in keys: # Loop over all keys
-        if issubclass(pars[key], Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+        if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
             except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
 
