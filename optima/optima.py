@@ -25,100 +25,125 @@ Version: 2016jan15 by cliffk
 __version__ = 2.0 
 
 
-## Housekeeping
-_silent = True # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
-def _failed(msg):
+
+
+## Housekeeping -- discard errors by default, but enable them if _failsilently is defined (in builtins) and is True
+delbuiltin = False
+delsys = False
+if '__builtin__' not in locals().keys(): 
+    import __builtin__
+    delbuiltin = True
+if 'sys' not in locals().keys(): 
+    import sys
+    delsys = True
+if '_failsilently' not in __builtin__.__dict__.keys(): _failsilently = True
+def _failed(doraise=True):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
-    if not _silent: print('Optima failed to import "%s"' % msg)
+    if not _failsilently: 
+        print('Optima import failed: %s' % sys.exc_info()[1])
+        if doraise: raise sys.exc_info()[1], None, sys.exc_info()[2]
 
 
 ## Load general modules
 try: from uuid import uuid4 as uuid
-except: _failed('uuid')
+except: _failed()
 
 try: from datetime import datetime; today = datetime.today
-except: _failed('datetime')
+except: _failed()
 
 try: from copy import deepcopy as dcp
-except: _failed('copy')
+except: _failed()
 
 
 
 ## Load non-Optima-specific custom functions
 try: from asd import asd
-except: _failed('asd')
+except: _failed()
 
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
-except: _failed('colortools')
+except: _failed()
 
 try: from utils import blank, checkmem, dataindex, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
-except: _failed('utils')
+except: _failed()
 
 
 ## Load Optima functions and classes
 try: from settings import Settings # Inter-project definitions, e.g. health states
-except: _failed('settings')
+except: _failed()
 
 try: from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
-except: _failed('makespreadsheet')
+except: _failed()
 
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
-except: _failed('loadspreadsheet')
+except: _failed()
 
-try: from results import Result, Resultset, getresults # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
-except: _failed('results')
+try: from results import Result, Resultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+except: _failed()
 
 try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars # Parameter and Parameterset classes
-except: _failed('parameters')
+except: _failed()
 
 try: from model import model, runmodel # The thing that actually runs the model
-except: _failed('model')
+except: _failed()
 
 try: from programs import Program, Programset # Define programs
-except: _failed('programs')
+except: _failed()
 
 try: from makeplots import epiplot # Create the plots
-except: _failed('makeplots')
+except: _failed()
 
 try: from calibration import sensitivity, autofit # Calibration functions
-except: _failed('calibration')
+except: _failed()
 
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
-except: _failed('scenarios')
+except: _failed()
+
+
+## Want to add more modules to Optima? Do that here (unless they're non-essential plotting functions)
 
 
 
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
-except: 
+except:
     def plotresults(**kwargs): print('plotresults could not be imported')
-    _failed('plotresults')
+    _failed(doraise=False)
 
 try: from gui import pygui # Handle the Python plotting
-except: 
+except:
     def pygui(**kwargs): print('pygui could not be imported')
-    _failed('pygui')
+    _failed(doraise=False)
 
 try: from gui import browser # Handle the browser-based plotting
-except: 
+except:
     def browser(**kwargs): print('browser could not be imported')
-    _failed('browser')
+    _failed(doraise=False)
 
 try: from manualgui import manualfit # Do manual fitting
-except: 
+except:
     def manualfit(**kwargs): print('manualfit could not be imported')
-    _failed('manualfit')
+    _failed(doraise=False)
 
 
 
 ## Import the Project class that ties everything together
 try: from project import Project # Project class
-except: _failed('project')
+except: _failed()
 
 
 
-## Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
+# Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: 
     import defaultprograms, plotpeople # Additional features not included in the main part of Optima
     import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
-except: _failed('high-level modules')
+except: _failed()
+
+
+
+
+## Tidy up -- delete things we created for housekeeping purposes that we no lnger need
+del _failed # This must exist, delete it
+if '_failsilently' in __builtin__.__dict__.keys(): del __builtin__._failsilently # This may or may not exist here
+else: del _failsilently
+if delbuiltin: del __builtin__
+if delsys: del sys
