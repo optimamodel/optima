@@ -26,68 +26,67 @@ __version__ = 2.0
 
 
 ## Housekeeping
-global _silent
-if '_silent' not in locals(): _silent = False # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
-if '_raiseexception' not in locals(): _raiseexception = True
-def _failed(E, msg):
+_E = None
+if '_printfailed' not in __builtins__(): _printfailed = True # This should be True -- since most of the modules below import from this file, the imports after the module in question are expected to fail
+else: _printfailed = __builtins__._printfailed
+def _failed(_E, msg):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
-    if not _silent: print('Optima failed to import "%s"' % msg)
-    if _raiseexception: raise E
+    if _printfailed: print('Optima failed to import "%s": "%s"' % (msg, _E))
 
 
 ## Load general modules
 try: from uuid import uuid4 as uuid
-except Exception, E: _failed(E, 'uuid')
+except Exception, _E: _failed(_E, 'uuid')
 
 try: from datetime import datetime; today = datetime.today
-except Exception, E: _failed(E, 'datetime')
+except Exception, _E: _failed(_E, 'datetime')
 
 try: from copy import deepcopy as dcp
-except Exception, E: _failed(E, 'copy')
+except Exception, _E: _failed(_E, 'copy')
 
 
 
 ## Load non-Optima-specific custom functions
 try: from asd import asd
-except Exception, E: _failed(E, 'asd')
+except Exception, _E: _failed(_E, 'asd')
 
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
-except Exception, E: _failed(E, 'colortools')
+except Exception, _E: _failed(_E, 'colortools')
 
 try: from utils import blank, checkmem, dataindex, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
-except Exception, E: _failed(E, 'utils')
+except Exception, _E: _failed(_E, 'utils')
 
 
 ## Load Optima functions and classes
 try: from settings import Settings # Inter-project definitions, e.g. health states
-except Exception, E: _failed(E, 'settings')
+except Exception, _E: _failed(_E, 'settings')
 
 try: from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
-except Exception, E: _failed(E, 'makespreadsheet')
+except Exception, _E: _failed(_E, 'makespreadsheet')
 
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
-except Exception, E: _failed(E, 'loadspreadsheet')
+except Exception, _E: _failed(_E, 'loadspreadsheet')
 
 try: from results import getresults, Result, Resultset  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
-except Exception, E: _failed(E, 'results')
+except Exception, _E: _failed(_E, 'results')
 
 try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars # Parameter and Parameterset classes
-except Exception, E: _failed(E, 'parameters')
+except Exception, _E: _failed(_E, 'parameters')
 
 try: from model import model, runmodel # The thing that actually runs the model
-except Exception, E: _failed(E, 'model')
+except Exception, _E: _failed(_E, 'model')
 
 try: from programs import Program, Programset # Define programs
-except Exception, E: _failed(E, 'programs')
+except Exception, _E: _failed(_E, 'programs')
 
 try: from makeplots import epiplot # Create the plots
-except Exception, E: _failed(E, 'makeplots')
+except Exception, _E: _failed(_E, 'makeplots')
 
 try: from calibration import sensitivity, autofit # Calibration functions
-except Exception, E: _failed(E, 'calibration')
+except Exception, _E: _failed(_E, 'calibration')
 
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
-except Exception, E: _failed(E, 'scenarios')
+except Exception, _E: _failed(_E, 'scenarios')
 
 
 
@@ -116,7 +115,7 @@ except:
 
 ## Import the Project class that ties everything together
 try: from project import Project # Project class
-except Exception, E: _failed(E, 'project')
+except Exception, _E: _failed(_E, 'project')
 
 
 
@@ -124,4 +123,7 @@ except Exception, E: _failed(E, 'project')
 #try: 
 #    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
 #    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
-#except Exception, E: _failed(E, 'high-level modules')
+#except Exception, _E: _failed(_E, 'high-level modules')
+
+## Tidy up
+del _failed, _printfailed, _E
