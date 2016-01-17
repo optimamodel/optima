@@ -66,7 +66,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Download  project-set data
     $scope.downloadProgramSet = function() {
-      $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id)
+      $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id,
+        {headers: {'Content-type': 'application/octet-stream'},
+        responseType:'blob'})
         .success(function (response) {
           var blob = new Blob([response], { type: 'application/octet-stream' });
           saveAs(blob, ($scope.activeProgramSet.name + '.progset'));
