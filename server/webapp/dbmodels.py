@@ -12,19 +12,20 @@ from sqlalchemy.orm import deferred
 from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json
 
+from werkzeug.utils import secure_filename
 import optima as op
 
 
 def db_model_as_file(model, loaddir, filename, name_field, extension):
     import os
-    from optima.utils import save
+    from optima.utils import saveobj
 
     be_object = model.hydrate()
     if filename is None:
         filename = '{}.{}'.format(getattr(model, name_field), extension)
     server_filename = os.path.join(loaddir, filename)
 
-    save(server_filename, be_object)
+    saveobj(server_filename, be_object)
 
     return filename
 
@@ -107,8 +108,8 @@ class ProjectDb(db.Model):
     progsets = db.relationship('ProgsetsDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
-            created=None, updated=None, settings=None, data=None, parsets=None,
-            results=None):
+                 created=None, updated=None, settings=None, data=None, parsets=None,
+                 results=None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
@@ -161,17 +162,48 @@ class ProjectDb(db.Model):
 
     def restore(self, project):
 
+        # Attention: this method adds only dependent objects to the session
         from datetime import datetime
         import dateutil
 
-        self.name = project.name
+        same_project = str(project.uid) == str(self.id)
+        str_project_id = str(self.id)
+        print "same_project:", same_project, project.uid, self.id
+        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
+        if same_project:
+            self.name = project.name
+        else:
+            db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
+            db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+        db.session.flush()
+
         self.created = project.created
-        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.updated = project.modified or datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
         self.data = op.saves(project.data)
+
+        if project.data:
+            self.datastart = int(project.data['years'][0])
+            self.dataend = int(project.data['years'][-1])
+            self.populations = []
+            project_pops = project.data['pops']
+            for i in range(len(project_pops['short'])):
+                new_pop = {
+                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
+                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
+                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
+                }
+                self.populations.append(new_pop)
+        else:
+            self.datastart = self.datastart or op.default_datastart
+            self.dataend = self.dataend or op.default_dataend
+            self.populations = self.populations or {}
         if project.parsets:
             from server.webapp.utils import update_or_create_parset
             for name, parset in project.parsets.iteritems():
+                if not same_project:
+                    parset.uid = op.uuid()  # so that we don't get same parset in two different projects
                 update_or_create_parset(self.id, name, parset)
 
         # Expects that progsets or programs should not be deleted from restoring a project
@@ -189,18 +221,19 @@ class ProjectDb(db.Model):
                 progset_record = update_or_create_progset(self.id, name, progset)
                 progset_record.restore(progset, program_list)
 
-    def recursive_delete(self):
+    def recursive_delete(self, synchronize_session=False):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
-        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete()
-        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete()
-        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
-        db.session.query(ProjectDb).filter_by(id=str_project_id).delete()
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.flush()
 
 
 class ParsetsDb(db.Model):
@@ -330,7 +363,7 @@ class ProgramsDb(db.Model):
         'progset_id': Uuid,
         'project_id': Uuid,
         'category': fields.String,
-        'short_name': fields.String,
+        'short_name': fields.String(attribute='short'),
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
@@ -345,7 +378,7 @@ class ProgramsDb(db.Model):
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     category = db.Column(db.String)
     name = db.Column(db.String)
-    short_name = db.Column(db.String)
+    short = db.Column('short_name', db.String)
     pars = db.Column(JSON)
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
@@ -353,14 +386,14 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short_name='',
-            category='No category', active=False, pars=None, created=None,
-            updated=None, id=None, targetpops=[], criteria=None):
+    def __init__(self, project_id, progset_id, name, short='',
+                 category='No category', active=False, pars=None, created=None,
+                 updated=None, id=None, targetpops=[], criteria=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
         self.name = name
-        self.short_name = short_name if short_name is not None else name
+        self.short = short if short is not None else name
         self.category = category
         self.pars = pars
         self.active = active
@@ -399,19 +432,18 @@ class ProgramsDb(db.Model):
             parameters[parameter['param']].append(parameter['pop'])
 
         pars = [{
-            'active': True,
-            'param': short_name,
-            'pops': pop,
-        } for short_name, pop in parameters.iteritems()]
+                'active': True,
+                'param': short_name,
+                'pops': pop,
+                } for short_name, pop in parameters.iteritems()]
 
         return pars
 
     def hydrate(self):
-        from optima.programs import Program
-        program_entry = Program(
-            self.name,
+        program_entry = op.Program(
+            self.short,
             targetpars=self.pars_to_program_pars(),
-            short_name=self.short_name,
+            name=self.name,
             category=self.category,
             targetpops=self.targetpops,
             criteria=self.criteria
@@ -493,7 +525,7 @@ class ProgsetsDb(db.Model):
     def create_programs_from_list(self, programs):
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short_name', 'category', 'targetpops', 'pars']:
+            for field in ['name', 'short', 'category', 'targetpops', 'pars']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
@@ -504,9 +536,10 @@ class ProgsetsDb(db.Model):
             )
             db.session.add(program_entry)
 
-    def recursive_delete(self):
-        db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete()
-        db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete()
+    def recursive_delete(self, synchronize_session=False):
+        db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete(synchronize_session)
+        db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete(synchronize_session)
+        db.session.flush()
 
     def as_file(self, loaddir, filename=None):
         return db_model_as_file(self, loaddir, filename, 'name', 'progset')

@@ -64,16 +64,16 @@ if 'saveload' in tests:
     t = tic()
     print('Running save/load test...')
     
-    from optima import Project, save, load
+    from optima import Project, saveobj, loadobj
     from os import remove
     filename = 'testproject.prj'
     
     print('  Checking saving...')
     P = Project()
-    save(filename, P)
+    saveobj(filename, P)
     
     print('  Checking loading...')
-    Q = load(filename)
+    Q = loadobj(filename)
     
     print('Cleaning up...')
     remove(filename)

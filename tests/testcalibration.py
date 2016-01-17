@@ -54,7 +54,6 @@ if 'attributes' in tests:
 
     print('Running attributes test...')
     from optima import Project
-    
     P = Project(spreadsheet='test.xlsx')
     P.parsets[0].listattributes()
 
@@ -78,7 +77,7 @@ if 'sensitivity' in tests:
     results = P.runsim('sensitivity')
     
     if doplot:
-        from gui import pygui
+        from optima import pygui
         pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
@@ -113,12 +112,12 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, niters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from gui import plotresults
+        from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
@@ -139,7 +138,7 @@ if 'autofitmulti' in tests:
     
     P = Project(spreadsheet='test7pops.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5) # Create MC initialization
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, niters=100, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=100, inds=None) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
@@ -169,12 +168,12 @@ if 'longfit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test7pops.xlsx')
-    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], niters=1000, inds=None, verbose=2) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], maxiters=1000, inds=None, verbose=2) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from gui import plotresults
+        from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     

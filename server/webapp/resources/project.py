@@ -4,6 +4,7 @@ import dateutil
 
 from flask import current_app, helpers, request, Response
 from werkzeug.exceptions import Unauthorized
+from werkzeug.utils import secure_filename
 
 from flask.ext.login import current_user, login_required
 from flask_restful import Resource, marshal_with
@@ -21,7 +22,7 @@ from server.webapp.fields import Uuid, Json
 
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 from server.webapp.utils import (load_project, verify_admin_request, report_exception,
-                                 delete_spreadsheet, RequestParser)
+                                 save_result, delete_spreadsheet, RequestParser)
 
 
 class ProjectBase(Resource):
@@ -51,7 +52,7 @@ population_parser.add_arguments({
 
 project_parser = RequestParser()
 project_parser.add_arguments({
-    'name': {'required': True, 'type': secure_filename_input},
+    'name': {'required': True, 'type': str},
     'datastart': {'type': int, 'default': op.default_datastart},
     'dataend': {'type': int, 'default': op.default_dataend},
     # FIXME: programs should be a "SubParser" with its own Parser
@@ -63,7 +64,7 @@ project_parser.add_arguments({
 # editing datastart & dataend currently is not allowed
 project_update_parser = RequestParser()
 project_update_parser.add_arguments({
-    'name': {'type': secure_filename_input},
+    'name': {'type': str},
     'populations': {'type': dict, 'action': 'append'},
     'canUpdate': {'type': bool, 'default': False},
     'datastart': {'type': int, 'default': None},
@@ -130,7 +131,7 @@ class Projects(ProjectBase):
             args['name'], user_id, current_user.email))
         project_entry = ProjectDb(
             user_id=user_id,
-            version=op.version,
+            version=op.optima.__version__,
             created=datetime.utcnow(),
             **args
         )
@@ -143,8 +144,7 @@ class Projects(ProjectBase):
             project_entry.name, project_entry.user_id))
         db.session.add(project_entry)
         db.session.commit()
-        new_project_template = "{}.xlsx".format(args['name'])
-
+        new_project_template = secure_filename("{}.xlsx".format(args['name']))
         path = templatepath(new_project_template)
         op.makespreadsheet(
             path,
@@ -156,7 +156,11 @@ class Projects(ProjectBase):
             "new_project_template: %s" % new_project_template)
         (dirname, basename) = (
             upload_dir_user(TEMPLATEDIR), new_project_template)
-        response = helpers.send_from_directory(dirname, basename)
+        response = helpers.send_from_directory(
+            dirname,
+            basename,
+            as_attachment=True,
+            attachment_filename=new_project_template)
         response.headers['X-project-id'] = project_entry.id
         response.status_code = 201
         return response
@@ -214,7 +218,8 @@ class Project(Resource):
         if not current_user.is_admin and \
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
-        project_entry.has_data_now = project_entry.has_data()  # no other way to make it work for methods and not attributes?
+        project_entry.has_data_now = project_entry.has_data()
+        # no other way to make it work for methods and not attributes?
         return project_entry
 
     @swagger.operation(
@@ -238,7 +243,8 @@ class Project(Resource):
             "project %s is in edit mode" % project_id)
         current_app.logger.debug(args)
 
-#        can_update = args.pop('canUpdate', False) we'll calculate it based on DB info + request info
+# can_update = args.pop('canUpdate', False) we'll calculate it based on DB
+# info + request info
         current_app.logger.debug("updateProject data: %s" % args)
 
         # Check whether we are editing a project
@@ -249,7 +255,8 @@ class Project(Resource):
         current_populations = project_entry.populations
         new_populations = args.get('populations', {})
         can_update = (current_populations == new_populations)
-        current_app.logger.debug("can_update %s: %s" % (project_id, can_update))
+        current_app.logger.debug(
+            "can_update %s: %s" % (project_id, can_update))
 
         for name, value in args.iteritems():
             if value is not None:
@@ -260,10 +267,12 @@ class Project(Resource):
                 project_entry.name, current_user.id, current_user.email))
 
         # because programs no longer apply here, we don't seem to have to recalculate the results
-        # not sure what to do with startdate and enddate though... let's see how it goes )
+        # not sure what to do with startdate and enddate though... let's see
+        # how it goes )
 
         if not can_update:
-            db.session.query(ProjectDataDb).filter_by(id=project_entry.id).delete()
+            db.session.query(ProjectDataDb).filter_by(
+                id=project_entry.id).delete()
             db.session.commit()
 
         # Save to db
@@ -271,10 +280,10 @@ class Project(Resource):
             project_entry.name, project_entry.user_id))
         db.session.add(project_entry)
         db.session.commit()
+        secure_project_name = secure_filename(project_entry.name)
+        new_project_template = secure_project_name
 
-        new_project_template = project_entry.name
-
-        path = templatepath(project_entry.name)
+        path = templatepath(secure_project_name)
         op.makespreadsheet(
             path,
             pops=args['populations'],
@@ -285,7 +294,11 @@ class Project(Resource):
             "new_project_template: %s" % new_project_template)
         (dirname, basename) = (
             upload_dir_user(TEMPLATEDIR), new_project_template)
-        response = helpers.send_from_directory(dirname, basename)
+        response = helpers.send_from_directory(
+            dirname,
+            basename,
+            as_attachment=True,
+            attachment_filename=new_project_template)
         response.headers['X-project-id'] = project_entry.id
         return response
 
@@ -319,6 +332,7 @@ class Project(Resource):
 
 
 class ProjectSpreadsheet(Resource):
+
     """
     Spreadsheet upload and download for the given project.
     """
@@ -342,8 +356,7 @@ class ProjectSpreadsheet(Resource):
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project_entry.id)
 
-        wb_name = '{}.xlsx'.format(project_entry.name)
-
+        wb_name = secure_filename('{}.xlsx'.format(project_entry.name))
         if projdata is not None and len(projdata.meta) > 0:
             return Response(
                 projdata.meta,
@@ -364,11 +377,12 @@ class ProjectSpreadsheet(Resource):
                 dataend=project_entry.dataend)
 
             current_app.logger.debug(
-                "project %s template created: %s" % (project_entry.name, wb_name)
+                "project %s template created: %s" % (
+                    project_entry.name, wb_name)
             )
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             # deliberately don't save the template as uploaded data
-            return helpers.send_from_directory(dirname, basename)
+            return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -382,13 +396,15 @@ class ProjectSpreadsheet(Resource):
         DATADIR = current_app.config['UPLOAD_FOLDER']
         CALIBRATION_TYPE = 'calibration'
 
-        current_app.logger.debug("PUT /api/project/%s/spreadsheet" % project_id)
+        current_app.logger.debug(
+            "PUT /api/project/%s/spreadsheet" % project_id)
 
         project_entry = load_project(project_id, raise_exception=True)
 
         project_name = project_entry.name
         user_id = current_user.id
-        current_app.logger.debug("uploadExcel(project id: %s user:%s)" % (project_id, user_id))
+        current_app.logger.debug(
+            "uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
         args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
@@ -400,39 +416,32 @@ class ProjectSpreadsheet(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        filename = project_name + '.xlsx'
+        filename = secure_filename(project_name + '.xlsx')
         server_filename = os.path.join(loaddir, filename)
         uploaded_file.save(server_filename)
 
         # See if there is matching project
-        current_app.logger.debug("project for user %s name %s: %s" % (current_user.id, project_name, project_entry))
+        current_app.logger.debug("project for user %s name %s: %s" % (
+            current_user.id, project_name, project_entry))
         from optima.utils import saves  # , loads
         # from optima.parameters import Parameterset
-        new_project = project_entry.hydrate()
-        new_project.loadspreadsheet(server_filename)
-        new_project.modified = datetime.now(dateutil.tz.tzutc())
-        current_app.logger.info("after spreadsheet uploading: %s" % new_project)
-        # TODO: figure out whether we still have to do anything like that
-        #   D['G']['inputpopulations'] = deepcopy(project_entry.populations)
+        project_instance = project_entry.hydrate()
+        project_instance.loadspreadsheet(server_filename)
+        project_instance.modified = datetime.now(dateutil.tz.tzutc())
+        current_app.logger.info(
+            "after spreadsheet uploading: %s" % project_instance)
 
-        # Is this the first time? if so then we have to run simulations
-        #   should_re_run = 'S' not in D
+        result = project_instance.runsim()
+        current_app.logger.info(
+            "runsim result for project %s: %s" % (project_id, result))
 
-        # TODO call new_project.runsim instead
-        result = new_project.runsim()
-        current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
-
-        # D = updatedata(D, input_programs = project_entry.programs, savetofile=False, rerun=should_re_run)
         #   now, update relevant project_entry fields
-        project_entry.settings = saves(new_project.settings)
-        project_entry.data = saves(new_project.data)
-        project_entry.created = new_project.created
-        project_entry.updated = new_project.modified
-
-        # update the programs and populations based on the data TODO: yes or no?
-        #   getPopsAndProgsFromModel(project_entry, trustInputMetadata = False)
-
+        # this adds to db.session all dependent entries
+        project_entry.restore(project_instance)
         db.session.add(project_entry)
+
+        result_record = save_result(project_entry.id, result)
+        db.session.add(result_record)
 
         # save data upload timestamp
         data_upload_time = datetime.now(dateutil.tz.tzutc())
@@ -440,39 +449,6 @@ class ProjectSpreadsheet(Resource):
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project data
         projdata = ProjectDataDb.query.get(project_entry.id)
-
-        # update parsets
-        result_parset_id = None
-        parset_records_map = {record.id: record for record in project_entry.parsets}
-        # may be SQLAlchemy can do stuff like this already?
-        for (parset_name, parset_entry) in new_project.parsets.iteritems():
-            parset_record = parset_records_map.get(parset_entry.uid)
-            if not parset_record:
-                parset_record = ParsetsDb(
-                    project_id=project_entry.id,
-                    name=parset_name,
-                    id=parset_entry.uid
-                )
-            if parset_record.name == "default":
-                result_parset_id = parset_entry.uid
-            parset_record.pars = saves(parset_entry.pars)
-            db.session.add(parset_record)
-
-        # update results (after runsim is invoked)
-            result_record = [item for item in project_entry.results if
-                             item.parset_id == result_parset_id and
-                             item.calculation_type == ResultsDb.CALIBRATION_TYPE]
-            if result_record:
-                result_record = result_record[0]
-                result_record.blob = saves(result)
-            if not result_record:
-                result_record = ResultsDb(
-                    parset_id=result_parset_id,
-                    project_id=project_entry.id,
-                    calculation_type=ResultsDb.CALIBRATION_TYPE,
-                    blob=saves(result)
-                )
-            db.session.add(result_record)
 
         # update existing
         if projdata is not None:
@@ -497,6 +473,7 @@ class ProjectSpreadsheet(Resource):
 
 
 class ProjectData(Resource):
+
     """
     Export and import of the existing project in / from pickled format.
     """
@@ -534,7 +511,8 @@ class ProjectData(Resource):
         Precondition: model should exist.
         """
         user_id = current_user.id
-        current_app.logger.debug("uploadProject(project id: %s user:%s)" % (project_id, user_id))
+        current_app.logger.debug(
+            "uploadProject(project id: %s user:%s)" % (project_id, user_id))
 
         args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
@@ -545,10 +523,22 @@ class ProjectData(Resource):
         if project_entry is None:
             raise ProjectDoesNotExist(project_id)
 
-        from optima.utils import load
-        new_project = load(uploaded_file)
-        project_entry.restore(new_project)
+        project_instance = op.loadobj(uploaded_file)
+
+        if project_instance.data:
+            assert(project_instance.parsets)
+            result = project_instance.runsim()
+            current_app.logger.info(
+                "runsim result for project %s: %s" % (project_id, result))
+
+        project_entry.restore(project_instance)
         db.session.add(project_entry)
+        db.session.flush()
+
+        if project_instance.data:
+            assert(project_instance.parsets)
+            result_record = save_result(project_entry.id, result)
+            db.session.add(result_record)
 
         db.session.commit()
 
@@ -571,6 +561,7 @@ project_upload_resource['id'] = Uuid
 
 
 class ProjectFromData(Resource):
+
     """
     Import of a new project from pickled format.
     """
@@ -582,7 +573,7 @@ class ProjectFromData(Resource):
     )
     @marshal_with(project_upload_resource)
     def post(self):
-        from optima.project import version
+        from optima.optima import __version__ as version
         user_id = current_user.id
 
         args = project_upload_form_parser.parse_args()
@@ -591,26 +582,13 @@ class ProjectFromData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        from optima.utils import load
-        new_project = load(uploaded_file)
+        project_instance = op.loadobj(uploaded_file)
+        project_instance.name = project_name
 
-        if new_project.data:
-            datastart = int(new_project.data['years'][0])
-            dataend = int(new_project.data['years'][-1])
-            pops = []
-            project_pops = new_project.data['pops']
-            for i in range(len(project_pops['short'])):
-                new_pop = {
-                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
-                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
-                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
-                }
-                pops.append(new_pop)
-        else:
-            from optima.makespreadsheet import default_datastart, default_dataend
-            datastart = default_datastart
-            dataend = default_dataend
-            pops = {}
+        from optima.makespreadsheet import default_datastart, default_dataend
+        datastart = default_datastart
+        dataend = default_dataend
+        pops = {}
 
         project_entry = ProjectDb(
             project_name, user_id, datastart,
@@ -622,8 +600,20 @@ class ProjectFromData(Resource):
         db.session.add(project_entry)
         db.session.flush()
 
-        project_entry.restore(new_project)
-        project_entry.name = project_name
+        if project_instance.data:
+            assert(project_instance.parsets)
+            result = project_instance.runsim()
+            current_app.logger.info(
+                "runsim result for project %s: %s" % (project_entry.id, result))
+
+        project_entry.restore(project_instance)
+        db.session.add(project_entry)
+        db.session.flush()
+
+        if project_instance.data:
+            result_record = save_result(project_entry.id, result)
+            db.session.add(result_record)
+
         db.session.commit()
 
         reply = {
@@ -661,7 +651,8 @@ class ProjectCopy(Resource):
         new_project_name = args['to']
 
         # Get project row for current user with project name
-        project_entry = load_project(project_id, all_data=True, raise_exception=True)
+        project_entry = load_project(
+            project_id, all_data=True, raise_exception=True)
         project_user_id = project_entry.user_id
 
         be_project = project_entry.hydrate()
@@ -678,10 +669,12 @@ class ProjectCopy(Resource):
 
         project_entry.restore(be_project)
         project_entry.name = new_project_name
-
+        db.session.add(project_entry)
         # change the creation and update time
         project_entry.created = datetime.now(dateutil.tz.tzutc())
         project_entry.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.flush()  # this updates the project ID to the new value
+
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
@@ -689,7 +682,20 @@ class ProjectCopy(Resource):
 
         if project_result_exists:
             # copy each result
+            new_parsets = db.session.query(ParsetsDb).filter_by(
+                project_id=str(new_project_id))
+            print "BE parsets", be_project.parsets
             for result in project_entry.results:
+                if result.calculation_type != ResultsDb.CALIBRATION_TYPE:
+                    continue
+                result_instance = op.loads(result.blob)
+                target_name = result_instance.parset.name
+                new_parset = [
+                    item for item in new_parsets if item.name == target_name]
+                if not new_parset:
+                    raise Exception(
+                        "Could not find copied parset for result in copied project {}".format(project_id))
+                result.parset_id = new_parset[0].id
                 db.session.expunge(result)
                 make_transient(result)
                 # set the id to None to ensure no duplicate ID
@@ -724,7 +730,8 @@ class Portfolio(Resource):
 
         current_app.logger.debug("Download Portfolio (/api/project/portfolio)")
         args = bulk_project_parser.parse_args()
-        current_app.logger.debug("Portfolio requested for projects {}".format(args['projects']))
+        current_app.logger.debug(
+            "Portfolio requested for projects {}".format(args['projects']))
 
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
@@ -739,7 +746,8 @@ class Portfolio(Resource):
         zipfile_server_name = os.path.join(loaddir, zipfile_name)
         with ZipFile(zipfile_server_name, 'w') as portfolio:
             for project in projects:
-                portfolio.write(os.path.join(loaddir, project), 'portfolio/{}'.format(project))
+                portfolio.write(
+                    os.path.join(loaddir, project), 'portfolio/{}'.format(project))
 
         return helpers.send_from_directory(loaddir, zipfile_name)
 
@@ -750,6 +758,7 @@ defaults_fields = {
 
 
 class Defaults(Resource):
+
     @swagger.operation(
         summary="""Gives default programs, program categories and program parameters
                 for the given program"""
