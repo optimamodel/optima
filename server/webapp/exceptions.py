@@ -52,6 +52,13 @@ class ParsetDoesNotExist(RecordDoesNotExist):
     _model = 'parset'
 
 
+class ParsetAlreadyExists(BaseRESTException):
+    def __init__(self, project_id, name):
+        super(ParsetAlreadyExists, self).__init__()
+        self.code = 406
+        self.description = 'Parset "{0}" already exists in project {1}'.format(name, project_id)
+
+
 class InvalidCredentials(BaseRESTException):
     code = 401
     description = 'The user or password provided are incorrect'

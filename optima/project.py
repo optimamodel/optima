@@ -116,8 +116,8 @@ class Project(object):
     
     
     def ensureparset(self, name='default'):
-         ''' If parameter set of that name doesn't exist, create it'''
-         # question: what is that parset does exist? delete it first?
+        ''' If parameter set of that name doesn't exist, create it'''
+        # question: what is that parset does exist? delete it first?
         if not self.data:
             raise Exception("No data in project %s!" % self.uid)
         if name not in self.parsets:

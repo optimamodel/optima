@@ -12,7 +12,7 @@ from server.webapp.inputs import SubParser, secure_filename_input, AllowedSafeFi
 
 from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
                                  upload_dir_user, save_result)
-from server.webapp.exceptions import ParsetDoesNotExist
+from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb
@@ -67,6 +67,8 @@ class Parsets(Resource):
 
         project_entry = load_project(project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
+        if name in project_instance.parsets:
+            raise ParsetAlreadyExists(project_id, name)
         if not parset_id:
             # create new parset with default settings
             project_instance.ensureparset(name)
@@ -74,7 +76,7 @@ class Parsets(Resource):
             project_entry.restore(project_instance)
             db.session.add(project_entry)
 
-            result_record = save_result(project_entry.id, result, name)
+            result_record = save_result(project_entry.id, new_result, name)
             db.session.add(result_record)
         else:
             # dealing with uid's directly might be messy...
@@ -88,13 +90,14 @@ class Parsets(Resource):
             db.session.add(project_entry)
 
             old_result_record = db.session.query(ResultsDb).filter_by(
-                id=parset_id, project_id=project_id,
-                calculation_type=ResultsDb.CALIBRATION_TYPE)
+                parset_id=str(parset_id), project_id=str(project_id),
+                calculation_type=ResultsDb.CALIBRATION_TYPE).first()
             old_result = old_result_record.hydrate()
             new_result = op.dcp(old_result)
             new_result_record = save_result(project_entry.id, new_result, name)
-            db.session.add(result_record)
-            db.session.commit()
+            db.session.add(new_result_record)
+
+        db.session.commit()
 
         return [item.hydrate() for item in project_entry.parsets], 201
 
