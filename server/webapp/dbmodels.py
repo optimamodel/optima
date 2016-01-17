@@ -13,6 +13,7 @@ from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json
 from server.webapp.exceptions import ParsetDoesNotExist
 
+from werkzeug.utils import secure_filename
 import optima as op
 
 
@@ -147,10 +148,10 @@ class ProjectDb(db.Model):
 
         be_project = self.hydrate()
         if filename is None:
-            filename = '{}.prj'.format(self.name)
+            filename = secure_filename('{}.prj'.format(self.name))
         server_filename = os.path.join(loaddir, filename)
 
-        op.save(server_filename, be_project)
+        op.saveobj(server_filename, be_project)
 
         return filename
 

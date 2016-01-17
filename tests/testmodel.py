@@ -69,7 +69,7 @@ if 'force' in tests:
     results2 = P.runsim('forcetest')
     
     if doplot:
-        from plotpeople import plotpeople
+        from optima.plotpeople import plotpeople
         plotpeople([results1, results2])
 
     done(t)
@@ -93,7 +93,7 @@ if 'treatment' in tests:
     results2 = P.runsim('treatment')
     
     if doplot:
-        from plotpeople import plotpeople
+        from optima.plotpeople import plotpeople
         plotpeople([results1, results2])
 
     done(t)
