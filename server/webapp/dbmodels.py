@@ -18,14 +18,14 @@ import optima as op
 
 def db_model_as_file(model, loaddir, filename, name_field, extension):
     import os
-    from optima.utils import save
+    from optima.utils import saveobj
 
     be_object = model.hydrate()
     if filename is None:
         filename = '{}.{}'.format(getattr(model, name_field), extension)
     server_filename = os.path.join(loaddir, filename)
 
-    save(server_filename, be_object)
+    saveobj(server_filename, be_object)
 
     return filename
 
