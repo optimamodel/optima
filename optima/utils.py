@@ -16,11 +16,6 @@ def blank(n=3):
     print('\n'*n)
 
 
-def objectid(obj):
-    ''' Return the object ID as per the default Python __repr__ method '''
-    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
-
-
 def createcollist(oldkeys, title, strlen = 18, ncol = 3):
     ''' Creates a string for a nice columnated list (e.g. to use in __repr__ method) '''
     from numpy import ceil
@@ -38,13 +33,20 @@ def createcollist(oldkeys, title, strlen = 18, ncol = 3):
         c += 1
     attstring += '\n'
     return attstring
-    
-def objectatt(obj, strlen = 18, ncol = 3):
+
+
+def objectid(obj):
+    ''' Return the object ID as per the default Python __repr__ method '''
+    return '<%s.%s at %s>\n' % (obj.__class__.__module__, obj.__class__.__name__, hex(id(obj)))
+
+
+def objatt(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object attributes for the Python __repr__ method '''
     oldkeys = sorted(obj.__dict__.keys())
     return createcollist(oldkeys, 'Attributes', strlen = 18, ncol = 3)
-    
-def objectmeth(obj, strlen = 18, ncol = 3):
+
+
+def objmeth(obj, strlen = 18, ncol = 3):
     ''' Return a sorted string of object methods for the Python __repr__ method '''
     oldkeys = sorted([method + '()' for method in dir(obj) if callable(getattr(obj, method)) and not method.startswith('__')])
     return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
@@ -519,7 +521,22 @@ def runcommand(command, printinput=False, printoutput=False):
 
 
 
-
+def gitinfo():
+    ''' Try to extract git information based on the file structure '''
+    try: # This whole thing could fail, you know!
+        from os import path, sep # Path and file separator
+        rootdir = path.abspath(path.dirname(__file__)) # e.g. /user/username/optima/optima
+        while len(rootdir): # Keep going as long as there's something left to go
+            gitdir = rootdir+sep+'.git' # look for the git directory in the current directory
+            if path.isdir(gitdir): break # It's found! terminate
+            else: rootdir = sep.join(rootdir.split(sep)[:-1]) # Remove the last directory and keep looking
+        headstrip = 'ref: ref'+sep+'heads'+sep # Header to strip off...hope this is generalizable!
+        with open(gitdir+sep+'HEAD') as f: gitbranch = f.read()[len(headstrip)+1:].strip() # Read git branch name
+        with open(gitdir+sep+'refs'+sep+'heads'+sep+gitbranch) as f: gitversion = f.read().strip() # Read git commit
+    except: # Failure? Give up
+        gitbranch = 'Git branch information not retrivable'
+        gitversion = 'Git version information not retrivable'
+    return gitbranch, gitversion
 
 
 
@@ -535,7 +552,7 @@ def runcommand(command, printinput=False, printoutput=False):
 ##############################################################################
 
 
-def save(filename, obj):
+def saveobj(filename, obj):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
@@ -546,21 +563,20 @@ def save(filename, obj):
     return None
 
 
-def load(filename):
+def loadobj(filename):
     ''' Load a saved file '''
     try:
         import cPickle as pickle  # For Python 2 compatibility
     except:
         import pickle
     from gzip import GzipFile
-
-    argtype = 'filename'
-    if not isinstance(filename, basestring):
-        argtype = 'fileobj'
+    
+    # Handle loading of either filename or file object
+    if isinstance(filename, basestring): argtype='filename'
+    else: argtype = 'fileobj'
     kwargs = {'mode': 'rb', argtype: filename}
 
-    with GzipFile(**kwargs) as fileobj:
-        obj = pickle.load(fileobj)
+    with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
     print('Object loaded from "%s"' % filename)
     return obj
 
@@ -669,12 +685,18 @@ class odict(OrderedDict):
         elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
-            startind = self.__slicekey(key.start, 'start')
-            stopind = self.__slicekey(key.stop, 'stop')
-            if stopind<startind: raise Exception('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
-            slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
-            try: return array(slicevals) # Try to convert to an array
-            except: return slicevals
+            try:
+                startind = self.__slicekey(key.start, 'start')
+                stopind = self.__slicekey(key.stop, 'stop')
+                if stopind<startind:
+                    print('Stop index must be >= start index (start=%i, stop=%i)' % (startind, stopind))
+                    raise Exception
+                slicevals = [self.__getitem__(i) for i in range(startind,stopind)]
+                try: return array(slicevals) # Try to convert to an array
+                except: return slicevals
+            except:
+                print('Invalid odict slice... returning empty list...')
+                return []
         elif self.__is_odict_iterable(key): # Iterate over items
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)

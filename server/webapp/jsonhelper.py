@@ -54,4 +54,10 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
         if isinstance(obj, op.utils.odict):  # never seems to get there
             return normalize_dict(obj)
 
+        if isinstance(obj, op.project.Project):
+            return None
+
+        if isinstance(obj, op.results.Resultset):
+            return None
+
         return flask.json.JSONEncoder.default(self, obj)

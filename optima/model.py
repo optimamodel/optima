@@ -53,16 +53,16 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     raw['death']    = zeros((npops, npts)) # Number of deaths per timestep
     
     # Biological and failure parameters -- death etc
-    prog = simpars['const']['progacute':'proggt50']
-    recov = simpars['const']['recovgt500':'recovgt50']
-    death = simpars['const']['deathacute':'deathlt50']
-    cd4trans = simpars['const']['cd4transacute':'cd4translt50']
-    deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
+    prog = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
+    recov = simpars['recovgt500':'recovgt50']
+    death = simpars['deathacute':'deathlt50']
+    cd4trans = simpars['cd4transacute':'cd4translt50']
+    deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = simpars['const']['effdx'] * cd4trans # Include diagnosis efficacy
-    txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
+    dxfactor = simpars['effdx'] * cd4trans # Include diagnosis efficacy
+    txfactor = simpars['efftx'] * dxfactor # And treatment efficacy
 
     # Disease state indices
     sus  = settings.uncirc  # Susceptible
@@ -74,13 +74,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Infection propabilities
     male = simpars['male']
     female = simpars['female']
-    transinj = simpars['const']['transinj']      # Injecting
+    transinj = simpars['transinj']      # Injecting
     
     # Further potential effects on transmission
-    effsti    = simpars['const']['effsti'] * simpars['stiprev']  # STI effect
-    effcirc   = 1 - simpars['const']['effcirc']            # Circumcision effect
-    effprep   = (1 - simpars['const']['effprep']) * simpars['prep'] # PrEP effect
-    effcondom = 1 - simpars['const']['effcondom']          # Condom effect
+    effsti    = simpars['effsti'] * simpars['stiprev']  # STI effect
+    effcirc   = 1 - simpars['effcirc']            # Circumcision effect
+    effprep   = (1 - simpars['effprep']) * simpars['prep'] # PrEP effect
+    effcondom = 1 - simpars['effcondom']          # Condom effect
     
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
@@ -136,7 +136,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([prog, simpars['const']['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
+        progratios = hstack([prog, simpars['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
         recovratios = hstack([inf, recov, efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
@@ -172,10 +172,10 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             this['cond'] = 1 - simpars['cond'+act][key]*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
-            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmmi']
+            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmmi']
             # WARNING how to specify receptive male-male??
-            elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['const']['transmfi']  
-            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmfr']
+            elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']  
+            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
             sexactslist.append(this)
     
@@ -380,12 +380,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
 
 
-def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uid=None, project=None, data=None, verbose=2):
+def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uid=None, project=None, data=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
     
-    Version: 2016jan05 by cliffk    
+    Version: 2016jan14 by cliffk    
     '''
     from optima import makesimpars, Resultset
     if simpars is None:
@@ -395,5 +395,5 @@ def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.
         if project is not None: settings = project.settings
         else: settings = Settings()
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
-    results = Resultset(raw=raw, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
+    results = Resultset(raw=raw, parset=parset, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
     return results

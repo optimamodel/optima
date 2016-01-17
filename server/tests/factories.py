@@ -108,6 +108,6 @@ class ProgramsFactory(SQLAlchemyModelFactory):
 
     category = 'Test category'
     name = fuzzy.FuzzyText(prefix='program_')
-    short_name = fuzzy.FuzzyText()
+    short = fuzzy.FuzzyText()
     active = True
     criteria = {'hivstatus': 'allstates', 'pregnant': False}
