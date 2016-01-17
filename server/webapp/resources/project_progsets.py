@@ -202,8 +202,8 @@ class ProgsetData(Resource):
         else:
             program_list = []
 
-        from optima.utils import load
-        new_progset = load(uploaded_file)
+        from optima.utils import loadobj
+        new_progset = loadobj(uploaded_file)
         progset_entry.restore(new_progset, program_list)
         db.session.add(progset_entry)
 

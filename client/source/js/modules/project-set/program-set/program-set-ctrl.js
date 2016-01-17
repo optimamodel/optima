@@ -66,7 +66,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Download  project-set data
     $scope.downloadProgramSet = function() {
-      $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id,
+      $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
         {headers: {'Content-type': 'application/octet-stream'},
         responseType:'blob'})
         .success(function (response) {
@@ -81,7 +81,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         .element('<input type=\'file\'>')
         .change(function(event){
           $upload.upload({
-            url: '/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id,
+            url: '/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id + '/data',
             file: event.target.files[0]
           }).success(function () {
             window.location.reload();
