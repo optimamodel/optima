@@ -1,5 +1,6 @@
 from datetime import datetime
 import dateutil
+import uuid
 
 from flask import current_app, helpers, make_response, request
 
@@ -18,6 +19,13 @@ from server.webapp.dbmodels import ParsetsDb, ResultsDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
+
+
+copy_parser = RequestParser()
+copy_parser.add_arguments({
+    'name': {'required': True},
+    'parset_id': {'type': uuid.UUID}
+})
 
 
 class Parsets(Resource):
@@ -42,6 +50,53 @@ class Parsets(Resource):
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         return [item.hydrate() for item in reply]  # TODO: project_id should be not null
+
+    @swagger.operation(
+        description='Create new parset with default settings or copy existing parset',
+        notes="""
+            If parset_id argument is given, copy from the existing parset.
+            Otherwise, create a parset with default settings
+            """
+    )
+    def post(self, project_id):
+        current_app.logger.debug("POST /api/project/{}/parsets".format(project_id))
+        args = copy_parser.parse_args()
+        print "args", args
+        name = args['name']
+        parset_id = args.get('parset_id')
+
+        project_entry = load_project(project_id, raise_exception=True)
+        project_instance = project_entry.hydrate()
+        if not parset_id:
+            # create new parset with default settings
+            project_instance.ensureparset(name)
+            new_result = project_instance.runsim(name)
+            project_entry.restore(project_instance)
+            db.session.add(project_entry)
+
+            result_record = save_result(project_entry.id, result, name)
+            db.session.add(result_record)
+        else:
+            # dealing with uid's directly might be messy...
+            original_parset = [item for item in project_entry.parsets if item.id == parset_id]
+            if not original_parset:
+                raise ParsetDoesNotExist(parset_id, project_id=project_id)
+            original_parset = original_parset[0]
+            parset_name = original_parset.name
+            project_instance.copyparset(orig=parset_name, new=name)
+            project_entry.restore(project_instance)
+            db.session.add(project_entry)
+
+            old_result_record = db.session.query(ResultsDb).filter_by(
+                id=parset_id, project_id=project_id,
+                calculation_type=ResultsDb.CALIBRATION_TYPE)
+            old_result = old_result_record.hydrate()
+            new_result = op.dcp(old_result)
+            new_result_record = save_result(project_entry.id, new_result, name)
+            db.session.add(result_record)
+            db.session.commit()
+
+        return [item.hydrate() for item in project_entry.parsets], 201
 
 
 rename_parser = RequestParser()
@@ -110,6 +165,7 @@ class ParsetsDetail(Resource):
         db.session.add(target_parset)
         db.session.commit()
         return [item.hydrate() for item in project_entry.parsets]
+
 
 calibration_fields = {
     "parset_id": Uuid,

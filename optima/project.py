@@ -111,16 +111,22 @@ class Project(object):
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         
-        ## If parameter set of that name doesn't exist, create it
+        self.ensureparset(name)
+        return None    
+    
+    
+    def ensureparset(self, name='default'):
+         ''' If parameter set of that name doesn't exist, create it'''
+         # question: what is that parset does exist? delete it first?
+        if not self.data:
+            raise Exception("No data in project %s!" % self.uid)
         if name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset) # Store parameters
         return None
-    
-    
-    
-    
+
+
     
 
     #######################################################################################################
@@ -187,7 +193,8 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
-        structlist[new].name = new # Update name
+        structlist[new].name = new  # Update name
+        structlist[new].uid = uuid()  # otherwise there will be 2 structures with same unique identifier
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
         return None
     
