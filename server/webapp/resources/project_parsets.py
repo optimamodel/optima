@@ -130,7 +130,7 @@ class ParsetsDetail(Resource):
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
         # Is this how we should check for default parset?
-        if parset.name == 'Default':  # TODO: it is lowercase
+        if parset.name.lower() == 'default':  # TODO: it is lowercase
             abort(403)
 
         # TODO: also delete the corresponding calibration results
@@ -138,7 +138,7 @@ class ParsetsDetail(Resource):
         db.session.query(ParsetsDb).filter_by(id=parset_id).delete()
         db.session.commit()
 
-        return [item.hydrate() for item in project_entry.parsets], 204
+        return '', 204
 
     @swagger.operation(
         description='Rename parset with the given id',
