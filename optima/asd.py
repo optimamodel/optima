@@ -1,7 +1,7 @@
-def asd(function, x, args = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
-    pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
-    MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 1e-3, TolX = None, StallIterLimit = 100, \
-    fulloutput = True, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 10):
+def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
+    pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None, MaxRangeIter=1000,
+    MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-3, TolX=None, StallIterLimit=100,
+    fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, verbose=10):
     """
     Optimization using the adaptive stochastic descent algorithm.
     
