@@ -109,22 +109,22 @@ except: _failed()
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
 except:
-    def plotresults(**kwargs): print('Note: plotresults() could not be imported, but everything else should work')
+    def plotresults(*args, **kwargs): print('Note: plotresults() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 try: from gui import pygui # Handle the Python plotting
 except:
-    def pygui(**kwargs): print('Note: pygui() could not be imported, but everything else should work')
+    def pygui(*args, **kwargs): print('Note: pygui() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 try: from gui import browser # Handle the browser-based plotting
 except:
-    def browser(**kwargs): print('Note: browser() could not be imported, but everything else should work')
+    def browser(*args, **kwargs): print('Note: browser() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 try: from manualgui import manualfit # Do manual fitting
 except:
-    def manualfit(**kwargs): print('Note: manualfit() could not be imported, but everything else should work')
+    def manualfit(*args, **kwargs): print('Note: manualfit() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 
