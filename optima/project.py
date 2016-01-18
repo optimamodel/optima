@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit # Import functions
+from optima import loadspreadsheet, loadeconomicsspreadsheet, makeecontimeseries, model, gitinfo, sensitivity, manualfit, autofit # Import functions
 from optima import __version__ # Get current version
 
 
@@ -25,6 +25,7 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
+        4. econ -- data and time series loaded from the economics spreadsheet
         
     
     Methods for structure lists:
@@ -56,6 +57,7 @@ class Project(object):
         self.name = name
         self.settings = Settings() # Global settings
         self.data = {} # Data from the spreadsheet
+        self.econ = {} # Data from the economics spreadsheet
         
         ## Define metadata
         self.uid = uuid()
@@ -119,7 +121,21 @@ class Project(object):
         return None
     
     
-    
+    def loadeconomics(self, filename):
+        ''' Load economic data and tranforms it to useful format'''
+        
+        # Make a time vector
+        start = self.settings.start
+        end = self.settings.end + 50
+        dt = self.settings.dt
+        from numpy import linspace
+        tvec = linspace(start, end, round((end-start)/dt)+1)
+
+        ## Load spreadsheet and update metadata
+        self.econ['data'] = loadeconomicsspreadsheet(filename)
+        self.econ['timeseries'] = makeecontimeseries(self.econ['data'], tvec)
+        
+        return None
     
     
 
