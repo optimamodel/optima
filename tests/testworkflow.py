@@ -57,7 +57,7 @@ if 'makeproject' in tests:
     print('Running makeproject/runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     P.loadeconomics(filename='testeconomics.xlsx')
     results = P.runsim('default')
     
@@ -129,7 +129,7 @@ if 'autofit' in tests:
     results = P.runsim('autofit', end=2015)
     
     if doplot:
-        from gui import plotresults
+        from optima import plotresults
         plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
