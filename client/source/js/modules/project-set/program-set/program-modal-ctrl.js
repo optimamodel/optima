@@ -1,7 +1,7 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, populations, programList, modalService) {
+  module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService) {
 
     // Default lidt of criteria
     var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
