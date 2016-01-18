@@ -8,16 +8,11 @@ from optima import printv, dcp, asd, runmodel, odict
 
 
 
-def objectivecalc(budgetvec, options=None):
-#    parset = options['pars']
-#    progset = options['progs']
-#    project = options['project']
-#    objectives = options['objectives']
-#    constraints = options['constraints']
+def objectivecalc(budgetvec, parset=None, progset=None, project=None, objectives=None, constraints=None):
     
     # Convert budgetvec to budget
-    print('temp')
-    budget = budgetvec    
+    budget = budgetvec
+    
     
     # Define years
     print('temp')
@@ -25,9 +20,9 @@ def objectivecalc(budgetvec, options=None):
     startyear = 2000
     endyear = 2030
     
-#    thiscoverage = progset.getprogcoverage(budget=budget, t=year, parset=parset)
-#    thisparset = progset.getparset(coverage=thiscoverage, t=year, parset=parset)
-#    results = runmodel(pars=thisparset.pars[0], start=startyear, end=endyear, project=project, verbose=0)
+    thiscoverage = progset.getprogcoverage(budget=budget, t=year, parset=parset)
+    thisparset = progset.getparset(coverage=thiscoverage, t=year, parset=parset)
+    results = runmodel(pars=thisparset.pars[0], start=startyear, end=endyear, project=project, verbose=0)
     
     # Calculate outcome
     print('temp')

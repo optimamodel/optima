@@ -8,11 +8,11 @@ Version: 2016jan14 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth, getresults
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
-# Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
+### Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
 partable = '''
 name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
 Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
@@ -109,6 +109,38 @@ def readpars(partable):
     return rawpars
 
 
+
+
+def getresults(pointer=None, project=None):
+    '''
+    A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
+    a string representation of the UID, the actual pointer to the results, or a function to return the
+    results.
+    
+    Example:
+        results = P.parsets[0].results()
+        calls
+        getresults(P, P.parsets[0].resultsref)
+        which returns
+        P.results[P.parsets[0].resultsref]
+    
+    Version: 2016jan18
+    '''
+    if type(pointer) in [str, int, float]:
+        if project is not None: return project.results[pointer]
+        else: raise Exception('To get results using a key or index, getresults() must be given the project')
+    elif type(pointer)==type(uuid()): 
+        if project is not None: return project.results[str(pointer)]
+        else: raise Exception('To get results using a UID, getresults() must be given the project')
+    elif callable(pointer): 
+        return pointer() # Try calling as function
+    else: 
+        return pointer # Give up, just return pointer, which is maybe a Resultset
+
+
+
+
+### Define the functions for handling the parameters
 
 def popgrow(exppars, tvec):
     ''' Return a time vector for a population growth '''
@@ -453,6 +485,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 
 
+### Define the classes
 
 class Par(object):
     ''' The base class for parameters '''

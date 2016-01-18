@@ -77,10 +77,10 @@ except: _failed()
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 except: _failed()
 
-try: from results import Result, Resultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars, getresults # Parameter and Parameterset classes
 except: _failed()
 
-try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars # Parameter and Parameterset classes
+try: from results import Result, Resultset  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
 try: from model import model, runmodel # The thing that actually runs the model
