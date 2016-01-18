@@ -45,7 +45,7 @@ if 'standardscen' in tests:
 
     print('Running standard scenarios test...')
     from optima import Project
-    from optima.defaultprograms import defaultprogset
+    from optima.defaults import defaultprogset
     from numpy import array
     
     P = Project(spreadsheet='test7pops.xlsx')
