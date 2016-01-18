@@ -18,7 +18,7 @@ print statements.
 
 I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
-Version: 2016jan15 by cliffk
+Version: 2016jan18 by cliffk
 """
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
@@ -40,7 +40,7 @@ if '_failsilently' not in __builtin__.__dict__.keys(): _failsilently = True
 def _failed(doraise=True):
     ''' Tiny function to optionally allow printing of failed imports (may be useful for debugging) '''
     if not _failsilently: 
-        print('Optima import failed: %s' % sys.exc_info()[1])
+        print('Warning: Optima import failed: %s' % sys.exc_info()[1])
         if doraise: raise sys.exc_info()[1], None, sys.exc_info()[2]
 
 
@@ -98,7 +98,7 @@ except: _failed()
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import minoutcomes # Scenario functions
+try: from optimization import minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
 
@@ -109,22 +109,22 @@ except: _failed()
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
 except:
-    def plotresults(**kwargs): print('plotresults could not be imported')
+    def plotresults(**kwargs): print('Note: plotresults() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 try: from gui import pygui # Handle the Python plotting
 except:
-    def pygui(**kwargs): print('pygui could not be imported')
+    def pygui(**kwargs): print('Note: pygui() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 try: from gui import browser # Handle the browser-based plotting
 except:
-    def browser(**kwargs): print('browser could not be imported')
+    def browser(**kwargs): print('Note: browser() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 try: from manualgui import manualfit # Do manual fitting
 except:
-    def manualfit(**kwargs): print('manualfit could not be imported')
+    def manualfit(**kwargs): print('Note: manualfit() could not be imported, but everything else should work')
     _failed(doraise=False)
 
 
@@ -138,7 +138,7 @@ except: _failed()
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: 
     import defaultprograms, plotpeople # Additional features not included in the main part of Optima
-    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project
+    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, optimization, gui, project
 except: _failed()
 
 
