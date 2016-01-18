@@ -8,10 +8,10 @@ from optima import printv, dcp, asd, runmodel
 
 
 
-def objectivecalc(budgetvec, options):
-    parset = options['pars']
-    progset = options['progs']
-    project = options['project']
+def objectivecalc(budgetvec, options=None):
+#    parset = options['pars']
+#    progset = options['progs']
+#    project = options['project']
 #    objectives = options['objectives']
 #    constraints = options['constraints']
     
@@ -38,7 +38,7 @@ def objectivecalc(budgetvec, options):
 
 
 
-def minoutcome(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None):
+def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None):
     
     printv('Running outcomes optimization...', 1, verbose)
     
@@ -56,13 +56,15 @@ def minoutcome(project=None, name=None, parset=None, progset=None, inds=0, objec
         
         # Calculate limits
         print('temp')
-        budgetvec = objectives['budget'][:]
+#        budgetvec = objectives['budget'][:]
+        from pylab import rand
+        budgetvec = rand(10)
         budgetlower = budgetvec*0
         budgethigher = budgetvec*100
         
-        options = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
+        theseargs = {} #{'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
 #        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=theseargs, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     
-    return results
+    return budgetvecnew

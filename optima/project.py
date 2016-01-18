@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes # Import functions
 from optima import __version__ # Get current version
 
 
@@ -291,4 +291,8 @@ class Project(object):
         self.copyparset(orig=orig, new=name) # Store parameters
         autofit(self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None
-
+    
+    def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None):
+        ''' Function to minimize outcomes '''
+        result = minoutcomes(project=project, name=name, parset=parset, progset=progset, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc)
+        return result

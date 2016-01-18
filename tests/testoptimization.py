@@ -11,7 +11,7 @@ Version: 2016jan05 by cliffk
 ## Define tests to run here!!!
 tests = [
 'tmp',
-#'minimizeoutcomes',
+'minimizeoutcomes',
 ]
 
 
@@ -103,7 +103,7 @@ if 'tmp' in tests:
         ]
     
     
-    allresults = runscenarios(scenlist=scenlist)
+#    allresults = runscenarios(scenlist=scenlist)
     
     done(t)
 
@@ -120,11 +120,11 @@ if 'minimizeoutcomes' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results = P.minoutcomes(parset='default', progset='default', alloc=[1e6,1e6])
+    results = P.minoutcomes(parset='default', progset='default')
     
-    if doplot:
-        from gui import plotresults
-        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+#    if doplot:
+#        from gui import plotresults
+#        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
