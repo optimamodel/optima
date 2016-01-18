@@ -12,7 +12,23 @@ from sqlalchemy.orm import deferred
 from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json
 
+from werkzeug.utils import secure_filename
 import optima as op
+
+
+def db_model_as_file(model, loaddir, filename, name_field, extension):
+    import os
+    from optima.utils import saveobj
+
+    be_object = model.hydrate()
+    if filename is None:
+        filename = '{}.{}'.format(getattr(model, name_field), extension)
+    server_filename = os.path.join(loaddir, filename)
+
+    saveobj(server_filename, be_object)
+
+    return filename
+
 
 
 @swagger.model
@@ -142,16 +158,7 @@ class ProjectDb(db.Model):
         return project_entry
 
     def as_file(self, loaddir, filename=None):
-        import os
-
-        be_project = self.hydrate()
-        if filename is None:
-            filename = '{}.prj'.format(self.name)
-        server_filename = os.path.join(loaddir, filename)
-
-        op.saveobj(server_filename, be_project)
-
-        return filename
+        return db_model_as_file(self, loaddir, filename, 'name', 'prj')
 
     def restore(self, project):
 
@@ -202,7 +209,7 @@ class ProjectDb(db.Model):
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
         if project.progsets:
-            from server.webapp.utils import update_or_create_progset, update_or_create_program
+            from server.webapp.utils import update_or_create_progset
             from server.webapp.programs import get_default_programs
 
             if project.data != {}:
@@ -212,28 +219,7 @@ class ProjectDb(db.Model):
 
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset(self.id, name, progset)
-
-                # only active programs are hydrated
-                # therefore we need to retrieve the default list of programs
-                loaded_programs = set()
-                for program in program_list:
-                    program_name = program['name']
-                    if program_name in progset.programs:
-                        loaded_programs.add(program_name)
-                        program = progset.programs[program_name].__dict__
-                        program['parameters'] = program.get('targetpars', [])
-                        active = True
-                    else:
-                        active = False
-
-                    update_or_create_program(self.id, progset_record.id, program_name, program, active)
-
-                # In case programs from prj are not in the defaults
-                for program_name, program in progset.programs.iteritems():
-                    if program_name not in loaded_programs:
-                        program = program.__dict__
-                        program['parameters'] = program.get('targetpars', [])
-                        update_or_create_program(self.id, progset_record.id, program_name, program, True)
+                progset_record.restore(progset, program_list)
 
     def recursive_delete(self, synchronize_session=False):
 
@@ -510,6 +496,32 @@ class ProgsetsDb(db.Model):
 
         return progset_entry
 
+    def restore(self, progset, program_list):
+        from server.webapp.utils import update_or_create_program
+
+        self.name = progset.name
+        # only active programs are hydrated
+        # therefore we need to retrieve the default list of programs
+        loaded_programs = set()
+        for program in program_list:
+            program_name = program['name']
+            if program_name in progset.programs:
+                loaded_programs.add(program_name)
+                program = progset.programs[program_name].__dict__
+                program['parameters'] = program.get('targetpars', [])
+                active = True
+            else:
+                active = False
+
+            update_or_create_program(self.project.id, self.id, program_name, program, active)
+
+        # In case programs from prj are not in the defaults
+        for program_name, program in progset.programs.iteritems():
+            if program_name not in loaded_programs:
+                program = program.__dict__
+                program['parameters'] = program.get('targetpars', [])
+                update_or_create_program(self.project.id, self.id, program_name, program, True)
+
     def create_programs_from_list(self, programs):
         for program in programs:
             kwargs = {}
@@ -528,3 +540,6 @@ class ProgsetsDb(db.Model):
         db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete(synchronize_session)
         db.session.query(ProgsetsDb).filter_by(id=str(self.id)).delete(synchronize_session)
         db.session.flush()
+
+    def as_file(self, loaddir, filename=None):
+        return db_model_as_file(self, loaddir, filename, 'name', 'progset')
