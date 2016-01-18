@@ -2,12 +2,12 @@ import os
 from datetime import datetime
 import dateutil
 
-from flask import current_app, helpers, request, Response, abort
+from flask import current_app, helpers, request, Response
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
 
 from flask.ext.login import current_user, login_required
-from flask_restful import Resource, marshal_with, fields
+from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 
 import optima as op
@@ -20,6 +20,7 @@ from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStora
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid, Json
 
+from server.webapp.resources.common import file_resource, file_upload_form_parser
 from server.webapp.utils import (load_project, verify_admin_request, report_exception,
                                  save_result, delete_spreadsheet, RequestParser)
 
@@ -231,8 +232,6 @@ class Project(Resource):
         This happens after users edit the project.
 
         """
-        # TODO replace this with app.config
-        DATADIR = current_app.config['UPLOAD_FOLDER']
 
         current_app.logger.debug(
             "updateProject %s for user %s" % (
@@ -330,15 +329,6 @@ class Project(Resource):
         current_app.logger.debug("spreadsheets for %s deleted" % project_name)
 
         return '', 204
-
-
-file_resource = {
-    'file': fields.String,
-    'result': fields.String,
-}
-file_upload_form_parser = RequestParser()
-file_upload_form_parser.add_argument(
-    'file', type=AllowedSafeFilenameStorage, location='files', required=True)
 
 
 class ProjectSpreadsheet(Resource):
