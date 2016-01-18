@@ -68,11 +68,12 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
         def rosen(x): return sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
         from numpy import array
         x0 = array([1.3, 0.7, 0.8, 1.9, 1.2])
-        budgetvecnew = optimfunc(rosen, x0, method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
         
-        theseargs = {} #{'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
+        
+        theseargs = ('hi',) #{'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
 #        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 #        budgetvecnew = optimfunc(objectivecalc, budgetvec, args=theseargs)
+        budgetvecnew = optimfunc(objectivecalc, budgetvec, args=theseargs).x
 
     
     return budgetvecnew
