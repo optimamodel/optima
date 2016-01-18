@@ -89,6 +89,9 @@ except: _failed()
 try: from programs import Program, Programset # Define programs
 except: _failed()
 
+try: from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
+except: _failed()
+
 try: from makeplots import epiplot # Create the plots
 except: _failed()
 

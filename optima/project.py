@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, loadeconomicsspreadsheet, makeecontimeseries, model, gitinfo, sensitivity, manualfit, autofit # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
 
 
@@ -124,16 +124,8 @@ class Project(object):
     def loadeconomics(self, filename):
         ''' Load economic data and tranforms it to useful format'''
         
-        # Make a time vector
-        start = self.settings.start
-        end = self.settings.end + 50
-        dt = self.settings.dt
-        from numpy import linspace
-        tvec = linspace(start, end, round((end-start)/dt)+1)
-
-        ## Load spreadsheet and update metadata
+        ## Load spreadsheet 
         self.econ['data'] = loadeconomicsspreadsheet(filename)
-        self.econ['timeseries'] = makeecontimeseries(self.econ['data'], tvec)
         
         return None
     
