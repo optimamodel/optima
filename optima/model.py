@@ -3,6 +3,7 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import printv, tic, toc, dcp, odict, findinds, Settings
 
+aslfj
 
 def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
@@ -13,7 +14,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     printv('Running model...', 1, verbose, newline=False)
     if benchmark: starttime = tic()
-
 
     ###############################################################################
     ## Setup

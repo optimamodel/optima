@@ -25,13 +25,13 @@ def objectivecalc(budgetvec, options):
     startyear = 2000
     endyear = 2030
     
-    thiscoverage = progset.getprogcoverage(budget=budget, t=year, parset=parset)
-    thisparset = progset.getparset(coverage=thiscoverage, t=year, parset=parset)
-    results = runmodel(pars=thisparset.pars[0], start=startyear, end=endyear, project=project, verbose=0)
+#    thiscoverage = progset.getprogcoverage(budget=budget, t=year, parset=parset)
+#    thisparset = progset.getparset(coverage=thiscoverage, t=year, parset=parset)
+#    results = runmodel(pars=thisparset.pars[0], start=startyear, end=endyear, project=project, verbose=0)
     
     # Calculate outcome
     print('temp')
-    outcome = results
+    outcome = sum(budgetvec)
     
     return outcome
 
@@ -61,6 +61,7 @@ def minoutcome(project=None, name=None, parset=None, progset=None, inds=0, objec
         budgethigher = budgetvec*100
         
         options = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
+#        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     

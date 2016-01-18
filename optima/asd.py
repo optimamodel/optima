@@ -1,4 +1,4 @@
-def asd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
+def asd(function, x, args = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 2, pdec = 2, \
     pinitial = None, sinitial = None, absinitial = None, xmin = None, xmax = None, MaxRangeIter = 1000, \
     MaxFunEvals = None, MaxIter = 1e3, AbsTolFun = 1e-6, RelTolFun = 1e-3, TolX = None, StallIterLimit = 100, \
     fulloutput = True, maxarraysize = 1e6, timelimit = 3600, stoppingfunc = None, verbose = 10):
@@ -63,7 +63,7 @@ def asd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 
     from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero
     from numpy.random import random # Was pylab.rand
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
-    from time import time, sleep
+    from time import time
     
     def consistentshape(userinput):
         """
@@ -92,7 +92,7 @@ def asd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 
     
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
-    fval = function(x) if options is None else function(x,options) # Calculate initial value of the objective function
+    fval = function(x, **args) # Calculate initial value of the objective function
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
     abserrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
@@ -138,7 +138,7 @@ def asd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc = 
         
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
-        fvalnew = function(xnew) if options is None else function(xnew, options) # Calculate the objective function for the new parameter set
+        fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
         abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
         relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>5:
