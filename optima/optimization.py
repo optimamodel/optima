@@ -62,7 +62,8 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
         budgetlower = budgetvec*0
         budgethigher = budgetvec*100
         
-        args = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
+#        args = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
+        args = {'pars':pars}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         elif method=='simplex': 
