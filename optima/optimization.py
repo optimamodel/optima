@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016jan10 by cliffk
 """
 
-from optima import printv, dcp, asd, runmodel
+from optima import printv, dcp, asd, runmodel, odict
 
 
 
@@ -77,3 +77,28 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
 
     
     return budgetvecnew
+
+
+
+
+
+
+
+def defaultobjectives(verbose=2):
+    """
+    Define default objectives for the optimization.
+    """
+
+    printv('Defining default objectives...', 3, verbose=verbose)
+
+    objectives = odict() # Dictionary of all objectives
+    objectives['start'] = 2017 # "Year to begin optimization from"
+    objectives['end'] = 2030 # "Year to end optimization"
+    objectives['until'] = 2030 # "Year to project outcomes to"
+    objectives['budget'] = 0 # "Annual budget to optimize"
+    
+    objectives['deathweight'] = 5 # "Death weighting"
+    objectives['inciweight'] = 1 # "Incidence weighting"
+    objectives['dalyweight'] = 0 # "DALY weighting"
+    
+    return objectives
