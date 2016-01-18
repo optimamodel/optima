@@ -17,11 +17,7 @@ from utils import printv
 default_datastart = 2000
 default_dataend = 2020
 
-def makespreadsheet(filename, 
-    pops, 
-    datastart=default_datastart, 
-    dataend=default_dataend, 
-    verbose=2):
+def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s''' % (
@@ -327,7 +323,7 @@ class TitledRange:
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
 class EconomicsSpreadsheet:
-    def __init__(self, name, data_start = 2000, data_end = 2016, verbose = 0):
+    def __init__(self, name, data_start = default_datastart, data_end = default_dataend, verbose = 0):
         self.sheet_names = OrderedDict([
             ('instr', 'Instructions'),
             ('econ', 'Economics and costs')])
@@ -401,7 +397,7 @@ class EconomicsSpreadsheet:
 
 
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start = 2000, data_end = 2016, verbose = 0):
+    def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, verbose = 0):
         self.sheet_names = OrderedDict([
             ('instr', 'Instructions'),
             ('meta','Populations'),
