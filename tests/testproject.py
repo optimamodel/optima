@@ -101,7 +101,9 @@ if 'loadspreadsheet' in tests:
     
     done(t)
 
-## Load spreadsheet test
+
+
+## Load economics spreadsheet test
 if 'loadeconomcs' in tests:
     t = tic()
     print('Running loadeconomics test...')

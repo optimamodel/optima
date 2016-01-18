@@ -18,8 +18,8 @@ Version: 2016jan11 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
-#'autofit',
-#'makeprograms',
+'makeprograms',
+'autofit',
 ]
 
 
@@ -57,7 +57,8 @@ if 'makeproject' in tests:
     print('Running makeproject/runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='test7pops.xlsx')
+    P = Project(spreadsheet='test.xlsx')
+    P.loadeconomics(filename='testeconomics.xlsx')
     results = P.runsim('default')
     
     done(t)
@@ -65,27 +66,13 @@ if 'makeproject' in tests:
 
 
 
-#####################################################################################################
-if 'autofit' in tests:
-    t = tic()
-
-    print('Running autofit test...')
-    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, maxiters=200, inds=None) # Run automatic fitting
-    results = P.runsim('autofit', end=2015)
-    
-    if doplot:
-        from gui import plotresults
-        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-    
-    done(t)
-
 
 #####################################################################################################
 if 'makeprograms' in tests:
     t = tic()
 
     print('Making a default programset...')
-    from defaultprograms import defaultprogset
+    from optima.defaultprograms import defaultprogset
     R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
 
     # Add coverage-outcome parameters
@@ -115,18 +102,40 @@ if 'makeprograms' in tests:
                   parset=P.parsets['default'],
                   newparsetname='progparset')
 
-    # Run results
-    from optima import runmodel
-    allresults = []
-    allresults.append(runmodel(pars=P.parsets['default'].pars[0], verbose=1)) 
-    allresults.append(runmodel(pars=progparset.pars[0], verbose=1)) 
-
-    if doplot:
-        from plotpeople import plotpeople
-        plotpeople(allresults)
+#    # Run results
+#    from optima import runmodel
+#    allresults = []
+#    allresults.append(runmodel(pars=P.parsets['default'].pars[0], verbose=1)) 
+#    allresults.append(runmodel(pars=progparset.pars[0], verbose=1)) 
+#
+#    if doplot:
+#        from plotpeople import plotpeople
+#        plotpeople(allresults)
 
     
     done(t)
+
+
+
+
+
+#####################################################################################################
+if 'autofit' in tests:
+    t = tic()
+
+    print('Running autofit test...')
+    P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, maxiters=50, inds=None) # Run automatic fitting
+    P.loadeconomics(filename='testeconomics.xlsx')
+    results = P.runsim('autofit', end=2015)
+    
+    if doplot:
+        from gui import plotresults
+        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    
+    done(t)
+
+
+
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))

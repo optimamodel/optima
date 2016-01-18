@@ -250,6 +250,9 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
     
     return finalprograms if filterprograms else allprograms
     
+    
+    
+    
 def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
