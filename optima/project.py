@@ -25,14 +25,9 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
-<<<<<<< HEAD
         4. econ -- data and time series loaded from the economics spreadsheet
         
     
-=======
-
-
->>>>>>> develop
     Methods for structure lists:
         1. add -- add a new structure to the odict
         2. remove -- remove a structure from the odict
