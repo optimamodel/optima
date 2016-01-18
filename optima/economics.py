@@ -6,7 +6,7 @@ Functions to read in the economic data and transform it into time series
 from optima import odict, printv, today, smoothinterp
 from numpy import nan, isnan, array, logical_or, nonzero
 
-def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):
+def loadeconspreadsheet(filename='economics.xlsx', verbose=0):
     """
     Loads the economics spreadsheet (i.e. reads its contents into the data).
     Version: 2016jan17

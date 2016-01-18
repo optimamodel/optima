@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, loadeconomicsspreadsheet # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, loadeconspreadsheet # Import functions
 from optima import __version__ # Get current version
 
 
@@ -120,11 +120,11 @@ class Project(object):
             self.addparset(name=name, parset=parset) # Store parameters
         return None
 
-    def loadeconomics(self, filename):
+    def loadecon(self, filename):
         ''' Load economic data and tranforms it to useful format'''
         
         ## Load spreadsheet 
-        self.econ['data'] = loadeconomicsspreadsheet(filename)
+        self.data['econ'] = loadeconspreadsheet(filename)
         
         return None
 

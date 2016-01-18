@@ -1,6 +1,6 @@
 import os
 import unittest
-from optima.makespreadsheet import EconomicsSpreadsheet, SheetRange, TitledRange, make_ref_years_range
+from optima.makespreadsheet import EconomicsSpreadsheet
 
 class TestOptimaSpreadsheet(unittest.TestCase):
 
