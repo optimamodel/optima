@@ -120,7 +120,7 @@ if 'minimizeoutcomes' in tests:
     from optima import Project
     
     P = Project(spreadsheet='test.xlsx')
-    results = P.minoutcomes(parset='default', progset='default')
+    results = P.minoutcomes(parset='default', progset='default', method='simplex')
     
 #    if doplot:
 #        from gui import plotresults
