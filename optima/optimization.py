@@ -62,18 +62,13 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
         budgetlower = budgetvec*0
         budgethigher = budgetvec*100
         
-        if method=='asd': optimfunc = asd
-        elif method=='simplex': from scipy.optimize import minimize as optimfunc
-        
-        def rosen(x): return sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
-        from numpy import array
-        x0 = array([1.3, 0.7, 0.8, 1.9, 1.2])
-        
-        
-        theseargs = ('hi',) #{'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
-#        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, options=options, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-#        budgetvecnew = optimfunc(objectivecalc, budgetvec, args=theseargs)
-        budgetvecnew = optimfunc(objectivecalc, budgetvec, args=theseargs).x
+        args = {'pars':pars, 'progs':project.progsets[progset], 'project':project, 'objectives':objectives, 'constraints': constraints}
+        if method=='asd': 
+            budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        elif method=='simplex': 
+            from scipy.optimize import minimize
+            budgetvecnew = minimize(objectivecalc, budgetvec, args=args).x
+        else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     
     return budgetvecnew
