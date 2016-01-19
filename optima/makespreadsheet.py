@@ -1,12 +1,8 @@
-###############################################################################
-##### 2.0 STATUS: probably fine code-wise but need to update once spreadsheet changes decided
-###############################################################################
-
 """
 OptimaSpreadsheet and related classes
 Created by: SSQ
 
-Version: 2015dec08 by anachesa
+Version: 2016jan17 by cliffk
 """
 
 import xlsxwriter
@@ -20,13 +16,24 @@ default_dataend = 2020
 def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
-    printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s''' % (
-        len(pops), datastart, dataend), 1, verbose)
+    printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
     book = OptimaSpreadsheet(filename, pops, datastart, dataend)
     book.create(filename)
 
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
+
+
+def makeeconspreadsheet(filename, datastart=default_datastart, dataend=default_dataend, verbose=2):
+    """ Generate the Optima economics spreadsheet -- the hard work is done by makespreadsheet.py """
+
+    printv('Generating economics spreadsheet: start=%s, end=%i' % (datastart, dataend), 1, verbose)
+    book = EconomicsSpreadsheet(filename, datastart, dataend)
+    book.create(filename)
+
+    printv('  ...done making economics spreadsheet %s.' % filename, 2, verbose)
+    return filename
+
 
 
 

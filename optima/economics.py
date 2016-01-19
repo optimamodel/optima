@@ -152,7 +152,7 @@ def makeecontimeseries(econdata, tvec):
     
 def loadeconomics(filename, tvec, verbose=0):
     ''' Loads spreadsheet and converts to time series'''
-    econdata = loadeconomicsspreadsheet(filename,verbose=verbose)
+    econdata = loadeconspreadsheet(filename,verbose=verbose)
     econtimeseries = makeecontimeseries(econdata, tvec)
     return econdata, econtimeseries
    
