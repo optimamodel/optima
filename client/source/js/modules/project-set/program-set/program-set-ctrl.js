@@ -6,6 +6,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     var openProject = currentProject.data;
     var defaults;
+    var parameters;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
     if (!openProject.has_data) {
@@ -34,7 +35,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     projectApiService.getDefault(openProject.id)
       .success(function (response) {
         defaults = response;
-        $scope.categories = response.categories;
+        $scope.categories = _.pluck(response.categories, 'category');
+      });
+
+    // Get the list of default parameters for the project
+    $http.get('/api/project/' + openProject.id + '/parameters' )
+      .success(function (response) {
+        parameters = response.parameters;
       });
 
     // This method is called by <select> to change current active program
@@ -150,7 +157,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Opens a modal for editing an existing program.
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
-      return programSetModalService.openProgramModal(editProgram, openProject.populations, $scope.activeProgramSet.programs).result.then(
+      return programSetModalService.openProgramModal(editProgram, openProject.populations, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
         }
@@ -164,7 +171,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs).result.then(
+      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         }
@@ -180,7 +187,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.name = program.name + ' copy';
       program.short_name = program.short_name + ' copy';
 
-      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs).result.then(
+      return programSetModalService.openProgramModal(program, openProject.populations, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         }
