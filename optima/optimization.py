@@ -14,9 +14,9 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives
     budgetvec *=  objectives['budget']/budgetvec.sum() 
     
     # Convert budgetvec to budget
-    budget = odict()
-    for i,key in enumerate(progset.programs.keys()):
-        budget[key] = array([budgetvec[i]]) # WARNING, ugly...
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    budget = progset.getdefaultbudget()
+    budget[:] = budgetvec
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
@@ -95,7 +95,6 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?

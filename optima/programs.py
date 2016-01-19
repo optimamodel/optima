@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, concatenate as cat
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, float64, concatenate as cat
 import abc
 import textwrap
 from pylab import figure, figtext
@@ -213,6 +213,8 @@ class Programset(object):
 
     def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
+
+        if type(t) in [int, float]: t = [t]
         coverage = odict()
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
@@ -536,8 +538,8 @@ class Program(object):
     def getcoverage(self,x,t,parset,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
 
-        if type(x) in [int,float]: x = [x]
-        if type(t) in [int,float]: t = [t]
+        if type(x) in [int,float,float64]: x = [x]
+        if type(t) in [int,float,float64]: t = [t]
         if type(x) == list: x = array(x)
         if type(t) == list: t = array(t)
 
