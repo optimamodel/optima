@@ -1,21 +1,31 @@
 from datetime import datetime
 import dateutil
+import uuid
 
-from flask import current_app
+from flask import current_app, helpers, make_response, request
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import SubParser
-from server.webapp.utils import load_project, RequestParser, report_exception
-from server.webapp.exceptions import ParsetDoesNotExist
+from server.webapp.inputs import SubParser, secure_filename_input, AllowedSafeFilenameStorage
+
+from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
+                                 upload_dir_user, save_result)
+from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
+
+
+copy_parser = RequestParser()
+copy_parser.add_arguments({
+    'name': {'required': True},
+    'parset_id': {'type': uuid.UUID}
+})
 
 
 class Parsets(Resource):
@@ -41,6 +51,60 @@ class Parsets(Resource):
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         return [item.hydrate() for item in reply]  # TODO: project_id should be not null
 
+    @swagger.operation(
+        description='Create new parset with default settings or copy existing parset',
+        notes="""
+            If parset_id argument is given, copy from the existing parset.
+            Otherwise, create a parset with default settings
+            """
+    )
+    def post(self, project_id):
+        current_app.logger.debug("POST /api/project/{}/parsets".format(project_id))
+        args = copy_parser.parse_args()
+        print "args", args
+        name = args['name']
+        parset_id = args.get('parset_id')
+
+        project_entry = load_project(project_id, raise_exception=True)
+        project_instance = project_entry.hydrate()
+        if name in project_instance.parsets:
+            raise ParsetAlreadyExists(project_id, name)
+        if not parset_id:
+            # create new parset with default settings
+            project_instance.ensureparset(name)
+            new_result = project_instance.runsim(name)
+            project_entry.restore(project_instance)
+            db.session.add(project_entry)
+
+            result_record = save_result(project_entry.id, new_result, name)
+            db.session.add(result_record)
+        else:
+            # dealing with uid's directly might be messy...
+            original_parset = [item for item in project_entry.parsets if item.id == parset_id]
+            if not original_parset:
+                raise ParsetDoesNotExist(parset_id, project_id=project_id)
+            original_parset = original_parset[0]
+            parset_name = original_parset.name
+            project_instance.copyparset(orig=parset_name, new=name)
+            project_entry.restore(project_instance)
+            db.session.add(project_entry)
+
+            old_result_record = db.session.query(ResultsDb).filter_by(
+                parset_id=str(parset_id), project_id=str(project_id),
+                calculation_type=ResultsDb.CALIBRATION_TYPE).first()
+            old_result = old_result_record.hydrate()
+            new_result = op.dcp(old_result)
+            new_result_record = save_result(project_entry.id, new_result, name)
+            db.session.add(new_result_record)
+
+        db.session.commit()
+
+        return [item.hydrate() for item in project_entry.parsets], 201
+
+
+rename_parser = RequestParser()
+rename_parser.add_argument('name', required=True)
+
 
 class ParsetsDetail(Resource):
     """
@@ -55,24 +119,55 @@ class ParsetsDetail(Resource):
             if parset does not exist, returns an error.
         """
     )
-    def delete(self, project_id, parset_id):  # TODO: we don't need project_id, because parset_id uniquely identifies the resourse
+    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
+    def delete(self, project_id, parset_id):
 
-        current_app.logger.debug("/api/project/{}/parsets/{}".format(project_id, parset_id))
+        current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
         project_entry = load_project(project_id, raise_exception=True)
 
         parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
         if parset is None:
-            raise ParsetDoesNotExist(id=parset_id)
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
         # Is this how we should check for default parset?
-        if parset.name == 'Default':  # TODO: it is lowercase
+        if parset.name.lower() == 'default':  # TODO: it is lowercase
             abort(403)
 
         # TODO: also delete the corresponding calibration results
+        db.session.query(ResultsDb).filter_by(id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         db.session.query(ParsetsDb).filter_by(id=parset_id).delete()
         db.session.commit()
 
         return '', 204
+
+    @swagger.operation(
+        description='Rename parset with the given id',
+        notes="""
+            if parset exists, rename it
+            if parset does not exist, return an error.
+            """
+    )
+    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
+    def put(self, project_id, parset_id):
+        """
+        For consistency, let's always return the updated parsets for operations on parsets
+        (so that FE doesn't need to perform another GET call)
+        """
+
+        current_app.logger.debug("PUT /api/project/{}/parsets/{}".format(project_id, parset_id))
+        args = rename_parser.parse_args()
+        name = args['name']
+
+        project_entry = load_project(project_id, raise_exception=True)
+        target_parset = [item for item in project_entry.parsets if item.id == parset_id]
+        if target_parset:
+            target_parset = target_parset[0]
+        if not target_parset:
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+        target_parset.name = name
+        db.session.add(target_parset)
+        db.session.commit()
+        return [item.hydrate() for item in project_entry.parsets]
 
 
 calibration_fields = {
@@ -231,3 +326,82 @@ class ParsetsCalibration(Resource):
             "graphs": graphs,
             "selectors": selectors
         }
+
+
+file_upload_form_parser = RequestParser()
+file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)
+
+
+class ParsetsData(Resource):
+    """
+    Export and import of the existing parset in / from pickled format.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        produces='application/x-gzip',
+        summary='Download data for the parset with the given id from project with the given id',
+        notes="""
+        if parset exists, returns data for it
+        if parset does not exist, returns an error.
+        """
+    )
+    def get(self, project_id, parset_id):
+        current_app.logger.debug("GET /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
+        if parset_entry is None:
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+
+        # return result as a file
+        loaddir = upload_dir_user(TEMPLATEDIR)
+        if not loaddir:
+            loaddir = TEMPLATEDIR
+
+        filename = parset_entry.as_file(loaddir)
+
+        response = helpers.send_from_directory(loaddir, filename)
+        response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
+
+        return response
+
+    @swagger.operation(
+        summary='Upload data for the parset with the given id in project with the given id',
+        notes="""
+        if parset exists, updates it with data from the file
+        if parset does not exist, returns an error"""
+    )
+    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
+    def put(self, project_id, parset_id):
+        # TODO replace this with app.config
+        current_app.logger.debug("PUT /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
+
+        print request.files, request.args
+        args = file_upload_form_parser.parse_args()
+        uploaded_file = args['file']
+
+        source_filename = uploaded_file.source_filename
+
+        project_entry = load_project(project_id, raise_exception=True)
+
+        parset_entry = project_entry.find_parset(parset_id)
+        parset_instance = op.load(uploaded_file)
+
+        parset_entry.restore(parset_instance)
+        db.session.add(parset_entry)
+        db.session.flush()
+
+        # recalculate data (TODO: verify with Robyn if it's needed )
+        project_instance = project_entry.hydrate()
+        result = project_instance.runsim(parset_entry.name)
+        current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
+
+        db.session.add(project_entry)  # todo: do we need to log that project was updated?
+        db.session.flush()
+
+        result_record = save_result(project_entry.id, result, parset_entry.name)
+        db.session.add(result_record)
+
+        db.session.commit()
+
+        return [item.hydrate() for item in project_entry.parsets]
+        return reply
