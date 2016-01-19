@@ -156,7 +156,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             if verbose>=5: flag = 'FAILURE'
-        if verbose>=5: print(' '*80 + flag + ' on step %i (old:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
+        if verbose>=5: print(' '*5 + flag + ' on step %i (old:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
