@@ -75,6 +75,14 @@ if 'setup' in tests:
     condprog.costcovfn.addccopar({'saturation': (0.75,0.75), 't': 2016.0, 'unitcost': (30,40)})
     fswprog.costcovfn.addccopar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (50,80)})
     
+    condprog.addcostcovdatum({'t':2015,
+                              'cost':2e6,
+                              'coverage':57143.})
+    
+    fswprog.addcostcovdatum({'t':2015,
+                              'cost':3e6,
+                              'coverage':45261.})
+    
     R = Programset(programs=[condprog, fswprog]) 
     
     R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
@@ -93,14 +101,14 @@ if 'setup' in tests:
 
 
 
-## Minimize money test
+## Minimize outcomes test
 if 'minimizeoutcomes' in tests:
     t = tic()
 
     print('Running minimize outcomes test...')
     from optima import defaultobjectives
     objectives = defaultobjectives()
-    objectives['budget'] = 5e6 # Change default budget to optimize
+    objectives['budget'] = 6e6 # Change default budget to optimize
     P.minoutcomes(name='optim', parsetname='default', progsetname='default', objectives=objectives, method='asd')
     
     print('Original allocation: '),

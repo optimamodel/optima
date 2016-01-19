@@ -5,13 +5,12 @@ Version: 2016jan18 by cliffk
 """
 
 from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
-from numpy import zeros, arange, array
+from numpy import zeros, arange, array, isnan
 
 
 def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
     
     # WARNING -- temp -- normalize budgetvec
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     budgetvec *=  objectives['budget']/budgetvec.sum() 
     
     # Convert budgetvec to budget
@@ -68,7 +67,14 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     totalbudget = objectives['budget']
     nprogs = len(progset.programs)
-    budgetvec = zeros(nprogs)+totalbudget/nprogs
+    budgetvec = progset.getdefaultbudget()[:]
+    if isnan(budgetvec).any():
+        budgetlessprograms = array(progset.programs.keys())[isnan(budgetvec)].tolist()
+        output = 'WARNING!!!!!!!!!! Not all programs have a budget associated with them.\n A uniform budget will be used instead.\n Programs with no budget are:\n'
+        output += '\n'.join(budgetlessprograms)
+        print(output)
+        budgetvec = zeros(nprogs)+totalbudget/nprogs
+    else: budgetvec *= totalbudget/sum(budgetvec) # Rescale
     
     for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
@@ -89,6 +95,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?

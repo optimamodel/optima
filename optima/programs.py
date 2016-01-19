@@ -200,10 +200,10 @@ class Programset(object):
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(allt,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
-                    lastbudget[program] = array([sanitize(totalbudget[program])[-1]])
+                    lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
                 printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                lastbudget[program] = array([nan])
+                lastbudget[program] = nan
             if tvec:
                 for yr in tvec:
                     yrindex = findinds(allt,yr)
