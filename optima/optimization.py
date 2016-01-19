@@ -10,6 +10,9 @@ from numpy import zeros, arange, array
 
 def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
     
+    # WARNING -- temp -- normalize budgetvec
+    budgetvec *=  objectives['budget']/budgetvec.sum() 
+    
     # Convert budgetvec to budget
     budget = odict()
     for i,key in enumerate(progset.programs.keys()):
@@ -33,6 +36,7 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives
 
     if outputresults:
         results.outcome = outcome
+        results.budgetvec = budgetvec # WARNING, not sure this should be here
         return results
     else: 
         return outcome
@@ -88,8 +92,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     multires = Multiresultset(resultsetlist=[orig, new])
     budget = odict()
-    budget['orig'] = budgetvec # Store original allocation
-    budget['optim'] = budgetvecnew # Store original allocation
+    budget['orig'] = orig.budgetvec # Store original allocation
+    budget['optim'] = new.budgetvec # Store original allocation
     multires.budget = budget # Store budget information
     multires.outcome = output.fval # Store full function evaluation information
     
