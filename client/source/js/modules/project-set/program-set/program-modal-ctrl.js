@@ -20,15 +20,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           pregnantFalse: true,
           allstates: true
         },
-        showAddData: false
+        showAddData: false,
+        newAddData: {}
       };
-
-      // todo: remove later
-      program.addData = [{
-        year: 2026,
-        spending: 500000,
-        coverage: 10000
-      }];
 
       if(program.populations && program.populations.length > 0) {
         _.forEach($scope.state.populations, function(population) {
@@ -113,6 +107,24 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Function to remove a parameter
     $scope.removeParameter = function ($index) {
       program.parameters.splice($index,1);
+    };
+
+    // Function to remove additional data
+    $scope.deleteAddData = function (addData) {
+      var indexOfData = $scope.state.program.addData.indexOf(addData);
+      $scope.state.program.addData.splice(indexOfData,1);
+    };
+
+    // Function to add additional data
+    $scope.addAddData = function () {
+      if($scope.state.newAddData.year && $scope.state.newAddData.spending && $scope.state.newAddData.coverage) {
+        if(!$scope.state.program.addData) {
+          $scope.state.program.addData = [];
+        }
+        $scope.state.program.addData.push($scope.state.newAddData);
+        $scope.state.newAddData = {};
+        $scope.state.showAddData = false;
+      }
     };
 
     $scope.submit = function (form) {
