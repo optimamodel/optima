@@ -2,7 +2,7 @@
 OptimaSpreadsheet and related classes
 Created by: SSQ
 
-Version: 2016jan17 by cliffk
+Version: 2016jan18 by robyns
 """
 
 import xlsxwriter
