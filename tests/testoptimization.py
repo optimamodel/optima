@@ -104,11 +104,12 @@ if 'minimizeoutcomes' in tests:
     P.minoutcomes(name='optim', parset='default', progset='default', objectives=objectives, method='asd')
     
     print('Original allocation: '),
-    print(P.results[-1].budgetorig)
+    print(P.results[-1].budget['orig'])
     print('Optimal allocation: '),
-    print(P.results[-1].budgetoptim)
-    print('Outcome: '),
-    print(P.results[-1].outcome)
+    print(P.results[-1].budget['optim']) # Showing that results are "stored" in the optimization
+    if doplot: 
+        from pylab import plot
+        plot(P.results[-1].outcome)
     
     done(t)
 
