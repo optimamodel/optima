@@ -1,9 +1,9 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService) {
+  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories) {
 
-    // Default lidt of criteria
+    // Default list of criteria
     var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
 
     // Initializes controller state and sets some default values in the program
@@ -13,8 +13,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         selectAll: false,
         isNew: !program.name,
         populations: angular.copy(populations),
-        // TODO: removing this hardcoding
-        categories: ['Prevention', 'Care and treatment', 'Management and administration', 'Other'],
+        parameters: parameters,
+        categories: categories,
         program: program,
         eligibility: {
           pregnantFalse: true,
@@ -30,6 +30,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return !population.active;
         })
       }
+
+      _.forEach($scope.state.program.parameters, function(parameter) {
+        parameter.parameterObj = _.find(parameters, function(param) {
+          return parameter.param === param.short;
+        });
+      });
 
       $scope.state.program.active = true;
       if ($scope.state.isNew) {
@@ -92,8 +98,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to add a new parameter
     $scope.addParameter = function () {
-      //$scope.state.program.parameters = $scope.state.program.parameters || [];
-      //$scope.state.program.parameters.push(entry);
+      $scope.state.program.parameters = $scope.state.program.parameters || [];
+      $scope.state.program.parameters.push({active: true});
     };
 
     // Function to remove a parameter
@@ -116,6 +122,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return $scope.state.eligibility[state];
         }).map(function(state) {
           return state;
+        });
+
+        _.forEach($scope.state.program.parameters, function(parameter) {
+          parameter.param = parameter.parameterObj.short;
+          delete parameter.parameterObj;
         });
 
         console.log('$scope.state.program', $scope.state.program);

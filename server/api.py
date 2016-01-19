@@ -93,7 +93,7 @@ api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(Portfolio, '/api/project/portfolio')
-api.add_resource(Parameters, '/api/project/parameters')
+api.add_resource(Parameters, '/api/project/<project_id>/parameters')
 api.add_resource(Populations, '/api/project/populations')
 api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
