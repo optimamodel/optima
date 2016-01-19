@@ -279,7 +279,7 @@ class Multiresultset(Resultset):
             # Now, the real deal: fix self.main
             for key2 in self.main.keys():
                 for at in ['pops', 'tot']:
-                    getattr(self.main[key2], at)[key2] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
                 
             

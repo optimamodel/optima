@@ -1,4 +1,4 @@
-from optima import odict, gridcolormap
+from optima import Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -15,6 +15,17 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
         Version: 2016jan18
         '''
+        
+        # Figure out what kind of result it is
+        if type(results)==Resultset: kind='single'
+        elif type(results)==Multiresultset: 
+            kind='multi'
+            best = list() # Initialize as empty list for storing results sets
+            labels = results.keys # Figure out the labels for the different lines
+            nlines = len(labels) # How ever many things are in results
+        else: 
+            errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s", you drongo' % type(results)
+            raise Exception(errormsg)
 
         # Initialize
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -40,47 +51,53 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 errormsg = 'Could not parse plot "%s"\n' % pl
                 errormsg += 'Please ensure format is e.g. "numplhiv-tot"'
                 raise Exception(errormsg)
-
-            # Process the plot data
-            try: # This should only fail if the key is wrong
-                best = getattr(results.main[datatype], poptype)[0] # poptype = either 'tot' or 'pops'
+            
+            try:
                 factor = 1.0 if results.main[datatype].isnumber else 100 # Swap between number and percent
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
-            try: # If results were calculated with quantiles, these should exist
-                lower = getattr(results.main[datatype], poptype)[1]
-                upper = getattr(results.main[datatype], poptype)[2]
-            except: # No? Just use the best data
-                lower = best
-                upper = best
-            try: # Try loading actual data -- very likely to not exist
-                tmp = getattr(results.main[datatype], 'data'+poptype)
-                databest = tmp[0]
-                datalow = tmp[1]
-                datahigh = tmp[2]
-            except:# Don't worry if no data
-                databest = None
-                datalow = None
-                datahigh = None
-
-            if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
-                best  = array([best])
-                lower = array([lower])
-                upper = array([upper])
-
+            
+            # Process the plot data
+            if kind=='single': # Single results thing: plot with uncertainties and data
+                best = getattr(results.main[datatype], poptype)[0] # poptype = either 'tot' or 'pops'
+                try: # If results were calculated with quantiles, these should exist
+                    lower = getattr(results.main[datatype], poptype)[1]
+                    upper = getattr(results.main[datatype], poptype)[2]
+                except: # No? Just use the best data
+                    lower = best
+                    upper = best
+                try: # Try loading actual data -- very likely to not exist
+                    tmp = getattr(results.main[datatype], 'data'+poptype)
+                    databest = tmp[0]
+                    datalow = tmp[1]
+                    datahigh = tmp[2]
+                except:# Don't worry if no data
+                    databest = None
+                    datalow = None
+                    datahigh = None
+                if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
+                    best  = array([best])
+                    lower = array([lower])
+                    upper = array([upper])
+            elif kind=='multi':
+                for l in range(nlines):
+                    try: best.append(getattr(results.main[datatype], poptype)[l])
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
 
-            nlines = len(best) # Either 1 or npops
+            if kind=='single': nlines = len(best) # Either 1 or npops
             colors = gridcolormap(nlines)
 
             # Plot model estimates with uncertainty
             for l in range(nlines):
-                if uncertainty:
+                if uncertainty and kind=='single':
                     fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
-                plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
-
+                try: plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
+                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                
             # Plot data points with uncertainty
             for l in range(nlines):
                 if databest is not None:
@@ -106,8 +123,11 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ax.set_title(results.main[datatype].name)
             ax.set_ylim((0,currentylims[1]))
             ax.set_xlim((results.tvec[0], results.tvec[-1]))
-            if poptype=='pops': ax.legend(results.popkeys, **legendsettings)
-            if poptype=='tot':  ax.legend(['Total'], **legendsettings)
+            if kind=='single':
+                if poptype=='pops': ax.legend(results.popkeys, **legendsettings)
+                if poptype=='tot':  ax.legend(['Total'], **legendsettings)
+            elif kind=='multi':
+                ax.legend(labels, **legendsettings) # WARNING, cannot plot multiple populations here!
 
 
             close(epiplots[pl])
