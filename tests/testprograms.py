@@ -278,10 +278,9 @@ if 'makeprograms' in tests:
                                 parset=P.parsets['default'])
 
     # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
-    progparset1 = R.getparset(coverage=coverage,
+    progparset1 = R.getparsdict(coverage=coverage,
                   t=[2015,2016,2020],
-                  parset=P.parsets['default'],
-                  newparsetname='progparset1')
+                  parset=P.parsets['default'])
 
 #    # 14. Plot cost-coverage curves for all programs
 #    if doplot: R.plotallcoverage(t=[2013,2015],

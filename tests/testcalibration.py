@@ -10,9 +10,9 @@ Version: 2016jan09 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'attributes',
-'sensitivity',
-'manualfit',
+#'attributes',
+#'sensitivity',
+#'manualfit',
 'autofit',
 #'autofitmulti',
 #'longfit',
@@ -117,7 +117,8 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from optima import plotresults
+        from optima import plotmismatch, plotresults
+        plotmismatch(P.parsets['autofit'])
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
