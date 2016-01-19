@@ -1,4 +1,4 @@
-from optima import Settings, Parameterset, Programset, Resultset # Import classes
+from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes # Import functions
 from optima import __version__ # Get current version
@@ -293,8 +293,10 @@ class Project(object):
     
     def minoutcomes(self, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''
-        self.addoptim(name=name, objectives=objectives, constraints=constraints, parset=parset, progset=progset)
-        results = minoutcomes(project=self, name=name, parset=parset, progset=progset, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        optim = Optim(name=name, objectives=objectives, constraints=constraints, parset=parset, progset=progset)
+        
+        results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        self.addoptim(optim=optim)
         self.addresult(result=results)
         self.optims[-1].results = results.uid
         return None

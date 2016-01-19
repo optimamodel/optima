@@ -88,8 +88,6 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     results.budgetorig = budgetvec # Store original allocation
     results.budgetoptim = budgetvecnew # Store new results
     
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    
     return results
 
 
