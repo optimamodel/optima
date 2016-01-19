@@ -69,7 +69,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
-          population: function () {
+          populations: function(){
+            return populations.data.populations;
+          },
+          population: function(){
             return population;
           }
         }

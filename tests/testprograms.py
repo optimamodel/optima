@@ -158,9 +158,20 @@ if 'makeprograms' in tests:
     HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
 
     # 12. Plot cost-coverage function
-    if doplot: HTC.plotcoverage(t=[2013,2015],parset=P.parsets['default'],xupperlim=1e8)
+    caption = 'Spending data includes all HTC spending. Global Fund spending on HTC in 2012 was $40,245. '\
+                  'In the reporting period, a total of 676 MARPs received HTC services, which makes a cumulative '\
+                  'total of 1,102 MARPs that received HTC including provision of results. Due to changes in '\
+                  'the definition and focus of the indicator, PWID that received HTC in DST Centers and prisoners '\
+                  'are included, both of them previously omitted in the reports.'
+    plotoptions = {}
+    plotoptions['caption'] = caption
+    plotoptions['xupperlim'] = 2e9
+    plotoptions['perperson'] = False
+
+    if doplot: HTC.plotcoverage(t=2015,parset=P.parsets['default'],plotoptions=plotoptions)
 
     print('Running make programs set test...')
+
     # Initialise with or without programs
     R = Programset()
     R = Programset(programs=[HTC,SBCC,MGT])
@@ -271,19 +282,9 @@ if 'makeprograms' in tests:
                   parset=P.parsets['default'],
                   newparsetname='progparset1')
 
-    # 14. Plot cost-coverage curves for all programs
-    if doplot: R.plotallcoverage(t=[2013,2015],
-                      parset=P.parsets['default'],
-                      xupperlim=1e8)
-
-    # 15. Example use of program scenarios
-    if doplot:
-        print doplot
-        P.parsets['progparset1'] = progparset1
-        results0 = P.runsim('default')
-        results1 = P.runsim('progparset1')
-        from plotpeople import plotpeople
-        plotpeople([results0, results1])
+#    # 14. Plot cost-coverage curves for all programs
+#    if doplot: R.plotallcoverage(t=[2013,2015],
+#                      parset=P.parsets['default'])
 
     done(t)
     

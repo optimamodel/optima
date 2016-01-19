@@ -7,10 +7,106 @@ Version: 2016jan14 by cliffk
 """
 
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, arange, maximum, minimum, Inf, linspace
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
 from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+
+# Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
+partable = '''
+name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
+Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
+Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	None	0	None
+Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	None
+Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
+Transitions (% moving/year)	transit	(0, 'maxrate')	array	meta	no	no	None	0	None
+Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
+HIV testing rate (%/person/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
+AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
+STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	1	random
+Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	1	random
+Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	1	1	random
+Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
+Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	1	random
+Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	1	random
+Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	1	random
+Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
+Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	1	random
+Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	1	random
+Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
+Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
+Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
+Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
+Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
+Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	None	0	None
+Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	None	0	None
+Male-male receptive transmissibility (per act)	transmmr	(0, 1)	tot	constant	const	const	None	0	None
+Injection-related transmissibility (per injection)	transinj	(0, 1)	tot	constant	const	const	None	0	None
+Mother-to-child breastfeeding transmissibility (%)	mtctbreast	(0, 1)	tot	constant	const	const	None	0	None
+Mother-to-child no-breastfeeding transmissibility (%)	mtctnobreast	(0, 1)	tot	constant	const	const	None	0	None
+Relative transmissibility for acute HIV (unitless)	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative transmissibility for CD4>500 (unitless)	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative transmissibility for CD4>350 (unitless)	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Progression rate for acute HIV (%/year)	progacute	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Progression rate for CD4>500 (%/year)	proggt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Progression rate for CD4>350 (%/year)	proggt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Progression rate for CD4>200 (%/year)	proggt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Progression rate for CD4>50 (%/year)	proggt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Treatment recovery rate into CD4>500 (%/year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Treatment recovery rate into CD4>350 (%/year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Treatment recovery rate into CD4>200 (%/year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Treatment recovery rate into CD4>50 (%/year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Death rate for acute HIV (%/year)	deathacute	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Death rate for CD4>500 (%/year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Death rate for CD4>350 (%/year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Death rate for CD4>200 (%/year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
+Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	None	0	None
+Efficacy of treatment (%)	efftx	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of PrEP (%)	effprep	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of condoms (%)	effcondom	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of circumcision (%)	effcirc	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of OST (%)	effost	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of diagnosis for behavior change (%)	effdx	(0, 1)	tot	constant	const	const	None	0	None
+Disutility of acute HIV (%)	disutilacute	(0, 1)	tot	constant	const	const	None	0	None
+Disutility of CD4>500 (%)	disutilgt500	(0, 1)	tot	constant	const	const	None	0	None
+Disutility of CD4>350 (%)	disutilgt350	(0, 1)	tot	constant	const	const	None	0	None
+Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	None
+Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
+Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
+Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
+'''
+
+
+def readpars(partable):
+    ''' 
+    Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
+    '''
+    rawpars = []
+    alllines = partable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
+    for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
+    attrs = alllines.pop(0) # First line is attributes
+    for l in range(len(alllines)): # Loop over parameters
+        rawpars.append(dict()) # Create an odict to store attributes
+        for i,attr in enumerate(attrs): # Loop over attributes
+            try:
+                if attr in ['limits', 'coverage', 'visible']: alllines[l][i] = eval(alllines[l][i]) # Turn into actual values
+                if alllines[l][i]=='None': alllines[l][i] = None # Turn any surviving 'None' values to actual None
+                rawpars[l][attr] = alllines[l][i] # Store attributes
+            except:
+                errormsg = 'Error processing parameter line "%s"' % alllines[l]
+                raise Exception(errormsg)
+    return rawpars
 
 
 
@@ -20,9 +116,21 @@ def popgrow(exppars, tvec):
 
 
 
-def data2prev(name, data, keys, index=0, limits=None, by=None, fittable='', auto='', blh=0): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def getvalidyears(years, validdata, defaultind=0):
+    ''' Return the years that are valid based on the validity of the input data '''
+    if sum(validdata): # There's at least one data point entered
+        if len(years)==len(validdata): # They're the same length: use for logical indexing
+            validyears = array(array(years)[validdata]) # Store each year
+        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
+            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
+    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
+    return validyears
+
+
+
+def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
-    par = Constant(name=name, short='initprev', y=odict(), limits=limits, by=by, fittable=fittable, auto=auto) # Create structure
+    par = Constant(y=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
@@ -30,9 +138,9 @@ def data2prev(name, data, keys, index=0, limits=None, by=None, fittable='', auto
 
 
 
-def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', blh=0):
+def data2popsize(data=None, keys=None, blh=0, **defaultargs):
     ''' Convert population size data into population size parameters '''
-    par = Popsizepar(name=name, short='popsize', m=1, limits=limits, by=by, fittable=fittable, auto=auto)
+    par = Popsizepar(m=1, **defaultargs)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
@@ -66,8 +174,6 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
             errormsg = 'Fitting population size data for population "%s" failed' % key
             raise Exception(errormsg)
     
-    # ...do weighting based on number of data points and/or population size?
-    
     # Handle populations that have only a single data point
     only1datapoint = list(set(keys)-set(atleast2datapoints))
     for key in only1datapoint:
@@ -85,29 +191,30 @@ def data2popsize(name, data, keys, limits=None, by=None, fittable='', auto='', b
 
 
 
-def getvalidyears(years, validdata, defaultind=0):
-    ''' Return the years that are valid based on the validity of the input data '''
-    if sum(validdata): # There's at least one data point entered
-        if len(years)==len(validdata): # They're the same length: use for logical indexing
-            validyears = array(array(years)[validdata]) # Store each year
-        elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
-            validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
-    return validyears
 
 
-
-def data2timepar(name, short, data, keys, by=None, limits=None, fittable='', auto='', defaultind=0):
+def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
-    par = Timepar(name=name, short=short, m=1, y=odict(), t=odict(), by=by, limits=limits, fittable=fittable, auto=auto) # Create structure
+    # Check that at minimum, name and short were specified, since can't proceed otherwise
+    try: 
+        name, short = defaultargs['name'], defaultargs['short']
+    except: 
+        errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
+        raise Exception(errormsg)
+        
+    par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
-        validdata = ~isnan(data[short][row])
-        par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
-        if sum(validdata): 
-            par.y[key] = sanitize(data[short][row])
-        else:
-            print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
-            par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
+        try:
+            validdata = ~isnan(data[short][row])
+            par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
+            if sum(validdata): 
+                par.y[key] = sanitize(data[short][row])
+            else:
+                print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
+                par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
+        except:
+            errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
+            raise Exception(errormsg)
     
     return par
 
@@ -180,20 +287,6 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
 
 
 
-def readpars(filename='parameters.tsv'):
-    ''' 
-    Function to read the parameter definitions file and return a structure that can be used to generate the parameters
-    WARNING -- not used currently, provides feature for later automation of parameter generation.
-    '''
-    rawpars = []
-    with open(filename) as f: alllines = f.readlines() # Load all data
-    for l in range(len(alllines)): alllines[l] = alllines[l].strip().split('\t') # Remove end characters and split from tabs
-    attrs = alllines.pop(0) # First line is attributes
-    for l in range(len(alllines)): # Loop over parameters
-        rawpars.append(odict()) # Create an odict to store attributes
-        for i,attr in enumerate(attrs): # Loop over attributes
-            rawpars[l][attr] = alllines[l][i] # Store attributes
-    return rawpars
 
 
 
@@ -203,7 +296,8 @@ def readpars(filename='parameters.tsv'):
 
 
 
-def makepars(data, verbose=2):
+
+def makepars(data, label=None, verbose=2):
     """
     Translates the raw data (which were read from the spreadsheet) into
     parameters that can be used in the model. These data are then used to update 
@@ -220,11 +314,8 @@ def makepars(data, verbose=2):
     ## Loop over quantities
     ###############################################################################
     
-    # Read in parameters automatically -- WARNING, not currently implemented
-#    parfilename = 'parameters.tsv' # Define the name of the file that contains the parameter definitions
-#    rawpars = readpars(parfilename) # Read the parameters structure
-    
     pars = odict()
+    pars['label'] = label # Add optional label, default None
     
     # Shorten information on which populations are male, which are female
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
@@ -237,79 +328,76 @@ def makepars(data, verbose=2):
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]]
     pars['popkeys'] = dcp(popkeys)
     
-    # Key parameters
-    bestindex = 0 # Define index for 'best' data, as opposed to high or low -- WARNING, kludgy, should use all
-    pars['initprev'] = data2prev('Initial HIV prevalence', data, popkeys, index=bestindex, limits=(0,1), by='pop', fittable='pop', auto='init') # Pull out first available HIV prevalence point
-    pars['popsize'] = data2popsize('Population size', data, popkeys, limits=(0,'maxpopsize'), by='pop', fittable='exp', auto='popsize')
     
-    # Epidemilogy parameters -- most are data
-    pars['stiprev'] = data2timepar('STI prevalence', 'stiprev', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # STI prevalence
-    pars['death']  = data2timepar('Mortality rate', 'death', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='other')  # Death rates
-    pars['tbprev'] = data2timepar('Tuberculosis prevalence', 'tbprev', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # TB prevalence
+    # Read in parameters automatically -- WARNING, not currently implemented
+    rawpars = readpars(partable) # Read the parameters structure
+    for rawpar in rawpars: # Iterate over all automatically read in parameters
+        printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
+        
+        # Shorten key variables
+        partype = rawpar.pop('partype')
+        parname = rawpar['short']
+        by = rawpar['by']
+        
+        # Decide what the keys are
+        if by=='tot': keys = totkey
+        elif by=='pop': keys = popkeys
+        elif by=='fpop': keys = fpopkeys
+        elif by=='mpop': keys = mpopkeys
+        else: keys = [] # They're not necessarily empty, e.g. by partnership, but too complicated to figure out here
+        if by in ['fpop', 'mpop']: rawpar['by'] = 'pop' # Reset, since no longer needed
+        
+        # Decide how to handle it based on parameter type
+        if partype=='initprev': # Initialize prevalence only
+            pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
+        elif partype=='popsize': # Population size only
+            pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
+        elif partype=='timepar': # It's a normal time parameter, e.g. hivtest
+            pars[parname] = data2timepar(data=data, keys=keys, **rawpar)
+        elif partype=='constant': # The constants, e.g. transmfi
+            best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
+            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+        elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
+            pars[parname] = Constant(y=odict(), **rawpar)
+            
     
-    # Testing parameters -- most are data
-    pars['hivtest'] = data2timepar('HIV testing rate', 'hivtest', data, popkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='test') # HIV testing rates
-    pars['aidstest'] = data2timepar('AIDS testing rate', 'aidstest', data, totkey, limits=(0,'maxrate'), by='tot', fittable='meta', auto='test') # AIDS testing rates
-    pars['numtx'] = data2timepar('Number on treatment', 'numtx', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='treat') # Number of people on first-line treatment -- WARNING, will need to change
 
-    # MTCT parameters
-    pars['numpmtct'] = data2timepar('Number on PMTCT', 'numpmtct', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='other')
-    pars['breast']   = data2timepar('Proportion who breastfeed', 'breast', data, totkey, limits=(0,1), by='tot', fittable='meta', auto='other')  
-    pars['birth']    = data2timepar('Birth rate', 'birth', data, fpopkeys, limits=(0,'maxrate'), by='pop', fittable='meta', auto='other')
+    ###############################################################################
+    ## Tidy up -- things that can't be converted automatically
+    ###############################################################################    
+    
+    # Births
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     
-    # Circumcision parameters
-    pars['circum'] = data2timepar('Circumcision probability', 'circum', data, mpopkeys, limits=(0,1), by='pop', fittable='meta', auto='other') # Circumcision percentage
+    # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
     
-    # Drug behavior parameters
-    pars['numost'] = data2timepar('Number on OST', 'numost', data, totkey, limits=(0,'maxpopsize'), by='tot', fittable='meta', auto='other')
-    pars['sharing'] = data2timepar('Probability of needle sharing', 'sharing', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other')
-    
-    # Other intervention parameters (proportion of the populations, not absolute numbers)
-    pars['prep'] = data2timepar('Proportion on PrEP', 'prep', data, popkeys, limits=(0,1), by='pop', fittable='meta', auto='other')
-    
-    # Constants
-    pars['const'] = odict() # WARNING, actually use Parameters class?
-    for parname in data['const'].keys():
-        printv('Converting data parameter %s...' % parname, 3, verbose)
-        best = data['const'][parname][0] # Taking best value only, hence the 0
-        low = data['const'][parname][1]
-        high = data['const'][parname][2]
-        pars['const'][parname] = Constant(name=parname, short=parname, limits=[low, high], y=best, by='tot', fittable='const', auto='const')
-
-    # Initialize metaparameters
-    pars['force'] = Constant(name='Force-of-infection', short='force', y=odict(), limits=(0,'maxmeta'), by='pop', fittable='pop', auto='force') # Create structure
-    pars['inhomo'] = Constant(name='Inhomogeneity', short='inhomo', y=odict(), limits=(0,'maxmeta'), by='pop', fittable='pop', auto='inhomo') # Create structure
-    for key in popkeys:
+    # Metaparameters
+    for key in popkeys: # Define values
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
     
-    # Risk-related population transitions
-    pars['transit'] = Constant(name='Transitions', short='transit', y=odict(), limits=(0,'maxrate'), by='array', fittable='no', auto='no')
-    for i,key1 in enumerate(popkeys):
+    # Transitions
+    for i,key1 in enumerate(popkeys): # Populate from spreadsheet verbatim
         for j,key2 in enumerate(popkeys):
             pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
     
     
-    # Sexual behavior parameters
+    # Balance partnerships parameters    
     tmpacts = odict()
     tmpcond = odict()
     tmpactspts = odict()
     tmpcondpts = odict()
-    fullnames = {'reg':'regular', 'cas':'casual', 'com':'commercial', 'inj':'injecting'}
     for act in ['reg','cas','com', 'inj']: # Number of acts
         actsname = 'acts'+act
         tmpacts[act], tmpactspts[act] = balance(act=act, which='numacts', data=data, popkeys=popkeys, popsizepar=pars['popsize'])
-        pars[actsname] = Timepar(name='Number of %s acts' % fullnames[act], short=actsname, m=1, y=odict(), t=odict(), limits=(0,'maxacts'), by='pship', fittable='meta', auto='other') # Create structure
     for act in ['reg','cas','com']: # Condom use
         condname = 'cond'+act
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
-        pars[condname] = Timepar(name='Condom use for %s acts' % fullnames[act], short=condname, m=1, y=odict(), t=odict(), limits=(0,1), by='pship', fittable='meta', auto='other') # Create structure
         
     # Convert matrices to lists of of population-pair keys
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
@@ -323,12 +411,6 @@ def makepars(data, verbose=2):
                     if act!='inj':
                         pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                         pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
-    
-
-    
-    
-    
-    
     
     printv('...done converting data to parameters.', 2, verbose)
     
@@ -345,7 +427,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jan04 by cliffk
+    Version: 2016jan14 by cliffk
     '''
     
     # Handle inputs and initialization
@@ -353,27 +435,19 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'popkeys']
-    modelkeys = ['const', 'initprev', 'popsize', 'force', 'inhomo', 'stiprev', 'death', 'tbprev', 'hivtest', 'aidstest', 'numtx', 'numpmtct', 'breast', 'birth', 'circum', 'numost', 'sharing', 'prep', 'actsreg', 'actscas', 'actscom', 'actsinj', 'condreg', 'condcas', 'condcom']
-    if keys is None: keys = modelkeys
+    if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
-    else: simpars['tvec'] = arange(start, end+dt, dt) # Store time vector with the model parameters
+    else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
     
     # Loop over requested keys
-    for key in keys:
-        if key=='const': # Handle constants separately
-            simpars['const'] = odict()
-            for subkey in pars['const'].keys():
-                simpars['const'][subkey] = pars['const'][subkey].interp()
-        else: # Handle all other parameters
-            try: 
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-            except: 
-                errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
-                raise Exception(errormsg)
-    
+    for key in keys: # Loop over all keys
+        if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
+            except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
+
     return simpars
 
 
@@ -382,13 +456,14 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', visible=0, proginteract=None):
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
+        self.coverage = coverage # Whether or not this is a coverage parameter
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
     
@@ -398,11 +473,12 @@ class Par(object):
         output += '        name: "%s"\n'    % self.name
         output += '       short: "%s"\n'    % self.short
         output += '      limits: %s\n'      % str(self.limits)
-        output += '          by: %s\n'      % self.by
+        output += '          by: "%s"\n'    % self.by
         output += '    fittable: "%s"\n'    % self.fittable
         output += '        auto: "%s"\n'    % self.auto
-        output += '     visible: "%s"\n'    % self.visible
-        output += 'proginteract: "%s"\n'    % self.proginteract
+        output += '    coverage: %s\n'      % self.coverage
+        output += '     visible: %s\n'      % self.visible
+        output += 'proginteract: %s\n'      % self.proginteract
         return output
 
 
@@ -415,8 +491,8 @@ class Par(object):
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=(0,1), t=None, y=None, m=1, by=None, fittable='', auto=''):
-        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
+    def __init__(self, t=None, y=None, m=1, **defaultargs):
+        Par.__init__(self, **defaultargs)
         if t is None: t = odict()
         if y is None: y = odict()
         self.t = t # Time data, e.g. [2002, 2008]
@@ -457,8 +533,8 @@ class Timepar(Par):
 class Popsizepar(Par):
     ''' The definition of the population size parameter '''
     
-    def __init__(self, name=None, short=None, limits=(0,1e9), p=None, m=1, start=2000, by=None, fittable='', auto=''):
-        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
+    def __init__(self, p=None, m=1, start=2000, **defaultargs):
+        Par.__init__(self, **defaultargs)
         if p is None: p = odict()
         self.p = p # Exponential fit parameters
         self.m = m # Multiplicative metaparameter, e.g. 1
@@ -490,8 +566,8 @@ class Popsizepar(Par):
 class Constant(Par):
     ''' The definition of a single constant parameter, which may or may not vary by population '''
     
-    def __init__(self, name=None, short=None, limits=(0,1), y=None, by=None, fittable='', auto=''):
-        Par.__init__(self, name=name, short=short, limits=limits, by=by, fittable=fittable, auto=auto)
+    def __init__(self, y=None, **defaultargs):
+        Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
     def __repr__(self):
@@ -500,9 +576,8 @@ class Constant(Par):
         output += '       y: %s\n'    % self.y
         return output
     
-    def interp(self, tvec=None, smoothness=None):
+    def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
             output = self.y
         else: # No, it has keys, return as an array
@@ -587,17 +662,19 @@ class Parameterset(object):
         pars = self.pars[0]
         
         print('\n\n\n')
-        print('PARAMETER TYPES:')
+        print('CONTENTS OF PARS, BY TYPE:')
         partypes = []
         for key in pars: partypes.append(type(pars[key]))
         partypes = set(partypes)
-        count = 0
+        count1 = 0
+        count2 = 0
         for partype in set(partypes): 
-            print('  ..%s' % str(partype))
+            count1 += 1
+            print('  %i..%s' % (count1, str(partype)))
             for key in pars:
                 if type(pars[key])==partype:
-                    count += 1
-                    print('      %i.... %s' % (count, str(key)))
+                    count2 += 1
+                    print('      %i.... %s' % (count2, str(key)))
         
         print('\n\n\n')
         print('ATTRIBUTES:')
@@ -608,12 +685,6 @@ class Parameterset(object):
                 for attr in theseattr:
                     if attr not in attributes.keys(): attributes[attr] = []
                     attributes[attr].append(getattr(pars[key], attr))
-            elif key=='const':
-                for key2 in pars['const']:
-                    theseattr = pars['const'][key2].__dict__.keys()
-                    for attr in theseattr:
-                        if attr not in attributes.keys(): attributes[attr] = []
-                        attributes[attr].append(getattr(pars['const'][key2], attr))
         for key in attributes:
             print('  ..%s' % key)
         print('\n\n')
@@ -635,7 +706,13 @@ class Parameterset(object):
                 except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         return None
 
+
+
+
+
+
     def manualfitlists(self, ind=0):
+        ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
             raise Exception("No parameters available!")
         elif len(self.pars)<=ind:
@@ -652,7 +729,6 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            print "key", key, "par", par
             if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
                 continue
             if par.fittable == 'meta':
@@ -676,7 +752,7 @@ class Parameterset(object):
                     valuelist.append(par.p[subkey][0])
                     labellist.append('{} -- {}'.format(par.name, str(subkey)))
             else:
-                print 'Parameter type "%s" not implemented!' % key.manual
+                print('Parameter type "%s" not implemented!' % par.fittable)
 
         return mflists
 
