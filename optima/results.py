@@ -57,7 +57,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, progset=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -68,12 +68,7 @@ class Resultset(object):
         if type(simpars)!=list: simpars = [simpars] # Force into being a list
         if type(raw)!=list: raw = [raw] # Force into being a list
         
-        # Fundamental quantities -- populated by project.runsim()
-        self.raw = raw
-        self.simpars = simpars # ...and sim parameters
-        self.tvec = raw[0]['tvec'] # Copy time vector
-        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
-        self.popkeys = raw[0]['popkeys']
+        # Read things in from the project if defined
         if project is not None:
             if parset is None:
                 try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
@@ -82,7 +77,14 @@ class Resultset(object):
                 try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
                 except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
-            settings = project.settings
+            if settings is None: settings = project.settings
+        
+        # Fundamental quantities -- populated by project.runsim()
+        self.raw = raw
+        self.simpars = simpars # ...and sim parameters
+        self.tvec = raw[0]['tvec'] # Copy time vector
+        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
+        self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
@@ -191,9 +193,11 @@ class Resultset(object):
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        self.main['numtreat'].pops = quantile(allpeople[:,txinds,:,indices].sum(axis=1), quantiles=quantiles)
-        self.main['numtreat'].tot = quantile(allpeople[:,txinds,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numdiag'].datatot = processdata(data['numtx'])
+        try:
+            self.main['numtreat'].pops = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+            self.main['numtreat'].tot = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+            if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
 
 # WARNING, need to implement
