@@ -201,3 +201,13 @@ class Resultset(object):
                 checkboxnames.append(name+' -- '+subname)
 
         return self.graph_selectors
+
+
+
+
+class Multiresultset(Resultset):
+    ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
+    def __init__(self, resultsetlist):
+        # Basic info
+        self.uid = uuid()
+        self.created = today()

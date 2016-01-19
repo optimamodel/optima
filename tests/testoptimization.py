@@ -100,7 +100,7 @@ if 'minimizeoutcomes' in tests:
     print('Running minimize outcomes test...')
     from optima import defaultobjectives
     objectives = defaultobjectives()
-    objectives['budget'] = 1e7 # Change default budget to optimize
+    objectives['budget'] = 5e6 # Change default budget to optimize
     P.minoutcomes(name='optim', parset='default', progset='default', objectives=objectives, method='asd')
     
     print('Original allocation:')

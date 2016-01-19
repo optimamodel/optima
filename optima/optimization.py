@@ -58,7 +58,6 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
-    if objectives is None: objectives = defaultobjectives()
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
     
     totalbudget = objectives['budget']
@@ -84,7 +83,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up
-    results = objectivecalc(budgetvecnew, outputresults=True, **args)
+    orig = objectivecalc(budgetvec, outputresults=True, **args)
+    new = objectivecalc(budgetvecnew, outputresults=True, **args)
     results.budgetorig = budgetvec # Store original allocation
     results.budgetoptim = budgetvecnew # Store new results
     
@@ -114,7 +114,7 @@ def defaultobjectives(verbose=2):
 
 
 class Optim(object):
-    def __init__(self, name='default', project=None, objectives=None, constraints=None, parset=None, progset=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parset=None, progset=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
@@ -122,8 +122,8 @@ class Optim(object):
         self.modified = today() # Date modified
         self.parset = parset # Parameter set name
         self.progset = progset # Program set name
-        self.objectives = None # List of dicts holding Parameter objects -- only one if no uncertainty
-        self.constraints = None # List of populations
+        self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.constraints = constraints # List of populations
         if objectives is None: self.objectives = defaultobjectives()
         if constraints is None: self.constraints = 'WARNING, not implemented'
         self.results = None # Store pointer to results

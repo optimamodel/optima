@@ -293,8 +293,7 @@ class Project(object):
     
     def minoutcomes(self, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''
-        optim = Optim(name=name, objectives=objectives, constraints=constraints, parset=parset, progset=progset)
-        
+        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parset=parset, progset=progset)
         results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
         self.addresult(result=results)
