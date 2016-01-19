@@ -13,6 +13,11 @@ fi
 
 source ./p-env/bin/activate
 
+# install optima as a package
+cd optima
+python setup.py develop
+cd ..
+
 TMP_DEPS=/tmp/temp_deps_${RANDOM}
 pip freeze -l > ${TMP_DEPS}
 if ! cmp ./requirements.txt ${TMP_DEPS} > /dev/null 2>&1
@@ -23,8 +28,10 @@ then
 fi
 
 mkdir -p /tmp/uploads
-cp ../optima/test.xlsx /tmp/uploads
+cp ../tests/test.xlsx /tmp/uploads
 mkdir -p static
-cp ../optima/test.xlsx static
+cp ../tests/test.xlsx static
 
 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests -c nose.cfg $@
+
+rm -rf static
