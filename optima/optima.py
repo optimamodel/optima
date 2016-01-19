@@ -89,9 +89,6 @@ except: _failed()
 try: from programs import Program, Programset # Define programs
 except: _failed()
 
-try: from makeplots import epiplot, plotallocs # Create the plots
-except: _failed()
-
 try: from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
@@ -99,6 +96,9 @@ try: from scenarios import runscenarios, makescenarios, defaultscenarios, getpar
 except: _failed()
 
 try: from optimization import minoutcomes, defaultobjectives, Optim # Scenario functions
+except: _failed()
+
+try: from makeplots import plotepi, plotmismatch, plotallocs # Create the plots
 except: _failed()
 
 

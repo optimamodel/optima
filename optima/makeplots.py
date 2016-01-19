@@ -4,6 +4,7 @@ from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_betw
 
 
 
+
 def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10):
         '''
@@ -121,6 +122,58 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
 
 ##################################################################
+## Plot mismatches
+##################################################################
+def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+    ''' 
+    Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
+    
+    Accepts either a parset (generated from autofit) or an optimization result with a mismatch attribute;
+    failing that, it will try to treat the object as something that can be used directly, e.g.
+        plotmismatch(results.mismatch)
+    also works.
+    
+    Version: 2016jan18 by cliffk    
+    '''
+
+    if hasattr(results, 'mismatch'): mismatch = results.mismatch # Get mismatch attribute of object if it exists
+    elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least
+    else: raise Exception('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument, mister')
+    
+    # Set up figure and do plot
+    fig = figure(figsize=figsize, facecolor=(1,1,1))
+    
+    # Plot model estimates with uncertainty
+    plot(mismatch, lw=lw, c=(0,0,0)) # Actually do the plot
+    
+    
+    # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+    ax = gca()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    ax.title.set_fontsize(titlesize)
+    ax.xaxis.label.set_fontsize(labelsize)
+    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+    
+    # Configure plot
+    currentylims = ylim()
+    ax.set_xlabel('Iteration')
+    ax.set_title('Outcome/mismatch')
+    ax.set_ylim((0,currentylims[1]))
+    ax.set_xlim((0, len(mismatch)))
+    
+    return fig
+
+
+
+
+
+
+
+
+##################################################################
 ## Allocation plots
 ##################################################################
 
@@ -141,7 +194,6 @@ def plotallocs(multires=None, compare=True):
     fig.subplots_adjust(wspace=0.30) # More space between
     fig.subplots_adjust(hspace=0.40) # More space between
     
-    from gridcolormap import gridcolormap
     colors = gridcolormap(nprogs)
     
     ax = []
@@ -164,3 +216,5 @@ def plotallocs(multires=None, compare=True):
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     for plt in range(len(progdata)):
         if compare: ax[plt].set_ylim((0,ymax))
+    
+    return fig

@@ -98,7 +98,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     budget['orig'] = orig.budgetvec # Store original allocation
     budget['optim'] = new.budgetvec # Store original allocation
     multires.budget = budget # Store budget information
-    multires.outcome = output.fval # Store full function evaluation information
+    multires.mismatch = output.fval # Store full function evaluation information
     
     return multires
 
