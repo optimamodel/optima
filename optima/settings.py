@@ -7,6 +7,7 @@ Version: 2016jan06 by cliffk
 """
 
 from numpy import arange, array, concatenate as cat, linspace
+from optima import defaultrepr
 
 
 class Settings():
@@ -44,19 +45,20 @@ class Settings():
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out
     
+    
     def __repr__(self):
-        output =  '                  Optima settings\n'
-        output += '============================================================\n'
-        for key in self.__dict__.keys():
-            output += ' %10s: %s\n' % (key, str(getattr(self, key)))
-        output += '============================================================\n'
+        ''' Prettily print object '''
+        output =  defaultrepr(self)
         return output
     
+    
     def maketvec(self, start=None, end=None, dt=None):
+        ''' Little function for calculating the time vector -- here since start, end, dt are stored here '''
         if start is None: start=self.start
         if end is None: end=self.end
         if dt is None: dt=self.dt
-        return linspace(start, end, round((end-start)/dt)+1)
+        tvec = linspace(start, end, round((end-start)/dt)+1)
+        return tvec
 
 
     def setmaxes(self, maxlist=None, dt=None):

@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015jan12 by cliffk
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
+from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 
 
@@ -82,11 +82,13 @@ class Resultset(object):
                 try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
                 except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
+            settings = project.settings
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
         self.data = data # Store data
+        self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
@@ -96,12 +98,13 @@ class Resultset(object):
         self.main['numplhiv'] = Result('Number of PLHIV')
         self.main['numdeath'] = Result('Number of HIV-related deaths')
         self.main['numdiag'] = Result('Number of people diagnosed')
-#        self.main['dalys'] = Result('Number of DALYs')
-#        self.main['numtreat'] = Result('Number of people on treatment')
-#        self.main['numnewtreat'] = Result('Number of people newly treated')
-#        self.main['numnewdiag'] = Result('Number of new diagnoses')
+        self.main['numtreat'] = Result('Number of people on treatment')
+
         
         # Other quantities
+#        self.main['dalys'] = Result('Number of DALYs')
+#        self.main['numnewtreat'] = Result('Number of people newly treated')
+#        self.main['numnewdiag'] = Result('Number of new diagnoses')
 #        self.other = odict() # For storing main results
 #        self.births = Result()
 #        self.mtct = Result()
@@ -160,6 +163,7 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
+        txinds = self.settings.treat
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -186,6 +190,10 @@ class Resultset(object):
         self.main['numdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
+        
+        self.main['numtreat'].pops = quantile(allpeople[:,txinds,:,indices].sum(axis=1), quantiles=quantiles)
+        self.main['numtreat'].tot = quantile(allpeople[:,txinds,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numdiag'].datatot = processdata(data['numtx'])
         
 
 # WARNING, need to implement

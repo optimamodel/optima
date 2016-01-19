@@ -19,7 +19,8 @@ Version: 2016jan11 by cliffk
 tests = [
 'makeproject',
 'makeprograms',
-'autofit',
+#'autofit',
+'manualfit',
 ]
 
 
@@ -97,10 +98,8 @@ if 'makeprograms' in tests:
     budget = R.getdefaultbudget()
     coverage = R.getprogcoverage(budget=budget, t=2016, parset=P.parsets['default'])
     outcomes = R.getoutcomes(coverage=coverage, t=2016, parset=P.parsets['default'])
-    progparset = R.getparset(coverage=coverage,
-                  t=[2016],
-                  parset=P.parsets['default'],
-                  newparsetname='progparset')
+#    progpars = R.getparsdict(coverage=coverage, t=[2016],
+#                  parset=P.parsets['default'])
 
 #    # Run results
 #    from optima import runmodel
@@ -134,6 +133,21 @@ if 'autofit' in tests:
     
     done(t)
 
+
+
+
+
+
+#####################################################################################################
+## Manual calibration test
+#####################################################################################################
+if 'manualfit' in tests and doplot:
+    t = tic()
+
+    print('Running manual calibration test...')
+    P.manualfit(orig='default', name='manual')
+    
+    done(t)
 
 
 
