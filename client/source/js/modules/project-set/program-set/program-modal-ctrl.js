@@ -19,8 +19,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         eligibility: {
           pregnantFalse: true,
           allstates: true
-        }
+        },
+        showAddData: false
       };
+
+      // todo: remove later
+      program.addData = [{
+        year: 2026,
+        spending: 500000,
+        coverage: 10000
+      }];
 
       if(program.populations && program.populations.length > 0) {
         _.forEach($scope.state.populations, function(population) {
@@ -111,6 +119,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if (form.$invalid) {
         modalService.inform(undefined,undefined,'Please fill in the form correctly');
       } else {
+
+        $scope.state.showAddData = false;
 
         $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
           return population.active;

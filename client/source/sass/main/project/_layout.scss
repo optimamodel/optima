@@ -76,3 +76,24 @@
     display: flex;
   }
 }
+
+.vertical_list {
+
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+
+  .data {
+    height: 30px;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    width: 80px;
+  }
+
+  input {
+    width: 80px;
+  }
+}
