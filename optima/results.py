@@ -208,8 +208,8 @@ class Multiresultset(Resultset):
         self.nresultsets = len(resultsetlist)
         self.keys = []
         if type(resultsetlist)==list: pass # It's already a list, carry on
-        if type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
-        if resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
+        elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
+        elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
         
         # Results specific to a Multiresultset
@@ -237,10 +237,7 @@ class Multiresultset(Resultset):
             for attr in sameattrs+commonattrs:
                 orig = getattr(self, attr)
                 new = getattr(rset, attr)
-                if orig is None: setattr(self, attr, new)
-                elif orig!=new and attr in sameattrs: # It's only an issue if they must be the same: for something like a project, OK if they differ
-                    errormsg = 'In generating multi-results, all results must have same attribute "%s": key "%s" differs' % (attr, key)
-                    raise Exception(errormsg)
+                if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
             
             # Loop over different attributes and append to the odict
             for attr in diffattrs:
