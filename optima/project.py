@@ -57,7 +57,6 @@ class Project(object):
         self.name = name
         self.settings = Settings() # Global settings
         self.data = {} # Data from the spreadsheet
-        self.econ = {} # Data from the economics spreadsheet
 
         ## Define metadata
         self.uid = uuid()

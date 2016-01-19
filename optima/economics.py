@@ -135,7 +135,7 @@ def loadeconspreadsheet(filename='economics.xlsx', verbose=0):
     printv('...done loading economic data.', 2, verbose)
     return econdata
 
-def makeecontimeseries(econdata, tvec):
+def interpeconomics(econdata, tvec):
     ''' Transform economic data into time series.'''
     econtimeseries = odict()
     
@@ -150,10 +150,10 @@ def makeecontimeseries(econdata, tvec):
                 
     return econtimeseries
     
-def interpecon(filename, tvec, verbose=0):
+def loadeconomics(filename, tvec, verbose=0):
     ''' Loads spreadsheet and converts to time series'''
     econdata = loadeconspreadsheet(filename,verbose=verbose)
-    econtimeseries = makeecontimeseries(econdata, tvec)
+    econtimeseries = interpeconomics(econdata, tvec)
     return econdata, econtimeseries
    
 def getartcosts(progset, tvec, shortnameofART='ART', growthrateofARTcost=0.02):
