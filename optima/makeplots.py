@@ -39,7 +39,11 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
             # Parse user input
             try:
-                datatype, poptype = pl.split('-')
+                if type(pl)==str: datatype, poptype = pl.split('-')
+                elif type(pl) in [list, tuple]: datatype, poptype = pl[0], pl[1]
+                else: 
+                    errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(pl)
+                    raise Exception(errormsg)
                 if datatype not in results.main.keys():
                     errormsg = 'Could not understand plot "%s"; ensure keys are one of:\n' % datatype
                     errormsg += '%s' % results.main.keys()
