@@ -6,7 +6,7 @@ Store all the static data for a project that won't change except between Optima 
 Version: 2016jan06 by cliffk
 """
 
-from numpy import arange, array, concatenate as cat
+from numpy import arange, array, concatenate as cat, linspace
 
 
 class Settings():
@@ -51,6 +51,12 @@ class Settings():
             output += ' %10s: %s\n' % (key, str(getattr(self, key)))
         output += '============================================================\n'
         return output
+    
+    def maketvec(self, start=None, end=None, dt=None):
+        if start is None: start=self.start
+        if end is None: end=self.end
+        if dt is None: dt=self.dt
+        return linspace(start, end, round((end-start)/dt)+1)
 
 
     def setmaxes(self, maxlist=None, dt=None):

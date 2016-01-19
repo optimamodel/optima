@@ -9,26 +9,24 @@ from numpy import zeros, arange
 
 
 
-def objectivecalc(budgetvec, project=None, parset=None, progset=None, indices=None, objectives=None, constraints=None):
+def objectivecalc(budgetvec, project=None, parset=None, progset=None, indices=None, objectives=None, constraints=None, tvec=None):
     
     # Convert budgetvec to budget
-    budget = budgetvec
+    budget = odict()
+    for i,key in enumerate(progset.programs.keys()):
+        budget[key] = budgetvec[i]
     
-    
-    # Define years
-    start = objectives['start']
-    end = objectives['end']
-    
-    thiscoverage = progset.getprogcoverage(budget=budget, t=start, parset=parset)
-    thisparset = progset.getparset(coverage=thiscoverage, t=start, parset=parset)
-    results = runmodel(pars=thisparset.pars[0], end=end, verbose=0)
+    # Run model
+    thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset)
+    thisparset = progset.getparset(coverage=thiscoverage, t=objectives['start'], parset=parset)
+    results = runmodel(pars=thisparset.pars[0], tvec=tvec, verbose=0)
     
     # Calculate outcome
     outcome = 0 # Preallocate objective value 
     for key in ['death', 'inci']:
         thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
         thisoutcome = results.main['num'+key].tot[indices].sum() # the instantaneous outcome e.g. objectives['numdeath']
-        outcome += thisoutcome*thisweight*resuls.dt # Calculate objective
+        outcome += thisoutcome*thisweight*results.dt # Calculate objective
 
     
     return outcome
@@ -50,13 +48,14 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     if objectives is None: objectives = defaultobjectives()
+    tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
     
     totalbudget = objectives['budget']
     nprogs = len(progset.programs)
     budgetvec = zeros(nprogs)+totalbudget/nprogs
     
-    initial = findinds(parset['tvec'], objectives['start'])
-    final = findinds(parset['tvec'], objectives['end'])
+    initial = findinds(tvec, objectives['start'])
+    final = findinds(tvec, objectives['end'])
     indices = arange(initial, final)
     
     for ind in inds:
@@ -67,7 +66,7 @@ def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, obje
         budgetlower  = zeros(nprogs)
         budgethigher = zeros(nprogs) + totalbudget
         
-        args = {'project':project, 'parset':pars, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'indices':indices}
+        args = {'project':project, 'parset':pars, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec, 'indices':indices}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         elif method=='simplex':
@@ -94,7 +93,7 @@ def defaultobjectives(verbose=2):
     objectives = odict() # Dictionary of all objectives
     objectives['start'] = 2017 # "Year to begin optimization"
     objectives['end'] = 2030 # "Year to project outcomes to"
-    objectives['budget'] = 0 # "Annual budget to optimize"
+    objectives['budget'] = 1e6 # "Annual budget to optimize"
     objectives['deathweight'] = 5 # "Death weighting"
     objectives['inciweight'] = 1 # "Incidence weighting"
     

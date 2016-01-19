@@ -378,7 +378,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
 
 
-def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uid=None, project=None, data=None, verbose=2):
+def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, project=None, data=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -388,7 +388,7 @@ def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, en
     from optima import makesimpars, Resultset
     if simpars is None:
         if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, start=start, end=end, dt=dt, name=name, uid=uid)
+        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
     if settings is None:
         if project is not None: settings = project.settings
         else: settings = Settings()
