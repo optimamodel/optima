@@ -1,5 +1,5 @@
 from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes # Import functions
 from optima import __version__ # Get current version
 
@@ -74,8 +74,7 @@ class Project(object):
 
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = objectid(self)
-        output += '============================================================\n'
+        output = '============================================================\n'
         output += '      Project name: %s\n'    % self.name
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
@@ -92,10 +91,7 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output
 
 

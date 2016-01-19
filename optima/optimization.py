@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016jan18 by cliffk
 """
 
-from optima import printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objectid, objatt, objmeth
+from optima import printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr
 from numpy import zeros, arange, array
 
 
@@ -131,8 +131,7 @@ class Optim(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = objectid(self)
-        output += '============================================================\n'
+        output = '============================================================\n'
         output += ' Optimization name: %s\n'    % self.name
         output += 'Parameter set name: %s\n'    % self.parset
         output += '  Program set name: %s\n'    % self.progset
@@ -140,8 +139,5 @@ class Optim(object):
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output

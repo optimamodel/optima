@@ -52,6 +52,36 @@ def objmeth(obj, strlen = 18, ncol = 3):
     return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
 
 
+def objrepr(obj):
+    ''' Return useful printout for the Python __repr__ method '''
+    output =  objectid(obj)
+    output += '============================================================\n'
+    output += objatt(obj)
+    output += '============================================================\n'
+    output += objmeth(obj)
+    output += '============================================================\n'
+    return output
+
+def defaultrepr(obj, maxlen=70):
+    ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
+    keys = sorted(obj.__dict__.keys())
+    maxkeylen = max([len(key) for key in keys])
+    if maxkeylen<maxlen: maxlen = maxlen - maxkeylen
+    formatstr = '%'+ '%i'%maxkeylen + 's'
+    output = '============================================================\n'
+    output +=  objectid(obj)
+    output += '============================================================\n'
+    for key in keys:
+        thisattr = str(getattr(obj, key))
+        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen]
+        output += formatstr%key + ': ' + thisattr
+    output += '============================================================\n'
+    output += objmeth(obj)
+    output += '============================================================\n'
+    return output
+
+
+
 def printarr(arr, arrformat='%0.2f  '):
     """ 
     Print a numpy array nicely.

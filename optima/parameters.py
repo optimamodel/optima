@@ -8,7 +8,7 @@ Version: 2016jan14 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -503,16 +503,7 @@ class Par(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = objectid(self)
-        output += '        name: "%s"\n'    % self.name
-        output += '       short: "%s"\n'    % self.short
-        output += '      limits: %s\n'      % str(self.limits)
-        output += '          by: "%s"\n'    % self.by
-        output += '    fittable: "%s"\n'    % self.fittable
-        output += '        auto: "%s"\n'    % self.auto
-        output += '    coverage: %s\n'      % self.coverage
-        output += '     visible: %s\n'      % self.visible
-        output += 'proginteract: %s\n'      % self.proginteract
+        output = defaultrepr(self)
         return output
 
 
@@ -535,11 +526,7 @@ class Timepar(Par):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = Par.__repr__(self)
-        output += '       t: \n%s\n'  % self.t
-        output += '       y: \n%s\n'  % self.y
-        output += '       m: %s\n'    % self.m
-        output += '    keys: %s\n'    % self.y.keys()
+        output = defaultrepr(self)
         return output
     
     def interp(self, tvec, smoothness=20):
@@ -576,11 +563,7 @@ class Popsizepar(Par):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = Par.__repr__(self)
-        output += '   start: %s\n'    % self.start
-        output += '       p: %s\n'    % self.p
-        output += '       m: %s\n'    % self.m
-        output += '    keys: %s\n'    % self.p.keys()
+        output = defaultrepr(self)
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
@@ -606,8 +589,7 @@ class Constant(Par):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = Par.__repr__(self)
-        output += '       y: %s\n'    % self.y
+        output = defaultrepr(self)
         return output
     
     def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
@@ -643,18 +625,14 @@ class Parameterset(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = objectid(self)
-        output += '============================================================\n'
+        output =  '============================================================\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output
     
     

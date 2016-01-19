@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015jan12 by cliffk
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, objectid, objatt, objmeth, dcp
+from optima import uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 
 
@@ -21,20 +21,18 @@ class Result(object):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = objectid(self)
-        output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
+        output = defaultrepr(self)
         return output
 
 
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
+        self.name = name # May be blank of automatically generated, but can be overwritten
         
         # Turn inputs into lists if not already
         if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
@@ -86,16 +84,12 @@ class Resultset(object):
     
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
-        output = objectid(self)
-        output += '============================================================\n'
+        output = '============================================================\n'
         output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output
     
     
@@ -211,3 +205,8 @@ class Multiresultset(Resultset):
         # Basic info
         self.uid = uuid()
         self.created = today()
+        
+    def __repr__(self):
+        ''' Print out useful information when called '''
+        output = defaultrepr(self)
+        return output
