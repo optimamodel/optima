@@ -110,6 +110,9 @@ if 'minimizeoutcomes' in tests:
     if doplot: 
         from pylab import plot
         plot(P.results[-1].outcome)
+        
+        from optima import plotallocs
+        plotallocs(P.results[-1])
     
     done(t)
 

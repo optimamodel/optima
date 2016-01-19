@@ -21,8 +21,9 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=array([objectives['start']]), parset=parset) # WARNING, shouldn't need array()
     thisparset = progset.getparset(coverage=thiscoverage, t=array([objectives['start']]), parset=parset)
-    results = runmodel(pars=thisparset.pars[0], tvec=tvec, verbose=0) # WARNING, should just generate pars, not parset
+    results = runmodel(pars=thisparset.pars[0], parset=parset, progset=progset, tvec=tvec, verbose=0) # WARNING, should just generate pars, not parset
     
+    # Figure out which indices to use
     initial = findinds(results.tvec, objectives['start'])
     final = findinds(results.tvec, objectives['end'])
     indices = arange(initial, final)
@@ -89,6 +90,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
+    orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
+    new.name = 'Optimal allocation'
     
     multires = Multiresultset(resultsetlist=[orig, new])
     budget = odict()

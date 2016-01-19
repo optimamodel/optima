@@ -1,7 +1,10 @@
 from optima import odict, gridcolormap
-from pylab import array, isinteractive, ioff, ion, figure, plot, close, ylim, ndim, fill_between, scatter, gca
+from numpy import array, ndim, maximum, arange
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
-def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+
+
+def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10):
         '''
         Render the plots requested and store them in a list. Argument "which" should be a list of form e.g.
@@ -9,7 +12,7 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
 
-        Version: 2015dec29
+        Version: 2016jan18
         '''
 
         # Initialize
@@ -116,13 +119,20 @@ def epiplot(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
 
 
+
 ##################################################################
 ## Allocation plots
 ##################################################################
 
-def plotallocs(project=None, budget=None, compare=True):
+def plotallocs(multires=None, compare=True):
     ''' Instead of stupid pie charts, make some nice bar charts '''
-    nprogs = len(progs)
+    
+    # Preliminaries: extract needed data
+    progset = multires.progset[0] # Should be the same so shouldn't matter which one you get
+    proglabels = progset.programs.keys()
+    nprogs = len(proglabels)
+    labels = multires.keys
+    progdata = [multires.budget['orig'], multires.budget['optim']]
     
     fig = figure(figsize=(10,6))
     fig.subplots_adjust(left=0.10) # Less space on left
@@ -141,17 +151,15 @@ def plotallocs(project=None, budget=None, compare=True):
         ax.append(subplot(len(progdata),1,plt+1))
         ax[-1].hold(True)
         for p in range(nprogs):
-            ax[-1].bar([xbardata[p]], [progdata[plt][p]/factor], color=colors[p], linewidth=0)
+            ax[-1].bar([xbardata[p]], [progdata[plt][p]], color=colors[p], linewidth=0)
             if plt==1 and compare:
-                ax[-1].bar([xbardata[p]], [progdata[0][p]/factor], color='None', linewidth=1)
+                ax[-1].bar([xbardata[p]], [progdata[0][p]], color='None', linewidth=1)
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt==0: ax[-1].set_xticklabels('')
-        if plt==1: ax[-1].set_xticklabels(progs,rotation=90)
+        if plt==1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        if factor==1: ax[-1].set_ylabel('Spending (US$)')
-        elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
-        elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
+        ax[-1].set_ylabel('Spending (US$)')
         ax[-1].set_title(labels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     for plt in range(len(progdata)):

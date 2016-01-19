@@ -57,7 +57,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, progset=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -78,10 +78,14 @@ class Resultset(object):
             if parset is None:
                 try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
                 except: pass # Don't really worry if the parset can't be populated
+            if progset is None:
+                try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
+                except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
+        self.progset = progset # Store programs
         self.data = data # Store data
         
         # Main results -- time series, by population
@@ -248,7 +252,7 @@ class Multiresultset(Resultset):
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys']
         commonattrs = ['project', 'data', 'datayears']
-        diffattrs = ['parset', 'raw', 'simpars']
+        diffattrs = ['parset', 'progset', 'raw', 'simpars']
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
         
