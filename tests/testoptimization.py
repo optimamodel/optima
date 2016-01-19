@@ -103,11 +103,11 @@ if 'minimizeoutcomes' in tests:
     objectives['budget'] = 5e6 # Change default budget to optimize
     P.minoutcomes(name='optim', parset='default', progset='default', objectives=objectives, method='asd')
     
-    print('Original allocation:')
+    print('Original allocation: '),
     print(P.results[-1].budgetorig)
-    print('Optimal allocation:')
+    print('Optimal allocation: '),
     print(P.results[-1].budgetoptim)
-    print('Outcome:')
+    print('Outcome: '),
     print(P.results[-1].outcome)
     
     done(t)

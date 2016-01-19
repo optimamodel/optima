@@ -174,7 +174,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     
 
 
-    def errorcalc(parvec, options):
+    def errorcalc(parvec, pars=None, parlist=None, project=None):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
@@ -193,9 +193,6 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
 
         printv(parvec, 4, verbose)
         
-        pars = options['pars']
-        parlist = options['parlist']
-        project = options['project']
         pars = convert(pars, parlist, parvec)
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0)
         
@@ -246,8 +243,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         
         # Perform fit
         parvec = convert(pars, parlist)
-        options = {'pars':pars, 'parlist':parlist, 'project':project}
-        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        args = {'pars':pars, 'parlist':parlist, 'project':project}
+        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
         pars = convert(pars, parlist, parvecnew)        
