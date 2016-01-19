@@ -42,6 +42,9 @@ class TestOptimaSpreadsheet(unittest.TestCase):
         content = make_populations_range('Populations', populations)
         content_range = TitledRange(test_sheet, 0, content)
         ref_content = make_ref_years_range('Coverage', content_range, 2000, 2015)
+        return ref_content
+
+
 
 class TestOptimaGraphTable(unittest.TestCase):
 
@@ -57,6 +60,23 @@ class TestOptimaGraphTable(unittest.TestCase):
           os.remove(path)
         table.create(path)
         self.assertTrue(os.path.exists(path))
+
+
+
+class TestEconSpreadsheet(unittest.TestCase):
+    def test_create_econspreadsheet_with_defaults(self):
+        import xlrd
+        from optima.makespreadsheet import EconomicsSpreadsheet
+        book = EconomicsSpreadsheet('testeconomics')
+        path = '/tmp/testeconomics.xlsx'
+        if os.path.exists(path):
+          os.remove(path)
+        book.create(path)
+        self.assertTrue(os.path.exists('/tmp/testeconomics.xlsx'))
+        workbook = xlrd.open_workbook(path)
+        for name, value in book.sheet_names.iteritems():
+            self.assertTrue(workbook.sheet_by_name(value) is not None)
+
 
 
 if __name__ == '__main__':

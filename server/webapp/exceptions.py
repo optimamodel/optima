@@ -59,6 +59,10 @@ class ParsetAlreadyExists(BaseRESTException):
         self.description = 'Parset "{0}" already exists in project {1}'.format(name, project_id)
 
 
+class ProgsetDoesNotExist(RecordDoesNotExist):
+    _model = 'progset'
+
+
 class InvalidCredentials(BaseRESTException):
     code = 401
     description = 'The user or password provided are incorrect'

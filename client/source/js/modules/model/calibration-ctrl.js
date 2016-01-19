@@ -34,6 +34,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
+    // TODO: use get api when only selectors change
     $scope.displayGraphs = function() {
       var data = {};
       if($scope.parameters) {
