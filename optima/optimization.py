@@ -14,7 +14,7 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives
     budgetvec *=  objectives['budget']/budgetvec.sum() 
     
     # Convert budgetvec to budget
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     budget = progset.getdefaultbudget()
     budget[:] = budgetvec
     
