@@ -11,6 +11,7 @@ from sqlalchemy.orm import deferred
 
 from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json
+from server.webapp.exceptions import ParsetDoesNotExist
 
 from werkzeug.utils import secure_filename
 import optima as op
@@ -235,6 +236,14 @@ class ProjectDb(db.Model):
         db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.flush()
 
+    def find_parset(self, parset_id):
+        parset_entry = [item for item in self.parsets if item.id == parset_id]
+        if parset_entry:
+            parset_entry = parset_entry[0]
+        else:
+            raise ParsetDoesNotExist(parset_id, self.id)
+        return parset_entry
+
 
 class ParsetsDb(db.Model):
 
@@ -268,14 +277,32 @@ class ParsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        parset_entry = op.Parameterset()
-        parset_entry.name = self.name
-        parset_entry.uid = self.id
-        parset_entry.created = self.created
-        parset_entry.modified = self.updated
+        parset_instance = op.Parameterset()
+        parset_instance.name = self.name
+        parset_instance.uid = self.id
+        parset_instance.created = self.created
+        parset_instance.modified = self.updated
         if self.pars:
-            parset_entry.pars = op.loads(self.pars)
-        return parset_entry
+            parset_instance.pars = op.loads(self.pars)
+        return parset_instance
+
+    def as_file(self, loaddir, filename=None):
+        import os
+
+        parset_instance = self.hydrate()
+        if filename is None:
+            filename = '{}.par'.format(self.name)
+        server_filename = os.path.join(loaddir, filename)
+
+        op.save(server_filename, parset_instance)
+
+        return filename
+
+    def restore(self, parset_instance):
+        same_parset = (parset_instance.uid == self.id)
+        if same_parset:
+            self.name = parset_instance.name
+        self.pars = op.saves(parset_instance.pars)
 
 
 class ResultsDb(db.Model):
