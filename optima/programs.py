@@ -5,9 +5,8 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, concatenate as cat
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize
 import abc
 import textwrap
 from pylab import figure, figtext
@@ -36,6 +35,11 @@ class Programset(object):
         output += '        Date created: %s\n'    % getdate(self.created)
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                 UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objatt(self)
+        output += '============================================================\n'
+        output += objmeth(self)
+        output += '============================================================\n'
         return output
 
     def gettargetpops(self):

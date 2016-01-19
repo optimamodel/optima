@@ -44,7 +44,8 @@ class Resultset(object):
         # Fundamental quantities -- populated by project.runsim()
         self.raw = raw
         self.simpars = simpars # ...and sim parameters
-        self.tvec = raw[0]['tvec']
+        self.tvec = raw[0]['tvec'] # Copy time vector
+        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
         self.popkeys = raw[0]['popkeys']
         if project is not None:
             if parset is None:
