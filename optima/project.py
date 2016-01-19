@@ -293,5 +293,5 @@ class Project(object):
         results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
         self.addresult(result=results)
-        self.optims[-1].results = results.uid
+        self.optims[-1].resultsref = results.uid
         return None

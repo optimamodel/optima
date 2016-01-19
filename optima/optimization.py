@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016jan18 by cliffk
 """
 
-from optima import printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, Multiresultset
+from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
 from numpy import zeros, arange, array
 
 
@@ -64,7 +64,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     nprogs = len(progset.programs)
     budgetvec = zeros(nprogs)+totalbudget/nprogs
     
-    for ind in inds:
+    for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
         thisparset = dcp(parset)
         try: thisparset.pars = [parset.pars[ind]] # Turn into a list
@@ -82,7 +82,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
             budgetvecnew = minimize(objectivecalc, budgetvec, args=args).x
         else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
-    ## Tidy up
+    ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     
@@ -131,7 +131,7 @@ class Optim(object):
         self.constraints = constraints # List of populations
         if objectives is None: self.objectives = defaultobjectives()
         if constraints is None: self.constraints = 'WARNING, not implemented'
-        self.results = None # Store pointer to results
+        self.resultsref = None # Store pointer to results
         
     
     def __repr__(self):
@@ -146,3 +146,13 @@ class Optim(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
+    
+    
+    def getresults(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None and self.project is not None:
+            results = getresults(project=self.project, pointer=self.resultsref)
+            return results
+        else:
+            print('WARNING, no results associated with this parameter set')
+            return None

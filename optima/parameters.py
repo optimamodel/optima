@@ -514,8 +514,7 @@ class Timepar(Par):
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                try: output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
         if npops==1: return output[0,:]
         else: return output
 
@@ -593,7 +592,7 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
-        self.results = None # Store pointer to results
+        self.resultsref = None # Store pointer to results
         
     
     def __repr__(self):
@@ -612,7 +611,7 @@ class Parameterset(object):
     def getresults(self):
         ''' A little method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(self.project, self.results)
+            results = getresults(project=self.project, pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this parameter set')
@@ -687,8 +686,7 @@ class Parameterset(object):
                     items.append('Failed to append item')
             for item in items:
                 count += 1
-                try: print('      %i....%s' % (count, str(item)))
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                print('      %i....%s' % (count, str(item)))
         return None
 
 

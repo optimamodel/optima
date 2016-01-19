@@ -9,7 +9,7 @@ from numpy import array, nan, zeros, arange
 
 
 
-def getresults(pointer=None, project=None):
+def getresults(project=None, pointer=None):
     '''
     A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
