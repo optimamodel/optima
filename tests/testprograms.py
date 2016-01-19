@@ -80,7 +80,8 @@ if 'makeprograms' in tests:
 
     ART = Program(short='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'Total'}],
-                  targetpops=['Total'])
+                  targetpops=['Total'],
+                  criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
     # Testing methods of program class
     # 1. Adding a target parameter to a program
