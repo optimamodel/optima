@@ -110,7 +110,7 @@ if 'loadeconomcs' in tests:
     from optima import Project
     
     print('  Create an empty project and add economic data')
-    P = Project(spreadsheet='test.xlsx')
+    P = Project()
     P.loadeconomics(filename='testeconomics.xlsx')
 
     print('  Create a project from a spreadsheet and add economic data')

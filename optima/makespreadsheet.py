@@ -163,7 +163,7 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
-    BG_COLOR = '#18C1FF'
+    BG_COLOR = '#FFC0CB' #'#18C1FF'
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
