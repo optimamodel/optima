@@ -32,9 +32,18 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       _.forEach($scope.state.program.parameters, function(parameter) {
-        parameter.parameterObj = _.find(parameters, function(param) {
+        var filteredParameter = _.find(parameters, function(param) {
           return parameter.param === param.short;
         });
+        parameter.name = filteredParameter.name;
+      });
+
+      $scope.state.program.activeParameters = _.filter($scope.state.program.parameters, function(parameter) {
+        return parameter.active;
+      });
+
+      $scope.state.program.inactiveParameters = _.filter($scope.state.program.parameters, function(parameter) {
+        return !parameter.active;
       });
 
       $scope.state.program.active = true;
@@ -98,8 +107,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to add a new parameter
     $scope.addParameter = function () {
-      $scope.state.program.parameters = $scope.state.program.parameters || [];
-      $scope.state.program.parameters.push({active: true});
+      if($scope.state.program.inactiveParameters && $scope.state.program.inactiveParameters.length > 0) {
+        $scope.state.program.activeParameters = $scope.state.program.activeParameters || [];
+        $scope.state.program.inactiveParameters[0].active = true;
+        $scope.state.program.activeParameters.push($scope.state.program.inactiveParameters[0]);
+        $scope.state.program.inactiveParameters = $scope.state.program.inactiveParameters.slice(0, 1);
+        console.log('$scope.state.program.activeParameters', $scope.state.program.activeParameters);
+        console.log('$scope.state.program.inactiveParameters', $scope.state.program.inactiveParameters);
+      }
     };
 
     // Function to remove a parameter
