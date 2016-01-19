@@ -62,7 +62,7 @@ def objrepr(obj):
     output += '============================================================\n'
     return output
 
-def defaultrepr(obj, maxlen=70):
+def defaultrepr(obj, maxlen=55):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
     keys = sorted(obj.__dict__.keys())
     maxkeylen = max([len(key) for key in keys])
@@ -73,8 +73,8 @@ def defaultrepr(obj, maxlen=70):
     output += '============================================================\n'
     for key in keys:
         thisattr = str(getattr(obj, key))
-        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen]
-        output += formatstr%key + ': ' + thisattr
+        if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]'
+        output += formatstr%key + ': ' + thisattr + '\n'
     output += '============================================================\n'
     output += objmeth(obj)
     output += '============================================================\n'
