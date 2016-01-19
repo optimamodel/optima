@@ -51,6 +51,10 @@ class ParsetDoesNotExist(RecordDoesNotExist):
     _model = 'parset'
 
 
+class ProgsetDoesNotExist(RecordDoesNotExist):
+    _model = 'progset'
+
+
 class InvalidCredentials(BaseRESTException):
     code = 401
     description = 'The user or password provided are incorrect'
