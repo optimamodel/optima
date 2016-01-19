@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
 
 
@@ -25,8 +25,9 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
-
-
+        4. econ -- data and time series loaded from the economics spreadsheet
+        
+    
     Methods for structure lists:
         1. add -- add a new structure to the odict
         2. remove -- remove a structure from the odict
@@ -114,9 +115,13 @@ class Project(object):
             self.addparset(name=name, parset=parset) # Store parameters
         return None
 
-
-
-
+    def loadeconomics(self, filename):
+        ''' Load economic data and tranforms it to useful format'''
+        
+        ## Load spreadsheet 
+        self.data['econ'] = loadeconomicsspreadsheet(filename)
+        
+        return None
 
 
     #######################################################################################################

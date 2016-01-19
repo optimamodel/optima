@@ -89,6 +89,9 @@ except: _failed()
 try: from programs import Program, Programset # Define programs
 except: _failed()
 
+try: from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
+except: _failed()
+
 try: from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
@@ -141,6 +144,8 @@ try:
     import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, optimization, gui, project
 except: _failed()
 
+try: import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
+except: _failed()
 
 
 
