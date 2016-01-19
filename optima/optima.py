@@ -89,7 +89,7 @@ except: _failed()
 try: from programs import Program, Programset # Define programs
 except: _failed()
 
-try: from makeplots import epiplot # Create the plots
+try: from makeplots import epiplot, plotallocs # Create the plots
 except: _failed()
 
 try: from calibration import sensitivity, autofit # Calibration functions
