@@ -249,5 +249,6 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         # Save
         pars = convert(pars, parlist, parvecnew)        
         parset.pars.append(pars)
+        parset.fiterrors = output.fval # Store errors
     
     return parset

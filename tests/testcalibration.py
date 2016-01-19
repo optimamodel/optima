@@ -10,9 +10,9 @@ Version: 2016jan09 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'attributes',
-'sensitivity',
-'manualfit',
+#'attributes',
+#'sensitivity',
+#'manualfit',
 'autofit',
 #'autofitmulti',
 #'longfit',
@@ -117,6 +117,13 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
+        from pylab import plot, figure, title, xlabel, ylabel
+        figure()
+        plot(P.parsets['autofit'].fiterrors) # Quick graph showing goodness-of-fit
+        title('Improvement in fit')
+        ylabel('Objective')
+        xlabel('Iteration')
+        
         from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
