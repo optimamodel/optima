@@ -32,7 +32,7 @@ class Resultset(object):
         # Basic info
         self.uid = uuid()
         self.created = today()
-        self.name = name # May be blank of automatically generated, but can be overwritten
+        self.name = name # May be blank if automatically generated, but can be overwritten
         
         # Turn inputs into lists if not already
         if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
@@ -205,7 +205,50 @@ class Multiresultset(Resultset):
         # Basic info
         self.uid = uuid()
         self.created = today()
-        self.
+        self.nresultsets = len(resultsetlist)
+        if type(resultsetlist)==list: pass # It's already a list, carry on
+        if type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
+        if resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
+        else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        
+        # Fundamental quantities -- populated by project.runsim()
+        sameattrs = ['tvec', 'dt', 'popkeys']
+        commonattrs = ['project', 'data', 'datayears']
+        diffattrs = ['parset', 'raw', 'simpars']
+        for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
+        
+        # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
+        self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
+        for key in self.main.keys():
+            for at in ['pops', 'tot']:
+                setattr(self.main[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+
+        for i,rset in enumerate(resultsetlist):
+            key = rset.name if rset.name is not None else str(i)
+            
+            # First, loop over shared attributes, and ensure they match
+            for attr in sameattrs+commonattrs:
+                orig = getattr(self, attr)
+                new = getattr(rset, attr)
+                if orig is None: setattr(self, attr, new)
+                elif orig!=new and attr in sameattrs: # It's only an issue if they must be the same: for something like a project, OK if they differ
+                    errormsg = 'In generating multi-results, all results must have same attribute "%s": key "%s" differs' % (attr, key)
+                    raise Exception(errormsg)
+            
+            # Loop over different attributes and append to the odict
+            for attr in diffattrs:
+                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. self.raw['foo'] = rset.raw -- WARNING, does this even work?
+            
+            # Now, the real deal: fix self.main
+            for key2 in self.main.keys():
+                for at in ['pops', 'tot']:
+                    getattr(self.main[key2], at)[key2] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+            
+                
+            
+        
+        
         
     def __repr__(self):
         ''' Print out useful information when called '''
