@@ -98,7 +98,7 @@ except: _failed()
 try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import minoutcomes, defaultobjectives # Scenario functions
+try: from optimization import minoutcomes, defaultobjectives, Optim # Scenario functions
 except: _failed()
 
 

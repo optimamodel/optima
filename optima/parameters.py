@@ -661,7 +661,7 @@ class Parameterset(object):
     def getresults(self):
         ''' A little method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(self.project, self.resultsref)
+            results = getresults(self.project, self.results)
             return results
         else:
             print('WARNING, no results associated with this parameter set')

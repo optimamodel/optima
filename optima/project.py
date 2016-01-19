@@ -267,7 +267,6 @@ class Project(object):
         self.addresult(result=results)
         if simpars is None: self.parsets[name].resultsref = results.uid
 
-
         return results
 
 
@@ -283,16 +282,19 @@ class Project(object):
         ''' Function to perform manual fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
         return None
 
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
-        autofit(self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None
     
-    def minoutcomes(project=None, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def minoutcomes(self, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''
-        result = minoutcomes(project=project, name=name, parset=parset, progset=progset, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        return result
+        self.addoptim(name=name, objectives=objectives, constraints=constraints, parset=parset, progset=progset)
+        results = minoutcomes(project=self, name=name, parset=parset, progset=progset, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        self.addresult(result=results)
+        self.optims[-1].results = results.uid
+        return None

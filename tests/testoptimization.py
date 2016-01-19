@@ -100,11 +100,15 @@ if 'minimizeoutcomes' in tests:
     print('Running minimize outcomes test...')
     from optima import defaultobjectives
     objectives = defaultobjectives()
-    results = P.minoutcomes(parset='default', progset='default', objectives=objectives, method='asd')
+    objectives['budget'] = 1e7 # Change default budget to optimize
+    P.minoutcomes(name='optim', parset='default', progset='default', objectives=objectives, method='asd')
     
-#    if doplot:
-#        from gui import plotresults
-#        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    print('Original allocation:')
+    print(P.results[-1].budgetorig)
+    print('Optimal allocation:')
+    print(P.results[-1].budgetoptim)
+    print('Outcome:')
+    print(P.results[-1].outcome)
     
     done(t)
 
