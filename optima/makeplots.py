@@ -154,12 +154,12 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
         plotmismatch(results.mismatch)
     also works.
     
-    Version: 2016jan18 by cliffk    
+    Version: 2016jan19 by cliffk    
     '''
 
     if hasattr(results, 'mismatch'): mismatch = results.mismatch # Get mismatch attribute of object if it exists
-    elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least
-    else: raise Exception('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument, mister')
+    elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least, but of course could still be wrong
+    else: raise Exception('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
     
     # Set up figure and do plot
     fig = figure(figsize=figsize, facecolor=(1,1,1))
@@ -203,7 +203,8 @@ def plotallocs(multires=None, compare=True):
     ''' Instead of stupid pie charts, make some nice bar charts '''
     
     # Preliminaries: extract needed data
-    progset = multires.progset[0] # Should be the same so shouldn't matter which one you get
+    try: progset = multires.progset[0] # For multires, progset is an odict, but all entries should be the same, so it shouldn't matter which one you use
+    except: raise Exception('Failed to extract program set; "multires" type = "%s", but "multires" should be a multiresults set' % type(multires))
     proglabels = progset.programs.keys()
     nprogs = len(proglabels)
     labels = multires.keys
