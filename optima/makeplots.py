@@ -67,23 +67,24 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 except: # No? Just use the best data
                     lower = best
                     upper = best
-                try: # Try loading actual data -- very likely to not exist
-                    tmp = getattr(results.main[datatype], 'data'+poptype)
-                    databest = tmp[0]
-                    datalow = tmp[1]
-                    datahigh = tmp[2]
-                except:# Don't worry if no data
-                    databest = None
-                    datalow = None
-                    datahigh = None
-                if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
-                    best  = array([best])
-                    lower = array([lower])
-                    upper = array([upper])
             elif kind=='multi':
-                for l in range(nlines):
-                    try: best.append(getattr(results.main[datatype], poptype)[l])
-                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                for l in range(nlines): best.append(getattr(results.main[datatype], poptype)[l])
+                lower = None
+                upper = None
+            try: # Try loading actual data -- very likely to not exist
+                tmp = getattr(results.main[datatype], 'data'+poptype)
+                databest = tmp[0]
+                datalow = tmp[1]
+                datahigh = tmp[2]
+            except:# Don't worry if no data
+                databest = None
+                datalow = None
+                datahigh = None
+            if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
+                best  = array([best])
+                lower = array([lower])
+                upper = array([upper])
+            
                 
             # Set up figure and do plot
             epiplots[pl] = figure(figsize=figsize)
