@@ -1,12 +1,8 @@
-###############################################################################
-##### 2.0 STATUS: probably fine code-wise but need to update once spreadsheet changes decided
-###############################################################################
-
 """
 OptimaSpreadsheet and related classes
 Created by: SSQ
 
-Version: 2015dec08 by anachesa
+Version: 2016jan17 by cliffk
 """
 
 import xlsxwriter
@@ -17,20 +13,27 @@ from utils import printv
 default_datastart = 2000
 default_dataend = 2020
 
-def makespreadsheet(filename, 
-    pops, 
-    datastart=default_datastart, 
-    dataend=default_dataend, 
-    verbose=2):
+def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
-    printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s''' % (
-        len(pops), datastart, dataend), 1, verbose)
+    printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
     book = OptimaSpreadsheet(filename, pops, datastart, dataend)
     book.create(filename)
 
     printv('  ...done making spreadsheet %s.' % filename, 2, verbose)
     return filename
+
+
+def makeeconspreadsheet(filename, datastart=default_datastart, dataend=default_dataend, verbose=2):
+    """ Generate the Optima economics spreadsheet -- the hard work is done by makespreadsheet.py """
+
+    printv('Generating economics spreadsheet: start=%s, end=%i' % (datastart, dataend), 1, verbose)
+    book = EconomicsSpreadsheet(filename, datastart, dataend)
+    book.create(filename)
+
+    printv('  ...done making economics spreadsheet %s.' % filename, 2, verbose)
+    return filename
+
 
 
 
@@ -326,8 +329,82 @@ class TitledRange:
     def param_refs(self, column_number = 0):
         return self.data_range.param_refs(self.sheet.get_name(), column_number)
 
+class EconomicsSpreadsheet:
+    def __init__(self, name, data_start = default_datastart, data_end = default_dataend, verbose = 0):
+        self.sheet_names = OrderedDict([
+            ('instr', 'Instructions'),
+            ('econ', 'Economics and costs')])
+        self.name = name
+        self.data_start = data_start
+        self.data_end = data_end
+        self.verbose = verbose
+        self.book = None
+        self.sheets = None
+        self.formats = None
+        self.current_sheet = None
+        self.years_range = years_range(self.data_start, self.data_end)
+
+    def emit_content_block(self, name, current_row, row_names, column_names, data = None,
+        row_format = OptimaFormats.GENERAL, assumption = False, row_levels = None,
+        assumption_properties = None):
+        content = OptimaContent(name, row_names, column_names, data)
+        content.set_row_format(row_format)
+        if assumption:
+            content.add_assumption()
+        if assumption_properties:
+            content.set_assumption_properties(assumption_properties)
+        if row_levels is not None:
+            content.set_row_levels(row_levels)
+        the_range = TitledRange(self.current_sheet, current_row, content)
+        current_row = the_range.emit(self.formats)
+        return current_row
+
+    def generate_instr(self):
+        current_row = 0
+        self.current_sheet.set_column('A:A',80)
+        self.current_sheet.merge_range('A1:A3', 'OPTIMA ECONOMIC DATA', self.formats.formats['info_header'])
+        current_row = 3
+        current_row = self.formats.write_info_line(self.current_sheet, current_row)
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the spreadsheet for entering economic data into Optima. Uploading this spreadsheet is required if you wish to view estimates of the financial costs associated with epidemic projections. All rows are optional, but if you do enter data for a row, you must also enter a growth assumption. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
+
+    def generate_econ(self):
+        current_row = 0
+
+        names = ['Consumer price index','Gross domestic product', 'Government revenue', 'Government expenditure', \
+        'Total domestic and international health expenditure', 'General government health expenditure']
+
+        assumption_properties = {'title':'Growth assumptions', 'connector':'AND', 'columns':['best','low','high']}
+
+        for name in names:
+            current_row = self.emit_content_block(name, current_row, ['Total'], self.years_range, assumption = True, \
+                row_format = OptimaFormats.SCIENTIFIC, assumption_properties = assumption_properties)
+
+        names_rows = [('HIV-related health care costs (excluding treatment)', \
+        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)']), \
+        ('Social mitigation costs', \
+        ['Acute infection', 'CD4(>500)', 'CD4(350-500)', 'CD4(200-350)', 'CD4(50-200)','CD4(<50)'])]
+        for (name, row_names) in names_rows:
+            current_row = self.emit_content_block(name, current_row, row_names, self.years_range, assumption = True, \
+                row_format = OptimaFormats.NUMBER, assumption_properties = assumption_properties)
+                
+    def create(self, path):
+        if self.verbose >=1: 
+            print("""Creating spreadsheet %s with parameters:
+            npops = %s, data_start = %s, data_end = %s""" % \
+            (path, self.npops, self.data_start, self.data_end))
+        self.book = xlsxwriter.Workbook(path)
+        self.formats = OptimaFormats(self.book)
+        self.sheets = {}
+        for name in self.sheet_names:
+            self.sheets[name] = self.book.add_worksheet(self.sheet_names[name])
+            self.current_sheet = self.sheets[name]
+            getattr(self, "generate_%s" % name)() # this calls the corresponding generate function
+        self.book.close()
+
+
 class OptimaSpreadsheet:
-    def __init__(self, name, pops, data_start = 2000, data_end = 2015, verbose = 0):
+    def __init__(self, name, pops, data_start = default_datastart, data_end = default_dataend, verbose = 0):
         self.sheet_names = OrderedDict([
             ('instr', 'Instructions'),
             ('meta','Populations'),
