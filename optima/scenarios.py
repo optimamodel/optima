@@ -1,5 +1,5 @@
 ## Imports
-from numpy import append, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
+from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
 from optima import dcp, today, odict, printv, findinds, runmodel #, sanitize, uuid, getdate, smoothinterp
 
 def runscenarios(scenlist=None, default_parset=None, verbose=2, debug=False):
@@ -36,16 +36,16 @@ def makescenarios(scenlist, verbose=2):
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
+        thisparset = dcp(scen['parset'])
+        thisparset.modified = today()
+        thisparset.name = scen['name']
+        npops = len(thisparset.popkeys)
+
         if scen['scenariotype']=='parameter':
-        
-            thisparset = dcp(scen['parset'])
-            thisparset.modified = today()
-            thisparset.name = scen['name']
-            npops = len(thisparset.pars[0]['popkeys'])
-            
-            for sc in range(len(thisparset.pars)): # Loop over all parameter sets
+    
+            for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
                 for par in scenlist[scenno]['pars']: # Loop over all parameters being changed
-                    thispar = thisparset.pars[sc][par['name']]
+                    thispar = thisparset.pars[pardictno][par['name']]
                     if type(par['for'])==tuple: # If it's a partnership...
                         par2 = (par['for'][1],par['for'][0])
                         pops = [par['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
@@ -74,7 +74,9 @@ def makescenarios(scenlist, verbose=2):
             elif scen['progscenariotype']=='coverage':
                 thiscoverage = scen['programs']
 
-            thisparset = thisprogset.getparset(coverage=thiscoverage, t=scen['t'], parset=scen['parset'], newparsetname=scen['name'])
+            thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen['t'], parset=scen['parset'])
+            for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
+                thisparset.pars[pardictno] = thisparsdict
 
         else: 
             errormsg = 'Unrecognized program scenario type.'

@@ -11,6 +11,7 @@ from numpy import zeros, arange, array
 def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
     
     # WARNING -- temp -- normalize budgetvec
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     budgetvec *=  objectives['budget']/budgetvec.sum() 
     
     # Convert budgetvec to budget
@@ -19,9 +20,9 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives
         budget[key] = array([budgetvec[i]]) # WARNING, ugly...
     
     # Run model
-    thiscoverage = progset.getprogcoverage(budget=budget, t=array([objectives['start']]), parset=parset) # WARNING, shouldn't need array()
-    thisparset = progset.getparset(coverage=thiscoverage, t=array([objectives['start']]), parset=parset)
-    results = runmodel(pars=thisparset.pars[0], parset=parset, progset=progset, tvec=tvec, verbose=0) # WARNING, should just generate pars, not parset
+    thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
+    thisparsdict = progset.getparsdict(coverage=thiscoverage, t=objectives['start'], parset=parset)
+    results = runmodel(pars=thisparsdict, parset=parset, progset=progset, tvec=tvec, verbose=0)
     
     # Figure out which indices to use
     initial = findinds(results.tvec, objectives['start'])
@@ -50,13 +51,13 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     printv('Running outcomes optimization...', 1, verbose)
     
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
-    parset = optim.parset
-    progset = optim.progset 
+    parsetname = optim.parsetname
+    progsetname = optim.progsetname
     objectives = optim.objectives
     constraints = optim.constraints 
     
-    parset  = project.parsets[parset] # Copy the original parameter set
-    progset = project.progsets[progset] # Copy the original parameter set
+    parset  = project.parsets[parsetname] # Copy the original parameter set
+    progset = project.progsets[progsetname] # Copy the original parameter set
     lenparlist = len(parset.pars)
     
     # Process inputs
@@ -126,14 +127,14 @@ def defaultobjectives(verbose=2):
 
 
 class Optim(object):
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parset=None, progset=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
-        self.parset = parset # Parameter set name
-        self.progset = progset # Program set name
+        self.parsetname = parsetname # Parameter set name
+        self.progsetname = progsetname # Program set name
         self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
         self.constraints = constraints # List of populations
         if objectives is None: self.objectives = defaultobjectives()
@@ -145,8 +146,8 @@ class Optim(object):
         ''' Print out useful information when called'''
         output = '============================================================\n'
         output += ' Optimization name: %s\n'    % self.name
-        output += 'Parameter set name: %s\n'    % self.parset
-        output += '  Program set name: %s\n'    % self.progset
+        output += 'Parameter set name: %s\n'    % self.parsetname
+        output += '  Program set name: %s\n'    % self.progsetname
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid

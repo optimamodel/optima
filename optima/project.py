@@ -292,9 +292,9 @@ class Project(object):
         autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None
     
-    def minoutcomes(self, name=None, parset=None, progset=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''
-        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parset=parset, progset=progset)
+        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
         self.addresult(result=results)

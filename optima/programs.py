@@ -345,21 +345,25 @@ class Programset(object):
         
         return outcomes
         
-    def getparset(self,coverage,t,parset,newparsetname='programpars',perturb=False):
+    def getparsdict(self, coverage, t, parset, ind=0, perturb=False):
         ''' Make a parset'''
-        outcomes = self.getoutcomes(coverage=coverage,t=t,parset=parset,perturb=perturb)
-        progparset = dcp(parset)
-        progparset.name = newparsetname
-        progparset.created = today()
-        progparset.modified = today()
+        
+        # Process inputs
+        if type(t) in [int,float]: t = [t]
+
+        # Get outcome dictionary
+        outcomes = self.getoutcomes(coverage=coverage, t=t, parset=parset, perturb=perturb)
+
+        # Create a parset and copy over parameter changes
+        parsdict = dcp(parset.pars[ind])
         for outcome in outcomes.keys():
             for p in outcomes[outcome].keys():
-                progparset.pars[0][outcome].t[p] = append(progparset.pars[0][outcome].t[p], min(t)-1) # Include the year before the programs start...
-                progparset.pars[0][outcome].y[p] = append(progparset.pars[0][outcome].y[p], progparset.pars[0][outcome].y[p][-1]) # Include the year before the programs start...
-                progparset.pars[0][outcome].t[p] = append(progparset.pars[0][outcome].t[p], array(t))
-                progparset.pars[0][outcome].y[p] = append(progparset.pars[0][outcome].y[p], array(outcomes[outcome][p]))
+                parsdict[outcome].t[p] = append(parsdict[outcome].t[p], min(t)-1) # Include the year before the programs start...
+                parsdict[outcome].y[p] = append(parsdict[outcome].y[p], parsdict[outcome].y[p][-1]) # Include the year before the programs start...
+                parsdict[outcome].t[p] = append(parsdict[outcome].t[p], array(t))
+                parsdict[outcome].y[p] = append(parsdict[outcome].y[p], array(outcomes[outcome][p]))
 
-        return progparset
+        return parsdict
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
@@ -569,7 +573,7 @@ class Program(object):
         
         # Get caption & scatter data 
         caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-        costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else None
+        costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else []
 
         # Make x data... 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
@@ -639,6 +643,7 @@ class Program(object):
             costdata,
             self.costcovdata['coverage'],
             color='#666666')
+        
 
         axis.set_xlim([0, xupperlim])
         axis.set_ylim(bottom=0)
