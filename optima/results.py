@@ -9,6 +9,35 @@ from numpy import array, nan, zeros, arange
 
 
 
+def getresults(pointer=None, project=None):
+    '''
+    A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
+    a string representation of the UID, the actual pointer to the results, or a function to return the
+    results.
+    
+    Example:
+        results = P.parsets[0].results()
+        calls
+        getresults(P, P.parsets[0].resultsref)
+        which returns
+        P.results[P.parsets[0].resultsref]
+    
+    Version: 2016jan18
+    '''
+    if type(pointer) in [str, int, float]:
+        if project is not None: return project.results[pointer]
+        else: raise Exception('To get results using a key or index, getresults() must be given the project')
+    elif type(pointer)==type(uuid()): 
+        if project is not None: return project.results[str(pointer)]
+        else: raise Exception('To get results using a UID, getresults() must be given the project')
+    elif callable(pointer): 
+        return pointer() # Try calling as function
+    else: 
+        return pointer # Give up, just return pointer, which is maybe a Resultset
+
+
+
+
 class Result(object):
     ''' A tiny class just to hold overall and by-population results '''
     def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
