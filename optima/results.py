@@ -201,15 +201,20 @@ class Resultset(object):
 
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
-    def __init__(self, resultsetlist=None):
+    def __init__(self, resultsetlist=None, budget=None):
         # Basic info
         self.uid = uuid()
         self.created = today()
         self.nresultsets = len(resultsetlist)
+        self.keys = []
         if type(resultsetlist)==list: pass # It's already a list, carry on
         if type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         if resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        
+        # Results specific to a Multiresultset
+        self.budget = budget
+        
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys']
@@ -226,6 +231,7 @@ class Multiresultset(Resultset):
 
         for i,rset in enumerate(resultsetlist):
             key = rset.name if rset.name is not None else str(i)
+            self.keys.append(key)
             
             # First, loop over shared attributes, and ensure they match
             for attr in sameattrs+commonattrs:
@@ -252,5 +258,11 @@ class Multiresultset(Resultset):
         
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = defaultrepr(self)
+        output = '============================================================\n'
+        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '      Results sets: %s\n'    % self.keys
+        output += '============================================================\n'
+        output += objrepr(self)
         return output

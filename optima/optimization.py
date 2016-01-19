@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016jan18 by cliffk
 """
 
-from optima import printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr
+from optima import printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, Multiresultset
 from numpy import zeros, arange, array
 
 
@@ -85,10 +85,15 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     ## Tidy up
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
-    results.budgetorig = budgetvec # Store original allocation
-    results.budgetoptim = budgetvecnew # Store new results
     
-    return results
+    multires = Multiresultset(resultsetlist=[orig, new])
+    budget = odict()
+    budget['orig'] = budgetvec # Store original allocation
+    budget['optim'] = budgetvecnew # Store original allocation
+    multires.budget = budget # Store budget information
+    multires.outcome = output.fval # Store full function evaluation information
+    
+    return multires
 
 
 

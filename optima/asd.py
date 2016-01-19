@@ -202,8 +202,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         iterations = count # Number of iterations
         funcCount = count+1 # Number of function evaluations
         if fulloutput: # Include additional output structure
-            fval = fulloutputfval[0:count] # Function evaluations
-            x = fulloutputx[0:count,:] # Parameters
+            fval = fulloutputfval[:count] # Function evaluations
+            x = fulloutputx[:count,:] # Parameters
     output = makeoutput()
     
     # Return x to its original shape
