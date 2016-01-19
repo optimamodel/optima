@@ -16,21 +16,19 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, indices=No
     
     
     # Define years
-    print('temp')
     start = objectives['start']
     end = objectives['end']
     
     thiscoverage = progset.getprogcoverage(budget=budget, t=start, parset=parset)
     thisparset = progset.getparset(coverage=thiscoverage, t=start, parset=parset)
     results = runmodel(pars=thisparset.pars[0], end=end, verbose=0)
-    dt = results['tvec'][1]-results['tvec'][0] # Shorten dt -- WARNING, seems kludgy
     
     # Calculate outcome
     outcome = 0 # Preallocate objective value 
     for key in ['death', 'inci']:
         thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
         thisoutcome = results.main['num'+key].tot[indices].sum() # the instantaneous outcome e.g. objectives['numdeath']
-        outcome += thisoutcome*thisweight*dt # Calculate objective
+        outcome += thisoutcome*thisweight*resuls.dt # Calculate objective
 
     
     return outcome
