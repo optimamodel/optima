@@ -145,7 +145,8 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
     
     # Plot model estimates with uncertainty
     plot(mismatch, lw=lw, c=(0,0,0)) # Actually do the plot
-    
+    absimprove = mismatch[0]-mismatch[-1]
+    relimprove = 100*(mismatch[0]-mismatch[-1])/mismatch[0]
     
     # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     ax = gca()
@@ -160,7 +161,7 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
     # Configure plot
     currentylims = ylim()
     ax.set_xlabel('Iteration')
-    ax.set_title('Outcome/mismatch')
+    ax.set_title('Absolute change: %f  Relative change: %2f%%' % (absimprove, relimprove))
     ax.set_ylim((0,currentylims[1]))
     ax.set_xlim((0, len(mismatch)))
     
