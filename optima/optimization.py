@@ -8,20 +8,23 @@ from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, 
 from numpy import zeros, arange, array, isnan
 
 
-def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
+def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
+    
+    # Validate input
+    if None in [budgetvec, progset, objectives, constraints, tvec]:  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+        raise Exception('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # WARNING -- temp -- normalize budgetvec
     budgetvec *=  objectives['budget']/budgetvec.sum() 
     
     # Convert budgetvec to budget
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     budget = progset.getdefaultbudget()
     budget[:] = budgetvec
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
     thisparsdict = progset.getparsdict(coverage=thiscoverage, t=objectives['start'], parset=parset)
-    results = runmodel(pars=thisparsdict, parset=parset, progset=progset, tvec=tvec, verbose=0)
+    results = runmodel(pars=thisparsdict, parset=parset, progset=progset, project=project, tvec=tvec, verbose=0)
     
     # Figure out which indices to use
     initial = findinds(results.tvec, objectives['start'])
@@ -48,6 +51,10 @@ def objectivecalc(budgetvec, project=None, parset=None, progset=None, objectives
 def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
     
     printv('Running outcomes optimization...', 1, verbose)
+    
+    if None in [project, optim]: raise Exception('minoutcomes() requires project and optim arguments at minimum')
+    
+    
     
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
     parsetname = optim.parsetname
