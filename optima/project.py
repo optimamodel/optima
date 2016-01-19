@@ -120,6 +120,7 @@ class Project(object):
             self.addparset(name=name, parset=parset) # Store parameters
         return None
 
+
     def loadecon(self, filename):
         ''' Load economic data and tranforms it to useful format'''
         
