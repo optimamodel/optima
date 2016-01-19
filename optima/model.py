@@ -28,7 +28,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     npops      = len(popkeys)
     simpars    = dcp(simpars)
     tvec       = simpars['tvec']
-    dt         = tvec[1]-tvec[0]      # Shorten dt
+    dt         = simpars['dt']      # Shorten dt
     npts       = len(tvec) # Number of time points
     ncd4       = settings.ncd4      # Shorten number of CD4 states
     nstates    = settings.nstates   # Shorten number of health states

@@ -459,7 +459,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jan14 by cliffk
+    Version: 2016jan18 by cliffk
     '''
     
     # Handle inputs and initialization
@@ -470,6 +470,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
+    simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
