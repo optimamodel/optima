@@ -201,10 +201,11 @@ class Resultset(object):
 
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
-    def __init__(self, resultsetlist):
+    def __init__(self, resultsetlist=None):
         # Basic info
         self.uid = uuid()
         self.created = today()
+        self.
         
     def __repr__(self):
         ''' Print out useful information when called '''
