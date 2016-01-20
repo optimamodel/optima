@@ -71,7 +71,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     care = settings.incare # in Care MK
-    tx   = settings.unsupp # On-Treatment - Unsuppressed Viral Load MK
+    usvl   = settings.unsupp # On-Treatment - Unsuppressed Viral Load MK
     svl  = settings.supp   # On-Treatment - Suppressed Viral Load MK
     lost = settings.lost   # Not on ART (anymore) and lost to follow-up MK
     off  = settings.off    # off-ART but still in care MK
@@ -104,7 +104,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     #MK Behavioural transitions between stages [npop,npts]
     immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T) ... hivtest/aidstest should also be P/T?
-    #treatmentrate = simpars['treatmentrate'] # treatment rate (N) wait this is the same as mtx1
     adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
     propstop      = simpars['propstop']      # Proportion of people on ART who stop taking ART per year (P/T)
@@ -223,7 +222,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             effcare = sum(dxfactor * people[care,pop,t]) # the diagnosis efficacy also applies to those in care?? MK
             #efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
-            efftxus = sum(redtransusvl * people[tx,pop,t]) # ...and treated MK
+            efftxus = sum(redtransusvl * people[usvl,pop,t]) # ...and treated MK
             efftxs  = sum(redtranssvl  * people[svl,pop,t]) # ...and suppressed viral load MK
             efflost = sum(dxfactor * people[lost,pop,t]) # the diagnosis efficacy also applies to those lost to follow-up?? MK
             effoff  = sum(dxfactor * people[off,pop,t])  # the diagnosis efficacy also applies to those off-ART but in care?? MK
@@ -347,7 +346,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         #MK
         ## In-Care
         currentincare = people[care,:,t] # how many people currently in care (by population)
-        newtreat1tot = numtx[t] - people[tx:svl,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = numtx[t] - people[usvl:svl,:,t].sum() # Calculate difference between current people on treatment and people needed
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
@@ -364,7 +363,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             inflows = progin + newdiagnoses[cd4]*immediatecare[:,t]
             outflows = progout + hivdeaths + otherdeaths + leavingcare[cd4]
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
-            newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+            newtreat1[cd4] = maximum(newtreat1[cd4], -safetymargin*people[usvl[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
             dC.append(inflows - outflows - newtreat1[cd4])
             raw['newtreat'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
@@ -373,18 +372,18 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ## Unsuppressed Viral Load (having begun treatment)
         for cd4 in range(ncd4):
             if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
-                recovin = dt*recov[cd4-1]*people[tx[cd4+1],:,t]
+                recovin = dt*recov[cd4-1]*people[usvl[cd4+1],:,t]
             else: 
                 recovin = 0 # Cannot recover in to acute or AIDS stage
             if cd4>1: # CD4>1 stops people from moving back into acute
-                recovout = dt*recov[cd4-2]*people[tx[cd4],:,t]
+                recovout = dt*recov[cd4-2]*people[usvl[cd4],:,t]
             else: 
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-            hivdeaths         = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
-            otherdeaths       = dt * people[tx[cd4],:,t] * background
-            virallysuppressed[cd4] = people[tx[cd4],:,t] * adherenceprop[:,t] * success
-            stopUSincare[cd4] = dt * people[tx[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
-            stopUSlost[cd4]   = dt * people[tx[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
+            hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
+            otherdeaths       = dt * people[usvl[cd4],:,t] * background
+            virallysuppressed[cd4] = people[usvl[cd4],:,t] * adherenceprop[:,t] * success
+            stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
+            stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + newtreat1[cd4]
             outflows = recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysuppressed[cd4]
             dUSVL.append(inflows - outflows)
@@ -455,7 +454,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             dU[cd4]    = negativepeople('undiagnosed', dU[cd4],    people[undx[cd4],:,t], t)
             dD[cd4]    = negativepeople('diagnosed',   dD[cd4],    people[dx[cd4],:,t], t)
             dC[cd4]    = negativepeople('incare',      dC[cd4],    people[care[cd4],:,t], t)
-            dUSVL[cd4] = negativepeople('treat',       dUSVL[cd4], people[tx[cd4],:,t], t)
+            dUSVL[cd4] = negativepeople('treat',       dUSVL[cd4], people[usvl[cd4],:,t], t)
             dSVL[cd4]  = negativepeople('suppressed',  dSVL[cd4],  people[svl[cd4],:,t], t)
             dL[cd4]    = negativepeople('lost',        dL[cd4],    people[lost[cd4],:,t], t)
             dO[cd4]    = negativepeople('off ART',     dO[cd4],    people[off[cd4],:,t], t)
@@ -474,7 +473,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
                 change[care[cd4],:] = dC[cd4] # MK
-                change[tx[cd4],:]   = dUSVL[cd4]
+                change[usvl[cd4],:]   = dUSVL[cd4]
                 change[svl[cd4],:]  = dSVL[cd4] # MK
                 change[lost[cd4],:] = dL[cd4] # MK
                 change[off[cd4],:]  = dO[cd4] # MK
