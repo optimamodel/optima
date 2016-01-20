@@ -12,7 +12,11 @@ from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, 
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
-### Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
+#############################################################################################################################
+### Define the parameters!
+##  NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters
+##  Edit there, then copy and paste from there into here; be sure to include header row
+#############################################################################################################################
 partable = '''
 name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
 Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
@@ -21,7 +25,7 @@ Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	Non
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
 Transitions (% moving/year)	transit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-HIV testing rate (%/person/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
+HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
 AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
 STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	1	random
 Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	1	random
@@ -40,6 +44,13 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
+immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	other	0	1	random
+linkage to care rate (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
+ART adherence so viral suppression achieved (%/year)	adherencerate	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
+Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	other	0	1	random
+Those who stop ART but are still in care (%)	propstop	(0, 1)	pop	timepar	meta	other	0	1	random
+Those in care who are then lost to follow-up (%/year)	leavecare	(0, 1)	pop	timepar	meta	other	0	1	random
+PLHIV lost to follow-up (%/year)	proploss	(0, 1)	pop	timepar	meta	other	0	1	random
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	None	0	None
@@ -85,6 +96,9 @@ Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	No
 Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
+Success of ART achieving viral suppression (%)	success	(0, 1)	tot	constant	const	const	None	0	None
+Reduction in transmission probability for usVL (%)	redtransusvl	(0, 1)	tot	constant	const	const	None	0	None
+Reduction in transmission probability for sVL (%)	redtranssvl	(0, 1)	tot	constant	const	const	None	0	None
 '''
 
 
