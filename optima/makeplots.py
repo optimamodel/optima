@@ -37,7 +37,9 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
         epiplots = odict()
         for pl in which:
 
-            # Parse user input
+            ################################################################################################################
+            ## Parse user input
+            ################################################################################################################
             try:
                 if type(pl)==str: datatype, poptype = pl.split('-')
                 elif type(pl) in [list, tuple]: datatype, poptype = pl[0], pl[1]
@@ -62,7 +64,10 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
             
-            # Process the plot data
+            
+            ################################################################################################################
+            ## Process the plot data
+            ################################################################################################################
             if kind=='single': # Single results thing: plot with uncertainties and data
                 best = getattr(results.main[datatype], poptype)[0] # poptype = either 'tot' or 'pops'
                 try: # If results were calculated with quantiles, these should exist
@@ -89,12 +94,22 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 lower = array([lower])
                 upper = array([upper])
             
-                
-            # Set up figure and do plot
-            epiplots[pl] = figure(figsize=figsize)
+            
+            ################################################################################################################
+            ## Set up figure and do plot
+            ################################################################################################################
+            isprevbypop = (datatype, poptype)==('prev', 'pops') # Flag for whether or not the selected key is prevalence by population
+            if isprevbypop: epiplots[pl] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+            else: epiplots[pl] = [] # Create empty list for storing by-population HIV prevalence plots
 
             if kind=='single': nlines = len(best) # Either 1 or npops
             colors = gridcolormap(nlines)
+            
+            # Plot uncertainty
+            if (nlines==1 or isprevbypop) and uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                for l in range(nlines):
+                    if isprevbypop: epiplots[pl].append(figure(figsize=figsize)) # Create a new figure
+                    fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
 
             # Plot model estimates with uncertainty
             for l in range(nlines):
@@ -109,8 +124,11 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                     scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
-
+            
+            
+            ################################################################################################################
             # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+            ################################################################################################################
             ax = gca()
             ax.spines["top"].set_visible(False)
             ax.spines["right"].set_visible(False)
@@ -134,9 +152,11 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             elif kind=='multi':
                 ax.legend(labels, **legendsettings) # WARNING, cannot plot multiple populations here!
 
-
-            close(epiplots[pl])
-
+            # Tidy up: close plots that were opened
+            if isprevbypop:
+                for p in range(len(epiplots[pl])):
+                    close(epiplots[pl][p]) # Close all prevalence plots
+            else: close(epiplots[pl])
 
 
         if wasinteractive: ion() # Turn interactivity back on

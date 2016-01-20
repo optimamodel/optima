@@ -30,7 +30,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
         plotresults(results)
     '''
     if toplot is None: toplot = ['prev-tot', 'prev-pops', 'numinci-pops']
-    if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
+    if fig is None: fig = figure('Optima results', facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     nplots = len(toplot) # Calculate rows and columns of subplots
     nrows = int(ceil(sqrt(nplots)))
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -85,7 +85,7 @@ def update(event=None, tmpresults=None):
     if nplots>0: # Don't do anything if no plots
         wasinteractive = isinteractive()
         if wasinteractive: ioff()
-        plotfig = figure(figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
+        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         
         # Actually create plots
         plots = plotepi(results, which=toplot, figsize=(width, height))
@@ -144,7 +144,7 @@ def pygui(tmpresults, which=None):
     ## Set up control panel
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
-    panelfig = figure(figsize=(7,8), facecolor=(0.95, 0.95, 0.95)) # Open control panel
+    panelfig = figure('Optima control panel', figsize=(7,8), facecolor=(0.95, 0.95, 0.95)) # Open control panel
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
     updateaxes = axes([0.1, 0.05, 0.3, 0.05]) # Create update button location
     closeaxes  = axes([0.6, 0.05, 0.3, 0.05]) # Create close button location
