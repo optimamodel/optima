@@ -99,7 +99,13 @@ class Parsets(Resource):
 
         db.session.commit()
 
-        return [item.hydrate() for item in project_entry.parsets], 201
+        rv = []
+        for item in project_entry.parsets:
+            rv_item = item.hydrate().__dict__
+            rv_item['id'] = item.id
+            rv.append(rv_item)
+
+        return rv
 
 
 rename_parser = RequestParser()
