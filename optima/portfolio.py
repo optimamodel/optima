@@ -60,23 +60,27 @@ class Portfolio(object):
         return output
 
     #######################################################################################################
-    ## Methods to handle common tasks with structure lists
+    ## Methods to handle common tasks
     #######################################################################################################
 
     def addproject(self, project):
         ''' Store a project within portfolio '''
-        self.projects[project.uid] = project
-        
+        self.projects[project.uid] = project        
+    
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
         
-    def genBOCs(self):
+    def genBOCs(self, objectives=None):
         ''' Loop through stored projects and construct budget-outcome-] curves '''
+        if objectives == None: objectives = defaultobjectives()
         for x in self.projects:
             p = self.projects[x]
-            print(p)
-            p.genBOC(parsetname = p.parsets[0].name, progsetname = p.progsets[0].name, maxtime = 10)   # WARNING!!! OPTIMISES FOR 1ST ONES
+            if p.getBOC(objectives) == None:
+                print('Generating BOC for project: %s' % p.name)
+                p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
+            else:
+                print('BOC does not need to be generated for project: %s' % p.name)
 
 ## -*- coding: utf-8 -*-
 #"""

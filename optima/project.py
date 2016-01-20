@@ -213,8 +213,20 @@ class Project(object):
         structlist[new].name = new # Update name
         printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
         return None
-
-
+        
+    def getBOC(self, objectives):
+        ''' Returns a BOC result with the same objectives (minus budget) if it exists, else None '''
+        for x in self.results:
+            if isinstance(self.results[x],BOC):
+                boc = self.results[x]
+                same = True
+                for y in ['start','end','deathweight','inciweight']:
+                    if not boc.objectives[y] == objectives[y]: same = False
+                if same:
+                    print('A BOC with the required objectives already exists in project: %s' % self.name)
+                    return boc
+        print('No BOC with the required objectives can be found in project: %s' % self.name)
+        return None
 
     #######################################################################################################
     ## Convenience functions -- NOTE, do we need these...?
