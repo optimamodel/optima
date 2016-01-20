@@ -140,7 +140,7 @@ except: _failed()
 
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: 
-    import defaultprograms, plotpeople # Additional features not included in the main part of Optima
+    import defaults, plotpeople # Additional features not included in the main part of Optima
     import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, optimization, gui, project
 except: _failed()
 

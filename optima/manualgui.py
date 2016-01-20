@@ -154,19 +154,19 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
     ## Set up GUI
     leftmargin = 10
     rowheight = 25
-    colwidth = 450
-    ncols = 2
+    colwidth = 500
+    ncols = 3
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
     buttonheight = panelheight-rowheight*1.5
-    buttonoffset = (panelwidth-400)/2
-    boxoffset = 250+leftmargin
+    buttonoffset = panelwidth/ncols
+    boxoffset = 300+leftmargin
     
     panel = QtGui.QWidget() # Create panel widget
     panel.setGeometry(100, 100, panelwidth, panelheight)
     for i in range(nfull):
-        row = (i % floor((nfull+1)/2))+1
-        col = floor(2*i/nfull)
+        row = (i % floor((nfull+1)/ncols))+1
+        col = floor(ncols*i/nfull)
         
         texts.append(QtGui.QLabel(parent=panel))
         texts[-1].setText(fulllabellist[i])
