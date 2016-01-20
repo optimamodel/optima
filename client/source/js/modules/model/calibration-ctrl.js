@@ -166,7 +166,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           responseType:'blob'})
         .success(function (response) {
           var blob = new Blob([response], { type: 'application/octet-stream' });
-          saveAs(blob, ($scope.activeParset.name + '.prj'));
+          saveAs(blob, ($scope.activeParset.name + '.par'));
         });
     };
 
