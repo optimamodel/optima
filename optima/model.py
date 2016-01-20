@@ -228,7 +228,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             effoff  = sum(dxfactor * people[off,pop,t])  # the diagnosis efficacy also applies to those off-ART but in care?? MK
             # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
             #effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t];
-            effhivprev[pop] = (effundx+effdx+effcare+efftxus+efftxs+efflost+effoff) / allpeople[pop,t;] #MK add new stages to sum
+            effhivprev[pop] = (effundx+effdx+effcare+efftxus+efftxs+efflost+effoff) / allpeople[pop,t] #MK add new stages to sum
             if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
@@ -447,17 +447,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             outflows = progout + hivdeaths + otherdeaths
             dO.append(inflows - outflows)
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-           
 
-        # check for negative people here
-        for cd4 in range(ncd4):
-            dU[cd4]    = negativepeople('undiagnosed', dU[cd4],    people[undx[cd4],:,t], t)
-            dD[cd4]    = negativepeople('diagnosed',   dD[cd4],    people[dx[cd4],:,t], t)
-            dC[cd4]    = negativepeople('incare',      dC[cd4],    people[care[cd4],:,t], t)
-            dUSVL[cd4] = negativepeople('treat',       dUSVL[cd4], people[usvl[cd4],:,t], t)
-            dSVL[cd4]  = negativepeople('suppressed',  dSVL[cd4],  people[svl[cd4],:,t], t)
-            dL[cd4]    = negativepeople('lost',        dL[cd4],    people[lost[cd4],:,t], t)
-            dO[cd4]    = negativepeople('off ART',     dO[cd4],    people[off[cd4],:,t], t)
 
 
 
