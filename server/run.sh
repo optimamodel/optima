@@ -14,9 +14,9 @@ fi
 
 source ./p-env/bin/activate
 
-cd optima
-python setup.py develop
 cd ..
+python setup.py develop
+cd server
 
 migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
 

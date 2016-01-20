@@ -22,6 +22,7 @@ tests = [
 from optima import tic, toc, blank, pd # analysis:ignore
 
 if 'doplot' not in locals(): doplot = True
+if 'showstats' not in locals(): showstats = True
 
 def done(t=0):
     print('Done.')
@@ -51,7 +52,7 @@ if 'modalities' in tests:
     t = tic()
 
     print('Testing service modalities...')
-    from optima import Project, Program, Programset
+    from optima import Project, Program, Programset, dcp
     from numpy import array
     from numpy.testing import assert_allclose
     # Uncomment the line below to disable the assert statements and run through to completion
@@ -107,54 +108,39 @@ if 'modalities' in tests:
               'HTC_hometest': array([ 1e6,])}
     
     # Plot the cost-coverage curves for each program if asked
-    if doplot: R.plotallcoverage(t=[2013],
-                      parset=P.parsets['default'],
-                      xupperlim=1e8)
+    if doplot: R.plotallcoverage(t=2013,
+                      parset=P.parsets['default'])
     
     # Get the coverage of each program associated with this budget
     coverage = R.getprogcoverage(budget=budget,
-                                 t=[2013],
+                                 t=2013,
                                  parset=P.parsets['default'],
                                  proportion=True)
+                                 
     coverage_number = R.getprogcoverage(budget=budget,
-                                 t=[2013],
+                                 t=2013,
                                  parset=P.parsets['default'],
                                  proportion=False)
     
     # Get the outcomes associated with this budget
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
     outcomes_nested = R.getoutcomes(coverage_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'random'
     outcomes_random = R.getoutcomes(coverage_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
     outcomes_additive = R.getoutcomes(coverage_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     
     assert_allclose(outcomes_nested['hivtest']['F 15-49'][0],testval_nested,atol=atol)
     assert_allclose(outcomes_random['hivtest']['F 15-49'][0],testval_random,atol=atol)
     assert_allclose(outcomes_additive['hivtest']['F 15-49'][0],testval_additive,atol=atol)
-    
-    output = '\n'
-    output += '===================================\n'
-    output += 'Calculated outcomes\n'
-    output += '   Nested: %s\n'    % outcomes_nested['hivtest']['F 15-49'][0]
-    output += '   Random: %s\n'    % outcomes_random['hivtest']['F 15-49'][0]
-    output += ' Additive: %s\n'    % outcomes_additive['hivtest']['F 15-49'][0]
-    output += '===================================\n'
-    output += 'Outcomes should be:\n'
-    output += '   Nested: %s\n'    % testval_nested
-    output += '   Random: %s\n'    % testval_random
-    output += ' Additive: %s\n'    % testval_additive
-    output += '===================================\n'
-    print output
-    
     
     r1 = 'PASS' if abs(outcomes_nested['hivtest']['F 15-49'][0]-testval_nested)<eps else 'FAIL'
     r2 = 'PASS' if abs(outcomes_random['hivtest']['F 15-49'][0]-testval_random)<eps else 'FAIL'
@@ -181,7 +167,7 @@ if 'modalities' in tests:
         output += '===================================\n'
         print output
     
-    summary()
+    if showstats: summary()
     
     # See the effect of scaling up one of the programs
     budget_outreachscaleup = {'HTC_clinics': array([ 1e7,]),
@@ -189,27 +175,27 @@ if 'modalities' in tests:
               'HTC_hometest': array([ 1e6,])}
     
     coverage_outreachscaleup = R.getprogcoverage(budget=budget_outreachscaleup,
-                                 t=[2013],
+                                 t=2013,
                                  parset=P.parsets['default'],
                                  proportion=True)
     coverage_outreachscaleup_number = R.getprogcoverage(budget=budget_outreachscaleup,
-                                 t=[2013],
+                                 t=2013,
                                  parset=P.parsets['default'],
                                  proportion=False)
     
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
     outcomes_nested_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'random'
     outcomes_random_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
     outcomes_additive_outreachscaleup = R.getoutcomes(coverage_outreachscaleup_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     
     
@@ -218,26 +204,77 @@ if 'modalities' in tests:
               'HTC_hometest': array([ 1e7,])}
     
     coverage_hometestscaleup = R.getprogcoverage(budget=budget_hometestscaleup,
-                                 t=[2013],
+                                 t=2013,
                                  parset=P.parsets['default'],
                                  proportion=True)
     coverage_hometestscaleup_number = R.getprogcoverage(budget=budget_hometestscaleup,
-                                 t=[2013],
+                                 t=2013,
                                  parset=P.parsets['default'],
                                  proportion=False)
     
     R.covout['hivtest']['F 15-49'].interaction = 'nested'
     outcomes_nested_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     R.covout['hivtest']['F 15-49'].interaction = 'random'
     outcomes_random_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
     R.covout['hivtest']['F 15-49'].interaction = 'additive'
     outcomes_additive_hometestscaleup = R.getoutcomes(coverage_hometestscaleup_number,
-                                    t=[2013],
+                                    t=2013,
                                     parset=P.parsets['default'])
+
+    # Run tests
+    assert_allclose(coverage['HTC_clinics'][0],0.244944433098,atol=atol)
+    assert_allclose(coverage['HTC_outreach'][0],0.0227951129721,atol=atol)
+    assert_allclose(coverage['HTC_hometest'][0],0.0566322089804,atol=atol)
+    
+    assert_allclose(outcomes_nested['hivtest']['F 15-49'][0],0.424751727846,atol=atol)
+    assert_allclose(outcomes_random['hivtest']['F 15-49'][0],0.437386196025,atol=atol)
+    assert_allclose(outcomes_additive['hivtest']['F 15-49'][0],0.441812505231,atol=atol)
+    
+    assert_allclose(coverage_outreachscaleup['HTC_clinics'][0],0.244944433098,atol=atol)
+    assert_allclose(coverage_outreachscaleup['HTC_outreach'][0], 0.217677365273,atol=atol)
+    assert_allclose(coverage_outreachscaleup['HTC_hometest'][0], 0.0566322089804,atol=atol)
+    
+    assert_allclose(outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0],0.444239953077,atol=atol)
+    assert_allclose(outcomes_random_outreachscaleup['hivtest']['F 15-49'][0],0.52833307343,atol=atol)
+    assert_allclose(outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0],0.558741856611,atol=atol)
+    
+    assert_allclose(coverage_hometestscaleup['HTC_clinics'][0],0.244944433098,atol=atol) 
+    assert_allclose(coverage_hometestscaleup['HTC_outreach'][0], 0.0227951129721,atol=atol)  
+    assert_allclose(coverage_hometestscaleup['HTC_hometest'][0], 0.356286414635,atol=atol) 
+    
+    assert_allclose(outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0],0.435885926,atol=atol)
+    assert_allclose(outcomes_random_hometestscaleup['hivtest']['F 15-49'][0],0.461657257438,atol=atol)
+    assert_allclose(outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0],0.471777925796,atol=atol)
+    
+
+    # Now see how the different options affect diagnoses
+    initialparsdict = R.getparsdict(coverage_number, t=2013, parset=P.parsets['default'])
+    outreachparsdict = R.getparsdict(coverage_outreachscaleup_number, t=2013, parset=P.parsets['default'])
+    hometestparsdict = R.getparsdict(coverage_hometestscaleup_number, t=2013, parset=P.parsets['default'])
+    
+    initialparset = dcp(P.parsets['default'])
+    initialparset.pars[0] = initialparsdict
+    outreachparset = dcp(P.parsets['default'])
+    outreachparset.pars[0] = outreachparsdict
+    hometestparset = dcp(P.parsets['default'])
+    hometestparset.pars[0] = hometestparsdict
+    
+    P.addparset(name='initial',parset=initialparset)
+    P.addparset(name='outreach',parset=outreachparset)
+    P.addparset(name='hometest',parset=hometestparset)
+    
+    epiresults_initial = P.runsim(name='initial')
+    epiresults_outreach = P.runsim(name='outreach')
+    epiresults_hometest = P.runsim(name='hometest')
+    
+    e1 = epiresults_initial.main['numdiag'].pops[0,1,16:].sum(axis=0)
+    e2 = epiresults_outreach.main['numdiag'].pops[0,1,16:].sum(axis=0)
+    e3 = epiresults_hometest.main['numdiag'].pops[0,1,16:].sum(axis=0)
+    
     
     def summary_scaleup():
         ''' Print out useful information'''
@@ -282,109 +319,13 @@ if 'modalities' in tests:
         output += '   Random: %s\n' % outcomes_random_hometestscaleup['hivtest']['F 15-49'][0]
         output += ' Additive: %s\n' % outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0]
         output += '===================================\n'
+        output = '\n'
+        output += '===================================\n'
+        output += 'Diagnoses in Females 15-49 2016-2030:\n'
+        output += '             Initial: %s\n'    % e1
+        output += '   Outreach scale-up: %s\n'    % e2
+        output += '  Home-test scale-up: %s\n'    % e3
+        output += '===================================\n'
         print output
     
-    summary_scaleup()
-    
-    
-    output = '\n'
-    output += '===================================\n'
-    output += 'Initial budget allocation:\n'
-    output += ' Clinics: %s\n'    % budget['HTC_clinics'][0]
-    output += ' Outreach: %s\n'    % budget['HTC_outreach'][0]
-    output += ' Hometest: %s\n'    % budget['HTC_hometest'][0]
-    output += 'Initial coverage:\n'
-    output += ' Clinics: %s\n'    % coverage['HTC_clinics'][0]
-    output += ' Outreach: %s\n'    % coverage['HTC_outreach'][0]
-    output += ' Hometest: %s\n'    % coverage['HTC_hometest'][0]
-    
-    assert_allclose(coverage['HTC_clinics'][0],0.244944433098,atol=atol)
-    assert_allclose(coverage['HTC_outreach'][0],0.0227951129721,atol=atol)
-    assert_allclose(coverage['HTC_hometest'][0],0.0566322089804,atol=atol)
-    
-    output += 'Initial outcomes:\n'
-    output += '   Nested: %s\n'    % outcomes_nested['hivtest']['F 15-49'][0]
-    output += '   Random: %s\n'    % outcomes_random['hivtest']['F 15-49'][0]
-    output += ' Additive: %s\n'    % outcomes_additive['hivtest']['F 15-49'][0]
-    
-    assert_allclose(outcomes_nested['hivtest']['F 15-49'][0],0.424751727846,atol=atol)
-    assert_allclose(outcomes_random['hivtest']['F 15-49'][0],0.437386196025,atol=atol)
-    assert_allclose(outcomes_additive['hivtest']['F 15-49'][0],0.441812505231,atol=atol)
-    
-    output += '===================================\n'
-    output += 'Budget with outreach scale-up:\n'
-    
-    output += ' Clinics: %s\n'    % budget_outreachscaleup['HTC_clinics'][0]
-    output += ' Outreach: %s\n'    % budget_outreachscaleup['HTC_outreach'][0]
-    output += ' Hometest: %s\n'    % budget_outreachscaleup['HTC_hometest'][0]
-    
-    output += 'Coverage with outreach scale-up:\n'
-    output += ' Clinics: %s\n'     % coverage_outreachscaleup['HTC_clinics'][0]
-    output += ' Outreach: %s\n'    % coverage_outreachscaleup['HTC_outreach'][0]
-    output += ' Hometest: %s\n'    % coverage_outreachscaleup['HTC_hometest'][0]
-    assert_allclose(coverage_outreachscaleup['HTC_clinics'][0],0.244944433098,atol=atol)
-    assert_allclose(coverage_outreachscaleup['HTC_outreach'][0], 0.217677365273,atol=atol)
-    assert_allclose(coverage_outreachscaleup['HTC_hometest'][0], 0.0566322089804,atol=atol)
-    
-    output += 'Outcomes with outreach scale-up:\n'
-    output += '   Nested: %s\n'    % outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0]
-    output += '   Random: %s\n'    % outcomes_random_outreachscaleup['hivtest']['F 15-49'][0]
-    output += ' Additive: %s\n'    % outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0]
-    assert_allclose(outcomes_nested_outreachscaleup['hivtest']['F 15-49'][0],0.444239953077,atol=atol)
-    assert_allclose(outcomes_random_outreachscaleup['hivtest']['F 15-49'][0],0.52833307343,atol=atol)
-    assert_allclose(outcomes_additive_outreachscaleup['hivtest']['F 15-49'][0],0.558741856611,atol=atol)
-    
-    
-    output += '===================================\n'
-    output += 'Budget with hometest scale-up:\n'
-    
-    output += ' Clinics: %s\n'     % budget_hometestscaleup['HTC_clinics'][0]
-    output += ' Outreach: %s\n'    % budget_hometestscaleup['HTC_outreach'][0]
-    output += ' Hometest: %s\n'    % budget_hometestscaleup['HTC_hometest'][0]
-    
-    output += 'Coverage with hometest scale-up:\n'
-    output += ' Clinics: %s\n'     % coverage_hometestscaleup['HTC_clinics'][0]
-    output += ' Outreach: %s\n'    % coverage_hometestscaleup['HTC_outreach'][0]
-    output += ' Hometest: %s\n'    % coverage_hometestscaleup['HTC_hometest'][0]
-    assert_allclose(coverage_hometestscaleup['HTC_clinics'][0],0.244944433098,atol=atol) 
-    assert_allclose(coverage_hometestscaleup['HTC_outreach'][0], 0.0227951129721,atol=atol)  
-    assert_allclose(coverage_hometestscaleup['HTC_hometest'][0], 0.356286414635,atol=atol) 
-    
-    output += 'Outcomes with hometest scale-up:\n'
-    output += '   Nested: %s\n' % outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0]
-    output += '   Random: %s\n' % outcomes_random_hometestscaleup['hivtest']['F 15-49'][0]
-    output += ' Additive: %s\n' % outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0]
-    assert_allclose(outcomes_nested_hometestscaleup['hivtest']['F 15-49'][0],0.435885926,atol=atol)
-    assert_allclose(outcomes_random_hometestscaleup['hivtest']['F 15-49'][0],0.461657257438,atol=atol)
-    assert_allclose(outcomes_additive_hometestscaleup['hivtest']['F 15-49'][0],0.471777925796,atol=atol)
-    
-    output += '===================================\n'
-    print output
-    
-    initialparset = R.getparset(coverage,t=[2013], parset=P.parsets['default'])
-    outreachparset = R.getparset(coverage_outreachscaleup,t=[2013], parset=P.parsets['default'])
-    hometestparset = R.getparset(coverage_hometestscaleup,t=[2013], parset=P.parsets['default'])
-    
-    P.addparset(name='initial',parset=initialparset)
-    P.addparset(name='outreach',parset=outreachparset)
-    P.addparset(name='hometest',parset=hometestparset)
-    
-    epiresults_initial = P.runsim(name='initial')
-    epiresults_outreach = P.runsim(name='outreach')
-    epiresults_hometest = P.runsim(name='hometest')
-    
-    e1 = epiresults_initial.main['numdiag'].pops[0,1,75:].sum(axis=0)
-    e2 = epiresults_outreach.main['numdiag'].pops[0,1,75:].sum(axis=0)
-    e3 = epiresults_hometest.main['numdiag'].pops[0,1,75:].sum(axis=0)
-    
-    # TODO: Some checks on the values of e1-e3 here
-    
-    output = '\n'
-    output += '===================================\n'
-    output += 'Diagnoses in Females 15-49 2015-2030:\n'
-    output += '             Initial: %s\n'    % e1
-    output += '   Outreach scale-up: %s\n'    % e2
-    output += '  Home-test scale-up: %s\n'    % e3
-    output += '===================================\n'
-    print output
-
+    if showstats: summary_scaleup()

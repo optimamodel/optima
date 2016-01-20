@@ -3,7 +3,6 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import printv, tic, toc, dcp, odict, findinds, Settings
 
-
 def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
@@ -13,7 +12,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     printv('Running model...', 1, verbose, newline=False)
     if benchmark: starttime = tic()
-
 
     ###############################################################################
     ## Setup
@@ -30,7 +28,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     npops      = len(popkeys)
     simpars    = dcp(simpars)
     tvec       = simpars['tvec']
-    dt         = tvec[1]-tvec[0]      # Shorten dt
+    dt         = simpars['dt']      # Shorten dt
     npts       = len(tvec) # Number of time points
     ncd4       = settings.ncd4      # Shorten number of CD4 states
     nstates    = settings.nstates   # Shorten number of health states
@@ -172,8 +170,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             this['cond'] = 1 - simpars['cond'+act][key]*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
-            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmmi']
-            # WARNING how to specify receptive male-male??
+            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = (simpars['transmmi'] + simpars['transmmr'])/2.0 # Note: this looks horrible and stupid but it's correct! Ask Kedz
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']  
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
@@ -380,7 +377,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
 
 
-def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uid=None, project=None, data=None, verbose=2):
+def runmodel(simpars=None, pars=None, parset=None, progset=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, project=None, data=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -390,10 +387,10 @@ def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, en
     from optima import makesimpars, Resultset
     if simpars is None:
         if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
-        simpars = makesimpars(pars, start=start, end=end, dt=dt, name=name, uid=uid)
+        simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
     if settings is None:
         if project is not None: settings = project.settings
         else: settings = Settings()
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
-    results = Resultset(raw=raw, parset=parset, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
+    results = Resultset(raw=raw, parset=parset, progset=progset, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
     return results

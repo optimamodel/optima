@@ -10,8 +10,8 @@ Version: 2016jan05 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'tmp',
-#'minimizeoutcomes',
+'setup',
+'minimizeoutcomes',
 ]
 
 
@@ -46,13 +46,12 @@ T = tic()
 
 
 
-## Temp test
-if 'tmp' in tests:
+## Set up project etc.
+if 'setup' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Project, Program, Programset, runscenarios
-    from numpy import array
+    from optima import Project, Program, Programset
     
     P = Project(spreadsheet='test7pops.xlsx')
     pops = P.data['pops']['short']
@@ -76,6 +75,14 @@ if 'tmp' in tests:
     condprog.costcovfn.addccopar({'saturation': (0.75,0.75), 't': 2016.0, 'unitcost': (30,40)})
     fswprog.costcovfn.addccopar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (50,80)})
     
+    condprog.addcostcovdatum({'t':2015,
+                              'cost':2e6,
+                              'coverage':57143.})
+    
+    fswprog.addcostcovdatum({'t':2015,
+                              'cost':3e6,
+                              'coverage':45261.})
+    
     R = Programset(programs=[condprog, fswprog]) 
     
     R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
@@ -86,24 +93,6 @@ if 'tmp' in tests:
     R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
     R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'FSW_programs':(0.6,0.65)})
     P.addprogset(name='default', progset=R)
-        
-    
-    ## Define scenarios
-    scenlist = [
-         {'name': 'Double investment in condom program',
-          'parset': P.parsets['default'],
-          'progset': P.progsets['default'],
-          'type': 'program',
-          'budgets': [
-           {'Condoms':array([2e9]),
-            'FSW_programs':array([1e9])},
-            ],
-          'coveragelevels': None,
-          't': [2016]},
-        ]
-    
-    
-    allresults = runscenarios(scenlist=scenlist)
     
     done(t)
 
@@ -112,19 +101,25 @@ if 'tmp' in tests:
 
 
 
-## Minimize money test
+## Minimize outcomes test
 if 'minimizeoutcomes' in tests:
     t = tic()
 
     print('Running minimize outcomes test...')
-    from optima import Project
+    from optima import defaultobjectives
+    objectives = defaultobjectives()
+    objectives['budget'] = 6e6 # Change default budget to optimize
+    P.minoutcomes(name='optim', parsetname='default', progsetname='default', objectives=objectives, method='asd')
     
-    P = Project(spreadsheet='test.xlsx')
-    results = P.minoutcomes(parset='default', progset='default', alloc=[1e6,1e6])
-    
-    if doplot:
-        from gui import plotresults
-        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    print('Original allocation: '),
+    print(P.results[-1].budget['orig'])
+    print('Optimal allocation: '),
+    print(P.optims[-1].getresults().budget['optim']) # Showing that results are "stored" in the optimization -- same object as before
+    if doplot: 
+        from optima import plotmismatch, plotallocs, plotresults
+        plotmismatch(P.results[-1])
+        plotallocs(P.results[-1])
+        plotresults(P.results[-1], toplot=['prev-tot', 'numinci-tot']) # WARNING, only handles plotting total (not by populations) for now
     
     done(t)
 
