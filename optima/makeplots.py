@@ -107,8 +107,9 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
-                if kind=='single': nlinesperplot = len(best) # Either 1 or npops
-                colors = gridcolormap(nlines)
+                if poptype=='pops' or kind=='multi': nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
+                else: nlinesperplot = 1 # In all other cases, there's a single line per plot
+                colors = gridcolormap(nlinesperplot)
                 
                 # Plot uncertainty
                 if uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
