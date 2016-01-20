@@ -1,6 +1,6 @@
-from optima import Settings, Parameterset, Programset, Resultset # Import classes
-from optima import odict, getdate, today, uuid, dcp, objectid, objatt, objmeth, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit # Import functions
+from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
 
 
@@ -25,6 +25,7 @@ class Project(object):
         1. data -- loaded from the spreadsheet
         2. settings -- timestep, indices, etc.
         3. various kinds of metadata -- project name, creation date, etc.
+        4. econ -- data and time series loaded from the economics spreadsheet
 
 
     Methods for structure lists:
@@ -33,7 +34,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2016jan14 by cliffk
+    Version: 2016jan18 by cliffk
     """
 
 
@@ -74,8 +75,7 @@ class Project(object):
 
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = objectid(self)
-        output += '============================================================\n'
+        output = '============================================================\n'
         output += '      Project name: %s\n'    % self.name
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
@@ -92,10 +92,7 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output
 
 
@@ -111,16 +108,28 @@ class Project(object):
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
 
-        ## If parameter set of that name doesn't exist, create it
+        self.ensureparset(name)
+        return None
+
+
+    def ensureparset(self, name='default'):
+        ''' If parameter set of that name doesn't exist, create it'''
+        # question: what is that parset does exist? delete it first?
+        if not self.data:
+            raise Exception("No data in project %s!" % self.uid)
         if name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset) # Store parameters
         return None
 
+    def loadeconomics(self, filename):
+        ''' Load economic data and tranforms it to useful format'''
 
+        ## Load spreadsheet
+        self.data['econ'] = loadeconomicsspreadsheet(filename)
 
-
+        return None
 
 
     #######################################################################################################
@@ -189,7 +198,8 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
-        structlist[new].name = new # Update name
+        structlist[new].name = new  # Update name
+        structlist[new].uid = uuid()  # otherwise there will be 2 structures with same unique identifier
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
         return None
 
@@ -267,7 +277,6 @@ class Project(object):
         self.addresult(result=results)
         if simpars is None: self.parsets[name].resultsref = results.uid
 
-
         return results
 
 
@@ -283,12 +292,20 @@ class Project(object):
         ''' Function to perform manual fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
         return None
 
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
-        autofit(self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None
-
+    
+    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+        ''' Function to minimize outcomes '''
+        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        self.addoptim(optim=optim)
+        self.addresult(result=results)
+        self.optims[-1].resultsref = results.uid
+        return None

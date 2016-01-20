@@ -17,7 +17,7 @@ from server.webapp.dbmodels import ProjectDb, UserDb, ResultsDb, ParsetsDb
 import optima as op
 
 # json should probably removed from here since we are now using prj for up/download
-ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg'}
+ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}  # TODO this should be checked per upload type
 
 
 def check_project_name(api_call):

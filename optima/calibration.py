@@ -22,17 +22,17 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
     Outputs:
         parset = perturbed parameter set with ncopies sets of pars
     
-    Version: 2016jan10 by cliffk
+    Version: 2016jan19 by cliffk
     '''
     
     printv('Performing sensitivity analysis...', 1, verbose)
     
     # Validate input
+    if type(orig)!=Parameterset:
+        raise Exception('First argument to sensitivity() must be a parameter set')
     if span>1 or span<0:
         print('WARNING: span argument must be a scalar in the interval [0,1], resetting...')
         span = median([0,1,span])
-    if type(orig)!=Parameterset:
-        raise Exception('First argument to sensitivity() must be a parameter set')
     
     # Copy things
     parset = dcp(orig) # Copy the original parameter set
@@ -82,6 +82,10 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     '''
     
     printv('Performing automatic fitting...', 1, verbose)
+    
+    # Validate input
+    if project is None: raise Exception('autofit() requires a project in order to run')
+    if type(name)!=str: raise Exception('"name" must be the name or index of a paramete set')
     
     # Initialization
     parset = project.parsets[name] # Copy the original parameter set
@@ -174,15 +178,18 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     
 
 
-    def errorcalc(parvec, options):
+    def errorcalc(parvec=None, pars=None, parlist=None, project=None, eps=0.001, bestindex=0):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
         does.
+        
+        WARNING, 'bestindex' is kludgy -- discard upper and lower limits for the data
+        WARNING, 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
         '''
         
-        bestindex = 0 # WARNING, KLUDGY -- discard upper and lower limits for the data
-        eps = 0.001 # Absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
+        # Validate input -- check everything in one go
+        if None in [parvec, pars, parlist, project]: raise Exception('errorcalc() requires parvec, pars, parlist, and project inputs')
         
         def extractdata(xdata, ydata):
             ''' Return the x and y data values for non-nan y data '''
@@ -193,9 +200,6 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
 
         printv(parvec, 4, verbose)
         
-        pars = options['pars']
-        parlist = options['parlist']
-        project = options['project']
         pars = convert(pars, parlist, parvec)
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0)
         
@@ -246,11 +250,12 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         
         # Perform fit
         parvec = convert(pars, parlist)
-        options = {'pars':pars, 'parlist':parlist, 'project':project}
-        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, options=options, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        args = {'pars':pars, 'parlist':parlist, 'project':project}
+        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
         pars = convert(pars, parlist, parvecnew)        
         parset.pars.append(pars)
+        parset.mismatch = output.fval # Store mismatch history
     
     return parset
