@@ -58,7 +58,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 raise Exception(errormsg)
             
             try:
-                factor = 1.0 if results.main[datatype].isnumber else 100 # Swap between number and percent
+                factor = 1.0 if results.main[datatype].isnumber else 100.0 # Swap between number and percent
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
@@ -98,10 +98,12 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ## Set up figure and do plot
             ################################################################################################################
             isprevbypop = (datatype, poptype)==('prev', 'pops') # Flag for whether or not the selected key is prevalence by population
-            if isprevbypop: pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
+            if isprevbypop: 
+                pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
+            
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
-            for pk in pkeys: # Either loop over individual population prevalence plots, or just plot a single plot
+            for i,pk in enumerate(pkeys): # Either loop over individual population prevalence plots, or just plot a single plot
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
@@ -155,10 +157,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                     ax.legend(labels, **legendsettings) # WARNING, cannot plot multiple populations here!
     
                 # Tidy up: close plots that were opened
-                if isprevbypop:
-                    for p in range(len(epiplots[pl])):
-                        close(epiplots[pl][p]) # Close all prevalence plots
-                else: close(epiplots[pl])
+                close(epiplots[pk])
 
 
         if wasinteractive: ion() # Turn interactivity back on
