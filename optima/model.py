@@ -71,8 +71,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     care = settings.incare # in Care MK
-    tx   = settings.treat  # Treatment -- 1st line
-    svl  = settings.supp   # Suppressed Viral Load MK
+    tx   = settings.unsupp # On-Treatment - Unsuppressed Viral Load MK
+    svl  = settings.supp   # On-Treatment - Suppressed Viral Load MK
     lost = settings.lost   # Not on ART (anymore) and lost to follow-up MK
     off  = settings.off    # off-ART but still in care MK
 
@@ -347,7 +347,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         #MK
         ## In-Care
         currentincare = people[care,:,t] # how many people currently in care (by population)
-        newtreat1tot = numtx[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = numtx[t] - people[tx:svl,:,t].sum() # Calculate difference between current people on treatment and people needed
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
