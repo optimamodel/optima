@@ -29,7 +29,7 @@ class Parameters(Resource):
         """Gives back project parameters (modifiable)"""
 
         from server.webapp.utils import load_project
-        from optima.parameters import partable, readpars
+        from optima.parameters import partable, readpars, Par
 
         default_pars = [par['short'] for par in readpars(partable)]
 
@@ -43,7 +43,9 @@ class Parameters(Resource):
                 for key in default_pars:
                     if key not in added_parameters and \
                             key in parameter and \
-                            parameter[key].visible == 1:
+                            isinstance(parameter[key], Par) and \
+                            parameter[key].visible == 1 and \
+                            parameter[key].y.keys():
                         parameters.append(parameter[key])
                         added_parameters.add(key)
         return parameters
