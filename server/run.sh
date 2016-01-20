@@ -14,7 +14,6 @@ fi
 
 source ./p-env/bin/activate
 
-CK: this stopped the server from running...
 cd ..
 python setup.py develop
 cd server
