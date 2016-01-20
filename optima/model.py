@@ -56,15 +56,14 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     death = simpars['deathacute':'deathlt50']
     cd4trans = simpars['cd4transacute':'cd4translt50']
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
-    success    = simpars['success']    # proportion of people who become virally suppressed if ART works (P) MK
+    successart    = simpars['successart']    # proportion of people who become virally suppressed if ART works (P) MK
     biofailure = simpars['biofail']    # biological treatment failure rate (P/T) [npts] MK
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = simpars['effdx'] * cd4trans # Include diagnosis efficacy
-    #txfactor = simpars['efftx'] * dxfactor # And treatment efficacy
-    redtransusvl = simpars['efftxusupp'] * dxfactor # (~30%) reduction in transmission probability for usVL MK
-    redtranssvl  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL (MK same as txfactor?)
+    efftxunsupp = simpars['efftxunsupp'] * dxfactor # (~30%) reduction in transmission probability for usVL MK
+    efftxsupp  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL (MK same as txfactor?)
 
     # Disease state indices
     sus  = settings.uncirc # Susceptible
@@ -221,13 +220,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             effcare = sum(dxfactor * people[care,pop,t]) # the diagnosis efficacy also applies to those in care?? MK
-            #efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
-            efftxus = sum(redtransusvl * people[usvl,pop,t]) # ...and treated MK
-            efftxs  = sum(redtranssvl  * people[svl,pop,t]) # ...and suppressed viral load MK
+            efftxus = sum(efftxunsupp * people[usvl,pop,t]) # ...and treated MK
+            efftxs  = sum(efftxsupp  * people[svl,pop,t]) # ...and suppressed viral load MK
             efflost = sum(dxfactor * people[lost,pop,t]) # the diagnosis efficacy also applies to those lost to follow-up?? MK
             effoff  = sum(dxfactor * people[off,pop,t])  # the diagnosis efficacy also applies to those off-ART but in care?? MK
             # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
-            #effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t];
             effhivprev[pop] = (effundx+effdx+effcare+efftxus+efftxs+efflost+effoff) / allpeople[pop,t] #MK add new stages to sum
             if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
@@ -381,7 +378,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths       = dt * people[usvl[cd4],:,t] * background
-            virallysuppressed[cd4] = people[usvl[cd4],:,t] * adherenceprop[:,t] * success
+            virallysuppressed[cd4] = people[usvl[cd4],:,t] * adherenceprop[:,t] * successart
             stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
             stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + newtreat1[cd4]

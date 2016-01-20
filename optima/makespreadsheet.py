@@ -413,6 +413,7 @@ class OptimaSpreadsheet:
             ('epi', 'Other epidemiology'),
             ('opt', 'Optional indicators'),
             ('txrx', 'Testing & treatment'),
+            ('casc', 'Cascade'),
             ('sex', 'Sexual behavior'),
             ('inj', 'Injecting behavior'),
             ('ptrans', 'Partnerships & transitions'),
@@ -556,6 +557,27 @@ class OptimaSpreadsheet:
             current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', 
             current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        
+    
+    def generate_casc(self):
+        ''' Added by CK for cascade parameters '''
+        current_row = 0
+
+        current_row = self.emit_ref_years_block('Immediate linkage to care (%)', 
+            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Linkage to care rate (%/year)', 
+            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('ART adherence so viral suppression achieved (%/year)', 
+            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Those who stop ART but are still in care (%)', 
+            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Those in care who are then lost to follow-up (%/year)', 
+            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('PLHIV lost to follow-up (%/year)', 
+            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Biological failure rate (%/year)', 
+            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+            
 
     def generate_sex(self):
         current_row = 0

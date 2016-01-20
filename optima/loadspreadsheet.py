@@ -3,7 +3,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
     
-    Version: 2015nov22
+    Version: 1.1 (2016jan19) by cliffk
     """
     
     ###########################################################################
@@ -68,9 +68,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         
     
     
-    ##############################################################################
-    ## Define the workbook and parameter names -- should match makespreadsheet.py!
-    ##############################################################################
+    ###########################################################################################################
+    ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
+    ###########################################################################################################
         
     sheets = odict()
     
@@ -87,6 +87,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'adherencerate', 'propstop', 'leavecare', 'proploss', 'biofailure']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
@@ -99,7 +100,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
-                           ['efftx', 'effpmtct', 'effprep','effcondom', 'effcirc', 'effost', 'effdx', 'effsti'],
+                           ['successart', 'efftxunsupp', 'efftxsupp', 'effpmtct', 'effprep','effcondom', 'effcirc', 'effost', 'effdx', 'effsti'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
     
 
