@@ -58,6 +58,12 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                 fulltypelist.append(typelist[k])
                 fullvallist.append(tmppars[key].m)
                 fulllabellist.append(namelist[k] + ' -- meta')
+            if typelist[k]=='const':
+                fullkeylist.append(key)
+                fullsubkeylist.append(None)
+                fulltypelist.append(typelist[k])
+                fullvallist.append(tmppars[key].y)
+                fulllabellist.append(namelist[k])
             elif typelist[k] in ['pop', 'pship']:
                 for subkey in tmppars[key].y.keys():
                     fullkeylist.append(key)
@@ -109,6 +115,10 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
                 printv('%s.p[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+            if fulltypelist[b]=='const': # Metaparameters
+                key = fullkeylist[b]
+                tmppars[key].y = eval(str(box.text()))
+                printv('%s.y = %s' % (key, box.text()), 4, verbose=verbose)
             else:
                 print('Parameter type "%s" not implemented!' % fulltypelist[b])
         
