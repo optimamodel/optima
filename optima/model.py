@@ -70,7 +70,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     undx = settings.undiag # Undiagnosed
     dx   = settings.diag   # Diagnosed
     care = settings.incare # in Care MK
-    usvl   = settings.unsupp # On-Treatment - Unsuppressed Viral Load MK
+    usvl = settings.unsupp # On-Treatment - Unsuppressed Viral Load MK
     svl  = settings.supp   # On-Treatment - Suppressed Viral Load MK
     lost = settings.lost   # Not on ART (anymore) and lost to follow-up MK
     off  = settings.off    # off-ART but still in care MK
@@ -164,7 +164,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         initpeople[settings.uncirc, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
-        initpeople[settings.alltreat, p] = treatment
+        initpeople[settings.supp, p] = treatment # WARNING, should divide between suppressed and unsuppressed
     
         if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             err = 'Non-positive people found during epidemic initialization!'  
@@ -343,7 +343,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         #MK
         ## In-Care
         currentincare = people[care,:,t] # how many people currently in care (by population)
-        newtreat1tot = numtx[t] - people[usvl:svl,:,t].sum() # Calculate difference between current people on treatment and people needed
+        newtreat1tot = numtx[t] - people[[usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
@@ -356,7 +356,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             newtreat1[cd4] = newtreat1tot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
             hivdeaths   = dt * people[care[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[care[cd4],:,t] * background
-            leavingcare[cd4] = dt * people[care[cd4],:,t] * leavecare
+            leavingcare[cd4] = dt * people[care[cd4],:,t] * leavecare[:,t]
             inflows = progin + newdiagnoses[cd4]*immediatecare[:,t]
             outflows = progout + hivdeaths + otherdeaths + leavingcare[cd4]
             newtreat1[cd4] = minimum(newtreat1[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
