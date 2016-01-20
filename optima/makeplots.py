@@ -35,16 +35,16 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
         # Loop over each plot
         epiplots = odict()
-        for pl in which:
+        for plotkey in which:
 
             ################################################################################################################
             ## Parse user input
             ################################################################################################################
             try:
-                if type(pl)==str: datatype, poptype = pl.split('-')
-                elif type(pl) in [list, tuple]: datatype, poptype = pl[0], pl[1]
+                if type(plotkey)==str: datatype, poptype = plotkey.split('-')
+                elif type(plotkey) in [list, tuple]: datatype, poptype = plotkey[0], plotkey[1]
                 else: 
-                    errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(pl)
+                    errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
                     raise Exception(errormsg)
                 if datatype not in results.main.keys():
                     errormsg = 'Could not understand plot "%s"; ensure keys are one of:\n' % datatype
@@ -54,8 +54,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                     errormsg = 'Type "%s" should be either "pops" or "tot"'
                     raise Exception(errormsg)
             except:
-                errormsg = 'Could not parse plot "%s"\n' % pl
-                errormsg += 'Please ensure format is e.g. "numplhiv-tot"'
+                errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
                 raise Exception(errormsg)
             
             try:
@@ -99,64 +98,67 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ## Set up figure and do plot
             ################################################################################################################
             isprevbypop = (datatype, poptype)==('prev', 'pops') # Flag for whether or not the selected key is prevalence by population
-            if isprevbypop: epiplots[pl] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
-            else: epiplots[pl] = [] # Create empty list for storing by-population HIV prevalence plots
-
-            if kind=='single': nlines = len(best) # Either 1 or npops
-            colors = gridcolormap(nlines)
+            if isprevbypop: pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
+            else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
-            # Plot uncertainty
-            if (nlines==1 or isprevbypop) and uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-                for l in range(nlines):
-                    if isprevbypop: epiplots[pl].append(figure(figsize=figsize)) # Create a new figure
-                    fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
-
-            # Plot model estimates with uncertainty
-            for l in range(nlines):
-                if uncertainty and kind=='single':
-                    fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
-                try: plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            for pk in pkeys: # Either loop over individual population prevalence plots, or just plot a single plot
                 
-            # Plot data points with uncertainty
-            for l in range(nlines):
-                if databest is not None:
-                    scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
-                    for y in range(len(results.datayears)):
-                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
-            
-            
-            ################################################################################################################
-            # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
-            ################################################################################################################
-            ax = gca()
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.get_xaxis().tick_bottom()
-            ax.get_yaxis().tick_left()
-            ax.title.set_fontsize(titlesize)
-            ax.xaxis.label.set_fontsize(labelsize)
-            for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
-
-            # Configure plot
-            currentylims = ylim()
-            legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
-            ax.set_xlabel('Year')
-            # ax.legend(loc='upper left', fancybox=True, title='')
-            ax.set_title(results.main[datatype].name)
-            ax.set_ylim((0,currentylims[1]))
-            ax.set_xlim((results.tvec[0], results.tvec[-1]))
-            if kind=='single':
-                if poptype=='pops': ax.legend(results.popkeys, **legendsettings)
-                if poptype=='tot':  ax.legend(['Total'], **legendsettings)
-            elif kind=='multi':
-                ax.legend(labels, **legendsettings) # WARNING, cannot plot multiple populations here!
-
-            # Tidy up: close plots that were opened
-            if isprevbypop:
-                for p in range(len(epiplots[pl])):
-                    close(epiplots[pl][p]) # Close all prevalence plots
-            else: close(epiplots[pl])
+                epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+    
+                if kind=='single': nlines = len(best) # Either 1 or npops
+                colors = gridcolormap(nlines)
+                
+                # Plot uncertainty
+                if (nlines==1 or isprevbypop) and uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                    for l in range(nlines):
+                        fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
+    
+                # Plot model estimates with uncertainty
+                for l in range(nlines):
+                    if uncertainty and kind=='single':
+                        fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
+                    try: plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    
+                # Plot data points with uncertainty
+                for l in range(nlines):
+                    if databest is not None:
+                        scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
+                        for y in range(len(results.datayears)):
+                            plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
+                
+                
+                ################################################################################################################
+                # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+                ################################################################################################################
+                ax = gca()
+                ax.spines["top"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+                ax.get_xaxis().tick_bottom()
+                ax.get_yaxis().tick_left()
+                ax.title.set_fontsize(titlesize)
+                ax.xaxis.label.set_fontsize(labelsize)
+                for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+    
+                # Configure plot
+                currentylims = ylim()
+                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+                ax.set_xlabel('Year')
+                # ax.legend(loc='upper left', fancybox=True, title='')
+                ax.set_title(results.main[datatype].name)
+                ax.set_ylim((0,currentylims[1]))
+                ax.set_xlim((results.tvec[0], results.tvec[-1]))
+                if kind=='single':
+                    if poptype=='pops': ax.legend(results.popkeys, **legendsettings)
+                    if poptype=='tot':  ax.legend(['Total'], **legendsettings)
+                elif kind=='multi':
+                    ax.legend(labels, **legendsettings) # WARNING, cannot plot multiple populations here!
+    
+                # Tidy up: close plots that were opened
+                if isprevbypop:
+                    for p in range(len(epiplots[pl])):
+                        close(epiplots[pl][p]) # Close all prevalence plots
+                else: close(epiplots[pl])
 
 
         if wasinteractive: ion() # Turn interactivity back on
