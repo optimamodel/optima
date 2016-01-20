@@ -377,20 +377,18 @@ class ParsetsData(Resource):
         if parset does not exist, returns an error"""
     )
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
-    def put(self, project_id, parset_id):
+    def post(self, project_id, parset_id):
         # TODO replace this with app.config
-        current_app.logger.debug("PUT /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
+        current_app.logger.debug("POST /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
 
         print request.files, request.args
         args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
 
-        source_filename = uploaded_file.source_filename
-
         project_entry = load_project(project_id, raise_exception=True)
 
         parset_entry = project_entry.find_parset(parset_id)
-        parset_instance = op.load(uploaded_file)
+        parset_instance = op.loadobj(uploaded_file)
 
         parset_entry.restore(parset_instance)
         db.session.add(parset_entry)
@@ -410,4 +408,3 @@ class ParsetsData(Resource):
         db.session.commit()
 
         return [item.hydrate() for item in project_entry.parsets]
-        return reply
