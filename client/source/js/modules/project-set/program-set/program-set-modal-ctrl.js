@@ -107,11 +107,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to add a new parameter
     $scope.addParameter = function () {
+      console.log('$scope.state.program.inactiveParameters', $scope.state.program.inactiveParameters);
       if($scope.state.program.inactiveParameters && $scope.state.program.inactiveParameters.length > 0) {
         $scope.state.program.activeParameters = $scope.state.program.activeParameters || [];
         $scope.state.program.inactiveParameters[0].active = true;
         $scope.state.program.activeParameters.push($scope.state.program.inactiveParameters[0]);
-        $scope.state.program.inactiveParameters = $scope.state.program.inactiveParameters.slice(0, 1);
+        $scope.state.program.inactiveParameters = $scope.state.program.inactiveParameters.slice(1);
         console.log('$scope.state.program.activeParameters', $scope.state.program.activeParameters);
         console.log('$scope.state.program.inactiveParameters', $scope.state.program.inactiveParameters);
       }

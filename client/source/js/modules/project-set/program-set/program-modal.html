@@ -119,7 +119,7 @@
                 <span>All populations</span>
               </span>
               <span ng-repeat="pops in entry.pops" class="option">
-                <input type="checkbox" ng-model="population.active" />
+                <input type="checkbox" ng-model="pops.active" />
                 <span>{{pops[0] + '/' + pops[1]}}</span>
               </span>
             </div>
