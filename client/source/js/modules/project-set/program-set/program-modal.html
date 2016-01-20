@@ -80,7 +80,7 @@
         </h3>
       </div>
 
-      <div ng-repeat="entry in state.program.parameters">
+      <div ng-repeat="entry in state.program.activeParameters">
 
 
         <div class="section well" style="margin: 10px 0">
@@ -104,7 +104,8 @@
               Parameters
             </div>
             <div class="++1 10 1++">
-              <select class="txbox" ng-model="entry.param" ng-options="param.keys as param.name for param in availableParameters"></select>
+              <select class="txbox" ng-model="entry" ng-options="param.name for param in state.program.inactiveParameters">
+              </select>
             </div>
           </div>
 
@@ -117,9 +118,9 @@
                 <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
                 <span>All populations</span>
               </span>
-              <span ng-repeat="population in entry.pops" class="option">
-                <input type="checkbox" ng-model="population.active" />
-                <span>{{population.name}}</span>
+              <span ng-repeat="pops in entry.pops" class="option">
+                <input type="checkbox" ng-model="pops.active" />
+                <span>{{pops[0] + '/' + pops[1]}}</span>
               </span>
             </div>
           </div>
