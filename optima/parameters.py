@@ -44,11 +44,11 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
-immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	other	0	1	random
-linkage to care rate (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-ART adherence so viral suppression achieved (%/year)	adherencerate	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
+Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	other	0	1	random
+Linkage to care rate (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
+ART adherence achieving viral suppression (%/year)	adherencerate	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
 Those who stop ART but are still in care (%)	propstop	(0, 1)	pop	timepar	meta	other	0	1	random
-Those in care who are then lost to follow-up (%/year)	leavecare	(0, 1)	pop	timepar	meta	other	0	1	random
+Those in care who are lost to follow-up (%/year)	leavecare	(0, 1)	pop	timepar	meta	other	0	1	random
 PLHIV lost to follow-up (%/year)	proploss	(0, 1)	pop	timepar	meta	other	0	1	random
 Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	other	0	1	random
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
@@ -82,9 +82,9 @@ Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const
 Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
 Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	None	0	None
 Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Success of ART achieving viral suppression (%)	success	(0, 1)	tot	constant	const	const	None	0	None
-Reduction in transmission probability for usVL (%)	redtransusvl	(0, 1)	tot	constant	const	const	None	0	None
-Reduction in transmission probability for sVL (%)	redtranssvl	(0, 1)	tot	constant	const	const	None	0	None
+Probability of viral suppression with ART  (%)	successart	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of unsuppressive ART (%)	efftxunsupp	(0, 1)	tot	constant	const	const	None	0	None
+Efficacy of suppressive ART (%)	efftxsupp	(0, 1)	tot	constant	const	const	None	0	None
 Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	None	0	None
 Efficacy of PrEP (%)	effprep	(0, 1)	tot	constant	const	const	None	0	None
 Efficacy of condoms (%)	effcondom	(0, 1)	tot	constant	const	const	None	0	None

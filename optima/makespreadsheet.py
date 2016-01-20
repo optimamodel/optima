@@ -21,7 +21,7 @@ def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default
         npops = pops
         pops = [] # Create real pops list
         for p in range(npops):
-            pops.append({'short_name':'Pop %i'%p, 'name':'Population %i'%p, 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
+            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
@@ -567,9 +567,9 @@ class OptimaSpreadsheet:
         current_row = 0
         current_row = self.emit_ref_years_block('Immediate linkage to care (%)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('ART adherence so viral suppression achieved (%/year)',         current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%/year)',           current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Those who stop ART but are still in care (%)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Those in care who are then lost to follow-up (%/year)',        current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Those in care who are lost to follow-up (%/year)',             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Biological failure rate (%/year)',                                 current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
@@ -654,13 +654,6 @@ class OptimaSpreadsheet:
             [0.14, 0.29, 0.33, 1.06], 
             [0.93, 1.11, 0.72, 1.96], 
             OptimaFormats.PERCENTAGE),
-        ('Treatment failure rate (% per year)',
-            ['First-line treatment',
-            'Second-line treatment'], 
-            [0.10,0.16], 
-            [0.08,0.05], 
-            [0.12,0.26], 
-            OptimaFormats.PERCENTAGE),
         ('Death rate (% mortality per year)',
             ['Acute infection',
             'CD4(>500)',
@@ -681,9 +674,9 @@ class OptimaSpreadsheet:
             'STI cofactor increase',
             'Opiate substitution therapy',
             'PMTCT',
-            'Pre-exposure prophylaxis'
-            'Unsuppressive ART'
-            'Suppressive ART'
+            'Pre-exposure prophylaxis',
+            'Unsuppressive ART',
+            'Suppressive ART',
             'Probability of viral suppression on ART'],
             [0.95, 0.58, 0.54, 0., 2.65, 0.9, 0.73, 0.5, 0.92, 0.9], 
             [0.8, 0.47, 0.33, 0., 1.35, 0.82, 0.65, 0.3, 0.8, 0.8 ],
