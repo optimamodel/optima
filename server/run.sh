@@ -14,10 +14,9 @@ fi
 
 source ./p-env/bin/activate
 
-# CK: this stopped the server from running...
-# cd optima
-# python setup.py develop
-# cd ..
+cd ..
+python setup.py develop
+cd server
 
 migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
 
