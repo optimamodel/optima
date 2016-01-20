@@ -27,15 +27,31 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(parsets) {
           $scope.parsets = parsets;
           $scope.activeParset = parsets[0];
-          $http.get('/api/parset/' + $scope.activeParset.id + '/calibration').
-          success(function (response) {
-            setCalibrationData(response.calibration);
-          });
+          $scope.getGraphs();
         }
       });
 
-    // TODO: use get api when only selectors change
-    $scope.displayGraphs = function() {
+    // Fetching graphs for active parset
+    $scope.getGraphs = function() {
+      var data = {};
+      if($scope.selectors) {
+        var selectors = _.filter($scope.selectors, function(selector) {
+          return selector.checked;
+        }).map(function(selector) {
+          return selector.key;
+        });
+        if(selectors && selectors.length > 0) {
+          data.which = selectors;
+        }
+      }
+      $http.get('/api/parset/' + $scope.activeParset.id + '/calibration', {params: data})
+        .success(function (response) {
+          setCalibrationData(response.calibration);
+        });
+    };
+
+    // Sending parameters to re-process graphs for active parset
+    $scope.processGraphs = function() {
       var data = {};
       if($scope.parameters) {
         data.parameters = $scope.parameters;

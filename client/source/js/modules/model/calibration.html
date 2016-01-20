@@ -1,18 +1,4 @@
 <script>
-/*  function move_year() {
-    var al = $('.mpld3-baseaxes').length;
-    var dl = $('div.fig').length;
-    if ($('.mpld3-baseaxes > text').length > 0) {
-      $('.mpld3-baseaxes > text').each(function() {
-        var value = $(this).text();
-        if (value === 'Year') {
-          $(this).attr('y', parseInt($(this).attr('y'))+10);
-        }
-      });
-    } else {
-      setTimeout(move_year, 150);
-    }
-  }*/
   function format_xaxis() {
     var axes = $('.mpld3-xaxis');
     if (axes.length > 0) {
@@ -80,10 +66,10 @@
 
   $(document).ready(function() {
     format_xaxis();
-    //move_year();
     add_lines_to_legends();
     set_overflow_visible();
     fix_mouse_pointer();
+    remove_default_plugin();
   });
 </script>
 <div class="rich" style="margin: 0 -25px;">
@@ -93,7 +79,7 @@
   <div style="display: flex;justify-content: flex-start;">
     <select id="programSet-selection" name="programSet-selection" class="txbox"
             ng-model="activeParset"
-            ng-change="displayGraphs()"
+            ng-change="getGraphs()"
             ng-options="parset.name for parset in parsets"
             style="width: 20%;">
     </select>
@@ -114,7 +100,7 @@
         </div>
       </div>
       <div style="display: flex;justify-content: center; margin-top: 25px">
-        <input type="button" value="Update" class="btn" ng-click="displayGraphs()"/>
+        <input type="button" value="Update" class="btn" ng-click="getGraphs()"/>
       </div>
     </div>
     <div class="chart_wrapper">
@@ -131,7 +117,7 @@
         </div>
       </div>
       <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
-        <input type="button" value="Update" class="btn" ng-click="displayGraphs()"/>
+        <input type="button" value="Update" class="btn" ng-click="processGraphs()"/>
         <input type="button" value="Reset" class="btn" ng-click="resetParameters()"/>
       </div>
     </div>
