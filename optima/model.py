@@ -51,13 +51,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     raw['death']    = zeros((npops, npts)) # Number of deaths per timestep
     
     # Biological and failure parameters -- death etc
-    prog = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
-    recov = simpars['recovgt500':'recovgt50']
-    death = simpars['deathacute':'deathlt50']
-    cd4trans = simpars['cd4transacute':'cd4translt50']
+    prog       = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
+    recov      = simpars['recovgt500':'recovgt50']
+    death      = simpars['deathacute':'deathlt50']
+    cd4trans   = simpars['cd4transacute':'cd4translt50']
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
-    successart    = simpars['successart']    # proportion of people who become virally suppressed if ART works (P) MK
-    biofailure = simpars['biofail']    # biological treatment failure rate (P/T) [npts] MK
+    successart = simpars['successart']    # proportion of people who become virally suppressed if ART works (P) MK
+    biofailure = simpars['biofailure']    # biological treatment failure rate (P/T) [npts] MK
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission

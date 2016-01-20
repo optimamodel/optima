@@ -46,7 +46,7 @@ Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	rando
 Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	other	0	1	random
 Linkage to care rate (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-ART adherence achieving viral suppression (%/year)	adherencerate	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
+ART adherence achieving viral suppression (%)	adherenceprop	(0, 1)	pop	timepar	meta	other	0	1	random
 Those who stop ART but are still in care (%)	propstop	(0, 1)	pop	timepar	meta	other	0	1	random
 Those in care who are lost to follow-up (%/year)	leavecare	(0, 1)	pop	timepar	meta	other	0	1	random
 PLHIV lost to follow-up (%/year)	proploss	(0, 1)	pop	timepar	meta	other	0	1	random

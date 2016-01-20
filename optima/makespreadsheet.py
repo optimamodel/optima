@@ -567,7 +567,7 @@ class OptimaSpreadsheet:
         current_row = 0
         current_row = self.emit_ref_years_block('Immediate linkage to care (%)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%/year)',           current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Those who stop ART but are still in care (%)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Those in care who are lost to follow-up (%/year)',             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)

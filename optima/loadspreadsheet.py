@@ -90,7 +90,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'adherencerate', 'propstop', 'leavecare', 'proploss', 'biofailure']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'adherenceprop', 'propstop', 'leavecare', 'proploss', 'biofailure']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
