@@ -66,12 +66,14 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     efftxsupp  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL (MK same as txfactor?)
 
     # Disease state indices
-    sus  = settings.uncirc # Susceptible
-    undx = settings.undiag # Undiagnosed
-    dx   = settings.diag   # Diagnosed
-    care = settings.incare # in Care MK
-    usvl = settings.unsupp # On-Treatment - Unsuppressed Viral Load MK
-    svl  = settings.supp   # On-Treatment - Suppressed Viral Load MK
+    uncirc  = settings.uncirc # Susceptible, uncircumcised
+    circ  = settings.circ # Susceptible, circumcised
+    sus  = settings.sus # Susceptible, circumcised
+    undx = settings.undx # Undiagnosed
+    dx   = settings.dx   # Diagnosed
+    care = settings.care # in Care MK
+    usvl = settings.usvl # On-Treatment - Unsuppressed Viral Load MK
+    svl  = settings.svl   # On-Treatment - Suppressed Viral Load MK
     lost = settings.lost   # Not on ART (anymore) and lost to follow-up MK
     off  = settings.off    # off-ART but still in care MK
 
@@ -135,6 +137,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         # Set up basic calculations
         popinfected = allinfected[p]
         uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
+        uncircumcised = uninfected*(1-simpars['circum'][p,0])
+        circumcised = uninfected*simpars['circum'][p,0]
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
@@ -161,10 +165,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         treatment *= recovratios
         
         # Populated equilibrated array
-        initpeople[settings.uncirc, p] = uninfected
-        initpeople[settings.undiag, p] = undiagnosed
-        initpeople[settings.diag, p] = diagnosed
-        initpeople[settings.supp, p] = treatment # WARNING, should divide between suppressed and unsuppressed
+        initpeople[uncirc, p] = uncircumcised
+        initpeople[circ, p] = circumcised
+        initpeople[undx, p] = undiagnosed
+        initpeople[dx, p] = diagnosed
+        initpeople[svl, p] = treatment # WARNING, should divide between suppressed and unsuppressed
     
         if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             err = 'Non-positive people found during epidemic initialization!'  
@@ -323,6 +328,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
