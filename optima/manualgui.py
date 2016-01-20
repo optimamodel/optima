@@ -58,7 +58,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                 fulltypelist.append(typelist[k])
                 fullvallist.append(tmppars[key].m)
                 fulllabellist.append(namelist[k] + ' -- meta')
-            if typelist[k]=='const':
+            elif typelist[k]=='const':
                 fullkeylist.append(key)
                 fullsubkeylist.append(None)
                 fulltypelist.append(typelist[k])

@@ -145,7 +145,7 @@ if 'manualfit' in tests and doplot:
     t = tic()
 
     print('Running manual calibration test...')
-    P.manualfit(orig='default', name='manual')
+    P.manualfit(orig=-1, name='manual') # Demonstrating that you can retrieve things by index as well
     
     done(t)
 

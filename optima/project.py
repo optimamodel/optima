@@ -163,6 +163,9 @@ class Project(object):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
+        if isinstance(checkexists, (int, float)): # It's a numerical index
+            try: checkexists = structlist.keys()[checkexists] # Convert from 
+            except: raise Exception('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None and overwrite==False:
             if checkabsent in structlist:
                 raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
