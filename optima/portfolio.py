@@ -2,6 +2,8 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import ut
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
 
+from optima import defaultobjectives
+
 #######################################################################################################
 ## Project class -- this contains everything else!
 #######################################################################################################
@@ -56,7 +58,25 @@ class Portfolio(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
-    
+
+    #######################################################################################################
+    ## Methods to handle common tasks with structure lists
+    #######################################################################################################
+
+    def addproject(self, project):
+        ''' Store a project within portfolio '''
+        self.projects[project.uid] = project
+        
+    #######################################################################################################
+    ## Methods to perform major tasks
+    #######################################################################################################
+        
+    def genBOCs(self):
+        ''' Loop through stored projects and construct budget-outcome-] curves '''
+        for x in self.projects:
+            p = self.projects[x]
+            print(p)
+            p.genBOC(parsetname = p.parsets[0].name, progsetname = p.progsets[0].name, maxtime = 1)   # WARNING!!! OPTIMISES FOR 1ST ONES
 
 ## -*- coding: utf-8 -*-
 #"""

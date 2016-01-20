@@ -55,6 +55,26 @@ class Result(object):
 
 
 
+class BOC(object):
+    ''' Very lightweight structure to hold a budget and outcome array for geospatial analysis'''
+    def __init__(self, x=None, y=None, objectives=None):
+        self.uid = uuid()
+        self.created = today()
+        self.x = x if x else [] # A list of budget totals
+        self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.objectives = objectives # Specification for what outcome y represents [[[NEEDS DEVELOPMENT]]]
+
+    def __repr__(self):
+        ''' Print out summary stats '''
+        output = '============================================================\n'
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+
+
+
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
     def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, progset=None, domake=True):

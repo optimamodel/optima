@@ -1,8 +1,9 @@
-from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
 
+from optima import defaultobjectives
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -308,4 +309,18 @@ class Project(object):
         self.addoptim(optim=optim)
         self.addresult(result=results)
         self.optims[-1].resultsref = results.uid
+        return None
+        
+    def genBOC(self, budgetlist=[10000,100000,1000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+        ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
+        projectBOC = BOC()        
+        if objectives == None: objectives = defaultobjectives()
+        projectBOC.objectives = objectives
+        for budget in budgetlist:
+            objectives['budget'] = budget
+            optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+            results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+            projectBOC.x.append(budget)
+            projectBOC.y.append(results.mismatch[-1])
+        self.addresult(result=projectBOC)
         return None

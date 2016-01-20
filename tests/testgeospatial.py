@@ -15,10 +15,10 @@ Version: 2016jan20 by davidkedz
 ## Define tests to run here!!!
 tests = [
 'makeportfolio',
-'saveload',
-'loadspreadsheet',
-'loadeconomics',
-'runsim'
+'generateBOCs',
+#'loadspreadsheet',
+#'loadeconomics',
+#'runsim'
 ]
 
 ##############################################################################
@@ -49,84 +49,72 @@ T = tic()
 
 
 ## Project creation test
-if 'makeproject' in tests:
+if 'makeportfolio' in tests:
     t = tic()
-    print('Running make project test...')
-    from optima import Project
-    P = Project()
-    print(P)
+    print('Running make portfolio test...')
+    from optima import Portfolio, Project, Programset, Program
+    F = Portfolio()
+    P1 = Project(spreadsheet='test7pops.xlsx')
+    P2 = Project(spreadsheet='test7pops.xlsx')
+    
+    # THIS PROGSET CONSTRUCTION IS MOMENTARY UNTIL NICE EXAMPLE PRJ FILES EXIST.
+    # ----------
+    pops = P1.data['pops']['short']
+    caspships = P1.data['pships']['cas']
+    compships = P1.data['pships']['com']
+    
+    condprog = Program(name='Condoms',
+                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
+                  targetpops=pops,
+                  category='Prevention',
+                  short='Condoms',
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})    
+                  
+    fswprog = Program(name='FSW_programs',
+                  targetpars=[{'param': 'condcom', 'pop': compship} for compship in [x for x in compships if 'FSW' in x]] + [{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'FSW' in x]] + [{'param': 'hivtest', 'pop': 'FSW'}],
+                  targetpops=['FSW'],
+                  category='Prevention',
+                  short='FSW programs',
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
+    
+    condprog.costcovfn.addccopar({'saturation': (0.75,0.75), 't': 2016.0, 'unitcost': (30,40)})
+    fswprog.costcovfn.addccopar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (50,80)})
+    
+    condprog.addcostcovdatum({'t':2015,
+                              'cost':2e6,
+                              'coverage':57143.})
+    
+    fswprog.addcostcovdatum({'t':2015,
+                              'cost':3e6,
+                              'coverage':45261.})
+    
+    R = Programset(programs=[condprog, fswprog]) 
+    
+    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65)})
+    R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
+    R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'FSW_programs':(0.6,0.65)})
+    P1.addprogset(name='default', progset=R)
+    P2.addprogset(name='default', progset=R)
+    # ----------
+    
+    F.addproject(P1)
+    F.addproject(P2)
+    print(F)
     done(t)
 
 
 
 
-## Project save/load test
-if 'saveload' in tests:
+## BOC generation test
+if 'generateBOCs' in tests:
     t = tic()
-    print('Running save/load test...')
-    
-    from optima import Project, saveobj, loadobj
-    from os import remove
-    filename = 'testproject.prj'
-    
-    print('  Checking saving...')
-    P = Project()
-    saveobj(filename, P)
-    
-    print('  Checking loading...')
-    Q = loadobj(filename)
-    
-    print('Cleaning up...')
-    remove(filename)
-    
-    done(t)
 
-
-
-
-## Load spreadsheet test
-if 'loadspreadsheet' in tests:
-    t = tic()
-    print('Running loadspreadsheet test...')
-    from optima import Project
-    
-    print('  Create a project from a spreadsheet')
-    P = Project(spreadsheet='test.xlsx')
-    
-    print('  Load a project, then load a spreadsheet')
-    Q = Project()
-    Q.loadspreadsheet('test.xlsx')
-    
-    assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
-    
-    done(t)
-
-
-
-## Load economics spreadsheet test
-if 'loadeconomcs' in tests:
-    t = tic()
-    print('Running loadeconomics test...')
-    from optima import Project
-    
-    print('  Create an empty project and add economic data')
-    P = Project()
-    P.loadeconomics(filename='testeconomics.xlsx')
-
-    print('  Create a project from a spreadsheet and add economic data')
-    P = Project(spreadsheet='test.xlsx')
-    P.loadeconomics(filename='testeconomics.xlsx')
-
-
-
-## Run simulation test
-if 'runsim' in tests:
-    t = tic()
-    print('Running runsim test...')
-    
-    from optima import Project
-    P = Project(spreadsheet='test.xlsx')
-    results = P.runsim('default')
+    print('Running BOC generation test...')
+    F.genBOCs()    
     
     done(t)
 
