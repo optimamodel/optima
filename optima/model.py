@@ -328,7 +328,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
         for cd4 in range(ncd4):
             if cd4>0: 
