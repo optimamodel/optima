@@ -58,8 +58,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     death = simpars['deathacute':'deathlt50']
     cd4trans = simpars['cd4transacute':'cd4translt50']
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
-    biofailure = simpars['biofail']    # biological treatment failure rate (P/T) MK
-    success    = simpars['success'] # proportion of people who become virally suppressed if ART works (P) MK
+    success    = simpars['success']    # proportion of people who become virally suppressed if ART works (P) MK
+    biofailure = simpars['biofail']    # biological treatment failure rate (P/T) [npts] MK
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
@@ -104,7 +104,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     stieff  = 1 + effsti
     
     #MK Behavioural transitions between stages [npop,npts]
-
     immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T) ... hivtest/aidstest should also be P/T?
     #treatmentrate = simpars['treatmentrate'] # treatment rate (N) wait this is the same as mtx1
@@ -408,7 +407,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths          = dt * currentsuppressed[cd4,:] * death[cd4]
             otherdeaths        = dt * currentsuppressed[cd4,:] * background
-            failing[cd4]       = dt * currentsuppressed[cd4,:] * biofailure
+            failing[cd4]       = dt * currentsuppressed[cd4,:] * biofailure[t]
             stopSVLincare[cd4] = dt * currentsuppressed[cd4,:] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
             stopSVLlost[cd4]   = dt * currentsuppressed[cd4,:] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + virallysuppressed[cd4]
