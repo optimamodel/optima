@@ -123,7 +123,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 # Plot data points with uncertainty
                 for l in range(nlines):
                     if databest is not None:
-                        scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
+                        scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)a
                         for y in range(len(results.datayears)):
                             plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
                 
