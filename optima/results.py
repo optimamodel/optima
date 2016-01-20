@@ -4,11 +4,12 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015jan12 by cliffk
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, objectid, objatt, objmeth, dcp
+from optima import uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 
 
-def getresults(pointer=None, project=None):
+
+def getresults(project=None, pointer=None):
     '''
     A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
@@ -21,7 +22,7 @@ def getresults(pointer=None, project=None):
         which returns
         P.results[P.parsets[0].resultsref]
     
-    Version: 2016jan12
+    Version: 2016jan18
     '''
     if type(pointer) in [str, int, float]:
         if project is not None: return project.results[pointer]
@@ -29,13 +30,11 @@ def getresults(pointer=None, project=None):
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
         else: raise Exception('To get results using a UID, getresults() must be given the project')
-    elif type(pointer)==Resultset: return pointer
-    else:
-        try: 
-            return pointer() # Try calling as function
-        except:
-            errormsg = 'Could not understand results pointer "%s" for project "%s"' % (pointer, project.name)
-            raise Exception(errormsg)
+    elif callable(pointer): 
+        return pointer() # Try calling as function
+    else: 
+        return pointer # Give up, just return pointer, which is maybe a Resultset
+
 
 
 
@@ -51,20 +50,18 @@ class Result(object):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = objectid(self)
-        output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
+        output = defaultrepr(self)
         return output
 
 
 
 class Resultset(object):
     ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, raw=None, simpars=None, project=None, data=None, parset=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, progset=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
+        self.name = name # May be blank if automatically generated, but can be overwritten
         
         # Turn inputs into lists if not already
         if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
@@ -74,16 +71,21 @@ class Resultset(object):
         # Fundamental quantities -- populated by project.runsim()
         self.raw = raw
         self.simpars = simpars # ...and sim parameters
-        self.tvec = raw[0]['tvec']
+        self.tvec = raw[0]['tvec'] # Copy time vector
+        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
         self.popkeys = raw[0]['popkeys']
         if project is not None:
             if parset is None:
                 try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
                 except: pass # Don't really worry if the parset can't be populated
+            if progset is None:
+                try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
+                except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
+        self.progset = progset # Store programs
         self.data = data # Store data
         
         # Main results -- time series, by population
@@ -115,16 +117,12 @@ class Resultset(object):
     
     def __repr__(self):
         ''' Print out useful information when called -- WARNING, add summary stats '''
-        output = objectid(self)
-        output += '============================================================\n'
+        output = '============================================================\n'
         output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output
     
     
@@ -206,8 +204,8 @@ class Resultset(object):
 
 
     def make_graph_selectors(self, which = None):
+        ''' WARNING -- this was added by StarterSquad and probably shouldn't be here '''
         ## Define options for graph selection
-        truebydefault = 2
         self.graph_selectors = {'keys':[], 'names':[], 'checks':[]}
         checkboxes = self.graph_selectors['keys'] # e.g. 'prev-tot'
         checkboxnames = self.graph_selectors['names'] # e.g. 'HIV prevalence (%) -- total'
@@ -230,3 +228,71 @@ class Resultset(object):
                 checkboxnames.append(name+' -- '+subname)
 
         return self.graph_selectors
+
+
+
+
+class Multiresultset(Resultset):
+    ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
+    def __init__(self, resultsetlist=None, budget=None):
+        # Basic info
+        self.uid = uuid()
+        self.created = today()
+        self.nresultsets = len(resultsetlist)
+        self.keys = []
+        if type(resultsetlist)==list: pass # It's already a list, carry on
+        elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
+        elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
+        else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        
+        # Results specific to a Multiresultset
+        self.budget = budget
+        
+        
+        # Fundamental quantities -- populated by project.runsim()
+        sameattrs = ['tvec', 'dt', 'popkeys']
+        commonattrs = ['project', 'data', 'datayears']
+        diffattrs = ['parset', 'progset', 'raw', 'simpars']
+        for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
+        for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
+        
+        # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
+        self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
+        for key in self.main.keys():
+            for at in ['pops', 'tot']:
+                setattr(self.main[key], at, odict()) # Turn all of these into an odict -- e.g. self.main['prev'].pops = odict()
+
+        for i,rset in enumerate(resultsetlist):
+            key = rset.name if rset.name is not None else str(i)
+            self.keys.append(key)
+            
+            # First, loop over shared attributes, and ensure they match
+            for attr in sameattrs+commonattrs:
+                orig = getattr(self, attr)
+                new = getattr(rset, attr)
+                if orig is None: setattr(self, attr, new) # Pray that they match, since too hard to compare
+            
+            # Loop over different attributes and append to the odict
+            for attr in diffattrs:
+                getattr(self, attr)[key] = getattr(rset, attr) # Super confusing, but boils down to e.g. self.raw['foo'] = rset.raw -- WARNING, does this even work?
+            
+            # Now, the real deal: fix self.main
+            for key2 in self.main.keys():
+                for at in ['pops', 'tot']:
+                    getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
+            
+                
+            
+        
+        
+        
+    def __repr__(self):
+        ''' Print out useful information when called '''
+        output = '============================================================\n'
+        output += '      Project name: %s\n'    % (self.project.name if self.project is not None else None)
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '      Results sets: %s\n'    % self.keys
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output

@@ -1,4 +1,4 @@
-from optima import epiplot
+from optima import plotepi
 from pylab import axes, ceil, sqrt, array, figure, isinteractive, ion, ioff, close, show
 from matplotlib.widgets import CheckButtons, Button
 
@@ -41,7 +41,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = epiplot(results, which=toplot, figsize=(width, height))
+    plots = plotepi(results, which=toplot, figsize=(width, height))
     for p in range(len(plots)): addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
     if wasinteractive: ion()
     show()
@@ -88,7 +88,7 @@ def update(event=None, tmpresults=None):
         plotfig = figure(figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         
         # Actually create plots
-        plots = epiplot(results, which=toplot, figsize=(width, height))
+        plots = plotepi(results, which=toplot, figsize=(width, height))
         for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
         if wasinteractive: ion()
         show()
@@ -260,7 +260,7 @@ def browser(results, which=None, doplot=True):
 
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
-    plots = epiplot(results, which) # Generate the plots
+    plots = plotepi(results, which) # Generate the plots
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure

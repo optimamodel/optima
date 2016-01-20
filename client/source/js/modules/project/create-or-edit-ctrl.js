@@ -38,7 +38,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       // change submit button name
       $scope.submit = "Save project & Optima template";
 
-      console.log('info.data', info.data);
       $scope.editParams.isEdit = true;
 
       if (activeProject.isSet()) {
@@ -70,7 +69,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         templateUrl: 'js/modules/project/create-population-modal.html',
         controller: 'ProjectCreatePopulationModalController',
         resolve: {
-          population: function () {
+          populations: function(){
+            return populations.data.populations;
+          },
+          population: function(){
             return population;
           }
         }
@@ -164,17 +166,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     };
 
-    $scope.prepareCreateOrEditForm = function () {
+    $scope.populationSelected = false;
 
-      const populationSelected = _.find($scope.populations, function(population) {
-        return population.active === true;
-      });
+    $scope.isFormValid = function(){
+      $scope.populationSelected = _.find($scope.populations, function(population) { return population.active === true; });
 
-      if ($scope.CreateOrEditProjectForm.$invalid || !populationSelected) {
-        modalService.informError([{message: 'Please fill in all the required project fields'}]);
+      if ($scope.CreateOrEditProjectForm.$invalid || !$scope.populationSelected) {
         return false;
+      }else{
+        return true;
       }
+    };
 
+    $scope.prepareCreateOrEditForm = function () {
       var selectedPopulations = toCleanArray($scope.populations);
 
       if ( $state.current.name == "project.edit" ) {

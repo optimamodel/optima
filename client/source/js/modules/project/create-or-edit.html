@@ -7,8 +7,9 @@
           <h1>Project details</h1>
 
          <b>Project name</b>
-        <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
+        <input class="txbox" type="text" ng-pattern="/^[\x20-\x7E]*$/" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
+        <div class="error-hint" ng-show="CreateOrEditProjectForm.ProjectName.$error.pattern"> Special characters are not allowed, please choose a different name. </div>
       </div>
     </div>
 
@@ -64,7 +65,7 @@
     </div>
 
     <div class="section">
-      <button class="btn __green" type="submit">{{ submit }}</button>
+      <button class="btn __green" type="submit" ng-disabled="!isFormValid()">{{ submit }}</button>
     </div>
 
     <input type="hidden" id="edit_params" name="edit_params" value = "{{ editParams }}">
