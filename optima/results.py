@@ -232,7 +232,7 @@ class Resultset(object):
 
 
 
-class Multiresultset(Resultset):
+class Multiresultset(object):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, budget=None):
         # Basic info
