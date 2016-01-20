@@ -76,7 +76,7 @@ class Portfolio(object):
         for x in self.projects:
             p = self.projects[x]
             print(p)
-            p.genBOC(parsetname = p.parsets[0].name, progsetname = p.progsets[0].name, maxtime = 1)   # WARNING!!! OPTIMISES FOR 1ST ONES
+            p.genBOC(parsetname = p.parsets[0].name, progsetname = p.progsets[0].name, maxtime = 10)   # WARNING!!! OPTIMISES FOR 1ST ONES
 
 ## -*- coding: utf-8 -*-
 #"""

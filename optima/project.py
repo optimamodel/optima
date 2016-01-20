@@ -311,7 +311,7 @@ class Project(object):
         self.optims[-1].resultsref = results.uid
         return None
         
-    def genBOC(self, budgetlist=[10000,100000,1000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def genBOC(self, budgetlist=[10000,100000,1000000,10000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC()        
         if objectives == None: objectives = defaultobjectives()
