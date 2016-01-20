@@ -16,7 +16,15 @@ default_dataend = 2020
 def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
+    # An integer argument is given: just create a pops dict using empty entries
+    if isinstance(pops, (int, float)):
+        npops = pops
+        pops = [] # Create real pops list
+        for p in range(npops):
+            pops.append({'short_name':'Pop %i'%p, 'name':'Population %i'%p, 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
+    
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
+
     book = OptimaSpreadsheet(filename, pops, datastart, dataend)
     book.create(filename)
 
@@ -163,7 +171,9 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
-    BG_COLOR = '#FFC0CB' #'#18C1FF'
+    originalblue = '#18C1FF'
+    hotpink = '#FFC0CB'
+    BG_COLOR = hotpink
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -540,43 +550,28 @@ class OptimaSpreadsheet:
         'Modeled estimate of number of PLHIV', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
+
     def generate_txrx(self):
         current_row = 0
-
-        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', 
-            current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_years_block('Number of people on treatment', 
-            current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)', 
-            current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_years_block('Birth rate (births per woman per year)', 
-            current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', 
-            current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year',      current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Number of people on treatment',                                    current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis',     current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)',           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
         
     
     def generate_casc(self):
-        ''' Added by CK for cascade parameters '''
+        ''' Added by CK for cascade parameters -- removed spaces for troubleshooting difference between this and txrx, it worked :) '''
         current_row = 0
-
-        current_row = self.emit_ref_years_block('Immediate linkage to care (%)', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Linkage to care rate (%/year)', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('ART adherence so viral suppression achieved (%/year)', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Those who stop ART but are still in care (%)', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Those in care who are then lost to follow-up (%/year)', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('PLHIV lost to follow-up (%/year)', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Biological failure rate (%/year)', 
-            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Immediate linkage to care (%)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('ART adherence so viral suppression achieved (%/year)',         current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Those who stop ART but are still in care (%)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Those in care who are then lost to follow-up (%/year)',        current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Biological failure rate (%/year)',                                 current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
 
     def generate_sex(self):
