@@ -232,6 +232,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
                 par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
+            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             raise Exception(errormsg)
     
     return par
