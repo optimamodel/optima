@@ -14,6 +14,11 @@ fi
 
 source ./p-env/bin/activate
 
+# CK: this stopped the server from running...
+# cd optima
+# python setup.py develop
+# cd ..
+
 migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
 
 TMP_DEPS=/tmp/temp_deps_${RANDOM}

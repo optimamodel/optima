@@ -14,5 +14,3 @@ server/config.py
 *.npy
 *.db
 *.prj
-*.xlsx
-*.json

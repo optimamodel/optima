@@ -5,9 +5,8 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, concatenate as cat
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize
+from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, float64, concatenate as cat
 import abc
 import textwrap
 from pylab import figure, figtext
@@ -36,6 +35,11 @@ class Programset(object):
         output += '        Date created: %s\n'    % getdate(self.created)
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                 UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objatt(self)
+        output += '============================================================\n'
+        output += objmeth(self)
+        output += '============================================================\n'
         return output
 
     def gettargetpops(self):
@@ -196,10 +200,10 @@ class Programset(object):
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(allt,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
-                    lastbudget[program] = array([sanitize(totalbudget[program])[-1]])
+                    lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
                 printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                lastbudget[program] = array([nan])
+                lastbudget[program] = nan
             if tvec:
                 for yr in tvec:
                     yrindex = findinds(allt,yr)
@@ -209,6 +213,8 @@ class Programset(object):
 
     def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
+
+        if type(t) in [int, float]: t = [t]
         coverage = odict()
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
@@ -341,21 +347,25 @@ class Programset(object):
         
         return outcomes
         
-    def getparset(self,coverage,t,parset,newparsetname='programpars',perturb=False):
+    def getparsdict(self, coverage, t, parset, ind=0, perturb=False):
         ''' Make a parset'''
-        outcomes = self.getoutcomes(coverage=coverage,t=t,parset=parset,perturb=perturb)
-        progparset = dcp(parset)
-        progparset.name = newparsetname
-        progparset.created = today()
-        progparset.modified = today()
+        
+        # Process inputs
+        if type(t) in [int,float]: t = [t]
+
+        # Get outcome dictionary
+        outcomes = self.getoutcomes(coverage=coverage, t=t, parset=parset, perturb=perturb)
+
+        # Create a parset and copy over parameter changes
+        parsdict = dcp(parset.pars[ind])
         for outcome in outcomes.keys():
             for p in outcomes[outcome].keys():
-                progparset.pars[0][outcome].t[p] = append(progparset.pars[0][outcome].t[p], min(t)-1) # Include the year before the programs start...
-                progparset.pars[0][outcome].y[p] = append(progparset.pars[0][outcome].y[p], progparset.pars[0][outcome].y[p][-1]) # Include the year before the programs start...
-                progparset.pars[0][outcome].t[p] = append(progparset.pars[0][outcome].t[p], array(t))
-                progparset.pars[0][outcome].y[p] = append(progparset.pars[0][outcome].y[p], array(outcomes[outcome][p]))
+                parsdict[outcome].t[p] = append(parsdict[outcome].t[p], min(t)-1) # Include the year before the programs start...
+                parsdict[outcome].y[p] = append(parsdict[outcome].y[p], parsdict[outcome].y[p][-1]) # Include the year before the programs start...
+                parsdict[outcome].t[p] = append(parsdict[outcome].t[p], array(t))
+                parsdict[outcome].y[p] = append(parsdict[outcome].y[p], array(outcomes[outcome][p]))
 
-        return progparset
+        return parsdict
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
@@ -528,8 +538,8 @@ class Program(object):
     def getcoverage(self,x,t,parset,total=True,proportion=False,toplot=False,bounds=None):
         '''Returns coverage for a time/spending vector'''
 
-        if type(x) in [int,float]: x = [x]
-        if type(t) in [int,float]: t = [t]
+        if type(x) in [int,float,float64]: x = [x]
+        if type(t) in [int,float,float64]: t = [t]
         if type(x) == list: x = array(x)
         if type(t) == list: t = array(t)
 
@@ -565,7 +575,7 @@ class Program(object):
         
         # Get caption & scatter data 
         caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
-        costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else None
+        costdata = dcp(self.costcovdata['cost']) if self.costcovdata.get('cost') else []
 
         # Make x data... 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
@@ -635,6 +645,7 @@ class Program(object):
             costdata,
             self.costcovdata['coverage'],
             color='#666666')
+        
 
         axis.set_xlim([0, xupperlim])
         axis.set_ylim(bottom=0)

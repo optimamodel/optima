@@ -8,11 +8,11 @@ Version: 2016jan14 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, objectid, objatt, objmeth, getresults
+from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
-# Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
+### Define the parameters -- NOTE, this should be consistent with the spreadsheet http://optimamodel.com/file/parameters; can copy and paste from there into here; be sure to include header row!
 partable = '''
 name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
 Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
@@ -109,6 +109,11 @@ def readpars(partable):
     return rawpars
 
 
+
+
+
+
+### Define the functions for handling the parameters
 
 def popgrow(exppars, tvec):
     ''' Return a time vector for a population growth '''
@@ -427,7 +432,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jan14 by cliffk
+    Version: 2016jan18 by cliffk
     '''
     
     # Handle inputs and initialization
@@ -438,6 +443,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
+    simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -453,6 +459,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 
 
+### Define the classes
 
 class Par(object):
     ''' The base class for parameters '''
@@ -469,16 +476,7 @@ class Par(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = objectid(self)
-        output += '        name: "%s"\n'    % self.name
-        output += '       short: "%s"\n'    % self.short
-        output += '      limits: %s\n'      % str(self.limits)
-        output += '          by: "%s"\n'    % self.by
-        output += '    fittable: "%s"\n'    % self.fittable
-        output += '        auto: "%s"\n'    % self.auto
-        output += '    coverage: %s\n'      % self.coverage
-        output += '     visible: %s\n'      % self.visible
-        output += 'proginteract: %s\n'      % self.proginteract
+        output = defaultrepr(self)
         return output
 
 
@@ -501,11 +499,7 @@ class Timepar(Par):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = Par.__repr__(self)
-        output += '       t: \n%s\n'  % self.t
-        output += '       y: \n%s\n'  % self.y
-        output += '       m: %s\n'    % self.m
-        output += '    keys: %s\n'    % self.y.keys()
+        output = defaultrepr(self)
         return output
     
     def interp(self, tvec, smoothness=20):
@@ -520,8 +514,7 @@ class Timepar(Par):
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                try: output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
         if npops==1: return output[0,:]
         else: return output
 
@@ -542,11 +535,7 @@ class Popsizepar(Par):
     
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = Par.__repr__(self)
-        output += '   start: %s\n'    % self.start
-        output += '       p: %s\n'    % self.p
-        output += '       m: %s\n'    % self.m
-        output += '    keys: %s\n'    % self.p.keys()
+        output = defaultrepr(self)
         return output
 
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
@@ -572,8 +561,7 @@ class Constant(Par):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = Par.__repr__(self)
-        output += '       y: %s\n'    % self.y
+        output = defaultrepr(self)
         return output
     
     def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
@@ -604,30 +592,26 @@ class Parameterset(object):
         self.modified = today() # Date modified
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
-        self.results = None # Store pointer to results
+        self.resultsref = None # Store pointer to results
         
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output = objectid(self)
-        output += '============================================================\n'
+        output =  '============================================================\n'
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        output += objrepr(self)
         return output
     
     
     def getresults(self):
         ''' A little method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(self.project, self.resultsref)
+            results = getresults(project=self.project, pointer=self.resultsref)
             return results
         else:
             print('WARNING, no results associated with this parameter set')
@@ -702,8 +686,7 @@ class Parameterset(object):
                     items.append('Failed to append item')
             for item in items:
                 count += 1
-                try: print('      %i....%s' % (count, str(item)))
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                print('      %i....%s' % (count, str(item)))
         return None
 
 
