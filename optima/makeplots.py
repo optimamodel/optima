@@ -22,7 +22,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             kind='multi'
             best = list() # Initialize as empty list for storing results sets
             labels = results.keys # Figure out the labels for the different lines
-            nlines = len(labels) # How ever many things are in results
+            nlinesperplot = len(labels) # How ever many things are in results
         else: 
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s", you drongo' % type(results)
             raise Exception(errormsg)
@@ -30,8 +30,8 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
         # Initialize
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
-        if which is None: which = [datatype+'-'+poptype for datatype in results.main.keys() for poptype in ['pops', 'tot']] # Just plot everything if not specified
-        elif type(which)==str: which = [which] # Convert to list
+        if which is None: which = [datatype+'-'+poptype for datatype in results.main.keys() for poptype in ['pops', 'sep', 'tot']] # Just plot everything if not specified
+        elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
 
         # Loop over each plot
         epiplots = odict()
@@ -50,8 +50,8 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                     errormsg = 'Could not understand plot "%s"; ensure keys are one of:\n' % datatype
                     errormsg += '%s' % results.main.keys()
                     raise Exception(errormsg)
-                if poptype not in ['pops', 'tot']:
-                    errormsg = 'Type "%s" should be either "pops" or "tot"'
+                if poptype not in ['pops', 'sep', 'tot']:
+                    errormsg = 'Type "%s" should be either "pops", "sep", or "tot"'
                     raise Exception(errormsg)
             except:
                 errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
@@ -67,20 +67,21 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ################################################################################################################
             ## Process the plot data
             ################################################################################################################
+            datapoptype = 'pops' if poptype=='sep' else poptype # Replace 'sep' with 'pops' for extracting data
             if kind=='single': # Single results thing: plot with uncertainties and data
-                best = getattr(results.main[datatype], poptype)[0] # poptype = either 'tot' or 'pops'
+                best = getattr(results.main[datatype], datapoptype)[0] # poptype = either 'tot' or 'pops'
                 try: # If results were calculated with quantiles, these should exist
-                    lower = getattr(results.main[datatype], poptype)[1]
-                    upper = getattr(results.main[datatype], poptype)[2]
+                    lower = getattr(results.main[datatype], datapoptype)[1]
+                    upper = getattr(results.main[datatype], datapoptype)[2]
                 except: # No? Just use the best data
                     lower = best
                     upper = best
             elif kind=='multi':
-                for l in range(nlines): best.append(getattr(results.main[datatype], poptype)[l])
+                for l in range(nlinesperplot): best.append(getattr(results.main[datatype], datapoptype)[l])
                 lower = None
                 upper = None
             try: # Try loading actual data -- very likely to not exist
-                tmp = getattr(results.main[datatype], 'data'+poptype)
+                tmp = getattr(results.main[datatype], 'data'+datapoptype)
                 databest = tmp[0]
                 datalow = tmp[1]
                 datahigh = tmp[2]
@@ -97,28 +98,24 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ################################################################################################################
             ## Set up figure and do plot
             ################################################################################################################
-            isprevbypop = (datatype, poptype)==('prev', 'pops') # Flag for whether or not the selected key is prevalence by population
-            if isprevbypop: 
+            seppops = poptype=='sep' # Whether or not populations are separated
+            if seppops: 
                 pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
-            
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
             for i,pk in enumerate(pkeys): # Either loop over individual population prevalence plots, or just plot a single plot
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
-                if kind=='single': nlines = len(best) # Either 1 or npops
+                if kind=='single': nlinesperplot = len(best) # Either 1 or npops
                 colors = gridcolormap(nlines)
                 
                 # Plot uncertainty
-                if (nlines==1 or isprevbypop) and uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-                    for l in range(nlines):
-                        fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
+                if uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                    fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[i], alpha=alpha, lw=0)
     
                 # Plot model estimates with uncertainty
                 for l in range(nlines):
-                    if uncertainty and kind=='single':
-                        fill_between(results.tvec, factor*lower[l], factor*upper[l], facecolor=colors[l], alpha=alpha, lw=0)
                     try: plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
                     except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     

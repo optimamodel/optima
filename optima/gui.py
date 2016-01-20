@@ -28,8 +28,10 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     Usage:
         results = P.runsim('default')
         plotresults(results)
+        
+    Version: 1.1 (2016jan19) by cliffk
     '''
-    if toplot is None: toplot = ['prev-tot', 'prev-pops', 'numinci-pops']
+    if toplot is None: toplot = ['prev-tot', 'prev-sep', 'numinci-pops']
     if fig is None: fig = figure('Optima results', facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     nplots = len(toplot) # Calculate rows and columns of subplots
     nrows = int(ceil(sqrt(nplots)))
@@ -119,8 +121,8 @@ def pygui(tmpresults, which=None):
     ## Define options for selection
     epikeys = results.main.keys()
     epinames = [thing.name for thing in results.main.values()]
-    episubkeys = ['tot','pops'] # Would be best not to hard-code this...
-    episubnames = ['total', 'by population']
+    episubkeys = ['tot', 'sep', 'pops'] # 'tot' = single overall value; 'sep' = separate figure for each plot; 'pops' = stacked or multiline plot
+    episubnames = ['total', 'separated', 'stacked']
     checkboxes = [] # e.g. 'prev-tot'
     checkboxnames = [] # e.g. 'HIV prevalence (%) -- total'
     for key in epikeys: # e.g. 'prev'
