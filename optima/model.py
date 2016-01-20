@@ -164,7 +164,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         initpeople[settings.uncirc, p] = uninfected
         initpeople[settings.undiag, p] = undiagnosed
         initpeople[settings.diag, p] = diagnosed
-        initpeople[settings.treat, p] = treatment
+        initpeople[settings.alltreat, p] = treatment
     
         if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             err = 'Non-positive people found during epidemic initialization!'  
