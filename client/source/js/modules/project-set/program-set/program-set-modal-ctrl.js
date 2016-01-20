@@ -32,18 +32,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       _.forEach($scope.state.program.parameters, function(parameter) {
-        var filteredParameter = _.find(parameters, function(param) {
+        parameter.parameterObj = _.find(parameters, function(param) {
           return parameter.param === param.short;
         });
-        parameter.name = filteredParameter.name;
-      });
-
-      $scope.state.program.activeParameters = _.filter($scope.state.program.parameters, function(parameter) {
-        return parameter.active;
-      });
-
-      $scope.state.program.inactiveParameters = _.filter($scope.state.program.parameters, function(parameter) {
-        return !parameter.active;
       });
 
       $scope.state.program.active = true;
@@ -105,16 +96,18 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       return exists;
     };
 
-    // Function to add a new parameter
-    $scope.addParameter = function () {
-      console.log('$scope.state.program.inactiveParameters', $scope.state.program.inactiveParameters);
-      if($scope.state.program.inactiveParameters && $scope.state.program.inactiveParameters.length > 0) {
-        $scope.state.program.activeParameters = $scope.state.program.activeParameters || [];
-        $scope.state.program.inactiveParameters[0].active = true;
-        $scope.state.program.activeParameters.push($scope.state.program.inactiveParameters[0]);
-        $scope.state.program.inactiveParameters = $scope.state.program.inactiveParameters.slice(1);
-        console.log('$scope.state.program.activeParameters', $scope.state.program.activeParameters);
-        console.log('$scope.state.program.inactiveParameters', $scope.state.program.inactiveParameters);
+    // Add a new parameter
+    $scope.addParameter = function() {
+      $scope.state.program.parameters.push({active: true});
+    };
+
+    $scope.addRemovePopToParameter = function(param, population) {
+      if(!param.pops) {
+        param.pops = [];
+        param.pops.push(population.short_name);
+      } else {
+        var popIndex = param.pops.indexOf(population.short_name);
+        if( >= 0)
       }
     };
 
@@ -123,6 +116,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.parameters.splice($index,1);
     };
 
+    // Submit form for saving program and closing modal
     $scope.submit = function (form) {
       if (form.$invalid) {
         modalService.inform(undefined,undefined,'Please fill in the form correctly');
@@ -145,7 +139,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           delete parameter.parameterObj;
         });
 
-        console.log('$scope.state.program', $scope.state.program);
+        console.log('$scope.state.program', $scope.state.program.parameters);
 
         $modalInstance.close($scope.state.program);
       }

@@ -80,7 +80,7 @@
         </h3>
       </div>
 
-      <div ng-repeat="entry in state.program.activeParameters">
+      <div ng-repeat="entry in state.program.parameters">
 
 
         <div class="section well" style="margin: 10px 0">
@@ -104,7 +104,7 @@
               Parameters
             </div>
             <div class="++1 10 1++">
-              <select class="txbox" ng-model="entry" ng-options="param.name for param in state.program.inactiveParameters">
+              <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters">
               </select>
             </div>
           </div>
@@ -113,14 +113,26 @@
             <h3>
               Populations
             </h3>
-            <div class="section_dashed_border">
+            <div>
+            <div class="section_dashed_border" ng-if="entry.parameterObj.pships.length === 0">
               <span class="option">
-                <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
+                <input type="checkbox" ng-click="addRemoveAllPopToParameter(entry)" ng-model="entry.selectAll">
                 <span>All populations</span>
               </span>
-              <span ng-repeat="pops in entry.pops" class="option">
+              <span ng-repeat="population in state.populations" class="option">
+                <input type="checkbox" ng-click="addRemovePopToParameter(entry, population)"/>
+                <span>{{population.name}}</span>
+              </span>
+              </div>
+            </div>
+            <div class="section_dashed_border" ng-if="entry.parameterObj.pships.length > 0">
+              <span class="option">
+                <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
+                <span>All partnerships</span>
+              </span>
+              <span ng-repeat="pship in entry.parameterObj.pships" class="option">
                 <input type="checkbox" ng-model="pops.active" />
-                <span>{{pops[0] + '/' + pops[1]}}</span>
+                <span>{{pship[0] + '/' + pship[1]}}</span>
               </span>
             </div>
           </div>
