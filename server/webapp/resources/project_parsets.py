@@ -199,7 +199,7 @@ class ParsetsCalibration(Resource):
     def _result_to_jsons(self, result, which):
         import mpld3
         import json
-        graphs = op.makeplots.plotepi(result, figsize=(4, 3), which=which)  # TODO: store if that becomes an efficiency issue
+        graphs = op.makeplots.plotepi(result, figsize=(4, 3), which=[str(w) for w in which])  # TODO: store if that becomes an efficiency issue
         jsons = []
         for graph in graphs:
             # Add necessary plugins here

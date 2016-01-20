@@ -55,11 +55,9 @@ class ParsetTestCase(OptimaTestCase):
         calibrated_res = self.client.get('/api/parset/{}/calibration'.format(parset_id))
         calibrated_res_data = json.loads(calibrated_res.data)
         calibration_data = calibrated_res_data['calibration']
-        print('*****************')
-        print([k['key'] for k in calibration_data['selectors']])
-        self.assertIn('numplhiv-tot', [k['key'] for k in calibration_data['selectors']])
+        third_graph_key = calibration_data['selectors'][2]['key']
 
-        recalibrated_res = self.client.get('/api/parset/{0}/calibration?which=numplhiv-tot'.format(parset_id))
+        recalibrated_res = self.client.get('/api/parset/{0}/calibration?which={1}'.format(parset_id, third_graph_key))
         recalibrated_res_data = json.loads(recalibrated_res.data)
         self.assertTrue('calibration' in recalibrated_res_data)
         self.assertEqual(len(recalibrated_res_data['calibration']['graphs']), 1)
