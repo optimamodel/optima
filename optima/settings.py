@@ -23,7 +23,7 @@ class Settings():
         self.undiag = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
         self.diag   = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
         self.incare = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
-        self.treat  = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+        self.unsupp = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
         self.supp   = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost   = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
         self.off    = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
@@ -39,8 +39,9 @@ class Settings():
 
         # Combined states
         self.alluninf = cat([self.uncirc, self.circ]) # All uninfected
-        self.alldiag = cat([self.diag, self.incare, self.treat, self.supp, self.lost, self.off]) # All people diagnosed
+        self.alldiag = cat([self.diag, self.incare, self.unsupp, self.supp, self.lost, self.off]) # All people diagnosed
         self.allplhiv = cat([self.undiag, self.alldiag]) # All PLHIV
+        self.alltreat = cat([self.unsupp, self.supp]) # All PLHIV
         self.allstates = cat([self.alluninf, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
         
