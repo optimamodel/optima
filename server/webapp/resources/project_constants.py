@@ -15,6 +15,18 @@ result_fields = {
     'short': fields.String,
     'coverage': fields.Boolean,
     'by': fields.String,
+    'pships': fields.Raw,
+}
+
+# see https://trello.com/c/WAPzqYIT/725-add-partnership-parameters-to-programs
+program_partnership_mapping = {
+    'actsreg': 'reg',
+    'actscas': 'cas',
+    'actscom': 'com',
+    'actsinj': 'inj',
+    'condreg': 'reg',
+    'condcas': 'cas',
+    'condcom': 'com',
 }
 
 
@@ -34,6 +46,7 @@ class Parameters(Resource):
         default_pars = [par['short'] for par in readpars(partable)]
 
         project = load_project(project_id, raise_exception=True)
+        be_project = project.hydrate()
         be_parsets = [parset.hydrate() for parset in project.parsets]
         parameters = []
         added_parameters = set()
@@ -46,8 +59,16 @@ class Parameters(Resource):
                             isinstance(parameter[key], Par) and \
                             parameter[key].visible == 1 and \
                             parameter[key].y.keys():
-                        parameters.append(parameter[key])
+                        param = parameter[key].__dict__
+                        if key in program_partnership_mapping:
+                            pships = be_project.data['pships'][program_partnership_mapping[key]]
+                        else:
+                            pships = []
+                        param['pships'] = pships
+
+                        parameters.append(param)
                         added_parameters.add(key)
+
         return parameters
 
 
