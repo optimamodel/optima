@@ -53,20 +53,20 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     raw['death']    = zeros((npops, npts)) # Number of deaths per timestep
     
     # Biological and failure parameters -- death etc
-    prog = simpars['const']['progacute':'proggt50']
-    recov = simpars['const']['recovgt500':'recovgt50']
-    death = simpars['const']['deathacute':'deathlt50']
-    cd4trans = simpars['const']['cd4transacute':'cd4translt50']
-    deathtx    = simpars['const']['deathtreat']   # Death rate whilst on treatment
-    biofailure = simpars['const']['biofail']    # biological treatment failure rate (P) MK
-    suppressionrate = simpars['const']['suppressionrate'] # proportion of people who become virally suppressed each year if ART works (P/T)
+    prog = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
+    recov = simpars['recovgt500':'recovgt50']
+    death = simpars['deathacute':'deathlt50']
+    cd4trans = simpars['cd4transacute':'cd4translt50']
+    deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
+    biofailure = simpars['biofail']    # biological treatment failure rate (P/T) MK
+    success    = simpars['success'] # proportion of people who become virally suppressed if ART works (P) MK
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = simpars['const']['effdx'] * cd4trans # Include diagnosis efficacy
-    #txfactor = simpars['const']['efftx'] * dxfactor # And treatment efficacy
-    redtransusvl = simpars['const']['efftxusupp'] * dxfactor # (~30%) reduction in transmission probability for usVL
-    redtranssvl  = simpars['const']['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL (MK same as txfactor?)
+    dxfactor = simpars['effdx'] * cd4trans # Include diagnosis efficacy
+    #txfactor = simpars['efftx'] * dxfactor # And treatment efficacy
+    redtransusvl = simpars['efftxusupp'] * dxfactor # (~30%) reduction in transmission probability for usVL MK
+    redtranssvl  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL (MK same as txfactor?)
 
     # Disease state indices
     sus  = settings.uncirc # Susceptible
@@ -83,13 +83,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Infection propabilities
     male = simpars['male']
     female = simpars['female']
-    transinj = simpars['const']['transinj']      # Injecting
+    transinj = simpars['transinj']      # Injecting
     
     # Further potential effects on transmission
-    effsti    = simpars['const']['effsti'] * simpars['stiprev']  # STI effect
-    effcirc   = 1 - simpars['const']['effcirc']            # Circumcision effect
-    effprep   = (1 - simpars['const']['effprep']) * simpars['prep'] # PrEP effect
-    effcondom = 1 - simpars['const']['effcondom']          # Condom effect
+    effsti    = simpars['effsti'] * simpars['stiprev']  # STI effect
+    effcirc   = 1 - simpars['effcirc']            # Circumcision effect
+    effprep   = (1 - simpars['effprep']) * simpars['prep'] # PrEP effect
+    effcondom = 1 - simpars['effcondom']          # Condom effect
     
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
@@ -104,10 +104,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     stieff  = 1 + effsti
     
     #MK Behavioural transitions between stages [npop,npts]
+
     immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T) ... hivtest/aidstest should also be P/T?
     #treatmentrate = simpars['treatmentrate'] # treatment rate (N) wait this is the same as mtx1
-    adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere (P)
+    adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
     propstop      = simpars['propstop']      # Proportion of people on ART who stop taking ART per year (P/T)
     proploss      = simpars['proploss']      # Proportion of people who stop taking ART per year who are lost to follow-up (P)
@@ -154,7 +155,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
         
         # Set rates within
-        progratios = hstack([prog, simpars['const']['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
+        progratios = hstack([prog, simpars['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
         progratios = (1/progratios)  / sum(1/progratios) # Normalize
         recovratios = hstack([inf, recov, efftreatmentrate]) # Not sure if this is right...inf since no progression to acute, treatmentrate since main entry here -- check
         recovratios = (1/recovratios)  / sum(1/recovratios) # Normalize
@@ -190,10 +191,10 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             this['cond'] = 1 - simpars['cond'+act][key]*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
-            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmmi']
+            if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmmi']
             # WARNING how to specify receptive male-male??
-            elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['const']['transmfi']  
-            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['const']['transmfr']
+            elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']  
+            elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
             else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
             sexactslist.append(this)
     
@@ -298,6 +299,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         newtreat1    = [0] * ncd4
         leavingcare  = [0] * ncd4
         virallysuppressed = [0] * ncd4
+        failing      = [0] * ncd4
         stopUSlost   = [0] * ncd4
         stopSVLlost  = [0] * ncd4
         stopUSincare = [0] * ncd4
@@ -384,7 +386,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths         = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths       = dt * people[tx[cd4],:,t] * background
-            virallysuppressed[cd4] = people[tx[cd4],:,t] * adherenceprop[:,t] * (1.-biofailure)
+            virallysuppressed[cd4] = people[tx[cd4],:,t] * adherenceprop[:,t] * success
             stopUSincare[cd4] = dt * people[tx[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
             stopUSlost[cd4]   = dt * people[tx[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + newtreat1[cd4]
@@ -406,11 +408,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths          = dt * currentsuppressed[cd4,:] * death[cd4]
             otherdeaths        = dt * currentsuppressed[cd4,:] * background
+            failing[cd4]       = dt * currentsuppressed[cd4,:] * biofailure
             stopSVLincare[cd4] = dt * currentsuppressed[cd4,:] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
             stopSVLlost[cd4]   = dt * currentsuppressed[cd4,:] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + virallysuppressed[cd4]
-            outflows = recovout + hivdeaths + otherdeaths + stopSVLincare[cd4] + stopSVLlost[cd4]
+            outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
             dSVL.append(inflows - outflows)
+            dUSVL[cd4] += failing[cd4]
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
 
         # MK
@@ -506,12 +510,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
 
 
-def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uid=None, project=None, data=None, verbose=2):
+def runmodel(simpars=None, pars=None, parset=None, settings=None, start=2000, end=2030, dt=0.2, name=None, uid=None, project=None, data=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
     
-    Version: 2016jan05 by cliffk    
+    Version: 2016jan14 by cliffk    
     '''
     from optima import makesimpars, Resultset
     if simpars is None:
@@ -521,5 +525,5 @@ def runmodel(simpars=None, pars=None, settings=None, start=2000, end=2030, dt=0.
         if project is not None: settings = project.settings
         else: settings = Settings()
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
-    results = Resultset(raw=raw, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
+    results = Resultset(raw=raw, parset=parset, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
     return results

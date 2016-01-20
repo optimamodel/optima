@@ -11,6 +11,7 @@ from pylab import hold, shape, subplot, figure, title, ylabel, plot, maximum
 def plotpeople(resultslist, normalized=True):
     if type(resultslist) is not list: resultslist = [resultslist]
     ppl = resultslist[0].raw[0]['people']
+    tvec = resultslist[0].raw[0]['tvec']
     if resultslist[0].project: settings = resultslist[0].project.settings
     else:
         from optima import Settings
@@ -45,7 +46,7 @@ def plotpeople(resultslist, normalized=True):
                     normalization = maximum(normalization, ppl[settings.allplhiv,p,:].max()*1.1)
                 else:
                     normalization = maximum(normalization, ppl[s,p,:].max()*1.1)
-                plot(resultslist[z].tvec, ppl[s,p,:]) # Plot values normalized across everything
+                plot(tvec, ppl[s,p,:]) # Plot values normalized across everything
             if s!=nstates-1: h.set_xticks([])
             h.set_yticks([])
             h.set_ylim((0, normalization))
