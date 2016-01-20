@@ -5,7 +5,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var activeProjectInfo = info.data;
     var defaultParameters;
+    $scope.parsets = [];
+    $scope.activeParset = undefined;
 
+    // Check if current active project has spreadsheet uploaded for it.
     if (!activeProjectInfo.has_data) {
       modalService.inform(
         function (){ },
@@ -17,9 +20,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return;
     }
 
-    $scope.parsets = [];
-    $scope.activeParset = undefined;
-
+    // Fetching list of parsets for open project
     $http.get('/api/project/' + activeProjectInfo.id + '/parsets').
       success(function (response) {
         var parsets = response.parsets;
@@ -49,10 +50,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      $http.put('/api/parset/' + $scope.activeParset.id + '/calibration', data).
-      success(function (response) {
-        setCalibrationData(response.calibration);
-      });
+      $http.put('/api/parset/' + $scope.activeParset.id + '/calibration', data)
+        .success(function (response) {
+          setCalibrationData(response.calibration);
+        });
     };
 
     // Set calibration data in scope
@@ -79,6 +80,40 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
       };
       openParameterSetModal(add, 'Add parameter set', $scope.parsets, null, 'Add');
+    };
+
+    // Copy parameter set
+    $scope.copyParameterSet = function() {
+      if (!$scope.activeParset) {
+        modalService.informError([{message: 'No parameter set selected.'}]);
+      } else {
+        var rename = function (name) {
+          $http.post('/api/project/' + activeProjectInfo.id + '/parsets', {
+            name: name,
+            parset_id: $scope.activeParset.id
+          }).success(function (response) {
+            $scope.parsets = response;
+            $scope.activeParset = response[response.length - 1];
+          });
+        };
+        openParameterSetModal(rename, 'Copy parameter set', $scope.parsets, $scope.activeParset.name + ' copy', 'Copy');
+      }
+    };
+
+    // Rename parameter set
+    $scope.renameParameterSet = function() {
+      if (!$scope.activeParset) {
+        modalService.informError([{message: 'No parameter set selected.'}]);
+      } else {
+        var rename = function (name) {
+          $http.put('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id, {
+            name: name
+          }).success(function () {
+            $scope.activeParset.name = name;
+          });
+        };
+        openParameterSetModal(rename, 'Copy parameter set', $scope.parsets, $scope.activeParset.name, 'Rename', true);
+      }
     };
 
     // Delete parameter set
@@ -135,44 +170,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Opens modal to add / rename / cope parameter set
     var openParameterSetModal = function (callback, title, parameterSetList, parameterSetName, operation, isRename) {
-
       var onModalKeyDown = function (event) {
         if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
       };
-
       var modalInstance = $modal.open({
         templateUrl: 'js/modules/model/parameter-set-modal.html',
         controller: ['$scope', '$document', function ($scope, $document) {
-
           $scope.title = title;
           $scope.name = parameterSetName;
           $scope.operation = operation;
-
           $scope.updateParameterSet = function () {
             $scope.newParameterSetName = $scope.name;
             callback($scope.name);
             modalInstance.close();
           };
-
           $scope.isUniqueName = function (parameterSetForm) {
             var exists = _(parameterSetList).some(function(item) {
                 return item.name == $scope.name;
               }) && $scope.name !== parameterSetName && $scope.name !== $scope.newParameterSetName;
-
             if(isRename) {
               parameterSetForm.parameterSetName.$setValidity("parameterSetUpdated", $scope.name !== parameterSetName);
             }
             parameterSetForm.parameterSetName.$setValidity("parameterSetExists", !exists);
-
             return exists;
           };
-
           $document.on('keydown', onModalKeyDown); // observe
           $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
-
         }]
       });
-
       return modalInstance;
     }
 
