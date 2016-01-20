@@ -98,17 +98,32 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Add a new parameter
     $scope.addParameter = function() {
-      $scope.state.program.parameters.push({active: true});
+      $scope.state.program.parameters.push({active: true, populations: angular.copy($scope.state.populations)});
     };
 
-    $scope.addRemovePopToParameter = function(param, population) {
-      if(!param.pops) {
-        param.pops = [];
-        param.pops.push(population.short_name);
-      } else {
-        var popIndex = param.pops.indexOf(population.short_name);
-        if( >= 0)
-      }
+    // Function to add/remove all populations to a parameter
+    $scope.addRemoveAllPopToParameter = function(param) {
+      _.forEach(param.populations, function(population) {
+        population.added = param.selectAll;
+      });
+    };
+
+    // Function to add/remove all partnerships to a parameter
+    $scope.addRemoveAllPshipsToParameter = function(param) {
+      console.log('param', param);
+      _.forEach(param.parameterObj.pships, function(pship) {
+        pship.added = param.selectAll;
+      });
+    };
+
+    //
+    $scope.setActivePopulations = function(parameter) {
+      parameter.populations = _.map(parameter.pops, function(pop) {
+        return _.find($scope.state.populations, function(populations) {
+          return pop === populations.short_name;
+        });
+      });
+      parameter.populations = _.extend($scope.state.populations, parameter.populations);
     };
 
     // Function to remove a parameter
@@ -136,10 +151,26 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
         _.forEach($scope.state.program.parameters, function(parameter) {
           parameter.param = parameter.parameterObj.short;
+          var addedPopulations = _.filter(parameter.populations, function(population){
+            return population.added;
+          });
+          if(addedPopulations && addedPopulations.length > 0) {
+            parameter.pops = addedPopulations.map(function (population) {
+              return population.short_name;
+            });
+          }
+          var selectedPartnerships = _.filter(parameter.parameterObj.pships, function(pship){
+            return pship.added;
+          });
+          if(selectedPartnerships && selectedPartnerships.length > 0) {
+            parameter.pships = selectedPartnerships;
+          }
+          delete parameter.populations;
           delete parameter.parameterObj;
+          delete parameter.selectAll;
         });
 
-        console.log('$scope.state.program', $scope.state.program.parameters);
+        console.log('$scope.state.program', $scope.state.program);
 
         $modalInstance.close($scope.state.program);
       }
