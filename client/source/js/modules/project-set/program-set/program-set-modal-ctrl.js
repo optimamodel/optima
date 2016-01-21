@@ -36,8 +36,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return parameter.param === param.short;
         });
         if(parameter.parameterObj && parameter.parameterObj.pships && parameter.parameterObj.pships.length > 0) {
-          console.log('into if');
-
+          _.forEach(parameter.parameterObj.pships, function(pship) {
+            _.forEach(parameter.pops, function(pop) {
+              if(angular.equals(pship, pop)) {
+                pship.added = true;
+              }
+            });
+          });
+          parameter.selectAll = parameter.parameterObj.pships && parameter.pops && parameter.parameterObj.pships.length === parameter.pops.length;
         } else {
           var selectedPopulation = _.map(parameter.pops, function(pop) {
             return _.find($scope.state.populations, function(populations) {
@@ -132,7 +138,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to add/remove all partnerships to a parameter
     $scope.addRemoveAllPshipsToParameter = function(param) {
-      console.log('param', param);
       _.forEach(param.parameterObj.pships, function(pship) {
         pship.added = param.selectAll;
       });
@@ -175,7 +180,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             return pship.added;
           });
           if(selectedPartnerships && selectedPartnerships.length > 0) {
-            parameter.pships = selectedPartnerships;
+            parameter.pops = selectedPartnerships;
           }
           delete parameter.populations;
           delete parameter.parameterObj;
