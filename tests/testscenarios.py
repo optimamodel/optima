@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
 """
-Created on Mon Nov 23 16:24:45 2015
+Test script to see if Optima works.
 
-@author: cliffk
+To use: comment out lines in the definition of 'tests' to not run those tests.
+
+NOTE: for best results, run in interactive mode, e.g.
+
+python -i tests.py
+
+Version: 2016jan18 by cliffk
 """
 
 
@@ -45,7 +50,7 @@ if 'standardscen' in tests:
 
     print('Running standard scenarios test...')
     from optima import Project
-    from optima.defaultprograms import defaultprogset
+    from optima.defaults import defaultprogset
     from numpy import array
     
     P = Project(spreadsheet='test7pops.xlsx')
@@ -176,8 +181,8 @@ if 'standardscen' in tests:
             output += '\n'           
             output += 'PLHIV: %s\n' % (allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
             output += 'Prop aware: %s\n' % (allresults[scenno].raw[0]['people'][settings.alldiag,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Number treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.treat,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.treat,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Number treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
             
             print output
 
