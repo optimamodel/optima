@@ -14,9 +14,9 @@ fi
 source ./p-env/bin/activate
 
 # install optima as a package
-cd optima
-python setup.py develop
 cd ..
+python setup.py develop
+cd server
 
 TMP_DEPS=/tmp/temp_deps_${RANDOM}
 pip freeze -l > ${TMP_DEPS}
