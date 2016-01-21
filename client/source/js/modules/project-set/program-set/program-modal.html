@@ -108,7 +108,7 @@
                 <span>All populations</span>
               </span>
               <span ng-repeat="population in entry.populations" class="option">
-                <input type="checkbox" ng-model="population.added"/>
+                <input type="checkbox" ng-model="population.added" ng-click="setParameterSelectAll(entry, entry.populations)"/>
                 <span>{{population.name}}</span>
               </span>
               </div>
@@ -124,7 +124,7 @@
                 <span>All partnerships</span>
               </span>
               <span ng-repeat="pship in entry.parameterObj.pships" class="option">
-                <input type="checkbox" ng-model="pship.added"/>
+                <input type="checkbox" ng-model="pship.added" ng-click="setParameterSelectAll(entry, entry.parameterObj.pships)"/>
                 <span>{{pship[0] + '/' + pship[1]}}</span>
               </span>
             </div>

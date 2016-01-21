@@ -41,7 +41,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
        * Section below will initialize parameters for program, it will:
        * 1. add temporary parameterObj to each parameter, it will have parameter details from api /parameters
        * 2. if parameterObj has partnerships, set them as added if they are already added to program
-       * 3. if parameterObj has no partnerships initialize it will populations from project populations,
+       * 3. if parameterObj has no partnerships initialize parameter will populations from project populations,
        *    set the populations which have already been added to the program->parameters as added.
        * 4. set selectAll if all the partnerships / populations have already been added for the parameter.
        */
@@ -155,6 +155,12 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
+    $scope.setParameterSelectAll = function(parameter, parameterPops) {
+      parameter.selectAll = !_.some(parameterPops, function(pop) {
+        return !pop.added;
+      });
+    };
+
     // Function to add/remove all partnerships to a parameter
     $scope.addRemoveAllPshipsToParameter = function(param) {
       _.forEach(param.parameterObj.pships, function(pship) {
@@ -210,7 +216,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           delete parameter.selectAll;
         });
 
-        console.log('$scope.state.program', $scope.state.program);
+        // console.log('$scope.state.program', $scope.state.program);
 
         $modalInstance.close($scope.state.program);
       }
