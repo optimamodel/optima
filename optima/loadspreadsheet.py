@@ -3,7 +3,10 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
     
-    Version: 2015nov22
+    Note: to add a new sheet, add it to the definition of "sheets" below, but also
+    make sure it's being handled appropriately in the main loop.
+    
+    Version: 1.2 (2016jan19) by cliffk
     """
     
     ###########################################################################
@@ -68,9 +71,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         
     
     
-    ##############################################################################
-    ## Define the workbook and parameter names -- should match makespreadsheet.py!
-    ##############################################################################
+    ###########################################################################################################
+    ## Define the workbook and parameter names -- should match makespreadsheet.py and partable in parameters.py
+    ###########################################################################################################
         
     sheets = odict()
     
@@ -87,6 +90,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'adherenceprop', 'propstop', 'leavecare', 'proploss', 'biofailure']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
@@ -99,10 +103,9 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
-                           ['efftx', 'effpmtct', 'effprep','effcondom', 'effcirc', 'effost', 'effdx', 'effsti'],
+                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp', 'successart'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
     
-
     
 
 
@@ -163,7 +166,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
         parcount = -1 # Initialize the parameter count
-        printv('  Loading "%s"...' % sheetname, 2, verbose)
+        printv('Loading "%s"...' % sheetname, 2, verbose)
         
         # Loop over each row in the workbook, starting from the top
         for row in range(sheetdata.nrows): 
@@ -199,7 +202,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     
                 
                 # It's key data, save both the values and uncertainties
-                if sheetname in ['Population size', 'HIV prevalence']:
+                elif sheetname in ['Population size', 'HIV prevalence']:
                     if len(data[thispar])==0: 
                         data[thispar] = [[] for z in range(3)] # Create new variable for best, low, high
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=3, end_colx=lastdatacol)) # Data starts in 4th column -- need room for high/best/low
@@ -215,7 +218,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     
                 
                 # It's basic data, append the data and check for programs
-                if sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Sexual behavior', 'Injecting behavior']: 
+                elif sheetname in ['Other epidemiology', 'Optional indicators', 'Testing & treatment', 'Cascade', 'Sexual behavior', 'Injecting behavior']: 
                     thesedata = blank2nan(sheetdata.row_values(row, start_colx=2, end_colx=lastdatacol-1)) # Data starts in 3rd column, and ends lastdatacol-1
                     assumptiondata = sheetdata.cell_value(row, assumptioncol-1)
                     if assumptiondata != '': # There's an assumption entered
@@ -247,6 +250,11 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         raise Exception(errormsg)
                     validatedata(thesedata, sheetname, thispar, row)
                     data['const'][subpar] = thesedata # Store data
+                
+                # It's not recognized: throw an error
+                else: 
+                    errormsg = 'Sheet name "%s" not recognized: please do not change the names of the sheets!' % sheetname
+                    raise Exception(errormsg)
     
     
     # Check that matrices have correct shape
