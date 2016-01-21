@@ -1,4 +1,3 @@
 define([
-  './calibration-ctrl',
-  './calibration-service'
+  './calibration-ctrl'
 ], function () {});
