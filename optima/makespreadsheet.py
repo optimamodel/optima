@@ -16,7 +16,15 @@ default_dataend = 2020
 def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default_dataend, verbose=2):
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
+    # An integer argument is given: just create a pops dict using empty entries
+    if isinstance(pops, (int, float)):
+        npops = pops
+        pops = [] # Create real pops list
+        for p in range(npops):
+            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
+    
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
+
     book = OptimaSpreadsheet(filename, pops, datastart, dataend)
     book.create(filename)
 
@@ -163,7 +171,9 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
-    BG_COLOR = '#FFC0CB' #'#18C1FF'
+    originalblue = '#18C1FF'
+    hotpink = '#FFC0CB'
+    BG_COLOR = hotpink
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -413,6 +423,7 @@ class OptimaSpreadsheet:
             ('epi', 'Other epidemiology'),
             ('opt', 'Optional indicators'),
             ('txrx', 'Testing & treatment'),
+            ('casc', 'Cascade'),
             ('sex', 'Sexual behavior'),
             ('inj', 'Injecting behavior'),
             ('ptrans', 'Partnerships & transitions'),
@@ -539,23 +550,29 @@ class OptimaSpreadsheet:
         'Modeled estimate of number of PLHIV', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
+
     def generate_txrx(self):
         current_row = 0
-
-        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year', 
-            current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_years_block('Number of people on treatment', 
-            current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis', 
-            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)', 
-            current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
-        current_row = self.emit_years_block('Birth rate (births per woman per year)', 
-            current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed', 
-            current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year',      current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Number of people on treatment',                                    current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis',     current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)',           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
+        
+    
+    def generate_casc(self):
+        ''' Added by CK for cascade parameters -- removed spaces for troubleshooting difference between this and txrx, it worked :) '''
+        current_row = 0
+        current_row = self.emit_ref_years_block('Immediate linkage to care (%)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Those who stop ART but are still in care (%)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Those in care who are lost to follow-up (%/year)',             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Biological failure rate (%/year)',                                 current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+            
 
     def generate_sex(self):
         current_row = 0
@@ -594,34 +611,89 @@ class OptimaSpreadsheet:
         self.current_sheet.set_column(1,1,40)
         current_row = 0
 
-        names_rows_data_format = [('Interaction-related transmissibility (% per act)', \
-        ['Insertive penile-vaginal intercourse', 'Receptive penile-vaginal intercourse', 'Insertive penile-anal intercourse', 'Receptive penile-anal intercourse', \
-        'Intravenous injection', 'Mother-to-child (breastfeeding)','Mother-to-child (non-breastfeeding)'], \
-        [0.0004, 0.0008, 0.0138, 0.0011, 0.0080, 0.367, 0.205], [0.0001, 0.0006, 0.0102, 0.0004, 0.0063, 0.294, 0.14], \
-        [0.0014, 0.0011, 0.0186, 0.0028, 0.0240, 0.440, 0.270], OptimaFormats.DECIMAL_PERCENTAGE), \
-        ('Relative disease-related transmissibility', \
-        ['Acute infection','CD4(>500)','CD4(500) to CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)'], \
-        [26.03,1,1,1,3.49,7.17], [2,1,1,1,1.76,3.9], [48.02,1,1,1,6.92,12.08], OptimaFormats.NUMBER), \
-        ('Disease progression rate (% per year)', \
-        ['Acute to CD4(>500)','CD4(500) to CD4(350-500)','CD4(350-500) to CD4(200-350)','CD4(200-350) to CD4(50-200)','CD4(50-200) to CD4(<50)'], \
-        [4.14, 1.05, 0.33, 0.27, 0.67], [2.00, 0.86, 0.32, 0.25, 0.44], [9.76, 1.61, 0.35, 0.29, 0.88], OptimaFormats.PERCENTAGE), \
-        ('Treatment recovery rate (% per year)', \
-        ['CD4(350-500) to CD4(>500)','CD4(200-350) to CD4(350-500)','CD4(50-200) to CD4(200-350)','CD4(<50) to CD4(50-200)'], \
-        [0.45, 0.70, 0.47, 1.52], [0.14, 0.29, 0.33, 1.06], [0.93, 1.11, 0.72, 1.96], OptimaFormats.PERCENTAGE), \
-        ('Treatment failure rate (% per year)', \
-        ['First-line treatment','Second-line treatment'], [0.10,0.16], [0.08,0.05], [0.12,0.26], OptimaFormats.PERCENTAGE), \
-        ('Death rate (% mortality per year)', \
-        ['Acute infection','CD4(>500)','CD4(350-500)','CD4(200-350)','CD4(50-200)','CD4(<50)','On treatment','Tuberculosis cofactor'], \
-        [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 2.17], [0.0029, 0.0029, 0.0048, 0.0750, 0.0540, 0.2960, 0.1500, 1.27], \
-        [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 3.71], OptimaFormats.DECIMAL_PERCENTAGE), \
-        ('Relative transmissibility', \
-        ['Condom use','Circumcision','Diagnosis behavior change','Ulcerative STI cofactor increase','Discharging STI cofactor increase','Opiate substitution therapy',\
-        'PMTCT','Antiretroviral therapy', 'Pre-exposure prophylaxis'], \
-        [0.05, 0.42, 1.00, 2.65, 1.00, 0.46, 0.10, 0.30, 0.275], [0.025, 0.33, 0.32, 1.35, 1.00, 0.32, 0.07, 0.10, 0.20], \
-        [0.20, 0.53, 1.00, 5.19, 1.35, 0.67, 0.18, 0.50, 0.35], OptimaFormats.PERCENTAGE), \
-        ('Disutility weights', \
-        ['Untreated HIV, acute','Untreated HIV, CD4(>500)','Untreated HIV, CD4(350-500)','Untreated HIV, CD4(200-350)', \
-        'Untreated HIV, CD4(50-200)','Untreated HIV, CD4(<50)','Treated HIV'], [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], OptimaFormats.NUMBER)]
+        names_rows_data_format = [
+        ('Interaction-related transmissibility (% per act)',
+            ['Insertive penile-vaginal intercourse', 
+            'Receptive penile-vaginal intercourse', 
+            'Insertive penile-anal intercourse', 
+            'Receptive penile-anal intercourse',
+            'Intravenous injection', 
+            'Mother-to-child (breastfeeding)',
+            'Mother-to-child (non-breastfeeding)'],
+            [0.0004, 0.0008, 0.0138, 0.0011, 0.0080, 0.367, 0.205],
+            [0.0001, 0.0006, 0.0102, 0.0004, 0.0063, 0.294, 0.14],
+            [0.0014, 0.0011, 0.0186, 0.0028, 0.0240, 0.440, 0.270], 
+            OptimaFormats.DECIMAL_PERCENTAGE),
+        ('Relative disease-related transmissibility',
+            ['Acute infection',
+            'CD4(>500)',
+            'CD4(500) to CD4(350-500)',
+            'CD4(200-350)',
+            'CD4(50-200)',
+            'CD4(<50)'],
+            [26.03,1,1,1,3.49,7.17], 
+            [2,1,1,1,1.76,3.9], 
+            [48.02,1,1,1,6.92,12.08], 
+            OptimaFormats.NUMBER),
+        ('Disease progression rate (% per year)',
+            ['Acute to CD4(>500)',
+            'CD4(500) to CD4(350-500)',
+            'CD4(350-500) to CD4(200-350)',
+            'CD4(200-350) to CD4(50-200)',
+            'CD4(50-200) to CD4(<50)'], 
+            [4.14, 1.05, 0.33, 0.27, 0.67], 
+            [2.00, 0.86, 0.32, 0.25, 0.44], 
+            [9.76, 1.61, 0.35, 0.29, 0.88],
+            OptimaFormats.PERCENTAGE),
+        ('Treatment recovery rate (% per year)',
+            ['CD4(350-500) to CD4(>500)',
+            'CD4(200-350) to CD4(350-500)',
+            'CD4(50-200) to CD4(200-350)',
+            'CD4(<50) to CD4(50-200)'],
+            [0.45, 0.70, 0.47, 1.52], 
+            [0.14, 0.29, 0.33, 1.06], 
+            [0.93, 1.11, 0.72, 1.96], 
+            OptimaFormats.PERCENTAGE),
+        ('Death rate (% mortality per year)',
+            ['Acute infection',
+            'CD4(>500)',
+            'CD4(350-500)',
+            'CD4(200-350)',
+            'CD4(50-200)',
+            'CD4(<50)',
+            'On treatment',
+            'Tuberculosis cofactor'],
+            [0.0036, 0.0036, 0.0058, 0.0088, 0.059, 0.3230, 0.2300, 2.17], 
+            [0.0029, 0.0029, 0.0048, 0.0750, 0.0540, 0.2960, 0.1500, 1.27],
+            [0.0044, 0.0044, 0.0071, 0.0101, 0.079, 0.4320, 0.3000, 3.71], 
+            OptimaFormats.DECIMAL_PERCENTAGE),
+        ('Changes in transmissibility (%)',
+            ['Condom use',
+            'Circumcision',
+            'Diagnosis behavior change',
+            'STI cofactor increase',
+            'Opiate substitution therapy',
+            'PMTCT',
+            'Pre-exposure prophylaxis',
+            'Unsuppressive ART',
+            'Suppressive ART',
+            'Probability of viral suppression on ART'],
+            [0.95, 0.58, 0.54, 0., 2.65, 0.9, 0.73, 0.5, 0.92, 0.9], 
+            [0.8, 0.47, 0.33, 0., 1.35, 0.82, 0.65, 0.3, 0.8, 0.8 ],
+            [0.98, 0.67, 0.68, 0.68, 5.19, 0.93, 0.8, 0.8, 0.95, 0.95],
+            OptimaFormats.PERCENTAGE),
+        ('Disutility weights',
+            ['Untreated HIV, acute',
+            'Untreated HIV, CD4(>500)',
+            'Untreated HIV, CD4(350-500)',
+            'Untreated HIV, CD4(200-350)',
+            'Untreated HIV, CD4(50-200)',
+            'Untreated HIV, CD4(<50)',
+            'Treated HIV'], 
+            [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], 
+            [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], 
+            [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], 
+            OptimaFormats.NUMBER)]
 
         for (name, row_names, best, low, high, format) in names_rows_data_format:
             current_row = self.emit_constants_block(name, current_row, row_names, best, low, high, format)

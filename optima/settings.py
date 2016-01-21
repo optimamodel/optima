@@ -20,10 +20,14 @@ class Settings():
         # Original states by diagnosis
         self.uncirc = arange(0,1) # Uninfected, uncircumcised
         self.circ   = arange(1,2) # Uninfected, circumcised
-        self.undiag = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
-        self.diag   = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
-        self.treat  = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, on treatment
-        
+        self.undx   = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
+        self.dx     = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
+        self.care   = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
+        self.usvl   = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+        self.svl    = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
+        self.lost   = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
+        self.off    = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
+       
         # Original states by CD4 count
         spacing = array([0,1,2])*self.ncd4 
         self.acute = 2 + spacing
@@ -34,10 +38,11 @@ class Settings():
         self.lt50  = 7 + spacing
 
         # Combined states
-        self.alluninf = cat([self.uncirc, self.circ]) # All uninfected
-        self.alldiag = cat([self.diag, self.treat]) # All people diagnosed
-        self.allplhiv = cat([self.undiag, self.alldiag]) # All PLHIV
-        self.allstates = cat([self.alluninf, self.allplhiv]) # All states
+        self.sus      = cat([self.uncirc, self.circ]) # All uninfected
+        self.alldx    = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
+        self.allplhiv = cat([self.undx, self.alldx]) # All PLHIV
+        self.alltreat = cat([self.usvl, self.svl]) # All PLHIV
+        self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
         
         # Other
