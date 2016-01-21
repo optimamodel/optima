@@ -8,13 +8,20 @@ from flask import helpers
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import load_project, load_progset, RequestParser, report_exception
-from server.webapp.exceptions import RecordDoesNotExist, ProjectDoesNotExist
+from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
 from server.webapp.dbconn import db
 
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 
+
+costcov_parser = RequestParser()
+costcov_parser.add_arguments({
+    'year': {'required': True, 'location': 'json'},
+    'cost': {'required': True, 'location': 'json'},
+    'cov': {'required': True, 'location': 'json'},
+})
 
 program_parser = RequestParser()
 program_parser.add_arguments({
@@ -25,6 +32,7 @@ program_parser.add_arguments({
     'active': {'type': bool, 'default': False, 'location': 'json'},
     'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
     'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
+    'costcov': {'type': SubParser(costcov_parser), 'action': 'append'},
 })
 
 

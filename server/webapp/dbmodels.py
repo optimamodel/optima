@@ -398,6 +398,7 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
+        'costcov': fields.Json,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -410,6 +411,7 @@ class ProgramsDb(db.Model):
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
     criteria = db.Column(JSON)
+    costcov = db.Column(JSON)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
