@@ -128,6 +128,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
+    suppressedfrac   = 0.75 # Assume 75% of those on treatment are suppressed to begin with
     
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
@@ -171,8 +172,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         initpeople[undx, p] = undiagnosed
         initpeople[dx, p]   = diagnosed * (1.-immediatecare[p,0])
         initpeople[care, p] = diagnosed * immediatecare[p,0]
-        initpeople[usvl, p] = treatment * (1.-successart)
-        initpeople[svl,  p] = treatment * successart
+        initpeople[usvl, p] = treatment * (1.-suppressedfrac) #(1.-successart)
+        initpeople[svl,  p] = treatment * suppressedfrac      # successart
         #initpeople[lost, p] = 
         #initpeople[off,  p] = 
     
