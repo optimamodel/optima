@@ -35,6 +35,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         parameter.parameterObj = _.find(parameters, function(param) {
           return parameter.param === param.short;
         });
+        if(parameter.parameterObj && parameter.parameterObj.pships && parameter.parameterObj.pships.length > 0) {
+          console.log('into if');
+
+        } else {
+          parameter.populations = _.map(parameter.pops, function(pop) {
+            return _.find($scope.state.populations, function(populations) {
+              return pop === populations.short_name;
+            });
+          });
+          parameter.populations = _.extend($scope.state.populations, parameter.populations);
+        }
       });
 
       $scope.state.program.active = true;
@@ -98,7 +109,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Add a new parameter
     $scope.addParameter = function() {
-      $scope.state.program.parameters.push({active: true, populations: angular.copy($scope.state.populations)});
+      $scope.state.program.parameters.push({active: true});
+    };
+
+    $scope.addPopulations = function(parameter) {
+      parameter.populations = $scope.state.populations;
     };
 
     // Function to add/remove all populations to a parameter
@@ -114,16 +129,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       _.forEach(param.parameterObj.pships, function(pship) {
         pship.added = param.selectAll;
       });
-    };
-
-    //
-    $scope.setActivePopulations = function(parameter) {
-      parameter.populations = _.map(parameter.pops, function(pop) {
-        return _.find($scope.state.populations, function(populations) {
-          return pop === populations.short_name;
-        });
-      });
-      parameter.populations = _.extend($scope.state.populations, parameter.populations);
     };
 
     // Function to remove a parameter
