@@ -83,7 +83,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // Upload project-set data
-    $scope.uploadProgramSet = function(name, id) {
+    $scope.uploadProgramSet = function() {
       angular
         .element('<input type=\'file\'>')
         .change(function(event){

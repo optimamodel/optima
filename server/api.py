@@ -10,8 +10,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
-from werkzeug.routing import UUIDConverter
-
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if new_path not in sys.path:
