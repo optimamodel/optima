@@ -97,10 +97,10 @@ if 'makeprograms' in tests:
     budget = R.getdefaultbudget()
     coverage = R.getprogcoverage(budget=budget, t=2016, parset=P.parsets['default'])
     outcomes = R.getoutcomes(coverage=coverage, t=2016, parset=P.parsets['default'])
-    progparset = R.getparset(coverage=coverage,
-                  t=[2016],
-                  parset=P.parsets['default'],
-                  newparsetname='progparset')
+#    progparset = R.getparset(coverage=coverage, # Renamed getpardict
+#                  t=[2016],
+#                  parset=P.parsets['default'],
+#                  newparsetname='progparset')
 
 #    # Run results
 #    from optima import runmodel
