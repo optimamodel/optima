@@ -22,15 +22,29 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }
       };
 
+      /**
+       * All populations for the project will be listed for the program for user to select from.
+       * Logic below will:
+       * 1. set the populations which have already been selected for the program as active.
+       * 2. if all the populations have been selected for the program selectAll will be set to true.
+       */
       if(program.populations && program.populations.length > 0) {
         _.forEach($scope.state.populations, function(population) {
-          population.active = (program.populations.length==0) || (program.populations.indexOf(population.short_name) > -1);
+          population.active = (program.populations.length === 0) || (program.populations.indexOf(population.short_name) > -1);
         });
         $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
           return !population.active;
         })
       }
 
+      /**
+       * Section below will initialize parameters for program, it will:
+       * 1. add temporary parameterObj to each parameter, it will have parameter details from api /parameters
+       * 2. if parameterObj has partnerships, set them as added if they are already added to program
+       * 3. if parameterObj has no partnerships initialize it will populations from project populations,
+       *    set the populations which have already been added to the program->parameters as added.
+       * 4. set selectAll if all the partnerships / populations have already been added for the parameter.
+       */
       _.forEach($scope.state.program.parameters, function(parameter) {
         parameter.parameterObj = _.find(parameters, function(param) {
           return parameter.param === param.short;
@@ -59,11 +73,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
+      // Set the program as active
       $scope.state.program.active = true;
+
+      // Add new programs to Other category
       if ($scope.state.isNew) {
         $scope.state.program.category = 'Other';
       }
 
+      // Initialize eligibility criteria
       if($scope.state.program.criteria) {
         $scope.state.eligibility.pregnantFalse = !$scope.state.program.criteria.pregnant;
         if($scope.state.program.criteria.hivstatus && $scope.state.program.criteria.hivstatus.length > 0
@@ -92,14 +110,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Function to select all populations
+    // Function to select / unselect all populations
     $scope.selectAllPopulations = function() {
       _.forEach($scope.state.populations, function(population) {
         population.active = $scope.state.selectAll;
       });
     };
 
-    // Function to select or un-select SelectAll when other populations are selected
+    // Function to select / un-select SelectAll when other populations are selected
     $scope.setSelectAll = function() {
       $scope.state.selectAll = true;
       _.forEach($scope.state.populations, function(population) {
@@ -123,6 +141,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state.program.parameters.push({active: true});
     };
 
+    // When selection in parameter drop-down changes this code will add default population set to the parameterObj
     $scope.addPopulations = function(parameter) {
       if(!parameter.pships || parameter.pships.length === 0) {
         parameter.populations = $scope.state.populations;
@@ -166,6 +185,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return state;
         });
 
+        /**
+         * The code below will extract the population / parameter arrays to be
+         * saved and will delete any unwanted data from it.
+         */
         _.forEach($scope.state.program.parameters, function(parameter) {
           parameter.param = parameter.parameterObj.short;
           var addedPopulations = _.filter(parameter.populations, function(population){
