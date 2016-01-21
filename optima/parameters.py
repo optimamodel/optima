@@ -101,12 +101,13 @@ Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	Non
 '''
 
 
-def readpars(partable):
+def loadpartable(inputpartable=None):
     ''' 
     Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
     '''
+    if inputpartable is None: inputpartable = partable # Use default defined one if not supplied as an input
     rawpars = []
-    alllines = partable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
+    alllines = inputpartable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
     for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
     attrs = alllines.pop(0) # First line is attributes
     for l in range(len(alllines)): # Loop over parameters
@@ -349,7 +350,7 @@ def makepars(data, label=None, verbose=2):
     
     
     # Read in parameters automatically -- WARNING, not currently implemented
-    rawpars = readpars(partable) # Read the parameters structure
+    rawpars = loadpartable() # Read the parameters structure
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
