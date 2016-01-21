@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from optima.defaultprograms import defaultprograms
+from optima.defaults import defaultprograms
 
 
 def get_default_programs(project):
