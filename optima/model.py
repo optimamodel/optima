@@ -49,6 +49,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     raw['diag']     = zeros((npops, npts)) # Number diagnosed per timestep
     raw['newtreat'] = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw['death']    = zeros((npops, npts)) # Number of deaths per timestep
+    raw['otherdeath']    = zeros((npops, npts)) # Number of other deaths per timestep
     
     # Biological and failure parameters -- death etc
     prog       = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
@@ -325,6 +326,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
             raw['diag'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
         dU[0] = dU[0] + newinfections # Now add newly infected people
         
         ## Diagnosed
@@ -344,6 +346,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             outflows = progout + hivdeaths + otherdeaths + currentdiagnosed[cd4,:]*linktocare[:,t]*dt #MK diagnosed moving into care
             dD.append(inflows - outflows)
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
 
         #MK
         ## In-Care
@@ -369,6 +372,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             dC.append(inflows - outflows - newtreat1[cd4])
             raw['newtreat'][:,t] += newtreat1[cd4]/dt # Save annual treatment initiation
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
         
         #MK
         ## Unsuppressed Viral Load (having begun treatment)
@@ -390,6 +394,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             outflows = recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysuppressed[cd4]
             dUSVL.append(inflows - outflows)
             raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
         
         #MK
         ## Suppressed Viral Load
@@ -413,6 +418,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             dSVL.append(inflows - outflows)
             dUSVL[cd4] += failing[cd4]
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
 
         # MK
         ## Lost to follow-up
@@ -431,6 +437,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             outflows = progout + hivdeaths + otherdeaths
             dL.append(inflows - outflows)
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
 
         # MK
         ## Off ART but not lost 
@@ -449,6 +456,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             outflows = progout + hivdeaths + otherdeaths
             dO.append(inflows - outflows)
             raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
 
