@@ -69,14 +69,14 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Disease state indices
     uncirc  = settings.uncirc # Susceptible, uncircumcised
     circ  = settings.circ # Susceptible, circumcised
-    sus  = settings.sus # Susceptible, circumcised
-    undx = settings.undx # Undiagnosed
-    dx   = settings.dx   # Diagnosed
-    care = settings.care # in Care
-    usvl = settings.usvl # On-Treatment - Unsuppressed Viral Load
+    sus  = settings.sus   # Susceptible, circumcised
+    undx = settings.undx  # Undiagnosed
+    dx   = settings.dx    # Diagnosed
+    care = settings.care  # in Care
+    usvl = settings.usvl  # On-Treatment - Unsuppressed Viral Load
     svl  = settings.svl   # On-Treatment - Suppressed Viral Load
-    lost = settings.lost   # Not on ART (anymore) and lost to follow-up
-    off  = settings.off    # off-ART but still in care
+    lost = settings.lost  # Not on ART (anymore) and lost to follow-up
+    off  = settings.off   # off-ART but still in care
 
     popsize = dcp(simpars['popsize']) # Population sizes
     
@@ -106,7 +106,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Behavioural transitions between stages [npop,npts]
     immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T) ... hivtest/aidstest should also be P/T?
-    adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
+    adherencerate = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
     propstop      = simpars['propstop']      # Proportion of people on ART who stop taking ART per year (P/T)
     proploss      = simpars['proploss']      # Proportion of people who stop taking ART per year who are lost to follow-up (P)
@@ -152,8 +152,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
         undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
         undiagnosed = nevertreated * assumedforceinf / undxdxrates     
-        diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates * (1.-immediatecare[p,0])
-        incare    = nevertreated * simpars['hivtest'][p,0] / undxdxrates * immediatecare[p,0]
+        diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
         
         # Set rates within
         progratios = hstack([prog, simpars['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
@@ -170,8 +169,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         initpeople[uncirc, p] = uncircumcised
         initpeople[circ, p] = circumcised
         initpeople[undx, p] = undiagnosed
-        initpeople[dx, p] = diagnosed
-        initpeople[care, p] = incare
+        initpeople[dx, p]   = diagnosed * (1.-immediatecare[p,0])
+        initpeople[care, p] = diagnosed * immediatecare[p,0]
         initpeople[usvl, p] = treatment * (1.-successart)
         initpeople[svl,  p] = treatment * successart
         #initpeople[lost, p] = 
@@ -392,7 +391,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths              = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths            = dt * people[usvl[cd4],:,t] * background
-            virallysuppressed[cd4] = dt * people[usvl[cd4],:,t] * adherenceprop[:,t] * successart
+            virallysuppressed[cd4] = dt * people[usvl[cd4],:,t] * adherencerate[:,t] * successart
             stopUSincare[cd4]      = dt * people[usvl[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
             stopUSlost[cd4]        = dt * people[usvl[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + newtreat1[cd4]
