@@ -123,9 +123,11 @@ if 'generateBOCs' in tests:
     t = tic()
 
     print('Running BOC generation test...')
-    F.genBOCs()
-
     from optima import Project, saveobj
+    from optima import defaultobjectives
+    
+    objectives = defaultobjectives()
+    F.genBOCs(objectives)
     
     print('Saving projects with BOCs...')
     saveobj('test7popsARTandHTC.prj', P1)

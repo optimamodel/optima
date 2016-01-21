@@ -114,7 +114,7 @@ if 'setup' in tests:
     R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
     R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
     R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-    R.rmprogram('HTC')    
+#    R.rmprogram('HTC')    
     
     P.addprogset(name='default', progset=R)
     

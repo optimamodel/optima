@@ -72,7 +72,7 @@ class Portfolio(object):
     #######################################################################################################
         
     def genBOCs(self, objectives=None):
-        ''' Loop through stored projects and construct budget-outcome-] curves '''
+        ''' Loop through stored projects and construct budget-outcome curves '''
         if objectives == None: objectives = defaultobjectives()
         for x in self.projects:
             p = self.projects[x]

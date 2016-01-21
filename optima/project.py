@@ -214,19 +214,6 @@ class Project(object):
         printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
         return None
         
-    def getBOC(self, objectives):
-        ''' Returns a BOC result with the same objectives (minus budget) if it exists, else None '''
-        for x in self.results:
-            if isinstance(self.results[x],BOC):
-                boc = self.results[x]
-                same = True
-                for y in ['start','end','deathweight','inciweight']:
-                    if not boc.objectives[y] == objectives[y]: same = False
-                if same:
-                    print('A BOC with the required objectives already exists in project: %s' % self.name)
-                    return boc
-        print('No BOC with the required objectives can be found in project: %s' % self.name)
-        return None
 
     #######################################################################################################
     ## Convenience functions -- NOTE, do we need these...?
@@ -323,6 +310,11 @@ class Project(object):
         self.optims[-1].resultsref = results.uid
         return None
         
+        
+    #######################################################################################################
+    ## Methods to handle specialised tasks (i.e. for geospatial analysis)
+    #######################################################################################################
+        
     def genBOC(self, budgetlist=[10000,100000,1000000,10000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC()        
@@ -335,4 +327,23 @@ class Project(object):
             projectBOC.x.append(budget)
             projectBOC.y.append(results.mismatch[-1])
         self.addresult(result=projectBOC)
+        return None        
+    
+    def getBOC(self, objectives):
+        ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        for x in self.results:
+            if isinstance(self.results[x],BOC):
+                boc = self.results[x]
+                same = True
+                for y in boc.objectives:
+                    if not y == 'budget' and not boc.objectives[y] == objectives[y]: same = False
+                if same:
+                    print('A BOC with the required objectives already exists in project: %s' % self.name)
+                    return boc
+        print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
+    
+    def interpBOC(self, objectives):
+        ''' If a BOC result with the desired objectives exists, return an interpolated object '''
+        
+    
