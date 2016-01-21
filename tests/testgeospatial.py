@@ -128,6 +128,7 @@ if 'generateBOCs' in tests:
     
     objectives = defaultobjectives()
     F.genBOCs(objectives)
+    F.plotBOCs(objectives)    
     
     print('Saving projects with BOCs...')
     saveobj('test7popsARTandHTC.prj', P1)

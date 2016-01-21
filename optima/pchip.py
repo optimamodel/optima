@@ -32,20 +32,32 @@ which combines a call to pchip_slopes() followed by pchip_eval().
 '''
 import warnings
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+from numpy import linspace
+from copy import deepcopy as dcp
 #from interpolate import slopes, stineman_interp
 
 #=========================================================
-def pchip(x, y, xnew):
+def pchip(x, y, xnew, deriv = False):
+    
+    xs = [a for a,b in sorted(zip(x,y))]
+    ys = [b for a,b in sorted(zip(x,y))]
+    x = dcp(xs)
+    y = dcp(ys)
+    xnew = dcp(sorted(xnew))
+    
+    print x
+    print y
 
     # Compute slopes used by piecewise cubic Hermite interpolator.
     m = pchip_slopes(x, y)
     
     # Use these slopes (along with the Hermite basis function) to interpolate.
-    ynew = pchip_eval(x, y, m, xnew)
+    ynew = pchip_eval(x, y, m, xnew, deriv)
     
     return ynew
     
+#=========================================================
 def pchip_slopes(x, y, monotone=True):
 
     if not len(x) == len(y): raise Exception('Error: Interpolation failure due to unequal x and y points!')
@@ -54,289 +66,94 @@ def pchip_slopes(x, y, monotone=True):
     secants = []
     
     if not len(x) > 1:
-        m.append(0)
+        raise Exception('Error: Interpolation failure due to the existence of only one point!')
     else:
         for c in xrange(len(x)-1):
             secants.append((y[c+1]-y[c])/(x[c+1]-x[c]))
         for c in xrange(len(x)):
-            if c == 0: m.append(secants[c])
-            elif c == len(x)-1: m.append(secants[c-1])
-            elif secants[c]*secants[c-1] <= 0: m.append(0)
-            else: m.append((secants[c]+secants[c-1])/2)
+            if c == 0: deriv = secants[c]
+            elif c == len(x)-1: deriv = secants[c-1]
+            elif secants[c]*secants[c-1] <= 0: deriv = 0
+            else: deriv = (secants[c]+secants[c-1])/2
+            
+            if c < len(x)-1 and abs(deriv) > 3*abs(secants[c]): deriv = 3*secants[c]
+            if c > 0 and abs(deriv) > 3*abs(secants[c-1]): deriv = 3*secants[c-1]
     
+            m.append(deriv)
+    
+    print secants
+    print m
     return np.array(m)
+
+#=========================================================
+def pchip_eval(x, y, m, xvec, deriv = False):
+    '''
+     Evaluate the piecewise cubic Hermite interpolant with  monoticity preserved
     
+        x = array containing the x-data
+        y = array containing the y-data
+        m = slopes at each (x,y) point [computed to preserve  monotonicity]
+        xnew = new "x" value where the interpolation is desired
+    
+        x must be sorted low to high... (no repeats)
+        y can have repeated values
+    
+     This works with either a scalar or vector of "xvec"
+    '''
+    
+    yvec = []    
+    
+    c = 0
+    for xc in xvec:
+        while xc < x[-1] and xc >= x[c+1]:
+            c += 1
+
+        print('%f %f' % (xc,x[c]))        
+        
+        # Create the Hermite coefficients
+        h = x[c+1] - x[c]
+        t = (xc - x[c]) / h
+        
+        # Hermite basis functions
+        if not deriv:
+            h00 = (2 * t**3) - (3 * t**2) + 1
+            h10 =      t**3  - (2 * t**2) + t
+            h01 = (-2* t**3) + (3 * t**2)
+            h11 =      t**3  -      t**2
+        else:
+            h00 = ((6 * t**2) - (6 * t**1))/h
+            h10 = ((3 * t**2) - (4 * t**1) + 1)/h
+            h01 = ((-6* t**2) + (6 * t**1))/h
+            h11 = ((3 * t**2)  - (2 * t**1))/h
+        
+        # Compute the interpolated value of "y"
+        ynew = h00*y[c] + h10*h*m[c] + h01*y[c+1] + h11*h*m[c+1]
+        yvec.append(ynew)
+    
+    return yvec
 
 ##=========================================================
-#def x_is_okay(x,xvec):
-#    # Make sure "x" and "xvec" satisfy the conditions for
-#    # running the pchip interpolator
-#    
-#    n = len(x)
-#    m = len(xvec)
-#    
-#    # Make sure "x" is in sorted order (brute force, but works...)
-#    xx = x.copy()
-#    xx.sort()
-#    total_matches = (xx == x).sum()
-#    if total_matches != n:
-#        warnings.warn( "x values weren't in sorted order --- aborting")
-#        return False
-#    
-#    # Make sure 'x' doesn't have any repeated values
-#    delta = x[1:] - x[:-1]
-#    if (delta == 0.0).any():
-#        warnings.warn( "x values weren't monotonic--- aborting")
-#        return False
-#    
-#    # Check for in-range xvec values (beyond upper edge)
-#    check = xvec > x[-1]
-#    if check.any():
-#        print "*" * 50
-#        print "x_is_okay()"
-#        print "Certain 'xvec' values are beyond the upper end of 'x'"
-#        print "x_max = ", x[-1]
-#        indices = np.compress(check, range(m))
-#        print "out-of-range xvec's = ", xvec[indices]
-#        print "out-of-range xvec indices = ", indices
-#        return False
-#    
-#    # Second - check for in-range xvec values (beyond lower edge)
-#    check = xvec< x[0]
-#    if check.any():
-#        print "*" * 50
-#        print "x_is_okay()"
-#        print "Certain 'xvec' values are beyond the lower end of 'x'"
-#        print "x_min = ", x[0]
-#        indices = np.compress(check, range(m))
-#        print "out-of-range xvec's = ", xvec[indices]
-#        print "out-of-range xvec indices = ", indices
-#        return False
-#    
-#    return True
-#
-##=========================================================
-#def pchip_eval(x, y, m, xvec):
-#    '''
-#     Evaluate the piecewise cubic Hermite interpolant with  monoticity preserved
-#    
-#        x = array containing the x-data
-#        y = array containing the y-data
-#        m = slopes at each (x,y) point [computed to preserve  monotonicity]
-#        xnew = new "x" value where the interpolation is desired
-#    
-#        x must be sorted low to high... (no repeats)
-#        y can have repeated values
-#    
-#     This works with either a scalar or vector of "xvec"
-#    '''
-#    n = len(x)
-#    mm = len(xvec)
-#    
-#    ############################
-#    # Make sure there aren't problems with the input data
-#    ############################
-#    if not x_is_okay(x, xvec):
-#        print "pchip_eval2() - ill formed 'x' vector!!!!!!!!!!!!!"
-#    
-#        # Cause a hard crash...
-#        return #STOP_pchip_eval2
-#    
-#    # Find the indices "k" such that x[k] < xvec < x[k+1]
-#    
-#    # Create "copies" of "x" as rows in a mxn 2-dimensional vector
-#    xx = np.resize(x,(mm,n)).transpose()
-#    xxx = xx > xvec
-#    
-#    # Compute column by column differences
-#    z = xxx[:-1,:] - xxx[1:,:]
-#    
-#    # Collapse over rows...
-#    k = z.argmax(axis=0)
-#    
-#    # Create the Hermite coefficients
-#    h = x[k+1] - x[k]
-#    t = (xvec - x[k]) / h[k]
-#    
-#    # Hermite basis functions
-#    h00 = (2 * t**3) - (3 * t**2) + 1
-#    h10 =      t**3  - (2 * t**2) + t
-#    h01 = (-2* t**3) + (3 * t**2)
-#    h11 =      t**3  -      t**2
-#    
-#    # Compute the interpolated value of "y"
-#    ynew = h00*y[k] + h10*h*m[k] + h01*y[k+1] + h11*h*m[k+1]
-#    
-#    return ynew
-#
-##=========================================================
-#def pchip_slopes(x,y, kind='secant', tension=0, monotone=True):
-#    '''
-#    Return estimated slopes y'(x) 
-#    
-#    Parameters
-#    ----------
-#    x, y : array-like
-#        array containing the x- and y-data, respectively.
-#        x must be sorted low to high... (no repeats) while
-#        y can have repeated values.
-#    kind : string
-#        defining method of estimation for yp. Valid options are:
-#        'secant' average secants 
-#            yp = 0.5*((y[k+1]-y[k])/(x[k+1]-x[k]) + (y[k]-y[k-1])/(x[k]-x[k-1]))
-#        'Catmull-Rom'  yp = (y[k+1]-y[k-1])/(x[k+1]-x[k-1])
-#        'Cardinal'     yp = (1-tension) * (y[k+1]-y[k-1])/(x[k+1]-x[k-1])
-#    tension : real scalar between 0 and 1.
-#        tension parameter used in Cardinal method
-#    monotone : bool
-#        If True modifies yp to preserve monoticity
-#    
-#    x input conditioning is assumed but not checked
-#    '''
-#    n = len(x)
-#    
-#    # Compute the slopes of the secant lines between successive points
-#    delta = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
-#    
-#    # Initialize the tangents at every points as the average of the  secants
-#    m = np.zeros(n, dtype='d')
-#    
-#    # At the endpoints - use one-sided differences
-#    m[0] = delta[0]
-#    m[n-1] = delta[-1]
-#    method = kind.lower()
-#    if method.startswith('secant'):
-#        # In the middle - use the average of the secants
-#        m[1:-1] = (delta[:-1] + delta[1:]) / 2.0
-#    else: # Cardinal or Catmull-Rom method
-#        m[1:-1] = (y[2:] - y[:-2]) / (x[2:] - x[:-2])
-#        if method.startswith('cardinal'):
-#            m = (1-tension) * m
-#       
-#    if monotone:
-#        # Special case: intervals where y[k] == y[k+1]
-#        
-#        # Setting these slopes to zero guarantees the spline connecting
-#        # these points will be flat which preserves monotonicity
-#        indices_to_fix = np.compress((delta == 0.0), range(n))
-#        for ii in indices_to_fix:
-#            m[ii]   = 0.0
-#            m[ii+1] = 0.0
-#        
-#        alpha = m[:-1]/delta
-#        beta  = m[1:]/delta
-#        dist  = alpha**2 + beta**2
-#        tau   = 3.0 / np.sqrt(dist)
-#        
-#        # To prevent overshoot or undershoot, restrict the position vector
-#        # (alpha, beta) to a circle of radius 3.  If (alpha**2 +  beta**2)>9,
-#        # then set m[k] = tau[k]alpha[k]delta[k] and m[k+1] =  tau[k]beta[b]delta[k]
-#        # where tau = 3/sqrt(alpha**2 + beta**2).
-#        
-#        # Find the indices that need adjustment
-#        over = (dist > 9.0)
-#        indices_to_fix = np.compress(over, range(n)) 
-#        for ii in indices_to_fix:
-#            m[ii]   = tau[ii] * alpha[ii] * delta[ii]
-#            m[ii+1] = tau[ii] * beta[ii]  * delta[ii]
-#    
-#    return m
 
-##========================================================================
-#def CubicHermiteSpline(x, y, xnew):
-#    '''
-#    Piecewise Cubic Hermite Interpolation using Catmull-Rom
-#    method for computing the slopes.
-#    '''
-#    # Non-montonic cubic Hermite spline interpolator using
-#    # Catmul-Rom method for computing slopes...
-#    m = pchip_slopes(x, y, kind='catmull', monotone=False)
-#    
-#    # Use these slopes (along with the Hermite basis function) to  interpolate
-#    ynew = pchip_eval(x, y, m, xnew)
-#    
-#    return ynew
-
-  
-
-##==============================================================
-#def main():
-#    ############################################################
-#    # Sine wave test
-#    ############################################################
-#    
-#    # Create a example vector containing a sine wave.
-#    x = np.arange(30.0)/10.
-#    y = np.sin(x)
-#    
-#    # Interpolate the data above to the grid defined by "xvec"
-#    xvec = np.arange(250.)/100.
-#    
-#    # Initialize the interpolator slopes
-#    m = pchip_slopes(x,y)
-##    m1 = slopes(x, y)
-#    m2  = pchip_slopes(x,y,kind='catmul',monotone=False)
-#    # Call the monotonic piece-wise Hermite cubic interpolator
-#    yvec2 = pchip_eval(x, y, m, xvec)
-#    
-#    plt.figure(1)
-#    plt.plot(x,y, 'ro')
-#    plt.title("pchip() Sin test code")
-#    
-#    # Plot the interpolated points
-#    plt.plot(xvec, yvec2, 'b')
-#    
-#     
-#    
-#    # Step function test...
-#    plt.figure(2)
-#    plt.title("pchip() step function test")
-#    
-#    # Create a step function (will demonstrate monotonicity)
-#    x = np.arange(7.0) - 3.0
-#    y = np.array([-1.0, -1,-1,0,1,1,1])
-#    
-#    # Interpolate using monotonic piecewise Hermite cubic spline
-#    xvec = np.arange(599.)/100. - 3.0
-#    
-#    # Create the pchip slopes
-#    m  = pchip_slopes(x,y)
-##    m1 = slopes(x, y)
-#    m2  = pchip_slopes(x,y,kind='catmul',monotone=False)
-#    # Interpolate...
-#    yvec = pchip_eval(x, y, m, xvec)
-#    
-#    # Call the Scipy cubic spline interpolator
-#    from scipy.interpolate import interpolate
-#    function = interpolate.interp1d(x, y, kind='cubic')
-#    yvec2 = function(xvec)
-#    
-#    # Non-montonic cubic Hermite spline interpolator using
-#    # Catmul-Rom method for computing slopes...
-#    yvec3 = CubicHermiteSpline(x,y, xvec)
-#    
-#    
-##    yvec4 = stineman_interp(xvec, x, y, m)
-#    
-#    # Plot the results
-#    plt.plot(x,    y,     'ro')
-#    plt.plot(xvec, yvec,  'b')
-#    plt.plot(xvec, yvec2, 'k')
-#    plt.plot(xvec, yvec3, 'g')
-##    plt.plot(xvec, yvec4, 'm')
-#    plt.xlabel("X")
-#    plt.ylabel("Y")
-#    plt.title("Comparing pypchip() vs. Scipy interp1d() vs. non-monotonic CHS")
-#    legends = ["Data", "pypchip()", "interp1d","CHS", 'SI']
-#    plt.legend(legends, loc="upper left")
-#    plt.ioff()
-#    plt.show()
-#
-#
-#if __name__ == '__main__':
-#    ###################################################################
-#    main()
-
-from numpy import linspace
-plt.plot(linspace(10000,1000000,100),    pchip(x,y,linspace(10000,1000000,100)),     'ro')
-plt.show()
+def plotpchip(x, y, deriv = False, returnplot = False):
+    
+    xnew = linspace(x[0],x[-1],200)
+    
+    try:
+        xnew = linspace(x[0],x[-1],200)
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        plt.plot(xnew, pchip(x,y,xnew,deriv))
+#        plt.plot(x,f(x),'-',label='BOC')
+#        plt.xlabel('Allocation Total')            
+#        plt.ylabel('Outcome')
+        if returnplot:
+            return ax
+        else:
+#            plt.legend(loc='best')
+            plt.show()
+    except:
+        print('Plotting of Budget Objective Curve failed!')
+    
+    return None

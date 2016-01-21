@@ -81,6 +81,14 @@ class Portfolio(object):
                 p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
             else:
                 print('BOC does not need to be generated for project: %s' % p.name)
+                
+    def plotBOCs(self, objectives):
+        ''' Loop through stored projects and plot budget-outcome curves '''
+        for x in self.projects:
+            p = self.projects[x]
+            p.plotBOC(objectives)
+            p.plotBOC(objectives, deriv = True)
+        
 
 ## -*- coding: utf-8 -*-
 #"""

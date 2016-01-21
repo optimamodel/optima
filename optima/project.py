@@ -4,6 +4,7 @@ from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, auto
 from optima import __version__ # Get current version
 
 from optima import defaultobjectives
+import matplotlib.pyplot as plt
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -343,7 +344,14 @@ class Project(object):
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
     
-    def interpBOC(self, objectives):
+    def plotBOC(self, objectives, deriv = False, returnplot = False):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
+        boc = self.getBOC(objectives = objectives)
         
+        if boc == None: print('Cannot plot a nonexistent BOC!')
+        else:
+            ax = boc.plot(deriv = deriv, returnplot = returnplot)
+            if returnplot: return ax
+            else: plt.show()
+            return None
     

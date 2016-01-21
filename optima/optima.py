@@ -60,6 +60,9 @@ except: _failed()
 try: from asd import asd
 except: _failed()
 
+try: from pchip import pchip, plotpchip
+except: _failed()
+
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 except: _failed()
 
