@@ -39,12 +39,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           console.log('into if');
 
         } else {
-          parameter.populations = _.map(parameter.pops, function(pop) {
+          var selectedPopulation = _.map(parameter.pops, function(pop) {
             return _.find($scope.state.populations, function(populations) {
               return pop === populations.short_name;
             });
           });
-          parameter.populations = _.extend($scope.state.populations, parameter.populations);
+          parameter.populations = angular.copy(selectedPopulation);
+          _.forEach(parameter.populations, function(population) {
+            population.added = true;
+          });
+          parameter.populations = _.extend(angular.copy($scope.state.populations), parameter.populations);
+          parameter.selectAll = parameter.populations && $scope.state.populations && parameter.populations.length === $scope.state.populations.length;
         }
       });
 
@@ -113,7 +118,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.addPopulations = function(parameter) {
-      parameter.populations = $scope.state.populations;
+      if(!parameter.pships || parameter.pships.length === 0) {
+        parameter.populations = $scope.state.populations;
+      }
     };
 
     // Function to add/remove all populations to a parameter
