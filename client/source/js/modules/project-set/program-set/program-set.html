@@ -39,7 +39,7 @@
               <input type="checkbox" ng-model="program.active">
             </td>
             <td style="width: 450px">{{ program.name }}</td>
-            <td style="width: 300px">{{ program.short_name }}</td>
+            <td style="width: 300px">{{ program.short || program.short_name }}</td>
             <td>
               <button type="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
             </td>
