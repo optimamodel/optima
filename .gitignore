@@ -6,6 +6,7 @@ server/p-env
 server/build
 server/static
 server/config.py
+optima-egg.info/*
 \~\$*
 *.iml
 *.pyc

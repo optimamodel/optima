@@ -34,12 +34,12 @@
             <td>&nbsp;</td>
             <td>&nbsp;</td>
           </tr>
-          <tr ng-repeat="program in activeProgramSet.programs | orderBy : 'name'" ng-if="program.category==category.category">
+          <tr ng-repeat="program in activeProgramSet.programs | orderBy : 'name'" ng-if="program.category==category">
             <td class="text-center" style="width: 50px" update-checkbox-on-click>
               <input type="checkbox" ng-model="program.active">
             </td>
             <td style="width: 450px">{{ program.name }}</td>
-            <td style="width: 300px">{{ program.short_name }}</td>
+            <td style="width: 300px">{{ program.short || program.short_name }}</td>
             <td>
               <button type="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
             </td>
