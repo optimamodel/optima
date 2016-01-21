@@ -180,9 +180,9 @@ if 'standardscen' in tests:
             output += scen['name']
             output += '\n'           
             output += 'PLHIV: %s\n' % (allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop aware: %s\n' % (allresults[scenno].raw[0]['people'][settings.alldiag,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Number treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.treat,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.treat,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop aware: %s\n' % (allresults[scenno].raw[0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Number treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
             
             print output
 

@@ -3,6 +3,7 @@ Installation
 
 Follow the Installation Steps described in:
 
+- optima/README.md
 - client/README.md
 - server/README.md
 - server/db/README.md

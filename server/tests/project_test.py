@@ -48,18 +48,6 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(projects_data['projects'][0]['name'], 'test2')
         self.assertEqual(projects_data['projects'][0]['id'], str(project_id))
 
-    def test_project_parameters(self):
-        from server.webapp.parameters import parameter_name
-        response = self.client.get('/api/project/parameters')
-        print(response)
-        self.assertEqual(response.status_code, 200)
-        parameters = json.loads(response.data)['parameters']
-        self.assertTrue(len(parameters) > 0)
-        self.assertTrue(set(parameters[0].keys()) ==
-                        set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
-        self.assertTrue(parameter_name(['condom', 'reg']) ==
-                        'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
-
     def test_upload_data(self):
         import re
         import os
@@ -165,6 +153,11 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(response.status_code, 200)
 
         return progsets_count, project, response
+
+    def test_project_parameters(self):
+        progsets_count, project, response = self._create_project_and_download()
+        response = self.client.get('/api/project/{}/parameters'.format(project.id))
+        self.assertEqual(response.status_code, 200)
 
     def test_download_upload_project(self):
         from server.webapp.dbmodels import ProjectDb
