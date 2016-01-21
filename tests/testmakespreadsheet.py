@@ -1,3 +1,76 @@
+"""
+A more standard version of testing if the spreadsheet works
+
+Version: 2016jan19 by cliffk
+"""
+
+
+
+## Define tests to run here!!!
+tests = [
+'makespreadsheet',
+#'unittests',
+]
+
+dosave = False
+
+
+##############################################################################
+## Initialization -- same for every test script
+##############################################################################
+
+from optima import tic, toc, blank, pd # analysis:ignore
+
+if 'doplot' not in locals(): doplot = True
+
+def done(t=0):
+    print('Done.')
+    toc(t)
+    blank()
+
+blank()
+print('Running tests:')
+for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
+blank()
+
+
+##############################################################################
+## The tests
+##############################################################################
+
+
+if 'makespreadsheet' in tests:
+    t = tic()
+    print('Running makespreadsheet test...')
+    
+    from optima import makespreadsheet
+    from os import remove
+    filename = 'tmpspreadsheet.xlsx'
+    makespreadsheet(filename, pops=2)
+    if not dosave: remove(filename)
+        
+    done(t)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+## Anna's original unit tests
+##############################################################################
+
+
+
 import os
 import unittest
 from optima.makespreadsheet import OptimaSpreadsheet, SheetRange, TitledRange, make_populations_range, make_ref_years_range, OptimaGraphTable
@@ -79,5 +152,5 @@ class TestEconSpreadsheet(unittest.TestCase):
 
 
 
-if __name__ == '__main__':
+if 'unittests' in tests: # Actually run the unit tests
     unittest.main()
