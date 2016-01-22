@@ -48,19 +48,6 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(projects_data['projects'][0]['name'], 'test2')
         self.assertEqual(projects_data['projects'][0]['id'], str(project_id))
 
-    # ToDo write a new test for /api/project/<project_id>/parameters
-    # def test_project_parameters(self):
-    #     from server.webapp.parameters import parameter_name
-    #     response = self.client.get('/api/project/parameters')
-    #     print(response)
-    #     self.assertEqual(response.status_code, 200)
-    #     parameters = json.loads(response.data)['parameters']
-    #     self.assertTrue(len(parameters) > 0)
-    #     self.assertTrue(set(parameters[0].keys()) ==
-    #                     set(["keys", "name", "modifiable", "calibration", "dim", "input_keys", "page"]))
-    #     self.assertTrue(parameter_name(['condom', 'reg']) ==
-    #                     'Condoms | Proportion of sexual acts in which condoms are used with regular partners')
-
     def test_upload_data(self):
         import re
         import os
@@ -187,6 +174,7 @@ class ProjectTestCase(OptimaTestCase):
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         self.assertEqual(len(project.progsets), progsets_count - 1)
         self.assertNotEqual(project.name, 'test')  # still just making sure
+        self.session.commit()
 
         upload_response = self.client.post(
             '/api/project/{}/data'.format(project.id),
@@ -338,6 +326,7 @@ class ProjectTestCase(OptimaTestCase):
         project = self.create_project(name='test_progset', return_instance=True, progsets_count=1)
 
         self.assertEquals(len(project.progsets), 1)
+        self.session.commit()
 
         response = self.client.delete('/api/project/{}'.format(project.id))
         self.assertEqual(response.status_code, 204)
