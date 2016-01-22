@@ -168,7 +168,7 @@ if 'plotresults' in tests and doplot:
 
     print('Running results plotting test...')
     from optima import plotresults
-    plotresults(P.results[-1], toplot=['prev-tot', 'prev-per', 'numinci-tot'], figsize=(16,10)) # Showing kwargs passed to plot
+    plotresults(P.results[-1], toplot=['prev-tot', 'numinci-sta'], figsize=(16,10)) # Showing kwargs passed to plot
     
     done(t)
 

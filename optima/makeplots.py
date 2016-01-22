@@ -7,7 +7,7 @@ for the frontend via MPLD3.
 
 from optima import Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, Rectangle
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -159,14 +159,12 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 if not ismultisim and isstacked:
                     if isnumber: # Stacked plot
                         bottom = 0*results.tvec # Easy way of setting to 0...
-                        for l in range(nlinesperplot):
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[l]), facecolor=colors[l], alpha=0, lw=0)
-                            bottom += best[l]
-                            figure()
-                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[l]), facecolor=colors[l], alpha=0, lw=0)
-                            print bottom
-                            print best[l]
-                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        for l in range(nlinesperplot): # Loop backwards so correct ordering -- first one at the top, not bottom
+                            k = nlinesperplot-1-l # And in reverse order
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
+                            bottom += best[k]
+                        for l in range(nlinesperplot): # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly...
+                            plot((0, 0), (0, 0), color=colors[l], linewidth=10)
                     else: # Multi-line plot
                         for l in range(nlinesperplot):
                             plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
