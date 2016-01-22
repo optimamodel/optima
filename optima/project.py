@@ -80,13 +80,13 @@ class Project(object):
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
         output += '      Program sets: %i\n'    % len(self.progsets)
-        output += '     Scenario sets: %i\n'    % len(self.scens)
-        output += ' Optimization sets: %i\n'    % len(self.optims)
+        output += '         Scenarios: %i\n'    % len(self.scens)
+        output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
         output += '    Optima version: %0.1f\n' % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
-        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
@@ -107,6 +107,7 @@ class Project(object):
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
+        self.modified = today()
 
         self.ensureparset(name)
         return None
@@ -121,6 +122,7 @@ class Project(object):
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset) # Store parameters
+            self.modified = today()
         return None
 
     def loadeconomics(self, filename):
@@ -128,6 +130,7 @@ class Project(object):
 
         ## Load spreadsheet
         self.data['econ'] = loadeconomicsspreadsheet(filename)
+        self.modified = today()
 
         return None
 
@@ -189,9 +192,8 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         structlist[name].name = name # Make sure names are consistent
-        # Commenting this out because it carshes when uploading progsets
-        # Error is settings object has no attribute 'verbose'
-        # printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
+        printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -201,6 +203,7 @@ class Project(object):
         self.checkname(what, checkexists=name)
         structlist.pop(name)
         printv('Item "%s" removed from structure list "%s"' % (name, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -212,6 +215,7 @@ class Project(object):
         structlist[new].name = new  # Update name
         structlist[new].uid = uuid()  # otherwise there will be 2 structures with same unique identifier
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -222,6 +226,7 @@ class Project(object):
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
         printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -300,6 +305,7 @@ class Project(object):
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
+        self.modified = today()
         return None
 
 
@@ -308,6 +314,7 @@ class Project(object):
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        self.modified = today()
         return None
 
 
@@ -315,6 +322,7 @@ class Project(object):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        self.modified = today()
         return None
     
     
@@ -323,6 +331,7 @@ class Project(object):
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
         multires = runscenarios(project=self, verbose=verbose)
         self.addresult(result=multires)
+        self.modified = today()
         return None
     
     
@@ -332,4 +341,5 @@ class Project(object):
         multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
         self.addresult(result=multires)
+        self.modified = today()
         return None
