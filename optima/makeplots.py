@@ -41,7 +41,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
         # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
         plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
-        plotformatsdict = odict({key:plotformatslist[i] for i,key in enumerate(['tot','pop','sta'])}) # More flexible but less clear than plotformatsdict = odict({'tot':plotformatslist[0], 'pop':plotformatslist[1], 'sta':plotformatslist[2]})
+        plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'sta':plotformatslist[2]})
 
         # Loop over each plot
         epiplots = odict()
@@ -72,7 +72,9 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
                 
-            istot = (plotformat in plotformatsdict['tot'])
+            istotal   = (plotformat in plotformatsdict['tot'])
+            isperpop  = (plotformat in plotformatsdict['per'])
+            isstacked = (plotformat in plotformatsdict['sta'])
             
             
             ################################################################################################################
@@ -80,8 +82,8 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ################################################################################################################
             
             # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
-            if plotformat in plotformatsdict['tot']: attrtype = 'tot' 
-            if plotformat in plotformatsdict['per','sta'].flatten(): attrtype = 'pops'
+            if istotal: attrtype = 'tot' 
+            else: attrtype = 'pops'
             
             if not ismultisim: # Single results thing: plot with uncertainties and data
                 best = getattr(results.main[datatype], attrtype)[0] # poptype = either 'tot' or 'pops'
@@ -113,34 +115,32 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ################################################################################################################
             ## Set up figure and do plot
             ################################################################################################################
-            seppops = (plotformat in plotformatsdict['spl']) # Whether or not populations are separated
-            if seppops: 
-                pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
+            if isperpop: pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
-            for i,pk in enumerate(pkeys): # Either loop over individual population prevalence plots, or just plot a single plot
+            for i,pk in enumerate(pkeys): # Either loop over individual population prevalence plots, or just plot a single plot, e.g. pk='hivprev-per-FSW'
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
-                if poptype=='pops' or kind=='multi': nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
+                if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
                 colors = gridcolormap(nlinesperplot)
                 
                 # Plot uncertainty
-                if uncertainty: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
                     fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[i], alpha=alpha, lw=0)
     
                 # Plot model estimates with uncertainty
-                for l in range(nlines):
+5$(*$&
+                for l in range(nlinesperplot):
                     try: plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
                     except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     
-                # Plot data points with uncertainty
-                for l in range(nlines):
-                    if databest is not None:
-                        scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
-                        for y in range(len(results.datayears)):
-                            plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
+                # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
+                if databest is not None and not isstacked and not ismultisim:
+                    scatter(results.datayears, factor*databest[i], c=colors[i], s=dotsize, lw=0)
+                    for y in range(len(results.datayears)):
+                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=colors[i], lw=1)
                 
                 
                 ################################################################################################################
