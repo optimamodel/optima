@@ -7,7 +7,7 @@ for the frontend via MPLD3.
 
 from optima import Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, Rectangle
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -90,6 +90,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                 for l in range(nlinesperplot): best.append(getattr(results.main[datatype], attrtype)[l])
                 lower = None
                 upper = None
+                databest = None
                 uncertainty = False
             else: # Single results thing: plot with uncertainties and data
                 best = getattr(results.main[datatype], attrtype)[0] # poptype = either 'tot' or 'pops'
@@ -134,7 +135,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                     except: print('Plotting uncertainty failed and/or not yet implemented')
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if databest is not None and not isstacked and not ismultisim:
+                if not isstacked and not ismultisim and databest is not None:
                     scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
@@ -174,8 +175,8 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        plot(results.tvec, factor*best[i][l], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
-                
+                        try: plot(results.tvec, factor*best[i][l], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
+                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
                 
                 

@@ -119,7 +119,7 @@ if 'minimizeoutcomes' in tests:
         from optima import plotmismatch, plotallocs, plotresults
         plotmismatch(P.results[-1])
         plotallocs(P.results[-1])
-        plotresults(P.results[-1], toplot=['prev-tot', 'numinci-tot']) # WARNING, only handles plotting total (not by populations) for now
+        plotresults(P.results[-1], toplot=['prev-tot', 'prev-per', 'numinci-sta'])
     
     done(t)
 
