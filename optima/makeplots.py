@@ -30,9 +30,8 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
         if type(results)==Resultset: ismultisim = False
         elif type(results)==Multiresultset: 
             ismultisim = True
-            best = list() # Initialize as empty list for storing results sets
             labels = results.keys # Figure out the labels for the different lines
-            nlinesperplot = len(labels) # How ever many things are in results
+            nsims = len(labels) # How ever many things are in results
         else: 
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s", you drongo' % type(results)
             raise Exception(errormsg)
@@ -87,7 +86,8 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             else: attrtype = 'pops'
             
             if ismultisim:  # e.g. scenario, no uncertainty
-                for l in range(nlinesperplot): best.append(getattr(results.main[datatype], attrtype)[l])
+                best = list() # Initialize as empty list for storing results sets
+                for s in range(nsims): best.append(getattr(results.main[datatype], attrtype)[s])
                 lower = None
                 upper = None
                 databest = None
@@ -175,8 +175,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                 
                 if ismultisim and isperpop:
                     for l in range(nlinesperplot):
-                        try: plot(results.tvec, factor*best[i][l], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
-                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                        plot(results.tvec, factor*best[l][i], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
                 
                 
