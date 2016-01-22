@@ -11,7 +11,7 @@ from numpy import array, nan, zeros, arange
 
 def getresults(project=None, pointer=None):
     '''
-    A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
+    Function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
     results.
     
@@ -39,7 +39,7 @@ def getresults(project=None, pointer=None):
 
 
 class Result(object):
-    ''' A tiny class just to hold overall and by-population results '''
+    ''' Class to hold overall and by-population results '''
     def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
         self.name = name # Name of this parameter
         self.isnumber = isnumber # Whether or not the result is a number (instead of a percentage)
@@ -56,7 +56,7 @@ class Result(object):
 
 
 class Resultset(object):
-    ''' Lightweight structure to hold results -- use this instead of a dict '''
+    ''' Structure to hold results '''
     def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, domake=True):
         # Basic info
         self.uid = uuid()
@@ -89,6 +89,7 @@ class Resultset(object):
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
+        self.budget = progset # Store budget
         self.data = data # Store data
         self.settings = settings if settings is not None else Settings()
         

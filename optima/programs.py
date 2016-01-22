@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2015nov04 by robynstuart
 """
 from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, float64, concatenate as cat
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, float64, ndarray, concatenate as cat
 import abc
 import textwrap
 from pylab import figure, figtext
@@ -186,11 +186,12 @@ class Programset(object):
         ''' Extract the budget if cost data has been provided'''
         
         if type(tvec) in [int, float]: tvec = [tvec]
+        if isinstance(tvec,ndarray): tvec = tvec.tolist()
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
         settings = Settings()
         start = settings.start
         end = settings.end
-        allt = arange(start,end)
+        allt = linspace(start, end, round((end-start)+1))
         emptyarray = array([nan]*len(allt))
         
         for program in self.programs:
@@ -204,12 +205,12 @@ class Programset(object):
             else: 
                 printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
                 lastbudget[program] = nan
-            if tvec:
+            if tvec is not None:
                 for yr in tvec:
                     yrindex = findinds(allt,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
 
-        return selectbudget if tvec else lastbudget
+        return selectbudget if tvec is not None else lastbudget
 
     def getprogcoverage(self, budget, t, parset, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''

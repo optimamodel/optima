@@ -19,7 +19,7 @@ class Scen(object):
         return output
 
     def getresults(self):
-        ''' A little method for getting the results '''
+        ''' Returns the results '''
         if self.resultsref is not None and self.project is not None:
             results = getresults(project=self.project, pointer=self.resultsref)
             return results
@@ -40,9 +40,9 @@ class Progscen(Scen):
     ''' An object for storing a single parameter scenario '''
     def __init__(self, progscentype=None, progset=None, programs=None, **defaultargs):
             Scen.__init__(self, **defaultargs)
-            self.progscentype = progscentype
-            self.progset = progset
-            self.programs = programs
+            self.progset = progset # Programset
+            self.progscentype = progscentype # String, should be 'budget' or 'coverage'
+            self.programs = programs # Dictionary with program short names as keys and the spending or coverage numbers as values
 
 
 
@@ -52,7 +52,6 @@ class Progscen(Scen):
 def runscenarios(project=None, verbose=2, defaultparset=0):
     """
     Run all the scenarios.
-    
     Version: 2016jan22 by cliffk
     """
     
@@ -72,7 +71,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        allresults.append(runmodel(pars=scenparsets[scen].pars[0], project=project, verbose=1)) # Don't bother printing out model run because it's obvious
+        allresults.append(runmodel(pars=scenparsets[scen].pars[0], project=project, verbose=1)) 
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     

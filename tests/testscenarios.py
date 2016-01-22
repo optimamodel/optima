@@ -161,28 +161,28 @@ if 'standardscen' in tests:
     P.scens[4].active = False # Turn off another scenario
     
     # Run the scenarios
-    P.runscenarios() # Alternate: P.runscenarios() if already defined
+    P.runscenarios() 
      
     if doplot:
         from optima import pygui
         pygui(P.results[-1])
 
-#    if showstats:
-#        from optima import Settings, findinds
-#        from numpy import arange
-#        settings = Settings()
-#        tvec = arange(settings.start,settings.end+settings.dt,settings.dt)
-#        yr = 2020
-#        blank()
-#        for scenno, scen in enumerate(scenlist):
-#            output = '===================================\n'
-#            output += scen['name']
-#            output += '\n'           
-#            output += 'PLHIV: %s\n' % (allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-#            output += 'Prop aware: %s\n' % (allresults[scenno].raw[0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-#            output += 'Number treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
-#            output += 'Prop treated: %s\n' % (allresults[scenno].raw[0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/allresults[scenno].raw[0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-#            print output
+    if showstats:
+        from optima import Settings, findinds
+        from numpy import arange
+        settings = Settings()
+        tvec = arange(settings.start,settings.end+settings.dt,settings.dt)
+        yr = 2020
+        blank()
+        for scenno, scen in enumerate([scen for scen in P.scens.values() if scen.active]):
+            output = '===================================\n'
+            output += scen.name
+            output += '\n'           
+            output += 'PLHIV: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop aware: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[0].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Number treated: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop treated: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[0].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            print output
 
 
     done(t)

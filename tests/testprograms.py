@@ -286,6 +286,8 @@ if 'makeprograms' in tests:
 #    if doplot: R.plotallcoverage(t=[2013,2015],
 #                      parset=P.parsets['default'])
 
+    R.getdefaultbudget(tvec=linspace(2000,2030,31))
+
     done(t)
     
 
