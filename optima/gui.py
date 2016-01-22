@@ -35,9 +35,6 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     '''
     if toplot is None: toplot = ['prev-tot', 'prev-per', 'numinci-sta']
     if fig is None: fig = figure('Optima results', facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
-    nplots = len(toplot) # Calculate rows and columns of subplots
-    nrows = int(ceil(sqrt(nplots)))
-    ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     
     # Do plotting
     wasinteractive = isinteractive()
@@ -46,6 +43,9 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     
     # Actually create plots
     plots = plotepi(results, which=toplot, figsize=(width, height))
+    nplots = len(plots)
+    nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
+    ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     for p in range(len(plots)): addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
     if wasinteractive: ion()
     show()

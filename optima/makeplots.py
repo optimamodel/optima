@@ -162,6 +162,11 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                         for l in range(nlinesperplot):
                             fill_between(results.tvec, factor*bottom, factor*(bottom+best[l]), facecolor=colors[l], alpha=0, lw=0)
                             bottom += best[l]
+                            figure()
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[l]), facecolor=colors[l], alpha=0, lw=0)
+                            print bottom
+                            print best[l]
+                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     else: # Multi-line plot
                         for l in range(nlinesperplot):
                             plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
@@ -202,7 +207,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 if not ismultisim:
                     if istotal:  ax.legend(['Total'], **legendsettings) # Single entry, "Total"
                     if isperpop: ax.legend([results.popkeys[i]], **legendsettings) # Single entry, this population
-                    if isstacked: ax.legend(results.popkeys[i], **legendsettings) # Multiple entries, all populations
+                    if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
     
