@@ -96,11 +96,11 @@ class Resultset(object):
         self.main = odict() # For storing main results
         self.main['prev'] = Result('HIV prevalence (%)', isnumber=False)
         self.main['force'] = Result('Force-of-infection (%/year)', isnumber=False)
-        self.main['numinci'] = Result('Number of new infections')
+        self.main['numinci'] = Result('New infections')
         self.main['numplhiv'] = Result('Number of PLHIV')
-        self.main['numdeath'] = Result('Number of HIV-related deaths')
-        self.main['numdiag'] = Result('Number of people diagnosed')
-        self.main['numtreat'] = Result('Number of people on treatment')
+        self.main['numdeath'] = Result('HIV-related deaths')
+        self.main['numdiag'] = Result('New diagnoses')
+        self.main['numtreat'] = Result('Number on treatment')
 
         
         # Other quantities
@@ -165,7 +165,7 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        txinds = self.settings.treat
+        txinds = self.settings.alltreat
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state

@@ -9,6 +9,9 @@ from optima import Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
+# Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
+plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
+plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'sta':plotformatslist[2]})
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 
 
@@ -40,10 +43,6 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
         if which is None: which = [datatype+'-'+plotformat for datatype in results.main.keys() for plotformat in ['p', 's', 't']] # Just plot everything if not specified
         elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
 
-        # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-        plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
-        plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'sta':plotformatslist[2]})
-
         # Loop over each plot
         epiplots = odict()
         for plotkey in which:
@@ -61,9 +60,10 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                     errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
                     raise Exception(errormsg)
                 if plotformat not in plotformatslist.flatten():
-                    errormsg = 'Could not understand type "%s"; should be one of:\n%s' % plotformatslist
+                    errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
                     raise Exception(errormsg)
             except:
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
                 raise Exception(errormsg)
             

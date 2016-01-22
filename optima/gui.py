@@ -1,9 +1,8 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import dcp, printv, sigfig, plotepi
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show
+from optima import dcp, printv, sigfig, plotepi, plotformatslist
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, transpose
 from matplotlib.widgets import CheckButtons, Button
 from PyQt4 import QtGui
-import gui # Need low-level functions so need to import directly
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
 
@@ -34,7 +33,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
         
     Version: 1.1 (2016jan19) by cliffk
     '''
-    if toplot is None: toplot = ['prev-tot', 'prev-sep', 'numinci-pops']
+    if toplot is None: toplot = ['prev-tot', 'prev-per', 'numinci-sta']
     if fig is None: fig = figure('Optima results', facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     nplots = len(toplot) # Calculate rows and columns of subplots
     nrows = int(ceil(sqrt(nplots)))
@@ -124,15 +123,14 @@ def pygui(tmpresults, which=None):
     ## Define options for selection
     epikeys = results.main.keys()
     epinames = [thing.name for thing in results.main.values()]
-    episubkeys = ['tot', 'sep', 'pops'] # 'tot' = single overall value; 'sep' = separate figure for each plot; 'pops' = stacked or multiline plot
-    episubnames = ['total', 'separated', 'stacked']
+    episubkeys = transpose(plotformatslist)[-1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
     checkboxes = [] # e.g. 'prev-tot'
     checkboxnames = [] # e.g. 'HIV prevalence (%) -- total'
     for key in epikeys: # e.g. 'prev'
         for subkey in episubkeys: # e.g. 'tot'
             checkboxes.append(key+'-'+subkey)
     for name in epinames: # e.g. 'HIV prevalence'
-        for subname in episubnames: # e.g. 'total'
+        for subname in episubkeys: # e.g. 'total'
             checkboxnames.append(name+' -- '+subname)
     nboxes = len(checkboxes) # Number of choices
     
