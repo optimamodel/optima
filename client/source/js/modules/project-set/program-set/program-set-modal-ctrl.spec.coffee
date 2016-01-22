@@ -15,7 +15,16 @@ define ['angular-mocks', 'Source/modules/project-set/program-set/program-set-mod
 
       inject ($rootScope, $controller) ->
         scope = $rootScope.$new()
-        subject = $controller 'ProgramSetModalController', { $scope: scope, $window: null, program: {name: 'abc'}, populations: null, programList: null, availableParameters: null, $modalInstance: null }
+        subject = $controller 'ProgramSetModalController', { 
+          $scope: scope, 
+          $modalInstance: null 
+          program: {name: 'abc'}, 
+          populations: null, 
+          programList: null, 
+          modal: null,
+          parameters: null, 
+          categories: null
+        }
 
     it 'should have loaded the subject', ->
       expect(subject).toBeDefined()

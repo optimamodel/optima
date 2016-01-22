@@ -7,13 +7,15 @@ from server.webapp.utils import report_exception
 
 
 result_fields = {
-    "calibration": fields.Boolean,
-    "dim": fields.Integer,
-    "input_keys": fields.Raw,
-    "keys": fields.Raw,
-    "modifiable": fields.Boolean,
-    "name": fields.String,
-    "page": fields.String,
+    'fittable': fields.String,
+    'name': fields.String,
+    'auto': fields.String,
+    'partype': fields.String,
+    'proginteract': fields.String,
+    'short': fields.String,
+    'coverage': fields.Boolean,
+    'by': fields.String,
+    'pships': fields.Raw,
 }
 
 
@@ -24,14 +26,38 @@ class Parameters(Resource):
     @marshal_with(result_fields, envelope='parameters')
     @login_required
     @report_exception
-    def get(self):
-        """
-        Gives back project parameters (modifiable)
-        """
-        from server.webapp.parameters import parameters
-        project_parameters = [
-            p for p in parameters() if 'modifiable' in p and p['modifiable']]
-        return project_parameters
+    def get(self, project_id):
+        """Gives back project parameters (modifiable)"""
+
+        from server.webapp.utils import load_project
+        from optima.parameters import partable, readpars, Par
+
+        default_pars = [par['short'] for par in readpars(partable)]
+
+        project = load_project(project_id, raise_exception=True)
+        be_parsets = [parset.hydrate() for parset in project.parsets]
+        parameters = []
+        added_parameters = set()
+        for parset in be_parsets:
+            print(parset.pars)
+            for parameter in parset.pars:
+                for key in default_pars:
+                    if key not in added_parameters and \
+                            key in parameter and \
+                            isinstance(parameter[key], Par) and \
+                            parameter[key].visible == 1 and \
+                            parameter[key].y.keys():
+                        param = parameter[key].__dict__
+                        if parameter[key].by == 'pship':
+                            pships = parameter[key].y.keys()
+                        else:
+                            pships = []
+                        param['pships'] = pships
+
+                        parameters.append(param)
+                        added_parameters.add(key)
+
+        return parameters
 
 
 populations_fields = {
