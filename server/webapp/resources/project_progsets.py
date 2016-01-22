@@ -19,8 +19,8 @@ from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
     'year': {'required': True, 'location': 'json'},
-    'spending': {'required': True, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'location': 'json', 'dest': 'cov'},
+    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
 })
 
 program_parser = RequestParser()
