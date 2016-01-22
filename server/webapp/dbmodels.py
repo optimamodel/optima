@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
 from server.webapp.dbconn import db
-from server.webapp.fields import Uuid, Json
+from server.webapp.fields import Uuid, Json, LargeInt
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from werkzeug.utils import secure_filename
@@ -374,8 +374,8 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
 
 costcov_fields = {
     'year': fields.String,
-    'spending': fields.String(attribute='cost'),
-    'coverage': fields.String(attribute='cov'),
+    'spending': LargeInt(attribute='cost'),
+    'coverage': LargeInt(attribute='cov'),
 }
 
 
@@ -468,6 +468,9 @@ class ProgramsDb(db.Model):
                 } for short_name, pop in parameters.iteritems()]
 
         return pars
+
+    def _conv_lg_num(self, num):
+        return int(float(num))
 
     def hydrate(self):
         program_entry = op.Program(
