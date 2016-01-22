@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
+from server.webapp.fields import Json
 
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
@@ -371,6 +372,12 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
         self.meta = meta
         self.updated = updated
 
+costcov_fields = {
+    'year': fields.String,
+    'spending': fields.String(attribute='cost'),
+    'coverage': fields.String(attribute='cov'),
+}
+
 
 @swagger.model
 class ProgramsDb(db.Model):
@@ -390,7 +397,7 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
-#        'costcov': fields.Json,
+        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov')
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -403,13 +410,14 @@ class ProgramsDb(db.Model):
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
     criteria = db.Column(JSON)
-#    costcov = db.Column(JSON)
+    costcov = db.Column(JSON)
+    blob = db.Column(db.LargeBinary)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short='',
                  category='No category', active=False, pars=None, created=None,
-                 updated=None, id=None, targetpops=[], criteria=None):
+                 updated=None, id=None, targetpops=[], criteria=None, costcov=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -420,6 +428,7 @@ class ProgramsDb(db.Model):
         self.active = active
         self.targetpops = targetpops
         self.criteria = criteria
+        self.costcov = costcov
         if created:
             self.created = created
         if updated:
@@ -467,7 +476,12 @@ class ProgramsDb(db.Model):
             name=self.name,
             category=self.category,
             targetpops=self.targetpops,
-            criteria=self.criteria
+            criteria=self.criteria,
+            costcovdata={
+                't': [self.costcov[i]['year'] for i in range(len(self.costcov))],
+                'cost': [self.costcov[i]['cost'] for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['cov'] for i in range(len(self.costcov))],
+            }
         )
         program_entry.id = self.id
         return program_entry
@@ -544,9 +558,10 @@ class ProgsetsDb(db.Model):
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
     def create_programs_from_list(self, programs):
+        from optima.utils import saves
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short', 'category', 'targetpops', 'pars']:
+            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
@@ -555,6 +570,7 @@ class ProgsetsDb(db.Model):
                 active=program.get('active', False),
                 **kwargs
             )
+            program_entry.blob = saves(program_entry.hydrate())
             db.session.add(program_entry)
 
     def recursive_delete(self, synchronize_session=False):
