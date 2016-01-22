@@ -10,8 +10,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
-from werkzeug.routing import UUIDConverter
-
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if new_path not in sys.path:
@@ -93,7 +91,7 @@ api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(Portfolio, '/api/project/portfolio')
-api.add_resource(Parameters, '/api/project/parameters')
+api.add_resource(Parameters, '/api/project/<project_id>/parameters')
 api.add_resource(Populations, '/api/project/populations')
 api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
