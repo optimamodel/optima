@@ -63,7 +63,6 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                     errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
                     raise Exception(errormsg)
             except:
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
                 raise Exception(errormsg)
             
