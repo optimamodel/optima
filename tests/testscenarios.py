@@ -57,7 +57,7 @@ if 'standardscen' in tests:
     caspships = P.data['pships']['cas']
 
     R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'HTC', 'ART'])
-
+    
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
     R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))

@@ -95,7 +95,6 @@ def makescenarios(scenlist, verbose=2):
         npops = len(thisparset.popkeys)
 
         if scen['scenariotype']=='parameter':
-    
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
                 for par in scenlist[scenno]['pars']: # Loop over all parameters being changed
                     thispar = thisparset.pars[pardictno][par['name']]
@@ -120,13 +119,12 @@ def makescenarios(scenlist, verbose=2):
                             thispar.y[pop] = append(thispar.y[pop], par['endval'])
     
         elif scen['scenariotype']=='program':
-            
             thisprogset = scen['progset']
             if scen['progscenariotype']=='budget':
                 thiscoverage = thisprogset.getprogcoverage(budget=scen['programs'], t=scen['t'], parset=scen['parset'])
             elif scen['progscenariotype']=='coverage':
                 thiscoverage = scen['programs']
-
+            
             thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen['t'], parset=scen['parset'])
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
