@@ -1,6 +1,6 @@
 """
 This module implements the monotonic Piecewise Cubic Hermite Interpolating Polynomial (PCHIP).
-Slopes are constrained via the Fritsch–Carlson method. 
+Slopes are constrained via the Fritsch-Carlson method.
 More details: https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
 Script written by Chris Michalski 2009aug18 used as a basis.
 
