@@ -484,7 +484,7 @@ class ProgramsDb(db.Model):
                 't': [self.costcov[i]['year'] for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] for i in range(len(self.costcov))],
                 'coverage': [self.costcov[i]['cov'] for i in range(len(self.costcov))],
-            }
+            } if self.costcov is not None else None
         )
         program_entry.id = self.id
         return program_entry
@@ -534,6 +534,21 @@ class ProgsetsDb(db.Model):
 
         return progset_entry
 
+    def _program_to_dict(self, program_be):
+        program = program_be.__dict__
+        program['parameters'] = program.get('targetpars', [])
+        if program['costcovdata'] is None:
+            program['costcov'] = []
+        else:
+            program['costcov'] = [
+                {
+                    'year': program['costcovdata']['t'][i],
+                    'cost': program['costcovdata']['cost'][i],
+                    'cov': program['costcovdata']['coverage'][i],
+                } for i in range(len(program['costcovdata']['t']))
+            ]
+        return program
+
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
 
@@ -545,8 +560,7 @@ class ProgsetsDb(db.Model):
             program_name = program['name']
             if program_name in progset.programs:
                 loaded_programs.add(program_name)
-                program = progset.programs[program_name].__dict__
-                program['parameters'] = program.get('targetpars', [])
+                program = self._program_to_dict(progset.programs[program_name])
                 active = True
             else:
                 active = False
@@ -556,8 +570,7 @@ class ProgsetsDb(db.Model):
         # In case programs from prj are not in the defaults
         for program_name, program in progset.programs.iteritems():
             if program_name not in loaded_programs:
-                program = program.__dict__
-                program['parameters'] = program.get('targetpars', [])
+                program = self._program_to_dict(program)
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
     def create_programs_from_list(self, programs):

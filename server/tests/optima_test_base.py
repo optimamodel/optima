@@ -109,6 +109,9 @@ class OptimaTestCase(unittest.TestCase):
     def create_project(self, return_instance=False, progsets_count=0,
                        programs_per_progset=2, parset_count=0, pars={},
                        **kwargs):
+
+        from optima.utils import saves
+
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
         project = self.create_record_with(ProjectFactory, **kwargs)
@@ -116,13 +119,25 @@ class OptimaTestCase(unittest.TestCase):
         for x in range(progsets_count):
             progset = self.create_record_with(ProgsetsFactory, project_id=project.id)
             for y in range(programs_per_progset):
-                self.create_record_with(
+                program = self.create_record_with(
                     ProgramsFactory,
                     project_id=project.id,
                     progset_id=progset.id,
                     active=True,
-                    pars=pars
+                    pars=pars,
+                    costcov=[
+                        {
+                            'year': 2011,
+                            'cost': '1e6',
+                            'cov': 500000
+                        }, {
+                            'year': 2012,
+                            'cost': 1000000.0,
+                            'cov': '75e4'
+                        }
+                    ]
                 )
+                program.blob = saves(program.hydrate())
         for x in range(parset_count):
             self.create_record_with(ParsetFactory, project_id=project.id)
 
