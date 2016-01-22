@@ -95,10 +95,10 @@ except: _failed()
 try: from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
-try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
+try: from scenarios import Scen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import minoutcomes, defaultobjectives, Optim # Scenario functions
+try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
 try: from makeplots import plotepi, plotmismatch, plotallocs, plotformatslist, plotformatsdict # Create the plots

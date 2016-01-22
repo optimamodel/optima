@@ -1,6 +1,6 @@
-from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import Settings, Parameterset, Programset, Resultset, Scen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
 
 
@@ -34,7 +34,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2016jan18 by cliffk
+    Version: 2016jan22 by cliffk
     """
 
 
@@ -175,8 +175,11 @@ class Project(object):
         return None
 
 
-    def add(self, name='default', item=None, what=None, overwrite=False):
+    def add(self, name=None, item=None, what=None, overwrite=False):
         ''' Add an entry to a structure list '''
+        if name is None:
+            try: name = item.name # Try getting name from the item
+            except: name = 'default' # If not, revert to default
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
@@ -222,10 +225,10 @@ class Project(object):
     ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
-    def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
-    def addprogset(self,  name='default', progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
-    def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
-    def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
+    def addparset(self,   name=None, parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
+    def addprogset(self,  name=None, progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
+    def addscen(self,     name=None, scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
+    def addoptim(self,    name=None, optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
 
     def rmparset(self,   name): self.remove(what='parset',   name=name)
     def rmprogset(self,  name): self.remove(what='progset',  name=name)
@@ -244,7 +247,7 @@ class Project(object):
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
     def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result)
-    def rmresult(self, index=-1):      self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
+    def rmresult(self, index=-1):     self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
 
 
 
@@ -298,17 +301,29 @@ class Project(object):
         manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
         return None
 
+
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         return None
     
+    
+    def runscenarios(self, name=None, scenlist=None, verbose=2):
+        ''' Function to minimize outcomes '''
+        scen = Scen(project=self, name=name, scenlist=scenlist)
+        multires = runscenarios(project=self, scenlist=scenlist, verbose=verbose)
+        self.addscen(scen=scen)
+        self.addresult(result=multires)
+        self.scen[-1].resultsref = multires.uid
+        return None
+    
+    
     def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
-        self.addresult(result=results)
-        self.optims[-1].resultsref = results.uid
+        self.addresult(result=multires)
+        self.optims[-1].resultsref = multires.uid
         return None

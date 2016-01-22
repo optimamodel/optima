@@ -8,6 +8,57 @@ from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, 
 from numpy import zeros, arange, array, isnan
 
 
+
+
+
+class Optim(object):
+    ''' An object for storing an optimization '''
+    
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
+        self.name = name # Name of the parameter set, e.g. 'default'
+        self.uid = uuid() # ID
+        self.project = project # Store pointer for the project, if available
+        self.created = today() # Date created
+        self.modified = today() # Date modified
+        self.parsetname = parsetname # Parameter set name
+        self.progsetname = progsetname # Program set name
+        self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.constraints = constraints # List of populations
+        if objectives is None: self.objectives = defaultobjectives()
+        if constraints is None: self.constraints = 'WARNING, not implemented'
+        self.resultsref = None # Store pointer to results
+        
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = '============================================================\n'
+        output += ' Optimization name: %s\n'    % self.name
+        output += 'Parameter set name: %s\n'    % self.parsetname
+        output += '  Program set name: %s\n'    % self.progsetname
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+    
+    
+    def getresults(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None and self.project is not None:
+            results = getresults(project=self.project, pointer=self.resultsref)
+            return results
+        else:
+            print('WARNING, no results associated with this parameter set')
+            return None
+
+
+
+
+
+
+
+
 def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
     
     # Validate input
@@ -135,45 +186,3 @@ def defaultobjectives(verbose=2):
     objectives['inciweight'] = 1 # "Incidence weighting"
     
     return objectives
-
-
-
-
-class Optim(object):
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
-        self.name = name # Name of the parameter set, e.g. 'default'
-        self.uid = uuid() # ID
-        self.project = project # Store pointer for the project, if available
-        self.created = today() # Date created
-        self.modified = today() # Date modified
-        self.parsetname = parsetname # Parameter set name
-        self.progsetname = progsetname # Program set name
-        self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
-        self.constraints = constraints # List of populations
-        if objectives is None: self.objectives = defaultobjectives()
-        if constraints is None: self.constraints = 'WARNING, not implemented'
-        self.resultsref = None # Store pointer to results
-        
-    
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = '============================================================\n'
-        output += ' Optimization name: %s\n'    % self.name
-        output += 'Parameter set name: %s\n'    % self.parsetname
-        output += '  Program set name: %s\n'    % self.progsetname
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
-        return output
-    
-    
-    def getresults(self):
-        ''' A little method for getting the results '''
-        if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
-            return results
-        else:
-            print('WARNING, no results associated with this parameter set')
-            return None

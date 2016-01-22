@@ -1,20 +1,63 @@
 ## Imports
 from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
-from optima import dcp, today, odict, printv, findinds, runmodel #, sanitize, uuid, getdate, smoothinterp
+from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, getdate, uuid, objrepr, getresults #, sanitize, uuid, getdate, smoothinterp
 
-def runscenarios(scenlist=None, default_parset=None, verbose=2, debug=False):
+
+
+
+
+class Scen(object):
+    ''' An object for storing a scenario '''
+    
+    def __init__(self, project=None, name='default', scenlist=None):
+        self.name = name # Name of the parameter set, e.g. 'default'
+        self.uid = uuid() # ID
+        self.project = project # Store pointer for the project, if available
+        self.created = today() # Date created
+        self.modified = today() # Date modified
+        self.scenlist = scenlist
+        self.resultsref = None # Store pointer to results
+        
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = '============================================================\n'
+        output += '      Scenario name: %s\n'    % self.name
+        output += 'Number of scenarios: %i\n'    % len(self.scenlist)
+        output += '       Date created: %s\n'    % getdate(self.created)
+        output += '      Date modified: %s\n'    % getdate(self.modified)
+        output += '                UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+    
+    
+    def getresults(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None and self.project is not None:
+            results = getresults(project=self.project, pointer=self.resultsref)
+            return results
+        else:
+            print('WARNING, no results associated with this parameter set')
+
+
+
+
+
+
+
+
+def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     """
     Run all the scenarios.
+    
+    Version: 2016jan22 by cliffk
     """
     
     printv('Running scenarios...', 1, verbose)
     
     # Make sure scenarios exist
-    if scenlist==None:
-        if default_parset==None: 
-            errormsg = 'Please specify a parameter set to use as a baseline.'
-            raise Exception(errormsg)
-        else: scenlist = defaultscenarios(default_parset, verbose=verbose)
+    if scenlist==None: scenlist = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
     nscenarios = len(scenlist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
@@ -26,8 +69,13 @@ def runscenarios(scenlist=None, default_parset=None, verbose=2, debug=False):
         allresults.append(runmodel(pars=scenparsets[scen].pars[0], verbose=1)) # Don't bother printing out model run because it's obvious
         printv('Scenario: %i/%i' % (scenno+1, nscenarios), 2, verbose)
     
+    multires = Multiresultset(allresults)
+    
     printv('...done running scenarios.', 2, verbose)
-    return allresults
+    return multires
+
+
+
 
 
 def makescenarios(scenlist, verbose=2):
@@ -88,26 +136,32 @@ def makescenarios(scenlist, verbose=2):
     return scenparsets
 
 
-def defaultscenarios(default_parset, verbose=2):
+
+
+
+def defaultscenarios(parset=None, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
+    if parset is None: raise Exception('You need to supply a parset to generate default scenarios')
     
     scenlist = [odict()]
     
     ## Current conditions
     scenlist[0]['name'] = 'Current conditions'
-    scenlist[0]['parset'] = default_parset
+    scenlist[0]['parset'] = parset
     scenlist[0]['pars'] = [] # No changes
     
     return scenlist
 
-def getparvalues(parset, par, dt=.2):
+
+
+def getparvalues(parset, par):
     """
     Return the default parameter values from simpars for a given par.
     
     defaultvals = getparvalues(P, parset, scenariolist[1]['pars'][2])
     """
     npops = len(parset.pars[0]['popkeys'])
-    simpars = parset.interp(start=par['startyear'], end=par['endyear'], dt=dt)
+    simpars = parset.interp(start=par['startyear'], end=par['endyear'])
 
     original = simpars[par['names'][0]]
     
@@ -122,3 +176,6 @@ def getparvalues(parset, par, dt=.2):
     endval = original[finalindex][0]
     return [startval, endval]
         
+
+
+
