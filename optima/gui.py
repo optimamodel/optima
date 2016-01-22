@@ -81,19 +81,19 @@ def update(event=None, tmpresults=None):
     # Get user selections
     ischecked = getchecked(check)
     toplot = array(checkboxes)[array(ischecked)].tolist() # Use logical indexing to get names to plot
-    nplots = sum(ischecked) # Calculate rows and columns of subplots
-    nrows = int(ceil(sqrt(nplots)))
-    ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     
     # Do plotting
-    if nplots>0: # Don't do anything if no plots
+    if sum(ischecked): # Don't do anything if no plots
         wasinteractive = isinteractive()
         if wasinteractive: ioff()
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         
         # Actually create plots
         plots = plotepi(results, which=toplot, figsize=(width, height))
-        for p in range(len(plots)): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
+        nplots = len(plots)
+        nrows = int(ceil(sqrt(nplots)))
+        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
+        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
         if wasinteractive: ion()
         show()
 
