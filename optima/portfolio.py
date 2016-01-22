@@ -1,5 +1,5 @@
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
+from optima import gitinfo # Import functions
 from optima import __version__ # Get current version
 
 from optima import defaultobjectives

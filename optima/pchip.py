@@ -1,36 +1,12 @@
-'''
+"""
+This module implements the monotonic Piecewise Cubic Hermite Interpolating Polynomial (PCHIP).
+Slopes are constrained via the Fritsch–Carlson method. 
+More details: https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
+Script written by Chris Michalski 2009aug18 used as a basis.
 
-pychip.py
-Michalski
-20090818
+Version: 2016jan22 by davidkedz
+"""
 
-Piecewise cubic Hermite interpolation (monotonic...) in Python
-
-References:
-
-    Wikipedia:  Monotone cubic interpolation
-                Cubic Hermite spline
-
-A cubic Hermite spline is a third degree spline with each polynomial of the spline
-in Hermite form.  The Hermite form consists of two control points and two control
-tangents for each polynomial.  Each interpolation is performed on one sub-interval
-at a time (piece-wise).  A monotone cubic interpolation is a variant of cubic
-interpolation that preserves monotonicity of the data to be interpolated (in other
-words, it controls overshoot).  Monotonicity is preserved by linear interpolation
-but not by cubic interpolation.
-
-Use:
-
-There are two separate calls, the first call, pchip_slopes(),  computes the slopes that
-the interpolator needs.  If there are a large number of points to compute,
-it is more efficient to compute the slopes once, rather than for  every point
-being evaluated.  The second call, pchip_eval(), takes the slopes computed by
-pchip_slopes() along with X, Y, and a vector of desired "xnew"s and computes a vector
-of "ynew"s.  If only a handful of points is needed, pchip() is a  third function
-which combines a call to pchip_slopes() followed by pchip_eval().
-
-'''
-import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import linspace
@@ -108,7 +84,7 @@ def pchip_eval(x, y, m, xvec, deriv = False):
         while xc < x[-1] and xc >= x[c+1]:
             c += 1
 
-        print('%f %f' % (xc,x[c]))        
+#        print('%f %f' % (xc,x[c]))        
         
         # Create the Hermite coefficients
         h = x[c+1] - x[c]
@@ -145,13 +121,9 @@ def plotpchip(x, y, deriv = False, returnplot = False):
         ax = fig.add_subplot(111)
         
         plt.plot(xnew, pchip(x,y,xnew,deriv))
-#        plt.plot(x,f(x),'-',label='BOC')
-#        plt.xlabel('Allocation Total')            
-#        plt.ylabel('Outcome')
         if returnplot:
             return ax
         else:
-#            plt.legend(loc='best')
             plt.show()
     except:
         print('Plotting of Budget Objective Curve failed!')
