@@ -6,10 +6,11 @@ from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
-    def __init__(self, name=None, parset=None, t=None):
+    def __init__(self, name=None, parset=None, t=None, active=True):
         self.name = name
         self.parset = parset
         self.t = t
+        self.active = active
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -20,14 +21,14 @@ class Scen(object):
 
 class Parscen(Scen):
     ''' An object for storing a single parameter scenario '''
-    def __init__(self, name=None, parset=None, t=None, pars=None):
-            Scen.__init__(self, name=name, parset=parset, t=t)
+    def __init__(self, pars=None, **defaultargs):
+            Scen.__init__(self, **defaultargs)
             self.pars = pars
 
 class Progscen(Scen):
     ''' An object for storing a single parameter scenario '''
-    def __init__(self, name=None, parset=None, t=None, progscentype=None, progset=None, programs=None):
-            Scen.__init__(self, name=name, parset=parset, t=t)
+    def __init__(self, progscentype=None, progset=None, programs=None, **defaultargs):
+            Scen.__init__(self, **defaultargs)
             self.progscentype = progscentype
             self.progset = progset
             self.programs = programs
