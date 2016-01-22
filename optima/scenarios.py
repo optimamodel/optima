@@ -49,7 +49,7 @@ class Progscen(Scen):
 
 
 
-def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
+def runscenarios(project=None, verbose=2, defaultparset=0):
     """
     Run all the scenarios.
     
@@ -60,7 +60,10 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     
     # Make sure scenarios exist
     if project is None: raise Exception('First argument to runscenarios() must be a project')
-    if scenlist is None: scenlist = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
+    if len(project.scens)==0:  # Create scenario list if not existing
+        defaultscens = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
+        project.addscenlist(defaultscens)
+    scenlist = [scen for scen in project.scens.values() if scen.active==True]
     nscens = len(scenlist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
@@ -74,6 +77,7 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
     multires = Multiresultset(allresults)
+    for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
     printv('...done running scenarios.', 2, verbose)
     return multires

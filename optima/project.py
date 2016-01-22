@@ -1,4 +1,4 @@
-from optima import Settings, Parameterset, Programset, Resultset, Scenset, Optim # Import classes
+from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
@@ -253,7 +253,11 @@ class Project(object):
 
     def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result)
     def rmresult(self, index=-1):     self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
-
+    
+    def addscenlist(self, scenlist): 
+        ''' Tiny function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
+        for scen in scenlist: self.addscen(name=scen.name, scen=scen)
+        return None
 
 
 
@@ -314,13 +318,11 @@ class Project(object):
         return None
     
     
-    def runscenarios(self, name=None, scenlist=None, verbose=2):
+    def runscenarios(self, scenlist=None, verbose=2):
         ''' Function to minimize outcomes '''
-        scen = Scenset(project=self, name=name, scenlist=scenlist)
-        multires = runscenarios(project=self, scenlist=scenlist, verbose=verbose)
-        self.addscen(scen=scen)
+        if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
+        multires = runscenarios(project=self, verbose=verbose)
         self.addresult(result=multires)
-        self.scens[-1].resultsref = multires.uid
         return None
     
     
@@ -330,5 +332,4 @@ class Project(object):
         multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
         self.addresult(result=multires)
-        self.optims[-1].resultsref = multires.uid
         return None

@@ -156,7 +156,7 @@ if 'standardscen' in tests:
         ]
     
     # Run the scenarios
-    P.runscenarios('scentest', scenlist=scenlist)
+    P.runscenarios(scenlist)
      
     if doplot:
         from optima import pygui
