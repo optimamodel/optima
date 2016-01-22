@@ -1,4 +1,4 @@
-from optima import Settings, Parameterset, Programset, Resultset, Scen, Optim # Import classes
+from optima import Settings, Parameterset, Programset, Resultset, Scenset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet # Import functions
 from optima import __version__ # Get current version
@@ -311,7 +311,7 @@ class Project(object):
     
     def runscenarios(self, name=None, scenlist=None, verbose=2):
         ''' Function to minimize outcomes '''
-        scen = Scen(project=self, name=name, scenlist=scenlist)
+        scen = Scenset(project=self, name=name, scenlist=scenlist)
         multires = runscenarios(project=self, scenlist=scenlist, verbose=verbose)
         self.addscen(scen=scen)
         self.addresult(result=multires)

@@ -5,9 +5,13 @@ from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset
 
 
 
+#class Scenario(object):
+#    ''' An object for storing a single scenario '''
 
-class Scen(object):
-    ''' An object for storing a scenario '''
+
+
+class Scenset(object):
+    ''' An object for storing a set of scenarios '''
     
     def __init__(self, project=None, name='default', scenlist=None):
         self.name = name # Name of the parameter set, e.g. 'default'
@@ -67,6 +71,7 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     allresults = []
     for scenno, scen in enumerate(scenparsets):
         allresults.append(runmodel(pars=scenparsets[scen].pars[0], verbose=1)) # Don't bother printing out model run because it's obvious
+        allresults[-1].name = scenlist[scenno]['name'] # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscenarios), 2, verbose)
     
     multires = Multiresultset(allresults)

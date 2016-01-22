@@ -161,8 +161,7 @@ if 'standardscen' in tests:
                        'ART':array([1e6,2e6])}}
         ]
     
-    print('TEMP')
-    P.runscenarios('scentest', scenlist=scenlist[0:2])
+    P.runscenarios('scentest', scenlist=scenlist)
      
     if doplot:
         from optima import pygui

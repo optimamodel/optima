@@ -95,7 +95,7 @@ except: _failed()
 try: from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
-try: from scenarios import Scen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
+try: from scenarios import Scenset, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
 try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
