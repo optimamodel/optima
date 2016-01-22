@@ -1,7 +1,13 @@
-from optima import Resultset, Multiresultset, odict, gridcolormap
-from numpy import array, ndim, maximum, arange
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+'''
+MAKEPLOTS
 
+This file generates all the figure files -- either for use with the Python backend, or
+for the frontend via MPLD3.
+'''
+
+from optima import Resultset, Multiresultset, odict, gridcolormap
+from numpy import array, ndim, maximum, arange, transpose
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 
 
@@ -13,13 +19,13 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
 
-        Version: 2016jan18
+        Version: 2016jan21
         '''
         
         # Figure out what kind of result it is
-        if type(results)==Resultset: kind='single'
+        if type(results)==Resultset: ismultisim = False
         elif type(results)==Multiresultset: 
-            kind='multi'
+            ismultisim = True
             best = list() # Initialize as empty list for storing results sets
             labels = results.keys # Figure out the labels for the different lines
             nlinesperplot = len(labels) # How ever many things are in results
@@ -30,8 +36,12 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
         # Initialize
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
-        if which is None: which = [datatype+'-'+poptype for datatype in results.main.keys() for poptype in ['pops', 'sep', 'tot']] # Just plot everything if not specified
+        if which is None: which = [datatype+'-'+plotformat for datatype in results.main.keys() for plotformat in ['p', 's', 't']] # Just plot everything if not specified
         elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
+
+        # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
+        plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
+        plotformatsdict = odict({key:plotformatslist[i] for i,key in enumerate(['tot','pop','sta'])}) # More flexible but less clear than plotformatsdict = odict({'tot':plotformatslist[0], 'pop':plotformatslist[1], 'sta':plotformatslist[2]})
 
         # Loop over each plot
         epiplots = odict()
@@ -41,17 +51,16 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ## Parse user input
             ################################################################################################################
             try:
-                if type(plotkey)==str: datatype, poptype = plotkey.split('-')
-                elif type(plotkey) in [list, tuple]: datatype, poptype = plotkey[0], plotkey[1]
+                if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
+                elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 else: 
                     errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
                     raise Exception(errormsg)
                 if datatype not in results.main.keys():
-                    errormsg = 'Could not understand plot "%s"; ensure keys are one of:\n' % datatype
-                    errormsg += '%s' % results.main.keys()
+                    errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
                     raise Exception(errormsg)
-                if poptype not in ['pops', 'sep', 'tot']:
-                    errormsg = 'Type "%s" should be either "pops", "sep", or "tot"'
+                if plotformat not in plotformatslist.flatten():
+                    errormsg = 'Could not understand type "%s"; should be one of:\n%s' % plotformatslist
                     raise Exception(errormsg)
             except:
                 errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
@@ -62,26 +71,32 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
+                
+            istot = (plotformat in plotformatsdict['tot'])
             
             
             ################################################################################################################
             ## Process the plot data
             ################################################################################################################
-            datapoptype = 'pops' if poptype=='sep' else poptype # Replace 'sep' with 'pops' for extracting data
-            if kind=='single': # Single results thing: plot with uncertainties and data
-                best = getattr(results.main[datatype], datapoptype)[0] # poptype = either 'tot' or 'pops'
+            
+            # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
+            if plotformat in plotformatsdict['tot']: attrtype = 'tot' 
+            if plotformat in plotformatsdict['per','sta'].flatten(): attrtype = 'pops'
+            
+            if not ismultisim: # Single results thing: plot with uncertainties and data
+                best = getattr(results.main[datatype], attrtype)[0] # poptype = either 'tot' or 'pops'
                 try: # If results were calculated with quantiles, these should exist
-                    lower = getattr(results.main[datatype], datapoptype)[1]
-                    upper = getattr(results.main[datatype], datapoptype)[2]
+                    lower = getattr(results.main[datatype], attrtype)[1]
+                    upper = getattr(results.main[datatype], attrtype)[2]
                 except: # No? Just use the best data
                     lower = best
                     upper = best
-            elif kind=='multi':
-                for l in range(nlinesperplot): best.append(getattr(results.main[datatype], datapoptype)[l])
+            else:
+                for l in range(nlinesperplot): best.append(getattr(results.main[datatype], attrtype)[l])
                 lower = None
                 upper = None
             try: # Try loading actual data -- very likely to not exist
-                tmp = getattr(results.main[datatype], 'data'+datapoptype)
+                tmp = getattr(results.main[datatype], 'data'+attrtype)
                 databest = tmp[0]
                 datalow = tmp[1]
                 datahigh = tmp[2]
@@ -98,7 +113,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ################################################################################################################
             ## Set up figure and do plot
             ################################################################################################################
-            seppops = poptype=='sep' # Whether or not populations are separated
+            seppops = (plotformat in plotformatsdict['spl']) # Whether or not populations are separated
             if seppops: 
                 pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
@@ -123,7 +138,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 # Plot data points with uncertainty
                 for l in range(nlines):
                     if databest is not None:
-                        scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)a
+                        scatter(results.datayears, factor*databest[l], c=colors[l], s=dotsize, lw=0)
                         for y in range(len(results.datayears)):
                             plot(results.datayears[y]*array([1,1]), factor*array([datalow[l][y], datahigh[l][y]]), c=colors[l], lw=1)
                 
