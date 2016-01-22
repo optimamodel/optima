@@ -6,10 +6,17 @@ from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
-    def __init__(self, name=None, parset=None, t):
+    def __init__(self, name=None, parset=None, t=None):
         self.name = name
         self.parset = parset
         self.t = t
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = defaultrepr(self)
+        return output
+    
+    
 
 class Parscen(Scen):
     ''' An object for storing a single parameter scenario '''
@@ -19,9 +26,9 @@ class Parscen(Scen):
 
 class Progscen(Scen):
     ''' An object for storing a single parameter scenario '''
-    def __init__(self, progscenariotype=None, progset=None, programs=None, **defaultargs):
+    def __init__(self, progscentype=None, progset=None, programs=None, **defaultargs):
             Scen.__init__(self, **defaultargs)
-            self.progscenariotype = progscenariotype
+            self.progscentype = progscentype
             self.progset = progset
             self.programs = programs
 
@@ -78,7 +85,7 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     
     # Make sure scenarios exist
     if scenlist==None: scenlist = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
-    nscenarios = len(scenlist)
+    nscens = len(scenlist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(scenlist,verbose=verbose)
@@ -88,7 +95,7 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     for scenno, scen in enumerate(scenparsets):
         allresults.append(runmodel(pars=scenparsets[scen].pars[0], verbose=1)) # Don't bother printing out model run because it's obvious
         allresults[-1].name = scenlist[scenno]['name'] # Give a name to these results so can be accessed for the plot legend
-        printv('Scenario: %i/%i' % (scenno+1, nscenarios), 2, verbose)
+        printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
     multires = Multiresultset(allresults)
     
@@ -136,9 +143,9 @@ def makescenarios(scenlist, verbose=2):
     
         elif type(scen)==Progscen:
             thisprogset = scen.progset
-            if scen.progscenariotype=='budget':
+            if scen.progscentype=='budget':
                 thiscoverage = thisprogset.getprogcoverage(budget=scen.programs, t=scen.t, parset=scen.parset)
-            elif scen['progscenariotype']=='coverage':
+            elif scen.progscentype=='coverage':
                 thiscoverage = scen.programs
             
             thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen.t, parset=scen.parset)
