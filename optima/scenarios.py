@@ -84,16 +84,17 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     printv('Running scenarios...', 1, verbose)
     
     # Make sure scenarios exist
-    if scenlist==None: scenlist = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
+    if project is None: raise Exception('First argument to runscenarios() must be a project')
+    if scenlist is None: scenlist = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
     nscens = len(scenlist)
     
     # Convert the list of scenarios to the actual parameters to use in the model
-    scenparsets = makescenarios(scenlist,verbose=verbose)
+    scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)
 
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        allresults.append(runmodel(pars=scenparsets[scen].pars[0], verbose=1)) # Don't bother printing out model run because it's obvious
+        allresults.append(runmodel(pars=scenparsets[scen].pars[0], project=project, verbose=1)) # Don't bother printing out model run because it's obvious
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
@@ -106,13 +107,14 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
 
 
 
-def makescenarios(scenlist, verbose=2):
+def makescenarios(project=None, scenlist=None, verbose=2):
     """ Convert dictionary of scenario parameters into parset to model parameters """
 
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        thisparset = dcp(scen.parset)
+        try: thisparset = dcp(project.parsets[scen.parset])
+        except: raise Exception('Failed to extract parset "%s" from this project:\n%s' % (scen.parset, project))
         thisparset.modified = today()
         thisparset.name = scen.name
         npops = len(thisparset.popkeys)
@@ -142,13 +144,14 @@ def makescenarios(scenlist, verbose=2):
                             thispar.y[pop] = append(thispar.y[pop], par['endval'])
     
         elif type(scen)==Progscen:
-            thisprogset = scen.progset
+            try: thisprogset = dcp(project.progsets[scen.progset])
+            except: raise Exception('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
             if scen.progscentype=='budget':
-                thiscoverage = thisprogset.getprogcoverage(budget=scen.programs, t=scen.t, parset=scen.parset)
+                thiscoverage = thisprogset.getprogcoverage(budget=scen.programs, t=scen.t, parset=thisparset)
             elif scen.progscentype=='coverage':
                 thiscoverage = scen.programs
             
-            thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen.t, parset=scen.parset)
+            thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen.t, parset=thisparset)
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
 

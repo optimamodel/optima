@@ -176,10 +176,15 @@ class Project(object):
 
 
     def add(self, name=None, item=None, what=None, overwrite=False):
-        ''' Add an entry to a structure list '''
+        ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
         if name is None:
             try: name = item.name # Try getting name from the item
             except: name = 'default' # If not, revert to default
+        if item is None and type(name)!=str: # Maybe an item has been supplied as the only argument
+            try: 
+                item = name # It's actully an item, not a name
+                name = item.name # Try getting name from the item
+            except: raise Exception('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
