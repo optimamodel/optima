@@ -315,7 +315,7 @@ class Project(object):
         multires = runscenarios(project=self, scenlist=scenlist, verbose=verbose)
         self.addscen(scen=scen)
         self.addresult(result=multires)
-        self.scen[-1].resultsref = multires.uid
+        self.scens[-1].resultsref = multires.uid
         return None
     
     
