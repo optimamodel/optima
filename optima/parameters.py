@@ -597,9 +597,9 @@ class Constant(Par):
 
 
 class Parameterset(object):
-    ''' A full set of all parameters, possibly including multiple uncertainty runs '''
+    ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
@@ -608,6 +608,8 @@ class Parameterset(object):
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
         self.resultsref = None # Store pointer to results
+        self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
+        self.budget = budget # Store the budget that generated the parset, if any
         
     
     def __repr__(self):
@@ -624,7 +626,7 @@ class Parameterset(object):
     
     
     def getresults(self):
-        ''' A little method for getting the results '''
+        ''' Method for getting the results '''
         if self.resultsref is not None and self.project is not None:
             results = getresults(project=self.project, pointer=self.resultsref)
             return results

@@ -348,8 +348,8 @@ class Programset(object):
         
         return outcomes
         
-    def getparsdict(self, coverage, t, parset, ind=0, perturb=False):
-        ''' Make a parset'''
+    def getpars(self, coverage, t, parset, ind=0, perturb=False):
+        ''' Make pars'''
         
         # Process inputs
         if type(t) in [int,float]: t = [t]
@@ -358,15 +358,15 @@ class Programset(object):
         outcomes = self.getoutcomes(coverage=coverage, t=t, parset=parset, perturb=perturb)
 
         # Create a parset and copy over parameter changes
-        parsdict = dcp(parset.pars[ind])
+        pars = dcp(parset.pars[ind])
         for outcome in outcomes.keys():
             for p in outcomes[outcome].keys():
-                parsdict[outcome].t[p] = append(parsdict[outcome].t[p], min(t)-1) # Include the year before the programs start...
-                parsdict[outcome].y[p] = append(parsdict[outcome].y[p], parsdict[outcome].y[p][-1]) # Include the year before the programs start...
-                parsdict[outcome].t[p] = append(parsdict[outcome].t[p], array(t))
-                parsdict[outcome].y[p] = append(parsdict[outcome].y[p], array(outcomes[outcome][p]))
+                pars[outcome].t[p] = append(pars[outcome].t[p], min(t)-1) # Include the year before the programs start...
+                pars[outcome].y[p] = append(pars[outcome].y[p], pars[outcome].y[p][-1]) # Include the year before the programs start...
+                pars[outcome].t[p] = append(pars[outcome].t[p], array(t))
+                pars[outcome].y[p] = append(pars[outcome].y[p], array(outcomes[outcome][p]))
 
-        return parsdict
+        return pars
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''

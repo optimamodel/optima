@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
 
@@ -260,7 +260,7 @@ class Project(object):
     def rmresult(self, index=-1):     self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
     
     def addscenlist(self, scenlist): 
-        ''' Tiny function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
+        ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
         for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
         return None
 
@@ -327,13 +327,23 @@ class Project(object):
     
     
     def runscenarios(self, scenlist=None, verbose=2):
-        ''' Function to minimize outcomes '''
+        ''' Function to run scenarios '''
         if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
         multires = runscenarios(project=self, verbose=verbose)
         self.addresult(result=multires)
         self.modified = today()
         return None
     
+
+    def runbudget(self, budget=None, t=None, progsetname=None, parsetname=None, verbose=2):
+        ''' Function to run the model for a given buget, programset and parameterset '''
+        coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=t, parset=self.parsets[parsetname])
+        progpars = self.progsets[progsetname].getpars(coverage=coverage,t=t, parset=self.parsets[parsetname])
+        results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget)
+        self.addresult(results)
+        self.modified = today()
+        return None
+
     
     def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''

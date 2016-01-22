@@ -57,7 +57,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -89,7 +89,7 @@ class Resultset(object):
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
-        self.budget = progset # Store budget
+        self.budget = budget # Store budget
         self.data = data # Store data
         self.settings = settings if settings is not None else Settings()
         
@@ -247,7 +247,7 @@ class Resultset(object):
 
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
-    def __init__(self, resultsetlist=None, budget=None):
+    def __init__(self, resultsetlist=None):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -257,9 +257,6 @@ class Multiresultset(Resultset):
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
-        
-        # Results specific to a Multiresultset
-        self.budget = budget
         
         
         # Fundamental quantities -- populated by project.runsim()

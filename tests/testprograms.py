@@ -52,7 +52,7 @@ if 'makeprograms' in tests:
     t = tic()
 
     print('Running make programs test...')
-    from optima import Project, Program, Programset
+    from optima import Project, Program, Programset, Parameterset, runmodel
     
     P = Project(spreadsheet='test7pops.xlsx')
 
@@ -73,8 +73,7 @@ if 'makeprograms' in tests:
                    name='Social and behaviour change communication',
                    targetpars=[{'param': 'condcas', 'pop': ('F 15+','M 15+')},
                                {'param': 'hivtest', 'pop': 'F 15+'}],
-                   targetpops=['F 15+']) # CK: what should this be for a partnership?
-                                           # RS: it should be the population that's targeted. E.g. if the condoms are distributed to the FSW, that's the target population.
+                   targetpops=['F 15+']) 
 
     MGT = Program(short='MGT')
 
@@ -277,19 +276,12 @@ if 'makeprograms' in tests:
                                 t=[2015,2016,2020],
                                 parset=P.parsets['default'])
 
-    # 13. Get a parset of the ALL parameter values corresponding to a vector of program allocations
-    progparset1 = R.getparsdict(coverage=coverage,
-                  t=[2015,2016,2020],
-                  parset=P.parsets['default'])
-
-#    # 14. Plot cost-coverage curves for all programs
-#    if doplot: R.plotallcoverage(t=[2013,2015],
-#                      parset=P.parsets['default'])
-
-    R.getdefaultbudget(tvec=linspace(2000,2030,31))
-
-    done(t)
+    # 13. Get an odict of the ALL parameter values corresponding to a vector of program allocations
+    P.addprogset(name='default', progset=R)
+    P.runbudget(budget=budget, t=[2015,2016,2020], progsetname='default', parsetname='default')
     
+    done(t)
+
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
