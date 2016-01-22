@@ -256,7 +256,7 @@ class Project(object):
     
     def addscenlist(self, scenlist): 
         ''' Tiny function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
-        for scen in scenlist: self.addscen(name=scen.name, scen=scen)
+        for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
         return None
 
 

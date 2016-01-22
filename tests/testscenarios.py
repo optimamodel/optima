@@ -155,8 +155,13 @@ if 'standardscen' in tests:
                            'ART':array([1e6,2e6])})
         ]
     
+    # Store these in the project
+    P.addscenlist(scenlist)
+    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
+    P.scens[4].active = False # Turn off another scenario
+    
     # Run the scenarios
-    P.runscenarios(scenlist)
+    P.runscenarios() # Alternate: P.runscenarios() if already defined
      
     if doplot:
         from optima import pygui
