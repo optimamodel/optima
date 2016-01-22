@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
-from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, getdate, uuid, objrepr, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
+from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
 
 
 
@@ -11,11 +11,20 @@ class Scen(object):
         self.parset = parset
         self.t = t
         self.active = active
+        self.resultsref = None
     
     def __repr__(self):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
+
+    def getresults(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None and self.project is not None:
+            results = getresults(project=self.project, pointer=self.resultsref)
+            return results
+        else:
+            print('WARNING, no results associated with this scenario')
     
     
 
@@ -25,6 +34,8 @@ class Parscen(Scen):
             Scen.__init__(self, **defaultargs)
             self.pars = pars
 
+
+
 class Progscen(Scen):
     ''' An object for storing a single parameter scenario '''
     def __init__(self, progscentype=None, progset=None, programs=None, **defaultargs):
@@ -32,43 +43,6 @@ class Progscen(Scen):
             self.progscentype = progscentype
             self.progset = progset
             self.programs = programs
-
-
-class Scenset(object):
-    ''' An object for storing a set of scenarios '''
-    
-    def __init__(self, project=None, name='default', scenlist=None):
-        self.name = name # Name of the parameter set, e.g. 'default'
-        self.uid = uuid() # ID
-        self.project = project # Store pointer for the project, if available
-        self.created = today() # Date created
-        self.modified = today() # Date modified
-        self.scenlist = scenlist
-        self.resultsref = None # Store pointer to results
-        
-    
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = '============================================================\n'
-        output += '      Scenario name: %s\n'    % self.name
-        output += 'Number of scenarios: %i\n'    % len(self.scenlist)
-        output += '       Date created: %s\n'    % getdate(self.created)
-        output += '      Date modified: %s\n'    % getdate(self.modified)
-        output += '                UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
-        return output
-    
-    
-    def getresults(self):
-        ''' A little method for getting the results '''
-        if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
-            return results
-        else:
-            print('WARNING, no results associated with this parameter set')
-
-
 
 
 
