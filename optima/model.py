@@ -169,6 +169,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         # Populated equilibrated array
         initpeople[uncirc, p] = uncircumcised
         initpeople[circ, p] = circumcised
+        #initpeople[sus, p]  = uninfected
         initpeople[undx, p] = undiagnosed
         initpeople[dx, p]   = diagnosed * (1.-immediatecare[p,0])
         initpeople[care, p] = diagnosed * immediatecare[p,0]
