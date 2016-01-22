@@ -20,14 +20,14 @@ class Scen(object):
 
 class Parscen(Scen):
     ''' An object for storing a single parameter scenario '''
-    def __init__(self, pars=None, **defaultargs):
-            Scen.__init__(self, **defaultargs)
+    def __init__(self, name=None, parset=None, t=None, pars=None):
+            Scen.__init__(self, name=name, parset=parset, t=t)
             self.pars = pars
 
 class Progscen(Scen):
     ''' An object for storing a single parameter scenario '''
-    def __init__(self, progscentype=None, progset=None, programs=None, **defaultargs):
-            Scen.__init__(self, **defaultargs)
+    def __init__(self, name=None, parset=None, t=None, progscentype=None, progset=None, programs=None):
+            Scen.__init__(self, name=name, parset=parset, t=t)
             self.progscentype = progscentype
             self.progset = progset
             self.programs = programs
@@ -94,7 +94,7 @@ def runscenarios(project=None, scenlist=None, verbose=2, defaultparset=0):
     allresults = []
     for scenno, scen in enumerate(scenparsets):
         allresults.append(runmodel(pars=scenparsets[scen].pars[0], verbose=1)) # Don't bother printing out model run because it's obvious
-        allresults[-1].name = scenlist[scenno]['name'] # Give a name to these results so can be accessed for the plot legend
+        allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
     multires = Multiresultset(allresults)
@@ -157,7 +157,7 @@ def makescenarios(scenlist, verbose=2):
             raise Exception(errormsg)
             
 
-        scenparsets[scen['name']] = thisparset
+        scenparsets[scen.name] = thisparset
 
     return scenparsets
 
