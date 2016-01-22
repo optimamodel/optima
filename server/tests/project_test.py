@@ -167,6 +167,11 @@ class ProjectTestCase(OptimaTestCase):
 
         return progsets_count, project, response
 
+    def test_project_parameters(self):
+        progsets_count, project, response = self._create_project_and_download()
+        response = self.client.get('/api/project/{}/parameters'.format(project.id))
+        self.assertEqual(response.status_code, 200)
+
     def test_download_upload_project(self):
         from server.webapp.dbmodels import ProjectDb
         from server.webapp.dbconn import db

@@ -3,7 +3,6 @@
     <a class="modal-close" ng-click="$dismiss('cancel')">&times;</a>
     <h4 class="modal-title">{{ state.isNew ? 'Create' : 'Edit'}} program</h4>
   </div>
-
   <form class="modal-body" name="programForm" novalidate="novalidate" ng-submit="submit(programForm)">
     <div class="section grid">
       <div class="++1 2">
@@ -14,7 +13,6 @@
         <div class="error-hint" ng-show="isUniqueName(state.program.name, programForm)"> A program set with this name already exists, please choose a different one. </div>
       </div>
     </div>
-
     <div class="section grid">
       <div class="++1 2" style="padding-left: 6px">
         Short name
@@ -23,7 +21,6 @@
         <input class="txbox __block" ng-model="state.program.short_name" required>
       </div>
     </div>
-
     <div class="section grid">
       <div class="++1 2" style="padding-left: 6px">
         Category
@@ -34,7 +31,6 @@
                 ng-options="category for category in state.categories"></select>
       </div>
     </div>
-
     <div ng-if="(state.program.populations && state.program.populations.length > 0) || (state.program.parameters && state.program.parameters.length > 0)">
       <div class="section grid">
         <h3>
@@ -73,62 +69,66 @@
           </div>
         </div>
       </div>
-
       <div class="section grid">
         <h3>
           Parameters in model influenced by this program
         </h3>
-
-      <div class="section_dashed_border">
-        <div ng-repeat="entry in state.program.parameters">
-
-          <div class="section well" style="margin: 10px 0">
-
-            <button type="button"
-                    class="btn __white"
-                    style="float: right; text-align: right; margin-top: 10px"
-                    ng-click="removeParameter($index)">Remove</button>
-
-            <div class="section grid">
-              <div class="++1 10 1++">
-                <label>
-                  <input type="checkbox" ng-model="entry.active">
-                  Active
-                </label>
-              </div>
+      </div>
+      <div ng-repeat="entry in state.program.parameters">
+        <div class="section well" style="margin: 10px 0">
+          <button type="button"
+                  class="btn __white"
+                  style="float: right; text-align: right; margin-top: 10px"
+                  ng-click="removeParameter($index)">Remove</button>
+          <div class="section grid">
+            <div class="++1 10 1++">
+              <label>
+                <input type="checkbox" ng-model="entry.active">
+                Active
+              </label>
             </div>
 
             <div class="section grid">
               <div class="++1 10 1++">
                 Parameters
               </div>
-              <div class="++1 10 1++">
-                <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters"></select>
-              </div>
+              <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)">
+              </select>
             </div>
-
-            <div class="section grid">
-              <h3>
-                Populations
-              </h3>
-              <div class="section_dashed_border">
-                <span class="option">
-                  <input type="checkbox" ng-click="selectAllEntryPopulations(entry)" ng-model="entry.selectAll">
-                  <span>All populations</span>
-                </span>
-                <span ng-repeat="population in entry.pops" class="option">
-                  <input type="checkbox" ng-model="population.active" />
-                  <span>{{population.name}}</span>
-                </span>
+          </div>
+          <div class="section grid" ng-if="entry.parameterObj.pships.length === 0 && entry.populations && entry.populations.length > 0">
+            <h3>
+              Populations
+            </h3>
+            <div>
+            <div class="section_dashed_border">
+              <span class="option">
+                <input type="checkbox" ng-click="addRemoveAllPopToParameter(entry)" ng-model="entry.selectAll">
+                <span>All populations</span>
+              </span>
+              <span ng-repeat="population in entry.populations" class="option">
+                <input type="checkbox" ng-model="population.added" ng-click="setParameterSelectAll(entry, entry.populations)"/>
+                <span>{{population.name}}</span>
+              </span>
               </div>
             </div>
           </div>
+          <div class="section grid" ng-if="entry.parameterObj.pships.length > 0">
+            <h3>
+              Partnerships
+            </h3>
+            <div class="section_dashed_border" ng-if="entry.parameterObj.pships.length > 0">
+              <span class="option">
+                <input type="checkbox" ng-click="addRemoveAllPshipsToParameter(entry)" ng-model="entry.selectAll">
+                <span>All partnerships</span>
+              </span>
+              <span ng-repeat="pship in entry.parameterObj.pships" class="option">
+                <input type="checkbox" ng-model="pship.added" ng-click="setParameterSelectAll(entry, entry.parameterObj.pships)"/>
+                <span>{{pship[0] + '/' + pship[1]}}</span>
+              </span>
+            </div>
+          </div>
         </div>
-        <div class="section text-center">
-          <button type="button" class="btn" ng-click="addParameter()">Add parameter</button>
-        </div>
-      </div>
-
       </div>
 
       <div class="section grid">
@@ -164,6 +164,9 @@
           </div>
       </div>
 
+    </div>
+    <div class="section text-center">
+      <button type="button" class="btn" ng-click="addParameter()">Add parameter</button>
     </div>
 
     <div class="section text-center" style="margin-top: 20px">

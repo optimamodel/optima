@@ -287,16 +287,7 @@ class ParsetsDb(db.Model):
         return parset_instance
 
     def as_file(self, loaddir, filename=None):
-        import os
-
-        parset_instance = self.hydrate()
-        if filename is None:
-            filename = '{}.par'.format(self.name)
-        server_filename = os.path.join(loaddir, filename)
-
-        op.save(server_filename, parset_instance)
-
-        return filename
+        return db_model_as_file(self, loaddir, filename, 'name', 'par')
 
     def restore(self, parset_instance):
         same_parset = (parset_instance.uid == self.id)
@@ -313,7 +304,8 @@ class ResultsDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
-    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    # When deleting a parset we only delete results of type CALIBRATION
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id', ondelete='SET NULL'))
     calculation_type = db.Column(db.Text)
     blob = db.Column(db.LargeBinary)
 
@@ -398,7 +390,7 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'costcov': fields.Json,
+#        'costcov': fields.Json,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -411,7 +403,7 @@ class ProgramsDb(db.Model):
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
     criteria = db.Column(JSON)
-    costcov = db.Column(JSON)
+#    costcov = db.Column(JSON)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
@@ -571,4 +563,4 @@ class ProgsetsDb(db.Model):
         db.session.flush()
 
     def as_file(self, loaddir, filename=None):
-        return db_model_as_file(self, loaddir, filename, 'name', 'progset')
+        return db_model_as_file(self, loaddir, filename, 'name', 'prg')
