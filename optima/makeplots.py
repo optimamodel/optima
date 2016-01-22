@@ -6,9 +6,10 @@ for the frontend via MPLD3.
 '''
 
 from optima import Resultset, Multiresultset, odict, gridcolormap
-from numpy import array, ndim, maximum, arange, transpose
+from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
+datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 
 
 def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
@@ -67,7 +68,8 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 raise Exception(errormsg)
             
             try:
-                factor = 1.0 if results.main[datatype].isnumber else 100.0 # Swap between number and percent
+                isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
+                factor = 1.0 if isnumber else 100.0 # Swap between number and percent
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
@@ -82,10 +84,15 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             ################################################################################################################
             
             # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
-            if istotal: attrtype = 'tot' 
+            if istotal or (isstacked and ismultisim): attrtype = 'tot' # Only plot total if it's a scenario and 'stacked' was requested
             else: attrtype = 'pops'
             
-            if not ismultisim: # Single results thing: plot with uncertainties and data
+            if ismultisim:  # e.g. scenario, no uncertainty
+                for l in range(nlinesperplot): best.append(getattr(results.main[datatype], attrtype)[l])
+                lower = None
+                upper = None
+                uncertainty = False
+            else: # Single results thing: plot with uncertainties and data
                 best = getattr(results.main[datatype], attrtype)[0] # poptype = either 'tot' or 'pops'
                 try: # If results were calculated with quantiles, these should exist
                     lower = getattr(results.main[datatype], attrtype)[1]
@@ -93,19 +100,15 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 except: # No? Just use the best data
                     lower = best
                     upper = best
-            else:
-                for l in range(nlinesperplot): best.append(getattr(results.main[datatype], attrtype)[l])
-                lower = None
-                upper = None
-            try: # Try loading actual data -- very likely to not exist
-                tmp = getattr(results.main[datatype], 'data'+attrtype)
-                databest = tmp[0]
-                datalow = tmp[1]
-                datahigh = tmp[2]
-            except:# Don't worry if no data
-                databest = None
-                datalow = None
-                datahigh = None
+                try: # Try loading actual data -- very likely to not exist
+                    tmp = getattr(results.main[datatype], 'data'+attrtype)
+                    databest = tmp[0]
+                    datalow = tmp[1]
+                    datahigh = tmp[2]
+                except:# Don't worry if no data
+                    databest = None
+                    datalow = None
+                    datahigh = None
             if ndim(best)==1: # Wrap so right number of dimensions -- happens if not by population
                 best  = array([best])
                 lower = array([lower])
@@ -118,7 +121,7 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
             if isperpop: pkeys = [str(plotkey)+'-'+key for key in results.popkeys] # Create list of plot keys (pkeys), one for each population
             else: pkeys = [plotkey] # If it's anything else, just go with the original, but turn into a list so can iterate
             
-            for i,pk in enumerate(pkeys): # Either loop over individual population prevalence plots, or just plot a single plot, e.g. pk='hivprev-per-FSW'
+            for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-per-FSW'
                 
                 epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
@@ -126,26 +129,58 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
                 colors = gridcolormap(nlinesperplot)
                 
-                # Plot uncertainty
+                # Plot uncertainty, but not for stacked plots
                 if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
                     fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[i], alpha=alpha, lw=0)
-    
-                # Plot model estimates with uncertainty
-5$(*$&
-                for l in range(nlinesperplot):
-                    try: plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Actually do the plot
-                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                    
+                
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if databest is not None and not isstacked and not ismultisim:
-                    scatter(results.datayears, factor*databest[i], c=colors[i], s=dotsize, lw=0)
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
                     for y in range(len(results.datayears)):
-                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=colors[i], lw=1)
+                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
+
+
+
+                ################################################################################################################
+                # Plot model estimates with uncertainty -- different for each of the different possibilities
+                ################################################################################################################
+                
+                # e.g. single simulation, prev-tot: single line, single plot
+                if not ismultisim and istotal:
+                    plot(results.tvec, factor*best[0], lw=lw, c=colors[0]) # Index is 0 since only one possibility
+                
+                # e.g. single simulation, prev-per: single line, separate plot per population
+                if not ismultisim and isperpop: 
+                    plot(results.tvec, factor*best[i], lw=lw, c=colors[0]) # Index is each individual population in a separate window
+                
+                # e.g. single simulation, prev-sta: either multiple lines or a stacked plot, depending on whether or not it's a number
+                if not ismultisim and isstacked:
+                    if isnumber: # Stacked plot
+                        bottom = 0*results.tvec # Easy way of setting to 0...
+                        for l in range(nlinesperplot):
+                            fill_between(results.tvec, factor*bottom, factor*(bottom+best[l]), facecolor=colors[l], alpha=0, lw=0)
+                            bottom += best[l]
+                    else: # Multi-line plot
+                        for l in range(nlinesperplot):
+                            plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different population
+                
+                # e.g. scenario, prev-tot; since stacked plots aren't possible with multiple lines, just plot the same in this case
+                if ismultisim and (istotal or isstacked):
+                    for l in range(nlinesperplot):
+                        plot(results.tvec, factor*best[l], lw=lw, c=colors[l]) # Index is each different e.g. scenario
+                
+                if ismultisim and isperpop:
+                    for l in range(nlinesperplot):
+                        plot(results.tvec, factor*best[i][l], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
+                
+
                 
                 
                 ################################################################################################################
                 # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
                 ################################################################################################################
+                
+                # General configuration
                 ax = gca()
                 ax.spines["top"].set_visible(False)
                 ax.spines["right"].set_visible(False)
@@ -155,19 +190,19 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 ax.xaxis.label.set_fontsize(labelsize)
                 for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
     
-                # Configure plot
+                # Configure plot specifics
                 currentylims = ylim()
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
                 ax.set_xlabel('Year')
-                # ax.legend(loc='upper left', fancybox=True, title='')
                 ax.set_title(results.main[datatype].name)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
-                if kind=='single':
-                    if poptype=='pops': ax.legend(results.popkeys, **legendsettings)
-                    if poptype=='tot':  ax.legend(['Total'], **legendsettings)
-                elif kind=='multi':
-                    ax.legend(labels, **legendsettings) # WARNING, cannot plot multiple populations here!
+                if not ismultisim:
+                    if istotal:  ax.legend(['Total'], **legendsettings) # Single entry, "Total"
+                    if isperpop: ax.legend([results.popkeys[i]], **legendsettings) # Single entry, this population
+                    if isstacked: ax.legend(results.popkeys[i], **legendsettings) # Multiple entries, all populations
+                else:
+                    ax.legend(labels, **legendsettings) # Multiple simulations
     
                 # Tidy up: close plots that were opened
                 close(epiplots[pk])
