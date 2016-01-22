@@ -15,7 +15,7 @@ plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'st
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 
 
-def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10):
         '''
         Render the plots requested and store them in a list. Argument "which" should be a list of form e.g.

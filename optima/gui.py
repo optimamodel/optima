@@ -33,7 +33,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
         
     Version: 1.1 (2016jan19) by cliffk
     '''
-    if toplot is None: toplot = ['prev-tot', 'prev-per', 'numinci-sta']
+    if toplot is None: toplot = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta']
     if fig is None: fig = figure('Optima results', facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     
     # Do plotting
