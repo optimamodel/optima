@@ -480,7 +480,8 @@ class ProgsetsDb(db.Model):
         'name': fields.String,
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'programs': fields.Nested(ProgramsDb.resource_fields)
+        'programs': fields.Nested(ProgramsDb.resource_fields),
+        'targetpartypes': fields.Raw,
     }
 
     __tablename__ = 'progsets'
@@ -501,6 +502,7 @@ class ProgsetsDb(db.Model):
             self.updated = updated
         if id:
             self.id = id
+        self.targetpartypes = []
 
     def hydrate(self):
         # In BE, programs don't have an "active" flag
@@ -514,6 +516,41 @@ class ProgsetsDb(db.Model):
         )
 
         return progset_entry
+
+    def _program_to_dict(self, program_be):
+        program = program_be.__dict__
+        program['parameters'] = program.get('targetpars', [])
+        if program['costcovdata'] is None:
+            program['costcov'] = []
+        else:
+            program['costcov'] = [
+                {
+                    'year': program['costcovdata']['t'][i],
+                    'cost': program['costcovdata']['cost'][i],
+                    'cov': program['costcovdata']['coverage'][i],
+                } for i in range(len(program['costcovdata']['t']))
+            ]
+        return program
+
+    def get_targetpartypes(self):
+        be_progset = self.hydrate()
+        be_progset.gettargetpartypes()
+        self.targetpartypes = be_progset.targetpartypes
+
+    def _program_to_dict(self, program_be):
+        program = program_be.__dict__
+        program['parameters'] = program.get('targetpars', [])
+        if program['costcovdata'] is None:
+            program['costcov'] = []
+        else:
+            program['costcov'] = [
+                {
+                    'year': program['costcovdata']['t'][i],
+                    'cost': program['costcovdata']['cost'][i],
+                    'cov': program['costcovdata']['coverage'][i],
+                } for i in range(len(program['costcovdata']['t']))
+            ]
+        return program
 
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program

@@ -58,6 +58,8 @@ class Progsets(Resource):
             raise ProjectDoesNotExist(id=project_id)
 
         reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
+        for progset in reply:
+            progset.get_targetpartypes()
         return reply
 
     @swagger.operation(
