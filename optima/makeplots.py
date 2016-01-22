@@ -129,11 +129,10 @@ def plotepi(results, which=None, uncertainty=True, verbose=2, figsize=(14,10), a
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
                 colors = gridcolormap(nlinesperplot)
                 
-                print('reanenalfd')
-#                # Plot uncertainty, but not for stacked plots
-#                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-#                    try: fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
-#                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                # Plot uncertainty, but not for stacked plots
+                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                    try: fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
+                    except: print('Plotting uncertainty failed and/or not yet implemented')
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if databest is not None and not isstacked and not ismultisim:
