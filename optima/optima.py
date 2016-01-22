@@ -125,7 +125,7 @@ except:
     def browser(*args, **kwargs): print('Note: browser() could not be imported, but everything else should work')
     _failed(doraise=False)
 
-try: from manualgui import manualfit # Do manual fitting
+try: from gui import manualfit # Do manual fitting
 except:
     def manualfit(*args, **kwargs): print('Note: manualfit() could not be imported, but everything else should work')
     _failed(doraise=False)
