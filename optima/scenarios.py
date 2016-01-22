@@ -1,13 +1,29 @@
 ## Imports
 from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
-from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, getdate, uuid, objrepr, getresults #, sanitize, uuid, getdate, smoothinterp
+from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, getdate, uuid, objrepr, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
 
 
 
+class Scen(object):
+    ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
+    def __init__(self, name=None, parset=None, t):
+        self.name = name
+        self.parset = parset
+        self.t = t
 
-#class Scenario(object):
-#    ''' An object for storing a single scenario '''
+class Parscen(Scen):
+    ''' An object for storing a single parameter scenario '''
+    def __init__(self, pars=None, **defaultargs):
+            Scen.__init__(self, **defaultargs)
+            self.pars = pars
 
+class Progscen(Scen):
+    ''' An object for storing a single parameter scenario '''
+    def __init__(self, progscenariotype=None, progset=None, programs=None, **defaultargs):
+            Scen.__init__(self, **defaultargs)
+            self.progscenariotype = progscenariotype
+            self.progset = progset
+            self.programs = programs
 
 
 class Scenset(object):
@@ -89,14 +105,14 @@ def makescenarios(scenlist, verbose=2):
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        thisparset = dcp(scen['parset'])
+        thisparset = dcp(scen.parset)
         thisparset.modified = today()
-        thisparset.name = scen['name']
+        thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
-        if scen['scenariotype']=='parameter':
+        if type(scen)==Parscen:
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
-                for par in scenlist[scenno]['pars']: # Loop over all parameters being changed
+                for par in scenlist[scenno].pars: # Loop over all parameters being changed
                     thispar = thisparset.pars[pardictno][par['name']]
                     if type(par['for'])==tuple: # If it's a partnership...
                         par2 = (par['for'][1],par['for'][0])
@@ -118,14 +134,14 @@ def makescenarios(scenlist, verbose=2):
                             thispar.t[pop] = append(thispar.t[pop], par['endyear'])
                             thispar.y[pop] = append(thispar.y[pop], par['endval'])
     
-        elif scen['scenariotype']=='program':
-            thisprogset = scen['progset']
-            if scen['progscenariotype']=='budget':
-                thiscoverage = thisprogset.getprogcoverage(budget=scen['programs'], t=scen['t'], parset=scen['parset'])
+        elif type(scen)==Progscen:
+            thisprogset = scen.progset
+            if scen.progscenariotype=='budget':
+                thiscoverage = thisprogset.getprogcoverage(budget=scen.programs, t=scen.t, parset=scen.parset)
             elif scen['progscenariotype']=='coverage':
-                thiscoverage = scen['programs']
+                thiscoverage = scen.programs
             
-            thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen['t'], parset=scen['parset'])
+            thisparsdict = thisprogset.getparsdict(coverage=thiscoverage, t=scen.t, parset=scen.parset)
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
 
@@ -146,12 +162,12 @@ def defaultscenarios(parset=None, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
     if parset is None: raise Exception('You need to supply a parset to generate default scenarios')
     
-    scenlist = [odict()]
+    scenlist = [Parscen()]
     
     ## Current conditions
-    scenlist[0]['name'] = 'Current conditions'
-    scenlist[0]['parset'] = parset
-    scenlist[0]['pars'] = [] # No changes
+    scenlist[0].name = 'Current conditions'
+    scenlist[0].parset = parset
+    scenlist[0].pars = [] # No changes
     
     return scenlist
 
@@ -159,7 +175,7 @@ def defaultscenarios(parset=None, verbose=2):
 
 def getparvalues(parset, par):
     """
-    Return the default parameter values from simpars for a given par.
+    Return the default parameter values from simpars for a given par. -- WARNING, shouldn't this be a method of Par?
     
     defaultvals = getparvalues(P, parset, scenariolist[1]['pars'][2])
     """
