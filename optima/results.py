@@ -257,7 +257,7 @@ class Multiresultset(Resultset):
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
-        
+                
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys']
@@ -265,6 +265,9 @@ class Multiresultset(Resultset):
         diffattrs = ['parset', 'progset', 'raw', 'simpars']
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
+
+        # Budget TEMP
+        self.budget = [resultset.budget for resultset in resultsetlist]
         
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all

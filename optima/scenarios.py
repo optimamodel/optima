@@ -79,7 +79,8 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        result = runmodel(pars=scenparsets[scen].pars[0], project=project, verbose=1)
+        budget = scenlist[scenno].budget if isinstance(scenlist[scenno],Progscen) else None
+        result = runmodel(pars=scenparsets[scen].pars[0], project=project, budget=budget, verbose=1)
         allresults.append(result) 
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -140,6 +141,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset)
 
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset)
+            scen.pars = thisparsdict
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
 
