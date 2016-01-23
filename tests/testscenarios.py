@@ -89,11 +89,11 @@ if 'standardscen' in tests:
     ## Define scenarios
     scenlist = [
         Parscen(name='Current conditions',
-                parset='default',
+                parsetname='default',
                 pars=[]),
 
         Parscen(name='Full casual condom use',
-             parset='default',
+             parsetname='default',
              pars=[{'endval': 1.,
                 'endyear': 2015,
                 'name': 'condcas',
@@ -102,7 +102,7 @@ if 'standardscen' in tests:
                 'startyear': 2005}]),
 
          Parscen(name='More casual acts',
-              parset='default',
+              parsetname='default',
               pars=[{'endval': 100.,
                 'endyear': 2015,
                 'name': 'actscas',
@@ -111,7 +111,7 @@ if 'standardscen' in tests:
                 'startyear': 2005}]),
 
          Parscen(name='100% testing',
-              parset='default',
+              parsetname='default',
               pars=[{'endval': 1.,
                 'endyear': 2020,
                 'name': 'hivtest',
@@ -120,7 +120,7 @@ if 'standardscen' in tests:
                 'startyear': 2016}]),
 
          Parscen(name='Increased STI prevalence in FSW',
-              parset='default',
+              parsetname='default',
               pars=[{'endval': 0.8,
                 'endyear': 2015,
                 'name': 'stiprev',
@@ -129,8 +129,8 @@ if 'standardscen' in tests:
                 'startyear': 2005}]),
 
          Budgetscen(name='Keep current investment in condom program',
-              parset='default',
-              progset='default',
+              parsetname='default',
+              progsetname='default',
               t=[2016,2020],
               budget={'Condoms': array([1e7,1e7]),
                            'FSW_programs':array([1e6,1e6]),
@@ -138,8 +138,8 @@ if 'standardscen' in tests:
                            'ART':array([1e6,1e6])}),
 
          Budgetscen(name='Double investment in condom program',
-              parset='default',
-              progset='default',
+              parsetname='default',
+              progsetname='default',
               t=[2016,2020],
               budget={'Condoms': array([1e7,2e7]),
                            'FSW_programs':array([1e6,1e6]),
@@ -147,8 +147,8 @@ if 'standardscen' in tests:
                            'ART':array([1e6,1e6])}),
 
          Coveragescen(name='A million people covered by the condom program',
-              parset='default',
-              progset='default',
+              parsetname='default',
+              progsetname='default',
               t=[2016,2020],
               coverage={'Condoms': array([285706.,1e6]),
                            'FSW_programs':array([15352.,15352.]),
@@ -156,8 +156,8 @@ if 'standardscen' in tests:
                            'ART':array([3324.,3324.])}),
 
          Budgetscen(name='Double investment in ART and HTC',
-              parset='default',
-              progset='default',
+              parsetname='default',
+              progsetname='default',
               t=[2016,2020],
               budget={'Condoms': array([1e7,1e7]),
                            'FSW_programs':array([1e6,1e6]),

@@ -6,9 +6,9 @@ from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset
 
 class Scen(object):
     ''' The scenario base class -- not to be used directly, instead use Parscen or Progscen '''
-    def __init__(self, name=None, parset=None, t=None, active=True):
+    def __init__(self, name=None, parsetname=None, t=None, active=True):
         self.name = name
-        self.parset = parset
+        self.parsetname = parsetname
         self.t = t
         self.active = active
         self.resultsref = None
@@ -38,9 +38,9 @@ class Parscen(Scen):
 
 class Progscen(Scen):
     ''' An object for storing a single parameter scenario '''
-    def __init__(self, progset=None, **defaultargs):
+    def __init__(self, progsetname=None, **defaultargs):
         Scen.__init__(self, **defaultargs)
-        self.progset = progset # Programset
+        self.progsetname = progsetname # Programset
 
 
 class Budgetscen(Progscen):
@@ -102,8 +102,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        try: thisparset = dcp(project.parsets[scen.parset])
-        except: raise Exception('Failed to extract parset "%s" from this project:\n%s' % (scen.parset, project))
+        try: thisparset = dcp(project.parsets[scen.parsetname])
+        except: raise Exception('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         thisparset.modified = today()
         thisparset.name = scen.name
         npops = len(thisparset.popkeys)
@@ -135,10 +135,10 @@ def makescenarios(project=None, scenlist=None, verbose=2):
     
         elif isinstance(scen,Progscen):
 
-            try: thisprogset = dcp(project.progsets[scen.progset])
+            try: thisprogset = dcp(project.progsets[scen.progsetname])
             except: raise Exception('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
             
-            try: results = project.parsets[scen.parset].getresults() # See if there are results already associated with this parset
+            try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
             except:
                 results = None
 
@@ -184,7 +184,7 @@ def getparvalues(parset, par):
     """
     Return the default parameter values from simpars for a given par. -- WARNING, shouldn't this be a method of Par?
     
-    defaultvals = getparvalues(P, parset, scenariolist[1]['pars'][2])
+    defaultvals = getparvalues(parset, scenariolist[1]['pars'][2])
     """
     npops = len(parset.pars[0]['popkeys'])
     simpars = parset.interp(start=par['startyear'], end=par['endyear'])
