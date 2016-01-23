@@ -1,8 +1,7 @@
 ## Imports
 from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
-from optima import printv, tic, toc, dcp, odict, findinds, Settings
-
+from optima import printv, tic, toc, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
@@ -24,9 +23,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     # Initialize basic quantities
     if simpars is None: raise Exception('model() requires simpars as an input')
-    if settings is None: 
-        print('Warning, settings not supplied to model(), using defaults instead')
-        settings = Settings() # Create if not supplied
+    if settings is None: raise Exception('model() requires settings as an input')
     popkeys    = simpars['popkeys']
     npops      = len(popkeys)
     simpars    = dcp(simpars)
@@ -513,21 +510,19 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, budgetyears=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
     
     Version: 2016jan23 by cliffk    
     '''
-    from optima import makesimpars, Resultset
     if simpars is None:
         if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
-    try: settings = project.settings 
-    except: 
-        print('Warning, no project supplied to runmodel(), settings defaulting to None')
-        settings = None
+    if settings is None:
+        try: settings = project.settings 
+        except: raise Exception('Could not get settings from project "%s" supplied to runmodel()' % project)
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, budgetyears=budgetyears, simpars=simpars, data=data, domake=True) # Create structure for storing results
     return results
