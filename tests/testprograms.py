@@ -52,7 +52,7 @@ if 'makeprograms' in tests:
     t = tic()
 
     print('Running make programs test...')
-    from optima import Project, Program, Programset
+    from optima import Project, Program, Programset, odict
     
     P = Project(spreadsheet='test7pops.xlsx')
 
@@ -199,10 +199,10 @@ if 'makeprograms' in tests:
     #    targeted by some program, and values are the programs that target them
     R.progs_by_targetpar()
 
-    # 7. Get a vector of coverage levels corresponding to a vector of program allocations
-    budget={'HTC':array([1e7,1.2e7,1.5e7]),
+    # 7. Get a dictionary of coverage levels corresponding to a dictionary of program allocations
+    budget=odict({'HTC':array([1e7,1.2e7,1.5e7]),
             'SBCC':array([1e6,1.2e6,1.5e6]),
-            'MGT':array([2e5,3e5,3e5])}
+            'MGT':array([2e5,3e5,3e5])})
             
     coverage={'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
               'MGT': None,
@@ -278,7 +278,10 @@ if 'makeprograms' in tests:
 
     # 13. Get an odict of the ALL parameter values corresponding to a vector of program allocations
     P.addprogset(name='default', progset=R)
-    P.runbudget(budget=budget, t=[2015,2016,2020], progsetname='default', parsetname='default')
+    P.runbudget(budget=budget, budgetyears=[2015,2016,2020], progsetname='default', parsetname='default')
+    
+    
+
     
     done(t)
 

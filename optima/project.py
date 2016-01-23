@@ -335,18 +335,18 @@ class Project(object):
         return None
     
 
-    def runbudget(self, budget=None, t=None, progsetname=None, parsetname='default', verbose=2):
-        ''' Function to run the model for a given buget, programset and parameterset '''
+    def runbudget(self, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+        ''' Function to run the model for a given budget, years, programset and parameterset '''
         if budget is None: raise Exception("Please enter a budget dictionary to run")
-        if t is None: raise Exception("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
+        if budgetyears is None: raise Exception("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
             except: raise Exception("No program set entered, and there are none stored in the project") 
-        coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=t, parset=self.parsets[parsetname])
-        progpars = self.progsets[progsetname].getpars(coverage=coverage,t=t, parset=self.parsets[parsetname])
-        results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget) # WARNING, this should probably use runsim, but then would need to make simpars...
+        coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
+        progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
+        results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
         self.addresult(results)
         self.modified = today()
         return None

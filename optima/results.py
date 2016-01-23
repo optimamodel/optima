@@ -57,7 +57,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -90,6 +90,7 @@ class Resultset(object):
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
         self.budget = budget # Store budget
+        self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
         self.settings = settings if settings is not None else Settings()
         
@@ -268,6 +269,7 @@ class Multiresultset(Resultset):
 
         # Budget TEMP
         self.budget = [resultset.budget for resultset in resultsetlist]
+        self.budgetyears = [resultset.budgetyears for resultset in resultsetlist]
         
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
