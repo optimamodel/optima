@@ -144,10 +144,10 @@
               <div class="data">Delete</div>
             </div>
             <div class="column" ng-repeat="data in state.program.addData">
-              <div class="data">{{data.year}}</div>
-              <div class="data">{{data.spending}}</div>
-              <div class="data">{{data.coverage}}</div>
-              <div class="data" style="display: flex;margin-left: 15px"><i class="fa fa-trash-o" ng-click="deleteAddData(data)"></i></div>
+              <div class="data numeric">{{data.year}}</div>
+              <div class="data numeric">{{data.spending}}</div>
+              <div class="data numeric">{{data.coverage}}</div>
+              <div class="data numeric" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteAddData(data)"></i></div>
             </div>
             <div class="column" ng-if="state.showAddData">
               <div class="data"><input ng-model="state.newAddData.year"/></div>
