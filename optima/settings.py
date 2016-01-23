@@ -18,7 +18,7 @@ class Settings():
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.ncd4 = len(self.hivstates)
         
-        # Original states by diagnosis
+        # Health states by diagnosis
         self.uncirc = arange(0,1) # Uninfected, uncircumcised
         self.circ   = arange(1,2) # Uninfected, circumcised
         self.undx   = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
@@ -28,8 +28,9 @@ class Settings():
         self.svl    = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost   = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
         self.off    = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
-       
-        # Original states by CD4 count
+		
+       	
+        # Health states by CD4 count
         spacing = array([0,1,2])*self.ncd4 
         self.acute = 2 + spacing
         self.gt500 = 3 + spacing
@@ -45,6 +46,11 @@ class Settings():
         self.alltreat = cat([self.usvl, self.svl]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
+
+		# Non-cascade settings/states
+		self.usecascade = True # Whether or not to actually use the cascade
+		self.tx  = self.svl # Infected, on treatment -- not used with the cascade
+		self.noncascadestates = cat([self.uncirc, self.circ, self.undx, self.dx, self.tx]) # Specify the non-cascade states -- WARNING, not sure if will be used
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
