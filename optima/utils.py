@@ -824,11 +824,12 @@ class odict(OrderedDict):
                     errormsg += '\n'.join(self.keys())
                     raise Exception(errormsg)
                 else: allkeys = sortby
-            if all(isinstance(x,int) for x in sortby): # Going to sort by numbers
+            elif all(isinstance(x,int) for x in sortby): # Going to sort by numbers
                 if not set(sortby)==set(range(len(self))):
                     errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
                     raise Exception(errormsg)
                 else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
+            else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         out = odict()
         for key in allkeys: out[key] = self[key]
         return out
