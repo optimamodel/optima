@@ -52,7 +52,7 @@ if 'makeprograms' in tests:
     t = tic()
 
     print('Running make programs test...')
-    from optima import Project, Program, Programset, Parameterset, runmodel
+    from optima import Project, Program, Programset
     
     P = Project(spreadsheet='test7pops.xlsx')
 

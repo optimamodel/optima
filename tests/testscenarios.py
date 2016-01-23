@@ -49,7 +49,7 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Project, Parscen, Progscen
+    from optima import Project, Parscen, Budgetscen, Coveragescen
     from optima.defaults import defaultprogset
     from numpy import array
     
@@ -85,6 +85,7 @@ if 'standardscen' in tests:
         Parscen(name='Current conditions',
                 parset='default',
                 pars=[]),
+
         Parscen(name='Full casual condom use',
              parset='default',
              pars=[{'endval': 1.,
@@ -93,6 +94,7 @@ if 'standardscen' in tests:
                 'for': caspships,
                 'startval': 1.,
                 'startyear': 2005}]),
+
          Parscen(name='More casual acts',
               parset='default',
               pars=[{'endval': 100.,
@@ -101,6 +103,7 @@ if 'standardscen' in tests:
                 'for': caspships,
                 'startval': 100.,
                 'startyear': 2005}]),
+
          Parscen(name='100% testing',
               parset='default',
               pars=[{'endval': 1.,
@@ -109,6 +112,7 @@ if 'standardscen' in tests:
                 'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
                 'startval': .5,
                 'startyear': 2016}]),
+
          Parscen(name='Increased STI prevalence in FSW',
               parset='default',
               pars=[{'endval': 0.8,
@@ -117,39 +121,39 @@ if 'standardscen' in tests:
                 'for': 0,
                 'startval': 0.8,
                 'startyear': 2005}]),
-         Progscen(name='Keep current investment in condom program',
+
+         Budgetscen(name='Keep current investment in condom program',
               parset='default',
-              progscentype='budget',
               progset='default',
               t=[2016,2020],
-              programs={'Condoms': array([1e7,1e7]),
+              budget={'Condoms': array([1e7,1e7]),
                            'FSW_programs':array([1e6,1e6]),
                            'HTC':array([2e7,2e7]),
                            'ART':array([1e6,1e6])}),
-         Progscen(name='Double investment in condom program',
+
+         Budgetscen(name='Double investment in condom program',
               parset='default',
-              progscentype='budget',
               progset='default',
               t=[2016,2020],
-              programs={'Condoms': array([1e7,2e7]),
+              budget={'Condoms': array([1e7,2e7]),
                            'FSW_programs':array([1e6,1e6]),
                            'HTC':array([2e7,2e7]),
                            'ART':array([1e6,1e6])}),
-         Progscen(name='A million people covered by the condom program',
+
+         Coveragescen(name='A million people covered by the condom program',
               parset='default',
-              progscentype='coverage',
               progset='default',
               t=[2016,2020],
-              programs={'Condoms': array([285706.,1e6]),
+              coverage={'Condoms': array([285706.,1e6]),
                            'FSW_programs':array([15352.,15352.]),
                            'HTC':array([1332862.,1332862.]),
                            'ART':array([3324.,3324.])}),
-         Progscen(name='Double investment in ART and HTC',
+
+         Budgetscen(name='Double investment in ART and HTC',
               parset='default',
-              progscentype='budget',
               progset='default',
               t=[2016,2020],
-              programs={'Condoms': array([1e7,1e7]),
+              budget={'Condoms': array([1e7,1e7]),
                            'FSW_programs':array([1e6,1e6]),
                            'HTC':array([2e7,4e7]),
                            'ART':array([1e6,2e6])})

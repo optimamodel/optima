@@ -74,7 +74,7 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
-    thisparsdict = progset.getparsdict(coverage=thiscoverage, t=objectives['start'], parset=parset)
+    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset)
     results = runmodel(pars=thisparsdict, parset=parset, progset=progset, project=project, tvec=tvec, verbose=0)
     
     # Figure out which indices to use
