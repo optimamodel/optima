@@ -263,7 +263,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
             c = inhomopar[pop]
-            thisprev = sum(people[1:,pop,t]) / allpeople[pop,t] # Probably a better way of doing this
+            thisprev = sum(people[2:,pop,t]) / allpeople[pop,t] # WARNING: Should use indexes retrieved from project settings
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
         
