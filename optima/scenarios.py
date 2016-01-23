@@ -143,7 +143,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 results = None
 
             if isinstance(scen, Budgetscen):
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
             elif isinstance(scen ,Budgetscen):
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
