@@ -252,9 +252,9 @@ if 'modalities' in tests:
     
 
     # Now see how the different options affect diagnoses
-    initialparsdict = R.getparsdict(coverage_number, t=2013, parset=P.parsets['default'])
-    outreachparsdict = R.getparsdict(coverage_outreachscaleup_number, t=2013, parset=P.parsets['default'])
-    hometestparsdict = R.getparsdict(coverage_hometestscaleup_number, t=2013, parset=P.parsets['default'])
+    initialparsdict = R.getpars(coverage_number, t=2013, parset=P.parsets['default'])
+    outreachparsdict = R.getpars(coverage_outreachscaleup_number, t=2013, parset=P.parsets['default'])
+    hometestparsdict = R.getpars(coverage_hometestscaleup_number, t=2013, parset=P.parsets['default'])
     
     initialparset = dcp(P.parsets['default'])
     initialparset.pars[0] = initialparsdict

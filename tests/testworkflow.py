@@ -10,7 +10,7 @@ python -i tests.py
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2016jan11 by cliffk
+Version: 2016jan21 by cliffk
 """
 
 
@@ -19,7 +19,9 @@ Version: 2016jan11 by cliffk
 tests = [
 'makeproject',
 'makeprograms',
-'autofit',
+#'autofit',
+#'manualfit',
+'plotresults',
 ]
 
 
@@ -119,6 +121,14 @@ if 'makeprograms' in tests:
 
 
 
+
+
+
+
+
+
+
+
 #####################################################################################################
 if 'autofit' in tests:
     t = tic()
@@ -128,12 +138,39 @@ if 'autofit' in tests:
     P.loadeconomics(filename='testeconomics.xlsx')
     results = P.runsim('autofit', end=2015)
     
-    if doplot:
-        from optima import plotresults
-        plotresults(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+    done(t)
+
+
+
+
+
+
+#####################################################################################################
+## Manual calibration test
+#####################################################################################################
+if 'manualfit' in tests and doplot:
+    t = tic()
+
+    print('Running manual calibration test...')
+    P.manualfit(orig=-1, name='manual') # Demonstrating that you can retrieve things by index as well
     
     done(t)
 
+
+
+
+
+#####################################################################################################
+## Plot results test
+#####################################################################################################
+if 'plotresults' in tests and doplot:
+    t = tic()
+
+    print('Running results plotting test...')
+    from optima import plotresults
+    plotresults(P.results[-1], toplot=['prev-tot', 'numinci-sta'], figsize=(16,10)) # Showing kwargs passed to plot
+    
+    done(t)
 
 
 

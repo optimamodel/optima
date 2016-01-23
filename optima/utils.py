@@ -691,7 +691,7 @@ class odict(OrderedDict):
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing,
     slicing, and appending.
     
-    All works, that I can tell, except for self.update().
+    WARNING: self.update() may not be functional
     
     Version: 2015nov21 by cliffk
     """
@@ -810,9 +810,26 @@ class odict(OrderedDict):
                 self.__setitem__(key, value)
         return None
     
-    def sort(self):
-        ''' Return an alphabetically sorted copy of the dict '''
-        allkeys = sorted(self.keys())
+    def sort(self, sortby=None):
+        ''' Return a sorted copy of the odict. 
+        Sorts by order of sortby, if provided, otherwise alphabetical'''
+        if not sortby: allkeys = sorted(self.keys())
+        else:
+            if not isinstance(sortby, list): raise Exception('Please provide a list to determine the sort order.')
+            if all(isinstance(x,str) for x in sortby): # Going to sort by keys
+                if not set(sortby)==set(self.keys()): 
+                    errormsg = 'List of keys to sort by must be the same as list of keys in odict.\n You provided the following list of keys to sort by:\n'
+                    errormsg += '\n'.join(sortby)
+                    errormsg += '\n List of keys in odict is:\n'
+                    errormsg += '\n'.join(self.keys())
+                    raise Exception(errormsg)
+                else: allkeys = sortby
+            elif all(isinstance(x,int) for x in sortby): # Going to sort by numbers
+                if not set(sortby)==set(range(len(self))):
+                    errormsg = 'List to sort by "%s" is not compatible with length of odict "%i"' % (sortby, len(self))
+                    raise Exception(errormsg)
+                else: allkeys = [y for (x,y) in sorted(zip(sortby,self.keys()))]
+            else: raise Exception('Cannot figure out how to sort by "%s"' % sortby)
         out = odict()
         for key in allkeys: out[key] = self[key]
         return out
