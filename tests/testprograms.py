@@ -200,14 +200,17 @@ if 'makeprograms' in tests:
     R.progs_by_targetpar()
 
     # 7. Get a dictionary of coverage levels corresponding to a dictionary of program allocations
-    budget=odict({'HTC':array([1e7,1.2e7,1.5e7]),
-            'SBCC':array([1e6,1.2e6,1.5e6]),
-            'MGT':array([2e5,3e5,3e5])})
+    budget=odict({'SBCC':array([1e6,1.2e6,1.5e6]),
+                  'HTC':array([1e7,1.2e7,1.5e7]),
+                  'MGT':array([2e5,3e5,3e5])})
             
-    coverage={'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
+    coverage=odict({'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
               'MGT': None,
-              'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])}
+              'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])})
               
+    budget = budget.sort([p.short for p in R.programs.values()])
+    coverage = coverage.sort([p.short for p in R.programs.values()])
+
     defaultbudget = R.getdefaultbudget()
             
     R.getprogcoverage(budget=budget,

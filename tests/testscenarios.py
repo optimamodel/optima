@@ -53,17 +53,23 @@ if 'standardscen' in tests:
     from optima.defaults import defaultprogset
     from numpy import array
     
+    # Make project and store results from default sim
     P = Project(spreadsheet='test7pops.xlsx')
+    results = P.runsim('default')
+
     caspships = P.data['pships']['cas']
 
+    # Get a default progset 
     R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'HTC', 'ART'])
     
+    # Modify target pars and pops
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
     R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
     R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
     R.updateprogset()
 
+    # Add program effects
     R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
     R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
     R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM_programs':(0.75,0.85)})
@@ -182,10 +188,10 @@ if 'standardscen' in tests:
             output = '===================================\n'
             output += scen.name
             output += '\n'           
-            output += 'PLHIV: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop aware: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[0].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Number treated: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop treated: %s\n' % (P.results[0].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[0].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'PLHIV: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop aware: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Number treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
             print output
 
 

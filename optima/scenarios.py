@@ -108,6 +108,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
         thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
+
         if isinstance(scen,Parscen):
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
                 for par in scenlist[scenno].pars: # Loop over all parameters being changed
@@ -133,15 +134,21 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                             thispar.y[pop] = append(thispar.y[pop], par['endval'])
     
         elif isinstance(scen,Progscen):
+
             try: thisprogset = dcp(project.progsets[scen.progset])
             except: raise Exception('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
             
-            if isinstance(scen,Budgetscen):
-                scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset)
-            elif isinstance(scen,Budgetscen):
-                scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset)
+            try: results = project.parsets[scen.parset].getresults() # See if there are results already associated with this parset
+            except:
+                results = None
 
-            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset)
+            if isinstance(scen, Budgetscen):
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
+            elif isinstance(scen ,Budgetscen):
+                scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
+
+            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
             scen.pars = thisparsdict
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
