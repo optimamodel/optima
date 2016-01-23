@@ -3,7 +3,16 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import printv, tic, toc, dcp, odict, findinds, Settings
 
-def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
+usecascade=True
+
+def model(usecascade=True, *args, **kwargs):
+    ''' Tiny function to switch between cascade and non-cascade versions '''
+    if usecascade: return modelcascade(*args, **kwargs)
+    else: return modelsimple(*args, **kwargs)
+    
+
+
+def modelcascade(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     
