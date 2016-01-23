@@ -13,7 +13,7 @@ tests = [
 
 
 ##############################################################################
-## Initialization -- same for every test script
+## Initialization -- same for every test script -- WARNING, should these be in testheader.py called by exec(open('testheader.py').read())?
 ##############################################################################
 
 from optima import tic, toc, blank, pd # analysis:ignore
