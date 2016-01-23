@@ -168,17 +168,18 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        txinds = self.settings.alltreat
+        alltreat = self.settings.alltreat
+        allplhiv = self.settings.allplhiv
         data = self.data
         
-        self.main['prev'].pops = quantile(allpeople[:,2:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,2:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,2:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,2:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
         
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
@@ -197,8 +198,8 @@ class Resultset(object):
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
         try:
-            self.main['numtreat'].pops = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numtreat'].tot = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+            self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+            self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
             if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         

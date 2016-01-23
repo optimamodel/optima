@@ -73,11 +73,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
     # Disease state indices
     
-    uncirc  = settings.uncirc # Susceptible, uncircumcised
-    circ  = settings.circ # Susceptible, circumcised
-    sus  = settings.sus   # Susceptible, both circumcised and uncircumcised
-    undx = settings.undx  # Undiagnosed
-    dx   = settings.dx    # Diagnosed
+    uncirc   = settings.uncirc # Susceptible, uncircumcised
+    circ     = settings.circ # Susceptible, circumcised
+    sus      = settings.sus   # Susceptible, both circumcised and uncircumcised
+    undx     = settings.undx  # Undiagnosed
+    dx       = settings.dx    # Diagnosed
+    allplhiv = settings.allplhiv
     if usecascade:
         care = settings.care  # in Care
         usvl = settings.usvl  # On-Treatment - Unsuppressed Viral Load
@@ -85,7 +86,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         lost = settings.lost  # Not on ART (anymore) and lost to follow-up
         off  = settings.off   # off-ART but still in care
     else:
-        tx  = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
+        tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
 
     popsize = dcp(simpars['popsize']) # Population sizes
     
@@ -263,7 +264,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
             c = inhomopar[pop]
-            thisprev = sum(people[2:,pop,t]) / allpeople[pop,t] # WARNING: Should use indexes retrieved from project settings
+            thisprev = sum(people[allplhiv,pop,t]) / allpeople[pop,t] # WARNING: Should use indexes retrieved from project settings
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
         
