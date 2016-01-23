@@ -33,7 +33,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             labels = results.keys # Figure out the labels for the different lines
             nsims = len(labels) # How ever many things are in results
         else: 
-            errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s", you drongo' % type(results)
+            errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
             raise Exception(errormsg)
 
         # Initialize
