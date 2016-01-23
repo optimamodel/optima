@@ -47,10 +47,9 @@ class Settings():
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
 
-		# Non-cascade settings/states
-		self.usecascade = True # Whether or not to actually use the cascade
-		self.tx  = self.svl # Infected, on treatment -- not used with the cascade
-		self.noncascadestates = cat([self.uncirc, self.circ, self.undx, self.dx, self.tx]) # Specify the non-cascade states -- WARNING, not sure if will be used
+        # Non-cascade settings/states
+        self.usecascade = False # Whether or not to actually use the cascade
+        self.tx  = self.svl # Infected, on treatment -- not used with the cascade
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
