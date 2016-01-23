@@ -197,11 +197,9 @@ class Resultset(object):
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        try:
-            self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
-            if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
-        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
 # WARNING, need to implement

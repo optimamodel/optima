@@ -86,8 +86,7 @@ class Programset(object):
                                     
                 # Delete any stored programs that are no longer needed (if removing a program)
                 progccopars = dcp(ccopars)
-                try: del progccopars['t'], progccopars['intercept']
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                del progccopars['t'], progccopars['intercept']
                 for prog in progccopars.keys(): 
                     if prog not in targetingprogs: del ccopars[prog]
 

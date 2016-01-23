@@ -554,10 +554,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             change = zeros((nstates, npops))
             change[sus,:] = dS
             for cd4 in range(ncd4): # this could be made much more efficient
-                try: 
-                    change[undx[cd4],:] = dU[cd4]
-                    change[dx[cd4],:]   = dD[cd4]
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                change[undx[cd4],:] = dU[cd4]
+                change[dx[cd4],:]   = dD[cd4]
                 if usecascade:
                     change[care[cd4],:] = dC[cd4]
                     change[usvl[cd4],:] = dUSVL[cd4]
