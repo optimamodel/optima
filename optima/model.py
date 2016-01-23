@@ -72,7 +72,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         txfactor = simpars['efftxsupp']*simpars['successart'] + simpars['efftxunsupp']*(1-simpars['successart']) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
     # Disease state indices
-    
     uncirc   = settings.uncirc # Susceptible, uncircumcised
     circ     = settings.circ # Susceptible, circumcised
     sus      = settings.sus   # Susceptible, both circumcised and uncircumcised
