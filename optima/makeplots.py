@@ -323,7 +323,46 @@ def plot2allocs(multires=None, compare=True):
     return fig
     
     
-def plotmultiallocs(multires=None, compare=True):
+def plotmultiallocs(multires=None, compare=False):
     ''' Plot multiple allocations on bar charts - intended for scenarios '''
     
-    ### NOT READY YET
+    # Preliminaries: extract needed data
+    budgetstoplot = [budget for budget in multires.budget if budget]
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears if budgetyears]
+    proglabels = budgetstoplot[0].keys() 
+    nprogs = len(proglabels)
+    labels = [key for keyno, key in enumerate(multires.keys) if multires.budget[keyno]]
+    
+    fig = figure(figsize=(10,6))
+    fig.subplots_adjust(left=0.10) # Less space on left
+    fig.subplots_adjust(right=0.98) # Less space on right
+    fig.subplots_adjust(bottom=0.30) # Less space on bottom
+    fig.subplots_adjust(wspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.40) # More space between
+    
+    colors = gridcolormap(nprogs)
+    
+    ax = []
+    ymax = 0
+    
+    for plt in range(len(labels)):
+        ax.append(subplot(len(labels),1,plt+1))
+        ax[-1].hold(True)
+        barwidth = .5/len(budgetyearstoplot[plt])
+        for y in range(len(budgetyearstoplot[plt])):
+            progdata = [x[y] for x in budgetstoplot[plt][:]]
+            xbardata = arange(nprogs)+.75+barwidth*y
+            for p in range(nprogs):
+                if p==nprogs-1: ax[-1].bar([xbardata[p]], [progdata[p]], label=budgetyearstoplot[plt][y], width=barwidth, color=colors[y])
+                else: ax[-1].bar([xbardata[p]], [progdata[p]], width=barwidth, color=colors[y])
+        ax[-1].legend()
+        ax[-1].set_xticks(arange(nprogs)+1)
+        if plt<nprogs: ax[-1].set_xticklabels('')
+        if plt==len(labels)-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        ax[-1].set_xlim(0,nprogs+1)
+        
+        ax[-1].set_ylabel('Spending (US$)')
+        ax[-1].set_title(labels[plt])
+        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    
+    return fig

@@ -524,6 +524,7 @@ def runmodel(simpars=None, pars=None, parset=None, progset=None, budget=None, bu
     if settings is None:
         if project is not None: settings = project.settings
         else: settings = Settings()
+    
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
     results = Resultset(raw=raw, parset=parset, progset=progset, budget=budget, budgetyears=budgetyears, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
     return results
