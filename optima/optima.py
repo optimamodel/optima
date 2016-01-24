@@ -60,6 +60,9 @@ except: _failed()
 try: from asd import asd
 except: _failed()
 
+try: from pchip import pchip, plotpchip
+except: _failed()
+
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 except: _failed()
 
@@ -77,7 +80,7 @@ except: _failed()
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 except: _failed()
 
-try: from results import Result, Resultset, Multiresultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+try: from results import Result, BOC, Resultset, Multiresultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
 try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults # Parameter and Parameterset classes
@@ -108,7 +111,6 @@ except: _failed()
 ## Want to add more modules to Optima? Do that here (unless they're non-essential plotting functions)
 
 
-
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
 try: from gui import plotresults
 except:
@@ -136,6 +138,8 @@ except:
 try: from project import Project # Project class
 except: _failed()
 
+try: from portfolio import Portfolio # Portfolio class (container of Projects)
+except: _failed()
 
 
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts

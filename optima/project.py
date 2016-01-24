@@ -1,8 +1,10 @@
-from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
+from optima import defaultobjectives
+import matplotlib.pyplot as plt
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -228,8 +230,7 @@ class Project(object):
         printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
         self.modified = today()
         return None
-
-
+        
 
     #######################################################################################################
     ## Convenience functions -- NOTE, do we need these...?
@@ -360,3 +361,48 @@ class Project(object):
         self.addresult(result=multires)
         self.modified = today()
         return None
+        
+        
+    #######################################################################################################
+    ## Methods to handle specialised tasks (i.e. for geospatial analysis)
+    #######################################################################################################
+        
+    def genBOC(self, budgetlist=[10000,100000,1000000,10000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+        ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
+        projectBOC = BOC()        
+        if objectives == None: objectives = defaultobjectives()
+        projectBOC.objectives = objectives
+        for budget in budgetlist:
+            objectives['budget'] = budget
+            optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+            results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+            projectBOC.x.append(budget)
+            projectBOC.y.append(results.mismatch[-1])
+        self.addresult(result=projectBOC)
+        return None        
+    
+    def getBOC(self, objectives):
+        ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        for x in self.results:
+            if isinstance(self.results[x],BOC):
+                boc = self.results[x]
+                same = True
+                for y in boc.objectives:
+                    if not y == 'budget' and not boc.objectives[y] == objectives[y]: same = False
+                if same:
+                    print('A BOC with the required objectives already exists in project: %s' % self.name)
+                    return boc
+        print('No BOC with the required objectives can be found in project: %s' % self.name)
+        return None
+    
+    def plotBOC(self, objectives, deriv = False, returnplot = False):
+        ''' If a BOC result with the desired objectives exists, return an interpolated object '''
+        boc = self.getBOC(objectives = objectives)
+        
+        if boc == None: print('Cannot plot a nonexistent BOC!')
+        else:
+            ax = boc.plot(deriv = deriv, returnplot = returnplot)
+            if returnplot: return ax
+            else: plt.show()
+            return None
+    
