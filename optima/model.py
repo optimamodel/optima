@@ -177,10 +177,10 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         treatment *= recovratios
         
         # Populated equilibrated array
+        initpeople[uncirc, p] = uncircumcised
+        initpeople[circ, p] = circumcised
+        initpeople[undx, p] = undiagnosed
         if usecascade:
-            initpeople[uncirc, p] = uncircumcised
-            initpeople[circ, p] = circumcised
-            initpeople[undx, p] = undiagnosed
             initpeople[dx, p]   = diagnosed * (1.-immediatecare[p,0])
             initpeople[care, p] = diagnosed * immediatecare[p,0]
             initpeople[usvl, p] = treatment * (1.-suppressedfrac) #(1.-successart)
@@ -188,8 +188,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             #initpeople[lost, p] = 
             #initpeople[off,  p] = 
         else:
-            initpeople[uncirc, p] = uninfected # WARNING, this needs to change with circumcision
-            initpeople[undx, p] = undiagnosed
             initpeople[dx, p] = diagnosed
             initpeople[tx, p] = treatment
     
@@ -263,7 +261,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
             c = inhomopar[pop]
-            thisprev = sum(people[allplhiv,pop,t]) / allpeople[pop,t] # WARNING: Should use indexes retrieved from project settings
+            thisprev = sum(people[allplhiv,pop,t]) / allpeople[pop,t] 
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
         
         
@@ -317,10 +315,9 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         newinfections = forceinfvec * force * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
     
         # Initalise / reset arrays
-        if usecascade:
-            dU = []; dD = []; dC = []; dUSVL = []; dSVL = []; dL = []; dO = []; # Reset differences
-        else:
-            dU = []; dD = []; dT = []; # Reset differences
+        dU = []; dD = []
+        if usecascade: dC = []; dUSVL = []; dSVL = []; dL = []; dO = []; # Reset differences for cascade compartments
+        else: dT = []; # Reset differences for simple compartments
         testingrate  = [0] * ncd4
         newdiagnoses = [0] * ncd4
         newtreat     = [0] * ncd4

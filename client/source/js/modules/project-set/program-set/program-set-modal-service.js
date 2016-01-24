@@ -56,7 +56,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       openProgramModal: function (program, populations, programList, parameters, categories) {
         return $modal.open({
           templateUrl: 'js/modules/project-set/program-set/program-modal.html',
-          controller: 'ProgramSetModalController',
+          controller: 'ProgramModalController',
           size: 'lg',
           resolve: {
             program: function () {

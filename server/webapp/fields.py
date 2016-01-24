@@ -11,3 +11,14 @@ class Json(fields.Raw):
 
 class LargeBinary(fields.Raw):
     pass
+
+
+class LargeInt(fields.Integer):
+
+    def format(self, value):
+        try:
+            if value is None:
+                return self.default
+            return int(float(value))
+        except ValueError as ve:
+            raise fields.MarshallingException(ve)

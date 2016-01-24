@@ -16,7 +16,7 @@ coveragepars=['numtx','numpmtct','numost','numcircum']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
+    def __init__(self, name='default', programs=None, default_interaction='random'):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
@@ -25,7 +25,6 @@ class Programset(object):
         if programs is not None: self.addprograms(programs)
         self.created = today()
         self.modified = today()
-        self.project = project
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -45,11 +44,8 @@ class Programset(object):
 
     def getsettings(self):
         ''' Try to get the freshest settings available '''
-        try: 
-            settings = self.project.settings
-        except: 
-            print('Warning, using default settings with program set "%s"' % self.name)
-            settings = Settings()
+        print('Warning, using default settings with program set "%s"' % self.name)
+        settings = Settings()
         return settings
         
     def gettargetpops(self):
@@ -192,20 +188,20 @@ class Programset(object):
         else: return progs_by_targetpar
 
 
-    def getdefaultbudget(self, tvec=None, verbose=2):
+    def getdefaultbudget(self, years=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''
         
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if type(tvec) in [int, float]: tvec = [tvec]
-        if isinstance(tvec,ndarray): tvec = tvec.tolist()
+        if type(years) in [int, float]: years = [years]
+        if isinstance(years,ndarray): years = years.tolist()
 
         # Set up internal variables
         settings = self.getsettings()
-        allt = settings.maketvec() # Confusing since usually called tvec, but that's defined differently above...
-        emptyarray = array([nan]*len(allt))
+        tvec = settings.maketvec() 
+        emptyarray = array([nan]*len(tvec))
         
         # Get cost data for each program in each year that it exists
         for program in self.programs:
@@ -213,7 +209,7 @@ class Programset(object):
             selectbudget[program] = []
             if self.programs[program].costcovdata['t']:
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
-                    yrindex = findinds(allt,yr)
+                    yrindex = findinds(tvec,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
                     lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
@@ -221,12 +217,12 @@ class Programset(object):
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
-            if tvec is not None:
-                for yr in tvec:
-                    yrindex = findinds(allt,yr)
+            if years is not None:
+                for yr in years:
+                    yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
 
-        return selectbudget if tvec is not None else lastbudget
+        return selectbudget if years is not None else lastbudget
 
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
@@ -457,7 +453,7 @@ class Program(object):
     '''
 
     def __init__(self, short, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', name='', criteria=None, targetcomposition=None, project=None):
+        category='No category', name='', criteria=None, targetcomposition=None):
         '''Initialize'''
         self.short = short
         self.name = name
@@ -477,7 +473,6 @@ class Program(object):
         self.category = category
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
         self.targetcomposition = targetcomposition
-        self.project = project
 
 
     def __repr__(self):
@@ -560,12 +555,7 @@ class Program(object):
         elif type(t)==list: t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
-            else:
-                try:
-                    parset = self.project.parsets[0]
-                    print('Warning, using default parset')
-                except:
-                    raise Exception('Please provide either a parset or a resultset that contains a parset')
+            else: raise Exception('Please provide either a parset or a resultset that contains a parset')
 
         # Initialise outputs
         popsizes = {}
@@ -576,10 +566,8 @@ class Program(object):
         except: 
             try: settings = results.project.settings
             except:
-                try: settings = self.project.settings
-                except:
-                    print('Warning, could not find settings for program "%s", using default' % self.name)
-                    settings = Settings()
+                print('Warning, could not find settings for program "%s", using default' % self.name)
+                settings = Settings()
         
         
 
@@ -593,7 +581,7 @@ class Program(object):
                     try: results = parset.getresults(die=True)
                     except Exception as E: 
                         print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
+                        results = runmodel(pars=parset.pars[ind], settings=settings)
                         parset.resultsref = results.uid # So it doesn't have to be rerun
                 
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
@@ -607,8 +595,13 @@ class Program(object):
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
 
             else: # HIV+ pregnant women
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t) #TEMP
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: WARNING, this isn't used, should it be?
+                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+                if not results: 
+                    try: results = parset.getresults(die=True)
+                    except Exception as E: 
+                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+                        results = runmodel(pars=parset.pars[ind], settings=settings)
+                        parset.resultsref = results.uid # So it doesn't have to be rerun
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
