@@ -13,8 +13,10 @@ global geoguiwindow
 geoguiwindow = None
 
 
-#%% All GUI structures and methods follow.
-
+import sys
+from Queue import Queue
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 def geogui():
     '''
@@ -22,7 +24,10 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs
+
+    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs, oldstdout
+    oldstdout = sys.stdout      # Make sure old stdout is remembered for redirection purposes.    
+    
     portfolio = None
     projectslist = []
     objectives = defaultobjectives()
@@ -36,9 +41,24 @@ def geogui():
     projext = '.prj'
     portext = '.prt'
     
+    # Extending the normal widget class so that stdout can be restored upon closure. Pretty funky, no?
+    class GAWidget(QtGui.QWidget):
+        def __init__(self):
+            QtGui.QWidget.__init__(self)
+    
+        def closeEvent(self, event):
+            reply = QtGui.QMessageBox.question(self, 'Message',
+                "Are you sure to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+    
+            if reply == QtGui.QMessageBox.Yes:
+                sys.stdout = oldstdout  # The important bit.
+                event.accept()
+            else:
+                event.ignore()    
+    
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
-    geoguiwindow = QtGui.QWidget() # Create panel widget
+    geoguiwindow = GAWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
     projectslist = []
@@ -261,6 +281,58 @@ def geogui():
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
         objectiveinputs[key].setText(str(objectives[key]))
         objectiveinputs[key].move(left+120, 200+k*30)
+        
+    ##############################################################################################################################
+    ## Redirect attempt
+    ##############################################################################################################################    
+ 
+    @pyqtSlot(str)
+    def append_text(text):
+        projectsbox.moveCursor(QTextCursor.End)
+        projectsbox.insertPlainText(text)
+   
+    # The new Stream Object which replaces the default stream associated with sys.stdout
+    # This object just puts data in a queue!
+    class WriteStream(object):
+        def __init__(self,queue):
+            self.queue = queue
     
+        def write(self,text):
+            self.queue.put(text)
+            
+        def flush(self):
+            pass
+    
+    # A QObject (to be run in a QThread) which sits waiting for data to come through a Queue.Queue().
+    # It blocks until data is available, and one it has got something from the queue, it sends
+    # it to the "MainThread" by emitting a Qt Signal 
+    class MyReceiver(QObject):
+        mysignal = pyqtSignal(str)
+    
+        def __init__(self,queue,*args,**kwargs):
+            QObject.__init__(self,*args,**kwargs)
+            self.queue = queue
+    
+        @pyqtSlot()
+        def run(self):
+            while True:
+                text = self.queue.get()
+                self.mysignal.emit(text)    
+    
+    # Create Queue and redirect sys.stdout to this queue
+    queue = Queue()
+    print('Now redirecting stdout to GUI...')
+    sys.stdout.flush()
+    sys.stdout = WriteStream(queue)
+    print('Output display initialised for GUI.')
+    
+    thread = QThread()
+    my_receiver = MyReceiver(queue)
+    my_receiver.mysignal.connect(append_text)
+    my_receiver.moveToThread(thread)
+    thread.started.connect(my_receiver.run)
+    thread.start()
+    
+    #%%
 
     geoguiwindow.show()

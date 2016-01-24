@@ -1,5 +1,7 @@
 """
 Test script to see if geospatial analysis works.
+Note that GUI can be extremely dangerous, as it redirects stdout!
+Make sure that GUI is exited normally, otherwise stdout reference will be lost until console reset...
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
@@ -150,9 +152,13 @@ if 'rungui' in tests and doplot:
     saveobj('test2.prj', P)
     saveobj('test7.prj', Q)
     saveobj('test.prt', F)
-    geogui()
+    print('Opening geospatial GUI. It will run after tests are completed.')
 
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
 toc(T)
+
+# The actual GUI is delayed until after the rest of test output, otherwise that too will be displayed in the widget.
+if 'rungui' in tests:
+    geogui()
