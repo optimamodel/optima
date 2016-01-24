@@ -18,7 +18,7 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, portfolio, projectslist, objectives
+    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs
     portfolio = None
     projectslist = []
     objectives = defaultobjectives()
@@ -146,7 +146,9 @@ def geogui():
     
     def rungeo():
         ''' Actually run geospatial analysis!!! '''
-        global portfolio, objectives
+        global portfolio, objectives, objectiveinputs
+        for key in objectives.keys():
+            objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives)
         portfolio.plotBOCs(objectives)
         # ...
@@ -187,6 +189,8 @@ def geogui():
     ##############################################################################################################################
     ## Define buttons
     ##############################################################################################################################
+    
+    ## Define buttons
     buttons = odict()
     buttons['makesheet'] = QtGui.QPushButton('Make geospatial template from project', parent=geoguiwindow)
     buttons['makeproj']  = QtGui.QPushButton('Auto-generate projects template', parent=geoguiwindow)
@@ -197,6 +201,7 @@ def geogui():
     buttons['saveport']  = QtGui.QPushButton('Save portfolio', parent=geoguiwindow)
     buttons['close']     = QtGui.QPushButton('Close', parent=geoguiwindow)
     
+    ## Define button functions
     actions = odict()
     actions['makesheet'] = makesheet
     actions['makeproj']  = makeproj
@@ -219,10 +224,36 @@ def geogui():
     
     
     
+    ##############################################################################################################################
     ## Define other objects
+    ##############################################################################################################################
+    
+    ## List of projects
     projectsbox = QtGui.QTextEdit(parent=geoguiwindow)
     projectsbox.move(300, 20)
     projectsbox.resize(wid-320, hei-40)
+    projectsbox.setReadOnly(True)
+    projectsbox.verticalScrollBar()
+    
+    ## Objectives
+    objectivetext = odict()
+    objectivetext['start']       = 'Start year:'
+    objectivetext['end']         = 'End year:'
+    objectivetext['budget']      = 'Total budget:'
+    objectivetext['deathweight'] = 'Deaths weight:'
+    objectivetext['inciweight']  = 'Infections weight:'
+    
+    objectivetextobjs = odict()
+    for k,key in enumerate(objectivetext.keys()):
+        objectivetextobjs[key] = QtGui.QLabel(parent=geoguiwindow)
+        objectivetextobjs[key].setText(str(objectivetext[key]))
+        objectivetextobjs[key].move(left+10, 205+k*30)
+    
+    objectiveinputs = odict()
+    for k,key in enumerate(objectives.keys()):
+        objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
+        objectiveinputs[key].setText(str(objectives[key]))
+        objectiveinputs[key].move(left+120, 200+k*30)
     
 
     geoguiwindow.show()
