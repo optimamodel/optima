@@ -87,12 +87,11 @@
                 Active
               </label>
             </div>
-          </div>
-          <div class="section grid">
-            <div class="++1 10 1++">
-              Parameters
-            </div>
-            <div class="++1 10 1++">
+
+            <div class="section grid">
+              <div class="++1 10 1++">
+                Parameters
+              </div>
               <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)">
               </select>
             </div>
@@ -131,12 +130,47 @@
           </div>
         </div>
       </div>
+
+      <div class="section grid">
+        <h3>
+          Add data
+        </h3>
+        <div class="section_dashed_border">
+          <div class="vertical_list">
+            <div class="column">
+              <div class="data">Year</div>
+              <div class="data">Spending</div>
+              <div class="data">Coverage</div>
+              <div class="data">Delete</div>
+            </div>
+            <div class="column" ng-repeat="data in state.program.addData">
+              <div class="data numeric">{{data.year}}</div>
+              <div class="data numeric">{{data.spending}}</div>
+              <div class="data numeric">{{data.coverage}}</div>
+              <div class="data numeric" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteAddData(data)"></i></div>
+            </div>
+            <div class="column" ng-if="state.showAddData">
+              <div class="data"><input ng-model="state.newAddData.year" type="number"/></div>
+              <div class="data"><input ng-model="state.newAddData.spending" type="number"/></div>
+              <div class="data"><input ng-model="state.newAddData.coverage" type="number"/></div>
+              <div class="data" style="display: flex;justify-content: center">
+                <i class="fa fa-check" ng-click="addAddData()"></i>
+                <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newAddData = {};state.showAddData = false"></i>
+              </div>
+            </div>
+            <div class="column">
+              <button type="button" class="btn __m" ng-click="state.showAddData = true" style="margin-left: 15px">Add</button>
+            </div>
+          </div>
+      </div>
+
     </div>
     <div class="section text-center">
       <button type="button" class="btn" ng-click="addParameter()">Add parameter</button>
     </div>
-    <div class="section text-center">
-      <button type="button" class="btn __white" ng-click="$dismiss('Closed')">Dismiss</button>
+
+    <div class="section text-center" style="margin-top: 20px">
+      <button type="button" class="btn __white" ng-click="state.showAddData = false;$dismiss('Closed')">Dismiss</button>
       <button type="submit" class="btn" ng-disabled="programForm.$invalid">Save</button>
     </div>
   </form>

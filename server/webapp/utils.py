@@ -371,6 +371,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
     from datetime import datetime
     import dateutil
     from server.webapp.dbmodels import ProgramsDb
+    from optima.utils import saves
 
     program_record = ProgramsDb.query \
         .filter_by(
@@ -391,10 +392,10 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
             pars=ProgramsDb.program_pars_to_pars(program.get('targetpars', [])),
             targetpops=program.get('targetpops', []),
             active=active,
-            criteria=program.get('criteria', None)
+            criteria=program.get('criteria', None),
+            costcov=program.get('costcov', [])
         )
 
-        db.session.add(program_record)
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
         program_record.pars = ProgramsDb.program_pars_to_pars(program.get('targetpars', []))
@@ -403,7 +404,10 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
         program_record.category = program.get('category', '')
         program_record.active = active
         program_record.criteria = program.get('criteria', None)
-        db.session.add(program_record)
+        program_record.costcov = program.get('costcov', [])
+
+    program_record.blob = saves(program_record.hydrate())
+    db.session.add(program_record)
 
 
 def save_result(project_id, result, parset_name='default'):
