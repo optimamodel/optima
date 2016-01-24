@@ -202,7 +202,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
                     data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
                     data['pops']['injects'].append(forcebool(thesedata[6], 'injects, row %i'% row))
-                    data['pops']['sexworker'].append(forcebool(thesedata[6], 'sexworker, row %i'% row))
+                    data['pops']['sexworker'].append(forcebool(thesedata[7], 'sexworker, row %i'% row))
                     
                 
                 # It's key data, save both the values and uncertainties
