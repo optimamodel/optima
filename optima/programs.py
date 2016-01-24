@@ -583,11 +583,10 @@ class Program(object):
         
         if not results: 
             try: results = parset.getresults(die=True)
-            except: 
-                print('HAVING TO RERUN THE MODEL!!!!!!!!!!!!!!!!!!!')
+            except Exception as E: 
+                print('Failed to extract results because "%s", rerunning the model...' % E.message)
                 results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
                 parset.resultsref = results.uid # So it doesn't have to be rerun
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:

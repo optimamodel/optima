@@ -26,13 +26,13 @@ def getresults(project=None, pointer=None, die=True):
     
     Version: 2016jan23
     '''
-    if isinstance(pointer, [str, int, float]):
+    if isinstance(pointer, (str, int, float)):
         if project is not None: return project.results[pointer]
         else: raise Exception('To get results using a key or index, getresults() must be given the project')
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
         else: raise Exception('To get results using a UID, getresults() must be given the project')
-    elif isinstance(pointer, [Resultset, Multiresultset]):
+    elif isinstance(pointer, (Resultset, Multiresultset)):
         return pointer # Return pointer directly if it's already a results set
     elif callable(pointer): 
         return pointer() # Try calling as function -- might be useful for the database or something
