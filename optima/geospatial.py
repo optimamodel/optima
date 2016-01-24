@@ -27,11 +27,11 @@ def geogui():
     left = 20.
     right = wid*2/3.
     
-    
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
+    geoguiwindow.setWindowTitle('Optima geospatial analysis')
     
     ## Define buttons
     makesheetbutton = QtGui.QPushButton('Create geospatial spreadsheet', parent=geoguiwindow)
