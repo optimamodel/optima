@@ -267,7 +267,7 @@ class Multiresultset(Resultset):
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
-        # Budget TEMP
+        # Budget
         self.budget = [resultset.budget for resultset in resultsetlist]
         self.budgetyears = [resultset.budgetyears for resultset in resultsetlist]
         
