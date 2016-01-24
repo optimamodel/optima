@@ -5,12 +5,12 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 
 Version: 2016jan23
 """
-
-global panel
+from PyQt4 import QtGui
+global geoguiwindow
 geoguiwindow = None
 
 def geogui():
-    from PyQt4 import QtGui
+    
     global geoguiwindow
     
     geoguiwindow = QtGui.QWidget() # Create panel widget
