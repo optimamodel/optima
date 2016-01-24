@@ -631,12 +631,12 @@ class Parameterset(object):
             results = getresults(project=self.project, pointer=self.resultsref)
             return results
         else:
-            print('WARNING, no results associated with this parameter set')
-            return None
+            raise Exception('No results associated with this parameter set')
+    
     
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
-        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
+        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys more accessibly
         return None
 
 

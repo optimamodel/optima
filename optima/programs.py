@@ -194,7 +194,7 @@ class Programset(object):
         if isinstance(tvec,ndarray): tvec = tvec.tolist()
 
         # Set up internal variables
-        settings = Settings()
+        settings = self.getsettings()
         start = settings.start
         end = settings.end
         allt = linspace(start, end, round((end-start)+1))
