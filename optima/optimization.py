@@ -1,7 +1,7 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan18 by cliffk
+Version: 2016jan24
 """
 
 from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
@@ -157,12 +157,15 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
+    tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=[orig, new])
-    budget = odict()
-    budget['orig'] = orig.budgetvec # Store original allocation
-    budget['optim'] = new.budgetvec # Store original allocation
-    multires.budget = budget # Store budget information
+    multires = Multiresultset(resultsetlist=tmpresults)
+    multires.budget = odict()
+    
+    for k,key in enumerate(multires.keys): # WARNING, this is ugly
+        multires.budget[key] = progset.getdefaultbudget()
+        multires.budget[key][:] = tmpresults[k].budgetvec # Copy budgetvec into odict
+    
     multires.mismatch = output.fval # Store full function evaluation information
     optim.resultsref = multires.uid # Store the reference for this result
     
