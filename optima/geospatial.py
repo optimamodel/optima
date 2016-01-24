@@ -43,8 +43,10 @@ def geogui():
     ## Define functions
     ##############################################################################################################################
 
-    def _checkproj(filepath):
-        ''' Check that the filename provided is a project; if so, return it; else, return None '''
+    
+    def _loadproj():
+        ''' Little helper function to load a project, since used more than once '''
+        filepath = QtGui.QFileDialog.getOpenFileNames(caption='Choose project file', filter='*'+projext)
         project = None
         try: 
             project = loadobj(filepath, verbose=0)
@@ -57,12 +59,6 @@ def geogui():
         except: 
             print('File "%s" is not an Optima project file' % filepath)
             return None
-    
-    
-    def _loadproj():
-        ''' Little helper function to load a project, since used more than once '''
-        filepath = QtGui.QFileDialog.getOpenFileNames(caption='Choose project file', filter='*'+projext)
-        return _checkproj(filepath)
         
         
     def makesheet():
@@ -88,6 +84,21 @@ def geogui():
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
         project = _loadproj()
+        
+        ## 2. Load a spreadsheet file
+        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+        
+        ## 3. Get a destination folder
+        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+        
+        ## 4. Read the spreadsheet
+        # ...
+        
+        ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
+        # ...
+        
+        ## 6. Save each project file into the directory
+        # ...
         
         return None
 
@@ -197,12 +208,14 @@ def geogui():
     actions['close']     = closewindow
     
     ## Set button locations
-    for b,button in enumerate(buttons.values()):
-        button.move(left, top+spacing*b)
+    spacer = 0
+    for b,key in enumerate(buttons.keys()):
+        if key=='rungeo': spacer = 200
+        buttons[key].move(left, top+spacing*b+spacer)
     
     ## Define button functions
-    for k in buttons.keys():
-        buttons[k].clicked.connect(actions[k])
+    for key in buttons.keys():
+        buttons[key].clicked.connect(actions[key])
     
     
     
