@@ -5,11 +5,10 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 
 Version: 2016jan23
 """
-import os
+
+from optima import Project, Portfolio, loadobj, defaultobjectives
 from PyQt4 import QtGui
 from pylab import figure, close
-from optima import Project, loadobj
-from glob import glob
 global geoguiwindow
 geoguiwindow = None
 
@@ -19,7 +18,10 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, projectlist
+    global geoguiwindow, portfolio, projectlist, objectives
+    portfolio = None
+    projectlist = []
+    objectives = defaultobjectives()
     
     ## Set parameters
     wid = 300.0
