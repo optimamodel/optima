@@ -18,9 +18,9 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, portfolio, projectlist, objectives
+    global geoguiwindow, portfolio, projectslist, objectives
     portfolio = None
-    projectlist = []
+    projectslist = []
     objectives = defaultobjectives()
     
     ## Set parameters
@@ -37,7 +37,7 @@ def geogui():
     geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
-    projectlist = []
+    projectslist = []
     
     ## Define buttons
     makesheetbutton = QtGui.QPushButton('Create geospatial spreadsheet', parent=geoguiwindow)
@@ -63,8 +63,8 @@ def geogui():
 #    geoguiwindow.setCentralWidget(projectsbox)
     
     def loadprojects():
-        global projectlist
-        projectlist = []
+        global projectslist
+        projectslist = []
         projectpaths = []
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files/portfolio folder', filter='*'+extension)
         for filepath in filepaths:
@@ -74,11 +74,13 @@ def geogui():
             if tmpproj is not None: 
                 try: 
                     assert type(tmpproj)==Project
-                    projectlist.append(tmpproj)
+                    projectslist.append(tmpproj)
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectsbox.setText('\n'.join(projectpaths))
+        portfolio = Portfolio()
+        for project in projectslist: portfolio.addproject(project)
         return None
     
     ## Define functions
