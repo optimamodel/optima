@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan12 by cliffk
+Version: 2015jan23 by cliffk
 """
 
 from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
@@ -9,7 +9,7 @@ from numpy import array, nan, zeros, arange
 
 
 
-def getresults(project=None, pointer=None):
+def getresults(project=None, pointer=None, die=True):
     '''
     Function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
@@ -22,18 +22,23 @@ def getresults(project=None, pointer=None):
         which returns
         P.results[P.parsets[0].resultsref]
     
-    Version: 2016jan18
+    The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
+    
+    Version: 2016jan23
     '''
-    if type(pointer) in [str, int, float]:
+    if isinstance(pointer, [str, int, float]):
         if project is not None: return project.results[pointer]
         else: raise Exception('To get results using a key or index, getresults() must be given the project')
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
         else: raise Exception('To get results using a UID, getresults() must be given the project')
+    elif isinstance(pointer, [Resultset, Multiresultset]):
+        return pointer # Return pointer directly if it's already a results set
     elif callable(pointer): 
-        return pointer() # Try calling as function
+        return pointer() # Try calling as function -- might be useful for the database or something
     else: 
-        return pointer # Give up, just return pointer, which is maybe a Resultset
+        if die: raise Exception('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        else: return None # Give up, return nothing
 
 
 
