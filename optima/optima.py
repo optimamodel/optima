@@ -141,6 +141,8 @@ except: _failed()
 try: from portfolio import Portfolio # Portfolio class (container of Projects)
 except: _failed()
 
+try: from geospatial import geogui # Import GUI tools for geospatial analysis
+except: _failed()
 
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: 

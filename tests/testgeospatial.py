@@ -15,8 +15,9 @@ Version: 2016jan20 by davidkedz
 ## Define tests to run here!!!
 tests = [
 #'forcerefresh',
-'makeportfolio',
-'generateBOCs',
+#'makeportfolio',
+#'generateBOCs',
+'rungui',
 ]
 
 ##############################################################################
@@ -137,6 +138,11 @@ if 'generateBOCs' in tests:
     done(t)
 
 
+
+
+if 'rungui' in tests and doplot:
+    from optima import geogui
+    geogui()
 
 
 
