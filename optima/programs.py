@@ -16,7 +16,7 @@ coveragepars=['numtx','numpmtct','numost','numcircum']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random'):
+    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
@@ -25,6 +25,7 @@ class Programset(object):
         if programs is not None: self.addprograms(programs)
         self.created = today()
         self.modified = today()
+        self.project = project
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -193,11 +194,7 @@ class Programset(object):
         if isinstance(tvec,ndarray): tvec = tvec.tolist()
 
         # Set up internal variables
-        try: 
-            settings = self.project.settings
-        except:
-            print('Warning, cannot extract settings from project in gettargetpopsize() in program set; using defaults instead')
-            settings = Settings()
+        settings = self.getsettings()
         start = settings.start
         end = settings.end
         allt = linspace(start, end, round((end-start)+1))
@@ -561,12 +558,12 @@ class Program(object):
         # Initialise outputs
         popsizes = {}
         targetpopsize = {}
-        
-        try: 
-            settings = self.project.settings
-        except:
-            print('Warning, cannot extract settings from project in gettargetpopsize() in program set; using defaults instead')
-            settings = Settings()
+		settings = self.getsettings()
+		if not results: 
+            try: results = parset.getresults()
+            except: 
+                results = runmodel(pars=parset.pars[ind])
+                parset.resultsref = results.uid # So it doesn't have to be rerun
 
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
@@ -575,7 +572,6 @@ class Program(object):
     
             else: # If it's a program for HIV+ people, need to find the number of positives
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
-                if not results: results = runmodel(pars=parset.pars[ind], project=self.project, settings=settings)
                 eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
                 for yr in t:
                     initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
@@ -588,7 +584,6 @@ class Program(object):
             else: # HIV+ pregnant women
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t) #TEMP
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
-                if not results: results = runmodel(pars=parset.pars[ind], project=self.project, settings=settings)
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
