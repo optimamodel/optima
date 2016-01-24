@@ -1,6 +1,7 @@
-
+'''
+Reads in parameter table from optima and provides additional functions
+'''
 from optima.parameters import loadpartable
-
 parameter_list = loadpartable()
 
 def input_parameter(short):
@@ -21,7 +22,7 @@ def input_parameter_name(short):
         return None
 
 # TODO: is this still necessary??
-def parameter_name(key): #params is the output of parameters() method
+def parameter_name(key): 
     if not type(key)==list: key=[key]
     entry = [param for param in parameter_list if ''.join(param['short'])==''.join(key)]
     if entry:
