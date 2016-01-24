@@ -145,6 +145,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     data['pops']['male'] = [] # Store whether or not population is male
     data['pops']['female'] = [] # Store whether or not population is female
     data['pops']['age'] = [] # Store the age range for this population
+    data['pops']['injects'] = [] # Store whether or not population injects
+    data['pops']['sexworker'] = [] # Store whether or not population is commercial sex provider
     
     ## Initialize partnerships
     data['pships'] = odict() # Initialize to empty list
@@ -199,6 +201,8 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     data['pops']['male'].append(forcebool(thesedata[2], 'male, row %i'% row))
                     data['pops']['female'].append(forcebool(thesedata[3], 'female, row %i'% row))
                     data['pops']['age'].append([int(thesedata[4]), int(thesedata[5])])
+                    data['pops']['injects'].append(forcebool(thesedata[6], 'injects, row %i'% row))
+                    data['pops']['sexworker'].append(forcebool(thesedata[6], 'sexworker, row %i'% row))
                     
                 
                 # It's key data, save both the values and uncertainties
