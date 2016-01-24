@@ -566,7 +566,11 @@ class Program(object):
             else: # If it's a program for HIV+ people, need to find the number of positives
                 settings = Settings()
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
-                if not results: results = runmodel(pars=parset.pars[ind])
+                if not results: 
+                    try: results = parset.getresults()
+                    except: 
+                        results = runmodel(pars=parset.pars[ind])
+                        parset.resultsref = results.uid # So it doesn't have to be rerun
                 eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
                 for yr in t:
                     initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
