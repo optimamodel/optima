@@ -17,7 +17,7 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow
+    global geoguiwindow, portfolio
     
     ## Set parameters
     wid = 300.0
@@ -32,6 +32,7 @@ def geogui():
     geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
+    portfolio = None
     
     ## Define buttons
     makesheetbutton = QtGui.QPushButton('Create geospatial spreadsheet', parent=geoguiwindow)
@@ -49,10 +50,16 @@ def geogui():
     exportbutton.move(left, hei-spacing)
     closebutton.move(right, hei-spacing)
     
+    def loadprojects():
+        global portfolio
+        filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files/portfolio folder')
+        print(portfolio)
+        return None
+    
     ## Define functions
 #    makesheetbutton.clicked.connect()
 #    genprojbutton.clicked.connect()
-#    loadbutton.clicked.connect()
+    loadbutton.clicked.connect(loadprojects)
 #    rungeobutton.clicked.connect()
 #    exportbutton.clicked.connect()
     closebutton.clicked.connect(geoguiwindow.close)
