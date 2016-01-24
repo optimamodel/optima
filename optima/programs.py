@@ -453,7 +453,7 @@ class Program(object):
     '''
 
     def __init__(self, short, targetpars=None, targetpops=None, ccopars=None, costcovdata=None, nonhivdalys=0,
-        category='No category', name='', criteria=None, targetcomposition=None, project=None):
+        category='No category', name='', criteria=None, targetcomposition=None):
         '''Initialize'''
         self.short = short
         self.name = name

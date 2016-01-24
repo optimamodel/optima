@@ -44,43 +44,26 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
 
         # Loop over each plot
         epiplots = odict()
-	for plotkey in which:
+        for plotkey in which:
+
             ################################################################################################################
             ## Parse user input
             ################################################################################################################
-#<<<<<<< HEAD
-#            if type(plotkey) not in [str, list, tuple]: 
-#                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
-#                raise Exception(errormsg)
-#            else:
-#                try:
-#                    if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
-#                    elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
-#                except:
-#                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-#                    raise Exception(errormsg)
-#            if datatype not in results.main.keys():
-#                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-#                raise Exception(errormsg)
-#            if plotformat not in plotformatslist.flatten():
-#                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
-#=======
-            try:
-                if type(plotkey)==str:
-			datatype, plotformat = plotkey.split('-')
-                elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
-                else: 
-                    errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
+            if type(plotkey) not in [str, list, tuple]: 
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
+                raise Exception(errormsg)
+            else:
+                try:
+                    if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
+                    elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
+                except:
+                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
                     raise Exception(errormsg)
-                if datatype not in results.main.keys():
-                    errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                    raise Exception(errormsg)
-                if plotformat not in plotformatslist.flatten():
-                    errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
-                    raise Exception(errormsg)
-            except Exception as e:
-                errormsg = '%s\nCould not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % (str(e), plotkey)
-#>>>>>>> develop
+            if datatype not in results.main.keys():
+                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
+                raise Exception(errormsg)
+            if plotformat not in plotformatslist.flatten():
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
                 raise Exception(errormsg)
             
             try:
