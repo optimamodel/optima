@@ -22,8 +22,8 @@ def pchip(x, y, xnew, deriv = False):
     y = dcp(ys)
     xnew = dcp(sorted(xnew))
     
-    print x
-    print y
+#    print x
+#    print y
 
     # Compute slopes used by piecewise cubic Hermite interpolator.
     m = pchip_slopes(x, y)
@@ -57,8 +57,8 @@ def pchip_slopes(x, y, monotone=True):
     
             m.append(deriv)
     
-    print secants
-    print m
+#    print secants
+#    print m
     return np.array(m)
 
 #=========================================================
