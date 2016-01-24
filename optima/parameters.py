@@ -624,10 +624,10 @@ class Parameterset(object):
         return output
     
     
-    def getresults(self):
+    def getresults(self, die=True):
         ''' Method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+            results = getresults(project=self.project, pointer=self.resultsref, die=die)
             return results
         else:
             print('WARNING, no results associated with this parameter set')

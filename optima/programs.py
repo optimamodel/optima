@@ -43,6 +43,15 @@ class Programset(object):
         output += '============================================================\n'
         return output
 
+    def getsettings(self):
+        ''' Try to get the freshest settings available '''
+        try: 
+            settings = self.project.settings
+        except: 
+            print('Warning, using default settings with program set "%s"' % self.name)
+            settings = Settings()
+        return settings
+        
     def gettargetpops(self):
         '''Update populations targeted by some program in the response'''
         self.targetpops = []
@@ -195,9 +204,7 @@ class Programset(object):
 
         # Set up internal variables
         settings = self.getsettings()
-        start = settings.start
-        end = settings.end
-        allt = linspace(start, end, round((end-start)+1))
+        allt = settings.maketvec() # Confusing since usually called tvec, but that's defined differently above...
         emptyarray = array([nan]*len(allt))
         
         # Get cost data for each program in each year that it exists
@@ -553,16 +560,31 @@ class Program(object):
         elif type(t)==list: t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
-            else: raise Exception('Please provide either a parset or a resultset that contains a parset')
+            else:
+                try:
+                    parset = self.project.parsets[0]
+                    print('Warning, using default parset')
+                except:
+                    raise Exception('Please provide either a parset or a resultset that contains a parset')
 
         # Initialise outputs
         popsizes = {}
         targetpopsize = {}
-		settings = self.getsettings()
-		if not results: 
-            try: results = parset.getresults()
+        
+        # Do everything possible to get settings
+        try: settings = parset.project.settings
+        except: 
+            try: settings = results.project.settings
+            except:
+                try: settings = self.project.settings
+                except:
+                    print('Warning, could not find settings for program "%s", using default' % self.name)
+                    settings = Settings()
+        
+        if not results: 
+            try: results = parset.getresults(die=True)
             except: 
-                results = runmodel(pars=parset.pars[ind])
+                results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
                 parset.resultsref = results.uid # So it doesn't have to be rerun
 
         # If it's a program for everyone... 
@@ -571,7 +593,7 @@ class Program(object):
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
     
             else: # If it's a program for HIV+ people, need to find the number of positives
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
+                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
                 eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
                 for yr in t:
                     initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
@@ -583,7 +605,7 @@ class Program(object):
 
             else: # HIV+ pregnant women
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t) #TEMP
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
+                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: WARNING, this isn't used, should it be?
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
