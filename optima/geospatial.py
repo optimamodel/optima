@@ -192,8 +192,8 @@ def geogui():
     
     ## Define buttons
     buttons = odict()
-    buttons['makesheet'] = QtGui.QPushButton('Make geospatial template from project', parent=geoguiwindow)
-    buttons['makeproj']  = QtGui.QPushButton('Auto-generate projects template', parent=geoguiwindow)
+    buttons['makesheet'] = QtGui.QPushButton('Make geospatial spreadsheet from project', parent=geoguiwindow)
+    buttons['makeproj']  = QtGui.QPushButton('Auto-generate projects from spreadsheet', parent=geoguiwindow)
     buttons['create']    = QtGui.QPushButton('Create portfolio from projects', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
