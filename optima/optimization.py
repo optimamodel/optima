@@ -63,7 +63,7 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     
     # Validate input
     if None in [budgetvec, progset, objectives, constraints, tvec]:  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise Exception('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
+        raise OptimaException('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # WARNING -- temp -- normalize budgetvec
     budgetvec *=  objectives['budget']/budgetvec.sum() 
@@ -103,7 +103,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     printv('Running outcomes optimization...', 1, verbose)
     
-    if None in [project, optim]: raise Exception('minoutcomes() requires project and optim arguments at minimum')
+    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     
     
     
@@ -120,7 +120,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     # Process inputs
     if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
-    if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
+    if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
     
     totalbudget = objectives['budget']
@@ -138,7 +138,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         # WARNING, kludge because some later functions expect parset instead of pars
         thisparset = dcp(parset)
         try: thisparset.pars = [parset.pars[ind]] # Turn into a list
-        except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
+        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         # Calculate limits -- WARNING, kludgy, I guess?
         budgetlower  = zeros(nprogs)
@@ -150,7 +150,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         elif method=='simplex':
             from scipy.optimize import minimize
             budgetvecnew = minimize(objectivecalc, budgetvec, args=args).x
-        else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
+        else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = objectivecalc(budgetvec, outputresults=True, **args)

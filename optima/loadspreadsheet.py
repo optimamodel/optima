@@ -27,7 +27,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             return 0
         else:
             errormsg = 'Boolean data "%s" not understood in spreadsheet location "%s"' % (entry, location)
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
         
         
         
@@ -41,7 +41,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
         
         # Now check integrity of data itself
         validdata = array(thesedata)[~isnan(thesedata)]
@@ -54,12 +54,12 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                 errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
                 if checkupper: errormsg += 'Be sure that all values are >=0 and <=1'
                 else: errormsg += 'Be sure that all values are >=0'
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
         
         # No data entered
         elif checkblank:
             errormsg = 'No data or assumption entered for sheet "%s", parameter "%s", row=%i' % (sheetname, thispar, row) 
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
         
         return None
 
@@ -123,7 +123,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
         workbook = open_workbook(filename) # Open workbook
     except: 
         errormsg = 'Failed to load spreadsheet: file "%s" not found or other problem' % filename
-        raise Exception(errormsg)
+        raise OptimaException(errormsg)
     
     
     ## Calculate columns for which data are entered, and store the year ranges
@@ -184,7 +184,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                     except:
                         errormsg = 'Incorrect number of headings found for sheet "%s"\n' % sheetname
                         errormsg += 'Check that there is no extra text in the first two columns'
-                        raise Exception(errormsg)
+                        raise OptimaException(errormsg)
                     data[thispar] = [] # Initialize to empty list
             
             elif subparam != '': # The first column is blank: it's time for the data
@@ -247,14 +247,14 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                         subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                     except:
                         errormsg = 'Failed to load constant subparameter from subparlist %i' % parcount
-                        raise Exception(errormsg)
+                        raise OptimaException(errormsg)
                     validatedata(thesedata, sheetname, thispar, row)
                     data['const'][subpar] = thesedata # Store data
                 
                 # It's not recognized: throw an error
                 else: 
                     errormsg = 'Sheet name "%s" not recognized: please do not change the names of the sheets!' % sheetname
-                    raise Exception(errormsg)
+                    raise OptimaException(errormsg)
     
     
     # Check that matrices have correct shape
@@ -266,7 +266,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
             errormsg = 'Matrix "%s" in partnerships & transitions sheet is not square\n' % key
             errormsg += '(rows = %i, columns = %i, should be %i)\n' % (matrixshape[0], matrixshape[1], data['npops'])
             errormsg += 'Check for missing rows or added text'
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
     
     
     # Store tuples of partnerships
