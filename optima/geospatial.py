@@ -5,9 +5,11 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 
 Version: 2016jan23
 """
-
+import os
 from PyQt4 import QtGui
 from pylab import figure, close
+from optima import Project, loadobj
+from glob import glob
 global geoguiwindow
 geoguiwindow = None
 
@@ -17,7 +19,7 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, portfolio
+    global geoguiwindow, projectlist
     
     ## Set parameters
     wid = 300.0
@@ -26,13 +28,14 @@ def geogui():
     spacing = 40
     left = 20.
     right = wid*2/3.
+    extension = '.prj'
     
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
-    portfolio = None
+    projectlist = []
     
     ## Define buttons
     makesheetbutton = QtGui.QPushButton('Create geospatial spreadsheet', parent=geoguiwindow)
@@ -42,6 +45,9 @@ def geogui():
     exportbutton    = QtGui.QPushButton('Export results', parent=geoguiwindow)
     closebutton     = QtGui.QPushButton('Close', parent=geoguiwindow)
     
+    ## Define other objects
+    projectsbox = QtGui.QTextEdit(parent=geoguiwindow)
+    
     ## Set button locations
     makesheetbutton.move(left, top+spacing*0)
     genprojbutton.move(left, top+spacing*1)
@@ -50,10 +56,27 @@ def geogui():
     exportbutton.move(left, hei-spacing)
     closebutton.move(right, hei-spacing)
     
+    ## Set other locations
+    projectsbox.move(200, 200)
+#    geoguiwindow.setCentralWidget(projectsbox)
+    
     def loadprojects():
-        global portfolio
-        filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files/portfolio folder')
-        print(portfolio)
+        global projectlist
+        projectlist = []
+        projectpaths = []
+        filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files/portfolio folder', filter='*'+extension)
+        for filepath in filepaths:
+            tmpproj = None
+            try: tmpproj = loadobj(filepath, verbose=0)
+            except: print('Could not load file "%s"; moving on...' % filepath)
+            if tmpproj is not None: 
+                try: 
+                    assert type(tmpproj)==Project
+                    projectlist.append(tmpproj)
+                    projectpaths.append(filepath)
+                    print('Project file "%s" loaded' % filepath)
+                except: print('File "%s" is not an Optima project file; moving on...' % filepath)
+        projectsbox.setText('\n'.join(projectpaths))
         return None
     
     ## Define functions
