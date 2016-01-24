@@ -226,7 +226,7 @@ class Resultset(object):
         defaultchecks = self.graph_selectors['checks']
         epikeys = self.main.keys()
         epinames = [thing.name for thing in self.main.values()]
-        episubkeys = ['tot', 'pops'] # Would be best not to hard-code this...
+        episubkeys = ['tot', 'per'] # Would be best not to hard-code this...
         episubnames = ['total', 'by population']
 
         if which is None:  # assume there is at least one epikey )

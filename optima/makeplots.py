@@ -44,13 +44,13 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
 
         # Loop over each plot
         epiplots = odict()
-        for plotkey in which:
-
+	for plotkey in which:
             ################################################################################################################
             ## Parse user input
             ################################################################################################################
             try:
-                if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
+                if type(plotkey)==str:
+			datatype, plotformat = plotkey.split('-')
                 elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 else: 
                     errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
@@ -61,8 +61,8 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                 if plotformat not in plotformatslist.flatten():
                     errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
                     raise Exception(errormsg)
-            except:
-                errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
+            except Exception as e:
+                errormsg = '%s\nCould not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % (str(e), plotkey)
                 raise Exception(errormsg)
             
             try:
