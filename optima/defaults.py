@@ -1,7 +1,7 @@
 """
 Defines the default parameters for each program.
 
-Version: 2016jan05 by robynstuart
+Version: 2016jan23 by cliffk
 """
 from optima import Program, Programset
 

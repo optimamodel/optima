@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan12 by cliffk
+Version: 2015jan23 by cliffk
 """
 
 from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
@@ -9,7 +9,7 @@ from numpy import array, nan, zeros, arange
 
 
 
-def getresults(project=None, pointer=None):
+def getresults(project=None, pointer=None, die=True):
     '''
     Function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
@@ -22,18 +22,23 @@ def getresults(project=None, pointer=None):
         which returns
         P.results[P.parsets[0].resultsref]
     
-    Version: 2016jan18
+    The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
+    
+    Version: 2016jan23
     '''
-    if type(pointer) in [str, int, float]:
+    if isinstance(pointer, (str, int, float)):
         if project is not None: return project.results[pointer]
         else: raise Exception('To get results using a key or index, getresults() must be given the project')
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
         else: raise Exception('To get results using a UID, getresults() must be given the project')
+    elif isinstance(pointer, (Resultset, Multiresultset)):
+        return pointer # Return pointer directly if it's already a results set
     elif callable(pointer): 
-        return pointer() # Try calling as function
+        return pointer() # Try calling as function -- might be useful for the database or something
     else: 
-        return pointer # Give up, just return pointer, which is maybe a Resultset
+        if die: raise Exception('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        else: return None # Give up, return nothing
 
 
 
@@ -136,6 +141,7 @@ class Resultset(object):
     
     def make(self, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
+        # WARNING: Should use indexes retrieved from project settings!
         
         printv('Making derived results...', 3, verbose)
         
@@ -167,17 +173,18 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        txinds = self.settings.alltreat
+        alltreat = self.settings.alltreat
+        allplhiv = self.settings.allplhiv
         data = self.data
         
-        self.main['prev'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
         
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
@@ -195,11 +202,9 @@ class Resultset(object):
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        try:
-            self.main['numtreat'].pops = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numtreat'].tot = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
-            if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
-        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
 # WARNING, need to implement
@@ -226,7 +231,7 @@ class Resultset(object):
         defaultchecks = self.graph_selectors['checks']
         epikeys = self.main.keys()
         epinames = [thing.name for thing in self.main.values()]
-        episubkeys = ['tot', 'per'] # Would be best not to hard-code this...
+        episubkeys = ['tot', 'per', 'sta'] # Would be best not to hard-code this...
         episubnames = ['total', 'by population']
 
         if which is None:  # assume there is at least one epikey )

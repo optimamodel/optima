@@ -233,7 +233,6 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
                 par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             raise Exception(errormsg)
     
     return par
@@ -625,18 +624,18 @@ class Parameterset(object):
         return output
     
     
-    def getresults(self):
+    def getresults(self, die=True):
         ''' Method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+            results = getresults(project=self.project, pointer=self.resultsref, die=die)
             return results
         else:
-            print('WARNING, no results associated with this parameter set')
-            return None
+            raise Exception('No results associated with this parameter set')
+    
     
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
-        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
+        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys more accessibly
         return None
 
 

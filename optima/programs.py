@@ -42,6 +42,12 @@ class Programset(object):
         output += '============================================================\n'
         return output
 
+    def getsettings(self):
+        ''' Try to get the freshest settings available '''
+        print('Warning, using default settings with program set "%s"' % self.name)
+        settings = Settings()
+        return settings
+        
     def gettargetpops(self):
         '''Update populations targeted by some program in the response'''
         self.targetpops = []
@@ -86,8 +92,7 @@ class Programset(object):
                                     
                 # Delete any stored programs that are no longer needed (if removing a program)
                 progccopars = dcp(ccopars)
-                try: del progccopars['t'], progccopars['intercept']
-                except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                del progccopars['t'], progccopars['intercept']
                 for prog in progccopars.keys(): 
                     if prog not in targetingprogs: del ccopars[prog]
 
@@ -183,22 +188,20 @@ class Programset(object):
         else: return progs_by_targetpar
 
 
-    def getdefaultbudget(self, tvec=None, verbose=2):
+    def getdefaultbudget(self, years=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''
         
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if type(tvec) in [int, float]: tvec = [tvec]
-        if isinstance(tvec,ndarray): tvec = tvec.tolist()
+        if type(years) in [int, float]: years = [years]
+        if isinstance(years,ndarray): years = years.tolist()
 
         # Set up internal variables
-        settings = Settings()
-        start = settings.start
-        end = settings.end
-        allt = linspace(start, end, round((end-start)+1))
-        emptyarray = array([nan]*len(allt))
+        settings = self.getsettings()
+        tvec = settings.maketvec() 
+        emptyarray = array([nan]*len(tvec))
         
         # Get cost data for each program in each year that it exists
         for program in self.programs:
@@ -206,7 +209,7 @@ class Programset(object):
             selectbudget[program] = []
             if self.programs[program].costcovdata['t']:
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
-                    yrindex = findinds(allt,yr)
+                    yrindex = findinds(tvec,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
                     lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
@@ -214,12 +217,12 @@ class Programset(object):
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
-            if tvec is not None:
-                for yr in tvec:
-                    yrindex = findinds(allt,yr)
+            if years is not None:
+                for yr in years:
+                    yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
 
-        return selectbudget if tvec is not None else lastbudget
+        return selectbudget if years is not None else lastbudget
 
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
@@ -557,6 +560,16 @@ class Program(object):
         # Initialise outputs
         popsizes = {}
         targetpopsize = {}
+        
+        # Do everything possible to get settings
+        try: settings = parset.project.settings
+        except: 
+            try: settings = results.project.settings
+            except:
+                print('Warning, could not find settings for program "%s", using default' % self.name)
+                settings = Settings()
+        
+        
 
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
@@ -564,9 +577,14 @@ class Program(object):
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
     
             else: # If it's a program for HIV+ people, need to find the number of positives
-                settings = Settings()
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
-                if not results: results = runmodel(pars=parset.pars[ind])
+                if not results: 
+                    try: results = parset.getresults(die=True)
+                    except Exception as E: 
+                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+                        results = runmodel(pars=parset.pars[ind], settings=settings)
+                        parset.resultsref = results.uid # So it doesn't have to be rerun
+                
+                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
                 eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
                 for yr in t:
                     initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
@@ -577,10 +595,13 @@ class Program(object):
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
 
             else: # HIV+ pregnant women
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t) #TEMP
-                settings = Settings()
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']]))
-                if not results: results = runmodel(pars=parset.pars[ind])
+                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+                if not results: 
+                    try: results = parset.getresults(die=True)
+                    except Exception as E: 
+                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+                        results = runmodel(pars=parset.pars[ind], settings=settings)
+                        parset.resultsref = results.uid # So it doesn't have to be rerun
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
