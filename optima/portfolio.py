@@ -2,10 +2,10 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import ut
 from optima import gitinfo # Import functions
 from optima import __version__ # Get current version
 
-from optima import defaultobjectives
+from optima import defaultobjectives, asd
 
 #######################################################################################################
-## Project class -- this contains everything else!
+## Portfolio class -- this contains everything else!
 #######################################################################################################
 
 class Portfolio(object):
@@ -88,7 +88,64 @@ class Portfolio(object):
             p = self.projects[x]
             p.plotBOC(objectives)
             p.plotBOC(objectives, deriv = True)
+            
+    def minBOCoutcomes(self, objectives):
+        ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
+        BOClist = []
+        grandtotal = objectives['budget']
+        for x in self.projects:
+            p = self.projects[x]
+            if p.getBOC(objectives) == None:
+                print('Generating missing BOC for project: %s' % p.name)
+                p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
+            BOClist.append(p.getBOC(objectives))
+        return minBOCoutcomes(BOClist, grandtotal)
         
+        
+        
+#%% Functions for geospatial analysis
+
+def constrainbudgets(x, grandtotal, minbound):
+    
+    # First make sure all values are not below the respective minimum bounds.
+    for i in xrange(len(x)):
+        if x[i] < minbound[i]:
+            x[i] = minbound[i]
+    
+    # Then scale all excesses over the minimum bounds so that the new sum is grandtotal.
+    constrainedx = []
+    for i in xrange(len(x)):
+        xi = (x[i] - minbound[i])*(grandtotal - sum(minbound))/(sum(x) - sum(minbound)) + minbound[i]
+        constrainedx.append(xi)
+    
+    return constrainedx
+
+def objectivecalc(x, BOClist, grandtotal, minbound):
+    ''' Objective function. Sums outcomes from all projects corresponding to budget list x. '''
+    x = constrainbudgets(x, grandtotal, minbound)
+    
+    totalobj = 0
+    for i in xrange(len(x)):
+        totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
+    print(totalobj)
+    return totalobj
+    
+def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxiters=1000, maxtime=None, verbose=5):
+    ''' Actual runs geospatial optimisation across provided BOCs. '''
+    
+    if minbound == None: minbound = [0]*len(BOClist)
+    if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
+    
+#    args = (BOClist, grandtotal, minbound)
+    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}
+        
+#    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    X = constrainbudgets(X, grandtotal, minbound)
+
+    print(FVAL)    
+    
+    return X
 
 ## -*- coding: utf-8 -*-
 #"""

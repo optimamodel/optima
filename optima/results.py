@@ -82,6 +82,14 @@ class BOC(object):
         output += objrepr(self)
         return output
         
+    def getoutcome(self, budgets):
+        ''' Get interpolated outcome for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets)
+        
+    def getoutcomederiv(self, budgets):
+        ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets, deriv = True)
+        
     def plot(self, deriv = False, returnplot = False):
         ''' Plot the budget-outcome curve '''
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True)                 # Plot interpolation

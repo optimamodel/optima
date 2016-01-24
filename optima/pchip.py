@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import linspace
 from copy import deepcopy as dcp
+import collections
 #from interpolate import slopes, stineman_interp
 
 #=========================================================
@@ -20,6 +21,9 @@ def pchip(x, y, xnew, deriv = False):
     ys = [b for a,b in sorted(zip(x,y))]
     x = dcp(xs)
     y = dcp(ys)
+    
+    if not isinstance(xnew,collections.Sequence):       # Is this reliable enough...?
+        Exception('Error: Values to interpolate for with PCHIP have not been given in sequence form (e.g. list or array)!')
     xnew = dcp(sorted(xnew))
     
 #    print x

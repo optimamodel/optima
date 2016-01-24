@@ -12,6 +12,10 @@ from pylab import figure, close
 global geoguiwindow
 geoguiwindow = None
 
+
+#%% All GUI structures and methods follow.
+
+
 def geogui():
     '''
     Open the GUI for doing geospatial analysis.
@@ -105,7 +109,7 @@ def geogui():
 
     def create():
         ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-        global projectslist
+        global portfolio, projectslist
         projectslist = []
         projectpaths = []
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
@@ -122,7 +126,8 @@ def geogui():
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectsbox.setText('\n'.join(projectpaths))
         portfolio = Portfolio()
-        for project in projectslist: portfolio.addproject(project)
+        for project in projectslist:
+            portfolio.addproject(project)
         return None
     
     def loadport():
@@ -151,7 +156,9 @@ def geogui():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives)
         portfolio.plotBOCs(objectives)
-        # ...
+        newbudgets = portfolio.minBOCoutcomes(objectives)
+        for x in newbudgets:
+            projectsbox.append('%f' % x)
         return None
     
     
