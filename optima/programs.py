@@ -5,7 +5,7 @@ set of programs, respectively.
 
 Version: 2015nov04 by robynstuart
 """
-from optima import printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
+from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat
 import abc
 import textwrap

@@ -13,7 +13,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     ## Preliminaries
     ###########################################################################
     
-    from optima import odict, printv, today
+    from optima import OptimaException, odict, printv, today
     from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)

@@ -3,7 +3,7 @@
 Functions to read in the economic data and transform it into time series
 '''
 
-from optima import odict, printv, today, smoothinterp
+from optima import OptimaException, odict, printv, today, smoothinterp
 from numpy import nan, isnan, array, logical_or, nonzero
 
 def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):

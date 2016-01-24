@@ -1,4 +1,4 @@
-from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version

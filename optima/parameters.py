@@ -8,7 +8,7 @@ Version: 2016jan14 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 

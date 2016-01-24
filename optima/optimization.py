@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016jan18 by cliffk
 """
 
-from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
+from optima import OptimaException, Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
 from numpy import zeros, arange, array, isnan
 
 

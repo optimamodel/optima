@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
-from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
 
 
 

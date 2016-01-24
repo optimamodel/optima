@@ -1,7 +1,7 @@
 ## Imports
 from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
-from optima import printv, tic, toc, dcp, odict, findinds, makesimpars, Resultset
+from optima import OptimaException, printv, tic, toc, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """

@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015jan23 by cliffk
 """
 
-from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 
 

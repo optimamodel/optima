@@ -5,7 +5,7 @@ This file generates all the figure files -- either for use with the Python backe
 for the frontend via MPLD3.
 '''
 
-from optima import Resultset, Multiresultset, odict, gridcolormap
+from optima import OptimaException, Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
