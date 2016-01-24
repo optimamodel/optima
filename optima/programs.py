@@ -581,12 +581,7 @@ class Program(object):
                     print('Warning, could not find settings for program "%s", using default' % self.name)
                     settings = Settings()
         
-        if not results: 
-            try: results = parset.getresults(die=True)
-            except Exception as E: 
-                print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
-                parset.resultsref = results.uid # So it doesn't have to be rerun
+        
 
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
@@ -594,6 +589,13 @@ class Program(object):
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
     
             else: # If it's a program for HIV+ people, need to find the number of positives
+                if not results: 
+                    try: results = parset.getresults(die=True)
+                    except Exception as E: 
+                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+                        results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
+                        parset.resultsref = results.uid # So it doesn't have to be rerun
+                
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
                 eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
                 for yr in t:
