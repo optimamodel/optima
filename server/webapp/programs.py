@@ -3,9 +3,9 @@ from collections import defaultdict
 from optima.defaults import defaultprograms
 
 
-def get_default_programs(project):
+def get_default_programs(parset):
 
-    programs = defaultprograms(project)
+    programs = defaultprograms(parset)
     rv = []
 
     for program in programs:
@@ -21,7 +21,7 @@ def get_default_programs(project):
             'short': program.short,
             'populations': program.targetpops,
             'parameters': [{
-                'active': False,
+                'active': True if pop else False,
                 'param': short_name,
                 'pops': pop,
             } for short_name, pop in parameters.iteritems()],
