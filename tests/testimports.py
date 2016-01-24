@@ -10,4 +10,4 @@ print('Testing imports...')
 import __builtin__
 __builtin__._failsilently = False
 import optima # analysis:ignore
-print('All essential imports succeeded! You must be very smart.')
+print('All essential imports succeeded.')

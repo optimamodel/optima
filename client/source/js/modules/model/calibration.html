@@ -1,17 +1,18 @@
 <script>
   function format_xaxis() {
     var axes = $('.mpld3-xaxis');
-    if (axes.length > 0) {
+    if (axes.length > 0 && !$(axes[0]).attr('data-pro')) {
       $(axes).find('g.tick > text').each(function() {
         $(this).text($(this).text().replace(',',''));
       });
+      axes.attr('data-pro', true);
     } else {
       setTimeout(format_xaxis, 150);
     }
   }
   function add_lines_to_legends() {
     var svgGraphFigures = $('svg.mpld3-figure');
-    if (svgGraphFigures.length > 0) {
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro1')) {
       svgGraphFigures.each(function() {
         var paths = $(this).find('.mpld3-baseaxes > text');
         if (paths) {
@@ -20,6 +21,7 @@
           var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
           $(this).find('.mpld3-baseaxes').append(lines_to_copy);
         }
+        $(this).attr('data-pro1', true);
       });
     } else {
       setTimeout(add_lines_to_legends, 150);
@@ -27,9 +29,10 @@
   }
   function set_overflow_visible() {
     var svgGraphFigures = $('svg.mpld3-figure');
-    if (svgGraphFigures.length > 0) {
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro2')) {
       svgGraphFigures.each(function() {
         $(this).css('overflow', 'visible');
+        $(this).attr('data-pro2', true);
       });
     } else {
       setTimeout(set_overflow_visible, 150);
@@ -37,7 +40,7 @@
   }
   function fix_mouse_pointer() {
     var svgGraphFigures = $('svg.mpld3-figure');
-    if (svgGraphFigures.length > 0) {
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro3')) {
       svgGraphFigures.each(function () {
         var that = this;
         $(that).on('mouseover', function() {
@@ -48,6 +51,7 @@
             $(this).remove();
           });
         });
+        $(this).attr('data-pro3', true);
       });
     } else {
       setTimeout(fix_mouse_pointer, 150);
@@ -55,21 +59,29 @@
   }
   function remove_default_plugin() {
     var svgGraphFigures = $('mpld3-toolbar');
-    if (svgGraphFigures.length > 0) {
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro4')) {
       svgGraphFigures.each(function () {
         $(this).remove();
+        $(this).attr('data-pro4', true);
       });
     } else {
       setTimeout(remove_default_plugin, 150);
     }
   }
 
-  $(document).ready(function() {
+  function fix_graphs() {
     format_xaxis();
     add_lines_to_legends();
     set_overflow_visible();
     fix_mouse_pointer();
     remove_default_plugin();
+  }
+
+  $(document).ready(function() {
+    fix_graphs();
+    $(document.body).on('click', '.updateGraph' ,function() {
+      fix_graphs();
+    });
   });
 </script>
 <div class="rich" style="margin: 0 -25px;">
@@ -77,7 +89,9 @@
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
   <div style="display: flex;justify-content: flex-start;">
-    <select id="programSet-selection" name="programSet-selection" class="txbox"
+    <select id="programSet-selection"
+            name="programSet-selection"
+            class="updateGraph txbox"
             ng-model="activeParset"
             ng-change="getGraphs()"
             ng-options="parset.name for parset in parsets"
@@ -100,7 +114,7 @@
         </div>
       </div>
       <div style="display: flex;justify-content: center; margin-top: 25px">
-        <input type="button" value="Update" class="btn" ng-click="getGraphs()"/>
+        <input type="button" value="Update" class="updateGraph btn" ng-click="getGraphs()"/>
       </div>
     </div>
     <div class="chart_wrapper">
@@ -117,7 +131,7 @@
         </div>
       </div>
       <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
-        <input type="button" value="Update" class="btn" ng-click="processGraphs()"/>
+        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>
         <input type="button" value="Reset" class="btn" ng-click="resetParameters()"/>
       </div>
     </div>

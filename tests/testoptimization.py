@@ -116,10 +116,10 @@ if 'minimizeoutcomes' in tests:
     print('Optimal allocation: '),
     print(P.optims[-1].getresults().budget['optim']) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
-        from optima import plotmismatch, plotallocs, plotresults
+        from optima import plotmismatch, plot2allocs, plotresults
         plotmismatch(P.results[-1])
-        plotallocs(P.results[-1])
-        plotresults(P.results[-1], toplot=['prev-tot', 'numinci-tot']) # WARNING, only handles plotting total (not by populations) for now
+        plot2allocs(P.results[-1])
+        plotresults(P.results[-1], toplot=['prev-tot', 'prev-per', 'numinci-sta'])
     
     done(t)
 

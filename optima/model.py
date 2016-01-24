@@ -69,7 +69,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Disease state indices
     uncirc  = settings.uncirc # Susceptible, uncircumcised
     circ  = settings.circ # Susceptible, circumcised
-    sus  = settings.sus   # Susceptible, circumcised
+    sus  = settings.sus   # Susceptible, both circumcised and uncircumcised
     undx = settings.undx  # Undiagnosed
     dx   = settings.dx    # Diagnosed
     care = settings.care  # in Care
@@ -106,7 +106,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Behavioural transitions between stages [npop,npts]
     immediatecare = simpars['immediatecare'] # Going directly into Care rather than Diagnosed-only after testing positive (P)
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T) ... hivtest/aidstest should also be P/T?
-    adherencerate = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
+    adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
     propstop      = simpars['propstop']      # Proportion of people on ART who stop taking ART per year (P/T)
     proploss      = simpars['proploss']      # Proportion of people who stop taking ART per year who are lost to follow-up (P)
@@ -392,7 +392,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
             hivdeaths              = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
             otherdeaths            = dt * people[usvl[cd4],:,t] * background
-            virallysuppressed[cd4] = dt * people[usvl[cd4],:,t] * adherencerate[:,t] * successart
+            virallysuppressed[cd4] = dt * people[usvl[cd4],:,t] * adherenceprop[:,t] * successart
             stopUSincare[cd4]      = dt * people[usvl[cd4],:,t] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
             stopUSlost[cd4]        = dt * people[usvl[cd4],:,t] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + newtreat1[cd4]
@@ -510,7 +510,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
 
 
-def runmodel(simpars=None, pars=None, parset=None, progset=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, project=None, data=None, verbose=2):
+def runmodel(simpars=None, pars=None, parset=None, progset=None, budget=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, project=None, data=None, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -525,5 +525,5 @@ def runmodel(simpars=None, pars=None, parset=None, progset=None, settings=None, 
         if project is not None: settings = project.settings
         else: settings = Settings()
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
-    results = Resultset(raw=raw, parset=parset, progset=progset, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
+    results = Resultset(raw=raw, parset=parset, progset=progset, budget=budget, budgetyears=budgetyears, simpars=simpars, project=project, data=data, domake=True) # Create structure for storing results
     return results

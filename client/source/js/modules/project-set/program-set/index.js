@@ -1,5 +1,5 @@
 define([
   './program-set-ctrl',
   './program-set-modal-service',
-  './program-set-modal-ctrl'
+  './program-modal-ctrl'
 ], function () {});

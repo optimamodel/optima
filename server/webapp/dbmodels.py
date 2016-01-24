@@ -4,13 +4,14 @@ from collections import defaultdict
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
+from server.webapp.fields import Json
 
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
 from server.webapp.dbconn import db
-from server.webapp.fields import Uuid, Json
+from server.webapp.fields import Uuid, Json, LargeInt
 from server.webapp.exceptions import ParsetDoesNotExist
 
 from werkzeug.utils import secure_filename
@@ -371,6 +372,12 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
         self.meta = meta
         self.updated = updated
 
+costcov_fields = {
+    'year': fields.String,
+    'spending': LargeInt(attribute='cost'),
+    'coverage': LargeInt(attribute='cov'),
+}
+
 
 @swagger.model
 class ProgramsDb(db.Model):
@@ -390,6 +397,7 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
+        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov')
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -402,12 +410,14 @@ class ProgramsDb(db.Model):
     active = db.Column(db.Boolean)
     targetpops = db.Column(ARRAY(db.String), default=[])
     criteria = db.Column(JSON)
+    costcov = db.Column(JSON)
+    blob = db.Column(db.LargeBinary)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short='',
                  category='No category', active=False, pars=None, created=None,
-                 updated=None, id=None, targetpops=[], criteria=None):
+                 updated=None, id=None, targetpops=[], criteria=None, costcov=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -418,6 +428,7 @@ class ProgramsDb(db.Model):
         self.active = active
         self.targetpops = targetpops
         self.criteria = criteria
+        self.costcov = costcov
         if created:
             self.created = created
         if updated:
@@ -458,6 +469,9 @@ class ProgramsDb(db.Model):
 
         return pars
 
+    def _conv_lg_num(self, num):
+        return int(float(num))
+
     def hydrate(self):
         program_entry = op.Program(
             self.short,
@@ -465,7 +479,12 @@ class ProgramsDb(db.Model):
             name=self.name,
             category=self.category,
             targetpops=self.targetpops,
-            criteria=self.criteria
+            criteria=self.criteria,
+            costcovdata={
+                't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['cov'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+            } if self.costcov is not None else None
         )
         program_entry.id = self.id
         return program_entry
@@ -515,6 +534,21 @@ class ProgsetsDb(db.Model):
 
         return progset_entry
 
+    def _program_to_dict(self, program_be):
+        program = program_be.__dict__
+        program['parameters'] = program.get('targetpars', [])
+        if program['costcovdata'] is None:
+            program['costcov'] = []
+        else:
+            program['costcov'] = [
+                {
+                    'year': program['costcovdata']['t'][i],
+                    'cost': program['costcovdata']['cost'][i],
+                    'cov': program['costcovdata']['coverage'][i],
+                } for i in range(len(program['costcovdata']['t']))
+            ]
+        return program
+
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
 
@@ -526,8 +560,7 @@ class ProgsetsDb(db.Model):
             program_name = program['name']
             if program_name in progset.programs:
                 loaded_programs.add(program_name)
-                program = progset.programs[program_name].__dict__
-                program['parameters'] = program.get('targetpars', [])
+                program = self._program_to_dict(progset.programs[program_name])
                 active = True
             else:
                 active = False
@@ -537,14 +570,14 @@ class ProgsetsDb(db.Model):
         # In case programs from prj are not in the defaults
         for program_name, program in progset.programs.iteritems():
             if program_name not in loaded_programs:
-                program = program.__dict__
-                program['parameters'] = program.get('targetpars', [])
+                program = self._program_to_dict(program)
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
     def create_programs_from_list(self, programs):
+        from optima.utils import saves
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short', 'category', 'targetpops', 'pars']:
+            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(
@@ -553,6 +586,7 @@ class ProgsetsDb(db.Model):
                 active=program.get('active', False),
                 **kwargs
             )
+            program_entry.blob = saves(program_entry.hydrate())
             db.session.add(program_entry)
 
     def recursive_delete(self, synchronize_session=False):

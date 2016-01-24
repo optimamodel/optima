@@ -1,6 +1,6 @@
 from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, minoutcomes, loadeconomicsspreadsheet # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
 
@@ -34,7 +34,7 @@ class Project(object):
         3. copy -- copy a structure in the odict
         4. rename -- rename a structure in the odict
 
-    Version: 2016jan18 by cliffk
+    Version: 2016jan22 by cliffk
     """
 
 
@@ -80,13 +80,13 @@ class Project(object):
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
         output += '      Program sets: %i\n'    % len(self.progsets)
-        output += '     Scenario sets: %i\n'    % len(self.scens)
-        output += ' Optimization sets: %i\n'    % len(self.optims)
+        output += '         Scenarios: %i\n'    % len(self.scens)
+        output += '     Optimizations: %i\n'    % len(self.optims)
         output += '      Results sets: %i\n'    % len(self.results)
         output += '\n'
         output += '    Optima version: %0.1f\n' % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
-        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
         output += 'Spreadsheet loaded: %s\n'    % getdate(self.spreadsheetdate)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
@@ -107,6 +107,7 @@ class Project(object):
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
+        self.modified = today()
 
         self.ensureparset(name)
         return None
@@ -121,6 +122,7 @@ class Project(object):
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset) # Store parameters
+            self.modified = today()
         return None
 
     def loadeconomics(self, filename):
@@ -128,6 +130,7 @@ class Project(object):
 
         ## Load spreadsheet
         self.data['econ'] = loadeconomicsspreadsheet(filename)
+        self.modified = today()
 
         return None
 
@@ -163,6 +166,9 @@ class Project(object):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
+        if isinstance(checkexists, (int, float)): # It's a numerical index
+            try: checkexists = structlist.keys()[checkexists] # Convert from 
+            except: raise Exception('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None and overwrite==False:
             if checkabsent in structlist:
                 raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
@@ -172,15 +178,22 @@ class Project(object):
         return None
 
 
-    def add(self, name='default', item=None, what=None, overwrite=False):
-        ''' Add an entry to a structure list '''
+    def add(self, name=None, item=None, what=None, overwrite=False):
+        ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
+        if name is None:
+            try: name = item.name # Try getting name from the item
+            except: name = 'default' # If not, revert to default
+        if item is None and type(name)!=str: # Maybe an item has been supplied as the only argument
+            try: 
+                item = name # It's actully an item, not a name
+                name = item.name # Try getting name from the item
+            except: raise Exception('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         structlist[name].name = name # Make sure names are consistent
-        # Commenting this out because it carshes when uploading progsets
-        # Error is settings object has no attribute 'verbose'
-        # printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
+        printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -190,6 +203,7 @@ class Project(object):
         self.checkname(what, checkexists=name)
         structlist.pop(name)
         printv('Item "%s" removed from structure list "%s"' % (name, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -201,6 +215,7 @@ class Project(object):
         structlist[new].name = new  # Update name
         structlist[new].uid = uuid()  # otherwise there will be 2 structures with same unique identifier
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -211,6 +226,7 @@ class Project(object):
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
         printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
+        self.modified = today()
         return None
 
 
@@ -219,10 +235,10 @@ class Project(object):
     ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
-    def addparset(self,   name='default', parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
-    def addprogset(self,  name='default', progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
-    def addscen(self,     name='default', scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
-    def addoptim(self,    name='default', optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
+    def addparset(self,   name=None, parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
+    def addprogset(self,  name=None, progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
+    def addscen(self,     name=None, scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
+    def addoptim(self,    name=None, optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
 
     def rmparset(self,   name): self.remove(what='parset',   name=name)
     def rmprogset(self,  name): self.remove(what='progset',  name=name)
@@ -241,8 +257,12 @@ class Project(object):
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
     def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result)
-    def rmresult(self, index=-1):      self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
-
+    def rmresult(self, index=-1):     self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
+    
+    def addscenlist(self, scenlist): 
+        ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
+        for scen in scenlist: self.addscen(name=scen.name, scen=scen, overwrite=True)
+        return None
 
 
 
@@ -285,6 +305,7 @@ class Project(object):
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
+        self.modified = today()
         return None
 
 
@@ -293,19 +314,49 @@ class Project(object):
         self.copyparset(orig=orig, new=name) # Store parameters
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        self.modified = today()
         return None
+
 
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        self.modified = today()
         return None
+    
+    
+    def runscenarios(self, scenlist=None, verbose=2):
+        ''' Function to run scenarios '''
+        if scenlist is not None: self.addscenlist(scenlist) # Replace existing scenario list with a new one
+        multires = runscenarios(project=self, verbose=verbose)
+        self.addresult(result=multires)
+        self.modified = today()
+        return None
+    
+
+    def runbudget(self, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
+        ''' Function to run the model for a given budget, years, programset and parameterset '''
+        if budget is None: raise Exception("Please enter a budget dictionary to run")
+        if budgetyears is None: raise Exception("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
+        if progsetname is None:
+            try:
+                progsetname = self.progsets[0].name
+                printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
+            except: raise Exception("No program set entered, and there are none stored in the project") 
+        coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
+        progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
+        results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
+        self.addresult(results)
+        self.modified = today()
+        return None
+
     
     def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to minimize outcomes '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
-        self.addresult(result=results)
-        self.optims[-1].resultsref = results.uid
+        self.addresult(result=multires)
+        self.modified = today()
         return None

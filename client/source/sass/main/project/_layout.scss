@@ -68,11 +68,36 @@
     margin: 2px;
     padding: 5px;
     border: 1px solid black;
-    overflow: scroll;
+    overflow: auto;
   }
 
   .option {
     padding: 10px 2px;
     display: flex;
+  }
+}
+
+.vertical_list {
+
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+
+  .data {
+    height: 30px;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    width: 80px;
+  }
+
+  .numeric {
+    text-align: right;
+  }
+
+  input {
+    width: 80px;
   }
 }

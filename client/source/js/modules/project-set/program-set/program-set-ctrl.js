@@ -73,27 +73,45 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Download  project-set data
     $scope.downloadProgramSet = function() {
-      $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
-        {headers: {'Content-type': 'application/octet-stream'},
-        responseType:'blob'})
-        .success(function (response) {
-          var blob = new Blob([response], { type: 'application/octet-stream' });
-          saveAs(blob, ($scope.activeProgramSet.name + '.prj'));
-        });
+      if(!$scope.activeProgramSet.id) {
+        modalService.inform(
+          function (){ },
+          'Okay',
+          'Please save the program set to proceed.',
+          'Cannot proceed'
+        );
+      } else {
+        $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
+          {headers: {'Content-type': 'application/octet-stream'},
+            responseType:'blob'})
+          .success(function (response) {
+            var blob = new Blob([response], { type: 'application/octet-stream' });
+            saveAs(blob, ($scope.activeProgramSet.name + '.prj'));
+          });
+      }
     };
 
     // Upload project-set data
     $scope.uploadProgramSet = function() {
-      angular
-        .element('<input type=\'file\'>')
-        .change(function(event){
-          $upload.upload({
-            url: '/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id + '/data',
-            file: event.target.files[0]
-          }).success(function () {
-            window.location.reload();
-          });
-        }).click();
+      if(!$scope.activeProgramSet.id) {
+        modalService.inform(
+          function (){ },
+          'Okay',
+          'Please save the program set to proceed.',
+          'Cannot proceed'
+        );
+      } else {
+        angular
+          .element('<input type=\'file\'>')
+          .change(function (event) {
+            $upload.upload({
+              url: '/api/project/' + openProject.id + '/progsets' + '/' + $scope.activeProgramSet.id + '/data',
+              file: event.target.files[0]
+            }).success(function () {
+              window.location.reload();
+            });
+          }).click();
+      }
     };
 
     // Delete a programSet from $scope.programSetList and also from DB is it was saved.

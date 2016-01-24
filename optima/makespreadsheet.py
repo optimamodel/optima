@@ -127,7 +127,7 @@ def make_populations_range(name, items):
     short_name, name, male, female, age_from, age_to
     (3x str, 2x bool, 2x int)
     """
-    column_names = ['Short name','Long name','Male','Female','Age from', 'Age to']
+    column_names = ['Short name','Long name','Male','Female','Age from (years)', 'Age to (years)']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
@@ -563,15 +563,14 @@ class OptimaSpreadsheet:
         
     
     def generate_casc(self):
-        ''' Added by CK for cascade parameters -- removed spaces for troubleshooting difference between this and txrx, it worked :) '''
         current_row = 0
-        current_row = self.emit_ref_years_block('Immediate linkage to care (%)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Those who stop ART but are still in care (%)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Those in care who are lost to follow-up (%/year)',             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Biological failure rate (%/year)',                                 current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                                        current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people not in care who are linked to care per year (%/year)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                                            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)',            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                                                         current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Biological failure rate (%/year)',                                                             current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
 
     def generate_sex(self):
@@ -704,7 +703,7 @@ class OptimaSpreadsheet:
         self.current_sheet.merge_range('A1:A3', 'O P T I M A', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. At first glance the spreadsheet looks complicated and confusing. Unfortunately, it is. So please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
 
     def create(self, path):
