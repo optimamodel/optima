@@ -301,7 +301,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
     
     ## Random housekeeping
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
-    fig = figure(); close(fig) # Open and close figure...dumb, no?
+    fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
     nsigfigs = 3
     
