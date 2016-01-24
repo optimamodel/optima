@@ -40,23 +40,29 @@ def geogui():
     projectslist = []
     
     ## Define buttons
-    makesheetbutton = QtGui.QPushButton('Create geospatial spreadsheet', parent=geoguiwindow)
-    genprojbutton   = QtGui.QPushButton('Generate projects from spreadsheet', parent=geoguiwindow)
-    loadbutton      = QtGui.QPushButton('Load portfolio', parent=geoguiwindow)
-    rungeobutton    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
-    exportbutton    = QtGui.QPushButton('Export results', parent=geoguiwindow)
+    makesheetbutton = QtGui.QPushButton('1. Make geospatial template from project', parent=geoguiwindow)
+    makeprojbutton  = QtGui.QPushButton('2. Auto-generate projects template', parent=geoguiwindow)
+    createbutton    = QtGui.QPushButton('3a. Create portfolio from projects', parent=geoguiwindow)
+    loadbutton      = QtGui.QPushButton('3b. Load existing portfolio', parent=geoguiwindow)
+    rungeobutton    = QtGui.QPushButton('4. Run geospatial analysis', parent=geoguiwindow)
+    exportbutton    = QtGui.QPushButton('5. Export results', parent=geoguiwindow)
     closebutton     = QtGui.QPushButton('Close', parent=geoguiwindow)
+    
+    allbuttons = [makesheetbutton, makeprojbutton, createbutton, loadbutton, rungeobutton, exportbutton, closebutton]
     
     ## Define other objects
     projectsbox = QtGui.QTextEdit(parent=geoguiwindow)
     
     ## Set button locations
-    makesheetbutton.move(left, top+spacing*0)
-    genprojbutton.move(left, top+spacing*1)
-    loadbutton.move(left, top+spacing*2)
-    rungeobutton.move(left, top+spacing*3)
-    exportbutton.move(left, hei-spacing)
-    closebutton.move(right, hei-spacing)
+    for b,button in enumerate(allbuttons):
+        button.move(left, top+spacing*b)
+#    makesheetbutton.move(left, top+spacing*0)
+#    makeprojbutton.move(left, top+spacing*1)
+#    makeprojbutton.move(left, top+spacing*1)
+#    loadbutton.move(left, top+spacing*2)
+#    rungeobutton.move(left, top+spacing*3)
+#    exportbutton.move(left, hei-spacing)
+#    closebutton.move(right, hei-spacing)
     
     ## Set other locations
     projectsbox.move(200, 200)
