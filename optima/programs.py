@@ -16,7 +16,7 @@ coveragepars=['numtx','numpmtct','numost','numcircum']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
+    def __init__(self, name='default', programs=None, default_interaction='random'):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
@@ -25,7 +25,6 @@ class Programset(object):
         if programs is not None: self.addprograms(programs)
         self.created = today()
         self.modified = today()
-        self.project = project
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -45,11 +44,8 @@ class Programset(object):
 
     def getsettings(self):
         ''' Try to get the freshest settings available '''
-        try: 
-            settings = self.project.settings
-        except: 
-            print('Warning, using default settings with program set "%s"' % self.name)
-            settings = Settings()
+        print('Warning, using default settings with program set "%s"' % self.name)
+        settings = Settings()
         return settings
         
     def gettargetpops(self):
@@ -477,7 +473,6 @@ class Program(object):
         self.category = category
         self.criteria = criteria if criteria else {'hivstatus': 'allstates', 'pregnant': False}
         self.targetcomposition = targetcomposition
-        self.project = project
 
 
     def __repr__(self):
@@ -560,12 +555,7 @@ class Program(object):
         elif type(t)==list: t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
-            else:
-                try:
-                    parset = self.project.parsets[0]
-                    print('Warning, using default parset')
-                except:
-                    raise Exception('Please provide either a parset or a resultset that contains a parset')
+            else: raise Exception('Please provide either a parset or a resultset that contains a parset')
 
         # Initialise outputs
         popsizes = {}
@@ -576,10 +566,8 @@ class Program(object):
         except: 
             try: settings = results.project.settings
             except:
-                try: settings = self.project.settings
-                except:
-                    print('Warning, could not find settings for program "%s", using default' % self.name)
-                    settings = Settings()
+                print('Warning, could not find settings for program "%s", using default' % self.name)
+                settings = Settings()
         
         
 
@@ -593,7 +581,7 @@ class Program(object):
                     try: results = parset.getresults(die=True)
                     except Exception as E: 
                         print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
+                        results = runmodel(pars=parset.pars[ind], settings=settings)
                         parset.resultsref = results.uid # So it doesn't have to be rerun
                 
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
@@ -612,7 +600,7 @@ class Program(object):
                     try: results = parset.getresults(die=True)
                     except Exception as E: 
                         print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings, project=self.project)
+                        results = runmodel(pars=parset.pars[ind], settings=settings)
                         parset.resultsref = results.uid # So it doesn't have to be rerun
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
