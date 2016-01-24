@@ -12,14 +12,25 @@ global geoguiwindow
 geoguiwindow = None
 
 def geogui():
+    '''
+    Open the GUI for doing geospatial analysis.
     
+    Version: 2016jan23
+    '''
     global geoguiwindow
     
-    fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
-    
-    geoguiwindow = QtGui.QWidget() # Create panel widget
+    ## Set parameters
     wid = 300.0
     hei = 400.0
+    top = 20
+    spacing = 40
+    left = 20.
+    right = wid*2/3.
+    
+    
+    ## Housekeeping
+    fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
+    geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     
     ## Define buttons
@@ -31,10 +42,6 @@ def geogui():
     closebutton     = QtGui.QPushButton('Close', parent=geoguiwindow)
     
     ## Set button locations
-    top = 20
-    spacing = 40
-    left = 20.
-    right = wid*2/3.
     makesheetbutton.move(left, top+spacing*0)
     genprojbutton.move(left, top+spacing*1)
     loadbutton.move(left, top+spacing*2)
