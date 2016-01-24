@@ -141,7 +141,15 @@ if 'generateBOCs' in tests:
 
 
 if 'rungui' in tests and doplot:
-    from optima import geogui
+    from optima import Project, Portfolio, geogui, saveobj
+    
+    P = Project(spreadsheet='test.xlsx')
+    Q = Project(spreadsheet='test.xlsx')
+    F = Portfolio()
+    for proj in [P, Q]: F.addproject(proj)
+    saveobj('test2.prj', P)
+    saveobj('test7.prj', Q)
+    saveobj('test.prt', F)
     geogui()
 
 
