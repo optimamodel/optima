@@ -42,6 +42,7 @@ class Parsets(Resource):
         """,
         responseClass=ParsetsDb.__name__
     )
+    @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
 
@@ -58,6 +59,7 @@ class Parsets(Resource):
             Otherwise, create a parset with default settings
             """
     )
+    @report_exception
     def post(self, project_id):
         current_app.logger.debug("POST /api/project/{}/parsets".format(project_id))
         args = copy_parser.parse_args()
@@ -125,6 +127,7 @@ class ParsetsDetail(Resource):
             if parset does not exist, returns an error.
         """
     )
+    @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def delete(self, project_id, parset_id):
 
@@ -153,6 +156,7 @@ class ParsetsDetail(Resource):
             if parset does not exist, return an error.
             """
     )
+    @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def put(self, project_id, parset_id):
         """
@@ -234,6 +238,7 @@ class ParsetsCalibration(Resource):
         """,
         parameters=calibration_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(calibration_fields, envelope="calibration")
     def get(self, parset_id):
         current_app.logger.debug("/api/parsets/{}/calibration".format(parset_id))
@@ -274,6 +279,7 @@ class ParsetsCalibration(Resource):
             "selectors": selectors
         }
 
+    @report_exception
     @marshal_with(calibration_fields, envelope="calibration")
     def put(self, parset_id):
         current_app.logger.debug("PUT /api/parsets/{}/calibration".format(parset_id))
@@ -352,6 +358,7 @@ class ParsetsData(Resource):
         if parset does not exist, returns an error.
         """
     )
+    @report_exception
     def get(self, project_id, parset_id):
         current_app.logger.debug("GET /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
         parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
@@ -376,6 +383,7 @@ class ParsetsData(Resource):
         if parset exists, updates it with data from the file
         if parset does not exist, returns an error"""
     )
+    @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def post(self, project_id, parset_id):
         # TODO replace this with app.config
