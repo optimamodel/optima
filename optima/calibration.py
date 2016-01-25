@@ -192,7 +192,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         '''
         
         # Validate input -- check everything in one go
-        if None in [parvec, pars, parlist, project]: raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
+        if any([arg is None for arg in [parvec, pars, parlist, project]]): 
+            raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
         
         def extractdata(xdata, ydata):
             ''' Return the x and y data values for non-nan y data '''
