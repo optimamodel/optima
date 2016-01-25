@@ -131,6 +131,8 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     
     # Tidy up: turn interactivity back on
     if wasinteractive: ion() 
+    
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     return allplots
 
@@ -168,7 +170,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
 
 
         ## Validate plot keys
-        for plotkey in toplot:
+        for pk,plotkey in enumerate(toplot):
+            datatype, plotformat = None, None
             if type(plotkey) not in [str, list, tuple]: 
                 errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
                 raise Exception(errormsg)
@@ -198,6 +201,10 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 else: 
                     printv(errormsg, 4, verbose)
                     toplot.remove(plotkey) # Just silently remove it
+            toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
+        
+        # Remove failed ones
+        for p in range(len(toplot)):
 
 
         ################################################################################################################
