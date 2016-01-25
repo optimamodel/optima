@@ -92,6 +92,7 @@ class Portfolio(object):
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
             Exception('Error: Trying to plot BOCs with faulty initbudgets or optbudgets.')
         
+        # Loop for BOCs.
         c = 0
         for x in self.projects:
             p = self.projects[x]
@@ -170,8 +171,8 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxit
     if not len(budgetvec) == len(BOClist): Exception('Error: Geospatial analysis is minimising x BOCs with y initial budgets, where x and y are not equal!')
         
 #    args = (BOClist, grandtotal, minbound)
-    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}
-        
+    args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
+    
 #    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X = constrainbudgets(X, grandtotal, minbound)

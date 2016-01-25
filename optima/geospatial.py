@@ -33,7 +33,7 @@ def geogui():
     objectives = defaultobjectives()
     
     ## Set parameters
-    wid = 650.0
+    wid = 650.0*2
     hei = 550.0
     top = 20
     spacing = 40
