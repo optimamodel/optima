@@ -23,9 +23,9 @@ class Parameters(Resource):
     @swagger.operation(
         summary="List default parameters"
     )
+    @report_exception
     @marshal_with(result_fields, envelope='parameters')
     @login_required
-    @report_exception
     def get(self, project_id):
         """Gives back project parameters (modifiable)"""
 
@@ -76,9 +76,9 @@ class Populations(Resource):
     @swagger.operation(
         summary='Gives back default populations'
     )
+    @report_exception
     @marshal_with(populations_fields, envelope='populations')
     @login_required
-    @report_exception
     def get(self):
         from server.webapp.populations import populations
 
