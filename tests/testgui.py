@@ -5,15 +5,15 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan06 by cliffk
+Version: 2016jan25 by cliffk
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'plot',
-'browser',
+#'plot',
+#'browser',
 'gui',
 ]
 
@@ -71,8 +71,7 @@ if 'browser' in tests and doplot:
     from optima import Project, browser
     
     P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
-    browser(results)
+    browser(P.results[-1])
 
     done(t)
 

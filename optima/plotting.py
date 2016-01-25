@@ -3,32 +3,157 @@ MAKEPLOTS
 
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
+
+To add a new plot, you need to both add it to getplotkeys so it will show up in the interface;
+plotresults so it will be sent to the right spot; and then add the actual function to do the
+polotting.
+
+Version: 2016jan24
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, gridcolormap
-from numpy import array, ndim, maximum, arange
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
+from numpy import array, ndim, maximum, arange, zeros, mean
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, bar, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
-plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'sta':plotformatslist[2]})
+epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
+epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
+defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta'] # Default epidemiological plots
+defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
 
 
-def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+def getplotkeys(results):
+    ''' 
+    From the inputted results structure, figure out what the available kinds of plots are. List results-specific
+    plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
+    plots such as the cascade.
+    
+    Version: 2016jan24
+    '''
+    
+    # Figure out what kind of result it is -- WARNING, copied from below
+    if type(results)==Resultset: ismultisim = False
+    elif type(results)==Multiresultset: ismultisim = True
+    else: 
+        errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+    
+    ## Set up output structure
+    plotselection = dict()
+    plotselection['keys'] = list()
+    plotselection['names'] = list()
+    
+    
+    ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
+    if hasattr(results, 'improvement') and results.improvement is not None:
+        plotselection['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
+        plotselection['names'] += ['Improvement']
+    
+    
+    ## Add selections for outcome and budget allocations
+    if hasattr(results, 'budget') and results.budget is not None:
+        plotselection['keys'] += ['budget']
+        plotselection['names'] += ['Budget allocation']
+    
+    
+    
+    ## Get plot selections for plotepi
+    plotepikeys = list()
+    plotepinames = list()
+    
+    epikeys = results.main.keys() # e.g. 'prev'
+    epinames = [thing.name for thing in results.main.values()]
+    episubkeys = epiformatslist[:,1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
+    episubnames = epiformatslist[:,2] # e.g. 'per population'
+    
+    for key in epikeys: # e.g. 'prev'
+        for subkey in episubkeys: # e.g. 'tot'
+            if not(ismultisim and subkey=='sta'): # Stacked multisim plots don't make sense
+                plotepikeys.append(key+'-'+subkey)
+    for name in epinames: # e.g. 'HIV prevalence'
+        for subname in episubnames: # e.g. 'total'
+            if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
+                plotepinames.append(name+' -- '+subname)
+    
+    
+    plotselection['keys'] += plotepikeys
+    plotselection['names'] += plotepinames
+    
+    return plotselection
+
+
+
+def makeplots(results=None, toplot=None, die=False, **kwargs):
+    ''' 
+    Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
+    
+    The keyword 'die' controls what it should do with an exception: if False, then carry on as if nothing happened;
+    if True, then actually rase the exception.
+    
+    Note that if toplot='default', it will plot the default plots (defined in plotting.py).
+    
+    Version: 2016jan24    
+    '''
+    
+    ## Initialize
+    allplots = odict()
+    wasinteractive = isinteractive() # Get current state of interactivity
+    ioff() # Just in case, so we don't flood the user's screen with figures
+    if toplot is None: toplot = defaultplots # Go straight ahead and replace with defaults
+    if not(isinstance(toplot, list)): toplot = [toplot] # Handle single entries, for example 
+    if 'default' in toplot: # Special case for handling default plots
+        toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
+    toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
+    
+
+    ## Add improvement plot
+    if 'improvement' in toplot:
+        toplot.remove('improvement') # Because everything else is passed to plotepi()
+        try: 
+            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
+        except Exception as E: 
+            if die: raise E
+        
+    
+    ## Add budget plot
+    if 'budget' in toplot:
+        toplot.remove('budget') # Because everything else is passed to plotepi()
+        try: 
+            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
+        except Exception as E: 
+            if die: raise E
+        
+    
+    ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
+    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
+    allplots.update(epiplots)
+    
+    # Tidy up: turn interactivity back on
+    if wasinteractive: ion() 
+    
+    return allplots
+
+
+
+
+
+def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+            titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
         '''
-        Render the plots requested and store them in a list. Argument "which" should be a list of form e.g.
-        ['prev-tot', 'inci-pops']
+        Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
+        ['prev-tot', 'inci-per']
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
+        
+        NOTE: do not call this function directly; instead, call via plotresults().
 
         Version: 2016jan21
         '''
         
         # Figure out what kind of result it is
         if type(results)==Resultset: ismultisim = False
-        elif type(results)==Multiresultset: 
+        elif type(results)==Multiresultset:
             ismultisim = True
             labels = results.keys # Figure out the labels for the different lines
             nsims = len(labels) # How ever many things are in results
@@ -37,18 +162,14 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             raise OptimaException(errormsg)
 
         # Initialize
-        wasinteractive = isinteractive() # Get current state of interactivity
-        ioff() # Just in case, so we don't flood the user's screen with figures
-        if which is None: which = [datatype+'-'+plotformat for datatype in results.main.keys() for plotformat in ['p', 's', 't']] # Just plot everything if not specified
-        elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
-
-        # Loop over each plot
+        if toplot is None: toplot = defaultepiplots # If not specified, plot default plots
+        elif type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
         epiplots = odict()
-        for plotkey in which:
 
-            ################################################################################################################
-            ## Parse user input
-            ################################################################################################################
+
+        ## Validate plot keys
+        for pk,plotkey in enumerate(toplot):
+            datatype, plotformat = None, None
             if type(plotkey) not in [str, list, tuple]: 
                 errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
                 raise OptimaException(errormsg)
@@ -58,24 +179,36 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                     elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                    raise OptimaException(errormsg)
+                    if die: raise OptimaException(errormsg)
+                    else: printv(errormsg, 4, verbose)
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                raise OptimaException(errormsg)
-            if plotformat not in plotformatslist.flatten():
-                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
-                raise OptimaException(errormsg)
+                if die: raise OptimaException(errormsg)
+                else: printv(errormsg, 4, verbose)
+            plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
+            if plotformat not in epiformatslist.flatten():
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
+                if die: raise OptimaException(errormsg)
+                else: printv(errormsg, 4, verbose)
+            toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
+        
+        # Remove failed ones
+        toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
+
+
+        ################################################################################################################
+        ## Loop over each plot
+        ################################################################################################################
+        for plotkey in toplot:
             
-            try:
-                isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
-                factor = 1.0 if isnumber else 100.0 # Swap between number and percent
-            except:
-                errormsg = 'Unable to find key "%s" in results' % datatype
-                raise OptimaException(errormsg)
-                
-            istotal   = (plotformat in plotformatsdict['tot'])
-            isperpop  = (plotformat in plotformatsdict['per'])
-            isstacked = (plotformat in plotformatsdict['sta'])
+            # Unpack tuple
+            datatype, plotformat = plotkey 
+            
+            isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
+            factor = 1.0 if isnumber else 100.0 # Swap between number and percent
+            istotal   = (plotformat=='t') # Only using first letter, see above...
+            isperpop  = (plotformat=='p')
+            isstacked = (plotformat=='s')
             
             
             ################################################################################################################
@@ -211,12 +344,9 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                     if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
-    
-                # Tidy up: close plots that were opened
-                close(epiplots[pk])
-
-
-        if wasinteractive: ion() # Turn interactivity back on
+                
+                close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
+        
         return epiplots
 
 
@@ -224,31 +354,41 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
 
 
 ##################################################################
-## Plot mismatches
+## Plot improvements
 ##################################################################
-def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
-    Accepts either a parset (generated from autofit) or an optimization result with a mismatch attribute;
+    Accepts either a parset (generated from autofit) or an optimization result with a improvement attribute;
     failing that, it will try to treat the object as something that can be used directly, e.g.
-        plotmismatch(results.mismatch)
+        plotimprovement(results.improvement)
     also works.
     
-    Version: 2016jan19 by cliffk    
+    NOTE: do not call this function directly; instead, call via plotresults().
+    
+    Version: 2016jan23 by cliffk    
     '''
 
-    if hasattr(results, 'mismatch'): mismatch = results.mismatch # Get mismatch attribute of object if it exists
-    elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least, but of course could still be wrong
-    else: raise OptimaException('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
+    if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
+    elif hasattr(results, '__len__'): improvement = results # Promising, has a length at least, but of course could still be wrong
+    else: raise OptimaException('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
+    ncurves = len(improvement) # Try to figure to figure out how many there are
     
     # Set up figure and do plot
-    fig = figure(figsize=figsize, facecolor=(1,1,1))
+    sigfigs = 2 # Number of significant figures
+    fig = figure(figsize=figsize)
+    colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
-    plot(mismatch, lw=lw, c=(0,0,0)) # Actually do the plot
-    absimprove = mismatch[0]-mismatch[-1]
-    relimprove = 100*(mismatch[0]-mismatch[-1])/mismatch[0]
+    absimprove = zeros(ncurves)
+    relimprove = zeros(ncurves)
+    maxiters = 0
+    for i in range(ncurves): # Expect a list of 
+        plot(improvement[i], lw=lw, c=colors[i]) # Actually do the plot
+        absimprove[i] = improvement[i][0]-improvement[i][-1]
+        relimprove[i] = 100*(improvement[i][0]-improvement[i][-1])/improvement[i][0]
+        maxiters = maximum(maxiters, len(improvement[i]))
     
     # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     ax = gca()
@@ -263,9 +403,14 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
     # Configure plot
     currentylims = ylim()
     ax.set_xlabel('Iteration')
-    ax.set_title('Absolute change: %f  Relative change: %2f%%' % (absimprove, relimprove))
+    
+    abschange = sigfig(mean(absimprove), sigfigs)
+    relchange = sigfig(mean(relimprove), sigfigs)
+    ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
-    ax.set_xlim((0, len(mismatch)))
+    ax.set_xlim((0, maxiters))
+    
+    close(fig)
     
     return fig
 
@@ -281,29 +426,29 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
 ##################################################################
     
     
-def plotallocs(multires=None, compare=False):
-    ''' Plot multiple allocations on bar charts -- intended for scenarios and optimizations '''
+def plotallocs(results=None, figsize=(14,10), **kwargs):
+    ''' 
+    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+    Results object must be of Multiresultset type.
+    
+    Version: 2016jan24    
+    '''
+    
+    # Validate input
+    if not(hasattr(results, 'budget')): raise OptimaException('No budget found for results object:\n"%s"' % results)
     
     # Preliminaries: extract needed data
-    budgetstoplot = [budget for budget in multires.budget.values() if budget]
-    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
+    budgetstoplot = [budget for budget in results.budget.values() if budget]
+    budgetyearstoplot = [budgetyears for budgetyears in results.budgetyears.values() if budgetyears]
     proglabels = budgetstoplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(multires.budget.keys()) if multires.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
+    alloclabels = [key for k,key in enumerate(results.budget.keys()) if results.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    
-    
-    
-    fig = figure(figsize=(10,6))
-    fig.subplots_adjust(left=0.10) # Less space on left
-    fig.subplots_adjust(right=0.98) # Less space on right
+    fig = figure(figsize=figsize)
     fig.subplots_adjust(bottom=0.30) # Less space on bottom
-    fig.subplots_adjust(wspace=0.30) # More space between
-    fig.subplots_adjust(hspace=0.40) # More space between
-    
+    fig.subplots_adjust(hspace=0.30) # More space between
     colors = gridcolormap(nprogs)
-    
     ax = []
     ymax = 0
     
@@ -313,15 +458,14 @@ def plotallocs(multires=None, compare=False):
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            try: progdata = [x[y] for x in budgetstoplot[plt][:]]
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            progdata = [x[y] for x in budgetstoplot[plt][:]]
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
         if nbudgetyears>1: ax[-1].legend()
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
@@ -331,5 +475,7 @@ def plotallocs(multires=None, compare=False):
         ax[-1].set_ylabel('Spending (US$)')
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    
+    close(fig)
     
     return fig

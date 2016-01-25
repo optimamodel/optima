@@ -20,8 +20,8 @@ tests = [
 'makeproject',
 'makeprograms',
 #'autofit',
-#'manualfit',
-'plotresults',
+'manualfit',
+#'plotresults',
 ]
 
 

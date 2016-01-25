@@ -716,9 +716,7 @@ class odict(OrderedDict):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if type(key)==str: # Treat like a normal dict
-            return OrderedDict.__getitem__(self,key)
-        elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
+        if isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -737,8 +735,14 @@ class odict(OrderedDict):
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)
             except: return listvals
-        else: # Try to convert to a list if it's an array or something
-            return OrderedDict.__getitem__(self, key)
+        else: # Handle string but also everything else
+            try:
+                output = OrderedDict.__getitem__(self,key)
+                return output
+            except: # WARNING, should be KeyError, but this can't print newlines!!!
+                if len(self.keys()): errormsg = 'odict key "%s" not found; available keys are:\n%s' % (key, '\n'.join(self.keys()))
+                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                raise Exception(errormsg)
 
         
     def __setitem__(self, key, value):

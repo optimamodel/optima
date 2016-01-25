@@ -49,7 +49,7 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Project, Parscen, Budgetscen, Coveragescen, odict
+    from optima import Project, Parscen, Budgetscen, Coveragescen
     from optima.defaults import defaultprogset
     from numpy import array
     
@@ -174,9 +174,8 @@ if 'standardscen' in tests:
     P.runscenarios() 
      
     if doplot:
-        from optima import pygui, plotallocs
-        pygui(P.results[-1])
-        plotallocs(P.results[-1])
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
 
     if showstats:
         from optima import Settings, findinds
