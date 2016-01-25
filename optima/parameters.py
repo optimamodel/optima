@@ -455,7 +455,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars = odict() # Used to be called M
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'popkeys']
+    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
