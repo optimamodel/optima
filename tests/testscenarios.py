@@ -93,7 +93,7 @@ if 'standardscen' in tests:
     R.covout['hivtest']['PWID'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99)})
 
     R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-    R.covout['numost']['PWID'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numost']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
     
     # Store this program set in the project
     P.addprogset(R)
@@ -179,14 +179,14 @@ if 'standardscen' in tests:
                            'OST':array([1250.,1250.]),
                            'ART':array([3324.,3324.])}),
 
-         Budgetscen(name='Double investment in ART and HTC',
+         Budgetscen(name='Double investment in ART, HTC and OST',
               parsetname='default',
               progsetname='default',
               t=[2016,2018,2020],
               budget={'Condoms': array([1e7,1e7,1e7]),
                            'FSW_programs':array([1e6,1e6,1e6]),
                            'HTC':array([2e7,3e7,4e7]),
-                           'OST':array([1e6,1e6]),
+                           'OST':array([1e6,1.5e6,2e6]),
                            'ART':array([1e6,1.5e6,2e6])})
         ]
     

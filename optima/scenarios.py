@@ -150,7 +150,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
             elif isinstance(scen, Coveragescen):
                 if not isinstance(scen.coverage,dict): raise Exception('Currently only accepting coverage as dictionaries.')
-                if not isinstance(scen.coverage,odict): scen.budget = odict(scen.budget)
+                if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
                 scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
