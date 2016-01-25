@@ -57,8 +57,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     death      = simpars['deathacute':'deathlt50']
     cd4trans   = simpars['cd4transacute':'cd4translt50']
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
-    successart = simpars['successart']    # proportion of people who become virally suppressed if ART works (P
-    biofailure = simpars['biofailure']    # biological treatment failure rate (P/T) [npts]
+    successart = simpars['successart']   # proportion of people on ART who become virally suppressed (P)
+    biofailure = simpars['biofailure']   # biological treatment failure rate (P/T) [npts]
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
@@ -94,6 +94,9 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
     numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment
+    numcare  = simpars['numcare']   # Number of PLHIV who are in care (N)
+    PDHIVcare= simpars['PDHIVcare'] # Percentage of all people who have been diagnosed with HIV who are in care
+    PLHIVcare= simpars['PLHIVcare'] # Percentage of all PLHIV who are in care
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     circum = simpars['circum']
@@ -336,6 +339,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         ## Diagnosed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
+        newcaretot = numcare[t] - people[[care,usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
@@ -416,8 +420,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             hivdeaths          = dt * currentsuppressed[cd4,:] * death[cd4]
             otherdeaths        = dt * currentsuppressed[cd4,:] * background
             failing[cd4]       = dt * currentsuppressed[cd4,:] * biofailure[t]
-            stopSVLincare[cd4] = dt * currentsuppressed[cd4,:] * propstop[:,t] * (1.-proploss[:,t]) # People stopping ART but still in care
-            stopSVLlost[cd4]   = dt * currentsuppressed[cd4,:] * propstop[:,t] *     proploss[:,t]  # People stopping ART and lost to followup
+            stopSVLincare[cd4] = dt * currentsuppressed[cd4,:] * propstop[:,t]  # People stopping ART but still in care
+            stopSVLlost[cd4]   = dt * currentsuppressed[cd4,:] * proploss[:,t]  # People stopping ART and lost to followup
             inflows = recovin + virallysuppressed[cd4]
             outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
             dSVL.append(inflows - outflows)
