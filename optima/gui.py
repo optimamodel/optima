@@ -88,7 +88,7 @@ def updateplots(event=None, tmpresults=None):
     
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
-        plotresults(results, toplot=toplot, figsize=(width, height))
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height))
     
 #    # Do plotting
 #    if sum(ischecked): # Don't do anything if no plots
