@@ -16,3 +16,4 @@ optima-egg.info/*
 *.npy
 *.db
 *.prj
+*.prt
