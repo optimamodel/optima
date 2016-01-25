@@ -15,6 +15,12 @@ plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'st
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 
 
+def getplotkeys(results):
+    ''' From the inputted results structure, figure out what the available kinds of plots are '''
+    
+    return plotkeys
+
+
 def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10):
         '''

@@ -49,7 +49,7 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Project, Parscen, Budgetscen, Coveragescen, odict
+    from optima import Project, Parscen, Budgetscen, Coveragescen
     from optima.defaults import defaultprogset
     from numpy import array
     
