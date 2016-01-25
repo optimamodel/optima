@@ -9,15 +9,20 @@ if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fu
 
 
 
-def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     ''' Add a plot to an existing figure '''
     thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
     thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
     orig = thisplot.get_position() # get the original position 
+    print('HIIiIIII')
+    if name is not None: print(name)
+    print([orig.x0, orig.y0,  orig.width, orig.height])
+    print('BYYYYYYE')
     widthfactor = 0.9/ncols**(1/4.)
     heightfactor = 0.9/nrows**(1/4.)
     pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
+#    if name=='budget': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     return None
 
@@ -51,7 +56,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     for p in range(len(plots)): 
         naxes = len(plots[p].axes)
         if 1:#naxes==1: # Usual situation: just plot the normal axis
-            addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
+            addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1)
         elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
             orignrow = floor(p/ncols)
             origncol = p%ncols # Column doesn't change
@@ -60,7 +65,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
             for a in range(naxes):
                 thisrow = newrowstart+a # Increment rows
                 newp = origncol*thisrow + origncol + 1 # Calculate new row/column
-                addplot(fig, plots[p].axes[a], int(newnrows), int(ncols), int(newp+1))
+                addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
             print('TEMP WARNING HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII!!!!!!!!!!!!!!!!!!!!!')
         else: pass # Must have 0 length or something
     if wasinteractive: ion()
@@ -263,7 +268,7 @@ def browser(results, toplot=None, doplot=True):
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
         naxes = len(plots[p].axes)
-        for ax in range(naxes): addplot(fig, plots[p].axes[ax], nrows=naxes, n=ax+1) # Add this plot to this figure
+        for ax in range(naxes): addplot(fig, plots[p].axes[ax], name=plots.keys()[p], nrows=naxes, n=ax+1) # Add this plot to this figure
         mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
         jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
         close(fig) # Close

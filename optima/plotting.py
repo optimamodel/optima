@@ -84,7 +84,7 @@ def getplotkeys(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, **kwargs):
+def makeplots(results=None, toplot=None, die=False, figsize=(14,10), **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -111,7 +111,7 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
+            allplots['improvement'] = plotimprovement(results, toplot=toplot, figsize=figsize, **kwargs)
         except Exception as E: 
             if die: raise E
         
@@ -120,13 +120,13 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     if 'budget' in toplot:
         toplot.remove('budget') # Because everything else is passed to plotepi()
         try: 
-            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
+            allplots['budget'] = plotallocs(results, toplot=toplot, figsize=figsize, **kwargs)
         except Exception as E: 
             if die: raise E
         
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, figsize=figsize, **kwargs)
     allplots.update(epiplots)
     
     # Tidy up: turn interactivity back on
@@ -257,7 +257,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-per-FSW'
                 
-                epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
+                epiplots[pk] = figure(figsize=figsize, **kwargs) # If it's anything other than HIV prevalence by population, create a single plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -377,7 +377,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = figure(figsize=figsize, facecolor=(1,1,1))
+    fig = figure(figsize=figsize, facecolor=(1,1,1), **kwargs)
     colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
@@ -426,7 +426,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
 ##################################################################
     
     
-def plotallocs(results=None, **kwargs):
+def plotallocs(results=None, figsize=(14,10), **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
     Results object must be of Multiresultset type.
@@ -445,7 +445,7 @@ def plotallocs(results=None, **kwargs):
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    fig = figure(figsize=(10,6))
+    fig = figure(figsize=figsize, **kwargs)
 #    fig.subplots_adjust(left=0.10) # Less space on left
 #    fig.subplots_adjust(right=0.98) # Less space on right
 #    fig.subplots_adjust(bottom=0.30) # Less space on bottom
@@ -454,32 +454,38 @@ def plotallocs(results=None, **kwargs):
     
     colors = gridcolormap(nprogs)
     
-    ax = []
-    ymax = 0
+#    f1 = figure()
+    subplot(2,1,1)
+    plot([3,5,7])
+    subplot(2,1,2)
+    plot([6,4,7])
     
-    for plt in range(nallocs):
-        nbudgetyears = len(budgetyearstoplot[plt])
-        ax.append(subplot(nallocs,1,plt+1))
-        ax[-1].hold(True)
-        barwidth = .5/nbudgetyears
-        for y in range(nbudgetyears):
-            progdata = [x[y] for x in budgetstoplot[plt][:]]
-            xbardata = arange(nprogs)+.75+barwidth*y
-            for p in range(nprogs):
-                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
-                else: barcolor = colors[p] # Only one year? Color by program
-                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
-                else: yearlabel=None
-                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
-        if nbudgetyears>1: ax[-1].legend()
-        ax[-1].set_xticks(arange(nprogs)+1)
-        if plt<nprogs: ax[-1].set_xticklabels('')
-        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
-        ax[-1].set_xlim(0,nprogs+1)
-        
-        ax[-1].set_ylabel('Spending (US$)')
-        ax[-1].set_title(alloclabels[plt])
-        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+#    ax = []
+#    ymax = 0
+#    
+#    for plt in range(nallocs):
+#        nbudgetyears = len(budgetyearstoplot[plt])
+#        ax.append(subplot(nallocs,1,plt+1))
+#        ax[-1].hold(True)
+#        barwidth = .5/nbudgetyears
+#        for y in range(nbudgetyears):
+#            progdata = [x[y] for x in budgetstoplot[plt][:]]
+#            xbardata = arange(nprogs)+.75+barwidth*y
+#            for p in range(nprogs):
+#                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+#                else: barcolor = colors[p] # Only one year? Color by program
+#                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+#                else: yearlabel=None
+#                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+#        if nbudgetyears>1: ax[-1].legend()
+#        ax[-1].set_xticks(arange(nprogs)+1)
+#        if plt<nprogs: ax[-1].set_xticklabels('')
+#        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+#        ax[-1].set_xlim(0,nprogs+1)
+#        
+#        ax[-1].set_ylabel('Spending (US$)')
+#        ax[-1].set_title(alloclabels[plt])
+#        ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     close(fig)
     
