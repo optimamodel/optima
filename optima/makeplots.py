@@ -3,6 +3,8 @@ MAKEPLOTS
 
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
+
+To add a new plot, you need to both add 
 '''
 
 from optima import Resultset, Multiresultset, odict, gridcolormap
@@ -31,10 +33,10 @@ def getplotkeys(results):
     plotselection['function'] = list()
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
-    if hasattr(results, 'outcome'):
-        plotselection['keys'] += 'outcome'
-        plotselection['names'] += 'Outcome'
-        plotselection['function'] += 'plotoutcome'
+    if hasattr(results, 'improvement'):
+        plotselection['keys'] += 'improvement'
+        plotselection['names'] += 'Improvement'
+        plotselection['function'] += 'plotimprovement'
     
     ## Add selections for outcome and budget allocations
     if hasattr(results, 'funcoutcome'):

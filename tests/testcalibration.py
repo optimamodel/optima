@@ -117,8 +117,8 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from optima import plotmismatch, plotresults
-        plotmismatch(P.parsets['autofit'])
+        from optima import plotimprovement, plotresults
+        plotimprovement(P.parsets['autofit'])
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
         plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
