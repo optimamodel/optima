@@ -326,7 +326,7 @@ class Programset(object):
             for thispop in self.progs_by_targetpar(thispartype).keys():
 
                 # If it's a coverage parameter, you are done
-                if thispartype in coveragepars and thispop.lower() in ['total','tot','all']:
+                if thispartype in coveragepars: # and thispop.lower() in ['total','tot','all']:
                     outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                         outcomes[thispartype][thispop] += coverage[thisprog.short]

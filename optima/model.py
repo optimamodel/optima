@@ -93,7 +93,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     transinj = simpars['transinj']      # Injecting
 
     # Population characteristics
-    simpars['popsize']              # Population size
     male = simpars['male']          # Boolean array, true for males
     female = simpars['female']      # Boolean array, true for females
     injects = simpars['injects']    # Boolean array, true for PWID
@@ -108,9 +107,14 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     prep     = simpars['prep']      # Prevalence of PrEP (P)
 
     # Uptake of OST
-    numost = simpars['numost']              # Number of people on OST (N)
-    numpwid = popsize[injects].sum(axis=0)  # Total number of PWID
-    ostprev = numost/numpwid                # Proportion of PWID on OST (P)
+    numost = simpars['numost']                  # Number of people on OST (N)
+    if any(injects):
+        numpwid = popsize[injects].sum(axis=0)  # Total number of PWID
+        try: ostprev = numost/numpwid           # Proportion of PWID on OST (P)
+        except: raise Exception('Cannot divide by the number of PWID')
+    else:
+        if sum(numost): raise Exception('You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject')
+        else: ostprev = 0.
     
     # Further potential effects on transmission
     effsti    = simpars['effsti'] * stiprev  # STI effect
@@ -302,11 +306,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)          
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for this in injactslist:
             effinj = this['acts'][t]
             pop1 = this['pop1']
             pop2 = this['pop2']
-            thisosteff = osteff[pop1,t]
+            thisosteff = osteff[t]
             
             thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2])) 
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
