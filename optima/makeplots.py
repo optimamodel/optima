@@ -4,11 +4,15 @@ MAKEPLOTS
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
 
-To add a new plot, you need to both add 
+To add a new plot, you need to both add it to getplotkeys so it will show up in the interface;
+plotresults so it will be sent to the right spot; and then add the actual function to do the
+polotting.
+
+Version: 2016jan24
 '''
 
 from optima import Resultset, Multiresultset, odict, gridcolormap
-from numpy import array, ndim, maximum, arange
+from numpy import array, ndim, maximum, arange, zeros, mean
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -318,7 +322,7 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
 
 
 ##################################################################
-## Plot improvementes
+## Plot improvements
 ##################################################################
 def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
     ''' 
@@ -331,20 +335,25 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     
     NOTE: do not call this function directly; instead, call via plotresults().
     
-    Version: 2016jan19 by cliffk    
+    Version: 2016jan23 by cliffk    
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
-    elif ndim(results)==1: improvement = results # Promising, has the right dimensionality at least, but of course could still be wrong
+    elif hasattr(results, '__len__'): improvement = results # Promising, has a length at least, but of course could still be wrong
     else: raise Exception('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
+    ncurves = len(improvement) # Try to figure to figure out how many there are
     
     # Set up figure and do plot
     fig = figure(figsize=figsize, facecolor=(1,1,1))
+    colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
-    plot(improvement, lw=lw, c=(0,0,0)) # Actually do the plot
-    absimprove = improvement[0]-improvement[-1]
-    relimprove = 100*(improvement[0]-improvement[-1])/improvement[0]
+    absimprove = zeros(ncurves)
+    relimprove = zeros(ncurves)
+    for i in range(ncurves): # Expect a list of 
+        plot(improvement, lw=lw, c=colors[i]) # Actually do the plot
+        absimprove[i] = improvement[0]-improvement[-1]
+        relimprove[i] = 100*(improvement[0]-improvement[-1])/improvement[0]
     
     # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     ax = gca()
@@ -359,7 +368,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     # Configure plot
     currentylims = ylim()
     ax.set_xlabel('Iteration')
-    ax.set_title('Absolute change: %f  Relative change: %2f%%' % (absimprove, relimprove))
+    ax.set_title('Absolute change: %f  Relative change: %2f%%' % (mean(absimprove), mean(relimprove))) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
     ax.set_xlim((0, len(improvement)))
     

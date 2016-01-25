@@ -96,6 +96,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
+    parset.improvement = [] # For storing the improvement for each fit
     pars = origparlist[0] # Just get a copy of the pars for parsing
     
     
@@ -256,6 +257,6 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         # Save
         pars = convert(pars, parlist, parvecnew)        
         parset.pars.append(pars)
-        parset.improvement = output.fval # Store improvement history
+        parset.improvement.append(output.fval) # Store improvement history
     
     return parset

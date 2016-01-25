@@ -169,7 +169,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         
         multires.budgetyears[key] = tmpresults[k].budgetyears
     
-    multires.improvement = output.fval # Store full function evaluation information
+    multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires

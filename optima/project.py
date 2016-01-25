@@ -213,7 +213,9 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
         structlist[new].name = new  # Update name
-        structlist[new].uid = uuid()  # otherwise there will be 2 structures with same unique identifier
+        structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
+        structlist[new].created = today() # Update dates
+        structlist[new].modified = today() # Update dates
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
         self.modified = today()
         return None
@@ -272,11 +274,12 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name='default', simpars=None, start=None, end=None, dt=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
+        if name is None and simpars is None: name = 'default' # Set default name
 
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
@@ -293,9 +296,8 @@ class Project(object):
 
         # Store results
         results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-        results.project = self # Use hard reference
         self.addresult(result=results)
-        if simpars is None: self.parsets[name].resultsref = results.uid
+        if name is not None and simpars is None: self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
 
         return results
 
@@ -320,9 +322,12 @@ class Project(object):
 
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
-        self.copyparset(orig=orig, new=name) # Store parameters
-        autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
-        results = self.runsim(name=name
+        self.copyparset(orig=orig, new=name) # Store parameters -- WARNING, shouldn't copy, should create new!
+        parset = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        results = self.runsim(name=name)
+        results.improvement = parset.improvement # Store in a more accessible place, since plotting functions use results
+        self.addresult(result=results)
+        parset.resultsref = results.uid
         self.modified = today()
         return None
     
