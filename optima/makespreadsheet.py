@@ -175,6 +175,7 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
+    darkgray = '#413839'
     originalblue = '#18C1FF'
     hotpink = '#FFC0CB'
     BG_COLOR = hotpink
@@ -523,6 +524,7 @@ class OptimaSpreadsheet:
         self.ref_pop_range = self.pop_range.param_refs()
         self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
+        self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
 
     def generate_key(self):
         row_levels = ['high', 'best', 'low']
@@ -603,12 +605,13 @@ class OptimaSpreadsheet:
         current_row = 0
         names = ['Interactions between regular partners', 'Interactions between casual partners',
         'Interactions between commercial partners', 'Interactions between people who inject drugs',
-        'Risk-related population transitions (average number of years before movement)']
+        'Births', 'Risk-related population transitions (average number of years before movement)']
 
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
+            if name!='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
+            else: current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range)
 
     def generate_const(self):
         self.current_sheet.set_column(1,1,40)

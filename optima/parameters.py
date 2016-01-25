@@ -300,12 +300,26 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     
     return output, ctrlpts
 
-
+# Births
+def birthmatrixcalc(birth=None, databirthmatrix=None, popkeys=None, fpopkeys=None):
+    ''' 
+    Combine the birth rates, the birth matrix and the population sizes to figure out how many people are born into each pop
+    '''
+    # Initialise output
+    births_to_pops = odict()
     
+    # Normalise rows of birth matrix
+    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in databirthmatrix]
 
+    # Assign births to mother/child pairs
+    for fpopno, fpop in enumerate(fpopkeys):
+        row = normalised_birthmatrix[fpopno]
+        for colno, col in enumerate(row):
+            if col:
+                key = (fpop, popkeys[colno])
+                births_to_pops[key] = [birth[fpopno][t]*normalised_birthmatrix[fpopno][colno] for t in range(len(birth[fpopno]))]
 
-
-
+    return births_to_pops
 
 
 
@@ -345,7 +359,7 @@ def makepars(data, label=None, verbose=2):
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
-    fpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['female'][i]]
+    fpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['female'][popno]]
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]]
     pars['popkeys'] = dcp(popkeys)
     
@@ -421,6 +435,7 @@ def makepars(data, label=None, verbose=2):
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
         
     # Convert matrices to lists of of population-pair keys
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         actsname = 'acts'+act
         condname = 'cond'+act
