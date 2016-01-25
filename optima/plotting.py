@@ -84,7 +84,7 @@ def getplotkeys(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, figsize=(14,10), **kwargs):
+def makeplots(results=None, toplot=None, die=False, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -111,7 +111,7 @@ def makeplots(results=None, toplot=None, die=False, figsize=(14,10), **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, toplot=toplot, figsize=figsize, **kwargs)
+            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
         except Exception as E: 
             if die: raise E
         
@@ -120,13 +120,13 @@ def makeplots(results=None, toplot=None, die=False, figsize=(14,10), **kwargs):
     if 'budget' in toplot:
         toplot.remove('budget') # Because everything else is passed to plotepi()
         try: 
-            allplots['budget'] = plotallocs(results, toplot=toplot, figsize=figsize, **kwargs)
+            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
         except Exception as E: 
             if die: raise E
         
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, die=die, figsize=figsize, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
     
     # Tidy up: turn interactivity back on
@@ -257,7 +257,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             
             for i,pk in enumerate(pkeys): # Either loop over individual population plots, or just plot a single plot, e.g. pk='prev-per-FSW'
                 
-                epiplots[pk] = figure(figsize=figsize, **kwargs) # If it's anything other than HIV prevalence by population, create a single plot
+                epiplots[pk] = figure(figsize=figsize) # If it's anything other than HIV prevalence by population, create a single plot
     
                 if isstacked or ismultisim: nlinesperplot = len(best) # There are multiple lines per plot for both pops poptype and for plotting multi results
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
@@ -356,7 +356,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
+def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -377,7 +377,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     
     # Set up figure and do plot
     sigfigs = 2 # Number of significant figures
-    fig = figure(figsize=figsize, facecolor=(1,1,1), **kwargs)
+    fig = figure(figsize=figsize)
     colors = gridcolormap(ncurves)
     
     # Plot model estimates with uncertainty
@@ -445,7 +445,7 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
-    fig = figure(figsize=figsize, **kwargs)
+    fig = figure(figsize=figsize)
 #    fig.subplots_adjust(left=0.10) # Less space on left
 #    fig.subplots_adjust(right=0.98) # Less space on right
 #    fig.subplots_adjust(bottom=0.30) # Less space on bottom
