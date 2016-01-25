@@ -83,6 +83,8 @@ class Progsets(Resource):
 
         db.session.commit()
 
+        progset_entry.get_targetpartypes()
+
         return progset_entry, 201
 
 
@@ -104,6 +106,9 @@ class Progset(Resource):
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
+
+        progset_entry.get_targetpartypes()
+
         return progset_entry
 
     @swagger.operation(
@@ -126,6 +131,8 @@ class Progset(Resource):
         progset_entry.create_programs_from_list(args.get('programs', []))
 
         db.session.commit()
+
+        progset_entry.get_targetpartypes()
 
         return progset_entry
 
