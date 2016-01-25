@@ -82,16 +82,27 @@ def getplotkeys(results):
 
 
 
-def plotresults(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+def plotresults(results=None, toplot=None, **kwargs):
     ''' Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use '''
     
     ## Initialize
     allplots = []
+    wasinteractive = isinteractive() # Get current state of interactivity
+    ioff() # Just in case, so we don't flood the user's screen with figures
+    
+    if 'improvement' in toplot:
+        allplots.append(plotimprovement(results, toplot=toplot, **kwargs))
+        toplot.remove('improvement')
+    
+    if 'budget' in toplot:
+        allplots.append(plotallocs(results, toplot=toplot, **kwargs))
+        toplot.remove('budget')
     
     for key in toplot:
     
-    
+    # Tidy up: close plots that were opened and turn interactivity back on
+    for plot in allplots: close(plot) 
+    if wasinteractive: ion() # Turn interactivity back on
     
     return allplots
 
@@ -99,11 +110,11 @@ def plotresults(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,
 
 
 
-def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+            titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
         '''
-        Render the plots requested and store them in a list. Argument "which" should be a list of form e.g.
-        ['prev-tot', 'inci-pops']
+        Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
+        ['prev-tot', 'inci-per']
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
 
@@ -121,14 +132,13 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             raise Exception(errormsg)
 
         # Initialize
-        wasinteractive = isinteractive() # Get current state of interactivity
-        ioff() # Just in case, so we don't flood the user's screen with figures
-        if which is None: which = [datatype+'-'+plotformat for datatype in results.main.keys() for plotformat in ['p', 's', 't']] # Just plot everything if not specified
-        elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
+        
+        if toplot is None: toplot = [datatype+'-'+plotformat for datatype in results.main.keys() for plotformat in ['p', 's', 't']] # Just plot everything if not specified
+        elif type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
 
         # Loop over each plot
         epiplots = odict()
-        for plotkey in which:
+        for plotkey in toplot:
 
             ################################################################################################################
             ## Parse user input
@@ -295,12 +305,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                     if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
-    
-                # Tidy up: close plots that were opened
-                close(epiplots[pk])
 
-
-        if wasinteractive: ion() # Turn interactivity back on
         return epiplots
 
 
@@ -310,7 +315,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
 ##################################################################
 ## Plot improvementes
 ##################################################################
-def plotimprovement(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -365,19 +370,24 @@ def plotimprovement(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, t
 ##################################################################
     
     
-def plotallocs(multires=None, compare=False):
-    ''' Plot multiple allocations on bar charts -- intended for scenarios and optimizations '''
+def plotallocs(results=None, **kwargs):
+    ''' 
+    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+    Results object must be of Multiresultset type.
+    
+    Version: 2016jan24    
+    '''
+    
+    # Validate input
+    if not(hasattr(results, 'budget')): raise Exception('No budget found for results object:\n"%s"' % results)
     
     # Preliminaries: extract needed data
-    budgetstoplot = [budget for budget in multires.budget.values() if budget]
-    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
+    budgetstoplot = [budget for budget in results.budget.values() if budget]
+    budgetyearstoplot = [budgetyears for budgetyears in results.budgetyears.values() if budgetyears]
     proglabels = budgetstoplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(multires.budget.keys()) if multires.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
+    alloclabels = [key for k,key in enumerate(results.budget.keys()) if results.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
-    
-    
-    
     
     fig = figure(figsize=(10,6))
     fig.subplots_adjust(left=0.10) # Less space on left
