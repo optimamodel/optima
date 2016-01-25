@@ -1,4 +1,4 @@
-from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
@@ -117,7 +117,7 @@ class Project(object):
         ''' If parameter set of that name doesn't exist, create it'''
         # question: what is that parset does exist? delete it first?
         if not self.data:
-            raise Exception("No data in project %s!" % self.uid)
+            raise OptimaException("No data in project %s!" % self.uid)
         if name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
@@ -146,19 +146,19 @@ class Project(object):
             structlist = getwhat('parameters')
         will return P.parset.
         '''
-        if item is None and what is None: raise Exception('No inputs provided')
+        if item is None and what is None: raise OptimaException('No inputs provided')
         if what is not None: # Explicitly define the type, item be damned
             if what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
             elif what in ['pr', 'progs', 'progset', 'progsets']: structlist = self.progsets # WARNING, inconsistent terminology!
             elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
             elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
             elif what in ['r', 'res', 'result', 'results']: structlist = self.results
-            else: raise Exception('Structure list "%s" not understood' % what)
+            else: raise OptimaException('Structure list "%s" not understood' % what)
         else: # Figure out the type based on the input
             if type(item)==Parameterset: structlist = self.parsets
             elif type(item)==Programset: structlist = self.progsets
             elif type(item)==Resultset: structlist = self.results
-            else: raise Exception('Structure list "%s" not understood' % str(type(item)))
+            else: raise OptimaException('Structure list "%s" not understood' % str(type(item)))
         return structlist
 
 
@@ -168,13 +168,13 @@ class Project(object):
         else: structlist = self.getwhat(what=what)
         if isinstance(checkexists, (int, float)): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
-            except: raise Exception('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
+            except: raise OptimaException('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None and overwrite==False:
             if checkabsent in structlist:
-                raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
+                raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
         if checkexists is not None:
             if not checkexists in structlist:
-                raise Exception('Structure list "%s" has no item named "%s"' % (what, checkexists))
+                raise OptimaException('Structure list "%s" has no item named "%s"' % (what, checkexists))
         return None
 
 
@@ -187,7 +187,7 @@ class Project(object):
             try: 
                 item = name # It's actully an item, not a name
                 name = item.name # Try getting name from the item
-            except: raise Exception('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
+            except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
@@ -337,13 +337,13 @@ class Project(object):
 
     def runbudget(self, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
-        if budget is None: raise Exception("Please enter a budget dictionary to run")
-        if budgetyears is None: raise Exception("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
+        if budget is None: raise OptimaException("Please enter a budget dictionary to run")
+        if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
-            except: raise Exception("No program set entered, and there are none stored in the project") 
+            except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
