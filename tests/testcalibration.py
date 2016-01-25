@@ -78,7 +78,7 @@ if 'sensitivity' in tests:
     
     if doplot:
         from optima import pygui
-        pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+        pygui(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 

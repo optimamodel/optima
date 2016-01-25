@@ -42,7 +42,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = plotepi(results, which=toplot, figsize=(width, height))
+    plots = plotepi(results, toplot=toplot, figsize=(width, height))
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -89,7 +89,7 @@ def update(event=None, tmpresults=None):
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         
         # Actually create plots
-        plots = plotepi(results, which=toplot, figsize=(width, height))
+        plots = plotepi(results, toplot=toplot, figsize=(width, height))
         nplots = len(plots)
         nrows = int(ceil(sqrt(nplots)))
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -99,7 +99,7 @@ def update(event=None, tmpresults=None):
 
 
 
-def pygui(tmpresults, which=None):
+def pygui(tmpresults, toplot=None):
     '''
     PYGUI
     
@@ -107,10 +107,10 @@ def pygui(tmpresults, which=None):
     and when "Update" is clicked, will clear the contents of the plotting window and replot.
     
     Usage:
-        pygui(results, [which])
+        pygui(results, [toplot])
     
-    where results is the output of e.g. runsim() and which is an optional list of form e.g.
-        which = ['prev-tot', 'inci-pops']
+    where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
+        toplot = ['prev-tot', 'inci-per']
     
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
@@ -126,12 +126,12 @@ def pygui(tmpresults, which=None):
     
     ## Set up what to plot when screen first opens
     truebydefault = 2 # Number of boxes to check true by default
-    if which is None: # No inputs: set the first couple true by default
+    if toplot is None: # No inputs: set the first couple true by default
         defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
     else: # They're specified
         defaultchecks = []
         for name in checkboxes: # Check to see if they match
-            if name in which: defaultchecks.append(True)
+            if name in toplot: defaultchecks.append(True)
             else: defaultchecks.append(False)
             
     ## Set up control panel
@@ -160,16 +160,16 @@ def pygui(tmpresults, which=None):
 
 
 
-def browser(results, which=None, doplot=True):
+def browser(results, toplot=None, doplot=True):
     ''' 
     Create an MPLD3 GUI and display in the browser. This is basically a testbed for 
     the Optima frontend.
     
     Usage:
-        browser(results, [which])
+        browser(results, [toplot])
     
-    where results is the output of e.g. runsim() and which is an optional list of form e.g.
-        which = ['prev-tot', 'inci-pops']
+    where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
+        toplot = ['prev-tot', 'inci-per']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
@@ -253,7 +253,7 @@ def browser(results, which=None, doplot=True):
 
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
-    plots = plotepi(results, which) # Generate the plots
+    plots = plotepi(results, toplot) # Generate the plots
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
