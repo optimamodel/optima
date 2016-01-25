@@ -45,8 +45,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     raw['sexinci']    = zeros((npops, npts)) # Incidence through sex
     raw['injinci']    = zeros((npops, npts)) # Incidence through injecting
     raw['inci']       = zeros((npops, npts)) # Total incidence
-    raw['births']     = zeros((1, npts))     # Number of births
-    raw['mtct']       = zeros((1, npts))     # Number of mother-to-child transmissions
+    raw['births']     = zeros((npops, npts)) # Number of births to each population
+    raw['mtct']       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
     raw['diag']       = zeros((npops, npts)) # Number diagnosed per timestep
     raw['newtreat']   = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw['death']      = zeros((npops, npts)) # Number of deaths per timestep
@@ -321,7 +321,16 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             raise OptimaException(errormsg)
             
 
-        
+        ###############################################################################
+        ## Calculate births and mother-to-child-transmission
+        ###############################################################################
+        birthby = simpars['birth'][:,t] * popsize[:,t]
+        birthsto = zeros(npops)
+        for pop in birthby:
+            birthsto[pop] += 
+
+
+
         ###############################################################################
         ## The ODEs
         ###############################################################################

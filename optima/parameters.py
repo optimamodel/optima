@@ -301,15 +301,15 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     return output, ctrlpts
 
 # Births
-def birthmatrixcalc(birth=None, databirthmatrix=None, popkeys=None, fpopkeys=None):
+def birthmatrixcalc(birth=None, birthmatrix=None, popkeys=None, fpopkeys=None):
     ''' 
     Combine the birth rates, the birth matrix and the population sizes to figure out how many people are born into each pop
     '''
     # Initialise output
     births_to_pops = odict()
     
-    # Normalise rows of birth matrix
-    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in databirthmatrix]
+    # Normalise rows of birth matrix and pad
+    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in birthmatrix]
 
     # Assign births to mother/child pairs
     for fpopno, fpop in enumerate(fpopkeys):
@@ -405,12 +405,24 @@ def makepars(data, label=None, verbose=2):
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
-    
+    pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['birth'].t = pars['birth'].t.sort(popkeys)
+
+    # Normalise birth matrix and pad
+    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['birthmatrix']]
+    fullbirthmatrix = zeros((len(popkeys),len(popkeys)))
+    for keyno, key in enumerate(popkeys):
+        if data['pops']['female'][keyno]:
+            fullbirthmatrix[len(popkeys[:keyno])] = normalised_birthmatrix[sum(data['pops']['female'][:keyno])]
+    pars['birthmatrix'] = fullbirthmatrix 
+
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
-    
+    pars['circum'].y = pars['circum'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['circum'].t = pars['circum'].t.sort(popkeys)
+
     # Metaparameters
     for key in popkeys: # Define values
         pars['force'].y[key] = 1
@@ -471,13 +483,14 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
+    staticmatrixkeys = ['birthmatrix']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
     
     # Copy default keys by default
-    for key in generalkeys: simpars[key] = dcp(pars[key])
+    for key in generalkeys+staticmatrixkeys: simpars[key] = dcp(pars[key])
     
     # Loop over requested keys
     for key in keys: # Loop over all keys
