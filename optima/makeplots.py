@@ -276,31 +276,31 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
 
 
 ##################################################################
-## Plot mismatches
+## Plot improvementes
 ##################################################################
-def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+def plotimprovement(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titlesize=14, labelsize=12, ticksize=10, legendsize=10):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
-    Accepts either a parset (generated from autofit) or an optimization result with a mismatch attribute;
+    Accepts either a parset (generated from autofit) or an optimization result with a improvement attribute;
     failing that, it will try to treat the object as something that can be used directly, e.g.
-        plotmismatch(results.mismatch)
+        plotimprovement(results.improvement)
     also works.
     
     Version: 2016jan19 by cliffk    
     '''
 
-    if hasattr(results, 'mismatch'): mismatch = results.mismatch # Get mismatch attribute of object if it exists
-    elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least, but of course could still be wrong
-    else: raise Exception('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
+    if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
+    elif ndim(results)==1: improvement = results # Promising, has the right dimensionality at least, but of course could still be wrong
+    else: raise Exception('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
     
     # Set up figure and do plot
     fig = figure(figsize=figsize, facecolor=(1,1,1))
     
     # Plot model estimates with uncertainty
-    plot(mismatch, lw=lw, c=(0,0,0)) # Actually do the plot
-    absimprove = mismatch[0]-mismatch[-1]
-    relimprove = 100*(mismatch[0]-mismatch[-1])/mismatch[0]
+    plot(improvement, lw=lw, c=(0,0,0)) # Actually do the plot
+    absimprove = improvement[0]-improvement[-1]
+    relimprove = 100*(improvement[0]-improvement[-1])/improvement[0]
     
     # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     ax = gca()
@@ -317,7 +317,7 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
     ax.set_xlabel('Iteration')
     ax.set_title('Absolute change: %f  Relative change: %2f%%' % (absimprove, relimprove))
     ax.set_ylim((0,currentylims[1]))
-    ax.set_xlim((0, len(mismatch)))
+    ax.set_xlim((0, len(improvement)))
     
     return fig
 
