@@ -46,13 +46,13 @@ def getplotkeys(results):
     
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
-    if hasattr(results, 'improvement'):
+    if hasattr(results, 'improvement') and results.improvement is not None:
         plotselection['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
         plotselection['names'] += ['Improvement']
     
     
     ## Add selections for outcome and budget allocations
-    if hasattr(results, 'budget'):
+    if hasattr(results, 'budget') and results.budget is not None:
         plotselection['keys'] += ['budget']
         plotselection['names'] += ['Budget allocation']
     

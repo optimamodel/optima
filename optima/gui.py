@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import dcp, printv, sigfig, makeplots, getplotkeys
+from optima import dcp, printv, sigfig, makeplots, getplotkeys, plotting
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
@@ -124,14 +124,9 @@ def pygui(tmpresults, toplot=None):
     nboxes = len(checkboxes) # Number of choices
     
     ## Set up what to plot when screen first opens
-    truebydefault = 2 # Number of boxes to check true by default
-    if toplot is None: # No inputs: set the first couple true by default
-        defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
-    else: # They're specified
-        defaultchecks = []
-        for name in checkboxes: # Check to see if they match
-            if name in toplot: defaultchecks.append(True)
-            else: defaultchecks.append(False)
+    defaultchecks = []
+    for box in checkboxes:
+        defaultchecks.append(box in plotting.defaultplots) # Append True if it's in the defaults; False otherwise
             
     ## Set up control panel
     try: fc = results.project.settings.optimablue # Try loading global optimablue
