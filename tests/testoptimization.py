@@ -115,8 +115,8 @@ if 'minimizeoutcomes' in tests:
     print('Optimal allocation: '),
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
-        from optima import browser
-        browser(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
     
     done(t)
 

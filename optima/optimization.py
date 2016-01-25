@@ -62,7 +62,7 @@ class Optim(object):
 def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
     
     # Validate input
-    if None in [budgetvec, progset, objectives, constraints, tvec]:  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+    if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise Exception('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # WARNING -- temp -- normalize budgetvec
