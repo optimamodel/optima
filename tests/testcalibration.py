@@ -13,8 +13,8 @@ tests = [
 #'attributes',
 #'sensitivity',
 #'manualfit',
-'autofit',
-#'autofitmulti',
+#'autofit',
+'autofitmulti',
 #'longfit',
 ]
 
@@ -117,10 +117,9 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from optima import plotimprovement, plotresults
-        plotimprovement(P.parsets['autofit'])
+        from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
@@ -146,7 +145,7 @@ if 'autofitmulti' in tests:
     if doplot:
         from gui import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
@@ -176,7 +175,7 @@ if 'longfit' in tests:
     if doplot:
         from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 

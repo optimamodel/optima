@@ -19,6 +19,8 @@ from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_betw
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
+defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta'] # Default epidemiological plots
+defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
 
 
 def getplotkeys(results):
@@ -86,17 +88,34 @@ def getplotkeys(results):
 
 
 
-def makeplots(results=None, toplot=None, **kwargs):
-    ''' Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use '''
+def makeplots(results=None, toplot=None, die=False, **kwargs):
+    ''' 
+    Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
+    
+    The keyword 'die' controls what it should do with an exception: if False, then carry on as if nothing happened;
+    if True, then actually rase the exception.
+    
+    Note that if toplot='default', it will plot the default plots (defined in plotting.py).
+    
+    Version: 2016jan24    
+    '''
     
     ## Initialize
     allplots = []
     wasinteractive = isinteractive() # Get current state of interactivity
     ioff() # Just in case, so we don't flood the user's screen with figures
+    if toplot is None: toplot = defaultplots # Go straight ahead and replace with defaults
+    if not(isinstance(toplot, list)): toplot = [toplot] # Handle single entries, for example 
+    if 'default' in toplot: # Special case for handling default plots
+        toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
+    toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     
     ## Add improvement plot
     if 'improvement' in toplot:
-        allplots.append(plotimprovement(results, toplot=toplot, **kwargs))
+        try: allplots.append(plotimprovement(results, toplot=toplot, **kwargs))
+        except Exception as E: 
+            if die: raise E
+            else: pass
         toplot.remove('improvement')
     
     ## Add budget plot
@@ -142,7 +161,7 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
 
         # Initialize
         
-        if toplot is None: toplot = [datatype+'-'+plotformat for datatype in results.main.keys() for plotformat in ['p', 's', 't']] # Just plot everything if not specified
+        if toplot is None: toplot = defaultepiplots # If not specified, plot default plots
         elif type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
 
         # Loop over each plot
@@ -165,6 +184,7 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
                 raise Exception(errormsg)
+            plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
             if plotformat not in epiformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
                 raise Exception(errormsg)
