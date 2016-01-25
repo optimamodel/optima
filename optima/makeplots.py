@@ -279,53 +279,10 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
 ##################################################################
 ## Allocation plots
 ##################################################################
-
-def plot2allocs(multires=None, compare=True):
-    ''' Plot 2 allocations on bar charts - intended for optimisations '''
-    
-    # Preliminaries: extract needed data
-    try: progset = multires.progset[0] # For multires, progset is an odict, but all entries should be the same, so it shouldn't matter which one you use
-    except: raise Exception('Failed to extract program set; "multires" type = "%s", but "multires" should be a multiresults set' % type(multires))
-    proglabels = progset.programs.keys()
-    nprogs = len(proglabels)
-    labels = multires.keys
-    progdata = [multires.budget['orig'], multires.budget['optim']]
-    
-    fig = figure(figsize=(10,6))
-    fig.subplots_adjust(left=0.10) # Less space on left
-    fig.subplots_adjust(right=0.98) # Less space on right
-    fig.subplots_adjust(bottom=0.30) # Less space on bottom
-    fig.subplots_adjust(wspace=0.30) # More space between
-    fig.subplots_adjust(hspace=0.40) # More space between
-    
-    colors = gridcolormap(nprogs)
-    
-    ax = []
-    xbardata = arange(nprogs)+0.5
-    ymax = 0
-    for plt in range(len(progdata)):
-        ax.append(subplot(len(progdata),1,plt+1))
-        ax[-1].hold(True)
-        for p in range(nprogs):
-            ax[-1].bar([xbardata[p]], [progdata[plt][p]], color=colors[p], linewidth=0)
-            if plt==1 and compare:
-                ax[-1].bar([xbardata[p]], [progdata[0][p]], color='None', linewidth=1)
-        ax[-1].set_xticks(arange(nprogs)+1)
-        if plt==0: ax[-1].set_xticklabels('')
-        if plt==1: ax[-1].set_xticklabels(proglabels,rotation=90)
-        ax[-1].set_xlim(0,nprogs+1)
-        
-        ax[-1].set_ylabel('Spending (US$)')
-        ax[-1].set_title(labels[plt])
-        ymax = maximum(ymax, ax[-1].get_ylim()[1])
-    for plt in range(len(progdata)):
-        if compare: ax[plt].set_ylim((0,ymax))
-    
-    return fig
     
     
-def plotmultiallocs(multires=None, compare=False):
-    ''' Plot multiple allocations on bar charts - intended for scenarios '''
+def plotallocs(multires=None, compare=False):
+    ''' Plot multiple allocations on bar charts -- intended for scenarios and optimizations '''
     
     # Preliminaries: extract needed data
     budgetstoplot = [budget for budget in multires.budget.values() if budget]

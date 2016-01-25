@@ -174,9 +174,9 @@ if 'standardscen' in tests:
     P.runscenarios() 
      
     if doplot:
-        from optima import pygui, plotmultiallocs
+        from optima import pygui, plotallocs
         pygui(P.results[-1])
-        plotmultiallocs(P.results[-1])
+        plotallocs(P.results[-1])
 
     if showstats:
         from optima import Settings, findinds
