@@ -5,7 +5,7 @@ This file generates all the figure files -- either for use with the Python backe
 for the frontend via MPLD3.
 '''
 
-from optima import Resultset, Multiresultset, odict, gridcolormap
+from optima import OptimaException, Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -34,7 +34,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             nsims = len(labels) # How ever many things are in results
         else: 
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
 
         # Initialize
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -51,27 +51,27 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             ################################################################################################################
             if type(plotkey) not in [str, list, tuple]: 
                 errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
             else:
                 try:
                     if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
                     elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                    raise Exception(errormsg)
+                    raise OptimaException(errormsg)
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
             if plotformat not in plotformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
             
             try:
                 isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
                 factor = 1.0 if isnumber else 100.0 # Swap between number and percent
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
                 
             istotal   = (plotformat in plotformatsdict['tot'])
             isperpop  = (plotformat in plotformatsdict['per'])
@@ -240,7 +240,7 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
 
     if hasattr(results, 'mismatch'): mismatch = results.mismatch # Get mismatch attribute of object if it exists
     elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least, but of course could still be wrong
-    else: raise Exception('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
+    else: raise OptimaException('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
     
     # Set up figure and do plot
     fig = figure(figsize=figsize, facecolor=(1,1,1))

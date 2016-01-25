@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2015jan23 by cliffk
 """
 
-from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 import matplotlib.pyplot as plt
 
@@ -30,16 +30,16 @@ def getresults(project=None, pointer=None, die=True):
     '''
     if isinstance(pointer, (str, int, float)):
         if project is not None: return project.results[pointer]
-        else: raise Exception('To get results using a key or index, getresults() must be given the project')
+        else: raise OptimaException('To get results using a key or index, getresults() must be given the project')
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
-        else: raise Exception('To get results using a UID, getresults() must be given the project')
+        else: raise OptimaException('To get results using a UID, getresults() must be given the project')
     elif isinstance(pointer, (Resultset, Multiresultset)):
         return pointer # Return pointer directly if it's already a results set
     elif callable(pointer): 
         return pointer() # Try calling as function -- might be useful for the database or something
     else: 
-        if die: raise Exception('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
         else: return None # Give up, return nothing
 
 
@@ -112,7 +112,7 @@ class Resultset(object):
         self.name = name # May be blank if automatically generated, but can be overwritten
         
         # Turn inputs into lists if not already
-        if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
+        if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
         if type(simpars)!=list: simpars = [simpars] # Force into being a list
         if type(raw)!=list: raw = [raw] # Force into being a list
         
@@ -306,8 +306,8 @@ class Multiresultset(object):
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
-        elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
-        else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
+        else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
                 
         
         # Fundamental quantities -- populated by project.runsim()
