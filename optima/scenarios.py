@@ -81,7 +81,8 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     for scenno, scen in enumerate(scenparsets):
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno],Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno],Progscen) else None
-        result = runmodel(pars=scenparsets[scen].pars[0], project=project, budget=budget, budgetyears=budgetyears, verbose=1)
+        progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno],Progscen) else None
+        result = runmodel(pars=scenparsets[scen].pars[0], parset=project.parsets[scenlist[scenno].parsetname], progset=progset, project=project, budget=budget, budgetyears=budgetyears, verbose=1)
         allresults.append(result) 
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -143,8 +144,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 results = None
 
             if isinstance(scen, Budgetscen):
+                if not isinstance(scen.budget,dict): raise Exception('Currently only accepting budgets as dictionaries.')
+                if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
+                scen.budget = scen.budget.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
-            elif isinstance(scen ,Budgetscen):
+            elif isinstance(scen, Coveragescen):
+                if not isinstance(scen.coverage,dict): raise Exception('Currently only accepting coverage as dictionaries.')
+                if not isinstance(scen.coverage,odict): scen.budget = odict(scen.budget)
+                scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)

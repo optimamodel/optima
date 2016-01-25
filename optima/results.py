@@ -302,6 +302,8 @@ class Multiresultset(object):
         self.created = today()
         self.nresultsets = len(resultsetlist)
         self.keys = []
+        self.budget = odict()
+        self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
@@ -315,10 +317,6 @@ class Multiresultset(object):
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
-        # Budget TEMP
-        self.budget = [resultset.budget for resultset in resultsetlist]
-        self.budgetyears = [resultset.budgetyears for resultset in resultsetlist]
-        
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
         for key in self.main.keys():
@@ -344,7 +342,13 @@ class Multiresultset(object):
                 for at in ['pops', 'tot']:
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
-                
+            # Finally, process the budget and budgetyears
+            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+                self.budget[key]      = rset.budget
+                self.budgetyears[key] = rset.budgetyears
+            except: 
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                pass # Not a problem if doesn't work
             
         
         
