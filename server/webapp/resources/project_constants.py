@@ -20,6 +20,7 @@ result_fields = {
 
 
 class Parameters(Resource):
+
     @swagger.operation(
         summary="List default parameters"
     )
