@@ -101,7 +101,7 @@ except: _failed()
 try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
-try: from plotting import getplotkeys, makeplots, plotepi, plotimprovement, plotallocs # Create the plots
+try: from plotting import getplotkeys, makeplots # Create the plots -- WARNING, shouldn't need access to the other features?
 except: _failed()
 
 
@@ -144,7 +144,7 @@ except: _failed()
 
 
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-try: import defaults, colortools, utils, gui # High-level modules that might be useful
+try: import colortools, utils, plotting, gui, defaults # High-level modules that might be useful
 except: _failed()
 
 

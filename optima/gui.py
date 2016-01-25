@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import dcp, printv, sigfig, plotepi, getplotkeys
+from optima import dcp, printv, sigfig, makeplots, getplotkeys
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
@@ -23,7 +23,7 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
 
 
 
-def plotresults(results, toplot=None, fig=None, **kwargs):
+def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
     Like update() for pygui, but just open a new window
     Keyword arguments if supplied are passed on to figure().
@@ -32,9 +32,8 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
         results = P.runsim('default')
         plotresults(results)
         
-    Version: 1.1 (2016jan19) by cliffk
+    Version: 1.2 (2016jan24) by cliffk
     '''
-    if toplot is None: toplot = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta']
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     
     # Do plotting
@@ -43,7 +42,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = plotepi(results, toplot=toplot, figsize=(width, height))
+    plots = makeplots(results, toplot=toplot, figsize=(width, height))
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -90,7 +89,7 @@ def update(event=None, tmpresults=None):
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         
         # Actually create plots
-        plots = plotepi(results, toplot=toplot, figsize=(width, height))
+        plots = makeplots(results, toplot=toplot, figsize=(width, height))
         nplots = len(plots)
         nrows = int(ceil(sqrt(nplots)))
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -254,7 +253,7 @@ def browser(results, toplot=None, doplot=True):
 
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
-    plots = plotepi(results, toplot) # Generate the plots
+    plots = makeplots(results=results, toplot=toplot) # Generate the plots
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
