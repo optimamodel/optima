@@ -461,8 +461,7 @@ def plotallocs(results=None, **kwargs):
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            try: progdata = [x[y] for x in budgetstoplot[plt][:]]
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            progdata = [x[y] for x in budgetstoplot[plt][:]]
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year

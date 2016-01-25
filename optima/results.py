@@ -278,7 +278,6 @@ class Multiresultset(Resultset):
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
             except: 
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 pass # Not a problem if doesn't work
             
         
