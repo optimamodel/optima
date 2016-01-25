@@ -328,11 +328,15 @@ def plotmultiallocs(multires=None, compare=False):
     ''' Plot multiple allocations on bar charts - intended for scenarios '''
     
     # Preliminaries: extract needed data
-    budgetstoplot = [budget for budget in multires.budget if budget]
-    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears if budgetyears]
+    budgetstoplot = [budget for budget in multires.budget.values() if budget]
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     proglabels = budgetstoplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(multires.budget.keys()) if multires.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
     nprogs = len(proglabels)
-    labels = [key for keyno, key in enumerate(multires.keys) if multires.budget[keyno]]
+    nallocs = len(alloclabels)
+    
+    
+    
     
     fig = figure(figsize=(10,6))
     fig.subplots_adjust(left=0.10) # Less space on left
@@ -346,24 +350,27 @@ def plotmultiallocs(multires=None, compare=False):
     ax = []
     ymax = 0
     
-    for plt in range(len(labels)):
-        ax.append(subplot(len(labels),1,plt+1))
+    for plt in range(nallocs):
+        nbudgetyears = len(budgetyearstoplot[plt])
+        ax.append(subplot(nallocs,1,plt+1))
         ax[-1].hold(True)
-        barwidth = .5/len(budgetyearstoplot[plt])
-        for y in range(len(budgetyearstoplot[plt])):
-            progdata = [x[y] for x in budgetstoplot[plt][:]]
+        barwidth = .5/nbudgetyears
+        for y in range(nbudgetyears):
+            try: progdata = [x[y] for x in budgetstoplot[plt][:]]
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
-                if p==nprogs-1: ax[-1].bar([xbardata[p]], [progdata[p]], label=budgetyearstoplot[plt][y], width=barwidth, color=colors[y])
-                else: ax[-1].bar([xbardata[p]], [progdata[p]], width=barwidth, color=colors[y])
-        ax[-1].legend()
+                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+                else: barcolor = colors[p] # Only one year? Color by program
+                ax[-1].bar([xbardata[p]], [progdata[p]], width=barwidth, color=barcolor)
+        if nbudgetyears>1: ax[-1].legend(tuple([yr for yr in budgetyearstoplot[plt]]))
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
-        if plt==len(labels)-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
         ax[-1].set_ylabel('Spending (US$)')
-        ax[-1].set_title(labels[plt])
+        ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     return fig

@@ -92,6 +92,10 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     if outputresults:
         results.outcome = outcome
         results.budgetvec = budgetvec # WARNING, not sure this should be here
+        results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+        results.budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+        for k,key in enumerate(results.budget.keys()):
+            results.budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
         return results
     else: 
         return outcome
@@ -160,11 +164,10 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     tmpresults = [orig, new]
     
     multires = Multiresultset(resultsetlist=tmpresults)
-    multires.budget = odict()
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
-        multires.budget[key] = progset.getdefaultbudget()
-        multires.budget[key][:] = tmpresults[k].budgetvec # Copy budgetvec into odict
+        
+        multires.budgetyears[key] = tmpresults[k].budgetyears
     
     multires.mismatch = output.fval # Store full function evaluation information
     optim.resultsref = multires.uid # Store the reference for this result

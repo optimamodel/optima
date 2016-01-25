@@ -109,12 +109,12 @@ if 'minimizeoutcomes' in tests:
     from optima import defaultobjectives
     objectives = defaultobjectives()
     objectives['budget'] = 6e6 # Change default budget to optimize
-    P.minoutcomes(name='optim', parsetname='default', progsetname='default', objectives=objectives, method='asd')
+    P.minoutcomes(name='optim', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxiters=5)
     
     print('Original allocation: '),
-    print(P.results[-1].budget['orig'])
+    print(P.results[-1].budget[0])
     print('Optimal allocation: '),
-    print(P.optims[-1].getresults().budget['optim']) # Showing that results are "stored" in the optimization -- same object as before
+    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
         from optima import plotmismatch, plotmultiallocs, plotresults
         plotmismatch(P.results[-1])
