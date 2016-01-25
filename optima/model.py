@@ -107,8 +107,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
     numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment
     numcare  = simpars['numcare']   # Number of PLHIV who are in care (N)
-    PDHIVcare= simpars['PDHIVcare'] # Percentage of all people who have been diagnosed with HIV who are in care
-    PLHIVcare= simpars['PLHIVcare'] # Percentage of all PLHIV who are in care
+    pdhivcare= simpars['pdhivcare'] # Percentage of all people who have been diagnosed with HIV who are in care
+    plhivcare= simpars['plhivcare'] # Percentage of all PLHIV who are in care
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
     circum   = simpars['circum']
