@@ -101,7 +101,7 @@ except: _failed()
 try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
-try: from makeplots import getplotkeys, plotepi, plotimprovement, plotallocs # Create the plots
+try: from plotting import getplotkeys, makeplots, plotepi, plotimprovement, plotallocs # Create the plots
 except: _failed()
 
 
@@ -141,7 +141,7 @@ except: _failed()
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: 
     import defaults, plotpeople # Additional features not included in the main part of Optima
-    import colortools, utils, gui
+    import colortools, utils, gui # High-level modules that might be useful
 except: _failed()
 
 
