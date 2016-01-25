@@ -837,3 +837,14 @@ class odict(OrderedDict):
         out = odict()
         for key in allkeys: out[key] = self[key]
         return out
+
+
+
+##############################################################################
+## OPTIMA EXCEPTIONS CLASS
+##############################################################################
+
+class OptimaException(Exception):
+    ''' A tiny class to allow for Optima-specific exceptions '''
+    def __init(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)

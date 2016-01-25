@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds
+from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds
 from numpy import median, zeros, array, mean
 
 
@@ -29,7 +29,7 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
     
     # Validate input
     if type(orig)!=Parameterset:
-        raise Exception('First argument to sensitivity() must be a parameter set')
+        raise OptimaException('First argument to sensitivity() must be a parameter set')
     if span>1 or span<0:
         print('WARNING: span argument must be a scalar in the interval [0,1], resetting...')
         span = median([0,1,span])
@@ -48,7 +48,7 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
             for key in popkeys:
                 parset.pars[n]['force'].y[key] = perturb(n=1, span=span)[0] # perturb() returns array, so need to index -- WARNING, could make more efficient and remove loop
     else:
-        raise Exception('Sorry, only "force" is implemented currently')
+        raise OptimaException('Sorry, only "force" is implemented currently')
     
     return parset
 
@@ -85,8 +85,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     printv('Performing automatic fitting...', 1, verbose)
     
     # Validate input
-    if project is None: raise Exception('autofit() requires a project in order to run')
-    if type(name)!=str: raise Exception('"name" must be the name or index of a paramete set')
+    if project is None: raise OptimaException('autofit() requires a project in order to run')
+    if type(name)!=str: raise OptimaException('"name" must be the name or index of a paramete set')
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
@@ -96,7 +96,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
     if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
-    if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
+    if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
     parset.improvement = [] # For storing the improvement for each fit
     pars = origparlist[0] # Just get a copy of the pars for parsing
@@ -130,7 +130,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
                     elif par.fittable=='const':
                         parlist.append({'name':par.short, 'type':'const', 'limits':par.limits, 'ind':None})
                     else:
-                        raise Exception('Parameter "fittable" type "%s" not understood' % par.fittable)
+                        raise OptimaException('Parameter "fittable" type "%s" not understood' % par.fittable)
             else: pass # It's like popkeys or something -- don't worry, be happy
         return parlist
     
@@ -173,7 +173,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
             elif thistype=='const': 
                 if tv: parvec[i] = pars[thisname].y
                 else:  pars[thisname].y = parvec[i]
-            else: raise Exception('Parameter type "%s" not understood' % thistype)
+            else: raise OptimaException('Parameter type "%s" not understood' % thistype)
         
         # Decide which to return
         if tv: return parvec
@@ -192,7 +192,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         '''
         
         # Validate input -- check everything in one go
-        if None in [parvec, pars, parlist, project]: raise Exception('errorcalc() requires parvec, pars, parlist, and project inputs')
+        if None in [parvec, pars, parlist, project]: raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
         
         def extractdata(xdata, ydata):
             ''' Return the x and y data values for non-nan y data '''
@@ -249,7 +249,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         
         # Get this set of parameters
         try: pars = origparlist[ind]
-        except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
+        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         # Perform fit
         parvec = convert(pars, parlist)

@@ -1,4 +1,4 @@
-from optima import Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
@@ -117,7 +117,7 @@ class Project(object):
         ''' If parameter set of that name doesn't exist, create it'''
         # question: what is that parset does exist? delete it first?
         if not self.data:
-            raise Exception("No data in project %s!" % self.uid)
+            raise OptimaException("No data in project %s!" % self.uid)
         if name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
@@ -146,19 +146,19 @@ class Project(object):
             structlist = getwhat('parameters')
         will return P.parset.
         '''
-        if item is None and what is None: raise Exception('No inputs provided')
+        if item is None and what is None: raise OptimaException('No inputs provided')
         if what is not None: # Explicitly define the type, item be damned
             if what in ['p', 'pars', 'parset', 'parameters']: structlist = self.parsets
             elif what in ['pr', 'progs', 'progset', 'progsets']: structlist = self.progsets # WARNING, inconsistent terminology!
             elif what in ['s', 'scen', 'scens', 'scenario', 'scenarios']: structlist = self.scens
             elif what in ['o', 'opt', 'opts', 'optim', 'optims', 'optimisation', 'optimization', 'optimisations', 'optimizations']: structlist = self.optims
             elif what in ['r', 'res', 'result', 'results']: structlist = self.results
-            else: raise Exception('Structure list "%s" not understood' % what)
+            else: raise OptimaException('Structure list "%s" not understood' % what)
         else: # Figure out the type based on the input
             if type(item)==Parameterset: structlist = self.parsets
             elif type(item)==Programset: structlist = self.progsets
             elif type(item)==Resultset: structlist = self.results
-            else: raise Exception('Structure list "%s" not understood' % str(type(item)))
+            else: raise OptimaException('Structure list "%s" not understood' % str(type(item)))
         return structlist
 
 
