@@ -11,7 +11,7 @@ polotting.
 Version: 2016jan24
 '''
 
-from optima import Resultset, Multiresultset, odict, gridcolormap
+from optima import Resultset, Multiresultset, odict, printv, gridcolormap
 from numpy import array, ndim, maximum, arange, zeros, mean
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -110,15 +110,14 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
         toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     
-    def maybedie(E, die=die):
-        ''' Die, but only if asked '''
-        if die: raise E
-    
+
     ## Add improvement plot
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
-        try: allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
-        except Exception as E: maybedie(E)
+        try: 
+            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
+        except Exception as E: 
+            if die: raise E
         
     
     ## Add budget plot
@@ -131,7 +130,7 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
         
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
-    epiplots = plotepi(results, toplot=toplot, **kwargs)
+    epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
     
     # Tidy up: close plots that were opened and turn interactivity back on
@@ -144,7 +143,7 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
 
 
 
-def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
@@ -168,17 +167,13 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
             raise Exception(errormsg)
 
         # Initialize
-        
         if toplot is None: toplot = defaultepiplots # If not specified, plot default plots
         elif type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
-
-        # Loop over each plot
         epiplots = odict()
-        for plotkey in toplot:
 
-            ################################################################################################################
-            ## Parse user input
-            ################################################################################################################
+
+        ## Validate plot keys
+        for plotkey in toplot:
             if type(plotkey) not in [str, list, tuple]: 
                 errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
                 raise Exception(errormsg)
@@ -188,22 +183,35 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
                     elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                    raise Exception(errormsg)
+                    if die: 
+                        raise Exception(errormsg)
+                    else: 
+                        printv(errormsg, 4, verbose)
+                        toplot.remove(plotkey) # Just silently remove it
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                raise Exception(errormsg)
+                if die:
+                    raise Exception(errormsg)
+                else: 
+                    printv(errormsg, 4, verbose)
+                    toplot.remove(plotkey) # Just silently remove it
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
             if plotformat not in epiformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
-                raise Exception(errormsg)
-            
-            try:
-                isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
-                factor = 1.0 if isnumber else 100.0 # Swap between number and percent
-            except:
-                errormsg = 'Unable to find key "%s" in results' % datatype
-                raise Exception(errormsg)
-                
+                if die:
+                    raise Exception(errormsg)
+                else: 
+                    printv(errormsg, 4, verbose)
+                    toplot.remove(plotkey) # Just silently remove it
+
+
+        ################################################################################################################
+        ## Loop over each plot
+        ################################################################################################################
+        for plotkey in toplot:
+
+            isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
+            factor = 1.0 if isnumber else 100.0 # Swap between number and percent
             istotal   = (plotformat in epiformatsdict['tot'])
             isperpop  = (plotformat in epiformatsdict['per'])
             isstacked = (plotformat in epiformatsdict['sta'])
