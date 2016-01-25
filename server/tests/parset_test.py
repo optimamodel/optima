@@ -33,6 +33,9 @@ class ParsetTestCase(OptimaTestCase):
         self.assertEqual(data['parsets'][0]['name'], 'default')
 
     def test_retrieve_calibrated_parameters(self):
+        project_response = self.client.get('api/project/{}'.format(self.project_id))
+        project_data = json.loads(project_response.data)
+
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
         parsets_data = json.loads(parsets_response.data)
         parset_id = parsets_data['parsets'][0]['id']
@@ -45,7 +48,11 @@ class ParsetTestCase(OptimaTestCase):
         self.assertEqual(calibration_data['parset_id'], parset_id)
         self.assertTrue(len(calibration_data['parameters']) > 0)
         self.assertTrue(len(calibration_data['selectors']) > 0)
-        self.assertEqual(len(calibration_data['graphs']), 2)
+
+        # We should expect len(populations) + 2 graphs -- total + one for each
+        # population + one with all populations together.
+        self.assertEqual(len(calibration_data['graphs']),
+                         len(project_data["populations"]) + 2)
 
     def test_show_other_graph(self):
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
@@ -87,7 +94,15 @@ class ParsetTestCase(OptimaTestCase):
 
         self.assertTrue('calibration' in recalibrated_res_data)
         recalibrated_data = recalibrated_res_data['calibration']
-        self.assertEqual(len(recalibrated_data['graphs']), 2)
+
+        project_response = self.client.get('api/project/{}'.format(self.project_id))
+        project_data = json.loads(project_response.data)
+
+        # We should expect len(populations) + 2 graphs -- total + one for each
+        # population + one with all populations together.
+        self.assertEqual(len(recalibrated_data['graphs']),
+                         len(project_data["populations"]) + 2)
+
         self.assertIn('aidstest', [p['key'] for p in recalibrated_data['parameters']])
         for p in recalibrated_data['parameters']:
             if p['key'] == 'aidstest':
