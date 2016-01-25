@@ -25,7 +25,7 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
 
 def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
-    Like update() for pygui, but just open a new window
+    Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
     
     Usage:
@@ -73,7 +73,7 @@ def getchecked(check=None):
     return ischecked
     
     
-def update(event=None, tmpresults=None):
+def updateplots(event=None, tmpresults=None):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
     if tmpresults is not None: results = tmpresults
@@ -88,18 +88,23 @@ def update(event=None, tmpresults=None):
     
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
-        wasinteractive = isinteractive()
-        if wasinteractive: ioff()
-        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-        
-        # Actually create plots
-        plots = makeplots(results, toplot=toplot, figsize=(width, height))
-        nplots = len(plots)
-        nrows = int(ceil(sqrt(nplots)))
-        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1) # WARNING, copied from plotresults()
-        if wasinteractive: ion()
-        show()
+        plotresults(results, toplot=toplot, figsize=(width, height))
+    
+#    # Do plotting
+#    if sum(ischecked): # Don't do anything if no plots
+#        wasinteractive = isinteractive()
+#        if wasinteractive: ioff()
+#        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
+#        
+#        # Actually create plots
+#        plots = makeplots(results, toplot=toplot, figsize=(width, height))
+#        nplots = len(plots)
+#        nrows = int(ceil(sqrt(nplots)))
+#        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
+#        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1) # WARNING, copied from plotresults()
+#        if wasinteractive: ion()
+#        show()
+    return None
 
 
 
@@ -153,9 +158,9 @@ def pygui(tmpresults, toplot=None):
         label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
     updatebutton = Button(updateaxes, 'Update', color=fc) # Make button pretty and blue
     closebutton = Button(closeaxes, 'Close', color=fc) # Make button pretty and blue
-    updatebutton.on_clicked(update) # Update figure if button is clicked
+    updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     closebutton.on_clicked(closegui) # Close figures
-    update(None) # Plot initially
+    updateplots(None) # Plot initially
 
 
 
@@ -404,7 +409,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
         
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
-        update(tmpresults=results)
+        updateplots(tmpresults=results)
         
     
     ## Keep the current parameters in the project; otherwise discard
@@ -427,7 +432,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
-        update(tmpresults=results)
+        updateplots(tmpresults=results)
         return None
     
 

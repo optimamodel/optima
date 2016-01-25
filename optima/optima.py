@@ -144,7 +144,10 @@ except: _failed()
 
 
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-try: import colortools, utils, plotting, gui, defaults # High-level modules that might be useful
+try: import colortools, utils, plotting, defaults # High-level modules that might be useful
+except: _failed()
+
+try: import gui # Separate this out since will fail if PyQt not available
 except: _failed()
 
 
