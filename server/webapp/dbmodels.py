@@ -167,6 +167,7 @@ class ProjectDb(db.Model):
         # Attention: this method adds only dependent objects to the session
         from datetime import datetime
         import dateutil
+        import pytz
 
         same_project = str(project.uid) == str(self.id)
         str_project_id = str(self.id)
@@ -180,8 +181,12 @@ class ProjectDb(db.Model):
             db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
         db.session.flush()
 
-        self.created = project.created
-        self.updated = project.modified or datetime.now(dateutil.tz.tzutc())
+        # BE projects are not always TZ aware
+        self.created = pytz.utc.localize(project.created) if project.created.tzinfo is None else project.created
+        if project.modified:
+            self.updated = pytz.utc.localize(project.modified) if project.modified.tzinfo is None else project.modified
+        else:
+            self.updated = datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
         self.data = op.saves(project.data)
 
