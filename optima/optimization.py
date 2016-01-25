@@ -1,7 +1,7 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan18 by cliffk
+Version: 2016jan24
 """
 
 from optima import OptimaException, Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
@@ -92,6 +92,10 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     if outputresults:
         results.outcome = outcome
         results.budgetvec = budgetvec # WARNING, not sure this should be here
+        results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+        results.budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+        for k,key in enumerate(results.budget.keys()):
+            results.budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
         return results
     else: 
         return outcome
@@ -157,12 +161,14 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
+    tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=[orig, new])
-    budget = odict()
-    budget['orig'] = orig.budgetvec # Store original allocation
-    budget['optim'] = new.budgetvec # Store original allocation
-    multires.budget = budget # Store budget information
+    multires = Multiresultset(resultsetlist=tmpresults)
+    
+    for k,key in enumerate(multires.keys): # WARNING, this is ugly
+        
+        multires.budgetyears[key] = tmpresults[k].budgetyears
+    
     multires.mismatch = output.fval # Store full function evaluation information
     optim.resultsref = multires.uid # Store the reference for this result
     
