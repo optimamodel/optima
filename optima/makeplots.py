@@ -86,7 +86,7 @@ def getplotkeys(results):
 
 
 
-def plotresults(results=None, toplot=None, **kwargs):
+def makeplots(results=None, toplot=None, **kwargs):
     ''' Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use '''
     
     ## Initialize
