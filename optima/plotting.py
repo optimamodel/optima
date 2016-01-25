@@ -406,7 +406,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     
     abschange = sigfig(mean(absimprove), sigfigs)
     relchange = sigfig(mean(relimprove), sigfigs)
-    ax.set_title('Absolute: %s | Relative: %s%%' % (abschange, relchange)) # WARNING -- use mean or best?
+    ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
     ax.set_xlim((0, maxiters))
     

@@ -97,7 +97,6 @@ if 'setup' in tests:
     done(t)
 
 
-TODO: make update() call plotresults(), fix plotresults() to handle multi-axes plots
 
 
 
