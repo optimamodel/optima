@@ -336,9 +336,11 @@ def makepars(data, label=None, verbose=2):
     pars = odict()
     pars['label'] = label # Add optional label, default None
     
-    # Shorten information on which populations are male, which are female
+    # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
+    pars['injects'] = array(data['pops']['injects']).astype(bool) # Populations that inject
+    pars['sexworker'] = array(data['pops']['sexworker']).astype(bool) # Populations that provide commercial sex
     
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population

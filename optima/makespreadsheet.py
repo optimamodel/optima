@@ -21,7 +21,7 @@ def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default
         npops = pops
         pops = [] # Create real pops list
         for p in range(npops):
-            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99}) # Must match make_populations_range definitions
+            pops.append({'short_name':'Pop %i'%(p+1), 'name':'Population %i'%(p+1), 'male':True, 'female':True, 'age_from':0, 'age_to':99, 'injects':0, 'sexworker':0}) # Must match make_populations_range definitions
     
     printv('Generating spreadsheet: pops=%i, datastart=%s, dataend=%s' % (len(pops), datastart, dataend), 1, verbose)
 
@@ -113,7 +113,7 @@ class OptimaContent:
             else:
                 return [self.row_format for name in self.row_names for level in self.row_levels]
 
-""" It's not truly pythonic, they cay, to have class methods """
+""" It's not truly pythonic, they say, to have class methods """
 
 def make_matrix_range(name, params):
     return OptimaContent(name, params, params)
@@ -127,7 +127,7 @@ def make_populations_range(name, items):
     short_name, name, male, female, age_from, age_to
     (3x str, 2x bool, 2x int)
     """
-    column_names = ['Short name','Long name','Male','Female','Age from (years)', 'Age to (years)']
+    column_names = ['Short name','Long name','Male','Female','Age from (years)', 'Age to (years)','Injects', 'Sex worker']
     row_names = range(1, len(items)+1)
     coded_params = []
     for item in items:
@@ -138,6 +138,8 @@ def make_populations_range(name, items):
             female = item.get('female', False)
             age_from = item.get('age_from',15)
             age_to = item.get('age_to',49)
+            injects = item.get('injects',0)
+            sexworker = item.get('sexworker',0)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
             short_name = abbreviate(item_name)
@@ -145,7 +147,9 @@ def make_populations_range(name, items):
             female = False
             age_from = 15
             age_to = 49
-        coded_params.append([short_name, item_name, male, female, age_from, age_to])
+            injects = 0
+            sexworker = 0
+        coded_params.append([short_name, item_name, male, female, age_from, age_to, injects, sexworker])
     return OptimaContent(name, row_names, column_names, coded_params)
 
 def make_constant_range(name, row_names, best_data, low_data, high_data):

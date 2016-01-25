@@ -5,17 +5,53 @@ Version: 2016jan23 by cliffk
 """
 from optima import Program, Programset
 
-def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
+def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
-    pops = P.data['pops']['short']
-    malepops = [P.data['pops']['short'][pop] for pop in range(P.data['npops']) if P.data['pops']['male'][pop]]
-    femalepops = [P.data['pops']['short'][pop] for pop in range(P.data['npops']) if P.data['pops']['female'][pop]]
-    caspships = P.data['pships']['cas']
-    compships = P.data['pships']['com']
-#    regpships = P.data['pships']['reg']
-#    injpships = P.data['pships']['inj']
+    pops = parset.popkeys
+    malelist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['male'][popno]]
+    pwidlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['injects'][popno]]
+    fswlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['sexworker'][popno] and parset.pars[0]['female'][popno]]
+
+    regpships = parset.pars[0]['condreg'].y.keys()
+    caspships = parset.pars[0]['condcas'].y.keys()
+    compships = parset.pars[0]['condcom'].y.keys()
+    
+    # Extract casual partnerships that include at least one female sex worker
+    fsw_caspships = []
+    for fsw in fswlist:
+        for caspship in caspships:
+            if fsw in caspship:
+                fsw_caspships.append(caspship)
+
+    # Extract commercial partnerships that include at least one female sex worker
+    fsw_compships = []
+    for fsw in fswlist:
+        for compship in compships:
+            if fsw in compship:
+                fsw_compships.append(compship)
+
+    # Extract men who have sex with men
+    msmlist = []
+    for pship in regpships+caspships+compships:
+        if pship[0] in malelist and pship[1] in malelist:
+            msmlist.append(pship[0])
+    msmlist = list(set(msmlist))
+
+    # Extract casual partnerships that include at least one man who has sex with men
+    msm_caspships = []
+    for msm in msmlist:
+        for caspship in caspships:
+            if msm in caspship:
+                msm_caspships.append(caspship)
+
+    # Extract casual partnerships that include at least one person who injects drugs
+    pwid_caspships = []
+    for pwid in pwidlist:
+        for caspship in caspships:
+            if pwid in caspship:
+                pwid_caspships.append(caspship)
     
     # Set up default programs
     Condoms = Program(short='Condoms',
@@ -40,43 +76,43 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     VMMC = Program(short='VMMC',
-                  targetpars=[{'param': 'circum', 'pop': malepop} for malepop in malepops],
-                  targetpops=malepops,
+                  targetpars=[{'param': 'circum', 'pop': male} for male in malelist],
+                  targetpops=malelist,
                   category='Prevention',
                   name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
     FSW_programs = Program(short='FSW_programs',
-                  targetpars=[{'param': 'condcom', 'pop': compship} for compship in [x for x in compships if 'FSW' in x]] + [{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'FSW' in x]] + [{'param': 'hivtest', 'pop': 'FSW'}],
-                  targetpops=['FSW'],
+                  targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
+                  targetpops=fswlist,
                   category='Prevention',
                   name='Programs for female sex workers and clients',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                  
     MSM_programs = Program(short='MSM_programs',
-                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'MSM' in x]] + [{'param': 'hivtest', 'pop': 'MSM'}],
-                  targetpops=['MSM'],
+                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
+                  targetpops=msmlist,
                   category='Prevention',
                   name='Programs for men who have sex with men',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     PWID_programs = Program(short='PWID_programs',
-                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'PWID' in x]] + [{'param': 'hivtest', 'pop': 'PWID'}] + [{'param': 'sharing', 'pop': 'PWID'}],
-                  targetpops=['PWID'],
+                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
+                  targetpops=pwidlist,
                   category='Prevention',
                   name='Programs for people who inject drugs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     OST = Program(short='OST',
-                  targetpars=[{'param': 'numost', 'pop': 'PWID'}],
-                  targetpops=['PWID'],
+                  targetpars=[{'param': 'numost', 'pop': pop} for pop in pwidlist],
+                  targetpops=pwidlist,
                   category='Prevention',
                   name='Opiate substitution therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     NSP = Program(short='NSP',
-                  targetpars=[{'param': 'sharing', 'pop': 'PWID'}],
-                  targetpops=['PWID'],
+                  targetpars=[{'param': 'sharing', 'pop': pop} for pop in pwidlist],
+                  targetpops=pwidlist,
                   category='Prevention',
                   name='Needle-syringe programs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
