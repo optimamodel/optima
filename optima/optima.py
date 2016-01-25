@@ -130,6 +130,11 @@ except:
     def manualfit(*args, **kwargs): print('Note: manualfit() could not be imported, but everything else should work')
     _failed(doraise=False)
 
+try: from gui import plotpeople # Plot all people
+except:
+    def plotpeople(*args, **kwargs): print('Note: plotpeople() could not be imported, but everything else should work')
+    _failed(doraise=False)
+
 
 
 ## Import the Project class that ties everything together
@@ -139,9 +144,7 @@ except: _failed()
 
 
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-try: 
-    import defaults, plotpeople # Additional features not included in the main part of Optima
-    import colortools, utils, gui # High-level modules that might be useful
+try: import defaults, colortools, utils, gui # High-level modules that might be useful
 except: _failed()
 
 
