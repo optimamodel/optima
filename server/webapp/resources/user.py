@@ -11,7 +11,7 @@ from server.webapp.dbmodels import UserDb
 
 from server.webapp.inputs import email, hashed_password, nullable_email
 from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist, InvalidCredentials
-from server.webapp.utils import verify_admin_request, RequestParser
+from server.webapp.utils import verify_admin_request, RequestParser, report_exception
 
 
 user_parser = RequestParser()
@@ -42,6 +42,7 @@ class User(Resource):
         responseClass=UserDb.__name__,
         summary='List users'
     )
+    @report_exception
     @marshal_with(UserDb.resource_fields, envelope='users')
     @verify_admin_request
     def get(self):
@@ -53,6 +54,7 @@ class User(Resource):
         summary='Create a user',
         parameters=user_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(UserDb.resource_fields)
     def post(self):
         current_app.logger.info("create request: {} {}".format(request, request.data))
@@ -76,6 +78,7 @@ class UserDetail(Resource):
         summary='Delete a user',
         notes='Requires admin privileges'
     )
+    @report_exception
     @verify_admin_request
     def delete(self, user_id):
         current_app.logger.debug('/api/user/delete/{}'.format(user_id))
@@ -108,6 +111,7 @@ class UserDetail(Resource):
         notes='Requires admin privileges',
         parameters=user_update_parser.swagger_parameters(),
     )
+    @report_exception
     @marshal_with(UserDb.resource_fields)
     def put(self, user_id):
         current_app.logger.debug('/api/user/{}'.format(user_id))
@@ -151,6 +155,7 @@ class CurrentUser(Resource):
         responseClass=UserDb.__name__,
         summary='Return the current user'
     )
+    @report_exception
     @marshal_with(UserDb.resource_fields)
     def get(self):
         return current_user
@@ -163,6 +168,7 @@ class UserLogin(Resource):
         summary='Try to log a user in',
         parameters=user_login_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(UserDb.resource_fields)
     def post(self):
         current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
@@ -196,6 +202,7 @@ class UserLogout(Resource):
     @swagger.operation(
         summary='Log the current user out'
     )
+    @report_exception
     def get(self):
         current_app.logger.debug("logging out user {}".format(
             current_user.name
