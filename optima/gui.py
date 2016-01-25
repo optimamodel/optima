@@ -34,6 +34,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
         
     Version: 1.2 (2016jan24) by cliffk
     '''
+    
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     
@@ -88,22 +89,9 @@ def updateplots(event=None, tmpresults=None):
     
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
+        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
         plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height))
     
-#    # Do plotting
-#    if sum(ischecked): # Don't do anything if no plots
-#        wasinteractive = isinteractive()
-#        if wasinteractive: ioff()
-#        plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-#        
-#        # Actually create plots
-#        plots = makeplots(results, toplot=toplot, figsize=(width, height))
-#        nplots = len(plots)
-#        nrows = int(ceil(sqrt(nplots)))
-#        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-#        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1) # WARNING, copied from plotresults()
-#        if wasinteractive: ion()
-#        show()
     return None
 
 
@@ -364,7 +352,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                     fullvallist.append(tmppars[key].p[subkey][0])
                     fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             else:
-                print('Parameter type "%s" not implemented!' % typelist[k])
+                printv('Parameter type "%s" not implemented!' % typelist[k], 2, verbose)
     
     populatelists()
     nfull = len(fulllabellist) # The total number of boxes needed
@@ -405,7 +393,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                 tmppars[key].y = eval(str(box.text()))
                 printv('%s.y = %s' % (key, box.text()), 4, verbose=verbose)
             else:
-                print('Parameter type "%s" not implemented!' % fulltypelist[b])
+                printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
