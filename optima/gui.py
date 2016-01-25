@@ -52,13 +52,13 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
         if naxes==1: # Usual situation: just plot the normal axis
             addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1)
         elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
-            orignrow = floor(p/ncols)
-            origncol = p%ncols # Column doesn't change
+            origrow = floor(p/ncols)
+            origcol = p%ncols # Column doesn't change
             newnrows = nrows*naxes
-            newrowstart = naxes*orignrow # e.g. 2 axes in 3rd row = 5th row in new system
+            newrowstart = naxes*origrow # e.g. 2 axes in 3rd row = 5th row in new system
             for a in range(naxes):
                 thisrow = newrowstart+a # Increment rows
-                newp = origncol*thisrow + origncol + 1 # Calculate new row/column
+                newp = ncols*thisrow + origcol # Calculate new row/column
                 addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
         else: pass # Must have 0 length or something
     if wasinteractive: ion()
