@@ -101,7 +101,7 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     '''
     
     ## Initialize
-    allplots = []
+    allplots = odict()
     wasinteractive = isinteractive() # Get current state of interactivity
     ioff() # Just in case, so we don't flood the user's screen with figures
     if toplot is None: toplot = defaultplots # Go straight ahead and replace with defaults
@@ -110,26 +110,34 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
         toplot[0:0] = defaultplots # Very weird but valid syntax for prepending one list to another: http://stackoverflow.com/questions/5805892/how-to-insert-the-contents-of-one-list-into-another
     toplot = list(odict.fromkeys(toplot)) # This strange but efficient hack removes duplicates while preserving order -- see http://stackoverflow.com/questions/1549509/remove-duplicates-in-a-list-while-keeping-its-order-python
     
+    def maybedie(E, die=die):
+        ''' Die, but only if asked '''
+        if die: raise E
+    
     ## Add improvement plot
     if 'improvement' in toplot:
-        try: allplots.append(plotimprovement(results, toplot=toplot, **kwargs))
-        except Exception as E: 
-            if die: raise E
-            else: pass
-        toplot.remove('improvement')
+        toplot.remove('improvement') # Because everything else is passed to plotepi()
+        try: allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
+        except Exception as E: maybedie(E)
+        
     
     ## Add budget plot
     if 'budget' in toplot:
-        allplots.append(plotallocs(results, toplot=toplot, **kwargs))
-        toplot.remove('budget')
+        toplot.remove('budget') # Because everything else is passed to plotepi()
+        try: 
+            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
+        except Exception as E: 
+            if die: raise E
+        
     
-    ## Add epi plots
-    allplots.extend(plotepi(results, toplot=toplot, **kwargs))
+    ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
+    epiplots = plotepi(results, toplot=toplot, **kwargs)
+    allplots.update(epiplots)
     
     # Tidy up: close plots that were opened and turn interactivity back on
     for thisplot in allplots: close(thisplot) # Close plots
     if wasinteractive: ion() # Turn interactivity back on
-    
+
     return allplots
 
 
@@ -334,7 +342,7 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
                     if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
-
+        
         return epiplots
 
 
@@ -370,10 +378,12 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     # Plot model estimates with uncertainty
     absimprove = zeros(ncurves)
     relimprove = zeros(ncurves)
+    maxiters = 0
     for i in range(ncurves): # Expect a list of 
-        plot(improvement, lw=lw, c=colors[i]) # Actually do the plot
-        absimprove[i] = improvement[0]-improvement[-1]
-        relimprove[i] = 100*(improvement[0]-improvement[-1])/improvement[0]
+        plot(improvement[i], lw=lw, c=colors[i]) # Actually do the plot
+        absimprove[i] = improvement[i][0]-improvement[i][-1]
+        relimprove[i] = 100*(improvement[i][0]-improvement[i][-1])/improvement[i][0]
+        maxiters = maximum(maxiters, len(improvement[i]))
     
     # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     ax = gca()
@@ -390,7 +400,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     ax.set_xlabel('Iteration')
     ax.set_title('Absolute change: %f  Relative change: %2f%%' % (mean(absimprove), mean(relimprove))) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
-    ax.set_xlim((0, len(improvement)))
+    ax.set_xlim((0, maxiters))
     
     return fig
 
