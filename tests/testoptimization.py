@@ -51,7 +51,7 @@ if 'setup' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Project, Program, Programset
+    from optima import Project
     from optima.defaults import defaultprogset
     
     P = Project(spreadsheet='test7pops.xlsx')
@@ -132,7 +132,7 @@ if 'minimizeoutcomes' in tests:
     from optima import defaultobjectives
     objectives = defaultobjectives()
     objectives['budget'] = 6e6 # Change default budget to optimize
-    P.minoutcomes(name='optim', parsetname='default', progsetname='default', objectives=objectives, method='asd')
+    P.minoutcomes(name='optim', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=20)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
