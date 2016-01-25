@@ -1,4 +1,4 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio # Import utilities
 from optima import gitinfo # Import functions
 from optima import __version__ # Get current version
 
@@ -71,6 +71,7 @@ class Portfolio(object):
     ## Methods to perform major tasks
     #######################################################################################################
         
+        
     def genBOCs(self, objectives=None):
         ''' Loop through stored projects and construct budget-outcome curves '''
         if objectives == None: objectives = defaultobjectives()
@@ -82,24 +83,55 @@ class Portfolio(object):
             else:
                 print('BOC does not need to be generated for project: %s' % p.name)
                 
-    def plotBOCs(self, objectives):
+                
+    def plotBOCs(self, objectives, initbudgets = None, optbudgets = None):
         ''' Loop through stored projects and plot budget-outcome curves '''
+        if initbudgets == None: initbudgets = [None]*len(self.projects)
+        if optbudgets == None: optbudgets = [None]*len(self.projects)
+            
+        if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
+            Exception('Error: Trying to plot BOCs with faulty initbudgets or optbudgets.')
+        
+        c = 0
         for x in self.projects:
             p = self.projects[x]
-            p.plotBOC(objectives)
-            p.plotBOC(objectives, deriv = True)
+            # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
+            p.plotBOC(objectives, initbudget = [initbudgets[c]], optbudget = [optbudgets[c]])
+            c += 1
+        
+        # Reloop for BOC derivatives just because they group nicer for the GUI.
+        c = 0
+        for x in self.projects:
+            p = self.projects[x]
+            # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
+            p.plotBOC(objectives, deriv = True, initbudget = [initbudgets[c]], optbudget = [optbudgets[c]])
+            c += 1
             
-    def minBOCoutcomes(self, objectives):
+            
+    def minBOCoutcomes(self, objectives, seedbudgets = None):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
         BOClist = []
         grandtotal = objectives['budget']
+        
+        # Scale seedbudgets just in case they don't add up to the required total.
+        if not seedbudgets == None:
+            seedbudgets = scaleratio(seedbudgets, objectives['budget'])
+            
         for x in self.projects:
             p = self.projects[x]
             if p.getBOC(objectives) == None:
                 print('Generating missing BOC for project: %s' % p.name)
                 p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
             BOClist.append(p.getBOC(objectives))
-        return minBOCoutcomes(BOClist, grandtotal)
+        return minBOCoutcomes(BOClist, grandtotal, budgetvec = seedbudgets)
+        
+        
+    def fullGA(self, objectives, budgetratio = None):
+        ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
+        initbudgets = scaleratio(budgetratio,objectives['budget'])
+        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets)
+        self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
+        
         
         
         
@@ -135,7 +167,8 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxit
     
     if minbound == None: minbound = [0]*len(BOClist)
     if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
-    
+    if not len(budgetvec) == len(BOClist): Exception('Error: Geospatial analysis is minimising x BOCs with y initial budgets, where x and y are not equal!')
+        
 #    args = (BOClist, grandtotal, minbound)
     args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}
         
@@ -143,8 +176,6 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxit
     X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X = constrainbudgets(X, grandtotal, minbound)
 
-    print(FVAL)    
-    
     return X
 
 ## -*- coding: utf-8 -*-

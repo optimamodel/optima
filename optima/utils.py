@@ -340,7 +340,13 @@ def perturb(n=1, span=0.5, randseed=None):
     if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
-
+    
+def scaleratio(inarray,total):
+    """ Multiply a list or array by some factor so that its sum is equal to the total. """
+    from copy import deepcopy as dcp
+    inarray = dcp(inarray)
+    inarray = [float(x)*total/sum(inarray) for x in inarray]
+    return inarray
 
 
 

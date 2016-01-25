@@ -175,10 +175,7 @@ def geogui():
         for key in objectives.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives)
-        portfolio.plotBOCs(objectives)
-        newbudgets = portfolio.minBOCoutcomes(objectives)
-        for x in newbudgets:
-            projectsbox.append('%f' % x)
+        portfolio.fullGA(objectives, budgetratio = [2,1])   # BUDGETRATIO OBVIOUSLY TEMPORARY
         return None
     
     

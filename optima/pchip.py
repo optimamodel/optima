@@ -114,22 +114,27 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 ##=========================================================
 
-def plotpchip(x, y, deriv = False, returnplot = False):
+def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbudget = None):
     
     xnew = linspace(x[0],x[-1],200)
     
-    try:
-        xnew = linspace(x[0],x[-1],200)
-        
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        
-        plt.plot(xnew, pchip(x,y,xnew,deriv))
-        if returnplot:
-            return ax
-        else:
-            plt.show()
-    except:
-        print('Plotting of Budget Objective Curve failed!')
+#    try:
+    xnew = linspace(x[0],x[-1],200)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    
+    plt.plot(xnew, pchip(x,y,xnew,deriv))
+    if not initbudget == None:
+        plt.plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Init. Est.')
+    if not optbudget == None:
+        plt.plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Opt. Est.')
+    if not initbudget == None or not optbudget == None: ax.legend(loc='best')
+    if returnplot:
+        return ax
+    else:
+        plt.show()
+#    except:
+#        print('Plotting of Budget Objective Curve failed!')
     
     return None

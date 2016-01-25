@@ -69,7 +69,7 @@ class BOC(object):
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
-        self.objectives = objectives # Specification for what outcome y represents [[[NEEDS DEVELOPMENT]]]
+        self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
         
         self.projectname = projectname # Name of corresponding project [[[REFERENCE PROJECT IF MORE NEEDED]]]
 
@@ -90,9 +90,9 @@ class BOC(object):
         ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
         return pchip(self.x, self.y, budgets, deriv = True)
         
-    def plot(self, deriv = False, returnplot = False):
+    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
         ''' Plot the budget-outcome curve '''
-        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True)                 # Plot interpolation
+        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
 #        plt.title('BOC: %s' % self.projectname)
         plt.xlabel('Budget')
         if not deriv: plt.ylabel('Outcome')

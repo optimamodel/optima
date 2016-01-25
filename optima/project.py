@@ -390,19 +390,22 @@ class Project(object):
                 for y in boc.objectives:
                     if not y == 'budget' and not boc.objectives[y] == objectives[y]: same = False
                 if same:
-                    print('BOC located in project: %s' % self.name)
+#                    print('BOC located in project: %s' % self.name)
                     return boc
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
     
-    def plotBOC(self, objectives, deriv = False, returnplot = False):
+    def plotBOC(self, objectives, deriv = False, returnplot = False, initbudget = None, optbudget = None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
         boc = self.getBOC(objectives = objectives)
         
         if boc == None: print('Cannot plot a nonexistent BOC!')
         else:
-            print('Plotting BOC...')
-            ax = boc.plot(deriv = deriv, returnplot = returnplot)
+            if deriv:
+                print('Plotting BOC for "%s"...' % self.name)
+            else:
+                print('Plotting BOC derivative for "%s"...' % self.name)
+            ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
             plt.title('Project: %s' % self.name)
             if returnplot: return ax
             else: plt.show()

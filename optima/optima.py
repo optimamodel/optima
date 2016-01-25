@@ -66,7 +66,7 @@ except: _failed()
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 except: _failed()
 
-try: from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
+try: from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc # odict class
 except: _failed()
 
 
