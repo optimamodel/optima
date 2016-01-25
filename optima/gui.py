@@ -50,7 +50,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     for p in range(len(plots)): 
         naxes = len(plots[p].axes)
-        if naxes==1: # Usual situation: just plot the normal axis
+        if 1:#naxes==1: # Usual situation: just plot the normal axis
             addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
         elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
             orignrow = floor(p/ncols)
