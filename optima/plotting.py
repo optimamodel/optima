@@ -13,7 +13,7 @@ Version: 2016jan24
 
 from optima import Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
 from numpy import array, ndim, maximum, arange, zeros, mean
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, bar
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -454,13 +454,13 @@ def plotallocs(results=None, **kwargs):
     
     colors = gridcolormap(nprogs)
     
-    ax = []
+#    ax = []
     ymax = 0
     
     for plt in range(nallocs):
         nbudgetyears = len(budgetyearstoplot[plt])
-        ax.append(subplot(nallocs,1,plt+1))
-        ax[-1].hold(True)
+#        ax.append(subplot(nallocs,1,plt+1))
+#        ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
             progdata = [x[y] for x in budgetstoplot[plt][:]]
@@ -470,15 +470,16 @@ def plotallocs(results=None, **kwargs):
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
-        if nbudgetyears>1: ax[-1].legend()
-        ax[-1].set_xticks(arange(nprogs)+1)
-        if plt<nprogs: ax[-1].set_xticklabels('')
-        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
-        ax[-1].set_xlim(0,nprogs+1)
+                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+        ax = gca()
+        if nbudgetyears>1: ax.legend()
+        ax.set_xticks(arange(nprogs)+1)
+        if plt<nprogs: ax.set_xticklabels('')
+        if plt==nallocs-1: ax.set_xticklabels(proglabels,rotation=90)
+        ax.set_xlim(0,nprogs+1)
         
-        ax[-1].set_ylabel('Spending (US$)')
-        ax[-1].set_title(alloclabels[plt])
+        ax.set_ylabel('Spending (US$)')
+        ax.set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     close(fig)
