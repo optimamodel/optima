@@ -362,8 +362,10 @@ def plotmultiallocs(multires=None, compare=False):
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
                 else: barcolor = colors[p] # Only one year? Color by program
-                ax[-1].bar([xbardata[p]], [progdata[p]], width=barwidth, color=barcolor)
-        if nbudgetyears>1: ax[-1].legend(tuple([yr for yr in budgetyearstoplot[plt]]))
+                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+                else: yearlabel=None
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+        if nbudgetyears>1: ax[-1].legend()
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
