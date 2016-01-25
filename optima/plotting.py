@@ -454,38 +454,33 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
     
     colors = gridcolormap(nprogs)
     
-#    f1 = figure()
-    subplot(2,1,1)
-    plot([3,5,7])
-    subplot(2,1,2)
-    plot([6,4,7])
     
-#    ax = []
-#    ymax = 0
-#    
-#    for plt in range(nallocs):
-#        nbudgetyears = len(budgetyearstoplot[plt])
-#        ax.append(subplot(nallocs,1,plt+1))
-#        ax[-1].hold(True)
-#        barwidth = .5/nbudgetyears
-#        for y in range(nbudgetyears):
-#            progdata = [x[y] for x in budgetstoplot[plt][:]]
-#            xbardata = arange(nprogs)+.75+barwidth*y
-#            for p in range(nprogs):
-#                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
-#                else: barcolor = colors[p] # Only one year? Color by program
-#                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
-#                else: yearlabel=None
-#                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
-#        if nbudgetyears>1: ax[-1].legend()
-#        ax[-1].set_xticks(arange(nprogs)+1)
-#        if plt<nprogs: ax[-1].set_xticklabels('')
-#        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
-#        ax[-1].set_xlim(0,nprogs+1)
-#        
-#        ax[-1].set_ylabel('Spending (US$)')
-#        ax[-1].set_title(alloclabels[plt])
-#        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    ax = []
+    ymax = 0
+    
+    for plt in range(nallocs):
+        nbudgetyears = len(budgetyearstoplot[plt])
+        ax.append(subplot(nallocs,1,plt+1))
+        ax[-1].hold(True)
+        barwidth = .5/nbudgetyears
+        for y in range(nbudgetyears):
+            progdata = [x[y] for x in budgetstoplot[plt][:]]
+            xbardata = arange(nprogs)+.75+barwidth*y
+            for p in range(nprogs):
+                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+                else: barcolor = colors[p] # Only one year? Color by program
+                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+                else: yearlabel=None
+                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+        if nbudgetyears>1: ax[-1].legend()
+        ax[-1].set_xticks(arange(nprogs)+1)
+        if plt<nprogs: ax[-1].set_xticklabels('')
+        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        ax[-1].set_xlim(0,nprogs+1)
+        
+        ax[-1].set_ylabel('Spending (US$)')
+        ax[-1].set_title(alloclabels[plt])
+        ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     close(fig)
     
