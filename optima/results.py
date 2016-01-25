@@ -1,17 +1,17 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan12 by cliffk
+Version: 2015jan23 by cliffk
 """
 
-from optima import uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
+from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 
 
 
-def getresults(project=None, pointer=None):
+def getresults(project=None, pointer=None, die=True):
     '''
-    A tiny function for returning the results associated with something. 'pointer' can eiher be a UID,
+    Function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
     results.
     
@@ -22,24 +22,29 @@ def getresults(project=None, pointer=None):
         which returns
         P.results[P.parsets[0].resultsref]
     
-    Version: 2016jan18
+    The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
+    
+    Version: 2016jan23
     '''
-    if type(pointer) in [str, int, float]:
+    if isinstance(pointer, (str, int, float)):
         if project is not None: return project.results[pointer]
         else: raise Exception('To get results using a key or index, getresults() must be given the project')
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
         else: raise Exception('To get results using a UID, getresults() must be given the project')
+    elif isinstance(pointer, (Resultset, Multiresultset)):
+        return pointer # Return pointer directly if it's already a results set
     elif callable(pointer): 
-        return pointer() # Try calling as function
+        return pointer() # Try calling as function -- might be useful for the database or something
     else: 
-        return pointer # Give up, just return pointer, which is maybe a Resultset
+        if die: raise Exception('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        else: return None # Give up, return nothing
 
 
 
 
 class Result(object):
-    ''' A tiny class just to hold overall and by-population results '''
+    ''' Class to hold overall and by-population results '''
     def __init__(self, name=None, isnumber=True, pops=None, tot=None, datapops=None, datatot=None):
         self.name = name # Name of this parameter
         self.isnumber = isnumber # Whether or not the result is a number (instead of a percentage)
@@ -56,8 +61,8 @@ class Result(object):
 
 
 class Resultset(object):
-    ''' Lightweight structure to hold results -- use this instead of a dict '''
-    def __init__(self, name=None, raw=None, simpars=None, project=None, data=None, parset=None, progset=None, domake=True):
+    ''' Structure to hold results '''
+    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -68,12 +73,7 @@ class Resultset(object):
         if type(simpars)!=list: simpars = [simpars] # Force into being a list
         if type(raw)!=list: raw = [raw] # Force into being a list
         
-        # Fundamental quantities -- populated by project.runsim()
-        self.raw = raw
-        self.simpars = simpars # ...and sim parameters
-        self.tvec = raw[0]['tvec'] # Copy time vector
-        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
-        self.popkeys = raw[0]['popkeys']
+        # Read things in from the project if defined
         if project is not None:
             if parset is None:
                 try: parset = project.parsets[simpars[0]['parsetname']] # Get parset if not supplied -- WARNING, UGLY
@@ -82,26 +82,38 @@ class Resultset(object):
                 try: progset = project.progset[simpars[0]['progsetname']] # Get parset if not supplied -- WARNING, UGLY
                 except: pass # Don't really worry if the parset can't be populated
             if data is None: data = project.data # Copy data if not supplied -- DO worry if data don't exist!
+            if settings is None: settings = project.settings
+        
+        # Fundamental quantities -- populated by project.runsim()
+        self.raw = raw
+        self.simpars = simpars # ...and sim parameters
+        self.tvec = raw[0]['tvec'] # Copy time vector
+        self.dt   = self.tvec[1] - self.tvec[0] # And pull out dt since useful
+        self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
+        self.budget = budget # Store budget
+        self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
+        self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
         self.main['prev'] = Result('HIV prevalence (%)', isnumber=False)
         self.main['force'] = Result('Force-of-infection (%/year)', isnumber=False)
-        self.main['numinci'] = Result('Number of new infections')
+        self.main['numinci'] = Result('New infections')
         self.main['numplhiv'] = Result('Number of PLHIV')
-        self.main['numdeath'] = Result('Number of HIV-related deaths')
-        self.main['numdiag'] = Result('Number of people diagnosed')
-#        self.main['dalys'] = Result('Number of DALYs')
-#        self.main['numtreat'] = Result('Number of people on treatment')
-#        self.main['numnewtreat'] = Result('Number of people newly treated')
-#        self.main['numnewdiag'] = Result('Number of new diagnoses')
+        self.main['numdeath'] = Result('HIV-related deaths')
+        self.main['numdiag'] = Result('New diagnoses')
+        self.main['numtreat'] = Result('Number on treatment')
+
         
         # Other quantities
+#        self.main['dalys'] = Result('Number of DALYs')
+#        self.main['numnewtreat'] = Result('Number of people newly treated')
+#        self.main['numnewdiag'] = Result('Number of new diagnoses')
 #        self.other = odict() # For storing main results
 #        self.births = Result()
 #        self.mtct = Result()
@@ -129,6 +141,7 @@ class Resultset(object):
     
     def make(self, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
+        # WARNING: Should use indexes retrieved from project settings!
         
         printv('Making derived results...', 3, verbose)
         
@@ -160,16 +173,18 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
+        alltreat = self.settings.alltreat
+        allplhiv = self.settings.allplhiv
         data = self.data
         
-        self.main['prev'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
         
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
@@ -186,6 +201,10 @@ class Resultset(object):
         self.main['numdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
+        
+        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
 # WARNING, need to implement
@@ -212,7 +231,7 @@ class Resultset(object):
         defaultchecks = self.graph_selectors['checks']
         epikeys = self.main.keys()
         epinames = [thing.name for thing in self.main.values()]
-        episubkeys = ['tot', 'pops'] # Would be best not to hard-code this...
+        episubkeys = ['tot', 'per', 'sta'] # Would be best not to hard-code this...
         episubnames = ['total', 'by population']
 
         if which is None:  # assume there is at least one epikey )
@@ -234,20 +253,19 @@ class Resultset(object):
 
 class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
-    def __init__(self, resultsetlist=None, budget=None):
+    def __init__(self, resultsetlist=None):
         # Basic info
         self.uid = uuid()
         self.created = today()
         self.nresultsets = len(resultsetlist)
         self.keys = []
+        self.budget = odict()
+        self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
         elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
         else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
-        
-        # Results specific to a Multiresultset
-        self.budget = budget
-        
+                
         
         # Fundamental quantities -- populated by project.runsim()
         sameattrs = ['tvec', 'dt', 'popkeys']
@@ -255,7 +273,7 @@ class Multiresultset(Resultset):
         diffattrs = ['parset', 'progset', 'raw', 'simpars']
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
-        
+
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
         for key in self.main.keys():
@@ -281,7 +299,13 @@ class Multiresultset(Resultset):
                 for at in ['pops', 'tot']:
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
-                
+            # Finally, process the budget and budgetyears
+            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+                self.budget[key]      = rset.budget
+                self.budgetyears[key] = rset.budgetyears
+            except: 
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                pass # Not a problem if doesn't work
             
         
         

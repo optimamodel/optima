@@ -174,6 +174,7 @@ class ProjectTestCase(OptimaTestCase):
         project = ProjectDb.query.filter_by(id=str(project.id)).first()
         self.assertEqual(len(project.progsets), progsets_count - 1)
         self.assertNotEqual(project.name, 'test')  # still just making sure
+        self.session.commit()
 
         upload_response = self.client.post(
             '/api/project/{}/data'.format(project.id),
@@ -325,6 +326,7 @@ class ProjectTestCase(OptimaTestCase):
         project = self.create_project(name='test_progset', return_instance=True, progsets_count=1)
 
         self.assertEquals(len(project.progsets), 1)
+        self.session.commit()
 
         response = self.client.delete('/api/project/{}'.format(project.id))
         self.assertEqual(response.status_code, 204)

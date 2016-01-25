@@ -1,7 +1,7 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramSetModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories) {
+  module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories) {
 
     // Default list of criteria
     var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
@@ -19,7 +19,9 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         eligibility: {
           pregnantFalse: true,
           allstates: true
-        }
+        },
+        showAddData: false,
+        newAddData: {}
       };
 
       /**
@@ -173,11 +175,30 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.parameters.splice($index,1);
     };
 
-    // Submit form for saving program and closing modal
+    // Function to remove additional data
+    $scope.deleteAddData = function (addData) {
+      var indexOfData = $scope.state.program.addData.indexOf(addData);
+      $scope.state.program.addData.splice(indexOfData,1);
+    };
+
+    // Function to add additional data
+    $scope.addAddData = function () {
+      if($scope.state.newAddData.year && $scope.state.newAddData.spending && $scope.state.newAddData.coverage) {
+        if(!$scope.state.program.addData) {
+          $scope.state.program.addData = [];
+        }
+        $scope.state.program.addData.push($scope.state.newAddData);
+        $scope.state.newAddData = {};
+        $scope.state.showAddData = false;
+      }
+    };
+
     $scope.submit = function (form) {
       if (form.$invalid) {
         modalService.inform(undefined,undefined,'Please fill in the form correctly');
       } else {
+
+        $scope.state.showAddData = false;
 
         $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
           return population.active;

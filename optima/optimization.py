@@ -1,11 +1,62 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan18 by cliffk
+Version: 2016jan24
 """
 
 from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
 from numpy import zeros, arange, array, isnan
+
+
+
+
+
+class Optim(object):
+    ''' An object for storing an optimization '''
+    
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
+        self.name = name # Name of the parameter set, e.g. 'default'
+        self.uid = uuid() # ID
+        self.project = project # Store pointer for the project, if available
+        self.created = today() # Date created
+        self.modified = today() # Date modified
+        self.parsetname = parsetname # Parameter set name
+        self.progsetname = progsetname # Program set name
+        self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.constraints = constraints # List of populations
+        if objectives is None: self.objectives = defaultobjectives()
+        if constraints is None: self.constraints = 'WARNING, not implemented'
+        self.resultsref = None # Store pointer to results
+        
+    
+    def __repr__(self):
+        ''' Print out useful information when called'''
+        output = '============================================================\n'
+        output += ' Optimization name: %s\n'    % self.name
+        output += 'Parameter set name: %s\n'    % self.parsetname
+        output += '  Program set name: %s\n'    % self.progsetname
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+    
+    
+    def getresults(self):
+        ''' A little method for getting the results '''
+        if self.resultsref is not None and self.project is not None:
+            results = getresults(project=self.project, pointer=self.resultsref)
+            return results
+        else:
+            print('WARNING, no results associated with this parameter set')
+            return None
+
+
+
+
+
+
 
 
 def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
@@ -23,7 +74,7 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
-    thisparsdict = progset.getparsdict(coverage=thiscoverage, t=objectives['start'], parset=parset)
+    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset)
     results = runmodel(pars=thisparsdict, parset=parset, progset=progset, project=project, tvec=tvec, verbose=0)
     
     # Figure out which indices to use
@@ -41,6 +92,10 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     if outputresults:
         results.outcome = outcome
         results.budgetvec = budgetvec # WARNING, not sure this should be here
+        results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+        results.budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+        for k,key in enumerate(results.budget.keys()):
+            results.budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
         return results
     else: 
         return outcome
@@ -106,13 +161,16 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
+    tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=[orig, new])
-    budget = odict()
-    budget['orig'] = orig.budgetvec # Store original allocation
-    budget['optim'] = new.budgetvec # Store original allocation
-    multires.budget = budget # Store budget information
+    multires = Multiresultset(resultsetlist=tmpresults)
+    
+    for k,key in enumerate(multires.keys): # WARNING, this is ugly
+        
+        multires.budgetyears[key] = tmpresults[k].budgetyears
+    
     multires.mismatch = output.fval # Store full function evaluation information
+    optim.resultsref = multires.uid # Store the reference for this result
     
     return multires
 
@@ -135,45 +193,3 @@ def defaultobjectives(verbose=2):
     objectives['inciweight'] = 1 # "Incidence weighting"
     
     return objectives
-
-
-
-
-class Optim(object):
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
-        self.name = name # Name of the parameter set, e.g. 'default'
-        self.uid = uuid() # ID
-        self.project = project # Store pointer for the project, if available
-        self.created = today() # Date created
-        self.modified = today() # Date modified
-        self.parsetname = parsetname # Parameter set name
-        self.progsetname = progsetname # Program set name
-        self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
-        self.constraints = constraints # List of populations
-        if objectives is None: self.objectives = defaultobjectives()
-        if constraints is None: self.constraints = 'WARNING, not implemented'
-        self.resultsref = None # Store pointer to results
-        
-    
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = '============================================================\n'
-        output += ' Optimization name: %s\n'    % self.name
-        output += 'Parameter set name: %s\n'    % self.parsetname
-        output += '  Program set name: %s\n'    % self.progsetname
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
-        return output
-    
-    
-    def getresults(self):
-        ''' A little method for getting the results '''
-        if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
-            return results
-        else:
-            print('WARNING, no results associated with this parameter set')
-            return None

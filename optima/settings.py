@@ -7,6 +7,7 @@ Version: 2016jan06 by cliffk
 """
 
 from numpy import arange, array, concatenate as cat, linspace
+from optima import defaultrepr
 
 
 class Settings():
@@ -17,7 +18,7 @@ class Settings():
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.ncd4 = len(self.hivstates)
         
-        # Original states by diagnosis
+        # Health states by diagnosis
         self.uncirc = arange(0,1) # Uninfected, uncircumcised
         self.circ   = arange(1,2) # Uninfected, circumcised
         self.undx   = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
@@ -27,8 +28,9 @@ class Settings():
         self.svl    = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost   = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
         self.off    = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
-       
-        # Original states by CD4 count
+		
+       	
+        # Health states by CD4 count
         spacing = array([0,1,2])*self.ncd4 
         self.acute = 2 + spacing
         self.gt500 = 3 + spacing
@@ -44,24 +46,29 @@ class Settings():
         self.alltreat = cat([self.usvl, self.svl]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
+
+        # Non-cascade settings/states
+        self.usecascade = False # Whether or not to actually use the cascade
+        self.tx  = self.svl # Infected, on treatment -- not used with the cascade
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out
     
+    
     def __repr__(self):
-        output =  '                  Optima settings\n'
-        output += '============================================================\n'
-        for key in self.__dict__.keys():
-            output += ' %10s: %s\n' % (key, str(getattr(self, key)))
-        output += '============================================================\n'
+        ''' Prettily print object '''
+        output =  defaultrepr(self)
         return output
     
+    
     def maketvec(self, start=None, end=None, dt=None):
+        ''' Little function for calculating the time vector -- here since start, end, dt are stored here '''
         if start is None: start=self.start
         if end is None: end=self.end
         if dt is None: dt=self.dt
-        return linspace(start, end, round((end-start)/dt)+1)
+        tvec = linspace(start, end, round((end-start)/dt)+1)
+        return tvec
 
 
     def setmaxes(self, maxlist=None, dt=None):

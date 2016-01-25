@@ -101,12 +101,13 @@ Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	Non
 '''
 
 
-def readpars(partable):
+def loadpartable(inputpartable=None):
     ''' 
     Function to parse the parameter definitions above and return a structure that can be used to generate the parameters
     '''
+    if inputpartable is None: inputpartable = partable # Use default defined one if not supplied as an input
     rawpars = []
-    alllines = partable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
+    alllines = inputpartable.split('\n')[1:-1] # Load all data, and remove first and last lines which are empty
     for l in range(len(alllines)): alllines[l] = alllines[l].split('\t') # Remove end characters and split from tabs
     attrs = alllines.pop(0) # First line is attributes
     for l in range(len(alllines)): # Loop over parameters
@@ -232,7 +233,6 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
                 par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             raise Exception(errormsg)
     
     return par
@@ -349,7 +349,7 @@ def makepars(data, label=None, verbose=2):
     
     
     # Read in parameters automatically -- WARNING, not currently implemented
-    rawpars = readpars(partable) # Read the parameters structure
+    rawpars = loadpartable() # Read the parameters structure
     for rawpar in rawpars: # Iterate over all automatically read in parameters
         printv('Converting data parameter "%s"...' % rawpar['short'], 3, verbose)
         
@@ -596,9 +596,9 @@ class Constant(Par):
 
 
 class Parameterset(object):
-    ''' A full set of all parameters, possibly including multiple uncertainty runs '''
+    ''' Class to hold all parameters and information on how they were generated, and perform operations on them'''
     
-    def __init__(self, name='default', project=None):
+    def __init__(self, name='default', project=None, progsetname=None, budget=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
@@ -607,6 +607,8 @@ class Parameterset(object):
         self.pars = [] # List of dicts holding Parameter objects -- only one if no uncertainty
         self.popkeys = [] # List of populations
         self.resultsref = None # Store pointer to results
+        self.progsetname = progsetname # Store the name of the progset that generated the parset, if any
+        self.budget = budget # Store the budget that generated the parset, if any
         
     
     def __repr__(self):
@@ -622,18 +624,18 @@ class Parameterset(object):
         return output
     
     
-    def getresults(self):
-        ''' A little method for getting the results '''
+    def getresults(self, die=True):
+        ''' Method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+            results = getresults(project=self.project, pointer=self.resultsref, die=die)
             return results
         else:
-            print('WARNING, no results associated with this parameter set')
-            return None
+            raise Exception('No results associated with this parameter set')
+    
     
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
-        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
+        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys more accessibly
         return None
 
 

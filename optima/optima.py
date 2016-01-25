@@ -80,7 +80,7 @@ except: _failed()
 try: from results import Result, Resultset, Multiresultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
-try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, readpars, getresults # Parameter and Parameterset classes
+try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults # Parameter and Parameterset classes
 except: _failed()
 
 try: from model import model, runmodel # The thing that actually runs the model
@@ -95,13 +95,13 @@ except: _failed()
 try: from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
-try: from scenarios import runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
+try: from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import minoutcomes, defaultobjectives, Optim # Scenario functions
+try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
-try: from makeplots import plotepi, plotmismatch, plotallocs # Create the plots
+try: from makeplots import plotepi, plotmismatch, plotallocs, plotformatslist, plotformatsdict # Create the plots
 except: _failed()
 
 
@@ -125,7 +125,7 @@ except:
     def browser(*args, **kwargs): print('Note: browser() could not be imported, but everything else should work')
     _failed(doraise=False)
 
-try: from manualgui import manualfit # Do manual fitting
+try: from gui import manualfit # Do manual fitting
 except:
     def manualfit(*args, **kwargs): print('Note: manualfit() could not be imported, but everything else should work')
     _failed(doraise=False)
@@ -141,10 +141,7 @@ except: _failed()
 # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
 try: 
     import defaults, plotpeople # Additional features not included in the main part of Optima
-    import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, optimization, gui, project
-except: _failed()
-
-try: import colortools, utils, results, parameters, programs, makeplots, calibration, scenarios, gui, project # Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
+    import colortools, utils, gui
 except: _failed()
 
 
