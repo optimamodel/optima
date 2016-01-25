@@ -82,6 +82,23 @@ def getplotkeys(results):
 
 
 
+def plotresults(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
+            titlesize=14, labelsize=12, ticksize=10, legendsize=10):
+    ''' Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use '''
+    
+    ## Initialize
+    allplots = []
+    
+    for key in toplot:
+    
+    
+    
+    return allplots
+
+
+
+
+
 def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
             titlesize=14, labelsize=12, ticksize=10, legendsize=10):
         '''
