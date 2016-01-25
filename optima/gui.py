@@ -34,6 +34,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
         
     Version: 1.2 (2016jan24) by cliffk
     '''
+    if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     
     # Do plotting

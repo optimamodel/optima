@@ -11,7 +11,7 @@ polotting.
 Version: 2016jan24
 '''
 
-from optima import Resultset, Multiresultset, odict, printv, gridcolormap
+from optima import Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
 from numpy import array, ndim, maximum, arange, zeros, mean
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -376,6 +376,7 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     ncurves = len(improvement) # Try to figure to figure out how many there are
     
     # Set up figure and do plot
+    sigfigs = 2 # Number of significant figures
     fig = figure(figsize=figsize, facecolor=(1,1,1))
     colors = gridcolormap(ncurves)
     
@@ -402,7 +403,10 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     # Configure plot
     currentylims = ylim()
     ax.set_xlabel('Iteration')
-    ax.set_title('Absolute change: %f  Relative change: %2f%%' % (mean(absimprove), mean(relimprove))) # WARNING -- use mean or best?
+    
+    abschange = sigfig(mean(absimprove), sigfigs)
+    relchange = sigfig(mean(relimprove), sigfigs)
+    ax.set_title('Absolute: %s | Relative: %s%%' % (abschange, relchange)) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
     ax.set_xlim((0, maxiters))
     

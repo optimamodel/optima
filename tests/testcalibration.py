@@ -139,13 +139,13 @@ if 'autofitmulti' in tests:
     P = Project(spreadsheet='test7pops.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5) # Create MC initialization
     P.runsim('sensitivity', end=2015) # Generate results
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=5, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
     
     
     if doplot:
         from optima import plotresults
-        plotresults(P.parsets['sensitivity'].getresults(), toplot=['prev-tot', 'prev-per', 'numinci-sta'])
-        plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-tot', 'prev-per', 'numinci-sta'])
+        plotresults(P.parsets['sensitivity'].getresults(), toplot=['prev-tot', 'numinci-sta'])
+        plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-tot', 'numinci-sta'])
     
     done(t)
 
