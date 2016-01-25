@@ -50,7 +50,7 @@ Number of PLHIV who are in care         numcare         (0, 'maxpopsize')       
 Percentage of HIV-diagnosed people who are in care (%)    pdhivcare     (0, 1)  pop     timepar   meta   other   0    1    random
 Percentage of all PLHIV who are in care (%)     plhivcare       (0, 1)  pop     timepar   meta   other   0    1    random
 Percentage of people who receive ART in year who stop taking ART (%/year)  stoprate   (0, 'maxrate')   pop   timepar   meta   other   0    1    random
-Those in care who are lost to follow-up (%/year)        leavecare   (0, 'maxrate')   pop   timepar   meta   other   0    1    random
+Percentage of people in care who are lost to follow-up (%/year)        leavecare   (0, 'maxrate')   pop   timepar   meta   other   0    1    random
 PLHIV lost to follow-up (%/year)	proploss	(0, 1)	pop	timepar	meta	other	0	1	random
 Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	other	0	1	random
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
