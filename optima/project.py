@@ -169,9 +169,13 @@ class Project(object):
         if isinstance(checkexists, (int, float)): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
             except: raise Exception('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
-        if checkabsent is not None and overwrite==False:
+        if checkabsent is not None:
             if checkabsent in structlist:
-                raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
+                if overwrite==False:
+                    raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
+                else:
+                    printv('Structure list "%s" already has item named "%s"' % (what, checkabsent), 2, self.settings.verbose)
+                
         if checkexists is not None:
             if not checkexists in structlist:
                 raise Exception('Structure list "%s" has no item named "%s"' % (what, checkexists))
@@ -274,7 +278,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
@@ -296,8 +300,9 @@ class Project(object):
 
         # Store results
         results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-        self.addresult(result=results)
-        if name is not None and simpars is None: self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
+        if addresult:
+            self.addresult(result=results)
+            self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
 
         return results
 
@@ -324,9 +329,8 @@ class Project(object):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters -- WARNING, shouldn't copy, should create new!
         parset = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
-        results = self.runsim(name=name)
+        results = self.runsim(name=name, addresult=True)
         results.improvement = parset.improvement # Store in a more accessible place, since plotting functions use results
-        self.addresult(result=results)
         parset.resultsref = results.uid
         self.modified = today()
         return None
