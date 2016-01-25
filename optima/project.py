@@ -329,10 +329,11 @@ class Project(object):
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters -- WARNING, shouldn't copy, should create new!
-        parset = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
-        results = self.runsim(name=name, addresult=True)
-        results.improvement = parset.improvement # Store in a more accessible place, since plotting functions use results
-        parset.resultsref = results.uid
+        self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        results = self.runsim(name=name, addresult=False)
+        results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
+        self.addresult(result=results)
+        self.parsets[name].resultsref = results.uid
         self.modified = today()
         return None
     
