@@ -10,15 +10,61 @@ from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
-plotformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
-plotformatsdict = odict({'tot':plotformatslist[0], 'per':plotformatslist[1], 'sta':plotformatslist[2]})
+epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
+epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 
 
 def getplotkeys(results):
-    ''' From the inputted results structure, figure out what the available kinds of plots are '''
+    ''' 
+    From the inputted results structure, figure out what the available kinds of plots are. List results-specific
+    plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
+    plots such as the cascade.
     
-    return plotkeys
+    Version: 2016jan24
+    '''
+    
+    ## Set up output structure
+    plotselection = dict()
+    plotselection['keys'] = list()
+    plotselection['names'] = list()
+    plotselection['function'] = list()
+    
+    ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
+    if hasattr(results, 'outcome'):
+        plotselection['keys'] += 'outcome'
+        plotselection['names'] += 'Outcome'
+        plotselection['function'] += 'plotoutcome'
+    
+    ## Add selections for outcome and budget allocations
+    if hasattr(results, 'funcoutcome'):
+        plotselection['keys'] += 'funcoutcome'
+        plotselection['names'] += 'Function outcome'
+        plotselection['function'] += 'plotoutcome'
+    
+    
+    ## Get plot selections for plotepi
+    plotepikeys = list()
+    plotepinames = list()
+    
+    epikeys = results.main.keys() # e.g. 'prev'
+    epinames = [thing.name for thing in results.main.values()]
+    episubkeys = epiformatslist[:,1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
+    episubnames = epiformatslist[:,2] # e.g. 'per population'
+    
+    for key in epikeys: # e.g. 'prev'
+        for subkey in episubkeys: # e.g. 'tot'
+            plotepikeys.append(key+'-'+subkey)
+    for name in epinames: # e.g. 'HIV prevalence'
+        for subname in episubnames: # e.g. 'total'
+            plotepinames.append(name+' -- '+subname)
+    
+    plotselection['keys'] += plotepikeys
+    plotselection['names'] += plotepinames
+    plotselection['function'] += ['plotepi']*len(plotepikeys)
+    
+    return plotselection
+
 
 
 def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
