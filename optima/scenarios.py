@@ -87,7 +87,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
-    multires = Multiresultset(name='scenarios', allresults)
+    multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
     printv('...done running scenarios.', 2, verbose)
