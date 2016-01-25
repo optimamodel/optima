@@ -132,8 +132,6 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     # Tidy up: turn interactivity back on
     if wasinteractive: ion() 
     
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
     return allplots
 
 
@@ -181,42 +179,36 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                    if die: 
-                        raise Exception(errormsg)
-                    else: 
-                        printv(errormsg, 4, verbose)
-                        toplot.remove(plotkey) # Just silently remove it
+                    if die: raise Exception(errormsg)
+                    else: printv(errormsg, 4, verbose)
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                if die:
-                    raise Exception(errormsg)
-                else: 
-                    printv(errormsg, 4, verbose)
-                    toplot.remove(plotkey) # Just silently remove it
+                if die: raise Exception(errormsg)
+                else: printv(errormsg, 4, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
             if plotformat not in epiformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
-                if die:
-                    raise Exception(errormsg)
-                else: 
-                    printv(errormsg, 4, verbose)
-                    toplot.remove(plotkey) # Just silently remove it
+                if die: raise Exception(errormsg)
+                else: printv(errormsg, 4, verbose)
             toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
         
         # Remove failed ones
-        for p in range(len(toplot)):
+        toplot = [thisplot for thisplot in toplot if None not in thisplot] # Remove a plot if datatype or plotformat is None
 
 
         ################################################################################################################
         ## Loop over each plot
         ################################################################################################################
         for plotkey in toplot:
-
+            
+            # Unpack tuple
+            datatype, plotformat = plotkey 
+            
             isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
             factor = 1.0 if isnumber else 100.0 # Swap between number and percent
-            istotal   = (plotformat in epiformatsdict['tot'])
-            isperpop  = (plotformat in epiformatsdict['per'])
-            isstacked = (plotformat in epiformatsdict['sta'])
+            istotal   = (plotformat=='t') # Only using first letter, see above...
+            isperpop  = (plotformat=='p')
+            isstacked = (plotformat=='s')
             
             
             ################################################################################################################
