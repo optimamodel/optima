@@ -322,6 +322,7 @@ class Project(object):
         ''' Function to perform automatic fitting '''
         self.copyparset(orig=orig, new=name) # Store parameters
         autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        results = self.runsim(name=name
         self.modified = today()
         return None
     

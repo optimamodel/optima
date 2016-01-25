@@ -180,7 +180,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
 
     def errorcalc(parvec=None, pars=None, parlist=None, project=None, eps=0.001, bestindex=0):
         ''' 
-        Calculate the improvement between the model and the data -- may or may not be
+        Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
         does.
         
@@ -204,8 +204,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0)
         
         ## Loop over all results
-        allimprovementes = []
-        improvement = 0
+        allmismatches = []
+        mismatch = 0
         for key in results.main: # The results! e.g. key='prev'
             this = results.main[key] 
             for attr in ['tot', 'pops']: # Loop over either total or by population denominators
@@ -223,12 +223,12 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
                         for i,year in enumerate(datax): # Loop over each data point available
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
                             modely = modelrow[modelx] # Finally, extract the model result!
-                            thisimprovement = abs(modely - datay[i]) / mean(datay+eps)
-                            allimprovementes.append(thisimprovement)
-                            improvement += thisimprovement
+                            thismismatch = abs(modely - datay[i]) / mean(datay+eps)
+                            allmismatches.append(thismismatch)
+                            mismatch += thismismatch
         
-        printv('Current improvement: %s' % array(thisimprovement).flatten(), 5, verbose=verbose)
-        return improvement
+        printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
+        return mismatch
 
 
 

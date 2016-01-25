@@ -90,18 +90,21 @@ def plotresults(results=None, toplot=None, **kwargs):
     wasinteractive = isinteractive() # Get current state of interactivity
     ioff() # Just in case, so we don't flood the user's screen with figures
     
+    ## Add improvement plot
     if 'improvement' in toplot:
         allplots.append(plotimprovement(results, toplot=toplot, **kwargs))
         toplot.remove('improvement')
     
+    ## Add budget plot
     if 'budget' in toplot:
         allplots.append(plotallocs(results, toplot=toplot, **kwargs))
         toplot.remove('budget')
     
-    for key in toplot:
+    ## Add epi plots
+    allplots.extend(plotepi(results, toplot=toplot, **kwargs))
     
     # Tidy up: close plots that were opened and turn interactivity back on
-    for plot in allplots: close(plot) 
+    for thisplot in allplots: close(thisplot) # Close plots
     if wasinteractive: ion() # Turn interactivity back on
     
     return allplots
@@ -117,13 +120,15 @@ def plotepi(results, toplot=None, uncertainty=False, verbose=2, figsize=(14,10),
         ['prev-tot', 'inci-per']
 
         This function returns an odict of figures, which can then be saved as MPLD3, etc.
+        
+        NOTE: do not call this function directly; instead, call via plotresults().
 
         Version: 2016jan21
         '''
         
         # Figure out what kind of result it is
         if type(results)==Resultset: ismultisim = False
-        elif type(results)==Multiresultset: 
+        elif type(results)==Multiresultset:
             ismultisim = True
             labels = results.keys # Figure out the labels for the different lines
             nsims = len(labels) # How ever many things are in results
@@ -323,6 +328,8 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     failing that, it will try to treat the object as something that can be used directly, e.g.
         plotimprovement(results.improvement)
     also works.
+    
+    NOTE: do not call this function directly; instead, call via plotresults().
     
     Version: 2016jan19 by cliffk    
     '''
