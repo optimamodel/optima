@@ -565,12 +565,15 @@ class OptimaSpreadsheet:
     def generate_casc(self):
         current_row = 0
         current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                                        current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people not in care who are linked to care per year (%/year)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                                            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people newly linked to care per year (%/year)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Number of PLHIV who are in care',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people who are in care (%)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of all PLHIV who are in care (%)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)',            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                                                         current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Biological failure rate (%/year)',                                                             current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Proportion of people on ART with viral suppression (%)',                                       current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
 
     def generate_sex(self):
