@@ -49,9 +49,20 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     for p in range(len(plots)): 
-        addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
-        if len(plots[p].axes)>1:
+        naxes = len(plots[p].axes)
+        if naxes==1: # Usual situation: just plot the normal axis
+            addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
+        elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
+            orignrow = floor(p/ncols)
+            origncol = p%ncols # Column doesn't change
+            newnrows = nrows*naxes
+            newrowstart = naxes*orignrow # e.g. 2 axes in 3rd row = 5th row in new system
+            for a in range(naxes):
+                thisrow = newrowstart+a # Increment rows
+                newp = origncol*thisrow + origncol + 1 # Calculate new row/column
+                addplot(fig, plots[p].axes[a], int(newnrows), int(ncols), int(newp+1))
             print('TEMP WARNING HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII!!!!!!!!!!!!!!!!!!!!!')
+        else: pass # Must have 0 length or something
     if wasinteractive: ion()
     show()
 
