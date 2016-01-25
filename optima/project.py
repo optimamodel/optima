@@ -168,17 +168,17 @@ class Project(object):
         else: structlist = self.getwhat(what=what)
         if isinstance(checkexists, (int, float)): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
-            except: raise Exception('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
+            except: raise OptimaException('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None:
             if checkabsent in structlist:
                 if overwrite==False:
-                    raise Exception('Structure list "%s" already has item named "%s"' % (what, checkabsent))
+                    raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
                     printv('Structure list "%s" already has item named "%s"' % (what, checkabsent), 2, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
-                raise Exception('Structure list "%s" has no item named "%s"' % (what, checkexists))
+                raise OptimaException('Structure list "%s" has no item named "%s"' % (what, checkexists))
         return None
 
 
@@ -191,7 +191,7 @@ class Project(object):
             try: 
                 item = name # It's actully an item, not a name
                 name = item.name # Try getting name from the item
-            except: raise Exception('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
+            except: raise OptimaException('Could not figure out how to add item with name "%s" and item "%s"' % (name, item))
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
@@ -278,7 +278,7 @@ class Project(object):
         else:
             validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
             errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
     
     
     def addscenlist(self, scenlist): 
@@ -365,13 +365,13 @@ class Project(object):
 
     def runbudget(self, budget=None, budgetyears=None, progsetname=None, parsetname='default', verbose=2):
         ''' Function to run the model for a given budget, years, programset and parameterset '''
-        if budget is None: raise Exception("Please enter a budget dictionary to run")
-        if budgetyears is None: raise Exception("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
+        if budget is None: raise OptimaException("Please enter a budget dictionary to run")
+        if budgetyears is None: raise OptimaException("Please specify the years for your budget") # WARNING, the budget should probably contain the years itself
         if progsetname is None:
             try:
                 progsetname = self.progsets[0].name
                 printv('No program set entered to runbudget, using stored program set "%s"' % (self.progsets[0].name), 1, self.settings.verbose)
-            except: raise Exception("No program set entered, and there are none stored in the project") 
+            except: raise OptimaException("No program set entered, and there are none stored in the project") 
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...

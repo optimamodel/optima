@@ -36,7 +36,7 @@ def getresults(project=None, pointer=None, die=True):
             resultnames = [res.name for res in project.results.values()]
             resultuids = project.results.keys()
         else: 
-            if die: raise Exception('To get results using a key or index, getresults() must be given the project')
+            if die: raise OptimaException('To get results using a key or index, getresults() must be given the project')
             else: return None
         try: # Try using pointer as key -- works if UID
             results = project.results[pointer]
@@ -48,7 +48,7 @@ def getresults(project=None, pointer=None, die=True):
             else:
                 validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(resultnames))]
                 errormsg = 'Could not get result "%s": choices are:\n%s' % (pointer, '\n'.join(validchoices))
-                if die: raise Exception(errormsg)
+                if die: raise OptimaException(errormsg)
                 else: return None
     
     # If it's a UID, have to convert to string, then use as key
@@ -57,10 +57,10 @@ def getresults(project=None, pointer=None, die=True):
             try: 
                 return project.results[str(pointer)]
             except: 
-                if die: raise Exception('To get results using a UID, getresults() must be given the project')
+                if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
                 else: return None
         else:
-            if die: raise Exception('To get results using a UID, getresults() must be given the project')
+            if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
             else: return None
     
     # The pointer is the results object
@@ -72,12 +72,12 @@ def getresults(project=None, pointer=None, die=True):
         try: 
             return pointer()
         except:
-            if die: raise Exception('Results pointer "%s" seems to be callable, but call failed' % str(pointer))
+            if die: raise OptimaException('Results pointer "%s" seems to be callable, but call failed' % str(pointer))
             else: return None
     
     # Could not figure out what to do with it
     else: 
-        if die: raise Exception('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
         else: return None
 
 
@@ -109,7 +109,7 @@ class Resultset(object):
         self.name = name # May be blank if automatically generated, but can be overwritten
         
         # Turn inputs into lists if not already
-        if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
+        if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
         if type(simpars)!=list: simpars = [simpars] # Force into being a list
         if type(raw)!=list: raw = [raw] # Force into being a list
         
@@ -278,8 +278,8 @@ class Multiresultset(Resultset):
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
-        elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
-        else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
+        else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
                 
         
         # Fundamental quantities -- populated by project.runsim()

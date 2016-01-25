@@ -11,7 +11,7 @@ polotting.
 Version: 2016jan24
 '''
 
-from optima import Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
 from numpy import array, ndim, maximum, arange, zeros, mean
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, bar, subplot
 
@@ -37,7 +37,7 @@ def getplotkeys(results):
     elif type(results)==Multiresultset: ismultisim = True
     else: 
         errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
-        raise Exception(errormsg)
+        raise OptimaException(errormsg)
     
     ## Set up output structure
     plotselection = dict()
@@ -159,7 +159,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             nsims = len(labels) # How ever many things are in results
         else: 
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
 
         # Initialize
         if toplot is None: toplot = defaultepiplots # If not specified, plot default plots
@@ -172,23 +172,23 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             datatype, plotformat = None, None
             if type(plotkey) not in [str, list, tuple]: 
                 errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
             else:
                 try:
                     if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
                     elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                    if die: raise Exception(errormsg)
+                    if die: raise OptimaException(errormsg)
                     else: printv(errormsg, 4, verbose)
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                if die: raise Exception(errormsg)
+                if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 4, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
             if plotformat not in epiformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
-                if die: raise Exception(errormsg)
+                if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 4, verbose)
             toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
         
@@ -372,7 +372,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
     elif hasattr(results, '__len__'): improvement = results # Promising, has a length at least, but of course could still be wrong
-    else: raise Exception('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
+    else: raise OptimaException('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
     ncurves = len(improvement) # Try to figure to figure out how many there are
     
     # Set up figure and do plot
@@ -435,7 +435,7 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
     '''
     
     # Validate input
-    if not(hasattr(results, 'budget')): raise Exception('No budget found for results object:\n"%s"' % results)
+    if not(hasattr(results, 'budget')): raise OptimaException('No budget found for results object:\n"%s"' % results)
     
     # Preliminaries: extract needed data
     budgetstoplot = [budget for budget in results.budget.values() if budget]

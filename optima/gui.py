@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import dcp, printv, sigfig, makeplots, getplotkeys, plotting
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotkeys, plotting
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
@@ -492,7 +492,7 @@ def plotpeople(resultslist, normalized=True):
             statelabels.append(t+cd4)
     nstates = len(statelabels) # 
     if nstates != shape(ppl)[0]:
-        raise Exception("Number of states don't match")
+        raise OptimaException("Number of states don't match")
     npops = shape(ppl)[1]
     count = 0
     figh = figure(figsize=(24,16), facecolor='w')
