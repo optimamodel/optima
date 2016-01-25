@@ -43,21 +43,18 @@ def getplotkeys(results):
     plotselection = dict()
     plotselection['keys'] = list()
     plotselection['names'] = list()
-    plotselection['function'] = list()
     
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
     if hasattr(results, 'improvement'):
-        plotselection['keys'] += 'improvement'
-        plotselection['names'] += 'Improvement'
-        plotselection['function'] += 'plotimprovement'
+        plotselection['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
+        plotselection['names'] += ['Improvement']
     
     
     ## Add selections for outcome and budget allocations
     if hasattr(results, 'budget'):
-        plotselection['keys'] += 'budget'
-        plotselection['names'] += 'Budget allocation'
-        plotselection['function'] += 'plotallocs'
+        plotselection['keys'] += ['budget']
+        plotselection['names'] += ['Budget allocation']
     
     
     
@@ -72,17 +69,16 @@ def getplotkeys(results):
     
     for key in epikeys: # e.g. 'prev'
         for subkey in episubkeys: # e.g. 'tot'
-            if not ismultisim and subkey!='sta': # Stacked multisim plots don't make sense
+            if not(ismultisim and subkey=='sta'): # Stacked multisim plots don't make sense
                 plotepikeys.append(key+'-'+subkey)
     for name in epinames: # e.g. 'HIV prevalence'
         for subname in episubnames: # e.g. 'total'
-            if not ismultisim and subkey!='sta': # Stacked multisim plots don't make sense
+            if not(ismultisim and subname=='stacked'): # Stacked multisim plots don't make sense -- WARNING, this is clunky!!!
                 plotepinames.append(name+' -- '+subname)
     
     
     plotselection['keys'] += plotepikeys
     plotselection['names'] += plotepinames
-    plotselection['function'] += ['plotepi']*len(plotepikeys)
     
     return plotselection
 
@@ -133,9 +129,8 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
     
-    # Tidy up: close plots that were opened and turn interactivity back on
-    for thisplot in allplots: close(thisplot) # Close plots
-    if wasinteractive: ion() # Turn interactivity back on
+    # Tidy up: turn interactivity back on
+    if wasinteractive: ion() 
 
     return allplots
 
@@ -350,6 +345,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
+                
+                close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
 
@@ -409,6 +406,8 @@ def plotimprovement(results=None, figsize=(10,6), lw=2, titlesize=14, labelsize=
     ax.set_title('Absolute change: %f  Relative change: %2f%%' % (mean(absimprove), mean(relimprove))) # WARNING -- use mean or best?
     ax.set_ylim((0,currentylims[1]))
     ax.set_xlim((0, maxiters))
+    
+    close(fig)
     
     return fig
 
@@ -478,5 +477,7 @@ def plotallocs(results=None, **kwargs):
         ax[-1].set_ylabel('Spending (US$)')
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    
+    close(fig)
     
     return fig

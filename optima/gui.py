@@ -46,7 +46,10 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-    for p in range(len(plots)): addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
+    for p in range(len(plots)): 
+        addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
+        if len(plots[p].axes)>1:
+            print('TEMP WARNING HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII!!!!!!!!!!!!!!!!!!!!!')
     if wasinteractive: ion()
     show()
 
@@ -93,7 +96,7 @@ def update(event=None, tmpresults=None):
         nplots = len(plots)
         nrows = int(ceil(sqrt(nplots)))
         ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
+        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1) # WARNING, copied from plotresults()
         if wasinteractive: ion()
         show()
 
@@ -121,7 +124,9 @@ def pygui(tmpresults, toplot=None):
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
-    checkboxes, checkboxnames = getplotkeys(results)
+    plotselection = getplotkeys(results)
+    checkboxes = plotselection['keys']
+    checkboxnames = plotselection['names']
     nboxes = len(checkboxes) # Number of choices
     
     ## Set up what to plot when screen first opens
