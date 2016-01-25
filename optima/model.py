@@ -306,7 +306,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)          
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for this in injactslist:
             effinj = this['acts'][t]
             pop1 = this['pop1']

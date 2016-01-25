@@ -193,7 +193,7 @@ if 'standardscen' in tests:
     # Store these in the project
     P.addscenlist(scenlist)
     P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
-    P.scens[4].active = False # Turn off another scenario
+    P.scens[2].active = False # Turn off another scenario
     
     # Run the scenarios
     P.runscenarios() 
@@ -201,7 +201,7 @@ if 'standardscen' in tests:
     if doplot:
         from optima import pygui, plotallocs
         pygui(P.results[-1])
-        plotallocs(P.results[-1])
+#        plotallocs(P.results[-1])
 
     if showstats:
         from optima import Settings, findinds
