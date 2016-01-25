@@ -101,15 +101,15 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default'):
+    def loadspreadsheet(self, filename, name='default', dorun=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-
         self.ensureparset(name)
+        if dorun: self.runsim(name, addresult=True)
         return None
 
 
@@ -182,7 +182,7 @@ class Project(object):
         return None
 
 
-    def add(self, name=None, item=None, what=None, overwrite=False):
+    def add(self, name=None, item=None, what=None, overwrite=False, consistentnames=True):
         ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
         if name is None:
             try: name = item.name # Try getting name from the item
@@ -195,7 +195,7 @@ class Project(object):
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
-        structlist[name].name = name # Make sure names are consistent
+        if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
         printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
         self.modified = today()
         return None
@@ -263,8 +263,23 @@ class Project(object):
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result)
-    def rmresult(self, index=-1):     self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
+    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result, consistentnames=False) # Use UID for key but keep name
+    
+    
+    def rmresult(self, name=-1):
+        resultuids = self.results.keys() # Pull out UID keys
+        resultnames = [res.name for res in self.results.values()] # Pull out names
+        if isinstance(name, (int, float)) and name<len(self.results):  # Remove by index rather than name
+            self.remove(what='result', name=self.results.keys()[name])
+        elif name in resultuids: # It's a UID: remove directly 
+            self.remove(what='result', name=name)
+        elif name in resultnames: # It's a name: find the UID corresponding to this name and remove
+            self.remove(what='result', name=resultuids[resultnames.index(name)]) # WARNING, if multiple names match, will delete oldest one -- expected behavior?
+        else:
+            validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
+            errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
+            raise Exception(errormsg)
+    
     
     def addscenlist(self, scenlist): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
@@ -299,11 +314,12 @@ class Project(object):
             raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
             rawlist.append(raw)
 
-        # Store results
-        results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        # Store results -- WARNING, is this correct in all cases?
+        resultname = 'parset-'+name if simpars is None else 'simpars'
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
             self.addresult(result=results)
-            self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
+            if simpars is None: self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
 
         return results
 

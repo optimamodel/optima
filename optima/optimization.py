@@ -163,7 +163,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=tmpresults)
+    multires = Multiresultset(name='optimization-%s-%s' % (parsetname, progsetname), resultsetlist=tmpresults)
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
         
