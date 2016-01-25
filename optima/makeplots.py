@@ -26,11 +26,19 @@ def getplotkeys(results):
     Version: 2016jan24
     '''
     
+    # Figure out what kind of result it is -- WARNING, copied from below
+    if type(results)==Resultset: ismultisim = False
+    elif type(results)==Multiresultset: ismultisim = True
+    else: 
+        errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise Exception(errormsg)
+    
     ## Set up output structure
     plotselection = dict()
     plotselection['keys'] = list()
     plotselection['names'] = list()
     plotselection['function'] = list()
+    
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
     if hasattr(results, 'improvement'):
@@ -38,11 +46,13 @@ def getplotkeys(results):
         plotselection['names'] += 'Improvement'
         plotselection['function'] += 'plotimprovement'
     
+    
     ## Add selections for outcome and budget allocations
-    if hasattr(results, 'funcoutcome'):
-        plotselection['keys'] += 'funcoutcome'
-        plotselection['names'] += 'Function outcome'
-        plotselection['function'] += 'plotoutcome'
+    if hasattr(results, 'budget'):
+        plotselection['keys'] += 'budget'
+        plotselection['names'] += 'Budget allocation'
+        plotselection['function'] += 'plotallocs'
+    
     
     
     ## Get plot selections for plotepi
@@ -56,10 +66,13 @@ def getplotkeys(results):
     
     for key in epikeys: # e.g. 'prev'
         for subkey in episubkeys: # e.g. 'tot'
-            plotepikeys.append(key+'-'+subkey)
+            if not ismultisim and subkey!='sta': # Stacked multisim plots don't make sense
+                plotepikeys.append(key+'-'+subkey)
     for name in epinames: # e.g. 'HIV prevalence'
         for subname in episubnames: # e.g. 'total'
-            plotepinames.append(name+' -- '+subname)
+            if not ismultisim and subkey!='sta': # Stacked multisim plots don't make sense
+                plotepinames.append(name+' -- '+subname)
+    
     
     plotselection['keys'] += plotepikeys
     plotselection['names'] += plotepinames
@@ -116,8 +129,8 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
                 raise Exception(errormsg)
-            if plotformat not in plotformatslist.flatten():
-                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
+            if plotformat not in epiformatslist.flatten():
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
                 raise Exception(errormsg)
             
             try:
@@ -127,9 +140,9 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
                 errormsg = 'Unable to find key "%s" in results' % datatype
                 raise Exception(errormsg)
                 
-            istotal   = (plotformat in plotformatsdict['tot'])
-            isperpop  = (plotformat in plotformatsdict['per'])
-            isstacked = (plotformat in plotformatsdict['sta'])
+            istotal   = (plotformat in epiformatsdict['tot'])
+            isperpop  = (plotformat in epiformatsdict['per'])
+            isstacked = (plotformat in epiformatsdict['sta'])
             
             
             ################################################################################################################

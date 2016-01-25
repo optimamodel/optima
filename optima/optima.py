@@ -101,7 +101,7 @@ except: _failed()
 try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
-try: from makeplots import plotepi, plotimprovement, plotallocs, plotformatslist, plotformatsdict # Create the plots
+try: from makeplots import getplotkeys, plotepi, plotimprovement, plotallocs # Create the plots
 except: _failed()
 
 

@@ -1,6 +1,6 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import dcp, printv, sigfig, plotepi, plotformatslist
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, transpose
+from optima import dcp, printv, sigfig, plotepi, getplotkeys
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show
 from matplotlib.widgets import CheckButtons, Button
 from PyQt4 import QtGui
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
@@ -121,17 +121,7 @@ def pygui(tmpresults, which=None):
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
-    epikeys = results.main.keys()
-    epinames = [thing.name for thing in results.main.values()]
-    episubkeys = transpose(plotformatslist)[-1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
-    checkboxes = [] # e.g. 'prev-tot'
-    checkboxnames = [] # e.g. 'HIV prevalence (%) -- total'
-    for key in epikeys: # e.g. 'prev'
-        for subkey in episubkeys: # e.g. 'tot'
-            checkboxes.append(key+'-'+subkey)
-    for name in epinames: # e.g. 'HIV prevalence'
-        for subname in episubkeys: # e.g. 'total'
-            checkboxnames.append(name+' -- '+subname)
+    checkboxes, checkboxnames = getplotkeys(results)
     nboxes = len(checkboxes) # Number of choices
     
     ## Set up what to plot when screen first opens
