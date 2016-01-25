@@ -220,6 +220,7 @@ class Project(object):
         structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
+        if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
         self.modified = today()
         return None
@@ -310,7 +311,7 @@ class Project(object):
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
-        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
+        parset = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
         self.modified = today()
         return None

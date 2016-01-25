@@ -9,7 +9,7 @@ from numpy import median, zeros, array, mean
 
 
 
-def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
+def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
     ''' 
     Function to perturb the parameters to get "uncertainties".
     
@@ -36,6 +36,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
     
     # Copy things
     parset = dcp(orig) # Copy the original parameter set
+    parset.project = project # Keep original project information
     origpars = dcp(parset.pars[ind])
     parset.pars = []
     for n in range(ncopies):
@@ -88,7 +89,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     if type(name)!=str: raise Exception('"name" must be the name or index of a paramete set')
     
     # Initialization
-    parset = project.parsets[name] # Copy the original parameter set
+    parset = project.parsets[name] # Shorten the original parameter set
+    parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
