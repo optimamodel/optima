@@ -104,8 +104,8 @@ def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     OST = Program(short='OST',
-                  targetpars=[{'param': 'numost', 'pop': pop} for pop in pwidlist],
-                  targetpops=pwidlist,
+                  targetpars=[{'param': 'numost', 'pop': 'tot'}],
+                  targetpops=['tot'],
                   category='Prevention',
                   name='Opiate substitution therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
