@@ -1,7 +1,7 @@
 ## Imports
 from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
-from optima import printv, tic, toc, dcp, odict, findinds, makesimpars, Resultset
+from optima import OptimaException, printv, tic, toc, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False):
     """
@@ -22,8 +22,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
-    if simpars is None: raise Exception('model() requires simpars as an input')
-    if settings is None: raise Exception('model() requires settings as an input')
+    if simpars is None: raise OptimaException('model() requires simpars as an input')
+    if settings is None: raise OptimaException('model() requires settings as an input')
     popkeys    = simpars['popkeys']
     npops      = len(popkeys)
     simpars    = dcp(simpars)
@@ -210,7 +210,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
         if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             err = 'Non-positive people found during epidemic initialization!'  
-            raise Exception(err)
+            raise OptimaException(err)
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
     
@@ -231,7 +231,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = (simpars['transmmi'] + simpars['transmmr'])/2.0 # Note: this looks horrible and stupid but it's correct! Ask Kedz
             elif   male[this['pop1']] and female[this['pop2']]: this['trans'] = simpars['transmfi']  
             elif female[this['pop1']] and   male[this['pop2']]: this['trans'] = simpars['transmfr']
-            else: raise Exception('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
+            else: raise OptimaException('Not able to figure out the sex of "%s" and "%s"' % (key[0], key[1]))
             sexactslist.append(this)
     
     # Injection
@@ -258,7 +258,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): raise Exception('No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t]))
+            if not(allpeople[pop,t]>0): raise OptimaException('No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t]))
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
             effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
             if usecascade:
@@ -273,7 +273,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
                 effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t] # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
 
-            if not(effhivprev[pop]>=0): raise Exception('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+            if not(effhivprev[pop]>=0): raise OptimaException('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
         
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
@@ -318,7 +318,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         if not(all(forceinfvec>=0)):
             invalid = [simpars['popkeys'][i] for i in findinds(forceinfvec<0)]
             errormsg = 'Force-of-infection is invalid in population %s' % invalid
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
             
 
         
@@ -614,11 +614,11 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     Version: 2016jan23 by cliffk    
     '''
     if simpars is None:
-        if pars is None: raise Exception('runmodel() requires either simpars or pars input; neither was provided')
+        if pars is None: raise OptimaException('runmodel() requires either simpars or pars input; neither was provided')
         simpars = makesimpars(pars, start=start, end=end, dt=dt, tvec=tvec, name=name, uid=uid)
     if settings is None:
         try: settings = project.settings 
-        except: raise Exception('Could not get settings from project "%s" supplied to runmodel()' % project)
+        except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
     raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, budgetyears=budgetyears, simpars=simpars, data=data, domake=True) # Create structure for storing results
     return results
