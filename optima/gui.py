@@ -14,16 +14,10 @@ def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
     thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
     orig = thisplot.get_position() # get the original position 
-    print('HIIiIIII')
-    if name is not None: print(name)
-    print([orig.x0, orig.y0,  orig.width, orig.height])
-    print('BYYYYYYE')
     widthfactor = 0.9/ncols**(1/4.)
     heightfactor = 0.9/nrows**(1/4.)
     pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
-#    if name=='budget': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
     return None
 
 
@@ -55,7 +49,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
     for p in range(len(plots)): 
         naxes = len(plots[p].axes)
-        if 1:#naxes==1: # Usual situation: just plot the normal axis
+        if naxes==1: # Usual situation: just plot the normal axis
             addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1)
         elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
             orignrow = floor(p/ncols)
@@ -66,7 +60,6 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
                 thisrow = newrowstart+a # Increment rows
                 newp = origncol*thisrow + origncol + 1 # Calculate new row/column
                 addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
-            print('TEMP WARNING HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII!!!!!!!!!!!!!!!!!!!!!')
         else: pass # Must have 0 length or something
     if wasinteractive: ion()
     show()

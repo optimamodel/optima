@@ -446,11 +446,11 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
     nallocs = len(alloclabels)
     
     fig = figure(figsize=figsize)
-#    fig.subplots_adjust(left=0.10) # Less space on left
-#    fig.subplots_adjust(right=0.98) # Less space on right
-#    fig.subplots_adjust(bottom=0.30) # Less space on bottom
-#    fig.subplots_adjust(wspace=0.30) # More space between
-#    fig.subplots_adjust(hspace=0.40) # More space between
+    fig.subplots_adjust(left=0.10) # Less space on left
+    fig.subplots_adjust(right=0.98) # Less space on right
+    fig.subplots_adjust(bottom=0.30) # Less space on bottom
+    fig.subplots_adjust(wspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.40) # More space between
     
     colors = gridcolormap(nprogs)
     
