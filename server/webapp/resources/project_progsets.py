@@ -210,7 +210,6 @@ class ProgsetData(Resource):
         source_filename = uploaded_file.source_filename
 
         progset_entry = load_progset(project_id, progset_id)
-        parset_entry = load_progset(project_id, parset_id)
 
         project_entry = load_project(project_id)
         project = project_entry.hydrate()
