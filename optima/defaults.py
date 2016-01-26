@@ -10,13 +10,13 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     
     # Shorten variable names
     pops = project.data['pops']['short']
-    malelist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['male'][popno]]
-    pwidlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['injects'][popno]]
-    fswlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['sexworker'][popno] and parset.pars[0]['female'][popno]]
+    malelist = [pops[i] for i in range(len(pops)) if project.data['pops']['male'][i]]
+    pwidlist = [pops[i] for i in range(len(pops)) if project.data['pops']['injects'][i]]
+    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i]]
 
-    regpships = parset.pars[0]['condreg'].y.keys()
-    caspships = parset.pars[0]['condcas'].y.keys()
-    compships = parset.pars[0]['condcom'].y.keys()
+    regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
+    caspships = project.parsets['default'].pars[0]['condcas'].y.keys()
+    compships = project.parsets['default'].pars[0]['condcom'].y.keys()
     
     # Extract casual partnerships that include at least one female sex worker
     fsw_caspships = []
