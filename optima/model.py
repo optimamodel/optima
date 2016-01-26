@@ -45,8 +45,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     raw['sexinci']    = zeros((npops, npts)) # Incidence through sex
     raw['injinci']    = zeros((npops, npts)) # Incidence through injecting
     raw['inci']       = zeros((npops, npts)) # Total incidence
-    raw['births']     = zeros((npops, npts)) # Number of births to each population
-    raw['mtct']       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
+    raw['births']     = zeros((1, npts))     # Number of births
+    raw['mtct']       = zeros((1, npts))     # Number of mother-to-child transmissions
     raw['diag']       = zeros((npops, npts)) # Number diagnosed per timestep
     raw['newtreat']   = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw['death']      = zeros((npops, npts)) # Number of deaths per timestep
@@ -89,49 +89,27 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
     popsize = dcp(simpars['popsize']) # Population sizes
     
-    # Infection probabilities
-    transinj = simpars['transinj']          # Injecting
-    mtctbreast = simpars['mtctbreast']      # MTCT with breastfeeding
-    mtctnobreast = simpars['mtctnobreast']  # MTCT with breastfeeding
-
-    # Population characteristics
-    male = simpars['male']          # Boolean array, true for males
-    female = simpars['female']      # Boolean array, true for females
-    injects = simpars['injects']    # Boolean array, true for PWID
+    # Infection propabilities
+    male = simpars['male']
+    female = simpars['female']
+    transinj = simpars['transinj']      # Injecting
+    
+    # Further potential effects on transmission
+    effsti    = simpars['effsti'] * simpars['stiprev']  # STI effect
+    effcirc   = 1 - simpars['effcirc']            # Circumcision effect
+    effprep   = (1 - simpars['effprep']) * simpars['prep'] # PrEP effect
+    effcondom = 1 - simpars['effcondom']          # Condom effect
     
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
     numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
-    circum   = simpars['circum']    # Prevalence of circumcision (P)
-    stiprev  = simpars['stiprev']   # Prevalence of STIs (P)
-    prep     = simpars['prep']      # Prevalence of PrEP (P)
-    numpmtct = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
-    usepmtctprop=True if all(numpmtct<1) else False
-
-    # Uptake of OST
-    numost = simpars['numost']                  # Number of people on OST (N)
-    if any(injects):
-        numpwid = popsize[injects].sum(axis=0)  # Total number of PWID
-        try: ostprev = numost/numpwid           # Proportion of PWID on OST (P)
-        except: raise Exception('Cannot divide by the number of PWID')
-    else:
-        if sum(numost): raise Exception('You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject')
-        else: ostprev = 0.
-    
-    # Further potential effects on transmission
-    effsti    = simpars['effsti'] * stiprev  # STI effect
-    effcirc   = simpars['effcirc'] * circum  # Circumcision effect
-    effprep   = simpars['effprep'] * prep    # PrEP effect
-    effcondom = simpars['effcondom']         # Condom effect
-    effpmtct  = simpars['effpmtct']          # PMTCT effect
-    effost    = simpars['effost'] * ostprev  # OST effect
+    circum = simpars['circum']
     
     # Calculations...used to be inside time loop
     circeff = 1 - effcirc*circum
     prepeff = 1 - effprep
-    osteff = 1 - effost
     stieff  = 1 + effsti
     
     # Behavioural transitions between stages [npop,npts]
@@ -315,9 +293,9 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             effinj = this['acts'][t]
             pop1 = this['pop1']
             pop2 = this['pop2']
-            thisosteff = osteff[t]
+            osteff = 1 # WARNING, TEMP osteff[pop1,t]
             
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2])) 
+            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*osteff*effhivprev[pop2])) 
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
         
         if not(all(forceinfvec>=0)):
@@ -326,49 +304,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             raise OptimaException(errormsg)
             
 
-        ###############################################################################
-        ## Calculate births and mother-to-child-transmission
-        ###############################################################################
-
-#        ontreatment = usvl+svl if usecascade else tx
-#        eligible = dx+care+lost+off if usecascade else dx
-#
-#        effmtct  = mtctbreast*simpars['breast'][t] + mtctnobreast*(1-simpars['breast'][t]) # Effective MTCT transmission
-#        pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
-#
-#        for p1 in range(npops):
-#
-#            allbirthrates = simpars['birthmatrix'][p1, :] * simpars['birth'][p1, t]
-#            alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
-#            
-#            for p2 in range(npops):
-#
-#                thisbirthrate  = allbirthrates[p2]
-#                
-#                if thisbirthrate:
-#                    popbirths      = sum(thisbirthrate * dt * people[:, p1, t])
-#                    mtctundx       = (thisbirthrate * dt * sum(people[undx, p1, t])) * effmtct # Births to undiagnosed mothers
-#                    mtcttx         = (thisbirthrate * dt * sum(people[ontreatment, p1, t]))  * pmtcteff # Births to mothers on treatment
-#                    thiseligbirths = (thisbirthrate * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
-#    
-#                    if usepmtctprop: # All numbers less than 1: assume it's a proportion
-#                        receivepmtct = numpmtct[t]*thiseligbirths # Births protected by PMTCT -- constrained by number eligible 
-#                    else: # It's a number
-#                        receivepmtct = min(numpmtct[t]*dt*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-#                    
-#                    mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-#                    mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-#                    popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
-#                    
-#                    raw['mtct'][p2, t] += popmtct                        
-#                    
-#                    people[undx[0], p2, t] += popmtct # HIV+ babies assigned to undiagnosed compartment
-#                    people[uncirc, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
-#
-
-
-
-
+        
         ###############################################################################
         ## The ODEs
         ###############################################################################
@@ -397,7 +333,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw['inci'][:,t] = (newinfections + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw['inci'][:,t] = (newinfections)/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         for cd4 in range(ncd4):
