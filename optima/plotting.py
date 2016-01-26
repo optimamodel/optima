@@ -4,7 +4,7 @@ MAKEPLOTS
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
 
-To add a new plot, you need to both add it to getplotkeys so it will show up in the interface;
+To add a new plot, you need to both add it to getplotselections so it will show up in the interface;
 plotresults so it will be sent to the right spot; and then add the actual function to do the
 polotting.
 
@@ -23,7 +23,7 @@ defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numde
 defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
 
 
-def getplotkeys(results):
+def getplotselections(results):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other

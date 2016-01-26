@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotkeys, plotting
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, plotting
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
@@ -127,7 +127,7 @@ def pygui(tmpresults, toplot=None):
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
-    plotselection = getplotkeys(results)
+    plotselection = getplotselections(results)
     checkboxes = plotselection['keys']
     checkboxnames = plotselection['names']
     nboxes = len(checkboxes) # Number of choices
