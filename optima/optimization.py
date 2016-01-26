@@ -14,12 +14,13 @@ from numpy import zeros, arange, array, isnan
 class Optim(object):
     ''' An object for storing an optimization '''
     
-    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, project=None, name='default', which='outcome', objectives=None, constraints=None, parsetname=None, progsetname=None):
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
+        self.which = which # Outcome or money minimization
         self.parsetname = parsetname # Parameter set name
         self.progsetname = progsetname # Program set name
         self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
