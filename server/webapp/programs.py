@@ -2,9 +2,9 @@ from collections import defaultdict
 
 from optima.defaults import defaultprograms
 
-def get_default_programs(parset):
+def get_default_programs(project):
 
-    programs = defaultprograms(parset)
+    programs = defaultprograms(project)
     rv = []
 
     for program in programs:
@@ -51,10 +51,10 @@ def programs_for_input_key(short, programs=None):
     return result
 
 
-def program_categories(parset):
+def program_categories(project):
     result = []
     next_category = None
-    for p in get_default_programs(parset):
+    for p in get_default_programs(project):
         current_category = p['category']
         if next_category is not None and next_category['category'] == current_category:
             next_category['programs'].append({'short': p['short'], 'name': p['name']})

@@ -5,11 +5,11 @@ Version: 2016jan23 by cliffk
 """
 from optima import Program, Programset
 
-def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None):
+def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
-    pops = parset.popkeys
+    pops = project.data['pops']['short']
     malelist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['male'][popno]]
     pwidlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['injects'][popno]]
     fswlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['sexworker'][popno] and parset.pars[0]['female'][popno]]

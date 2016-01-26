@@ -45,6 +45,8 @@ population_parser.add_arguments({
     'name':       {'required': True, 'location': 'json'},
     'female':     {'type': bool, 'required': True, 'location': 'json'},
     'male':       {'type': bool, 'required': True, 'location': 'json'},
+    'injects':    {'type': bool, 'required': True, 'location': 'json'},
+    'sexworker':  {'type': bool, 'required': True, 'location': 'json'},
     'age_from':   {'location': 'json'},
     'age_to':     {'location': 'json'},
 })
