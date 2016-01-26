@@ -45,7 +45,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None):
+    def __init__(self, name='default', spreadsheet=None, dorun=True):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -70,7 +70,7 @@ class Project(object):
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
-            self.loadspreadsheet(spreadsheet)
+            self.loadspreadsheet(spreadsheet, dorun=dorun)
 
         return None
 

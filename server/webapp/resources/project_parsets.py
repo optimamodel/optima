@@ -209,7 +209,7 @@ class ParsetsCalibration(Resource):
     def _result_to_jsons(self, result, which):
         import mpld3
         import json
-        graphs = op.makeplots.plotepi(result, figsize=(4, 3), which=[str(w) for w in which])  # TODO: store if that becomes an efficiency issue
+        graphs = op.plotting.makeplots(result, figsize=(4, 3), toplot=[str(w) for w in which])  # TODO: store if that becomes an efficiency issue
         jsons = []
         for graph in graphs:
             # Add necessary plugins here
@@ -220,10 +220,10 @@ class ParsetsCalibration(Resource):
         return jsons
 
     def _selectors_from_result(self, result, which):
-        graph_selectors = result.make_graph_selectors(which)
+        graph_selectors = op.getplotselections(result)
         keys = graph_selectors['keys']
         names = graph_selectors['names']
-        checks = graph_selectors['checks']
+        checks = graph_selectors['defaults']
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
         return selectors
