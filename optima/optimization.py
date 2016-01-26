@@ -274,7 +274,7 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2, tolerance=0.05):
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=True):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
@@ -288,7 +288,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     
      # Specify the amount of 
     
-    printv('Running outcomes optimization...', 1, verbose)
+    printv('Running money optimization...', 1, verbose)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
@@ -337,15 +337,25 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         targetsmet = moneycalc(budgetvec1+infmoney, **args)
         if not(targetsmet):
             budgetvecfinal = budgetvec1+infmoney
-            print("Warning, infinite allocation can't meet targets")
+            printv("Warning, infinite allocation can't meet targets:", 1, verbose)
+            if debug: 
+                results = moneycalc(budgetvecfinal, outputresults=True, **args)
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             break
+        else:
+            printv("Infinite allocation meets targets, as expected; proceeding...", 1, verbose)
         
         # Next, try no money
         targetsmet = moneycalc(budgetvec1/infmoney, **args)
         if targetsmet:
             budgetvecfinal = budgetvec1/infmoney
             print("Warning, even zero allocation meets targets")
+            if debug: 
+                results = moneycalc(budgetvecfinal, outputresults=True, **args)
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             break
+        else:
+            printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
         
         # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
         results = moneycalc(budgetvec1, results=True, **args)
