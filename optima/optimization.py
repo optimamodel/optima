@@ -178,7 +178,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
 
 
 
-def defaultobjectives(verbose=2):
+def defaultobjectives(which='outcome', verbose=2):
     """
     Define default objectives for the optimization.
     """
@@ -188,8 +188,14 @@ def defaultobjectives(verbose=2):
     objectives = odict() # Dictionary of all objectives
     objectives['start'] = 2017 # "Year to begin optimization"
     objectives['end'] = 2030 # "Year to project outcomes to"
-    objectives['budget'] = 1e6 # "Annual budget to optimize"
-    objectives['deathweight'] = 5 # "Death weighting"
-    objectives['inciweight'] = 1 # "Incidence weighting"
+    if which=='outcome':
+        objectives['budget'] = 1e6 # "Annual budget to optimize"
+        objectives['deathweight'] = 5 # "Death weighting"
+        objectives['inciweight'] = 1 # "Incidence weighting"
+    elif which=='money':
+        objectives['deathsfrac'] = 0.5
+        objectives['incifrac'] = 0.5
+    else: 
+        raise Exception('"which" keyword argument must be either "outcome" or "money"')
     
     return objectives
