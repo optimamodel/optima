@@ -127,9 +127,9 @@ def pygui(tmpresults, toplot=None):
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
-    plotselection = getplotselections(results)
-    checkboxes = plotselection['keys']
-    checkboxnames = plotselection['names']
+    plotselections = getplotselections(results)
+    checkboxes = plotselections['keys']
+    checkboxnames = plotselections['names']
     nboxes = len(checkboxes) # Number of choices
     
     ## Set up what to plot when screen first opens

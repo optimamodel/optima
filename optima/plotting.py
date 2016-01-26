@@ -40,21 +40,21 @@ def getplotselections(results):
         raise OptimaException(errormsg)
     
     ## Set up output structure
-    plotselection = dict()
-    plotselection['keys'] = list()
-    plotselection['names'] = list()
+    plotselections = dict()
+    plotselections['keys'] = list()
+    plotselections['names'] = list()
     
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
     if hasattr(results, 'improvement') and results.improvement is not None:
-        plotselection['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
-        plotselection['names'] += ['Improvement']
+        plotselections['keys'] += ['improvement'] # WARNING, maybe more standard to do append()...
+        plotselections['names'] += ['Improvement']
     
     
     ## Add selections for outcome and budget allocations
     if hasattr(results, 'budget') and results.budget is not None:
-        plotselection['keys'] += ['budget']
-        plotselection['names'] += ['Budget allocation']
+        plotselections['keys'] += ['budget']
+        plotselections['names'] += ['Budget allocation']
     
     
     
@@ -77,10 +77,10 @@ def getplotselections(results):
                 plotepinames.append(name+' -- '+subname)
     
     
-    plotselection['keys'] += plotepikeys
-    plotselection['names'] += plotepinames
+    plotselections['keys'] += plotepikeys
+    plotselections['names'] += plotepinames
     
-    return plotselection
+    return plotselections
 
 
 
