@@ -273,12 +273,17 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
+    "fundingchange" specifies the amount by which to increase/decrease the total budget to see if
+    objectives are met.
+    
     Version: 2016jan26
     '''
+    
+     # Specify the amount of 
     
     printv('Running outcomes optimization...', 1, verbose)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
@@ -351,15 +356,34 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         
         ##########################################################################################################################
         ## Now run an optimization on the current budget
-        budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvec2, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         
         # See if objectives are met
-        targetsmet = moneycalc(budgetvec/infmoney, **args)
+        targetsmet = moneycalc(budgetvec2/infmoney, **args)
+        fundingfactor = 1.0
         
-        # 
+        # If targets are met, scale down until they're not -- this loop will be skipped entirely if targets not currently met
+        while targetsmet:
+            fundingfactor /= fundingchange
+            targetsmet = moneycalc(budgetvec2*fundingfactor, **args)
+            printv('Current funding factor: %f' % fundingfactor, 4, verbose)
         
-
+        # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
+        while not(targetsmet):
+            fundingfactor *= fundingchange
+            targetsmet = moneycalc(budgetvec2*fundingfactor, **args)
+            printv('Current funding factor: %f' % fundingfactor, 4, verbose)
+        
+        # Re-optimize based on this fairly close allocation
+        budgetvec3 = budgetvec2*fundingfactor # Calculate new budget vector
+        totalbudget = budgetvec3.sum() # Calculate new total funding
+        args['objective']['budget'] = totalbudget
+        budgethigher = zeros(nprogs) + totalbudget # Reset funding maximum
+        budgetvec4, fval, exitflag, output = asd(outcomecalc, budgetvec3, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        
+        
+        
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = outcomecalc(budgetvec, outputresults=True, **args)
     new = outcomecalc(budgetvecnew, outputresults=True, **args)
