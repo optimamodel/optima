@@ -272,7 +272,9 @@ class Project(object):
         resultnames = [res.name for res in self.results.values()] # Pull out names
         if isinstance(name, (int, float)) and name<len(self.results):  # Remove by index rather than name
             self.remove(what='result', name=self.results.keys()[name])
-        elif name in resultuids: # It's a UID: remove directly 
+        elif isinstance(name, type(uuid())): # It's a raw UID: convert to string, then remove
+            self.remove(what='result', name=str(name))
+        elif name in resultuids: # It's a UID string: remove directly 
             self.remove(what='result', name=name)
         elif name in resultnames: # It's a name: find the UID corresponding to this name and remove
             self.remove(what='result', name=resultuids[resultnames.index(name)]) # WARNING, if multiple names match, will delete oldest one -- expected behavior?
