@@ -58,7 +58,12 @@ class Optim(object):
 
 def defaultobjectives(which='outcome', verbose=2):
     """
-    Define default objectives for the optimization.
+    Define default objectives for the optimization. Some objectives are shared
+    between outcome and money minimizations, while others are different. However,
+    outcome minimization is performed as part of money minimization, so it's useful
+    to keep all the keys for both. Still, ugly.
+    
+    Version: 2016jan26
     """
 
     printv('Defining default objectives...', 3, verbose=verbose)
@@ -70,9 +75,14 @@ def defaultobjectives(which='outcome', verbose=2):
         objectives['budget'] = 1e6 # "Annual budget to optimize"
         objectives['deathweight'] = 5 # "Death weighting"
         objectives['inciweight'] = 1 # "Incidence weighting"
+        objectives['deathsfrac'] = None # Fraction of deaths to get to
+        objectives['incifrac'] = None # Fraction of incidence to get to
     elif which=='money':
-        objectives['deathsfrac'] = 0.5
-        objectives['incifrac'] = 0.5
+        objectives['budget'] = None # "Annual budget to optimize"
+        objectives['deathweight'] = None # "Death weighting"
+        objectives['inciweight'] = None # "Incidence weighting"
+        objectives['deathsfrac'] = 0.5 # Fraction of deaths to get to
+        objectives['incifrac'] = 0.5 # Fraction of incidence to get to
     else: 
         raise Exception('"which" keyword argument must be either "outcome" or "money"')
     

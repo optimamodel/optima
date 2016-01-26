@@ -1,6 +1,6 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, minmoney, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
 from optima import defaultobjectives
@@ -390,10 +390,11 @@ class Project(object):
         self.modified = today()
         return None
     
-    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
-        ''' Function to minimize outcomes '''
-        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+    
+    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+        ''' Function to minimize money '''
+        optim = Optim(project=self, name=name, which='money', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()

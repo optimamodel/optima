@@ -157,7 +157,8 @@ if 'minimizemoney' in tests:
     print('Running minimize money test...')
     from optima import defaultobjectives
     objectives = defaultobjectives(which='money')
-    objectives['budget'] = 6e6 # Change default budget to optimize
+    objectives['deathsfrac'] = 0.5
+    objectives['incifrac'] = 0.5
     P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10)
     
     print('Original allocation: '),
