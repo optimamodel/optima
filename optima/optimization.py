@@ -55,6 +55,28 @@ class Optim(object):
 
 
 
+def defaultobjectives(which='outcome', verbose=2):
+    """
+    Define default objectives for the optimization.
+    """
+
+    printv('Defining default objectives...', 3, verbose=verbose)
+
+    objectives = odict() # Dictionary of all objectives
+    objectives['start'] = 2017 # "Year to begin optimization"
+    objectives['end'] = 2030 # "Year to project outcomes to"
+    if which=='outcome':
+        objectives['budget'] = 1e6 # "Annual budget to optimize"
+        objectives['deathweight'] = 5 # "Death weighting"
+        objectives['inciweight'] = 1 # "Incidence weighting"
+    elif which=='money':
+        objectives['deathsfrac'] = 0.5
+        objectives['incifrac'] = 0.5
+    else: 
+        raise Exception('"which" keyword argument must be either "outcome" or "money"')
+    
+    return objectives
+
 
 
 
@@ -173,29 +195,72 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires
-
-
-
-
-
-def defaultobjectives(which='outcome', verbose=2):
-    """
-    Define default objectives for the optimization.
-    """
-
-    printv('Defining default objectives...', 3, verbose=verbose)
-
-    objectives = odict() # Dictionary of all objectives
-    objectives['start'] = 2017 # "Year to begin optimization"
-    objectives['end'] = 2030 # "Year to project outcomes to"
-    if which=='outcome':
-        objectives['budget'] = 1e6 # "Annual budget to optimize"
-        objectives['deathweight'] = 5 # "Death weighting"
-        objectives['inciweight'] = 1 # "Incidence weighting"
-    elif which=='money':
-        objectives['deathsfrac'] = 0.5
-        objectives['incifrac'] = 0.5
-    else: 
-        raise Exception('"which" keyword argument must be either "outcome" or "money"')
     
-    return objectives
+    
+    
+    
+    
+    
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    
+    printv('Running outcomes optimization...', 1, verbose)
+    
+    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
+    
+    # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
+    parsetname = optim.parsetname
+    progsetname = optim.progsetname
+    objectives = optim.objectives
+    constraints = optim.constraints 
+    
+    parset  = project.parsets[parsetname] # Copy the original parameter set
+    progset = project.progsets[progsetname] # Copy the original parameter set
+    lenparlist = len(parset.pars)
+    
+    # Process inputs
+    if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
+    if inds is None: inds = range(lenparlist)
+    if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
+    tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
+    
+    
+    for ind in inds: # WARNING, kludgy -- inds not actually used!!!
+        # WARNING, kludge because some later functions expect parset instead of pars
+        thisparset = dcp(parset)
+        try: thisparset.pars = [parset.pars[ind]] # Turn into a list
+        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
+        
+        # Calculate limits -- WARNING, kludgy, I guess?
+        budgetlower  = zeros(nprogs)
+        budgethigher = zeros(nprogs) + totalbudget
+        
+        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
+        if method=='asd': 
+            budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        elif method=='simplex':
+            from scipy.optimize import minimize
+            budgetvecnew = minimize(objectivecalc, budgetvec, args=args).x
+        else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
+
+    ## Tidy up -- WARNING, need to think of a way to process multiple inds
+    orig = objectivecalc(budgetvec, outputresults=True, **args)
+    new = objectivecalc(budgetvecnew, outputresults=True, **args)
+    orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
+    new.name = 'Optimal allocation'
+    tmpresults = [orig, new]
+    
+    multires = Multiresultset(resultsetlist=tmpresults, name='optimization-%s-%s' % (parsetname, progsetname))
+    
+    for k,key in enumerate(multires.keys): # WARNING, this is ugly
+        
+        multires.budgetyears[key] = tmpresults[k].budgetyears
+    
+    multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
+    optim.resultsref = multires.uid # Store the reference for this result
+    
+    return multires
+
+
+
+
+

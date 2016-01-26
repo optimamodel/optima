@@ -109,7 +109,7 @@ try:
     from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
+try: from optimization import Optim, minoutcomes, minmoney, defaultobjectives # Scenario functions
 except: _failed()
 
 try: 
