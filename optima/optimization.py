@@ -315,7 +315,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
         
-        budgetvec = progset.getdefaultbudget()[:] # Get the current budget allocation
+        budgetvecorig = progset.getdefaultbudget()[:] # Get the current budget allocation
+        budgetvec = dcp(budgetvecorig)
         budgetlower = zeros(nprogs)
         budgethigher = zeros(nprogs) + budgetvec.sum() # WARNING, I guess this is ok to start with...
         
@@ -347,19 +348,17 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         for key in objectives['keys']:
             objectives[key+'weight'] = weights[key] # Reset objective weights according to the reduction required
         
-        # Now run an optimization on the current budget
+        
+        ##########################################################################################################################
+        ## Now run an optimization on the current budget
         budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         
+        # See if objectives are met
+        targetsmet = moneycalc(budgetvec/infmoney, **args)
         
+        # 
         
-        
-        if method=='asd': 
-            budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        elif method=='simplex':
-            from scipy.optimize import minimize
-            budgetvecnew = minimize(outcomecalc, budgetvec, args=args).x
-        else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = outcomecalc(budgetvec, outputresults=True, **args)
