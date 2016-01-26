@@ -43,6 +43,7 @@ def getplotselections(results):
     plotselections = dict()
     plotselections['keys'] = list()
     plotselections['names'] = list()
+    plotselections['defaults'] = list()
     
     
     ## Add selections for outcome -- for autofit()- or minoutcomes()-generated results
@@ -79,6 +80,8 @@ def getplotselections(results):
     
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
+    for key in plotselections['keys']: # Loop over each key
+        plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
     
     return plotselections
 

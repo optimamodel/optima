@@ -220,10 +220,10 @@ class ParsetsCalibration(Resource):
         return jsons
 
     def _selectors_from_result(self, result, which):
-        graph_selectors = result.make_graph_selectors(which)
+        graph_selectors = op.getplotselections(result)
         keys = graph_selectors['keys']
         names = graph_selectors['names']
-        checks = graph_selectors['checks']
+        checks = graph_selectors['defaults']
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
         return selectors
