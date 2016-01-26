@@ -26,6 +26,7 @@ MASTER = [
 'testscenarios',
 'testcalibration',
 'testoptimization',
+'benchmark'
 ]
 
 ## Other tests, for completeness -- not run by default since a subset of the other tests and/or does not make sense to run in batch
@@ -39,29 +40,29 @@ OTHER = [
 
 ## Run the tests in a loop
 VARIABLES = []
-STARTTIME = TIME()
+VERYSTART = TIME()
 FAILED = []
 SUCCEEDED = []
-THISSTART = 0
 for TEST in MASTER:
     try:
-        VARIABLES = locals().keys() # Get the state before the test is ru
+        VARIABLES = locals().keys() # Get the state before the test is run
+        THISSTART = TIME()
+        print('#'*200)
         exec(open(TEST+'.py').read()) # Run the test!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if len(SUCCEEDED): THISSTART = SUCCEEDED[-1][1]
-        SUCCEEDED.append([TEST, TIME()-STARTTIME-THISSTART])
+        SUCCEEDED.append({'test':TEST, 'time':TIME()-THISSTART})
         for KEY in locals().keys(): # Clean up -- delete any new variables added
             if KEY not in VARIABLES:
                 print('       "%s" complete; deleting "%s"' % (TEST, KEY))
                 exec('del '+KEY)
     except:
-        FAILED.append([TEST, exc_info()[1]])
+        FAILED.append({'test':TEST, 'msg':exc_info()[1]})
 
 
 print('\n'*5)
 if len(FAILED):
     print('The following %i/%i tests failed :(' % (len(FAILED), len(MASTER)))
-    for FAIL in FAILED: print('  %s: %s' % (FAIL[0], FAIL[1]))
+    for FAIL in FAILED: print('  %s: %s' % (FAIL['test'], FAIL['msg']))
 else:
     print('All %i tests passed!!! You are the best!!' % len(MASTER))
-    for SUCCESS in SUCCEEDED: print('  %s: %0.1f s' % (SUCCESS[0], SUCCESS[1]))
-print('Elapsed time: %0.1f s.' % (TIME()-STARTTIME))
+    for SUCCESS in SUCCEEDED: print('  %s: %0.1f s' % (SUCCESS['test'], SUCCESS['time']))
+print('Elapsed time: %0.1f s.' % (TIME()-VERYSTART))
