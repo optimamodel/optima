@@ -114,7 +114,7 @@ except: _failed()
 
 try: 
     import plotting # Load high-level module as well
-    from plotting import getplotkeys, makeplots # Create the plots
+    from plotting import getplotselections, makeplots # Create the plots
 except: _failed()
 
 

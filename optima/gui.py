@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotkeys, plotting
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, plotting
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
@@ -31,7 +31,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
         results = P.runsim('default')
         plotresults(results)
         
-    Version: 1.2 (2016jan24) by cliffk
+    Version: 1.3 (2016jan25) by cliffk
     '''
     
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
@@ -121,22 +121,17 @@ def pygui(tmpresults, toplot=None):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 1.1 (2015dec29) by cliffk
+    Version: 1.2 (2016jan25)
     '''
     global check, checkboxes, updatebutton, closebutton, panelfig, results
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
-    plotselection = getplotkeys(results)
-    checkboxes = plotselection['keys']
-    checkboxnames = plotselection['names']
-    nboxes = len(checkboxes) # Number of choices
+    plotselections = getplotselections(results)
+    checkboxes = plotselections['keys']
+    checkboxnames = plotselections['names']
+    defaultchecks = plotselections['defaults']
     
-    ## Set up what to plot when screen first opens
-    defaultchecks = []
-    for box in checkboxes:
-        defaultchecks.append(box in plotting.defaultplots) # Append True if it's in the defaults; False otherwise
-            
     ## Set up control panel
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
