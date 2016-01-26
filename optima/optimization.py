@@ -1,13 +1,14 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan24
+Version: 2016jan26
 """
 
 from optima import OptimaException, Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
 from numpy import zeros, arange, array, isnan
-infmoney = 1e9 # Effectively infinite money
 
+# Define global parameters that shouldn't really matter
+infmoney = 1e9 # Effectively infinite money
 
 
 
@@ -207,7 +208,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=tmpresults, name='optimization-%s-%s' % (parsetname, progsetname))
+    multires = Multiresultset(resultsetlist=tmpresults, name='minoutcomes-%s-%s' % (parsetname, progsetname))
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
         
@@ -273,12 +274,14 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2):
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2, tolerance=0.05):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
     "fundingchange" specifies the amount by which to increase/decrease the total budget to see if
     objectives are met.
+    
+    "tolerance" specifies how close the funding amount needs to converge.
     
     Version: 2016jan26
     '''
@@ -320,10 +323,10 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
         
-        budgetvecorig = progset.getdefaultbudget()[:] # Get the current budget allocation
-        budgetvec = dcp(budgetvecorig)
+        budgetvec0 = progset.getdefaultbudget()[:] # Get the current budget allocation
+        budgetvec1 = dcp(budgetvec0)
         budgetlower = zeros(nprogs)
-        budgethigher = zeros(nprogs) + budgetvec.sum() # WARNING, I guess this is ok to start with...
+        budgethigher = zeros(nprogs) + budgetvec1.sum() # WARNING, I guess this is ok to start with...
         
         
         ##########################################################################################################################
@@ -331,19 +334,19 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         ##########################################################################################################################
         
         # First, try infinite money
-        targetsmet = moneycalc(budgetvec+infmoney, **args)
+        targetsmet = moneycalc(budgetvec1+infmoney, **args)
         if not(targetsmet):
             print("Warning, infinite allocation can't meet targets")
             break
         
         # Next, try no money
-        targetsmet = moneycalc(budgetvec/infmoney, **args)
+        targetsmet = moneycalc(budgetvec1/infmoney, **args)
         if targetsmet:
             print("Warning, even zero allocation meets targets")
             break
         
         # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
-        results = moneycalc(budgetvec, results=True, **args)
+        results = moneycalc(budgetvec1, results=True, **args)
         absreductions = odict() # Absolute reductions requested, for setting weights
         for key in objectives['keys']:
             absreductions[key] = results.outcomes['baseline'][key]*objectives[key+'frac'] # e.g. 1000 deaths * 40% reduction = 400 deaths
@@ -356,7 +359,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         
         ##########################################################################################################################
         ## Now run an optimization on the current budget
-        budgetvec2, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvec2, fval, exitflag, output = asd(outcomecalc, budgetvec1, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         
         # See if objectives are met
@@ -375,6 +378,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
             targetsmet = moneycalc(budgetvec2*fundingfactor, **args)
             printv('Current funding factor: %f' % fundingfactor, 4, verbose)
         
+        ##########################################################################################################################
         # Re-optimize based on this fairly close allocation
         budgetvec3 = budgetvec2*fundingfactor # Calculate new budget vector
         totalbudget = budgetvec3.sum() # Calculate new total funding
@@ -382,19 +386,32 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         budgethigher = zeros(nprogs) + totalbudget # Reset funding maximum
         budgetvec4, fval, exitflag, output = asd(outcomecalc, budgetvec3, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
-        
+        # Check that targets are still met
+        targetsmet = moneycalc(budgetvec4, **args)
+        if targetsmet: budgetvec5 = dcp(budgetvec4) # Yes, keep them
+        else: budgetvec5 = dcp(budgetvec3) # No, go back to previous version that we know worked
+                
+        # And finally, home in on a solution
+        upperlim = 1.0
+        lowerlim = 1.0/fundingchange
+        while (upperlim-lowerlim>tolerance): # Keep looping until they converge to within "tolerance" of the budget
+            fundingfactor = (upperlim+lowerlim)/2
+            targetsmet = moneycalc(budgetvec5*fundingfactor, **args)
+            printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 4, verbose)
+            if targetsmet: upperlim=fundingfactor
+            else: lowerlim=fundingfactor
+        budgetvec6 = budgetvec5*upperlim # Final budget is new upper limit
         
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    orig = outcomecalc(budgetvec, outputresults=True, **args)
-    new = outcomecalc(budgetvecnew, outputresults=True, **args)
+    orig = moneycalc(budgetvec0, outputresults=True, **args)
+    new = moneycalc(budgetvec6, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=tmpresults, name='optimization-%s-%s' % (parsetname, progsetname))
+    multires = Multiresultset(resultsetlist=tmpresults, name='minmoney-%s-%s' % (parsetname, progsetname))
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
-        
         multires.budgetyears[key] = tmpresults[k].budgetyears
     
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
