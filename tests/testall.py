@@ -26,7 +26,6 @@ MASTER = [
 'testscenarios',
 'testcalibration',
 'testoptimization',
-'benchmark'
 ]
 
 ## Other tests, for completeness -- not run by default since a subset of the other tests and/or does not make sense to run in batch
