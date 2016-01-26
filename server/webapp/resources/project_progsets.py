@@ -214,9 +214,8 @@ class ProgsetData(Resource):
 
         project_entry = load_project(project_id)
         project = project_entry.hydrate()
-        parset = parset_entry.hydrate()
         if project.data != {}:
-            program_list = get_default_programs(parset)
+            program_list = get_default_programs(project)
         else:
             program_list = []
 
