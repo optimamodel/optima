@@ -89,8 +89,10 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
     popsize = dcp(simpars['popsize']) # Population sizes
     
-    # Infection propabilities
-    transinj = simpars['transinj']      # Injecting
+    # Infection probabilities
+    transinj = simpars['transinj']          # Injecting
+    mtctbreast = simpars['mtctbreast']      # MTCT with breastfeeding
+    mtctnobreast = simpars['mtctnobreast']  # MTCT with breastfeeding
 
     # Population characteristics
     male = simpars['male']          # Boolean array, true for males
@@ -105,6 +107,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     circum   = simpars['circum']    # Prevalence of circumcision (P)
     stiprev  = simpars['stiprev']   # Prevalence of STIs (P)
     prep     = simpars['prep']      # Prevalence of PrEP (P)
+    numpmtct = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
+    usepmtctprop=True if all(numpmtct<1) else False
 
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
@@ -121,6 +125,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     effcirc   = simpars['effcirc'] * circum  # Circumcision effect
     effprep   = simpars['effprep'] * prep    # PrEP effect
     effcondom = simpars['effcondom']         # Condom effect
+    effpmtct  = simpars['effpmtct']          # PMTCT effect
     effost    = simpars['effost'] * ostprev  # OST effect
     
     # Calculations...used to be inside time loop
@@ -324,10 +329,43 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ###############################################################################
         ## Calculate births and mother-to-child-transmission
         ###############################################################################
-        birthby = simpars['birth'][:,t] * popsize[:,t]
-        birthsto = zeros(npops)
-        for pop in birthby:
-            birthsto[pop] += 
+
+        ontreatment = usvl+svl if usecascade else tx
+        eligible = dx+care+lost+off if usecascade else dx
+
+        effmtct  = mtctbreast*simpars['breast'][t] + mtctnobreast*(1-simpars['breast'][t]) # Effective MTCT transmission
+        pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
+
+        for p1 in range(npops):
+
+            allbirthrates = simpars['birthmatrix'][p1, :] * simpars['birth'][p1, t]
+            alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+            
+            for p2 in range(npops):
+
+                thisbirthrate  = allbirthrates[p2]
+                
+                if thisbirthrate:
+                    popbirths      = sum(thisbirthrate * dt * people[:, p1, t])
+                    mtctundx       = (thisbirthrate * dt * sum(people[undx, p1, t])) * effmtct # Births to undiagnosed mothers
+                    mtcttx         = (thisbirthrate * dt * sum(people[ontreatment, p1, t]))  * pmtcteff # Births to mothers on treatment
+                    thiseligbirths = (thisbirthrate * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+    
+                    if usepmtctprop: # All numbers less than 1: assume it's a proportion
+                        receivepmtct = numpmtct[t]*thiseligbirths # Births protected by PMTCT -- constrained by number eligible 
+                    else: # It's a number
+                        receivepmtct = min(numpmtct[t]*dt*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                    
+                    mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+                    mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+                    popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+                    
+                    raw['mtct'][p2, t] += popmtct                        
+                    
+                    people[undx[0], p2, t] += popmtct # HIV+ babies assigned to undiagnosed compartment
+                    people[uncirc, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+
+
 
 
 
@@ -359,7 +397,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw['inci'][:,t] = (newinfections)/float(dt)  # Store new infections AND new MTCT births
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        raw['inci'][:,t] = (newinfections + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         for cd4 in range(ncd4):

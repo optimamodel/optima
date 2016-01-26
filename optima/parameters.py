@@ -416,6 +416,14 @@ def makepars(data, label=None, verbose=2):
             fullbirthmatrix[len(popkeys[:keyno])] = normalised_birthmatrix[sum(data['pops']['female'][:keyno])]
     pars['birthmatrix'] = fullbirthmatrix 
 
+    # Create age transition matrix from age data
+    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['birthmatrix']]
+    fullbirthmatrix = zeros((len(popkeys),len(popkeys)))
+    for keyno, key in enumerate(popkeys):
+        if data['pops']['female'][keyno]:
+            fullbirthmatrix[len(popkeys[:keyno])] = normalised_birthmatrix[sum(data['pops']['female'][:keyno])]
+    pars['birthmatrix'] = fullbirthmatrix 
+
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
