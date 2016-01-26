@@ -78,7 +78,7 @@ def defaultobjectives(which='outcome', verbose=2):
         objectives['budget'] = 1e6 # "Annual budget to optimize"
         objectives['deathweight'] = 5 # "Death weighting"
         objectives['inciweight'] = 1 # "Incidence weighting"
-        objectives['deathsfrac'] = None # Fraction of deaths to get to
+        objectives['deathfrac'] = None # Fraction of deaths to get to
         objectives['incifrac'] = None # Fraction of incidence to get to
     elif which=='money':
         objectives['base'] = 2015 # "Baseline year to compare outcomes to"
@@ -87,7 +87,7 @@ def defaultobjectives(which='outcome', verbose=2):
         objectives['budget'] = None # "Annual budget to optimize"
         objectives['deathweight'] = None # "Death weighting"
         objectives['inciweight'] = None # "Incidence weighting"
-        objectives['deathsfrac'] = 0.5 # Fraction of deaths to get to
+        objectives['deathfrac'] = 0.5 # Fraction of deaths to get to
         objectives['incifrac'] = 0.5 # Fraction of incidence to get to
     else: 
         raise Exception('"which" keyword argument must be either "outcome" or "money"')
@@ -336,12 +336,14 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         # First, try infinite money
         targetsmet = moneycalc(budgetvec1+infmoney, **args)
         if not(targetsmet):
+            budgetvecfinal = budgetvec1+infmoney
             print("Warning, infinite allocation can't meet targets")
             break
         
         # Next, try no money
         targetsmet = moneycalc(budgetvec1/infmoney, **args)
         if targetsmet:
+            budgetvecfinal = budgetvec1/infmoney
             print("Warning, even zero allocation meets targets")
             break
         
@@ -400,11 +402,11 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
             printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 4, verbose)
             if targetsmet: upperlim=fundingfactor
             else: lowerlim=fundingfactor
-        budgetvec6 = budgetvec5*upperlim # Final budget is new upper limit
+        budgetvecfinal = budgetvec5*upperlim # Final budget is new upper limit
         
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = moneycalc(budgetvec0, outputresults=True, **args)
-    new = moneycalc(budgetvec6, outputresults=True, **args)
+    new = moneycalc(budgetvecfinal, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
@@ -414,7 +416,6 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
         multires.budgetyears[key] = tmpresults[k].budgetyears
     
-    multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires
