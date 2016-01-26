@@ -72,14 +72,14 @@ class Portfolio(object):
     #######################################################################################################
         
         
-    def genBOCs(self, objectives=None):
+    def genBOCs(self, objectives=None, maxtime=None):
         ''' Loop through stored projects and construct budget-outcome curves '''
         if objectives == None: objectives = defaultobjectives()
         for x in self.projects:
             p = self.projects[x]
             if p.getBOC(objectives) == None:
                 print('Generating BOC for project: %s' % p.name)
-                p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
+                p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=maxtime)   # WARNING!!! OPTIMISES FOR 1ST ONES
             else:
                 print('BOC does not need to be generated for project: %s' % p.name)
                 
