@@ -5,7 +5,7 @@ from optima import __version__ # Get current version
 from optima import defaultobjectives, asd
 
 #######################################################################################################
-## Portfolio class -- this contains everything else!
+## Portfolio class -- this contains Projects and GA optimisations
 #######################################################################################################
 
 class Portfolio(object):
@@ -59,13 +59,23 @@ class Portfolio(object):
         output += objrepr(self)
         return output
 
+
     #######################################################################################################
     ## Methods to handle common tasks
     #######################################################################################################
 
     def addproject(self, project):
         ''' Store a project within portfolio '''
-        self.projects[project.uid] = project        
+        self.projects[project.uid] = project
+        
+    def getdefaultbudgets(self):
+        ''' Get the default allocation totals of each project '''
+        budgets = []
+        for x in self.projects:
+            p = self.projects[x]
+            budgets.append(sum(p.progsets[0].getdefaultbudget().values()))      # WARNING!!! SELECTS 1ST PROGSET
+        return budgets
+    
     
     #######################################################################################################
     ## Methods to perform major tasks
@@ -109,7 +119,7 @@ class Portfolio(object):
             c += 1
             
             
-    def minBOCoutcomes(self, objectives, seedbudgets = None):
+    def minBOCoutcomes(self, objectives, seedbudgets = None, maxtime = None):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
         BOClist = []
         grandtotal = objectives['budget']
@@ -122,16 +132,29 @@ class Portfolio(object):
             p = self.projects[x]
             if p.getBOC(objectives) == None:
                 print('Generating missing BOC for project: %s' % p.name)
-                p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
+                p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=maxtime)   # WARNING!!! OPTIMISES FOR 1ST PARSET & PROGSET
             BOClist.append(p.getBOC(objectives))
         return minBOCoutcomes(BOClist, grandtotal, budgetvec = seedbudgets)
         
         
-    def fullGA(self, objectives, budgetratio = None):
+    def fullGA(self, objectives, budgetratio = None, maxtime = None):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
+        objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
+        
+        gaoptim = GAOptim(objectives = objectives)
+        self.gaoptims[gaoptim.uid] = gaoptim
+        
+        if budgetratio == None:
+            budgetratio = []
+            for x in self.projects:
+                p = self.projects[x]
+                budgetratio.append(sum(p.progsets[0].getdefaultbudget().values()))      # WARNING!!! OPTIMISES FOR 1ST PROGSET
+        
         initbudgets = scaleratio(budgetratio,objectives['budget'])
-        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets)
+        optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
         self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
+        
+        gaoptim.complete(self.projects,initbudgets,optbudgets)
         
         
         
@@ -178,6 +201,62 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxit
     X = constrainbudgets(X, grandtotal, minbound)
 
     return X
+
+
+
+#%% Geospatial analysis runs are stored in a GAOptim object.
+
+class GAOptim(object):
+    """
+    GAOPTIM
+
+    Short for geospatial analysis optimisation. This class stores results from an optimisation run.
+
+    Version: 2016jan26 by davidkedz
+    """
+        #######################################################################################################
+    ## Built-in methods -- initialization, and the thing to print if you call a portfolio
+    #######################################################################################################
+
+    def __init__(self, name='default', objectives = None):
+        ''' Initialize the GA optim object '''
+
+        ## Define the structure sets
+        self.objectives = objectives
+        self.summary = odict()
+
+        ## Define other quantities
+        self.name = name
+
+        ## Define metadata
+        self.uid = uuid()
+        self.created = today()
+        self.modified = today()
+        self.version = __version__
+        self.gitbranch, self.gitversion = gitinfo()
+
+        return None
+
+
+    def __repr__(self):
+        ''' Print out useful information when called '''
+        output = '============================================================\n'
+        output += '      GAOptim name: %s\n'    % self.name
+        output += '\n'
+        output += '    Optima version: %0.1f\n' % self.version
+        output += '      Date created: %s\n'    % getdate(self.created)
+        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '        Git branch: %s\n'    % self.gitbranch
+        output += '       Git version: %s\n'    % self.gitversion
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+    
+    
+    def complete():
+        pass
+
 
 ## -*- coding: utf-8 -*-
 #"""

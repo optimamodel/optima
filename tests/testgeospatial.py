@@ -75,6 +75,7 @@ if 'makeportfolio' in tests:
     print('Running make portfolio test...')
     from optima import Portfolio, Project, loadobj
     from optima.defaults import defaultprogset
+    from copy import deepcopy as dcp
     F = Portfolio()
     
     try:
@@ -109,6 +110,7 @@ if 'makeportfolio' in tests:
         R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         P1.addprogset(name='default', progset=R)
+        R = dcp(R)
         R.rmprogram('HTC')
         P2.addprogset(name='default', progset=R)
         # ----------
@@ -130,7 +132,8 @@ if 'generateBOCs' in tests:
     from optima import defaultobjectives
     
     objectives = defaultobjectives()
-    F.genBOCs(objectives)
+#    objectives['inciweight'] = 5
+    F.genBOCs(objectives)#, maxtime = 20)
     F.plotBOCs(objectives)    
     
     print('Saving projects with BOCs...')

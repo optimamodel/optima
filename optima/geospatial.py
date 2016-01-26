@@ -18,9 +18,10 @@ from Queue import Queue
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-def geogui():
+def geogui(redirect = False):
     '''
     Open the GUI for doing geospatial analysis.
+    Can redirect stdout to textbox.
     
     Version: 2016jan23
     '''
@@ -148,6 +149,7 @@ def geogui():
         portfolio = Portfolio()
         for project in projectslist:
             portfolio.addproject(project)
+        projectsbox.append('\nBudget value to start with initial allocations in each project: %f' % sum(portfolio.getdefaultbudgets()))
         return None
     
     def loadport():
@@ -164,8 +166,7 @@ def geogui():
                 print('Portfolio file "%s" loaded' % filepath)
             except: print('File "%s" is not an Optima portfolio file' % filepath)
         projectsbox.setText('\n'.join([proj.name for proj in portfolio.projects.values()]))
-        portfolio = Portfolio()
-        for project in projectslist: portfolio.addproject(project)
+        projectsbox.append('\nBudget value to start with initial allocations in each project: %f' % sum(portfolio.getdefaultbudgets()))
         return None
     
     
@@ -175,7 +176,7 @@ def geogui():
         for key in objectives.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives)
-        portfolio.fullGA(objectives, budgetratio = [2,1])   # BUDGETRATIO OBVIOUSLY TEMPORARY
+        portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets())
         return None
     
     
@@ -280,55 +281,57 @@ def geogui():
         objectiveinputs[key].move(left+120, 200+k*30)
         
     ##############################################################################################################################
-    ## Redirect attempt
+    ## Redirection of stdout
     ##############################################################################################################################    
- 
-    @pyqtSlot(str)
-    def append_text(text):
-        projectsbox.moveCursor(QTextCursor.End)
-        projectsbox.insertPlainText(text)
-   
-    # The new Stream Object which replaces the default stream associated with sys.stdout
-    # This object just puts data in a queue!
-    class WriteStream(object):
-        def __init__(self,queue):
-            self.queue = queue
-    
-        def write(self,text):
-            self.queue.put(text)
-            
-        def flush(self):
-            pass
-    
-    # A QObject (to be run in a QThread) which sits waiting for data to come through a Queue.Queue().
-    # It blocks until data is available, and one it has got something from the queue, it sends
-    # it to the "MainThread" by emitting a Qt Signal 
-    class MyReceiver(QObject):
-        mysignal = pyqtSignal(str)
-    
-        def __init__(self,queue,*args,**kwargs):
-            QObject.__init__(self,*args,**kwargs)
-            self.queue = queue
-    
-        @pyqtSlot()
-        def run(self):
-            while True:
-                text = self.queue.get()
-                self.mysignal.emit(text)    
-    
-    # Create Queue and redirect sys.stdout to this queue
-    queue = Queue()
-    print('Now redirecting stdout to GUI...')
-    sys.stdout.flush()
-    sys.stdout = WriteStream(queue)
-    print('Output display initialised for GUI.')
-    
-    thread = QThread()
-    my_receiver = MyReceiver(queue)
-    my_receiver.mysignal.connect(append_text)
-    my_receiver.moveToThread(thread)
-    thread.started.connect(my_receiver.run)
-    thread.start()
+
+    if redirect: 
+        
+        @pyqtSlot(str)
+        def append_text(text):
+            projectsbox.moveCursor(QTextCursor.End)
+            projectsbox.insertPlainText(text)
+       
+        # The new Stream Object which replaces the default stream associated with sys.stdout
+        # This object just puts data in a queue!
+        class WriteStream(object):
+            def __init__(self,queue):
+                self.queue = queue
+        
+            def write(self,text):
+                self.queue.put(text)
+                
+            def flush(self):
+                pass
+        
+        # A QObject (to be run in a QThread) which sits waiting for data to come through a Queue.Queue().
+        # It blocks until data is available, and one it has got something from the queue, it sends
+        # it to the "MainThread" by emitting a Qt Signal 
+        class MyReceiver(QObject):
+            mysignal = pyqtSignal(str)
+        
+            def __init__(self,queue,*args,**kwargs):
+                QObject.__init__(self,*args,**kwargs)
+                self.queue = queue
+        
+            @pyqtSlot()
+            def run(self):
+                while True:
+                    text = self.queue.get()
+                    self.mysignal.emit(text)    
+        
+        # Create Queue and redirect sys.stdout to this queue
+        queue = Queue()
+        print('Now redirecting stdout to GUI...')
+        sys.stdout.flush()
+        sys.stdout = WriteStream(queue)
+        print('Output display initialised for GUI.')
+        
+        thread = QThread()
+        my_receiver = MyReceiver(queue)
+        my_receiver.mysignal.connect(append_text)
+        my_receiver.moveToThread(thread)
+        thread.started.connect(my_receiver.run)
+        thread.start()
     
     #%%
 
