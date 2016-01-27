@@ -57,6 +57,7 @@ class Progsets(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
+    @report_exception
     @marshal_with(ProgsetsDb.resource_fields, envelope='progsets')
     def get(self, project_id):
 
@@ -74,6 +75,7 @@ class Progsets(Resource):
         description='Create a progset for the project with the given id.',
         parameters=progset_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
@@ -110,6 +112,7 @@ class Progset(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
+    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -127,6 +130,7 @@ class Progset(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
+    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -151,6 +155,7 @@ class Progset(Resource):
             if progset does not exist, returns an error.
         """
     )
+    @report_exception
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
@@ -180,6 +185,7 @@ class ProgsetData(Resource):
         """,
 
     )
+    @report_exception
     def get(self, project_id, progset_id):
         current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
@@ -196,8 +202,9 @@ class ProgsetData(Resource):
         summary='Uploads data for already created progset',
         parameters=file_upload_form_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(file_resource)
-    def post(self, project_id, progset_id):
+    def post(self, project_id, progset_id, parset_id):
         """
         Uploads Data file, uses it to update the progrset and program models.
         Precondition: model should exist.
