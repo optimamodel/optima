@@ -109,11 +109,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
     if any(injects):
-        numpwid = popsize[injects].sum(axis=0)  # Total number of PWID
+        numpwid = popsize[injects,:].sum(axis=0)  # Total number of PWID
         try: ostprev = numost/numpwid           # Proportion of PWID on OST (P)
-        except: raise Exception('Cannot divide by the number of PWID')
+        except: raise OptimaException('Cannot divide by the number of PWID')
     else:
-        if sum(numost): raise Exception('You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject')
+        if sum(numost): raise OptimaException('You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject')
         else: ostprev = 0.
     
     # Further potential effects on transmission
