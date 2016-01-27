@@ -18,10 +18,10 @@ print statements.
 
 I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
-Version: 2016jan18 by cliffk
+Version: 2016jan27 by cliffk
 """
 
-license = '''
+optimalicense = '''
 Optima HIV -- HIV optimization and analysis tool
 Copyright (C) 2016 by the Optima Consortium
 
@@ -39,7 +39,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-print(license)
+print(optimalicense)
 
 
 
