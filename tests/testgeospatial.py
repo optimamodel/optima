@@ -79,8 +79,8 @@ if 'makeportfolio' in tests:
     
     try:
         print('Loading projects...')
-        P1 = loadobj('test7popsARTandHTC.prj')
-        P2 = loadobj('test7popsART.prj')
+        P1 = loadobj('test7popsFSWandCon.prj')
+        P2 = loadobj('test7popsCon.prj')
     except:
         print('Project files cannot be found.\nNow generating from scratch...')
         P1 = Project(name='Test with Condoms and FSW Programs', spreadsheet='test7pops.xlsx')
@@ -167,13 +167,13 @@ if 'generateBOCs' in tests:
 if 'rungui' in tests and doplot:
     from optima import Project, Portfolio, geogui, saveobj
     
-    P = Project(spreadsheet='test.xlsx')
-    Q = Project(spreadsheet='test.xlsx')
-    F = Portfolio()
-    for proj in [P, Q]: F.addproject(proj)
-    saveobj('test2.prj', P)
-    saveobj('test7.prj', Q)
-    saveobj('test.prt', F)
+#    P = Project(spreadsheet='test.xlsx')
+#    Q = Project(spreadsheet='test.xlsx')
+#    F = Portfolio()
+#    for proj in [P, Q]: F.addproject(proj)
+#    saveobj('test2.prj', P)
+#    saveobj('test7.prj', Q)
+#    saveobj('test.prt', F)
     print('Opening geospatial GUI. It will run after tests are completed.')
 
 
