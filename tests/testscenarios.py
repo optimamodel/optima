@@ -192,7 +192,7 @@ if 'standardscen' in tests:
     
     # Store these in the project
     P.addscenlist(scenlist)
-    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
+#    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
     P.scens[2].active = False # Turn off another scenario
     
     # Run the scenarios

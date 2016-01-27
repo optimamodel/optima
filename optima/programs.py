@@ -16,26 +16,6 @@ from matplotlib.ticker import MaxNLocator
 coveragepars=['numtx','numpmtct','numost','numcircum']
 
 
-def vec2budget(progset=None, budgetvec=None):
-    ''' Little helper function to convert a budget vector into a proper budget odict '''
-    
-    # Validate input
-    if None in [progset, budgetvec]: raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
-    if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
-    
-    # Get budget structure and populate
-    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
-    if len(budget)==len(budgetvec):
-        for k,key in enumerate(budget.keys()):
-            budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
-    else:
-        errormsg = 'Could not convert budget vector into budget: incompatible lengths (%i vs. %i)' % (len(budgetvec), len(budget))
-        raise OptimaException(errormsg)
-    
-    return budget
-
-
-
 class Programset(object):
 
     def __init__(self, name='default', programs=None, default_interaction='random'):
@@ -779,7 +759,9 @@ class Program(object):
 
         return cost_coverage_figure
 
-
+########################################################
+# COST COVERAGE OUTCOME FUNCTIONS
+########################################################
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
     __metaclass__ = abc.ABCMeta
@@ -912,7 +894,9 @@ class CCOF(object):
         pass
 
 
-######## SPECIFIC CCOF IMPLEMENTATIONS
+########################################################
+# COST COVERAGE FUNCTIONS
+########################################################
 class Costcov(CCOF):
     '''Cost-coverage objects'''
 
@@ -947,6 +931,9 @@ class Costcov(CCOF):
         ccopars['t'] = None
         return ccopars
 
+########################################################
+# COVERAGE OUTCOME FUNCTIONS
+########################################################
 class Covout(CCOF):
     '''Coverage-outcome objects'''
 
@@ -962,3 +949,23 @@ class Covout(CCOF):
         ccopars['t'] = None
         return ccopars
 
+########################################################
+# HELPER FUNCTIONS
+########################################################
+def vec2budget(progset=None, budgetvec=None):
+    ''' Function to convert a budget/coverage vector into a budget/coverage odict '''
+    
+    # Validate input
+    if None in [progset, budgetvec]: raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
+    if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
+    
+    # Get budget structure and populate
+    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+    if len(budget)==len(budgetvec):
+        for k,key in enumerate(budget.keys()):
+            budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
+    else:
+        errormsg = 'Could not convert budget vector into budget: incompatible lengths (%i vs. %i)' % (len(budgetvec), len(budget))
+        raise OptimaException(errormsg)
+    
+    return budget

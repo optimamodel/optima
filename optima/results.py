@@ -62,7 +62,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, budgetyears=None, domake=True):
+    def __init__(self, name=None, raw=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -95,6 +95,7 @@ class Resultset(object):
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
         self.budget = budget # Store budget
+        self.coverage = coverage # Store coverage
         self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
         self.settings = settings if settings is not None else Settings()
@@ -301,13 +302,22 @@ class Multiresultset(Resultset):
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
-            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+            if rset.__dict__.get('budget'):
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True)
-            except: 
-                pass # Not a problem if doesn't work
+                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+            elif rset.__dict__.get('coverage'):
+                self.coverage[key]      = rset.coverage
+                self.budgetyears[key] = rset.budgetyears
+                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered
+
+                
+#            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+#                self.budget[key]      = rset.budget
+#                self.budgetyears[key] = rset.budgetyears
+##                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+#            except: 
+#                pass # Not a problem if doesn't work
             
         
         
