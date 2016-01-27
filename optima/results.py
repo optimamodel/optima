@@ -309,17 +309,7 @@ class Multiresultset(Resultset):
             elif rset.__dict__.get('coverage'):
                 self.coverage[key]      = rset.coverage
                 self.budgetyears[key] = rset.budgetyears
-                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered
-
-                
-#            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
-#                self.budget[key]      = rset.budget
-#                self.budgetyears[key] = rset.budgetyears
-##                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-#            except: 
-#                pass # Not a problem if doesn't work
-            
-        
+                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):
