@@ -10,7 +10,7 @@
                   ng-options="p.name for p in state.programSetList"
                   ng-change="populateProgramDropdown()"
                   ng-model="state.selectedProgramSet">
-            <option value="">-- Please select a program --</option>
+            <option value="">-- Please select a program set --</option>
           </select>
         </label>
       </span>
@@ -21,16 +21,22 @@
                     ng-options="p.name for p in state.parsets"
                     ng-change="changeProgram()"
                     ng-model="state.selectedProgram">
-                <option value="">-- Please select a program --</option>
+                <option value="">-- Please select a parameter set --</option>
             </select>
         </label>
       </span>
     </div>
 
     <div style="padding: 40px 0 20px;border-bottom: 1px solid gray;display: flex;">
-      <span class="small_bordered_section" ng-class="{yellowBg: state.activeTab === 'defineCostFunctions'}">Define cost functions</span>
-      <span class="small_bordered_section">Define outcome functions</span>
-      <span class="small_bordered_section">View summary</span>
+      <span class="small_bordered_section"
+            ng-class="{yellowBg: state.activeTab === 'defineCostFunctions'}"
+            ng-click="state.activeTab = 'defineCostFunctions'">Define cost functions</span>
+      <span class="small_bordered_section"
+            ng-class="{yellowBg: state.activeTab === 'defineOutcomeFunctions'}"
+            ng-click="state.activeTab = 'defineOutcomeFunctions'">Define outcome functions</span>
+      <span class="small_bordered_section"
+            ng-class="{yellowBg: state.activeTab === 'viewSummary'}"
+            ng-click="state.activeTab = 'viewSummary'">View summary</span>
     </div>
 
     <div style="margin-top: 2%;width: 40%">
@@ -47,6 +53,24 @@
 
     <div style="margin-top: 2%;width: 40%">
       <h2>FSW Programs</h2>
+    </div>
+
+    <div style="display: flex">
+      <div>Graph to come here</div>
+      <div class="flex-column">
+        <div class="flex-column">
+          <h3>Parameters for defining cost function</h3>
+        </div>
+        <div class="flex-column">
+          <h3>Historical cost and coverage data</h3>
+        </div>
+        <div class="flex-column">
+          <h3>Options for displaying curves</h3>
+        </div>
+        <div class="flex-column">
+          <h3>Add notes</h3>
+        </div>
+      </div>
     </div>
 
   </div>
