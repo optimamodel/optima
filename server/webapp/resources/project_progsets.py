@@ -263,7 +263,10 @@ class ProgsetParams(Resource):
         param_names = set([p['param'] for p in progset_be.targetpars])
         params = [{
             'name': name,
-            'populations': progset_be.progs_by_targetpar(name).keys()
+            'populations': [{
+                'pop': pop,
+                'programs': [program.name for program in progs]
+            } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()]
         } for name in param_names]
 
         return params
