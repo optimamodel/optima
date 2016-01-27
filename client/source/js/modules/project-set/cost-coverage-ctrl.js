@@ -4,7 +4,9 @@ define(['./module', 'underscore'], function (module, _) {
   module.controller('ModelCostCoverageController', function ($scope, $http,
     $state, activeProject, modalService, projectApiService) {
 
-    $scope.state = {};
+    $scope.state = {
+      activeTab: 'defineCostFunctions'
+    };
     var openProject = activeProject.data;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
@@ -19,17 +21,16 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
-    projectApiService.getDefault(openProject.id)
-      .success(function (response) {
-        $scope.state.programs = response.programs;
-      });
-
     $http.get('/api/project/' + openProject.id + '/progsets' )
       .success(function (response) {
         if(response.progsets) {
           $scope.state.programSetList = response.progsets;
         }
       });
+
+    $scope.populateProgramDropdown = function() {
+      $scope.state.programs = $scope.state.selectedProgramSet.programs;
+    };
 
     $http.get('/api/project/' + openProject.id + '/parsets').
       success(function (response) {
