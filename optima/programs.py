@@ -3,8 +3,9 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2015nov04 by robynstuart
+Version: 2016jan27
 """
+
 from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat
 import abc
@@ -13,6 +14,27 @@ from pylab import figure, figtext
 from matplotlib.ticker import MaxNLocator
 
 coveragepars=['numtx','numpmtct','numost','numcircum']
+
+
+def vec2budget(progset=None, budgetvec=None):
+    ''' Little helper function to convert a budget vector into a proper budget odict '''
+    
+    # Validate input
+    if None in [progset, budgetvec]: raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
+    if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
+    
+    # Get budget structure and populate
+    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+    if len(budget)==len(budgetvec):
+        for k,key in enumerate(budget.keys()):
+            budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
+    else:
+        errormsg = 'Could not convert budget vector into budget: incompatible lengths (%i vs. %i)' % (len(budgetvec), len(budget))
+        raise OptimaException(errormsg)
+    
+    return budget
+
+
 
 class Programset(object):
 
@@ -44,8 +66,8 @@ class Programset(object):
 
     def getsettings(self):
         ''' Try to get the freshest settings available '''
-        print('Warning, using default settings with program set "%s"' % self.name)
-        settings = Settings()
+#        print('Warning, using default settings with program set "%s"' % self.name)
+        settings = Settings() # WARNING KLUDGY should fix by having project an attribute of Programset
         return settings
         
     def gettargetpops(self):
@@ -75,7 +97,7 @@ class Programset(object):
         '''Sets up the required coverage-outcome curves.
            Parameters for actually defining these should be added using 
            R.covout[paramtype][parampop].addccopar()'''
-        if not self.__dict__.get('covout'): self.covout = odict()
+        if not hasattr(self, 'covout'): self.covout = odict()
 
         for targetpartype in self.targetpartypes: # Loop over parameter types
             if not self.covout.get(targetpartype): self.covout[targetpartype] = {} # Initialize if it's not there already
@@ -233,8 +255,9 @@ class Programset(object):
 
         # Validate inputs
         if type(t) in [int, float]: t = [t]
-        if not isinstance(budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
-        if not isinstance(budget,odict): budget = odict(budget)
+        if isinstance(budget, list) or isinstance(budget,type(array([]))):
+            budget = vec2budget(self, budget) # It seems to be a vector: convert to odict
+        if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget = budget.sort([p.short for p in self.programs.values()])
 
         # Get program-level coverage for each program
