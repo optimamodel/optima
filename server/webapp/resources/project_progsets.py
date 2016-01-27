@@ -1,7 +1,9 @@
+import json
+
 from flask import current_app
 
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with
+from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 from flask import helpers
 
@@ -361,3 +363,19 @@ class CostCoverage(Resource):
             return {"params": [], "data": {"t": [], "cost": [], "coverage": []}}
 
         return program_entry
+
+
+    @swagger.operation(
+        description="Replace costcoverage parameters and data for the given program.")
+    def put(self, project_id, progset_id, program_id):
+
+        program_entry = load_program(project_id, progset_id, program_id)
+
+        from flask import request
+
+        args = json.loads(request.data)
+        program_entry.blob = args
+        db.session.flush()
+        db.session.commit()
+
+        return program_entry.blob
