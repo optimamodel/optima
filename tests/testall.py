@@ -35,7 +35,7 @@ OTHER = [
 ]
 
 ## Optionally run everything
-#MASTER += OTHER
+MASTER += OTHER
 
 ## Run the tests in a loop
 VARIABLES = []

@@ -260,6 +260,7 @@ class Multiresultset(Resultset):
         self.nresultsets = len(resultsetlist)
         self.keys = []
         self.budget = odict()
+        self.coverage = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -303,8 +304,9 @@ class Multiresultset(Resultset):
             try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True)
             except: 
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 pass # Not a problem if doesn't work
             
         
