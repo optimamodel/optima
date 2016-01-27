@@ -9,16 +9,16 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016jan20 by davidkedz
+Version: 2016jan27
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-#'forcerefresh',
-#'makeportfolio',
-#'generateBOCs',
+'forcerefresh',
+'makeportfolio',
+'generateBOCs',
 'rungui',
 ]
 
@@ -83,8 +83,8 @@ if 'makeportfolio' in tests:
         P2 = loadobj('test7popsCon.prj')
     except:
         print('Project files cannot be found.\nNow generating from scratch...')
-        P1 = Project(name='Test with Condoms and FSW Programs', spreadsheet='test7pops.xlsx')
-        P2 = Project(name='Test with Condoms only', spreadsheet='test7pops.xlsx')
+        P1 = Project(name='Test with Condoms and FSW Programs', spreadsheet='generalized.xlsx')
+        P2 = Project(name='Test with Condoms only', spreadsheet='generalized.xlsx')
         
         # THIS PROGSET CONSTRUCTION IS MOMENTARY UNTIL NICE EXAMPLE PRJ FILES EXIST.
         # ----------
@@ -147,8 +147,7 @@ if 'generateBOCs' in tests:
     t = tic()
 
     print('Running BOC generation test...')
-    from optima import Project, saveobj
-    from optima import defaultobjectives
+    from optima import saveobj, defaultobjectives
     
     objectives = defaultobjectives()
 #    objectives['inciweight'] = 5
@@ -165,22 +164,16 @@ if 'generateBOCs' in tests:
 
 
 if 'rungui' in tests and doplot:
-    from optima import Project, Portfolio, geogui, saveobj
+    t = tic()
+
+    print('Running geo GUI test...')
+    from optima import geogui
+    geogui()
     
-#    P = Project(spreadsheet='test.xlsx')
-#    Q = Project(spreadsheet='test.xlsx')
-#    F = Portfolio()
-#    for proj in [P, Q]: F.addproject(proj)
-#    saveobj('test2.prj', P)
-#    saveobj('test7.prj', Q)
-#    saveobj('test.prt', F)
-    print('Opening geospatial GUI. It will run after tests are completed.')
+    done(t)
 
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
 toc(T)
-
-# The actual GUI is delayed until after the rest of test output, otherwise that too will be displayed in the widget.
-if 'rungui' in tests:
-    geogui()
+    
