@@ -3,6 +3,8 @@ import json
 from optima_test_base import OptimaTestCase
 from flask import helpers
 from server.api import app
+from server.webapp.dbmodels import ProjectDb
+
 
 class ParsetTestCase(OptimaTestCase):
 
@@ -22,7 +24,6 @@ class ParsetTestCase(OptimaTestCase):
         with open(file_path) as f:
             self.client.post('api/project/{}/spreadsheet'.format(self.project_id), data=dict(file=f))
 
-
     def test_get_parsets(self):
         # retrieve parsets  project -> id -> parsets
         response = self.client.get('api/project/{}/parsets'.format(self.project_id))
@@ -33,6 +34,8 @@ class ParsetTestCase(OptimaTestCase):
         self.assertEqual(data['parsets'][0]['name'], 'default')
 
     def test_retrieve_calibrated_parameters(self):
+        project = ProjectDb.query.get(self.project_id)
+
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
         parsets_data = json.loads(parsets_response.data)
         parset_id = parsets_data['parsets'][0]['id']
@@ -45,7 +48,11 @@ class ParsetTestCase(OptimaTestCase):
         self.assertEqual(calibration_data['parset_id'], parset_id)
         self.assertTrue(len(calibration_data['parameters']) > 0)
         self.assertTrue(len(calibration_data['selectors']) > 0)
-        self.assertEqual(len(calibration_data['graphs']), 2)
+
+        # We should expect len(populations) + 2 graphs -- total + one for each
+        # population + one with all populations together.
+        self.assertEqual(len(calibration_data['graphs']),
+                         len(project.populations) + 2)
 
     def test_show_other_graph(self):
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
@@ -87,7 +94,14 @@ class ParsetTestCase(OptimaTestCase):
 
         self.assertTrue('calibration' in recalibrated_res_data)
         recalibrated_data = recalibrated_res_data['calibration']
-        self.assertEqual(len(recalibrated_data['graphs']), 2)
+
+        project = ProjectDb.query.get(self.project_id)
+
+        # We should expect len(populations) + 2 graphs -- total + one for each
+        # population + one with all populations together.
+        self.assertEqual(len(recalibrated_data['graphs']),
+                         len(project.populations) + 2)
+
         self.assertIn('aidstest', [p['key'] for p in recalibrated_data['parameters']])
         for p in recalibrated_data['parameters']:
             if p['key'] == 'aidstest':

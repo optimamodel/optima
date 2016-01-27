@@ -20,19 +20,20 @@ result_fields = {
 
 
 class Parameters(Resource):
+
     @swagger.operation(
         summary="List default parameters"
     )
+    @report_exception
     @marshal_with(result_fields, envelope='parameters')
     @login_required
-    @report_exception
     def get(self, project_id):
         """Gives back project parameters (modifiable)"""
 
         from server.webapp.utils import load_project
-        from optima.parameters import partable, readpars, Par
+        from optima.parameters import partable, loadpartable, Par
 
-        default_pars = [par['short'] for par in readpars(partable)]
+        default_pars = [par['short'] for par in loadpartable(partable)]
 
         project = load_project(project_id, raise_exception=True)
         be_parsets = [parset.hydrate() for parset in project.parsets]
@@ -66,6 +67,8 @@ populations_fields = {
     "age_to": fields.Integer,
     "female": fields.Boolean,
     "male": fields.Boolean,
+    "injects": fields.Boolean,
+    "sexworker": fields.Boolean,
     "name": fields.String,
     "short_name": fields.String,
 }
@@ -76,9 +79,9 @@ class Populations(Resource):
     @swagger.operation(
         summary='Gives back default populations'
     )
+    @report_exception
     @marshal_with(populations_fields, envelope='populations')
     @login_required
-    @report_exception
     def get(self):
         from server.webapp.populations import populations
 
