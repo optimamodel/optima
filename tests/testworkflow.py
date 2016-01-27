@@ -74,7 +74,7 @@ if 'makeprograms' in tests:
     t = tic()
 
     print('Making a default programset...')
-    from optima.defaults import defaultprogset
+    from defaults import defaultprogset
     R = defaultprogset(P.parsets['default'], addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
     
     # Modify target pars and pops
