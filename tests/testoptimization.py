@@ -5,7 +5,7 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan05 by cliffk
+Version: 2016jan24 by cliffk
 """
 
 ## Define tests to run here!!!
@@ -100,7 +100,6 @@ if 'setup' in tests:
 
 
 
-
 ## Minimize outcomes test
 if 'minimizeoutcomes' in tests:
     t = tic()
@@ -116,10 +115,8 @@ if 'minimizeoutcomes' in tests:
     print('Optimal allocation: '),
     print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
     if doplot: 
-        from optima import plotmismatch, plotallocs, plotresults
-        plotmismatch(P.results[-1])
-        plotallocs(P.results[-1])
-        plotresults(P.results[-1], toplot=['prev-tot', 'prev-per', 'numinci-sta'])
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
     
     done(t)
 

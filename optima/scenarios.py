@@ -88,7 +88,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
-    multires = Multiresultset(allresults)
+    multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
     printv('...done running scenarios.', 2, verbose)
@@ -151,7 +151,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
                     scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
-                if not isinstance(scen.budget,dict): raise Exception('Currently only accepting budgets as dictionaries.')
+                if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
                 scen.budget = scen.budget.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
 
