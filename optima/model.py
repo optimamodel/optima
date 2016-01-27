@@ -147,7 +147,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     suppressedfrac   = successprop[0] #0.75 # Assume 75% of those on treatment are suppressed to begin with
-    fraccare = 0.7 #Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
+    fraccare = 0.5 #Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
     
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
