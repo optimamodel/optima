@@ -431,9 +431,11 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
 ##################################################################
     
     
-def plotallocs(multires=None, which=None, die=True, verbose=2):
+def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+
+    Results object must be of Multiresultset type.
     
     "which" should be either 'budget' or 'coverage'
     
@@ -453,19 +455,14 @@ def plotallocs(multires=None, which=None, die=True, verbose=2):
     alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
-
-    fig = figure(figsize=(10,6))
-    fig.subplots_adjust(left=0.10) # Less space on left -- WARNING, do these have any effect?
-    fig.subplots_adjust(right=0.98) # Less space on right
+    
+    fig = figure(figsize=figsize)
     fig.subplots_adjust(bottom=0.30) # Less space on bottom
-    fig.subplots_adjust(wspace=0.30) # More space between
-    fig.subplots_adjust(hspace=0.40) # More space between
-    
+    fig.subplots_adjust(hspace=0.30) # More space between
     colors = gridcolormap(nprogs)
-    
     ax = []
     ymax = 0
-
+    
     for plt in range(nallocs):
         nbudgetyears = len(budgetyearstoplot[plt])
         ax.append(subplot(nallocs,1,plt+1))
