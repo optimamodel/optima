@@ -32,7 +32,7 @@
       </div>
     </div>
     <div>
-      <div class="section grid">
+      <div class="section grid" ng-show="state.program.parameters.length > 0">
         <h3>
           Populations
         </h3>
@@ -69,7 +69,7 @@
           </div>
         </div>
       </div>
-      <div class="section grid">
+      <div class="section grid" ng-show="state.program.parameters.length">
         <h3>
           Parameters in model influenced by this program
         </h3>
