@@ -223,7 +223,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
 
 
-def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False, verbose=2):
+def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False, verbose=2, debug=True):
     ''' Function to evaluate whether or not targets have been met for a given budget vector (note, not time-varying) '''
     # Validate input
     if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
@@ -256,6 +256,9 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
         final[key] = thisresult[finalind]
         if final[key] > baseline[key]*(1-targets[key]): targetsmet = False # Targets are NOT met
 
+    # Optionally debug
+    if debug: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    
     # Output results
     if outputresults:
         results.outcomes = odict([('baseline',baseline), ('final',final)])
@@ -274,7 +277,7 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=True):
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=False):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
@@ -338,9 +341,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         if not(targetsmet):
             budgetvecfinal = budgetvec1+infmoney
             printv("Warning, infinite allocation can't meet targets:", 1, verbose)
-            if debug: 
-                results = moneycalc(budgetvecfinal, outputresults=True, **args)
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            if debug: results = moneycalc(budgetvecfinal, outputresults=True, debug=True, **args)
             break
         else:
             printv("Infinite allocation meets targets, as expected; proceeding...", 1, verbose)
@@ -350,9 +351,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         if targetsmet:
             budgetvecfinal = budgetvec1/infmoney
             print("Warning, even zero allocation meets targets")
-            if debug: 
-                results = moneycalc(budgetvecfinal, outputresults=True, **args)
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            if debug: results = moneycalc(budgetvecfinal, outputresults=True, debug=True, **args)
             break
         else:
             printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
