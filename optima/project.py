@@ -398,11 +398,23 @@ class Project(object):
     ## Methods to handle specialised tasks (i.e. for geospatial analysis)
     #######################################################################################################
         
-    def genBOC(self, budgetlist=[10000,100000,1000000,10000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        projectBOC = BOC()        
+        projectBOC = BOC()
         if objectives == None: objectives = defaultobjectives()
         projectBOC.objectives = objectives
+        
+        if budgetlist == None:
+            if not progsetname == None:
+                baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
+            else:
+                try:
+                    baseline = sum(self.progsets[0].getdefaultbudget().values())
+                except:
+                    OptimaException('Error: No progsets associated with project for which BOC is being generated!')
+            budgetlist = [x*baseline for x in [0.1,0.3,0.6,1.0,3.0,6.0,10.0]]
+                
+        
         for budget in budgetlist:
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
