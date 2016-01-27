@@ -31,7 +31,7 @@
                 ng-options="category for category in state.categories"></select>
       </div>
     </div>
-    <div ng-if="(state.program.populations && state.program.populations.length > 0) || (state.program.parameters && state.program.parameters.length > 0)">
+    <div>
       <div class="section grid">
         <h3>
           Populations
@@ -75,10 +75,10 @@
         </h3>
       </div>
       <div ng-repeat="entry in state.program.parameters">
-        <div class="section well" style="margin: 10px 0">
+        <div class="grid well">
           <button type="button"
                   class="btn __white"
-                  style="float: right; text-align: right; margin-top: 10px"
+                  style="float: right; text-align: right;"
                   ng-click="removeParameter($index)">Remove</button>
           <div class="section grid">
             <div class="++1 10 1++">
@@ -86,14 +86,15 @@
                 <input type="checkbox" ng-model="entry.active">
                 Active
               </label>
-            </div>
-
+            </div><br>
+            <div class="section_dashed_border">
             <div class="section grid">
               <div class="++1 10 1++">
                 Parameters
               </div>
               <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)">
               </select>
+            </div>
             </div>
           </div>
           <div class="section grid" ng-if="entry.parameterObj.pships.length === 0 && entry.populations && entry.populations.length > 0">
