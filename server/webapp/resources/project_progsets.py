@@ -35,6 +35,18 @@ program_parser.add_arguments({
     'addData': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
 })
 
+query_program_parser = RequestParser()
+query_program_parser.add_arguments({
+    'name': {'required': True},
+    'short': {},
+    'short_name': {},
+    'category': {'required': True},
+    'active': {'type': bool, 'default': False},
+    'parameters': {'type': list, 'dest': 'pars'},
+    'populations': {'type': list, 'dest': 'targetpops'},
+})
+
+
 
 progset_parser = RequestParser()
 progset_parser.add_arguments({
@@ -230,3 +242,48 @@ class ProgsetData(Resource):
             'result': 'Progset %s is updated' % progset_entry.name,
         }
         return reply
+
+
+
+class Programs(Resource):
+    """
+    Programs for a given progset.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Get programs for the progset with the given ID.",
+        responseClass=ProgramsDb.__name__)
+
+    @marshal_with(ProgramsDb.resource_fields, envelope='programs')
+    def get(self, project_id, progset_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+
+        progset_entry = load_progset(project_id, progset_id)
+        if progset_entry is None:
+            raise ProgsetDoesNotExist(id=progset_id)
+
+        reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
+        return reply
+
+    @swagger.operation(
+        description="Create a program for the progset with the given ID.",
+        parameters=program_parser.swagger_parameters())
+    @marshal_with(ProgramsDb.resource_fields)
+    def post(self, project_id, progset_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+
+        progset_entry = load_progset(project_id, progset_id)
+        if progset_entry is None:
+            raise ProgsetDoesNotExist(id=progset_id)
+
+        args = query_program_parser.parse_args()
+        args["short"] = args["short_name"]
+        del args["short_name"]
+
+        program_entry = ProgramsDb(project_id, progset_id, **args)
+        db.session.add(program_entry)
+        db.session.flush()
+        db.session.commit()
+
+        return program_entry, 201
