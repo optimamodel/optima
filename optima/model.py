@@ -108,12 +108,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
-    numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment
-    numcare  = simpars['numcare']   # Number of PLHIV who are in care (N)
-    pdhivcare= simpars['pdhivcare'] # Percentage of all people who have been diagnosed with HIV who are in care
-    plhivcare= simpars['plhivcare'] # Percentage of all PLHIV who are in care
-    hivtest  = simpars['hivtest']   # HIV testing (P)
-    aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
+    numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
+    #numcare  = simpars['numcare']   # Number of PLHIV who are in care (N)
+    pdhivcare= simpars['pdhivcare'] # Percentage of all people who have been diagnosed with HIV who are in care [npts]
+    #plhivcare= simpars['plhivcare'] # Percentage of all PLHIV who are in care
+    hivtest  = simpars['hivtest']   # HIV testing (P) [npop,npts]
+    aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
     circum   = simpars['circum']
     
     # Calculations...used to be inside time loop
@@ -375,7 +375,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
             ## Diagnosed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
-            #newcaretot = numcare[t] - people[[care,usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
+            totcurrentpdhiv     = people[[dx,care,usvl,svl,lost,off],:,t].sum() # How many people are pdhiv (regardless of pop or cd4count)
+            totcurrentincare    = people[[care,usvl,svl,off],:,t].sum() # How many people are in some form of care (regardless of pop or cd4count)
+            totshouldbeincare   = totcurrentpdhiv * pdhivcare[t]
+            totmoveintocare     = totshouldbeincare - totcurrentincare
+            totcurrentnotincare = totcurrentpdhiv - totcurrentincare
+            fracnocarediag = currentdiagnosed / (eps+totcurrentnotincare) # fraction of off-care PDHIV in prelim-diagnosis stage (D/(D+L)) (by cd4 & pop)
+            fracnocarelost = people[lost,:,t] / (eps+totcurrentnotincare) # fraction of off-care PDHIV in off-ART lost     stage (L/(D+L)) (by cd4 & pop)
             for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
@@ -385,16 +391,16 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                     progout = dt*prog[cd4]*people[dx[cd4],:,t]
                 else: 
                     progout = 0 # Cannot progress out of AIDS stage
-                #newcare[cd4] = newcaretot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed #WARNING FIX
+                newcare[cd4] = totmoveintocare * fracnocarediag[cd4,:]
                 hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[dx[cd4],:,t] * background
                 inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) # some go immediately into care after testing
-                #outflows = progout + hivdeaths + otherdeaths #+ currentdiagnosed[cd4,:]*linktocare[:,t]*dt # diagnosed moving into care
-                #outflows = progout + hivdeaths + otherdeaths + currentdiagnosed[cd4,:]*linktocare[:,t]*dt # diagnosed moving into care
-                #newcare[cd4] = minimum(newcare[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
-                #newcare[cd4] = maximum(newcare[cd4], -safetymargin*people[care[cd4],:,t]) # Make sure it doesn't exceed the number of people in the care compartment
-                dD.append(inflows - outflows)
-                #dD.append(inflows - outflows - newcare[cd4])
+                #outflows = progout + hivdeaths + otherdeaths
+                outflows = progout + hivdeaths + otherdeaths + currentdiagnosed[cd4,:]*linktocare[:,t]*dt # diagnosed moving into care
+                newcare[cd4] = minimum(newcare[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Ensure you don't remove everyone in diagnosed compartment
+                newcare[cd4] = maximum(newcare[cd4], -safetymargin*people[care[cd4],:,t]) # Ensure you don't remove everyone in the care compartment
+                #dD.append(inflows - outflows)
+                dD.append(inflows - outflows - newcare[cd4])
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
 
