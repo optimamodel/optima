@@ -54,7 +54,7 @@ if 'plot' in tests and doplot:
     print('Running plot test...')
     from optima import Project, plotresults
     
-    P = Project(spreadsheet='testpwid.xlsx')
+    P = Project(spreadsheet='concentrated.xlsx')
     results = P.runsim('default')
     plotresults(results, figsize=(14,10))
 
@@ -70,7 +70,7 @@ if 'browser' in tests and doplot:
     print('Running browser test...')
     from optima import Project, browser
     
-    P = Project(spreadsheet='testpwid.xlsx')
+    P = Project(spreadsheet='concentrated.xlsx')
     results = P.runsim('default')
     browser(results)
 
@@ -88,7 +88,7 @@ if 'gui' in tests and doplot:
     print('Running GUI test...')
     from optima import Project, pygui
     
-    P = Project(spreadsheet='testpwid.xlsx')
+    P = Project(spreadsheet='concentrated.xlsx')
     results = P.runsim('default')
     pygui(results)
 
