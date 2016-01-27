@@ -108,7 +108,7 @@ except: _failed()
 try: from model import model, runmodel # The thing that actually runs the model
 except: _failed()
 
-try: from programs import Program, Programset # Define programs
+try: from programs import Program, Programset, vec2budget # Define programs
 except: _failed()
 
 try: from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
