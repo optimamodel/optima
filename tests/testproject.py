@@ -125,11 +125,7 @@ if 'runsim' in tests:
     print('Running runsim test...')
     
     from optima import Project
-<<<<<<< HEAD
-    P = Project(spreadsheet='test7pops.xlsx')
-=======
     P = Project(spreadsheet='concentrated.xlsx')
->>>>>>> develop
     results = P.runsim('default')
     
     done(t)
