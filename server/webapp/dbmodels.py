@@ -490,6 +490,7 @@ class ProgramsDb(db.Model):
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'coverage': [self.costcov[i]['cov'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None
+            ccopars=self.blob.get("params") if self.blob else None,
         )
         program_entry.id = self.id
         return program_entry

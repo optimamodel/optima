@@ -15,7 +15,7 @@ from server.webapp.resources.common import file_resource, file_upload_form_parse
 
 from server.webapp.dbconn import db
 
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb
 
 
 costcov_parser = RequestParser()
@@ -46,19 +46,6 @@ query_program_parser.add_arguments({
     'active': {'type': bool, 'default': False},
     'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
     'populations': {'type': list, 'dest': 'targetpops', 'location': 'json'},
-})
-
-cost_data_parser = RequestParser()
-cost_data_parser.add_arguments({
-    't': {'type': list, 'required': True, 'location': 'json'},
-    'cost': {'type': list, 'required': True, 'location': 'json'},
-    'coverage': {'type': list, 'required': True, 'location': 'json'}
-})
-
-costcoverage_parser = RequestParser()
-costcoverage_parser.add_arguments({
-    'params': {'required': True, 'type': list, 'location': 'json'},
-    'data': {'type': SubParser(cost_data_parser), 'location': 'json'}
 })
 
 progset_parser = RequestParser()
@@ -357,12 +344,10 @@ class CostCoverage(Resource):
 
         program_entry = load_program(project_id, progset_id, program_id)
 
-        print(program_entry.blob)
-
         if not program_entry.blob:
             return {"params": [], "data": {"t": [], "cost": [], "coverage": []}}
 
-        return program_entry
+        return program_entry.blob
 
 
     @swagger.operation(
@@ -379,3 +364,37 @@ class CostCoverage(Resource):
         db.session.commit()
 
         return program_entry.blob
+
+
+@swagger.model
+class CostCoverageGraphFields(object):
+    resource_fields = {
+        "t": fields.String
+    }
+
+
+class CostCoverageGraph(Resource):
+    """
+    Costcoverage graph for a Program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(description="Get graph.")
+    @marshal_with(CostCoverageGraphFields.resource_fields)
+    def get(self, project_id, progset_id, program_id):
+
+        from flask import request
+
+        args = dict(request.args)
+
+        # Get and hydrate the parset
+        parset = db.session.query(ParsetsDb).get(args["parset"][0])
+        parset = parset.hydrate()
+
+        program_entry = load_program(project_id, progset_id, program_id)
+
+        prog = program_entry.hydrate()
+
+        plot = prog.plotcoverage(t=int(args["t"][0]), parset=parset)
+
+        return plot
