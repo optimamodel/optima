@@ -62,7 +62,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
 
     # Defined for total (not by populations) and time dependent [npts]
     if usecascade:
-        successprop = simpars['successprop']      # Proportion of people on ART with viral suppression (P)
+        successprop = simpars['successprop']   # Proportion of people on ART with viral suppression (P)
         #successart = simpars['successart']    # proportion of people who become virally suppressed if ART works (P
         biofailure  = simpars['biofailure']    # biological treatment failure rate (P/T) [npts]
 
@@ -146,7 +146,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Set parameters
     prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    suppressedfrac   = successprop[:,0] #0.75 # Assume 75% of those on treatment are suppressed to begin with
+    suppressedfrac   = successprop[0] #0.75 # Assume 75% of those on treatment are suppressed to begin with
     fraccare = 0.7 #Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
     
     # Shorten key variables
@@ -436,6 +436,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             
 
             ## Unsuppressed Viral Load (having begun treatment)
+            currentunsupp    = people[usvl,:,t]
+            totcurrentunsupp = currentunsupp.sum()
+            currentsupp      = people[svl,:,t]
+            totcurrentsupp   = currentsupp.sum()
+            totcurrenttreat  = totcurrentsupp + totcurrentunsupp
+            totshouldbesupp  = totcurrenttreat * successprop[t]
+            totmovetosupp    = totshouldbesupp - totcurrentsupp
             for cd4 in range(ncd4):
                 if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
                     recovin = dt*recov[cd4-1]*people[usvl[cd4+1],:,t]
@@ -445,10 +452,9 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                     recovout = dt*recov[cd4-2]*people[usvl[cd4],:,t]
                 else: 
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-                hivdeaths              = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
-                otherdeaths            = dt * people[usvl[cd4],:,t] * background
-                virallysupp[cd4] = dt * people[usvl[cd4],:,t] * adherenceprop[:,t] * successart #WARNING FIX
-                #virallysupp[cd4] = newtreat[cd4] * successprop #adherenceprop[:,t] * successart
+                hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
+                otherdeaths       = dt * people[usvl[cd4],:,t] * background
+                virallysupp[cd4]  = totmovetosupp * currentunsupp[cd4,:] / (eps+totcurrentunsupp)
                 fracalive           = 1. - death[cd4]*deathtx - background
                 stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate * fracalive * fraccare  # People stopping ART but still in care
                 stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
@@ -460,7 +466,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             
 
             ## Suppressed Viral Load
-            currentsuppressed = people[svl,:,t] # how many people currently in care (by population)
             for cd4 in range(ncd4):
                 if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
                     recovin = dt*recov[cd4-1]*people[svl[cd4+1],:,t]
@@ -470,12 +475,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                     recovout = dt*recov[cd4-2]*people[svl[cd4],:,t]
                 else: 
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-                hivdeaths          = dt * currentsuppressed[cd4,:] * death[cd4]
-                otherdeaths        = dt * currentsuppressed[cd4,:] * background
-                failing[cd4]       = dt * currentsuppressed[cd4,:] * biofailure[t]
+                hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
+                otherdeaths        = dt * currentsupp[cd4,:] * background
+                failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
                 fracalive       = 1. - death[cd4] - background
-                stopSVLincare[cd4] = dt * currentsuppressed[cd4,:] * stoprate * fracalive * fraccare  # People stopping ART but still in care
-                stopSVLlost[cd4]   = dt * currentsuppressed[cd4,:] * stoprate * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
+                stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate * fracalive * fraccare  # People stopping ART but still in care
+                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4]
                 outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
                 dSVL.append(inflows - outflows)
