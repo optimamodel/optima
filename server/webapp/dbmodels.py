@@ -561,21 +561,6 @@ class ProgsetsDb(db.Model):
         be_progset.gettargetpartypes()
         self.targetpartypes = be_progset.targetpartypes
 
-    def _program_to_dict(self, program_be):
-        program = program_be.__dict__
-        program['parameters'] = program.get('targetpars', [])
-        if program['costcovdata'] is None:
-            program['costcov'] = []
-        else:
-            program['costcov'] = [
-                {
-                    'year': program['costcovdata']['t'][i],
-                    'cost': program['costcovdata']['cost'][i],
-                    'cov': program['costcovdata']['coverage'][i],
-                } for i in range(len(program['costcovdata']['t']))
-            ]
-        return program
-
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
 
