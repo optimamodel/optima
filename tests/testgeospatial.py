@@ -133,7 +133,7 @@ if 'generateBOCs' in tests:
     
     objectives = defaultobjectives()
 #    objectives['inciweight'] = 5
-    F.genBOCs(objectives)#, maxtime = 20)
+    F.genBOCs(objectives, maxtime = 20)#,forceregen = True)#, maxtime = 20)
     F.plotBOCs(objectives)    
     
     print('Saving projects with BOCs...')

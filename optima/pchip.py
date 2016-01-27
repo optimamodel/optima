@@ -119,40 +119,40 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbudget = None):
     
-    xnew = linspace(x[0],x[-1],200)
+#    xnew = linspace(x[0],x[-1],200)
     
-    try:
-        xstart = x[0]
-        xend = x[-1]
-        if not initbudget == None:
-            xstart = min(xstart,initbudget[0])
-            xend = max(xend,initbudget[-1])
-        if not optbudget == None:
-            xstart = min(xstart,optbudget[0])
-            xend = max(xend,optbudget[-1])
-        xnew = linspace(xstart,xend,200)
-        
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        print(xnew)
-        print(pchip(x,y,xnew,deriv))
-        print(optbudget)
-        print(pchip(x,y,optbudget,deriv))
-        plt.plot(xnew, pchip(x,y,xnew,deriv))
-        xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
-        plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=1.5, label='BOC Data')
+#    try:
+    xstart = x[0]
+    xend = x[-1]
+    if not initbudget == None:
+        xstart = min(xstart,initbudget[0])
+        xend = max(xend,initbudget[-1])
+    if not optbudget == None:
+        xstart = min(xstart,optbudget[0])
+        xend = max(xend,optbudget[-1])
+    xnew = linspace(xstart,xend,200)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+#    print(xnew)
+#    print(pchip(x,y,xnew,deriv))
+#    print(optbudget)
+#    print(pchip(x,y,optbudget,deriv))
+    plt.plot(xnew, pchip(x,y,xnew,deriv))
+    xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
+    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=1.5, label='BOC Data')
 #        print(x)
 #        print(pchip(x,y,x,deriv))
-        if not initbudget == None:
-            plt.plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Init. Est.')
-        if not optbudget == None:
-            plt.plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Opt. Est.')
-        ax.legend(loc='best')
-        if returnplot:
-            return ax
-        else:
-            plt.show()
-    except:
-        print('Plotting of PCHIP-interpolated data failed!')
+    if not initbudget == None:
+        plt.plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Init. Est.')
+    if not optbudget == None:
+        plt.plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Opt. Est.')
+    ax.legend(loc='best')
+    if returnplot:
+        return ax
+    else:
+        plt.show()
+#    except:
+#        print('Plotting of PCHIP-interpolated data failed!')
     
     return None

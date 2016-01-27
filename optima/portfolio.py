@@ -1,4 +1,4 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException # Import utilities
 from optima import gitinfo # Import functions
 from optima import __version__ # Get current version
 
@@ -7,6 +7,8 @@ from optima import defaultobjectives, asd
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
 #######################################################################################################
+
+budgeteps = 1e-8        # Project optimisations will fail for budgets that are optimised by GA to be zero. This avoids zeros.
 
 class Portfolio(object):
     """
@@ -82,13 +84,14 @@ class Portfolio(object):
     #######################################################################################################
         
         
-    def genBOCs(self, objectives=None, maxtime=None):
+    def genBOCs(self, objectives = None, maxtime = None, forceregen = False):
         ''' Loop through stored projects and construct budget-outcome curves '''
         if objectives == None: objectives = defaultobjectives()
         for x in self.projects:
             p = self.projects[x]
-            if p.getBOC(objectives) == None:
+            if p.getBOC(objectives) == None or forceregen:
                 print('Generating BOC for project: %s' % p.name)
+                p.delBOC(objectives)    # Delete BOCs in case forcing regeneration.
                 p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=maxtime)   # WARNING!!! OPTIMISES FOR 1ST ONES
             else:
                 print('BOC does not need to be generated for project: %s' % p.name)
@@ -98,25 +101,22 @@ class Portfolio(object):
         ''' Loop through stored projects and plot budget-outcome curves '''
         if initbudgets == None: initbudgets = [None]*len(self.projects)
         if optbudgets == None: optbudgets = [None]*len(self.projects)
-            
+        
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
-            Exception('Error: Trying to plot BOCs with faulty initbudgets or optbudgets.')
+            OptimaException('Error: Trying to plot BOCs with faulty initbudgets or optbudgets.')
         
-        # Loop for BOCs.
-        c = 0
-        for x in self.projects:
-            p = self.projects[x]
-            # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
-            p.plotBOC(objectives, initbudget = [initbudgets[c]], optbudget = [optbudgets[c]])
-            c += 1
-        
-        # Reloop for BOC derivatives just because they group nicer for the GUI.
-        c = 0
-        for x in self.projects:
-            p = self.projects[x]
-            # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
-            p.plotBOC(objectives, deriv = True, initbudget = [initbudgets[c]], optbudget = [optbudgets[c]])
-            c += 1
+        # Loop for BOCs and then BOC derivatives.
+        for inderiv in [False,True]:
+            c = 0
+            for x in self.projects:
+                p = self.projects[x]
+                ib = initbudgets[c]
+                if not ib == None: ib = [ib]
+                ob = optbudgets[c]
+                if not ob == None: ob = [ob]
+                # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
+                p.plotBOC(objectives, deriv = inderiv, initbudget = ib, optbudget = ob)
+                c += 1
             
             
     def minBOCoutcomes(self, objectives, seedbudgets = None, maxtime = None):
@@ -144,13 +144,9 @@ class Portfolio(object):
         gaoptim = GAOptim(objectives = objectives)
         self.gaoptims[gaoptim.uid] = gaoptim
         
-        if budgetratio == None:
-            budgetratio = []
-            for x in self.projects:
-                p = self.projects[x]
-                budgetratio.append(sum(p.progsets[0].getdefaultbudget().values()))      # WARNING!!! OPTIMISES FOR 1ST PROGSET
-        
+        if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
+        
         optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
         self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
@@ -191,7 +187,7 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxit
     
     if minbound == None: minbound = [0]*len(BOClist)
     if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
-    if not len(budgetvec) == len(BOClist): Exception('Error: Geospatial analysis is minimising x BOCs with y initial budgets, where x and y are not equal!')
+    if not len(budgetvec) == len(BOClist): OptimaException('Error: Geospatial analysis is minimising x BOCs with y initial budgets, where x and y are not equal!')
         
 #    args = (BOClist, grandtotal, minbound)
     args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
@@ -223,7 +219,7 @@ class GAOptim(object):
 
         ## Define the structure sets
         self.objectives = objectives
-        self.summary = odict()
+        self.resultpairs = odict()
 
         ## Define other quantities
         self.name = name
@@ -254,8 +250,31 @@ class GAOptim(object):
         return output
     
     
-    def complete():
-        pass
+    def complete(self,projects,initbudgets,optbudgets):
+        ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
+        print('Finalising geospatial analysis...')
+
+        if not len(projects) == len(initbudgets) or not len(projects) == len(optbudgets):
+            OptimaException('Error: The number of projects is not matching the number of initial or optimal budgets in GA!')
+        
+        # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
+        # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
+        # WARNING: AS USUAL USING 1ST PARSET AND PROGSET!
+        for x in xrange(len(projects)):
+            p = projects[x]
+            self.resultpairs[p.uid] = odict()
+            
+            initobjectives = dcp(self.objectives)
+            initobjectives['budget'] = initbudgets[x] + budgeteps
+            print("Generating initial-budget optimisation for '%s'." % p.name)
+            print(initobjectives)
+            self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=initobjectives, maxtime = 5, saveprocess = False)
+            
+            optobjectives = dcp(self.objectives)
+            optobjectives['budget'] = optbudgets[x] + budgeteps
+            print("Generating optimal-budget optimisation for '%s'." % p.name)
+            print(optobjectives)
+            self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=optobjectives, maxtime = 5, saveprocess = False)
 
 
 ## -*- coding: utf-8 -*-

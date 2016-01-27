@@ -383,14 +383,15 @@ class Project(object):
         return None
 
     
-    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd', saveprocess=True):
         ''' Function to minimize outcomes '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        self.addoptim(optim=optim)
-        self.addresult(result=multires)
-        self.modified = today()
-        return None
+        if saveprocess:        
+            self.addoptim(optim=optim)
+            self.addresult(result=multires)
+            self.modified = today()
+        return multires
         
         
     #######################################################################################################
@@ -423,6 +424,14 @@ class Project(object):
 #                    print('BOC located in project: %s' % self.name)
                     return boc
         print('No BOC with the required objectives can be found in project: %s' % self.name)
+        return None
+        
+    def delBOC(self, objectives):
+        ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
+        while not self.getBOC(objectives = objectives) == None:
+            print('Deleting an old BOC...')
+            ind = self.getBOC(objectives = objectives).uid
+            self.rmresult(str(ind))
         return None
     
     def plotBOC(self, objectives, deriv = False, returnplot = False, initbudget = None, optbudget = None):
