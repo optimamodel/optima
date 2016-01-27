@@ -51,7 +51,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // Sending parameters to re-process graphs for active parset
-    $scope.processGraphs = function() {
+    $scope.processGraphs = function(save) {
       var data = {};
       if($scope.parameters) {
         data.parameters = $scope.parameters;
@@ -65,6 +65,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(selectors && selectors.length > 0) {
           data.which = selectors;
         }
+      }
+      if (save) {
+        data.doSave = true;
       }
       $http.put('/api/parset/' + $scope.activeParset.id + '/calibration', data)
         .success(function (response) {
