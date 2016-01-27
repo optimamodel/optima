@@ -18,12 +18,9 @@ print statements.
 
 I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
-Version: 2016jan18 by cliffk
-"""
 
-license = '''
-Optima HIV -- HIV optimization and analysis tool
-Copyright (C) 2016 by the Optima Consortium
+
+Now, the legal part:
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -37,9 +34,16 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
 
-print(license)
+
+Version: 2016jan27 by cliffk
+"""
+
+optimalicense = '''
+Optima HIV -- HIV optimization and analysis tool
+Copyright (C) 2016 by the Optima Consortium
+'''
+print(optimalicense)
 
 
 
@@ -108,7 +112,7 @@ except: _failed()
 try: from model import model, runmodel # The thing that actually runs the model
 except: _failed()
 
-try: from programs import Program, Programset # Define programs
+try: from programs import Program, Programset, vec2budget # Define programs
 except: _failed()
 
 try: from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules

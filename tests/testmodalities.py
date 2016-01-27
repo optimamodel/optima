@@ -58,7 +58,7 @@ if 'modalities' in tests:
     # Uncomment the line below to disable the assert statements and run through to completion
     #assert_allclose = lambda x,y: True
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
     
     eps = 1e-3
     atol = 1e-3

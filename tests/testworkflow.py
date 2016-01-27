@@ -59,7 +59,7 @@ if 'makeproject' in tests:
     print('Running makeproject/runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='test7pops.xlsx')
+    P = Project(spreadsheet='generalized.xlsx')
     P.loadeconomics(filename='testeconomics.xlsx')
     results = P.runsim('default')
     
@@ -75,7 +75,7 @@ if 'makeprograms' in tests:
 
     print('Making a default programset...')
     from optima.defaults import defaultprogset
-    R = defaultprogset(P.parsets['default'], addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'MSM_programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'HTC', 'ART', 'PMTCT', 'MGMT', 'HR', 'Other']) #TODO Add ART, PMTCT, VMMC
     
     # Modify target pars and pops
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
