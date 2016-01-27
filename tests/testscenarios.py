@@ -50,7 +50,7 @@ if 'standardscen' in tests:
 
     print('Running standard scenarios test...')
     from optima import Project, Parscen, Budgetscen, Coveragescen
-    from defaults import defaultprogset
+    from optima.defaults import defaultprogset
     from numpy import array
     
     # Make project and store results from default sim
