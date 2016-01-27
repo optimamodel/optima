@@ -90,26 +90,43 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     popsize = dcp(simpars['popsize']) # Population sizes
     
     # Infection propabilities
-    male = simpars['male']
-    female = simpars['female']
     transinj = simpars['transinj']      # Injecting
-    
-    # Further potential effects on transmission
-    effsti    = simpars['effsti'] * simpars['stiprev']  # STI effect
-    effcirc   = 1 - simpars['effcirc']            # Circumcision effect
-    effprep   = (1 - simpars['effprep']) * simpars['prep'] # PrEP effect
-    effcondom = 1 - simpars['effcondom']          # Condom effect
+
+    # Population characteristics
+    male = simpars['male']          # Boolean array, true for males
+    female = simpars['female']      # Boolean array, true for females
+    injects = simpars['injects']    # Boolean array, true for PWID
     
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
     numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment
     hivtest  = simpars['hivtest']   # HIV testing (P)
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P)
-    circum = simpars['circum']
+    circum   = simpars['circum']    # Prevalence of circumcision (P)
+    stiprev  = simpars['stiprev']   # Prevalence of STIs (P)
+    prep     = simpars['prep']      # Prevalence of PrEP (P)
+
+    # Uptake of OST
+    numost = simpars['numost']                  # Number of people on OST (N)
+    if any(injects):
+        numpwid = popsize[injects,:].sum(axis=0)  # Total number of PWID
+        try: ostprev = numost/numpwid           # Proportion of PWID on OST (P)
+        except: raise OptimaException('Cannot divide by the number of PWID')
+    else:
+        if sum(numost): raise OptimaException('You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject')
+        else: ostprev = 0.
+    
+    # Further potential effects on transmission
+    effsti    = simpars['effsti'] * stiprev  # STI effect
+    effcirc   = simpars['effcirc'] * circum  # Circumcision effect
+    effprep   = simpars['effprep'] * prep    # PrEP effect
+    effcondom = simpars['effcondom']         # Condom effect
+    effost    = simpars['effost'] * ostprev  # OST effect
     
     # Calculations...used to be inside time loop
     circeff = 1 - effcirc*circum
     prepeff = 1 - effprep
+    osteff = 1 - effost
     stieff  = 1 + effsti
     
     # Behavioural transitions between stages [npop,npts]
@@ -293,9 +310,9 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             effinj = this['acts'][t]
             pop1 = this['pop1']
             pop2 = this['pop2']
-            osteff = 1 # WARNING, TEMP osteff[pop1,t]
+            thisosteff = osteff[t]
             
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*osteff*effhivprev[pop2])) 
+            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2])) 
             forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
         
         if not(all(forceinfvec>=0)):

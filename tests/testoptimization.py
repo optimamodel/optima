@@ -53,7 +53,7 @@ if 'setup' in tests:
     print('Running standard scenarios test...')
     from optima import Project, Program, Programset
     
-    P = Project(spreadsheet='test7pops.xlsx')
+    P = Project(spreadsheet='generalized.xlsx')
     pops = P.data['pops']['short']
     caspships = P.data['pships']['cas']
     compships = P.data['pships']['com']
