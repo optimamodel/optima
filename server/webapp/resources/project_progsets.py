@@ -7,7 +7,7 @@ from flask import helpers
 
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project, load_progset, RequestParser, report_exception
+from server.webapp.utils import load_project, load_progset, load_program, RequestParser, report_exception
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
@@ -42,11 +42,22 @@ query_program_parser.add_arguments({
     'short_name': {},
     'category': {'required': True},
     'active': {'type': bool, 'default': False},
-    'parameters': {'type': list, 'dest': 'pars'},
-    'populations': {'type': list, 'dest': 'targetpops'},
+    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
+    'populations': {'type': list, 'dest': 'targetpops', 'location': 'json'},
 })
 
+cost_data_parser = RequestParser()
+cost_data_parser.add_arguments({
+    't': {'type': list, 'required': True, 'location': 'json'},
+    'cost': {'type': list, 'required': True, 'location': 'json'},
+    'coverage': {'type': list, 'required': True, 'location': 'json'}
+})
 
+costcoverage_parser = RequestParser()
+costcoverage_parser.add_arguments({
+    'params': {'required': True, 'type': list, 'location': 'json'},
+    'data': {'type': SubParser(cost_data_parser), 'location': 'json'}
+})
 
 progset_parser = RequestParser()
 progset_parser.add_arguments({
@@ -287,3 +298,66 @@ class Programs(Resource):
         db.session.commit()
 
         return program_entry, 201
+
+
+class Programs(Resource):
+    """
+    Programs for a given progset.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Get programs for the progset with the given ID.",
+        responseClass=ProgramsDb.__name__)
+    @marshal_with(ProgramsDb.resource_fields, envelope='programs')
+    def get(self, project_id, progset_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+
+        progset_entry = load_progset(project_id, progset_id)
+        if progset_entry is None:
+            raise ProgsetDoesNotExist(id=progset_id)
+
+        reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
+        return reply
+
+    @swagger.operation(
+        description="Create a program for the progset with the given ID.",
+        parameters=program_parser.swagger_parameters())
+    @marshal_with(ProgramsDb.resource_fields)
+    def post(self, project_id, progset_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+
+        progset_entry = load_progset(project_id, progset_id)
+        if progset_entry is None:
+            raise ProgsetDoesNotExist(id=progset_id)
+
+        args = query_program_parser.parse_args()
+        args["short"] = args["short_name"]
+        del args["short_name"]
+
+        program_entry = ProgramsDb(project_id, progset_id, **args)
+        db.session.add(program_entry)
+        db.session.flush()
+        db.session.commit()
+
+        return program_entry, 201
+
+
+class CostCoverage(Resource):
+    """
+    Costcoverage for a given Program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Get costcoverage parameters and data for the given program.")
+    def get(self, project_id, progset_id, program_id):
+
+        program_entry = load_program(project_id, progset_id, program_id)
+
+        print(program_entry.blob)
+
+        if not program_entry.blob:
+            return {"params": [], "data": {"t": [], "cost": [], "coverage": []}}
+
+        return program_entry

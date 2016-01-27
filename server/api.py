@@ -67,8 +67,8 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData
-from server.webapp.resources.project_parsets import Parsets, ParsetsDetail, ParsetsCalibration, ParsetsData
-from server.webapp.resources.project_progsets import Programs
+from server.webapp.resources.project_parsets import Parsets, ParsetsDetail, ParsetsCalibration
+from server.webapp.resources.project_progsets import Programs, CostCoverage
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -91,6 +91,7 @@ api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
+api.add_resource(CostCoverage, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/<project_id>/parameters')
