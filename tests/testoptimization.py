@@ -11,8 +11,8 @@ Version: 2016jan24 by cliffk
 ## Define tests to run here!!!
 tests = [
 'setup',
-#'minimizeoutcomes',
-'minimizemoney',
+'minimizeoutcomes',
+#'minimizemonrey',
 ]
 
 

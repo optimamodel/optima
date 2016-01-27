@@ -240,7 +240,7 @@ if 'maxbudget' in tests:
     
     ## Define scenarios
     scenlist = [
-        Parscen(name='Current conditions', parsetname='default', pars=[]),
+        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=odict([(key, 1e9) for key in R.programs.keys()])),
         ]
     

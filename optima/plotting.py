@@ -444,6 +444,7 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
     if not(hasattr(results, 'budget')) or results.budget is None: raise OptimaException('No budget found for results object:\n"%s"' % results)
     
     # Preliminaries: extract needed data
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING, if budgets are not arrays')
     budgetstoplot = [budget for budget in results.budget.values() if budget]
     budgetyearstoplot = [budgetyears for budgetyears in results.budgetyears.values() if budgetyears]
     proglabels = budgetstoplot[0].keys() 
