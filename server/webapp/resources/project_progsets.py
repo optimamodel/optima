@@ -1,11 +1,12 @@
 from flask import current_app
 
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with
+from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 from flask import helpers
 
 from server.webapp.inputs import SubParser
+from server.webapp.fields import Json
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import load_project, load_progset, RequestParser, report_exception
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist
@@ -239,3 +240,30 @@ class ProgsetData(Resource):
             'result': 'Progset %s is updated' % progset_entry.name,
         }
         return reply
+
+param_fields = {
+        'name': fields.String,
+        'populations': Json
+    }
+
+
+class ProgsetParams(Resource):
+
+    @swagger.operation(
+        description='Get param/populations sets for the selected progset'
+    )
+    @report_exception
+    @marshal_with(param_fields)
+    def get(self, project_id, progset_id):
+        from server.webapp.utils import load_progset
+
+        progset_entry = load_progset(project_id, progset_id)
+        progset_be = progset_entry.hydrate()
+
+        param_names = set([p['param'] for p in progset_be.targetpars])
+        params = [{
+            'name': name,
+            'populations': progset_be.progs_by_targetpar(name).keys()
+        } for name in param_names]
+
+        return params
