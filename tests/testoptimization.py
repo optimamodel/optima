@@ -55,7 +55,7 @@ if 'setup' in tests:
     from optima import Project
     from optima.defaults import defaultprogset
     
-    P = Project(spreadsheet='test7pops.xlsx')
+    P = Project(spreadsheet='generalized.xlsx')
     pops = P.data['pops']['short']
     caspships = P.data['pships']['cas']
 #    compships = P.data['pships']['com']

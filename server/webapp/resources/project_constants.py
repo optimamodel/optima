@@ -67,6 +67,8 @@ populations_fields = {
     "age_to": fields.Integer,
     "female": fields.Boolean,
     "male": fields.Boolean,
+    "injects": fields.Boolean,
+    "sexworker": fields.Boolean,
     "name": fields.String,
     "short_name": fields.String,
 }
