@@ -5,18 +5,18 @@ Version: 2016jan23 by cliffk
 """
 from optima import Program, Programset
 
-def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None):
+def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
-    pops = parset.popkeys
-    malelist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['male'][popno]]
-    pwidlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['injects'][popno]]
-    fswlist = [pop for popno, pop in enumerate(pops) if parset.pars[0]['sexworker'][popno] and parset.pars[0]['female'][popno]]
+    pops = project.data['pops']['short']
+    malelist = [pops[i] for i in range(len(pops)) if project.data['pops']['male'][i]]
+    pwidlist = [pops[i] for i in range(len(pops)) if project.data['pops']['injects'][i]]
+    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i]]
 
-    regpships = parset.pars[0]['condreg'].y.keys()
-    caspships = parset.pars[0]['condcas'].y.keys()
-    compships = parset.pars[0]['condcom'].y.keys()
+    regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
+    caspships = project.parsets['default'].pars[0]['condcas'].y.keys()
+    compships = project.parsets['default'].pars[0]['condcom'].y.keys()
     
     # Extract casual partnerships that include at least one female sex worker
     fsw_caspships = []
@@ -82,21 +82,21 @@ def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None
                   name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
-    FSW_programs = Program(short='FSW_programs',
+    FSW_programs = Program(short='FSW programs',
                   targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
                   targetpops=fswlist,
                   category='Prevention',
                   name='Programs for female sex workers and clients',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                  
-    MSM_programs = Program(short='MSM_programs',
+    MSM_programs = Program(short='MSM programs',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
                   targetpops=msmlist,
                   category='Prevention',
                   name='Programs for men who have sex with men',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    PWID_programs = Program(short='PWID_programs',
+    PWID_programs = Program(short='PWID programs',
                   targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
                   targetpops=pwidlist,
                   category='Prevention',
@@ -117,7 +117,7 @@ def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None
                   name='Needle-syringe programs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    Cash_transfers = Program(short='Cash_transfers',
+    Cash_transfers = Program(short='Cash transfers',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
                   category='Prevention',
@@ -162,7 +162,7 @@ def defaultprograms(parset, addpars=False, addcostcov=False, filterprograms=None
                   name='Orphans and vulnerable children',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
-    Other_care = Program(short='Other_care',
+    Other_care = Program(short='Other care',
                   category='Care and treatment',
                   name='Other HIV care',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})

@@ -18,12 +18,38 @@ print statements.
 
 I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
-Version: 2016jan18 by cliffk
+
+
+Now, the legal part:
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Version: 2016jan27 by cliffk
 """
+
+optimalicense = '''
+Optima HIV -- HIV optimization and analysis tool
+Copyright (C) 2016 by the Optima Consortium
+'''
+print(optimalicense)
+
+
+
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0 
-
 
 
 
@@ -86,7 +112,7 @@ except: _failed()
 try: from model import model, runmodel # The thing that actually runs the model
 except: _failed()
 
-try: from programs import Program, Programset # Define programs
+try: from programs import Program, Programset, vec2budget # Define programs
 except: _failed()
 
 try: from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules

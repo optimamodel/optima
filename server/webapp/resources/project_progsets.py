@@ -210,13 +210,11 @@ class ProgsetData(Resource):
         source_filename = uploaded_file.source_filename
 
         progset_entry = load_progset(project_id, progset_id)
-        parset_entry = load_progset(project_id, parset_id)
 
         project_entry = load_project(project_id)
         project = project_entry.hydrate()
-        parset = parset_entry.hydrate()
         if project.data != {}:
-            program_list = get_default_programs(parset)
+            program_list = get_default_programs(project)
         else:
             program_list = []
 

@@ -61,7 +61,7 @@ if 'force' in tests:
     print('Running force-of-infection test...')
     from optima import Project
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
     results1 = P.runsim('default')
     
     P.copyparset('default', 'forcetest')
@@ -84,7 +84,7 @@ if 'treatment' in tests:
     print('Running force-of-infection test...')
     from optima import Project
     
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
     results1 = P.runsim('default')
     
     P.copyparset('default', 'treatment')

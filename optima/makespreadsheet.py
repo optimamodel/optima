@@ -605,13 +605,12 @@ class OptimaSpreadsheet:
         current_row = 0
         names = ['Interactions between regular partners', 'Interactions between casual partners',
         'Interactions between commercial partners', 'Interactions between people who inject drugs',
-        'Births', 'Risk-related population transitions (average number of years before movement)']
+        'Births and aging', 'Risk-related population transitions (average number of years before movement)']
 
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            if name!='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
-            else: current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range)
+            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_const(self):
         self.current_sheet.set_column(1,1,40)
@@ -684,9 +683,9 @@ class OptimaSpreadsheet:
             'Unsuppressive ART',
             'Suppressive ART',
             'Probability of viral suppression on ART'],
-            [0.95, 0.58, 0., 2.65, 0.54, 0.9, 0.73, 0.5, 0.92, 0.9], 
-            [0.8, 0.47, 0., 1.35, 0.33, 0.82, 0.65, 0.3, 0.8, 0.8 ],
-            [0.98, 0.67, 5.19, 0.68, 0.68, 0.93, 0.8, 0.8, 0.95, 0.95],
+            [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92, 0.9],
+            [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8, 0.8],
+            [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95, 0.95],
             OptimaFormats.PERCENTAGE),
         ('Disutility weights',
             ['Untreated HIV, acute',
