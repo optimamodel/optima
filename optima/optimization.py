@@ -223,7 +223,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
 
 
-def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False, verbose=2, debug=True):
+def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False, verbose=2, debug=False):
     ''' Function to evaluate whether or not targets have been met for a given budget vector (note, not time-varying) '''
     # Validate input
     if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
@@ -305,7 +305,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         thisfrac = objectives[key+'frac']
         if thisfrac<0 or thisfrac>=1:
             errormsg = 'Fractional reduction in "%s" must be >=0 and <1; actually %f' % (key, thisfrac)
-            raise OptimaException(errormsg)
+            print(errormsg) # WARNING TEMP
+#            raise OptimaException(errormsg) # WARNING TEMP
     
     parset  = project.parsets[parsetname] # Copy the original parameter set
     progset = project.progsets[progsetname] # Copy the original parameter set
@@ -357,7 +358,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
             printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
         
         # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
-        results = moneycalc(budgetvec1, results=True, **args)
+        results = moneycalc(budgetvec1, outputresults=True, **args)
         absreductions = odict() # Absolute reductions requested, for setting weights
         for key in objectives['keys']:
             absreductions[key] = results.outcomes['baseline'][key]*objectives[key+'frac'] # e.g. 1000 deaths * 40% reduction = 400 deaths
@@ -365,8 +366,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         weights = 1.0/weights[:] # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
         weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
         for key in objectives['keys']:
-            objectives[key+'weight'] = weights[key] # Reset objective weights according to the reduction required
-        
+            try: objectives[key+'weight'] = weights[key] # Reset objective weights according to the reduction required
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         ##########################################################################################################################
         ## Now run an optimization on the current budget

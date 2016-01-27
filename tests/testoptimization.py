@@ -11,8 +11,8 @@ Version: 2016jan24 by cliffk
 ## Define tests to run here!!!
 tests = [
 'setup',
-'minimizeoutcomes',
-#'minimizemonrey',
+#'minimizeoutcomes',
+'minimizemoney',
 ]
 
 
@@ -51,7 +51,7 @@ T = tic()
 if 'setup' in tests:
     t = tic()
 
-    print('Running standard scenarios test...')
+    print('Running standard programs test...')
     from optima import Project
     from optima.defaults import defaultprogset
     
@@ -157,8 +157,8 @@ if 'minimizemoney' in tests:
     print('Running minimize money test...')
     from optima import defaultobjectives
     objectives = defaultobjectives(which='money')
-    objectives['deathfrac'] = 0.01
-    objectives['incifrac'] = 0.01
+    objectives['deathfrac'] = 0.5
+    objectives['incifrac'] = -10
     P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10)
     
     print('Original allocation: '),
