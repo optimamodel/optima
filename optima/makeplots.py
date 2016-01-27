@@ -5,7 +5,7 @@ This file generates all the figure files -- either for use with the Python backe
 for the frontend via MPLD3.
 '''
 
-from optima import Resultset, Multiresultset, odict, gridcolormap
+from optima import OptimaException, Resultset, Multiresultset, odict, gridcolormap
 from numpy import array, ndim, maximum, arange
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -34,7 +34,7 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             nsims = len(labels) # How ever many things are in results
         else: 
             errormsg = 'Results input to plotepi() must be either Resultset or Multiresultset, not "%s".' % type(results)
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
 
         # Initialize
         wasinteractive = isinteractive() # Get current state of interactivity
@@ -49,28 +49,29 @@ def plotepi(results, which=None, uncertainty=False, verbose=2, figsize=(14,10), 
             ################################################################################################################
             ## Parse user input
             ################################################################################################################
-            try:
-                if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
-                elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
-                else: 
-                    errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
-                    raise Exception(errormsg)
-                if datatype not in results.main.keys():
-                    errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
-                    raise Exception(errormsg)
-                if plotformat not in plotformatslist.flatten():
-                    errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
-                    raise Exception(errormsg)
-            except:
-                errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
-                raise Exception(errormsg)
+            if type(plotkey) not in [str, list, tuple]: 
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
+                raise OptimaException(errormsg)
+            else:
+                try:
+                    if type(plotkey)==str: datatype, plotformat = plotkey.split('-')
+                    elif type(plotkey) in [list, tuple]: datatype, plotformat = plotkey[0], plotkey[1]
+                except:
+                    errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
+                    raise OptimaException(errormsg)
+            if datatype not in results.main.keys():
+                errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
+                raise OptimaException(errormsg)
+            if plotformat not in plotformatslist.flatten():
+                errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, plotformatslist)
+                raise OptimaException(errormsg)
             
             try:
                 isnumber = results.main[datatype].isnumber # Distinguish between e.g. HIV prevalence and number PLHIV
                 factor = 1.0 if isnumber else 100.0 # Swap between number and percent
             except:
                 errormsg = 'Unable to find key "%s" in results' % datatype
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
                 
             istotal   = (plotformat in plotformatsdict['tot'])
             isperpop  = (plotformat in plotformatsdict['per'])
@@ -239,7 +240,7 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
 
     if hasattr(results, 'mismatch'): mismatch = results.mismatch # Get mismatch attribute of object if it exists
     elif ndim(results)==1: mismatch = results # Promising, has the right dimensionality at least, but of course could still be wrong
-    else: raise Exception('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
+    else: raise OptimaException('To plot the mismatch, you must give either the mismatch or an object containing the mismatch as the first argument; try again')
     
     # Set up figure and do plot
     fig = figure(figsize=figsize, facecolor=(1,1,1))
@@ -278,17 +279,21 @@ def plotmismatch(results=None, verbose=2, figsize=(10,6), lw=2, dotsize=50, titl
 ##################################################################
 ## Allocation plots
 ##################################################################
-
-def plot2allocs(multires=None, compare=True):
-    ''' Plot 2 allocations on bar charts - intended for optimisations '''
+    
+    
+def plotallocs(multires=None, compare=False):
+    ''' Plot multiple allocations on bar charts -- intended for scenarios and optimizations '''
     
     # Preliminaries: extract needed data
-    try: progset = multires.progset[0] # For multires, progset is an odict, but all entries should be the same, so it shouldn't matter which one you use
-    except: raise Exception('Failed to extract program set; "multires" type = "%s", but "multires" should be a multiresults set' % type(multires))
-    proglabels = progset.programs.keys()
+    budgetstoplot = [budget for budget in multires.budget.values() if budget]
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
+    proglabels = budgetstoplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(multires.budget.keys()) if multires.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
     nprogs = len(proglabels)
-    labels = multires.keys
-    progdata = [multires.budget['orig'], multires.budget['optim']]
+    nallocs = len(alloclabels)
+    
+    
+    
     
     fig = figure(figsize=(10,6))
     fig.subplots_adjust(left=0.10) # Less space on left
@@ -300,30 +305,31 @@ def plot2allocs(multires=None, compare=True):
     colors = gridcolormap(nprogs)
     
     ax = []
-    xbardata = arange(nprogs)+0.5
     ymax = 0
-    for plt in range(len(progdata)):
-        ax.append(subplot(len(progdata),1,plt+1))
+    
+    for plt in range(nallocs):
+        nbudgetyears = len(budgetyearstoplot[plt])
+        ax.append(subplot(nallocs,1,plt+1))
         ax[-1].hold(True)
-        for p in range(nprogs):
-            ax[-1].bar([xbardata[p]], [progdata[plt][p]], color=colors[p], linewidth=0)
-            if plt==1 and compare:
-                ax[-1].bar([xbardata[p]], [progdata[0][p]], color='None', linewidth=1)
+        barwidth = .5/nbudgetyears
+        for y in range(nbudgetyears):
+            try: progdata = [x[y] for x in budgetstoplot[plt][:]]
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            xbardata = arange(nprogs)+.75+barwidth*y
+            for p in range(nprogs):
+                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+                else: barcolor = colors[p] # Only one year? Color by program
+                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+                else: yearlabel=None
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+        if nbudgetyears>1: ax[-1].legend()
         ax[-1].set_xticks(arange(nprogs)+1)
-        if plt==0: ax[-1].set_xticklabels('')
-        if plt==1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        if plt<nprogs: ax[-1].set_xticklabels('')
+        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
         ax[-1].set_ylabel('Spending (US$)')
-        ax[-1].set_title(labels[plt])
+        ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
-    for plt in range(len(progdata)):
-        if compare: ax[plt].set_ylim((0,ymax))
     
     return fig
-    
-    
-def plotmultiallocs(multires=None, compare=True):
-    ''' Plot multiple allocations on bar charts - intended for scenarios '''
-    
-    ### NOT READY YET

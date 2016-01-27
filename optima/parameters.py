@@ -8,7 +8,7 @@ Version: 2016jan14 by cliffk
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -121,7 +121,7 @@ def loadpartable(inputpartable=None):
                 rawpars[l][attr] = alllines[l][i] # Store attributes
             except:
                 errormsg = 'Error processing parameter line "%s"' % alllines[l]
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
     return rawpars
 
 
@@ -180,7 +180,7 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
     if len(atleast2datapoints)==0:
         errormsg = 'Not more than one data point entered for any population size\n'
         errormsg += 'To estimate growth trends, at least one population must have at least 2 data points'
-        raise Exception(errormsg)
+        raise OptimaException(errormsg)
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
@@ -193,7 +193,7 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
             par.p[key] = array([exp(fitpars[1]), fitpars[0]])
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
     
     # Handle populations that have only a single data point
     only1datapoint = list(set(keys)-set(atleast2datapoints))
@@ -202,7 +202,7 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
         thisyear = sanitizedt[key][0]
         thispopsize = sanitizedy[key][0]
         largestthatyear = popgrow(largestpars, thisyear-startyear)
@@ -221,7 +221,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
         name, short = defaultargs['name'], defaultargs['short']
     except: 
         errormsg = 'Cannot create a time parameter without keyword arguments "name" and "short"! \n\nArguments:\n %s' % defaultargs.items()
-        raise Exception(errormsg)
+        raise OptimaException(errormsg)
         
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
     for row,key in enumerate(keys):
@@ -235,8 +235,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
                 par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
-            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
     
     return par
 
@@ -248,7 +247,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     
     Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
     '''
-    if which not in ['numacts','condom']: raise Exception('Can only balance numacts or condom, not "%s"' % which)
+    if which not in ['numacts','condom']: raise OptimaException('Can only balance numacts or condom, not "%s"' % which)
     mixmatrix = array(data['part'+act]) # Get the partnerships matrix
     npops = len(popkeys) # Figure out the number of populations
     symmetricmatrix = zeros((npops,npops));
@@ -339,9 +338,11 @@ def makepars(data, label=None, verbose=2):
     pars = odict()
     pars['label'] = label # Add optional label, default None
     
-    # Shorten information on which populations are male, which are female
+    # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
+    pars['injects'] = array(data['pops']['injects']).astype(bool) # Populations that inject
+    pars['sexworker'] = array(data['pops']['sexworker']).astype(bool) # Populations that provide commercial sex
     
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
@@ -456,7 +457,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars = odict() # Used to be called M
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'popkeys']
+    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
@@ -469,7 +470,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-            except: raise Exception('Could not figure out how to interpolate parameter "%s"' % key)
+            except: raise OptimaException('Could not figure out how to interpolate parameter "%s"' % key)
 
     return simpars
 
@@ -627,18 +628,18 @@ class Parameterset(object):
         return output
     
     
-    def getresults(self):
+    def getresults(self, die=True):
         ''' Method for getting the results '''
         if self.resultsref is not None and self.project is not None:
-            results = getresults(project=self.project, pointer=self.resultsref)
+            results = getresults(project=self.project, pointer=self.resultsref, die=die)
             return results
         else:
-            print('WARNING, no results associated with this parameter set')
-            return None
+            raise OptimaException('No results associated with this parameter set')
+    
     
     def makepars(self, data, verbose=2):
         self.pars = [makepars(data, verbose=verbose)] # Initialize as list with single entry
-        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys
+        self.popkeys = dcp(self.pars[-1]['popkeys']) # Store population keys more accessibly
         return None
 
 
@@ -716,9 +717,9 @@ class Parameterset(object):
     def manualfitlists(self, ind=0):
         ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
         if not self.pars:
-            raise Exception("No parameters available!")
+            raise OptimaException("No parameters available!")
         elif len(self.pars)<=ind:
-            raise Exception("Parameter with index {} not found!".format(ind))
+            raise OptimaException("Parameter with index {} not found!".format(ind))
 
         tmppars = self.pars[ind]
 
@@ -763,9 +764,9 @@ class Parameterset(object):
         from optima import printv
         ''' Update Parameterset with new results '''
         if not self.pars:
-            raise Exception("No parameters available!")
+            raise OptimaException("No parameters available!")
         elif len(self.pars)<=ind:
-            raise Exception("Parameter with index {} not found!".format(ind))
+            raise OptimaException("Parameter with index {} not found!".format(ind))
 
         tmppars = self.pars[ind]
 

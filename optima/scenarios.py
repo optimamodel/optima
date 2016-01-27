@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
-from optima import dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
 
 
 
@@ -66,7 +66,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     printv('Running scenarios...', 1, verbose)
     
     # Make sure scenarios exist
-    if project is None: raise Exception('First argument to runscenarios() must be a project')
+    if project is None: raise OptimaException('First argument to runscenarios() must be a project')
     if len(project.scens)==0:  # Create scenario list if not existing
         defaultscens = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
         project.addscenlist(defaultscens)
@@ -81,7 +81,8 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     for scenno, scen in enumerate(scenparsets):
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno],Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno],Progscen) else None
-        result = runmodel(pars=scenparsets[scen].pars[0], project=project, budget=budget, budgetyears=budgetyears, verbose=1)
+        progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno],Progscen) else None
+        result = runmodel(pars=scenparsets[scen].pars[0], parset=project.parsets[scenlist[scenno].parsetname], progset=progset, project=project, budget=budget, budgetyears=budgetyears, verbose=1)
         allresults.append(result) 
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -103,7 +104,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
     for scenno, scen in enumerate(scenlist):
         
         try: thisparset = dcp(project.parsets[scen.parsetname])
-        except: raise Exception('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
+        except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         thisparset.modified = today()
         thisparset.name = scen.name
         npops = len(thisparset.popkeys)
@@ -122,7 +123,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = par['for']
                     else: 
                         errormsg = 'Unrecognized population or partnership type.'
-                        raise Exception(errormsg)
+                        raise OptimaException(errormsg)
                     for pop in pops:
                         if par['startyear'] < max(thispar.t[pop]):
                             thispar.t[pop] = thispar.t[pop][thispar.t[pop] < par['startyear']]
@@ -136,15 +137,21 @@ def makescenarios(project=None, scenlist=None, verbose=2):
         elif isinstance(scen,Progscen):
 
             try: thisprogset = dcp(project.progsets[scen.progsetname])
-            except: raise Exception('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
+            except: raise OptimaException('Failed to extract progset "%s" from this project:\n%s' % (scen.progset, project))
             
             try: results = project.parsets[scen.parsetname].getresults() # See if there are results already associated with this parset
             except:
                 results = None
 
             if isinstance(scen, Budgetscen):
+                if not isinstance(scen.budget,dict): raise Exception('Currently only accepting budgets as dictionaries.')
+                if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
+                scen.budget = scen.budget.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
-            elif isinstance(scen ,Budgetscen):
+            elif isinstance(scen, Coveragescen):
+                if not isinstance(scen.coverage,dict): raise Exception('Currently only accepting coverage as dictionaries.')
+                if not isinstance(scen.coverage,odict): scen.budget = odict(scen.budget)
+                scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
@@ -154,7 +161,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
         else: 
             errormsg = 'Unrecognized program scenario type.'
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
             
 
         scenparsets[scen.name] = thisparset
@@ -167,7 +174,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
 def defaultscenarios(parset=None, verbose=2):
     """ Define a list of default scenarios -- only "Current conditions" by default """
-    if parset is None: raise Exception('You need to supply a parset to generate default scenarios')
+    if parset is None: raise OptimaException('You need to supply a parset to generate default scenarios')
     
     scenlist = [Parscen()]
     

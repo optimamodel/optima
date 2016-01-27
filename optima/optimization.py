@@ -1,10 +1,10 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan18 by cliffk
+Version: 2016jan24
 """
 
-from optima import Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
+from optima import OptimaException, Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
 from numpy import zeros, arange, array, isnan
 
 
@@ -63,7 +63,7 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     
     # Validate input
     if None in [budgetvec, progset, objectives, constraints, tvec]:  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise Exception('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
+        raise OptimaException('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # WARNING -- temp -- normalize budgetvec
     budgetvec *=  objectives['budget']/budgetvec.sum() 
@@ -92,6 +92,10 @@ def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objec
     if outputresults:
         results.outcome = outcome
         results.budgetvec = budgetvec # WARNING, not sure this should be here
+        results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+        results.budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+        for k,key in enumerate(results.budget.keys()):
+            results.budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
         return results
     else: 
         return outcome
@@ -103,7 +107,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     printv('Running outcomes optimization...', 1, verbose)
     
-    if None in [project, optim]: raise Exception('minoutcomes() requires project and optim arguments at minimum')
+    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     
     
     
@@ -120,7 +124,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     # Process inputs
     if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
-    if max(inds)>lenparlist: raise Exception('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
+    if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
     
     totalbudget = objectives['budget']
@@ -138,7 +142,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         # WARNING, kludge because some later functions expect parset instead of pars
         thisparset = dcp(parset)
         try: thisparset.pars = [parset.pars[ind]] # Turn into a list
-        except: raise Exception('Could not load parameters %i from parset %s' % (ind, parset.name))
+        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         # Calculate limits -- WARNING, kludgy, I guess?
         budgetlower  = zeros(nprogs)
@@ -150,19 +154,21 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         elif method=='simplex':
             from scipy.optimize import minimize
             budgetvecnew = minimize(objectivecalc, budgetvec, args=args).x
-        else: raise Exception('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
+        else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     new = objectivecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
+    tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=[orig, new])
-    budget = odict()
-    budget['orig'] = orig.budgetvec # Store original allocation
-    budget['optim'] = new.budgetvec # Store original allocation
-    multires.budget = budget # Store budget information
+    multires = Multiresultset(resultsetlist=tmpresults)
+    
+    for k,key in enumerate(multires.keys): # WARNING, this is ugly
+        
+        multires.budgetyears[key] = tmpresults[k].budgetyears
+    
     multires.mismatch = output.fval # Store full function evaluation information
     optim.resultsref = multires.uid # Store the reference for this result
     

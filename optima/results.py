@@ -1,15 +1,15 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan12 by cliffk
+Version: 2015jan23 by cliffk
 """
 
-from optima import Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 
 
 
-def getresults(project=None, pointer=None):
+def getresults(project=None, pointer=None, die=True):
     '''
     Function for returning the results associated with something. 'pointer' can eiher be a UID,
     a string representation of the UID, the actual pointer to the results, or a function to return the
@@ -22,18 +22,23 @@ def getresults(project=None, pointer=None):
         which returns
         P.results[P.parsets[0].resultsref]
     
-    Version: 2016jan18
+    The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
+    
+    Version: 2016jan23
     '''
-    if type(pointer) in [str, int, float]:
+    if isinstance(pointer, (str, int, float)):
         if project is not None: return project.results[pointer]
-        else: raise Exception('To get results using a key or index, getresults() must be given the project')
+        else: raise OptimaException('To get results using a key or index, getresults() must be given the project')
     elif type(pointer)==type(uuid()): 
         if project is not None: return project.results[str(pointer)]
-        else: raise Exception('To get results using a UID, getresults() must be given the project')
+        else: raise OptimaException('To get results using a UID, getresults() must be given the project')
+    elif isinstance(pointer, (Resultset, Multiresultset)):
+        return pointer # Return pointer directly if it's already a results set
     elif callable(pointer): 
-        return pointer() # Try calling as function
+        return pointer() # Try calling as function -- might be useful for the database or something
     else: 
-        return pointer # Give up, just return pointer, which is maybe a Resultset
+        if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        else: return None # Give up, return nothing
 
 
 
@@ -64,7 +69,7 @@ class Resultset(object):
         self.name = name # May be blank if automatically generated, but can be overwritten
         
         # Turn inputs into lists if not already
-        if raw is None: raise Exception('To generate results, you must feed in model output: none provided')
+        if raw is None: raise OptimaException('To generate results, you must feed in model output: none provided')
         if type(simpars)!=list: simpars = [simpars] # Force into being a list
         if type(raw)!=list: raw = [raw] # Force into being a list
         
@@ -136,6 +141,7 @@ class Resultset(object):
     
     def make(self, quantiles=None, annual=True, verbose=2):
         """ Gather standard results into a form suitable for plotting with uncertainties. """
+        # WARNING: Should use indexes retrieved from project settings!
         
         printv('Making derived results...', 3, verbose)
         
@@ -167,17 +173,18 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        txinds = self.settings.alltreat
+        alltreat = self.settings.alltreat
+        allplhiv = self.settings.allplhiv
         data = self.data
         
-        self.main['prev'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['prev'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['prev'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: 
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,1:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,1:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
         if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
         
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
@@ -195,11 +202,9 @@ class Resultset(object):
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        try:
-            self.main['numtreat'].pops = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-            self.main['numtreat'].tot = quantile(allpeople[:,txinds,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
-            if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
-        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
 # WARNING, need to implement
@@ -226,7 +231,7 @@ class Resultset(object):
         defaultchecks = self.graph_selectors['checks']
         epikeys = self.main.keys()
         epinames = [thing.name for thing in self.main.values()]
-        episubkeys = ['tot', 'pops'] # Would be best not to hard-code this...
+        episubkeys = ['tot', 'per', 'sta'] # Would be best not to hard-code this...
         episubnames = ['total', 'by population']
 
         if which is None:  # assume there is at least one epikey )
@@ -254,10 +259,12 @@ class Multiresultset(Resultset):
         self.created = today()
         self.nresultsets = len(resultsetlist)
         self.keys = []
+        self.budget = odict()
+        self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
-        elif resultsetlist is None: raise Exception('To generate multi-results, you must feed in a list of result sets: none provided')
-        else: raise Exception('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
+        elif resultsetlist is None: raise OptimaException('To generate multi-results, you must feed in a list of result sets: none provided')
+        else: raise OptimaException('Resultsetlist type "%s" not understood' % str(type(resultsetlist)))
                 
         
         # Fundamental quantities -- populated by project.runsim()
@@ -267,10 +274,6 @@ class Multiresultset(Resultset):
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
-        # Budget TEMP
-        self.budget = [resultset.budget for resultset in resultsetlist]
-        self.budgetyears = [resultset.budgetyears for resultset in resultsetlist]
-        
         # Main results -- time series, by population -- get right structure, but clear out results -- WARNING, must match format above!
         self.main = dcp(resultsetlist[0].main) # For storing main results -- get the format from the first entry, since should be the same for all
         for key in self.main.keys():
@@ -296,7 +299,13 @@ class Multiresultset(Resultset):
                 for at in ['pops', 'tot']:
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
-                
+            # Finally, process the budget and budgetyears
+            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+                self.budget[key]      = rset.budget
+                self.budgetyears[key] = rset.budgetyears
+            except: 
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                pass # Not a problem if doesn't work
             
         
         

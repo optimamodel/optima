@@ -21,9 +21,31 @@ I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 Version: 2016jan18 by cliffk
 """
 
+license = '''
+Optima HIV -- HIV optimization and analysis tool
+Copyright (C) 2016 by the Optima Consortium
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
+print(license)
+
+
+
+
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0 
-
 
 
 
@@ -63,7 +85,7 @@ except: _failed()
 try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 except: _failed()
 
-try: from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
+try: from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
 except: _failed()
 
 
@@ -101,7 +123,7 @@ except: _failed()
 try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
 except: _failed()
 
-try: from makeplots import plotepi, plotmismatch, plot2allocs, plotmultiallocs, plotformatslist, plotformatsdict # Create the plots
+try: from makeplots import plotepi, plotmismatch, plotallocs, plotformatslist, plotformatsdict # Create the plots
 except: _failed()
 
 

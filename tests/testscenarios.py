@@ -60,7 +60,7 @@ if 'standardscen' in tests:
     caspships = P.data['pships']['cas']
 
     # Get a default progset 
-    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'HTC', 'ART'])
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART'])
     
     # Modify target pars and pops
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
@@ -70,14 +70,21 @@ if 'standardscen' in tests:
     R.updateprogset()
 
     # Add program effects
-    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+    R.covout['condcas'][('FSW', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
     R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-    R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM_programs':(0.75,0.85)})
-    R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
+    R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+    R.covout['condcas'][('FSW', 'M 15+')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
     R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-    R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
-    R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW_programs':(0.95,0.99)})
-    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM_programs':(0.95,0.99)})
+    R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+
+    R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+    R.covout['condcom'][('FSW', 'Clients')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+
+    R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
+    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
     R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
     R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
     R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
@@ -133,7 +140,7 @@ if 'standardscen' in tests:
               progsetname='default',
               t=[2016,2020],
               budget={'Condoms': array([1e7,1e7]),
-                           'FSW_programs':array([1e6,1e6]),
+                           'FSW programs':array([1e6,1e6]),
                            'HTC':array([2e7,2e7]),
                            'ART':array([1e6,1e6])}),
 
@@ -142,7 +149,7 @@ if 'standardscen' in tests:
               progsetname='default',
               t=[2016,2020],
               budget={'Condoms': array([1e7,2e7]),
-                           'FSW_programs':array([1e6,1e6]),
+                           'FSW programs':array([1e6,1e6]),
                            'HTC':array([2e7,2e7]),
                            'ART':array([1e6,1e6])}),
 
@@ -151,18 +158,18 @@ if 'standardscen' in tests:
               progsetname='default',
               t=[2016,2020],
               coverage={'Condoms': array([285706.,1e6]),
-                           'FSW_programs':array([15352.,15352.]),
+                           'FSW programs':array([15352.,15352.]),
                            'HTC':array([1332862.,1332862.]),
                            'ART':array([3324.,3324.])}),
 
          Budgetscen(name='Double investment in ART and HTC',
               parsetname='default',
               progsetname='default',
-              t=[2016,2020],
-              budget={'Condoms': array([1e7,1e7]),
-                           'FSW_programs':array([1e6,1e6]),
-                           'HTC':array([2e7,4e7]),
-                           'ART':array([1e6,2e6])})
+              t=[2016,2018,2020],
+              budget={'Condoms': array([1e7,1e7,1e7]),
+                           'FSW programs':array([1e6,1e6,1e6]),
+                           'HTC':array([2e7,3e7,4e7]),
+                           'ART':array([1e6,1.5e6,2e6])})
         ]
     
     # Store these in the project
@@ -174,8 +181,9 @@ if 'standardscen' in tests:
     P.runscenarios() 
      
     if doplot:
-        from optima import pygui
+        from optima import pygui, plotallocs
         pygui(P.results[-1])
+        plotallocs(P.results[-1])
 
     if showstats:
         from optima import Settings, findinds
