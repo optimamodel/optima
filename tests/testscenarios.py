@@ -7,13 +7,14 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016jan18 by cliffk
+Version: 2016jan26 by cliffk
 """
 
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
+'maxbudget',
 ]
 
 ##############################################################################
@@ -196,3 +197,57 @@ if 'standardscen' in tests:
 
 
     done(t)
+
+
+
+
+
+
+
+## Set up project etc.
+if 'maxbudget' in tests:
+    t = tic()
+
+    print('Running maximum budget scenario test...')
+    from optima import Project, Parscen, Budgetscen, odict
+    from optima.defaults import defaultprogset
+    
+    ## Set up default project
+    P = Project(spreadsheet='test7pops.xlsx')
+    pops = P.data['pops']['short']
+    caspships = P.data['pships']['cas']
+    
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'HTC', 'ART'])
+    R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
+    R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
+    R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
+    R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
+    R.updateprogset()
+    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM_programs':(0.75,0.85)})
+    R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+    R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
+    R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW_programs':(0.95,0.99)})
+    R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM_programs':(0.95,0.99)})
+    R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
+    R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+    R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+    R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    
+    P.addprogset(name='default', progset=R)
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions', parsetname='default', pars=[]),
+        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=odict([(key, 1e9) for key in R.programs.keys()])),
+        ]
+    
+    # Run the scenarios
+    P.addscenlist(scenlist)
+    P.runscenarios() 
+     
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')

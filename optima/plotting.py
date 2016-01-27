@@ -54,8 +54,11 @@ def getplotselections(results):
     
     ## Add selections for outcome and budget allocations
     if hasattr(results, 'budget') and results.budget is not None:
-        plotselections['keys'] += ['budget']
-        plotselections['names'] += ['Budget allocation']
+        if all([budg is not None for budg in results.budget.values()]): # Make sure none of the individual budgets are none either
+            print('HIEIEIEIEI')
+            print(results.budget)
+            plotselections['keys'] += ['budget']
+            plotselections['names'] += ['Budget allocation']
     
     
     
@@ -438,7 +441,7 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
     '''
     
     # Validate input
-    if not(hasattr(results, 'budget')): raise OptimaException('No budget found for results object:\n"%s"' % results)
+    if not(hasattr(results, 'budget')) or results.budget is None: raise OptimaException('No budget found for results object:\n"%s"' % results)
     
     # Preliminaries: extract needed data
     budgetstoplot = [budget for budget in results.budget.values() if budget]
