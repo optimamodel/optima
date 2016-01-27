@@ -97,11 +97,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     # Behavioural transitions between stages [npop,npts]
     immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
     linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)
-    #adherenceprop = simpars['adherenceprop'] # Proportion of people on treatment who adhere per year (P/T)
     leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
     stoprate      = simpars['stoprate']      # Percentage of people who receive ART in year who stop taking ART (%/year) (P/T)
-    #propstop      = simpars['propstop']      # Proportion of people on ART who stop taking ART per year (P/T)
-    #proploss      = simpars['proploss']      # Proportion of people who stop taking ART per year who are lost to follow-up (P)
 
     # Intervention uptake (P=proportion, N=number)
     sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
@@ -345,7 +342,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         
         ## Diagnosed
         currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
-        newcaretot = numcare[t] - people[[care,usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
+        #newcaretot = numcare[t] - people[[care,usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
         for cd4 in range(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
