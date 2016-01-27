@@ -60,7 +60,7 @@ if 'standardscen' in tests:
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
 
     # Get a default progset 
-    R = defaultprogset(P.parsets['default'], addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'HTC', 'ART', 'OST'])
+    R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
     
     # Modify target pars and pops
     R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
