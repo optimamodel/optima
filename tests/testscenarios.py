@@ -54,7 +54,7 @@ if 'standardscen' in tests:
     from numpy import array
     
     # Make project and store results from default sim
-    P = Project(spreadsheet='testpwid.xlsx')
+    P = Project(spreadsheet='concentrated.xlsx')
     results = P.runsim('default')
 
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
