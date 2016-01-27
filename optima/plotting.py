@@ -436,15 +436,13 @@ def plotallocs(multires=None, which=None, compare=False):
     elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
 
     # Preliminaries: process inputs and extract needed data
-    if 'budget' in which: budgetstoplot = [budget for budget in multires.budget.values() if budget]
-    if 'coverage' in which: coveragetoplot = [coverage for coverage in multires.coverage.values() if coverage]
+    toplot = [item for item in getattr(multires, which) if item]
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
     for plotkey in which:
-        toplot = budgetstoplot if plotkey=='budget' else coveragetoplot
         proglabels = toplot[0].keys() 
 
-        alloclabels = [key for k,key in enumerate(multires.__dict__[plotkey].keys()) if multires.__dict__[plotkey].values()[k]] 
+        alloclabels = [key for k,key in enumerate(getattr(multires, plotkey).keys()) if getattr(multires, plotkey).values()[k]] 
         nprogs = len(proglabels)
         nallocs = len(alloclabels)
     
