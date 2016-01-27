@@ -95,7 +95,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
-    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','birthmatrix','transit']
+    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','asymtransit','transit']
     
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
@@ -266,8 +266,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     for key in sheets['Partnerships & transitions']:
         thesedata = data[key]
         matrixshape = shape(array(thesedata))
-        correctfirstdim = data['npops'] if key!='birthmatrix' else sum(data['pops']['female'])
-        correctseconddim = data['npops']
+        correctfirstdim, correctseconddim = data['npops'], data['npops']
         if matrixshape[0] != correctfirstdim or matrixshape[1] != correctseconddim:
             errormsg = 'Matrix "%s" in partnerships & transitions sheet is not the correct shape' % key
             errormsg += '(rows = %i, columns = %i, should be %i and %i)\n' % (matrixshape[0], matrixshape[1], correctfirstdim, correctseconddim)

@@ -126,7 +126,7 @@ if 'runsim' in tests:
     
     from optima import Project
     P = Project(spreadsheet='concentrated.xlsx')
-    results = P.runsim('default')
+#    results = P.runsim('default')
     
     done(t)
 

@@ -408,21 +408,16 @@ def makepars(data, label=None, verbose=2):
     pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['birth'].t = pars['birth'].t.sort(popkeys)
 
-    # Normalise birth matrix and pad
-    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['birthmatrix']]
-    fullbirthmatrix = zeros((len(popkeys),len(popkeys)))
-    for keyno, key in enumerate(popkeys):
-        if data['pops']['female'][keyno]:
-            fullbirthmatrix[len(popkeys[:keyno])] = normalised_birthmatrix[sum(data['pops']['female'][:keyno])]
-    pars['birthmatrix'] = fullbirthmatrix 
+    # Aging
+    for key in popkeys:
+        pars['birth'].y[key] = array([0])
+        pars['birth'].t[key] = array([0])
+    pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['birth'].t = pars['birth'].t.sort(popkeys)
 
-    # Create age transition matrix from age data
-    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['birthmatrix']]
-    fullbirthmatrix = zeros((len(popkeys),len(popkeys)))
-    for keyno, key in enumerate(popkeys):
-        if data['pops']['female'][keyno]:
-            fullbirthmatrix[len(popkeys[:keyno])] = normalised_birthmatrix[sum(data['pops']['female'][:keyno])]
-    pars['birthmatrix'] = fullbirthmatrix 
+    # Normalise aging matrix
+    normalised_asymtransit = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['asymtransit']]
+    pars['asymtransit'] = normalised_asymtransit 
 
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
@@ -491,7 +486,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
-    staticmatrixkeys = ['birthmatrix']
+    staticmatrixkeys = ['asymtransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
