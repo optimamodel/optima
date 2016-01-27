@@ -271,10 +271,61 @@ class ProgsetParams(Resource):
                 'pop': pop,
                 'programs': [program.name for program in progs]
             } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
-            'coverage': parset_be.pars[0][name].coverage
+            'coverage': parset_be.pars[0][name].coverage,
+            'proginteract': parset_be.pars[0][name].proginteract
         } for name in param_names]
 
         return params
+
+
+program_effect_parser = RequestParser()
+program_effect_parser.add_arguments({
+    'name': {'required': True, 'location': 'json'},
+    'intercept_lower': {'required': True, 'type': float, 'location': 'json'},
+    'intercept_upper': {'required': True, 'type': float, 'location': 'json'},
+})
+
+
+param_year_effect_parser = RequestParser()
+param_year_effect_parser.add_arguments({
+    'year': {'required': True, 'location': 'json'},
+    'intercept_lower': {'required': True, 'type': float, 'location': 'json'},
+    'intercept_upper': {'required': True, 'type': float, 'location': 'json'},
+    'interact': {'location': 'json'},
+    'programs': {
+        'type': SubParser(program_effect_parser),
+        'action': 'append',
+        'default': [],
+        'location': 'json',
+    },
+})
+
+
+param_effect_parser = RequestParser()
+param_effect_parser.add_arguments({
+    'name': {'required': True, 'location': 'json'},
+    'years': {
+        'type': SubParser(param_year_effect_parser),
+        'action': 'append',
+        'default': [],
+        'location': 'json',
+    },
+})
+
+
+parset_effect_parser = RequestParser()
+parset_effect_parser.add_arguments({
+    'parset': {'required': True, 'location': 'json'},
+    'parameters': {
+        'type': SubParser(param_effect_parser),
+        'action': 'append',
+        'default': [],
+        'location': 'json',
+    }
+})
+
+effect_parser = RequestParser()
+effect_parser.add_argument('effects', type=SubParser(parset_effect_parser), action='append', default=[])
 
 
 class ProgsetEffects(Resource):

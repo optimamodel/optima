@@ -262,6 +262,7 @@ class ParsetsDb(db.Model):
         'created': fields.DateTime,
         'updated': fields.DateTime,
         'pars': Json,
+        'effects': Json,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -270,6 +271,7 @@ class ParsetsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     pars = db.Column(db.LargeBinary)
+    effects = db.Column(JSON)
 
     def __init__(self, project_id, name, created=None, updated=None, pars=None, id=None):
         self.project_id = project_id
