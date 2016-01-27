@@ -243,7 +243,8 @@ class ProgsetData(Resource):
 
 param_fields = {
         'name': fields.String,
-        'populations': Json
+        'populations': Json,
+        'coverage': fields.Boolean,
     }
 
 
@@ -254,11 +255,14 @@ class ProgsetParams(Resource):
     )
     @report_exception
     @marshal_with(param_fields)
-    def get(self, project_id, progset_id):
-        from server.webapp.utils import load_progset
+    def get(self, project_id, progset_id, parset_id):
+        from server.webapp.utils import load_progset, load_parset
 
         progset_entry = load_progset(project_id, progset_id)
         progset_be = progset_entry.hydrate()
+
+        parset_entry = load_parset(project_id, parset_id)
+        parset_be = parset_entry.hydrate()
 
         param_names = set([p['param'] for p in progset_be.targetpars])
         params = [{
@@ -266,7 +270,14 @@ class ProgsetParams(Resource):
             'populations': [{
                 'pop': pop,
                 'programs': [program.name for program in progs]
-            } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()]
+            } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
+            'coverage': parset_be.pars[0][name].coverage
         } for name in param_names]
 
         return params
+
+
+class ProgsetEffects(Resource):
+
+    def get(self, project_id, progset_id):
+        pass
