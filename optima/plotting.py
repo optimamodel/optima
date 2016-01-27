@@ -87,7 +87,7 @@ def getplotselections(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -114,20 +114,22 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
+            allplots['improvement'] = plotimprovement(results, **kwargs)
         except Exception as E: 
             if die: raise E
+            else: printv(E.message, 1, verbose)
         
     
-    ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
-        try: 
-            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
-        except Exception as E: 
-            if die: raise E
-        
-    
+    ## Add budget and coverage plots
+    for budcov in ['budget', 'coverage']:
+        if budcov in toplot:
+            toplot.remove(budcov) # Because everything else is passed to plotepi()
+            try: 
+                allplots[budcov] = plotallocs(results, which=budcov, **kwargs)
+            except Exception as E: 
+                if die: raise E
+                else: printv(E.message, 1, verbose)
+            
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
@@ -429,60 +431,66 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
 ##################################################################
     
     
-def plotallocs(multires=None, which=None, compare=False):
-    ''' Plot multiple allocations on bar charts -- intended for scenarios and optimizations '''
+def plotallocs(multires=None, which=None, die=True, verbose=2):
+    ''' 
+    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
     
-    if which is None: which = ['budget','coverage'] # Plot everything if not specified
-    elif type(which) in [str, tuple]: which = [which] # If single value, put inside list
-
+    "which" should be either 'budget' or 'coverage'
+    
+    Version: 2016jan27
+    '''
+    
     # Preliminaries: process inputs and extract needed data
-    toplot = [item for item in getattr(multires, which) if item]
+    try: 
+        toplot = [item for item in getattr(multires, which) if item] # e.g. [budget for budget in multires.budget]
+    except: 
+        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
+        if die: raise OptimaException(errormsg)
+        else: printv(errormsg, 1, verbose)
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    for plotkey in which:
-        proglabels = toplot[0].keys() 
+    proglabels = toplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
+    nprogs = len(proglabels)
+    nallocs = len(alloclabels)
 
-        alloclabels = [key for k,key in enumerate(getattr(multires, plotkey).keys()) if getattr(multires, plotkey).values()[k]] 
-        nprogs = len(proglabels)
-        nallocs = len(alloclabels)
+    fig = figure(figsize=(10,6))
+    fig.subplots_adjust(left=0.10) # Less space on left -- WARNING, do these have any effect?
+    fig.subplots_adjust(right=0.98) # Less space on right
+    fig.subplots_adjust(bottom=0.30) # Less space on bottom
+    fig.subplots_adjust(wspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.40) # More space between
     
-        fig = figure(figsize=(10,6))
-        fig.subplots_adjust(left=0.10) # Less space on left
-        fig.subplots_adjust(right=0.98) # Less space on right
-        fig.subplots_adjust(bottom=0.30) # Less space on bottom
-        fig.subplots_adjust(wspace=0.30) # More space between
-        fig.subplots_adjust(hspace=0.40) # More space between
-        
-        colors = gridcolormap(nprogs)
-        
-        ax = []
-        ymax = 0
+    colors = gridcolormap(nprogs)
     
-        for plt in range(nallocs):
-            nbudgetyears = len(budgetyearstoplot[plt])
-            ax.append(subplot(nallocs,1,plt+1))
-            ax[-1].hold(True)
-            barwidth = .5/nbudgetyears
-            for y in range(nbudgetyears):
-                progdata = [x[y] for x in toplot[plt][:]]
-                if plotkey=='coverage': progdata *= 100 
-                xbardata = arange(nprogs)+.75+barwidth*y
-                for p in range(nprogs):
-                    if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
-                    else: barcolor = colors[p] # Only one year? Color by program
-                    if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
-                    else: yearlabel=None
-                    ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
-            if nbudgetyears>1: ax[-1].legend()
-            ax[-1].set_xticks(arange(nprogs)+1)
-            if plt<nprogs: ax[-1].set_xticklabels('')
-            if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
-            ax[-1].set_xlim(0,nprogs+1)
-            
-            ylabel = 'Spending (US$)' if plotkey=='budget' else 'Coverage (% of targeted)'
-            ax[-1].set_ylabel(ylabel)
-            ax[-1].set_title(alloclabels[plt])
-            ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    ax = []
+    ymax = 0
+
+    for plt in range(nallocs):
+        nbudgetyears = len(budgetyearstoplot[plt])
+        ax.append(subplot(nallocs,1,plt+1))
+        ax[-1].hold(True)
+        barwidth = .5/nbudgetyears
+        for y in range(nbudgetyears):
+            progdata = [x[y] for x in toplot[plt][:]]
+            if which=='coverage': progdata *= 100 
+            xbardata = arange(nprogs)+.75+barwidth*y
+            for p in range(nprogs):
+                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+                else: barcolor = colors[p] # Only one year? Color by program
+                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+                else: yearlabel=None
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+        if nbudgetyears>1: ax[-1].legend()
+        ax[-1].set_xticks(arange(nprogs)+1)
+        if plt<nprogs: ax[-1].set_xticklabels('')
+        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        ax[-1].set_xlim(0,nprogs+1)
+        
+        ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
+        ax[-1].set_ylabel(ylabel)
+        ax[-1].set_title(alloclabels[plt])
+        ymax = maximum(ymax, ax[-1].get_ylim()[1])
         
     close(fig)
     
