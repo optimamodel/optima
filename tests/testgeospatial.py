@@ -40,6 +40,8 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
+filename1 = 'test1.prj'
+filename2 = 'test2.prj'
 
 
 ##############################################################################
@@ -59,8 +61,8 @@ if 'forcerefresh' in tests:
     
     try:
         print('Deleting project files to be used in this test...')
-        remove('test7popsARTandHTC.prj')
-        remove('test7popsART.prj')
+        remove(filename1)
+        remove(filename2)
     except OSError:
         print('No relevant project files can be found...')
     
@@ -73,15 +75,19 @@ if 'forcerefresh' in tests:
 if 'makeportfolio' in tests:
     t = tic()
     print('Running make portfolio test...')
-    from optima import Portfolio
+    from optima import Portfolio, loadobj
     from optima.defaults import defaultproject
     
-    P1 = defaultproject('concentrated')
-    P2 = defaultproject('concentrated')
-
-    P1.progsets[0].rmprogram('OST')
-    P2.progsets[0].rmprogram('OST')
-    P2.progsets[0].rmprogram('HTC')
+    try:
+        P1 = loadobj(filename1)
+        P2 = loadobj(filename2)
+    except:
+        P1 = defaultproject('concentrated')
+        P2 = defaultproject('concentrated')
+    
+        P1.progsets[0].rmprogram('OST')
+        P2.progsets[0].rmprogram('OST')
+        P2.progsets[0].rmprogram('HTC')
 
     F = Portfolio(projects=[P1,P2])
 
@@ -103,8 +109,8 @@ if 'generateBOCs' in tests:
     F.plotBOCs(objectives=objectives)    
     
     print('Saving projects with BOCs...')
-    saveobj('test7popsFSWandCon.prj', P1)
-    saveobj('test7popsCon.prj', P2)
+    saveobj(filename1, P1)
+    saveobj(filename2, P2)
     
     done(t)
 

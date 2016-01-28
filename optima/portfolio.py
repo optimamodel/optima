@@ -109,7 +109,7 @@ class Portfolio(object):
         if initbudgets == None: initbudgets = [None]*len(self.projects)
         if optbudgets == None: optbudgets = [None]*len(self.projects)
         if objectives == None: 
-            printv('WARNING, you have called plotBOCs on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            printv('WARNING, you have called plotBOCs on portfolio %s without specifying objectives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
             
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
