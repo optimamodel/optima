@@ -158,7 +158,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             flag = 'FAILURE'
-        if verbose>=2: print(offset + 'Step %i (%0.1f s): %s (orig: %0.4e | old:%0.4e | new:%0.4e | diff:%0.4e | ratio:%0.5f)' % (count, time()-start, flag, fvalorig, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
+        if verbose>=2: print(offset + 'Step %i (%0.1f s): %s (orig: %s | old:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+sigfig(fvalorig, fvalold, fvalnew, fvalnew-fvalold) + (fvalnew/fvalold,)))
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
@@ -212,3 +212,23 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     x = reshape(x,origshape)
 
     return x, fval, exitflag, output
+
+
+
+
+def sigfig(x, sigfigs=3):
+    """ Return a string representation of variable x with sigfigs number of significant figures -- WARNING, copied from utils.py so this is self-contained """
+    
+    try:
+        if x==0: return '0'
+        from numpy import log10, floor
+        magnitude = floor(log10(abs(x)))
+        factor = 10**(sigfigs-magnitude-1)
+        x = round(x*factor)/float(factor)
+        digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+        decimals = int(max(0,-magnitude+sigfigs-1))
+        strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+        string = strformat % x
+        return string
+    except:
+        return str(x)
