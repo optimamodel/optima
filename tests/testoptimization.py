@@ -89,9 +89,9 @@ if 'minimizemoney' in tests:
     P = defaultproject(which='concentrated') 
     
     objectives = defaultobjectives(which='money')
-    objectives['deathfrac'] = 0.5
+    objectives['deathfrac'] = 0.1
     objectives['incifrac'] = -10
-    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10)
+    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=True)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])

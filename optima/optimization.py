@@ -243,23 +243,24 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
     baseline = odict()
     final = odict()
-    targets = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
+    target = odict()
+    targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
     for key in objectives['keys']:
         thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
-        baseline[key] = thisresult[baseind] 
-        final[key] = thisresult[finalind]
-        if final[key] > baseline[key]*(1-targets[key]): targetsmet = False # Targets are NOT met
+        baseline[key] = float(thisresult[baseind])
+        final[key] = float(thisresult[finalind])
+        target[key] = float(baseline[key]*(1-targetfrac[key]))
+        if final[key] > target[key]: targetsmet = False # Targets are NOT met
 
     # Optionally debug
     if debug: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     # Output results
     if outputresults:
-        results.outcomes = odict([('baseline',baseline), ('final',final)])
+        results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
         results.budgetvec = budgetvec # WARNING, not sure this should be here
         results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
         results.budget = vec2budget(progset, budgetvec) # Convert to budget
-        results.targets = targets
         results.targetsmet = targetsmet
         return results
     else: 
@@ -355,13 +356,12 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         results = moneycalc(budgetvec1, outputresults=True, **args)
         absreductions = odict() # Absolute reductions requested, for setting weights
         for key in objectives['keys']:
-            absreductions[key] = results.outcomes['baseline'][key]*objectives[key+'frac'] # e.g. 1000 deaths * 40% reduction = 400 deaths
+            absreductions[key] = float(results.outcomes['baseline'][key]*objectives[key+'frac']) # e.g. 1000 deaths * 40% reduction = 400 deaths
         weights = dcp(absreductions) # Copy this, since will be modifying it -- not strictly necessary but could come in handy
         weights = 1.0/weights[:] # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
         weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
         for key in objectives['keys']:
-            try: objectives[key+'weight'] = weights[key] # Reset objective weights according to the reduction required
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+           objectives[key+'weight'] = weights[key] # Reset objective weights according to the reduction required
         
         ##########################################################################################################################
         ## Now run an optimization on the current budget

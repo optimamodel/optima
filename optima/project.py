@@ -391,10 +391,10 @@ class Project(object):
         return None
     
     
-    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=5, stoppingfunc=None):
+    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=5, stoppingfunc=None, debug=False):
         ''' Function to minimize money '''
         optim = Optim(project=self, name=name, which='money', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc)
+        multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
         self.addoptim(optim=optim)
         self.addresult(result=multires)
         self.modified = today()
