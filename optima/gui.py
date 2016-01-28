@@ -1,9 +1,8 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, plotting
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
-from PyQt4 import QtGui
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
 
@@ -287,6 +286,9 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     
     Version: 1.0 (2015dec29) by cliffk
     '''
+    
+    # For edit boxes, we need this -- but import it here so only this function will fail
+    from PyQt4 import QtGui
     
     ## Random housekeeping
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
