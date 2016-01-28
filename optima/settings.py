@@ -89,16 +89,25 @@ class Settings():
         maxmeta = 1000.0
         maxacts = 5000.0
         
+        # It's a single number: just return it
+        if isinstance(maxlist, (int, float)): return maxlist
+        
         # Just return the limits themselves if no input argument
         if maxlist is None: 
             return (maxrate, maxpopsize, maxmeta, maxacts)
         
+        # If it's a string, convert to list, but remember this
+        isstring = (type(maxlist)==str)
+        if isstring: maxlist = [maxlist] # Convert to array
+        
         # If list argument is given, replace text labels with numeric limits
-        else:
-            for i,m in enumerate(maxlist):
-                if m=='maxrate': maxlist[i] = maxrate
-                elif m=='maxpopsize': maxlist[i] = maxpopsize
-                elif m=='maxmeta': maxlist[i] = maxmeta
-                elif m=='maxacts': maxlist[i] = maxacts
-                else: pass
-            return maxlist
+        for i,m in enumerate(maxlist):
+            if m=='maxrate': maxlist[i] = maxrate
+            elif m=='maxpopsize': maxlist[i] = maxpopsize
+            elif m=='maxmeta': maxlist[i] = maxmeta
+            elif m=='maxacts': maxlist[i] = maxacts
+            else: pass # This leaves maxlist[i] untouched if it's a number or something
+        
+        # Wrap up
+        if isstring: return maxlist[0] # Return just a scalar
+        else: return maxlist # Or return the whole list

@@ -409,15 +409,24 @@ class Programset(object):
         
         return outcomes
         
-    def getpars(self, coverage, years=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
+    def getpars(self, coverage, t=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
         ''' Make pars'''
+        
+        years = t # WARNING, not renaming in the function definition for now so as to not break things
         
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
         if type(years) in [int,float]: years = [years]
+        settings = None
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        
+        # Get settings from somewhere
+        try: settings = parset.project.settings
+        except:
+            printv('Warning, could not extract settings, using defaults', 1, verbose)
+            settings = Settings()
 
         # Get outcome dictionary
         outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, perturb=perturb)
@@ -429,8 +438,8 @@ class Programset(object):
                 
                 # Validate outcome
                 thisoutcome = outcomes[outcome][p] # Shorten
-                lower = pars[outcome].limits[0] # Lower limit
-                upper = pars[outcome].limits[1] # Upper limit
+                lower = float(pars[outcome].limits[0]) # Lower limit, cast to float just to be sure (is probably int)
+                upper = settings.setmaxes(pars[outcome].limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
                     errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
                     if die:
@@ -980,7 +989,7 @@ def vec2budget(progset=None, budgetvec=None):
     ''' Function to convert a budget/coverage vector into a budget/coverage odict '''
     
     # Validate input
-    if None in [progset, budgetvec]: raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
+    if any([item is None for item in [progset, budgetvec]]): raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
     if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
     
     # Get budget structure and populate
