@@ -3,8 +3,7 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan14 by cliffk
-"""
+Version: 2016jan28
 
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
@@ -25,8 +24,8 @@ Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	Non
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
 Transitions (% moving/year)	transit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-HIV testing rate (%/year)	hivtest	(0, 1)	pop	timepar	meta	test	0	1	random
-AIDS testing rate (%/year)	aidstest	(0, 1)	tot	timepar	meta	test	0	1	random
+HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
+AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
 STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	1	random
 Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	1	random
 Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	1	1	random
