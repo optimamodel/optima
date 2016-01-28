@@ -9,7 +9,8 @@ Version: 2016jan23 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'compare',
-'comparesimple'
+'simple',
+'cascade'
 ]
 
 
@@ -73,12 +74,40 @@ if 'compare' in tests:
 
 
 
-if 'comparesimple' in tests:
+if 'simple' in tests:
     t = tic()
-    print('Running comparison test...')
-    
-    toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta'] # Specify what plots to display here
-    
+    print('Running simple test...')
+    from optima import Project
+    P = Project(spreadsheet='simple.xlsx')
+    P.settings.usecascade = False
+    qq = tic()
+    results = P.runsim()
+    toc(qq, label='model run with cascade')
+    if doplot:
+        settings = P.settings
+        from numpy import linspace
+        tvec = linspace(settings.start, settings.end, round((settings.end-settings.start)/settings.dt)+1)
+        from matplotlib import pyplot as plt
+        alldx = results.raw[0]['people'][settings.alldx,:,:].sum(axis=(0,1))
+        plhiv = results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
+        treat = results.raw[0]['people'][settings.alltreat,:,:].sum(axis=(0,1))
+
+        fig = plt.figure()
+        plt.plot(tvec,plhiv,label='PLHIV')
+        plt.plot(tvec,alldx,label='All diagnosed')
+        plt.plot(tvec,treat,label='on treatment')
+        plt.legend(loc='best')
+        fig.savefig("simple_all.png")
+
+    done(t)
+
+
+
+
+
+if 'cascade' in tests:
+    t = tic()
+    print('Running cascade test...')
     from optima import Project
     Q = Project(spreadsheet='cascade2p.xlsx')
     Q.settings.usecascade = True
@@ -86,7 +115,7 @@ if 'comparesimple' in tests:
     results = Q.runsim()
     toc(qq, label='model run with cascade')
     
-    
+    #toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta'] # Specify what plots to display here
     if doplot:
         """
         from optima import plotresults
@@ -100,40 +129,19 @@ if 'comparesimple' in tests:
         from matplotlib import pyplot as plt
 
         alldx = results.raw[0]['people'][settings.alldx,:,:].sum(axis=(0,1))
-        fig = plt.figure()
-        plt.plot(tvec,alldx)
-        fig.savefig("cascade_alldx.png")
-
         care = results.raw[0]['people'][settings.care,:,:].sum(axis=(0,1))
-        fig = plt.figure()
-        plt.plot(tvec,care)
-        fig.savefig("cascade_care.png")
-
         plhiv = results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
-        fig = plt.figure()
-        plt.plot(tvec,plhiv)
-        fig.savefig("cascade_plhiv.png")
-        
         treat = results.raw[0]['people'][settings.alltreat,:,:].sum(axis=(0,1))
-        fig = plt.figure()
-        plt.plot(tvec,treat)
-        fig.savefig("cascade_treat.png")
-
+        supp = results.raw[0]['people'][settings.svl,:,:].sum(axis=(0,1))
         lost = results.raw[0]['people'][settings.lost,:,:].sum(axis=(0,1))
-        fig = plt.figure()
-        plt.plot(tvec,lost)
-        fig.savefig("cascade_lost.png")
-
         off = results.raw[0]['people'][settings.off,:,:].sum(axis=(0,1))
-        fig = plt.figure()
-        plt.plot(tvec,off)
-        fig.savefig("cascade_off.png")
 
         fig = plt.figure()
+        plt.plot(tvec,plhiv,label='PLHIV')
         plt.plot(tvec,alldx,label='All diagnosed')
         plt.plot(tvec,care,label='care')
-        plt.plot(tvec,plhiv,label='PLHIV')
-        plt.plot(tvec,treat,label='All on treatment')
+        plt.plot(tvec,treat,label='on treatment')
+        plt.plot(tvec,supp,label='suppressed viral load')
         plt.plot(tvec,lost,label='off ART, not in care')
         plt.plot(tvec,off,label='off ART in care')
         plt.legend(loc='best')
