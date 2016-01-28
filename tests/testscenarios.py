@@ -50,7 +50,7 @@ if 'standardscen' in tests:
     
     P = defaultproject('concentrated')
     
-    caspships = P.parsets['default'].pars[0]['condcas'].keys
+    caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
     
     ## Define scenarios
     scenlist = [
