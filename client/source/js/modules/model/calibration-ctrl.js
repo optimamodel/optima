@@ -66,10 +66,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
+      var url = '/api/parset/' + $scope.activeParset.id + '/calibration';
       if (save) {
-        data.doSave = true;
+        url = url + '?doSave=true';
       }
-      $http.put('/api/parset/' + $scope.activeParset.id + '/calibration', data)
+      $http.put(url, data)
         .success(function (response) {
           setCalibrationData(response.calibration);
         });
