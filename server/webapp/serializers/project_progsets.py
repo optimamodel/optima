@@ -54,10 +54,10 @@ param_year_effect_parser.add_arguments({
     'year': {'required': False, 'location': 'json'},
     'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
     'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
-    'interact': {'location': 'json', 'required': False},
+    'interact': {'location': 'json', 'required': False, 'type': JsonInput},
     'programs': {
         'type': SubParser(program_effect_parser),
-        'action': 'append',
+        # 'action': 'append',
         'default': [],
         'location': 'json',
         'required': False,
@@ -71,7 +71,7 @@ param_effect_parser.add_arguments({
     'pop': {'required': False, 'location': 'json', 'type': JsonInput},
     'years': {
         'type': SubParser(param_year_effect_parser),
-        'action': 'append',
+        # 'action': 'append',
         'default': [],
         'location': 'json',
         'required': False,
@@ -81,11 +81,10 @@ param_effect_parser.add_arguments({
 
 parset_effect_parser = RequestParser()
 parset_effect_parser.add_arguments({
-    'parset': {'required': True, 'location': 'json'},
+    'parset': {'required': False, 'location': 'json'},
     'parameters': {
         'type': SubParser(param_effect_parser),
-        'action': 'append',
-        'type': JsonInput,
+        # 'action': 'append',
         'default': [],
         'location': 'json',
         'required': False

@@ -263,9 +263,9 @@ class ProgsetEffects(Resource):
         progset_entry = load_progset(project_id, progset_id)
 
         args = effect_parser.parse_args()
-        # raise Exception(args)
         progset_entry.effects = args.get('effects', [])
 
+        db.session.add(progset_entry)
         db.session.commit()
 
         return progset_entry

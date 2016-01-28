@@ -273,7 +273,7 @@ class ParsetsDb(db.Model):
     pars = db.Column(db.LargeBinary)
     effects = db.Column(JSON)
 
-    def __init__(self, project_id, name, created=None, updated=None, pars=None, id=None):
+    def __init__(self, project_id, name, created=None, updated=None, pars=None, id=None, effects=None):
         self.project_id = project_id
         self.name = name
         if created:
@@ -283,6 +283,7 @@ class ParsetsDb(db.Model):
         self.pars = pars
         if id:
             self.id = id
+        self.effects = effects
 
     def hydrate(self):
         parset_instance = op.Parameterset()

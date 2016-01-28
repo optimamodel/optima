@@ -51,7 +51,8 @@ class SubParser:
         self.child_parser.abort_on_error = False
 
     def __call__(self, item_to_parse):
-        print(item_to_parse)
+        if isinstance(item_to_parse, list):
+            return [self.child_parser.parse_args(req=SubRequest(item)) for item in item_to_parse]
         return self.child_parser.parse_args(req=SubRequest(item_to_parse))
 
 
