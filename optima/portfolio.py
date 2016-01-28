@@ -140,7 +140,7 @@ class Portfolio(object):
                 p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
             BOClist.append(p.getBOC(objectives))
             
-        return minBOCoutcomes(BOClist, grandtotal, budgetvec = seedbudgets)
+        return minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets)
         
         
     def fullGA(self, objectives=None, budgetratio=None, verbose=0):
@@ -184,17 +184,17 @@ def objectivecalc(x, BOClist, grandtotal, minbound):
     totalobj = 0
     for i in xrange(len(x)):
         totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
-    print(totalobj)
     return totalobj
     
-def minBOCoutcomes(BOClist, grandtotal, budgetvec = None, minbound = None, maxiters=1000, maxtime=None, verbose=5):
+def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=5):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
     
     if minbound == None: minbound = [0]*len(BOClist)
     if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
-    if not len(budgetvec) == len(BOClist): Exception('Error: Geospatial analysis is minimising x BOCs with y initial budgets, where x and y are not equal!')
+    if not len(budgetvec) == len(BOClist): 
+        errormsg = 'Geospatial analysis is minimising %i BOCs with %i initial budgets' % (len(BOClist), len(budgetvec))
+        raise OptimaException(errormsg)
         
-#    args = (BOClist, grandtotal, minbound)
     args = {'BOClist':BOClist, 'grandtotal':grandtotal, 'minbound':minbound}    
     
 #    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
