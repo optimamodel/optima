@@ -7,13 +7,13 @@ Version: 2016jan27
 """
 
 from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat
+from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
-import textwrap
-from pylab import figure, figtext
-from matplotlib.ticker import MaxNLocator
 
-coveragepars=['numtx','numpmtct','numost','numcircum']
+# WARNING, this should not be hard-coded!!! Available from
+# [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
+# ...though would be nice to have an easier way!
+coveragepars=['numtx','numpmtct','numost','numcircum'] 
 
 
 class Programset(object):
@@ -409,26 +409,45 @@ class Programset(object):
         
         return outcomes
         
-    def getpars(self, coverage, t, parset=None, results=None, ind=0, perturb=False):
+    def getpars(self, coverage, years=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
         ''' Make pars'''
         
         # Validate inputs
-        if type(t) in [int,float]: t = [t]
+        if years is None: raise OptimaException('To get pars, one must supply years')
+        if type(years) in [int,float]: years = [years]
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
 
         # Get outcome dictionary
-        outcomes = self.getoutcomes(coverage=coverage, t=t, parset=parset, results=results, perturb=perturb)
+        outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, perturb=perturb)
 
         # Create a parset and copy over parameter changes
         pars = dcp(parset.pars[ind])
         for outcome in outcomes.keys():
             for p in outcomes[outcome].keys():
-                pars[outcome].t[p] = append(pars[outcome].t[p], min(t)-1) # Include the year before the programs start...
-                pars[outcome].y[p] = append(pars[outcome].y[p], pars[outcome].y[p][-1]) # Include the year before the programs start...
-                pars[outcome].t[p] = append(pars[outcome].t[p], array(t))
-                pars[outcome].y[p] = append(pars[outcome].y[p], array(outcomes[outcome][p]))
+                
+                # Validate outcome
+                thisoutcome = outcomes[outcome][p] # Shorten
+                lower = pars[outcome].limits[0] # Lower limit
+                upper = pars[outcome].limits[1] # Upper limit
+                if any(thisoutcome<lower) or any(thisoutcome>upper):
+                    errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
+                    if die:
+                        raise OptimaException(errormsg)
+                    else:
+                        printv(errormsg, 1, verbose)
+                        thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
+                        thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
+                
+                # Overwrite parameter indices
+                par_t = pars[outcome].t[p] # Shorten time values
+                par_y = pars[outcome].y[p] # Shorten y values
+                minyear = min(years) # Find the earliest year
+                tokeep = findinds(par_t<minyear) # Keep only the indices from before the program
+                if len(tokeep)==0: tokeep = array([0]) # Keep at least one year
+                pars[outcome].t[p] = append(par_t[tokeep], years) 
+                pars[outcome].y[p] = append(par_y[tokeep], thisoutcome)
 
         return pars
 
@@ -669,6 +688,11 @@ class Program(object):
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
         randseed=None, bounds=None, npts=100, maxupperlim=1e8):
         ''' Plot the cost-coverage curve for a single program'''
+        
+        # Put plotting imports here so fails at the last possible moment
+        from pylab import figure, figtext
+        from matplotlib.ticker import MaxNLocator
+        import textwrap
 
         if type(t) in [int,float]: t = [t]
         plotdata = {}
@@ -764,7 +788,7 @@ class Program(object):
 ########################################################
 class CCOF(object):
     '''Cost-coverage, coverage-outcome and cost-outcome objects'''
-    __metaclass__ = abc.ABCMeta
+    __metaclass__ = abc.ABCMeta # WARNING, this is the only place where this is used...is it necessary...?
 
     def __init__(self,ccopars=None,interaction=None):
         self.ccopars = ccopars if ccopars else {}
