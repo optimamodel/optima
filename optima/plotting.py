@@ -538,13 +538,13 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     fig = figure(figsize=figsize)
     colors = gridcolormap(3)
     settings = results.settings
-    cascadedict = odict([('All PLHIV', settings.allplhiv), ('Diagnosed PLHIV', settings.alldx), ('PLHIV on treatment', settings.alltx)]) 
+    cascadelist = ['allplhiv', 'alldx', 'alltx']odict([('allplhiv', 'All PLHIV'), ('alldx', 'Diagnosed PLHIV'), ('PLHIV on treatment', settings.alltx)]) 
     
     # Plot model estimates with uncertainty
     bottom = 0*results.tvec # Easy way of setting to 0...
-    for l,inds in cascadedict.values(): # Loop backwards so correct ordering -- first one at the top, not bottom
+    for l,key in cascadedict.keys(): # Loop backwards so correct ordering -- first one at the top, not bottom
         k = nlinesperplot-1-l # And in reverse order
-        fill_between(results.tvec, bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
+        fill_between(results.tvec, bottom, results.main[factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
         bottom += best[k]
     
     absimprove = zeros(ncurves)
