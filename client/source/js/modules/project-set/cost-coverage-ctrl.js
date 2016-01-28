@@ -4,6 +4,7 @@ define(['./module', 'underscore'], function (module, _) {
   module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
 
     var vm = this;
+    var openProject = activeProject.data;
 
     /* VM vars */
     vm.activeTab = 'outcome';
@@ -35,13 +36,20 @@ define(['./module', 'underscore'], function (module, _) {
       }
     ]
     vm.selectedParameter = vm.fakeParams[1]
-    vm.tables = [{}]
+    vm.years = [{}]
 
     /* VM functions */
     vm.populateProgramDropdown = populateProgramDropdown;
     vm.changeParameter = changeParameter;
     vm.addYear = addYear;
     vm.selectTab = selectTab;
+    vm.deleteYear = deleteYear;
+
+    function deleteYear(yearIndex) {
+      vm.years = _.reject(vm.years, function (year, index) {
+        return index === yearIndex
+      });
+    }
 
     /* Function definitions */
 
@@ -58,11 +66,10 @@ define(['./module', 'underscore'], function (module, _) {
     }
 
     function addYear() {
-      vm.tables.push({})
+      vm.years.push({})
     }
 
     /* Initialize */
-    var openProject = activeProject.data;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
     if (!openProject.has_data) {

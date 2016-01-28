@@ -1,3 +1,14 @@
+.c-cost-coverage {
+  &__button {
+    width: 90px;
+    &--submit {
+      width: 120px;
+      margin-top: 50px;
+      transition: all linear 100ms;
+    }
+  }
+}
+
 .c-tab {
   padding-top: 2%;
 }
@@ -5,18 +16,55 @@
 .c-select {
   &__input {
     margin-top: 3px;
+    width: 200px;
+  }
+}
+
+.c-nested-form {
+  border-radius: 3px;
+  background-color: #fbfbfb;
+  border: 1px solid #E2E2E2;
+  transition: all linear 100ms;
+  max-width: 760px;
+  width: 100%;
+  margin-top: 50px;
+  padding: 10px;
+  position: relative;
+
+  &:hover {
+    background-color: #f8f8f8;
+    .c-nested-form__delete {
+      opacity: 1;
+    }
+  }
+
+  &__delete {
+    background-color: #d46060;
+    color: white;
+    position: absolute;
+    top: -13px;
+    right: -12px;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    border-radius: 100%;
+    font-size: 15px;
+    line-height: 24px;
+    cursor: pointer;
+    transition: all linear 100ms;
+    opacity: 0;
+
+    &:hover {
+      background-color: #bf444f;
+    }
   }
 }
 
 .c-table {
-  border-top: 1px solid black;
-  border-bottom: 1px solid black;
-  max-width: 760px;
   width: 100%;
-  margin-top: 50px;
 
   &__header {
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid #9C9C9C;
     padding-left: 10px;
     height: 45px;
   }
@@ -25,7 +73,7 @@
   }
 
   &__column {
-    padding: 5px 0 5px 10px;
+    padding: 8px;
 
     &--year {
       width: 17%;
