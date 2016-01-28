@@ -28,9 +28,9 @@ then
 fi
 
 mkdir -p /tmp/uploads
-cp ../tests/test.xlsx /tmp/uploads
+cp ../tests/simple.xlsx /tmp/uploads/test.xlsx
 mkdir -p static
-cp ../tests/test.xlsx static
+cp ../tests/simple.xlsx static/test.xlsx
 
 OPTIMA_TEST_CFG="${PWD}/test.cfg" nosetests -c nose.cfg $@
 
