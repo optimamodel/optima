@@ -257,7 +257,7 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        alltreat = self.settings.alltreat
+        alltx = self.settings.alltx
         allplhiv = self.settings.allplhiv
         data = self.data
         
@@ -286,8 +286,8 @@ class Resultset(object):
         self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
@@ -328,9 +328,9 @@ class Multiresultset(object):
                 
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys']
-        commonattrs = ['project', 'data', 'datayears']
-        diffattrs = ['parset', 'progset', 'raw', 'simpars']
+        sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
+        commonattrs = ['project', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
+        diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 

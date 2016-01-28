@@ -536,7 +536,13 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
 
     # Set up figure and do plot
     fig = figure(figsize=figsize)
-    colors = gridcolormap(nsims)
+    colors = gridcolormap(3)
+    settings = results.settings
+    cascadedict = odict([('All PLHIV', settings.allplhiv), ('Diagnosed PLHIV', settings.alldx), ('PLHIV on treatment', settings.alltx), 
+    
+    self.alldx    = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
+        self.allplhiv = cat([self.undx, self.alldx]) # All PLHIV
+        self.alltx = cat([self.usvl, self.svl]) # All PLHIV
     
     # Plot model estimates with uncertainty
     bottom = 0*results.tvec # Easy way of setting to 0...

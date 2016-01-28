@@ -50,7 +50,7 @@ class Settings():
         self.sus      = cat([self.uncirc, self.circ]) # All uninfected
         self.alldx    = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
         self.allplhiv = cat([self.undx, self.alldx]) # All PLHIV
-        self.alltreat = cat([self.usvl, self.svl]) # All PLHIV
+        self.alltx = cat([self.usvl, self.svl]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
 
