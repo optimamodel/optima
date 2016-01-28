@@ -13,28 +13,25 @@
   border-bottom: 1px solid black;
   max-width: 760px;
   width: 100%;
-  text-align: center;
   margin-top: 50px;
 
   &__header {
     border-bottom: 1px solid black;
-    text-align: center;
+    padding-left: 10px;
     height: 45px;
   }
 
   &__row {
-    text-align: center;
   }
 
   &__column {
-    text-align: center;
-    padding: 15px 0;
+    padding: 5px 0 5px 10px;
 
     &--year {
-      width: 7%;
+      width: 17%;
     }
     &--text {
-      width: 73%;
+      width: 63%;
     }
     &--inputs {
 
@@ -42,8 +39,9 @@
   }
 
   &__input {
+    width: 60px;
     &--half {
-      width: 30px;
+      width: 50px;
     }
   }
 
@@ -51,4 +49,8 @@
     margin: 0 2px;
   }
 
+}
+
+.c-checkbox {
+  margin-right: 40px;
 }

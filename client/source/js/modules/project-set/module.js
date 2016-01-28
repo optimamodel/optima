@@ -39,8 +39,9 @@ define([
         })
         .state('project-set.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
-          controller: 'ModelCostCoverageController',
+          controller: 'ModelCostCoverageController as vm',
           templateUrl: 'js/modules/project-set/cost-coverage.html',
+          bindToController: true,
           resolve: {
             activeProject: function (projectApiService) {
               return projectApiService.getActiveProject();

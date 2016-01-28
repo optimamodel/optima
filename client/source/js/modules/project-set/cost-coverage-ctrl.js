@@ -1,19 +1,74 @@
 define(['./module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http,
-    $state, activeProject, modalService, projectApiService) {
+  module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
 
-    $scope.state = {
-      activeTab: 'defineOutcomeFunctions'
+    var vm = this;
+
+    /* VM vars */
+    vm.activeTab = 'outcome';
+    vm.fakeParams = [
+      {
+        name: 'First'
+      },
+      {
+        name: 'Second',
+        coverage: true
+      },
+      {
+        name: 'Third'
+      }
+    ]
+    vm.post = {}
+    vm.tabs = [
+      {
+        name: 'Define cost functions',
+        slug: 'cost'
+      },
+      {
+        name: 'Define outcome functions',
+        slug: 'outcome'
+      },
+      {
+        name: 'View summary',
+        slug: 'summary'
+      }
+    ]
+    vm.selectedParameter = vm.fakeParams[1]
+    vm.tables = [{}]
+
+    /* VM functions */
+    vm.populateProgramDropdown = populateProgramDropdown;
+    vm.changeParameter = changeParameter;
+    vm.addYear = addYear;
+    vm.selectTab = selectTab;
+
+    /* Function definitions */
+
+    function populateProgramDropdown() {
+      vm.programs = vm.selectedProgramSet.programs;
     };
 
+    function selectTab(tab) {
+      vm.activeTab = tab;
+    }
+
+    function changeParameter(newParameter) {
+      console.log('newParameter', vm.selectedParameter);
+    }
+
+    function addYear() {
+      vm.tables.push({})
+    }
+
+    /* Initialize */
     var openProject = activeProject.data;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
     if (!openProject.has_data) {
       modalService.inform(
-        function (){ },
+        function () {
+        },
         'Okay',
         'Please upload spreadsheet to proceed.',
         'Cannot proceed'
@@ -22,38 +77,23 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
-
-    $scope.state.fakeParams = [
-      {
-        name: 'First'
-      },
-      {
-        name: 'Second'
-      },
-      {
-        name: 'Third'
-      }
-    ]
-
-    $scope.changeParameter = function (newParameter) {
-      console.log('newParameter', $scope.state.selectedParameter);
-    }
-
     $http.get('/api/project/' + openProject.id + '/progsets')
       .success(function (response) {
-        if(response.progsets) {
-          $scope.state.programSetList = response.progsets;
+        if (response.progsets) {
+          vm.programSetList = response.progsets;
         }
       });
 
-    $scope.populateProgramDropdown = function() {
-      $scope.state.programs = $scope.state.selectedProgramSet.programs;
-    };
+    $http.get('/api/project/' + openProject.id + '/parsets').success(function (response) {
+      vm.parsets = response.parsets;
+    });
 
-    $http.get('/api/project/' + openProject.id + '/parsets').
-      success(function (response) {
-        $scope.state.parsets = response.parsets;
-      });
+    $scope.$watch(function () {
+      return vm.post
+    }, function () {
+      console.log('post is', vm.post);
+    }, true);
+
   });
 
 
