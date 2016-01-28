@@ -42,10 +42,7 @@ define([
           controller: 'ModelCostCoverageController',
           templateUrl: 'js/modules/project-set/cost-coverage.html',
           resolve: {
-            programsResource: function(Model) {
-              return Model.getPrograms().$promise;
-            },
-            info: function (projectApiService) {
+            activeProject: function (projectApiService) {
               return projectApiService.getActiveProject();
             }
           }
