@@ -5,8 +5,9 @@ define(['./module', 'underscore'], function (module, _) {
     $state, activeProject, modalService, projectApiService) {
 
     $scope.state = {
-      activeTab: 'defineCostFunctions'
+      activeTab: 'defineOutcomeFunctions'
     };
+
     var openProject = activeProject.data;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
@@ -21,7 +22,24 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
-    $http.get('/api/project/' + openProject.id + '/progsets' )
+
+    $scope.state.fakeParams = [
+      {
+        name: 'First'
+      },
+      {
+        name: 'Second'
+      },
+      {
+        name: 'Third'
+      }
+    ]
+
+    $scope.changeParameter = function (newParameter) {
+      console.log('newParameter', $scope.state.selectedParameter);
+    }
+
+    $http.get('/api/project/' + openProject.id + '/progsets')
       .success(function (response) {
         if(response.progsets) {
           $scope.state.programSetList = response.progsets;

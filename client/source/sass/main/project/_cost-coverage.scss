@@ -1,0 +1,54 @@
+.c-tab {
+  padding-top: 2%;
+}
+
+.c-select {
+  &__input {
+    margin-top: 3px;
+  }
+}
+
+.c-table {
+  border-top: 1px solid black;
+  border-bottom: 1px solid black;
+  max-width: 760px;
+  width: 100%;
+  text-align: center;
+  margin-top: 50px;
+
+  &__header {
+    border-bottom: 1px solid black;
+    text-align: center;
+    height: 45px;
+  }
+
+  &__row {
+    text-align: center;
+  }
+
+  &__column {
+    text-align: center;
+    padding: 15px 0;
+
+    &--year {
+      width: 7%;
+    }
+    &--text {
+      width: 73%;
+    }
+    &--inputs {
+
+    }
+  }
+
+  &__input {
+    &--half {
+      width: 30px;
+    }
+  }
+
+  &__between-input {
+    margin: 0 2px;
+  }
+
+}

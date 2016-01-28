@@ -1,8 +1,6 @@
 <div class="page rich">
 
-  <div ng-if="!missingModelData">
-
-    <div style="display: flex">
+  <div style="display: flex">
       <span style="width: 25%;margin-right: 10%">
         <label>
           Select a program set: <br>
@@ -16,18 +14,18 @@
       </span>
       <span style="width: 25%">
         <label>
-            Select a parameter set: <br>
-            <select class="txbox"
-                    ng-options="p.name for p in state.parsets"
-                    ng-change="changeProgram()"
-                    ng-model="state.selectedProgram">
-                <option value="">-- Please select a parameter set --</option>
-            </select>
+          Select a parameter set: <br>
+          <select class="txbox"
+                  ng-options="p.name for p in state.parsets"
+                  ng-change="changeProgram()"
+                  ng-model="state.selectedProgram">
+            <option value="">-- Please select a parameter set --</option>
+          </select>
         </label>
       </span>
-    </div>
+  </div>
 
-    <div style="padding: 40px 0 20px;border-bottom: 1px solid gray;display: flex;">
+  <div style="padding: 40px 0 20px;border-bottom: 1px solid gray;display: flex;">
       <span class="small_bordered_section"
             ng-class="{yellowBg: state.activeTab === 'defineCostFunctions'}"
             ng-click="state.activeTab = 'defineCostFunctions'">Define cost functions</span>
@@ -37,42 +35,91 @@
       <span class="small_bordered_section"
             ng-class="{yellowBg: state.activeTab === 'viewSummary'}"
             ng-click="state.activeTab = 'viewSummary'">View summary</span>
+  </div>
+
+  <!-- Cost functions tab -->
+  <div class="c-tab" ng-if="state.activeTab === 'defineCostFunctions'">
+    <div style="width: 40%">
+      <label>
+        Select a program: <br>
+        <select class="txbox"
+                ng-options="p.name for p in state.programs"
+                ng-change="changeProgram()"
+                ng-model="state.selectedProgram">
+          <option value="">-- Please select a program --</option>
+        </select>
+      </label>
     </div>
 
-    <div ng-if="state.activeTab === 'defineCostFunctions'">
-      <div style="margin-top: 2%;width: 40%">
-        <label>
-          Select a program: <br>
-          <select class="txbox"
-                  ng-options="p.name for p in state.programs"
-                  ng-change="changeProgram()"
-                  ng-model="state.selectedProgram">
-            <option value="">-- Please select a program --</option>
-          </select>
-        </label>
-      </div>
+    <div style="margin-top: 2%;width: 40%">
+      <h2>FSW Programs</h2>
+    </div>
 
-      <div style="margin-top: 2%;width: 40%">
-        <h2>FSW Programs</h2>
-      </div>
-
-      <div style="display: flex">
-        <div>Graph to come here</div>
+    <div style="display: flex">
+      <div>Graph to come here</div>
+      <div class="flex-column">
         <div class="flex-column">
-          <div class="flex-column">
-            <h3>Parameters for defining cost function</h3>
-          </div>
-          <div class="flex-column">
-            <h3>Historical cost and coverage data</h3>
-          </div>
-          <div class="flex-column">
-            <h3>Options for displaying curves</h3>
-          </div>
-          <div class="flex-column">
-            <h3>Add notes</h3>
-          </div>
+          <h3>Parameters for defining cost function</h3>
+        </div>
+        <div class="flex-column">
+          <h3>Historical cost and coverage data</h3>
+        </div>
+        <div class="flex-column">
+          <h3>Options for displaying curves</h3>
+        </div>
+        <div class="flex-column">
+          <h3>Add notes</h3>
         </div>
       </div>
-      </div>
+    </div>
   </div>
+
+  <!-- Outcome functions tab -->
+  <div class="c-tab" ng-if="state.activeTab === 'defineOutcomeFunctions'">
+
+    <div class="c-select">
+      <label class="c-select__label"> Select a parameter: </label>
+      <select class="txbox c-select__input"
+              ng-options="p.name for p in state.fakeParams"
+              ng-change="changeParameter()"
+              ng-model="state.selectedParameter">
+        <option value="">-- Please select a parameter --</option>
+      </select>
+    </div>
+
+    <table class="c-table">
+
+      <tr class="c-table__row">
+        <th class="c-table__header">
+          Year
+        </th>
+        <th class="c-table__header">
+          Description of program impact
+        </th>
+        <th class="c-table__header">
+          Parameter value
+        </th>
+      </tr>
+
+      <tr class="c-table__row">
+        <td class="c-table__column c-table__column--year">
+          <input class="txbox c-table__input" type="text"/>
+        </td>
+        <td class="c-table__column c-table__column--text">
+          in the absence of any programs
+        </td>
+        <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal">
+          <input class="txbox c-table__input c-table__input--half" type="text"/>
+          <span class="c-table__between-input"> - </span>
+          <input class="txbox c-table__input c-table__input--half" type="text"/>
+          <span class="c-table__between-input"> % </span>
+        </td>
+      </tr>
+
+    </table>
+
+    <br/>
+    <button class="btn"> Add year</button>
+  </div>
+
 </div>
