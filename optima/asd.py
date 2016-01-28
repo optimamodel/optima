@@ -93,6 +93,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
     fval = function(x, **args) # Calculate initial value of the objective function
+    fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
     abserrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
@@ -105,7 +106,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     start = time()
     offset = ' '*5 # Offset the print statements
     while 1:
-        if verbose>=1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
+        if verbose==1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval)) # For more verbose, use other print statement below
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -143,7 +144,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
         relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>=3:
-            print(offset+'choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (choice, par, pm, x[par], xnew[par], inrange))
+            print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -157,7 +158,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             flag = 'FAILURE'
-        if verbose>=2: print(offset + flag + ' on step %i (old:%0.2e new:%0.2e diff:%0.2e ratio:%0.5f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
+        if verbose>=2: print(offset + 'Step %i (%0.1f s): %s (orig: %0.4e | old:%0.4e | new:%0.4e | diff:%0.4e | ratio:%0.5f)' % (count, time()-start, flag, fvalorig, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
