@@ -460,7 +460,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     
     fig = figure(figsize=figsize)
     fig.subplots_adjust(bottom=0.30) # Less space on bottom
-    fig.subplots_adjust(hspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.50) # More space between
     colors = gridcolormap(nprogs)
     ax = []
     ymax = 0
@@ -471,7 +471,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = [x[y] for x in toplot[plt][:]]
+            progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
             if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
