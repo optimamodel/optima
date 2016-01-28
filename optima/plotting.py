@@ -13,7 +13,7 @@ Version: 2016jan24
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
 from numpy import array, ndim, maximum, arange, zeros, mean
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, bar, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -52,19 +52,14 @@ def getplotselections(results):
         plotselections['names'] += ['Improvement']
     
     
-    ## Add selection for budget allocations
-    if hasattr(results, 'budget') and results.budget is not None:
-        if all([budg is not None for budg in results.budget.values()]): # Make sure none of the individual budgets are none either
-            plotselections['keys'] += ['budget']
-            plotselections['names'] += ['Budget allocation']
+    ## Add selection for budget allocations and coverage
+    budcovdict = odict([('budget','Budget allocation'), ('coverage','Program coverage')])
+    for budcov in budcovdict.keys():
+        if hasattr(results, budcov) and getattr(results, budcov) is not None:
+            if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
+                plotselections['keys'] += [budcov] # e.g. 'budget'
+                plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
 
-    ## Add selection for coverage
-    if hasattr(results, 'coverage') and results.coverage is not None:
-        if all([cov is not None for cov in results.coverage.values()]): # Make sure none of the individual coverages are none either
-            plotselections['keys'] += ['coverage']
-            plotselections['names'] += ['Program coverage']
-    
-    
     
     ## Get plot selections for plotepi
     plotepikeys = list()
@@ -476,24 +471,26 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = [x[y] for x in budgetstoplot[plt][:]]
+            progdata = [x[y] for x in toplot[plt][:]]
+            if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
         if nbudgetyears>1: ax[-1].legend()
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ax[-1].set_ylabel('Spending (US$)')
+        ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
+        ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
-    
+        
     close(fig)
     
     return fig
