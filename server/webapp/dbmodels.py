@@ -262,7 +262,6 @@ class ParsetsDb(db.Model):
         'created': fields.DateTime,
         'updated': fields.DateTime,
         'pars': Json,
-        'effects': Json,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -271,9 +270,8 @@ class ParsetsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     pars = db.Column(db.LargeBinary)
-    effects = db.Column(JSON)
 
-    def __init__(self, project_id, name, created=None, updated=None, pars=None, id=None, effects=None):
+    def __init__(self, project_id, name, created=None, updated=None, pars=None, id=None):
         self.project_id = project_id
         self.name = name
         if created:
@@ -283,7 +281,6 @@ class ParsetsDb(db.Model):
         self.pars = pars
         if id:
             self.id = id
-        self.effects = effects
 
     def hydrate(self):
         parset_instance = op.Parameterset()
@@ -519,8 +516,9 @@ class ProgsetsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     programs = db.relationship('ProgramsDb', backref='progset', lazy='joined')
+    effects = db.Column(JSON)
 
-    def __init__(self, project_id, name, created=None, updated=None, id=None):
+    def __init__(self, project_id, name, created=None, updated=None, id=None, effects=[]):
         self.project_id = project_id
         self.name = name
         if created:
@@ -530,6 +528,7 @@ class ProgsetsDb(db.Model):
         if id:
             self.id = id
         self.targetpartypes = []
+        self.effects = effects
 
     def hydrate(self):
         # In BE, programs don't have an "active" flag
