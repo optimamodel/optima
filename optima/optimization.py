@@ -4,7 +4,8 @@ Functions for running optimizations.
 Version: 2016jan26
 """
 
-from optima import OptimaException, Multiresultset, printv, dcp, asd, runmodel, odict, findinds, today, getdate, uuid, objrepr, getresults
+from optima import OptimaException, Multiresultset, asd, runmodel, getresults, vec2budget # Main functions
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr # Utilities
 from numpy import zeros, arange, array, isnan
 
 # Define global parameters that shouldn't really matter
@@ -95,13 +96,6 @@ def defaultobjectives(which='outcome', verbose=2):
     return objectives
 
 
-
-def vec2budget(progset, budgetvec):
-    ''' Little helper function to convert a budget vector into a proper budget objective '''
-    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
-    for k,key in enumerate(budget.keys()):
-        budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
-    return budget
 
 
 

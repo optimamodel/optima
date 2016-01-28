@@ -1,9 +1,9 @@
 """
 Defines the default parameters for each program.
 
-Version: 2016jan23 by cliffk
+Version: 2016jan27
 """
-from optima import Program, Programset
+from optima import Program
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
@@ -285,20 +285,3 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
         finalprograms = [prog for prog in allprograms if prog.short in filterprograms]
     
     return finalprograms if filterprograms else allprograms
-    
-    
-    
-    
-def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
-    ''' Make a default programset (for testing optimisations)'''
-    programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
-    R = Programset(programs=programs)   
-    return R
-
-
-
-
-def defaultproject(which='simple', addprogset=True):
-    
-    
-    return P
