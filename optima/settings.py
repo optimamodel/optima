@@ -3,11 +3,18 @@ SETTINGS
 
 Store all the static data for a project that won't change except between Optima versions.
 
-Version: 2016jan06 by cliffk
+How verbose works:
+  0 = no output except absolutely critical
+  1 = serious warnings/errors only
+  2 = standard output -- fair amount of detail
+  3 = additional detail
+  4 = absolutely everything
+
+Version: 2016jan27 by cliffk
 """
 
 from numpy import arange, array, concatenate as cat, linspace
-from optima import defaultrepr
+from optima import defaultrepr, printv
 
 
 class Settings():
@@ -53,7 +60,8 @@ class Settings():
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
-        self.verbose = 2 # Default verbosity for how much to print out
+        self.verbose = 2 # Default verbosity for how much to print out -- see definitions above
+        printv('Initialized settings', 4, self.verbose) # And show how it's used
     
     
     def __repr__(self):
@@ -64,6 +72,7 @@ class Settings():
     
     def maketvec(self, start=None, end=None, dt=None):
         ''' Little function for calculating the time vector -- here since start, end, dt are stored here '''
+        printv('Making time vector', 4, self.verbose)
         if start is None: start=self.start
         if end is None: end=self.end
         if dt is None: dt=self.dt
@@ -73,6 +82,7 @@ class Settings():
 
     def setmaxes(self, maxlist=None, dt=None):
         ''' Method to calculate maximum limits '''
+        printv('Setting maximum limits', 4, self.verbose)
         if dt is None: dt = self.dt
         maxrate = 0.9/dt
         maxpopsize = 1e9
