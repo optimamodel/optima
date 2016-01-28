@@ -5,8 +5,8 @@ from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 from flask import helpers
 
-from server.webapp.inputs import SubParser
-from server.webapp.fields import Json
+from server.webapp.inputs import SubParser, Json as JsonInput
+from server.webapp.fields import Json, Uuid
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import load_project, load_progset, RequestParser, report_exception
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist
@@ -58,7 +58,6 @@ class Progsets(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields, envelope='progsets')
     def get(self, project_id):
 
@@ -76,7 +75,6 @@ class Progsets(Resource):
         description='Create a progset for the project with the given id.',
         parameters=progset_parser.swagger_parameters()
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
@@ -113,7 +111,6 @@ class Progset(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -131,7 +128,6 @@ class Progset(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -156,7 +152,6 @@ class Progset(Resource):
             if progset does not exist, returns an error.
         """
     )
-    @report_exception
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
@@ -186,7 +181,6 @@ class ProgsetData(Resource):
         """,
 
     )
-    @report_exception
     def get(self, project_id, progset_id):
         current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
@@ -203,7 +197,6 @@ class ProgsetData(Resource):
         summary='Uploads data for already created progset',
         parameters=file_upload_form_parser.swagger_parameters()
     )
-    @report_exception
     @marshal_with(file_resource)
     def post(self, project_id, progset_id, parset_id):
         """
@@ -253,7 +246,6 @@ class ProgsetParams(Resource):
     @swagger.operation(
         description='Get param/populations sets for the selected progset'
     )
-    @report_exception
     @marshal_with(param_fields)
     def get(self, project_id, progset_id, parset_id):
         from server.webapp.utils import load_progset, load_parset
@@ -280,35 +272,38 @@ class ProgsetParams(Resource):
 
 program_effect_parser = RequestParser()
 program_effect_parser.add_arguments({
-    'name': {'required': True, 'location': 'json'},
-    'intercept_lower': {'required': True, 'type': float, 'location': 'json'},
-    'intercept_upper': {'required': True, 'type': float, 'location': 'json'},
+    'name': {'required': False, 'location': 'json'},
+    'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
+    'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
 })
 
 
 param_year_effect_parser = RequestParser()
 param_year_effect_parser.add_arguments({
-    'year': {'required': True, 'location': 'json'},
-    'intercept_lower': {'required': True, 'type': float, 'location': 'json'},
-    'intercept_upper': {'required': True, 'type': float, 'location': 'json'},
-    'interact': {'location': 'json'},
+    'year': {'required': False, 'location': 'json'},
+    'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
+    'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
+    'interact': {'location': 'json', 'required': False},
     'programs': {
         'type': SubParser(program_effect_parser),
         'action': 'append',
         'default': [],
         'location': 'json',
+        'required': False,
     },
 })
 
 
 param_effect_parser = RequestParser()
 param_effect_parser.add_arguments({
-    'name': {'required': True, 'location': 'json'},
+    'name': {'required': False, 'location': 'json'},
+    'pop': {'required': False, 'location': 'json', 'type': JsonInput},
     'years': {
         'type': SubParser(param_year_effect_parser),
         'action': 'append',
         'default': [],
         'location': 'json',
+        'required': False,
     },
 })
 
@@ -319,16 +314,77 @@ parset_effect_parser.add_arguments({
     'parameters': {
         'type': SubParser(param_effect_parser),
         'action': 'append',
+        'type': JsonInput,
         'default': [],
         'location': 'json',
+        'required': False
     }
 })
 
+
 effect_parser = RequestParser()
-effect_parser.add_argument('effects', type=SubParser(parset_effect_parser), action='append', default=[])
+effect_parser.add_argument('effects', type=SubParser(parset_effect_parser), action='append')
+
+
+program_effect_fields = {
+    'name': fields.String,
+    'intercept_lower': fields.Float,
+    'intercept_upper': fields.Float
+}
+
+
+param_year_effect_fields = {
+    'year': fields.Integer,
+    'intercept_lower': fields.Float,
+    'intercept_upper': fields.Float,
+    'interact': fields.List(fields.String),
+    'programs': fields.List(fields.Nested(program_effect_fields), default=[])
+}
+
+param_effect_fields = {
+    'name': fields.String,
+    'pop': fields.Raw,
+    'years': fields.List(fields.Nested(param_year_effect_fields), default=[])
+}
+
+parset_effect_fields = {
+    'parset': Uuid,
+    'parameters': fields.List(fields.Nested(param_effect_fields), default=[])
+}
+
+progset_effects_fields = {
+    'effects': fields.List(fields.Nested(parset_effect_fields), default=[])
+}
 
 
 class ProgsetEffects(Resource):
 
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description='Get List of Progset effects  for the selected progset'
+    )
+    @marshal_with(progset_effects_fields)
     def get(self, project_id, progset_id):
-        pass
+        from server.webapp.utils import load_progset
+
+        progset_entry = load_progset(project_id, progset_id)
+        return progset_entry
+
+    @swagger.operation(
+        description='Get List of Progset effects  for the selected progset',
+        parameters=effect_parser.swagger_parameters()
+    )
+    @marshal_with(progset_effects_fields)
+    def put(self, project_id, progset_id):
+        from server.webapp.utils import load_progset
+
+        progset_entry = load_progset(project_id, progset_id)
+
+        args = effect_parser.parse_args()
+        # raise Exception(args)
+        progset_entry.effects = args.get('effects', [])
+
+        db.session.commit()
+
+        return progset_entry
