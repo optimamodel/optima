@@ -115,9 +115,9 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
             allplots['improvement'] = plotimprovement(results, **kwargs)
-        except Exception as E: 
+        except OptimaException as E: 
             if die: raise E
-            else: printv(E.message, 1, verbose)
+            else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
         
     
     ## Add budget and coverage plots
@@ -126,9 +126,9 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             toplot.remove(budcov) # Because everything else is passed to plotepi()
             try: 
                 allplots[budcov] = plotallocs(results, which=budcov, **kwargs)
-            except Exception as E: 
+            except OptimaException as E: 
                 if die: raise E
-                else: printv(E.message, 1, verbose)
+                else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
             
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
