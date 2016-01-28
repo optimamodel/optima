@@ -20,7 +20,7 @@ epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], [
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta'] # Default epidemiological plots
-defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
+defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
 
 
 def getplotselections(results):
@@ -29,7 +29,7 @@ def getplotselections(results):
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
     plots such as the cascade.
     
-    Version: 2016jan24
+    Version: 2016jan28
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from below
@@ -59,7 +59,10 @@ def getplotselections(results):
             if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
                 plotselections['keys'] += [budcov] # e.g. 'budget'
                 plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
-
+    
+    ## Cascade plot is always available, since epi is always available
+    plotselections['keys'] += ['cascade']
+    plotselections['names'] += ['Treatment cascade']
     
     ## Get plot selections for plotepi
     plotepikeys = list()
@@ -131,7 +134,17 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             except OptimaException as E: 
                 if die: raise E
                 else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
-            
+    
+    ## Add cascade plot
+    if 'cascade' in toplot:
+        toplot.remove('cascade') # Because everything else is passed to plotepi()
+        try: 
+            allplots['cascade'] = plotcascade(results, die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+    
+    
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
@@ -491,6 +504,76 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
         
+    close(fig)
+    
+    return fig
+
+
+
+
+
+##################################################################
+## Plot improvements
+##################################################################
+def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
+    ''' 
+    Plot the treatment cascade.
+    
+    NOTE: do not call this function directly; instead, call via plotresults().
+    
+    Version: 2016jan28    
+    '''
+    
+    # Figure out what kind of result it is -- WARNING, copied from 
+    if type(results)==Resultset: ismultisim = False
+    elif type(results)==Multiresultset:
+        ismultisim = True
+        labels = results.keys # Figure out the labels for the different lines
+        nsims = len(labels) # How ever many things are in results
+    else: 
+        errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig = figure(figsize=figsize)
+    colors = gridcolormap(nsims)
+    
+    # Plot model estimates with uncertainty
+    bottom = 0*results.tvec # Easy way of setting to 0...
+    for l in range(nlinesperplot): # Loop backwards so correct ordering -- first one at the top, not bottom
+        k = nlinesperplot-1-l # And in reverse order
+        fill_between(results.tvec, factor*bottom, factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
+        bottom += best[k]
+    
+    absimprove = zeros(ncurves)
+    relimprove = zeros(ncurves)
+    maxiters = 0
+    for i in range(ncurves): # Expect a list of 
+        plot(improvement[i], lw=lw, c=colors[i]) # Actually do the plot
+        absimprove[i] = improvement[i][0]-improvement[i][-1]
+        relimprove[i] = 100*(improvement[i][0]-improvement[i][-1])/improvement[i][0]
+        maxiters = maximum(maxiters, len(improvement[i]))
+    
+    # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+    ax = gca()
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    ax.title.set_fontsize(titlesize)
+    ax.xaxis.label.set_fontsize(labelsize)
+    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+    
+    # Configure plot
+    currentylims = ylim()
+    ax.set_xlabel('Iteration')
+    
+    abschange = sigfig(mean(absimprove), sigfigs)
+    relchange = sigfig(mean(relimprove), sigfigs)
+    ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
+    ax.set_ylim((0,currentylims[1]))
+    ax.set_xlim((0, maxiters))
+    
     close(fig)
     
     return fig
