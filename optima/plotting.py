@@ -515,7 +515,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
+def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -528,54 +528,50 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     if type(results)==Resultset: ismultisim = False
     elif type(results)==Multiresultset:
         ismultisim = True
-        labels = results.keys # Figure out the labels for the different lines
-        nsims = len(labels) # How ever many things are in results
+        titles = results.keys # Figure out the labels for the different lines
+        nsims = len(titles) # How ever many things are in results
     else: 
         errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
         raise OptimaException(errormsg)
 
     # Set up figure and do plot
     fig = figure(figsize=figsize)
-    colors = gridcolormap(3)
-    settings = results.settings
-    cascadelist = ['allplhiv', 'alldx', 'alltx']odict([('allplhiv', 'All PLHIV'), ('alldx', 'Diagnosed PLHIV'), ('PLHIV on treatment', settings.alltx)]) 
     
-    # Plot model estimates with uncertainty
+    cascadelist = ['allplhiv', 'alldx', 'alltx'] 
+    cascadenames = []
+    colors = gridcolormap(len(cascadelist))
+    
+    
     bottom = 0*results.tvec # Easy way of setting to 0...
-    for l,key in cascadedict.keys(): # Loop backwards so correct ordering -- first one at the top, not bottom
-        k = nlinesperplot-1-l # And in reverse order
-        fill_between(results.tvec, bottom, results.main[factor*(bottom+best[k]), facecolor=colors[k], alpha=1, lw=0)
-        bottom += best[k]
-    
-    absimprove = zeros(ncurves)
-    relimprove = zeros(ncurves)
-    maxiters = 0
-    for i in range(ncurves): # Expect a list of 
-        plot(improvement[i], lw=lw, c=colors[i]) # Actually do the plot
-        absimprove[i] = improvement[i][0]-improvement[i][-1]
-        relimprove[i] = 100*(improvement[i][0]-improvement[i][-1])/improvement[i][0]
-        maxiters = maximum(maxiters, len(improvement[i]))
-    
-    # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
-    ax = gca()
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.get_xaxis().tick_bottom()
-    ax.get_yaxis().tick_left()
-    ax.title.set_fontsize(titlesize)
-    ax.xaxis.label.set_fontsize(labelsize)
-    for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
-    
-    # Configure plot
-    currentylims = ylim()
-    ax.set_xlabel('Iteration')
-    
-    abschange = sigfig(mean(absimprove), sigfigs)
-    relchange = sigfig(mean(relimprove), sigfigs)
-    ax.set_title('Change in outcome: %s (%s%%)' % (abschange, relchange)) # WARNING -- use mean or best?
-    ax.set_ylim((0,currentylims[1]))
-    ax.set_xlim((0, maxiters))
-    
+    for plt in range(nsims): # WARNING, copied from plotallocs()
+        
+        ## Do the plotting
+        subplot(nsims,1,plt+1)
+        for k,key in enumerate(cascadelist): # Loop backwards so correct ordering -- first one at the top, not bottom
+            if ismultisim: thisdata = results.main[key][plt].tot[0] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata = results.main[key].tot[0]
+            fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
+            cascadenames.append(results.main[key].name) # Store the name for the legend later
+        
+        ## Configure plot -- WARNING, copied from plotepi()
+        ax = gca()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.title.set_fontsize(titlesize)
+        ax.xaxis.label.set_fontsize(labelsize)
+        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+        # Configure plot specifics
+        
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+        ax.set_title('Cascade -- %s' % titles[plt])
+        ax.set_xlabel('Year')
+        ax.set_ylim((0,ylim()[1]))
+        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
+        
     close(fig)
     
     return fig
