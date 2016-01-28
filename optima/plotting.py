@@ -114,7 +114,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, **kwargs)
+            allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
@@ -125,7 +125,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         if budcov in toplot:
             toplot.remove(budcov) # Because everything else is passed to plotepi()
             try: 
-                allplots[budcov] = plotallocs(results, which=budcov, **kwargs)
+                allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
             except OptimaException as E: 
                 if die: raise E
                 else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
@@ -444,13 +444,14 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2):
     
     # Preliminaries: process inputs and extract needed data
     try: 
-        toplot = [item for item in getattr(multires, which) if item] # e.g. [budget for budget in multires.budget]
+        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
     except: 
         errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
         if die: raise OptimaException(errormsg)
         else: printv(errormsg, 1, verbose)
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     proglabels = toplot[0].keys() 
     alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
