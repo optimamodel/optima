@@ -47,14 +47,15 @@ The last step is to make sure that Optima is available on the Python path. There
     0. **Option 2B** (Linux, Mac only): Add the Optima folder to `~/.bashrc` or `~/.bash_profile`, e.g.  
     `export PYTHONPATH=$PYTHONPATH:/users/alice/github/optima`  
     [NB: if you don't use `bash`, you are probably a hacker and don't need these instructions.]
-    0. **Option 2C** (Windows only): search for “variables” from the Start Menu; the option should be called something like “Edit environment variables for your account”. Under “user variables”, you should see “PYTHONPATH” listed. Add the folder for the Optima repository, e.g.   `C:\Users\Alice\GitHub\Optima`  
+    0. **Option 2C** (Windows only): search for “variables” from the Start Menu; the option should be called something like “Edit environment variables for your account”. Under “user variables”, you should see “PYTHONPATH” listed. Add the folder for the Optima repository, e.g.  
+    `C:\Users\Alice\GitHub\Optima`  
     If there are already things on the Python path, add this to the end separated by a semicolon and no space, e.g.  
     `C:\Anaconda2\Library\bin;C:\Users\Alice\GitHub\Optima`
 
 2.3 Verification/usage
 -------
 If you followed the steps correctly, you should be able to run  
-`import optima`
+`import optima`  
 from a Python console (either the system console or the Spyder console)
 
 For usage examples, see the scripts in the `tests` folder. In particular, `testworkflow.py` shows a typical usage example.
