@@ -528,7 +528,6 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     if type(results)==Resultset: 
         ismultisim = False
         nsims = 1
-        titles = ['PLHIV'] # WARNING, not sure what label this should be, if any
     elif type(results)==Multiresultset:
         ismultisim = True
         titles = results.keys # Figure out the labels for the different lines
@@ -541,7 +540,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     fig = figure(figsize=figsize)
     
     cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
-    cascadenames = []
+    cascadenames = ['PLHIV', 'Diagnosed', 'Treated']
+    
     colors = gridcolormap(len(cascadelist))
     
     
@@ -551,10 +551,11 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         ## Do the plotting
         subplot(nsims,1,plt+1)
         for k,key in enumerate(cascadelist): # Loop backwards so correct ordering -- first one at the top, not bottom
-            if ismultisim: thisdata = results.main[key][plt].tot[0] # If it's a multisim, need an extra index for the plot number
-            else:          thisdata = results.main[key].tot[0]
+            if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata = results.main[key].tot[0] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
-            cascadenames.append(results.main[key].name) # Store the name for the legend later
+            plot((0, 0), (0, 0), color=colors[k], linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+                            
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
@@ -569,11 +570,14 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         # Configure plot specifics
         
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
-        ax.set_title('Cascade -- %s' % titles[plt])
+        if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
+        else: ax.set_title('Cascade')
         ax.set_xlabel('Year')
         ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
+        print('HIIIIIIIIIIIIIIIIIIIII')
+        print(cascadenames)
         
     close(fig)
     
