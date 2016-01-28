@@ -19,8 +19,16 @@ def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
 
 
 def defaultproject(which='simple', addprogset=True):
-    ''' Options for easily creating default projects -- useful for testing '''
+    ''' 
+    Options for easily creating default projects based on different spreadsheets, including
+    program information -- useful for testing 
     
+    Version: 2016jan27    
+    '''
+    
+    ##########################################################################################################################
+    ## Generalized
+    ##########################################################################################################################
     if which=='generalized':
         print('Creating generalized epidemic project...')
         P = Project(spreadsheet='generalized.xlsx')
@@ -66,7 +74,9 @@ def defaultproject(which='simple', addprogset=True):
     
     
     
-    
+    ##########################################################################################################################
+    ## Concentrated
+    ##########################################################################################################################
     elif which=='concentrated':
         # Make project and store results from default sim
         P = Project(spreadsheet='concentrated.xlsx')
