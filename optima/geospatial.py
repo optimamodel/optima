@@ -149,7 +149,7 @@ def geogui(redirect = False):
         projectsbox.setText('\n'.join(projectpaths))
         portfolio = Portfolio()
         for project in projectslist:
-            portfolio.addproject(project)
+            portfolio.addprojects(project)
         projectsbox.append('\nBudget value to start with initial allocations in each project: %f' % sum(portfolio.getdefaultbudgets()))
         return None
     

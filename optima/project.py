@@ -437,7 +437,7 @@ class Project(object):
                 boc = self.results[x]
                 same = True
                 for y in boc.objectives:
-                    if not y == 'budget' and not boc.objectives[y] == objectives[y]: same = False
+                    if y in ['start','end','deathweight','inciweight'] and not boc.objectives[y] == objectives[y]: same = False
                 if same:
 #                    print('BOC located in project: %s' % self.name)
                     return boc
