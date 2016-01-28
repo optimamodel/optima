@@ -87,23 +87,21 @@
                 Active
               </label>
             </div><br>
-            <div class="section_dashed_border">
-            <div class="section grid">
+            <div class="section_dashed_border no-border">
               <div class="++1 10 1++">
                 Parameters
               </div>
               <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)" required>
               </select>
             </div>
-            </div>
           </div>
           <div class="section grid" ng-if="entry.parameterObj.pships.length === 0 && entry.populations && entry.populations.length > 0">
-            <h3>
+            <div class="++1 10 1++">
               Populations
-            </h3>
+            </div>
             <div>
             <div class="error-hint" ng-show="isPopulationSelected(entry, entry.populations) && entry.parameterObj">Please select population</div>
-            <div class="section_dashed_border">
+            <div class="section_dashed_border no-border">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPopToParameter(entry)" ng-model="entry.selectAll">
                 <span>All populations</span>
@@ -132,6 +130,7 @@
             </div>
           </div>
         </div>
+        <br>
       </div>
 
       <div class="section grid">
