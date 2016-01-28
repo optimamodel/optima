@@ -83,7 +83,7 @@ if 'comparesimple' in tests:
     Q = Project(spreadsheet='cascade2p.xlsx')
     Q.settings.usecascade = True
     qq = tic()
-    Q.runsim()
+    results = Q.runsim()
     toc(qq, label='model run with cascade')
     
     
@@ -97,15 +97,50 @@ if 'comparesimple' in tests:
         from numpy import linspace
         tvec = linspace(settings.start, settings.end, round((settings.end-settings.start)/settings.dt)+1)
 
-        plhiv = Q.results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
-        alldx = Q.results.raw[0]['people'][settings.alldx,:,:].sum(axis=(0,1))
-        care = Q.results.raw[0]['people'][settings.care,:,:].sum(axis=(0,1))
+        from matplotlib import pyplot as plt
 
-        from pylab import figure, plot
-        figure()
-        plot(tvec,care)
+        alldx = results.raw[0]['people'][settings.alldx,:,:].sum(axis=(0,1))
+        fig = plt.figure()
+        plt.plot(tvec,alldx)
+        fig.savefig("cascade_alldx.png")
+
+        care = results.raw[0]['people'][settings.care,:,:].sum(axis=(0,1))
+        fig = plt.figure()
+        plt.plot(tvec,care)
+        fig.savefig("cascade_care.png")
+
+        plhiv = results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
+        fig = plt.figure()
+        plt.plot(tvec,plhiv)
+        fig.savefig("cascade_plhiv.png")
         
+        treat = results.raw[0]['people'][settings.alltreat,:,:].sum(axis=(0,1))
+        fig = plt.figure()
+        plt.plot(tvec,treat)
+        fig.savefig("cascade_treat.png")
+
+        lost = results.raw[0]['people'][settings.lost,:,:].sum(axis=(0,1))
+        fig = plt.figure()
+        plt.plot(tvec,lost)
+        fig.savefig("cascade_lost.png")
+
+        off = results.raw[0]['people'][settings.off,:,:].sum(axis=(0,1))
+        fig = plt.figure()
+        plt.plot(tvec,off)
+        fig.savefig("cascade_off.png")
+
+        fig = plt.figure()
+        plt.plot(tvec,alldx,label='All diagnosed')
+        plt.plot(tvec,care,label='care')
+        plt.plot(tvec,plhiv,label='PLHIV')
+        plt.plot(tvec,treat,label='All on treatment')
+        plt.plot(tvec,lost,label='off ART, not in care')
+        plt.plot(tvec,off,label='off ART in care')
+        plt.legend(loc='best')
+        fig.savefig("cascade_all.png")
+
         
+
     done(t)
 
 
