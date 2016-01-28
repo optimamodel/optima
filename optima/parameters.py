@@ -491,6 +491,8 @@ class Par(object):
         self.coverage = coverage # Whether or not this is a coverage parameter
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
+        print('HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII')
+        print [self.short, self.keys]
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -514,6 +516,7 @@ class Timepar(Par):
         self.t = t # Time data, e.g. [2002, 2008]
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
+        self.keys = self.y.keys # Copy method
     
     def __repr__(self):
         ''' Print out useful information when called'''
