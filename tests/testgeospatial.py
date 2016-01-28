@@ -73,7 +73,7 @@ if 'forcerefresh' in tests:
 if 'makeportfolio' in tests:
     t = tic()
     print('Running make portfolio test...')
-    from optima import Portfolio, Project, loadobj, dcp
+    from optima import Portfolio
     from optima.defaults import defaultproject
     
     P1 = defaultproject('concentrated')
@@ -99,8 +99,8 @@ if 'generateBOCs' in tests:
     
     objectives = defaultobjectives()
 #    objectives['inciweight'] = 5
-    F.genBOCs(objectives)#,forceregen = True)#, maxtime = 20)
-    F.plotBOCs(objectives)    
+    F.genBOCs(objectives=objectives, maxtime=3)#,forceregen = True)#, maxtime = 20)
+    F.plotBOCs(objectives=objectives)    
     
     print('Saving projects with BOCs...')
     saveobj('test7popsFSWandCon.prj', P1)

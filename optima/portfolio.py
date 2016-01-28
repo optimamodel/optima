@@ -126,7 +126,7 @@ class Portfolio(object):
                 ob = optbudgets[c]
                 if not ob == None: ob = [ob]
                 # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
-                p.plotBOC(objectives, deriv = inderiv, initbudget = ib, optbudget = ob)
+                p.plotBOC(objectives=objectives, deriv = inderiv, initbudget = ib, optbudget = ob)
                 c += 1
             
             
