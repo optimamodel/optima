@@ -4,7 +4,7 @@ used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
 Version: 2016jan28
-
+"""
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
