@@ -21,12 +21,12 @@ class Portfolio(object):
     ## Built-in methods -- initialization, and the thing to print if you call a portfolio
     #######################################################################################################
 
-    def __init__(self, name='default'):
+    def __init__(self, name='default', projects=None, gaoptims=None):
         ''' Initialize the portfolio '''
 
         ## Define the structure sets
-        self.projects = odict()
-        self.gaoptims = odict()
+        self.projects = projects if projects else odict()
+        self.gaoptims = gaoptims if gaoptims else odict()
 
         ## Define other quantities
         self.name = name
@@ -111,6 +111,11 @@ class Portfolio(object):
             
     def minBOCoutcomes(self, objectives, seedbudgets = None):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
+
+        # Check inputs
+        
+
+        # Initialise internal parameters
         BOClist = []
         grandtotal = objectives['budget']
         
