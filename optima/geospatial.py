@@ -41,7 +41,7 @@ def geogui():
     projext = '.prj'
     portext = '.prt'
     
-    # Extending the normal widget class so that stdout can be restored upon closure. Pretty funky, no?
+    # Extending the normal widget class so that stdout can be restored upon closure.
     class GAWidget(QtGui.QWidget):
         def __init__(self):
             QtGui.QWidget.__init__(self)
@@ -69,7 +69,7 @@ def geogui():
 
     
     def _loadproj():
-        ''' Little helper function to load a project, since used more than once '''
+        ''' Helper function to load a project, since used more than once '''
         filepath = QtGui.QFileDialog.getOpenFileNames(caption='Choose project file', filter='*'+projext)
         project = None
         try: 

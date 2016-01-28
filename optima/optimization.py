@@ -47,7 +47,7 @@ class Optim(object):
     
     
     def getresults(self):
-        ''' A little method for getting the results '''
+        ''' A method for getting the results '''
         if self.resultsref is not None and self.project is not None:
             results = getresults(project=self.project, pointer=self.resultsref)
             return results
