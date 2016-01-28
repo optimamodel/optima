@@ -45,7 +45,7 @@ if 'standardscen' in tests:
 
     print('Running standard scenarios test...')
     from optima import Parscen, Budgetscen, Coveragescen
-    from makedefaults import defaultproject
+    from optima.defaults import defaultproject
     from numpy import array
     
     P = defaultproject('concentrated')

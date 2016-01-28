@@ -3,7 +3,7 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False, die=False):
+def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False, die=True):
     """
     This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
     

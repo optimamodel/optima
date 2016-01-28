@@ -40,7 +40,7 @@ blank()
 ## The tests
 ##############################################################################
 
-from makedefaults import defaultproject
+from optima.defaults import defaultproject
 
 T = tic()
 
