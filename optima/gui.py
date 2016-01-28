@@ -278,7 +278,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, name='default', ind=0, verbose=4):
+def manualfit(project=None, name='default', ind=0, verbose=2):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -376,21 +376,21 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
             if fulltypelist[b]=='meta': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].m = eval(str(box.text()))
-                printv('%s.m = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.m = %s' % (key, box.text()), 3, verbose)
             elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship': # Populations or partnerships
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].y[subkey] = eval(str(box.text()))
-                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             if fulltypelist[b]=='const': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
-                printv('%s.y = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.y = %s' % (key, box.text()), 3, verbose)
             else:
                 printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         

@@ -1,7 +1,7 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None, MaxRangeIter=1000,
     MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-3, TolX=None, StallIterLimit=100,
-    fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, verbose=10):
+    fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, verbose=2):
     """
     Optimization using the adaptive stochastic descent algorithm.
     
@@ -48,7 +48,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
                maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
                  timelimit {3600} -- Maximum time allowed, in seconds
               stoppingfunc {None} -- External method that can be used to stop the calculation from the outside.
-                      verbose {0} -- How much information to print during the run
+                      verbose {2} -- How much information to print during the run
   
     
     Example:
@@ -103,8 +103,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     
     ## Loop
     start = time()
+    offset = ' '*5 # Offset the print statements
     while 1:
-        if verbose>=1: print('Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
+        if verbose>=1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -141,8 +142,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
         abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
         relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
-        if verbose>5:
-            print('       choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
+        if verbose>=3:
+            print(offset+'choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s1' % (choice, par, pm, x[par], xnew[par], inrange))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -151,12 +152,12 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
-            if verbose>=5: flag = 'SUCCESS'
+            flag = 'SUCCESS'
         elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
-            if verbose>=5: flag = 'FAILURE'
-        if verbose>=5: print(' '*5 + flag + ' on step %i (old:%0.1f new:%0.1f diff:%0.5f ratio:%0.3f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
+            flag = 'FAILURE'
+        if verbose>=2: print(offset + flag + ' on step %i (old:%0.2e new:%0.2e diff:%0.2e ratio:%0.5f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
 
         # Optionally store output information
         if fulloutput: # Include additional output structure
