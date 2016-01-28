@@ -51,7 +51,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     // Sending parameters to re-process graphs for active parset
-    $scope.processGraphs = function(save) {
+    $scope.processGraphs = function(shouldSave) {
       var data = {};
       if($scope.parameters) {
         data.parameters = $scope.parameters;
@@ -67,7 +67,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       }
       var url = '/api/parset/' + $scope.activeParset.id + '/calibration';
-      if (save) {
+      if (shouldSave) {
         url = url + '?doSave=true';
       }
       $http.put(url, data)
