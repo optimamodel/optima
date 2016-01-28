@@ -92,7 +92,7 @@
               <div class="++1 10 1++">
                 Parameters
               </div>
-              <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)">
+              <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)" required>
               </select>
             </div>
             </div>
@@ -102,6 +102,7 @@
               Populations
             </h3>
             <div>
+            <div class="error-hint" ng-show="isPopulationSelected(entry, entry.populations) && entry.parameterObj">Please select population</div>
             <div class="section_dashed_border">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPopToParameter(entry)" ng-model="entry.selectAll">
@@ -118,6 +119,7 @@
             <h3>
               Partnerships
             </h3>
+            <div class="error-hint" ng-show="isPopulationSelected(entry, entry.parameterObj.pships) && entry.parameterObj">Please select partnership</div>
             <div class="section_dashed_border" ng-if="entry.parameterObj.pships.length > 0">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPshipsToParameter(entry)" ng-model="entry.selectAll">
@@ -172,7 +174,7 @@
 
     <div class="section text-center" style="margin-top: 20px">
       <button type="button" class="btn __white" ng-click="state.showAddData = false;$dismiss('Closed')">Dismiss</button>
-      <button type="submit" class="btn" ng-disabled="programForm.$invalid">Save</button>
+      <button type="submit" class="btn" ng-disabled="programForm.$invalid || formInvalid">Save</button>
     </div>
   </form>
 </div>
