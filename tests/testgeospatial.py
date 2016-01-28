@@ -9,7 +9,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016jan20 by davidkedz
+Version: 2016jan27
 """
 
 
@@ -17,9 +17,9 @@ Version: 2016jan20 by davidkedz
 ## Define tests to run here!!!
 tests = [
 #'forcerefresh',
-'makeportfolio',
+#'makeportfolio',
 #'generateBOCs',
-#'rungui',
+'rungui',
 ]
 
 ##############################################################################
@@ -95,16 +95,16 @@ if 'generateBOCs' in tests:
     t = tic()
 
     print('Running BOC generation test...')
-    from optima import Project, saveobj
-    from optima import defaultobjectives
+    from optima import saveobj, defaultobjectives
     
     objectives = defaultobjectives()
-    F.genBOCs(objectives)
+#    objectives['inciweight'] = 5
+    F.genBOCs(objectives)#,forceregen = True)#, maxtime = 20)
     F.plotBOCs(objectives)    
     
     print('Saving projects with BOCs...')
-    saveobj('test7popsARTandHTC.prj', P1)
-    saveobj('test7popsART.prj', P2)
+    saveobj('test7popsFSWandCon.prj', P1)
+    saveobj('test7popsCon.prj', P2)
     
     done(t)
 
@@ -112,22 +112,16 @@ if 'generateBOCs' in tests:
 
 
 if 'rungui' in tests and doplot:
-    from optima import Project, Portfolio, geogui, saveobj
+    t = tic()
+
+    print('Running geo GUI test...')
+    from optima import geogui
+    geogui()
     
-    P = Project(spreadsheet='simple.xlsx')
-    Q = Project(spreadsheet='simple.xlsx')
-    F = Portfolio()
-    for proj in [P, Q]: F.addproject(proj)
-    saveobj('test2.prj', P)
-    saveobj('test7.prj', Q)
-    saveobj('test.prt', F)
-    print('Opening geospatial GUI. It will run after tests are completed.')
+    done(t)
 
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
 toc(T)
-
-# The actual GUI is delayed until after the rest of test output, otherwise that too will be displayed in the widget.
-if 'rungui' in tests and doplot:
-    geogui()
+    

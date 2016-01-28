@@ -104,14 +104,14 @@ class Result(object):
 
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
-    def __init__(self, projectname='Unspecified', x=None, y=None, objectives=None):
+    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
         self.uid = uuid()
         self.created = today()
         self.x = x if x else [] # A list of budget totals
         self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
         self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
         
-        self.projectname = projectname # Name of corresponding project [[[REFERENCE PROJECT IF MORE NEEDED]]]
+        self.name = name # Required by rmresult in Project.
 
     def __repr__(self):
         ''' Print out summary stats '''
