@@ -18,8 +18,8 @@ Version: 2016jan20 by davidkedz
 tests = [
 #'forcerefresh',
 'makeportfolio',
-'generateBOCs',
-'rungui',
+#'generateBOCs',
+#'rungui',
 ]
 
 ##############################################################################
@@ -75,7 +75,6 @@ if 'makeportfolio' in tests:
     print('Running make portfolio test...')
     from optima import Portfolio, Project, loadobj, dcp
     from optima.defaults import defaultproject
-    F = Portfolio()
     
     P1 = defaultproject('concentrated')
     P2 = defaultproject('concentrated')
@@ -84,9 +83,8 @@ if 'makeportfolio' in tests:
     P2.progsets[0].rmprogram('OST')
     P2.progsets[0].rmprogram('HTC')
 
-    F.addproject(P1)
-    F.addproject(P2)
-    print(F)
+    F = Portfolio(projects=[P1,P2])
+
     done(t)
 
 
