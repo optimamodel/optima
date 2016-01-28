@@ -73,46 +73,17 @@ if 'forcerefresh' in tests:
 if 'makeportfolio' in tests:
     t = tic()
     print('Running make portfolio test...')
-    from optima import Portfolio, Project, loadobj
-    from optima.defaults import defaultprogset
+    from optima import Portfolio, Project, loadobj, dcp
+    from optima.defaults import defaultproject
     F = Portfolio()
     
-    try:
-        print('Loading projects...')
-        P1 = loadobj('test7popsARTandHTC.prj')
-        P2 = loadobj('test7popsART.prj')
-    except:
-        print('Project files cannot be found.\nNow generating from scratch...')
-        P1 = Project(name='Test with ART and HTC', spreadsheet='concentrated.xlsx')
-        P2 = Project(name='Test with ART only', spreadsheet='concentrated.xlsx')
-        
-        # THIS PROGSET CONSTRUCTION IS MOMENTARY UNTIL NICE EXAMPLE PRJ FILES EXIST.
-        # ----------
-        R = defaultprogset(P1, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART'])
-    
-        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
-        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
-        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
-        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
-        R.updateprogset()
-    
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-        R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-        R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-        P1.addprogset(name='default', progset=R)
-        R.rmprogram('HTC')
-        P2.addprogset(name='default', progset=R)
-        # ----------
-    
+    P1 = defaultproject('concentrated')
+    P2 = defaultproject('concentrated')
+
+    P1.progsets[0].rmprogram('OST')
+    P2.progsets[0].rmprogram('OST')
+    P2.progsets[0].rmprogram('HTC')
+
     F.addproject(P1)
     F.addproject(P2)
     print(F)

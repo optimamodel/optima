@@ -7,7 +7,7 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
 'maxbudget',
 ]
 

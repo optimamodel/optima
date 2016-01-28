@@ -11,7 +11,7 @@ Version: 2016jan27 by cliffk
 ## Define tests to run here!!!
 tests = [
 'setup',
-#'minimizeoutcomes',
+'minimizeoutcomes',
 'minimizemoney',
 ]
 
@@ -91,7 +91,7 @@ if 'minimizemoney' in tests:
     objectives = defaultobjectives(which='money')
     objectives['deathfrac'] = 0.1
     objectives['incifrac'] = -10
-    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=True)
+    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=False)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])

@@ -415,7 +415,7 @@ class Project(object):
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
             projectBOC.x.append(budget)
-            projectBOC.y.append(results.mismatch[-1])
+            projectBOC.y.append(results.improvement[-1])
         self.addresult(result=projectBOC)
         return None        
     
