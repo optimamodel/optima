@@ -1,5 +1,5 @@
 '''
-MAKEPLOTS
+PLOTTING
 
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
@@ -52,11 +52,17 @@ def getplotselections(results):
         plotselections['names'] += ['Improvement']
     
     
-    ## Add selections for outcome and budget allocations
+    ## Add selection for budget allocations
     if hasattr(results, 'budget') and results.budget is not None:
         if all([budg is not None for budg in results.budget.values()]): # Make sure none of the individual budgets are none either
             plotselections['keys'] += ['budget']
             plotselections['names'] += ['Budget allocation']
+
+    ## Add selection for coverage
+    if hasattr(results, 'coverage') and results.coverage is not None:
+        if all([cov is not None for cov in results.coverage.values()]): # Make sure none of the individual coverages are none either
+            plotselections['keys'] += ['coverage']
+            plotselections['names'] += ['Program coverage']
     
     
     
@@ -88,7 +94,7 @@ def getplotselections(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -115,20 +121,22 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
-        except Exception as E: 
+            allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
+        except OptimaException as E: 
             if die: raise E
+            else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
         
     
-    ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
-        try: 
-            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
-        except Exception as E: 
-            if die: raise E
-        
-    
+    ## Add budget and coverage plots
+    for budcov in ['budget', 'coverage']:
+        if budcov in toplot:
+            toplot.remove(budcov) # Because everything else is passed to plotepi()
+            try: 
+                allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
+            except OptimaException as E: 
+                if die: raise E
+                else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
+            
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
@@ -430,23 +438,28 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
 ##################################################################
     
     
-def plotallocs(results=None, figsize=(14,10), **kwargs):
+def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+
     Results object must be of Multiresultset type.
     
-    Version: 2016jan24    
+    "which" should be either 'budget' or 'coverage'
+    
+    Version: 2016jan27
     '''
     
-    # Validate input
-    if not(hasattr(results, 'budget')) or results.budget is None: raise OptimaException('No budget found for results object:\n"%s"' % results)
+    # Preliminaries: process inputs and extract needed data
+    try: 
+        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
+    except: 
+        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
+        if die: raise OptimaException(errormsg)
+        else: printv(errormsg, 1, verbose)
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    # Preliminaries: extract needed data
-    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING, if budgets are not arrays')
-    budgetstoplot = [budget for budget in results.budget.values() if budget]
-    budgetyearstoplot = [budgetyears for budgetyears in results.budgetyears.values() if budgetyears]
-    proglabels = budgetstoplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(results.budget.keys()) if results.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
+    proglabels = toplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     

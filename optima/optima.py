@@ -110,7 +110,9 @@ except: _failed()
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 except: _failed()
 
-try: from results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+try: 
+    import results
+    from results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
 try: 
@@ -131,7 +133,9 @@ try:
     from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
 except: _failed()
 
-try: from calibration import sensitivity, autofit # Calibration functions
+try: 
+    import calibration
+    from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
 try: 
