@@ -117,11 +117,15 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 ##=========================================================
 
 def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbudget = None):
-    
+
     xnew = linspace(x[0],x[-1],200)
+
+    # Process inputs
+    if isinstance(initbudget, (int, float)): initbudget = [initbudget] # Plotting expects this to be a list
+    if isinstance(optbudget, (int, float)): optbudget = [optbudget] # Plotting expects this to be a list
     
+    # Try to make plot
     try:
-        xnew = linspace(x[0],x[-1],200)
         
         fig = plt.figure()
         ax = fig.add_subplot(111)

@@ -1,4 +1,4 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio # Import utilities
+from optima import odict, getdate, today, uuid, objrepr, printv, scaleratio, OptimaException # Import utilities
 from optima import gitinfo # Import functions
 from optima import __version__ # Get current version
 
@@ -44,17 +44,17 @@ class Portfolio(object):
     def __repr__(self):
         ''' Print out useful information when called '''
         output = '============================================================\n'
-        output += '    Portfolio name: %s\n'    % self.name
+        output += '            Portfolio name: %s\n' % self.name
         output += '\n'
-        output += '          Projects: %i\n'    % len(self.projects)
-        output += '  GA Optimizations: %i\n'    % len(self.gaoptims)
+        output += '        Number of projects: %i\n' % len(self.projects)
+        output += 'Number of GA Optimizations: %i\n' % len(self.gaoptims)
         output += '\n'
-        output += '    Optima version: %0.1f\n' % self.version
-        output += '      Date created: %s\n'    % getdate(self.created)
-        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
-        output += '        Git branch: %s\n'    % self.gitbranch
-        output += '       Git version: %s\n'    % self.gitversion
-        output += '               UID: %s\n'    % self.uid
+        output += '            Optima version: %0.1f\n' % self.version
+        output += '              Date created: %s\n'    % getdate(self.created)
+        if self.modified: output += '             Date modified: %s\n'    % getdate(self.modified)
+        output += '                Git branch: %s\n'    % self.gitbranch
+        output += '               Git version: %s\n'    % self.gitversion
+        output += '                       UID: %s\n'    % self.uid
         output += '============================================================\n'
         output += objrepr(self)
         return output
@@ -63,25 +63,26 @@ class Portfolio(object):
     ## Methods to handle common tasks
     #######################################################################################################
 
-    def addproject(self, project):
+    def addproject(self, project, verbose=2):
         ''' Store a project within portfolio '''
         self.projects[project.uid] = project        
+        printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 4, verbose)
     
     #######################################################################################################
     ## Methods to perform major tasks
     #######################################################################################################
         
         
-    def genBOCs(self, objectives=None):
-        ''' Loop through stored projects and construct budget-outcome curves '''
+    def genBOCs(self, objectives=None, verbose=2):
+        ''' Loop through stored projects and pull out budget-outcome curves, or construct them if they don't exist '''
         if objectives == None: objectives = defaultobjectives()
         for x in self.projects:
             p = self.projects[x]
             if p.getBOC(objectives) == None:
-                print('Generating BOC for project: %s' % p.name)
+                printv('WARNING, project %s does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[0].name, p.progsets[0].name), 2, verbose)
                 p.genBOC(parsetname=p.parsets[0].name, progsetname=p.progsets[0].name, objectives=objectives, maxtime=10)   # WARNING!!! OPTIMISES FOR 1ST ONES
             else:
-                print('BOC does not need to be generated for project: %s' % p.name)
+                printv('Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
                 
     def plotBOCs(self, objectives, initbudgets = None, optbudgets = None):
@@ -90,22 +91,21 @@ class Portfolio(object):
         if optbudgets == None: optbudgets = [None]*len(self.projects)
             
         if not len(self.projects) == len(initbudgets) or not len(self.projects) == len(optbudgets):
-            Exception('Error: Trying to plot BOCs with faulty initbudgets or optbudgets.')
+            errormsg = 'Error: Plotting BOCs for %i projects with %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
+            raise OptimaException(errormsg)
         
         # Loop for BOCs.
         c = 0
         for x in self.projects:
             p = self.projects[x]
-            # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
-            p.plotBOC(objectives, initbudget = [initbudgets[c]], optbudget = [optbudgets[c]])
+            p.plotBOC(objectives=objectives, initbudget = initbudgets[c], optbudget = optbudgets[c])
             c += 1
         
         # Reloop for BOC derivatives just because they group nicer for the GUI.
         c = 0
         for x in self.projects:
             p = self.projects[x]
-            # Note: The reason plotBOC is being passed listed forms of single values is due to current PCHIP implementation...
-            p.plotBOC(objectives, deriv = True, initbudget = [initbudgets[c]], optbudget = [optbudgets[c]])
+            p.plotBOC(objectives=objectives, deriv = True, initbudget = initbudgets[c], optbudget = optbudgets[c])
             c += 1
             
             

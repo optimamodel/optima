@@ -17,8 +17,8 @@ Version: 2016jan20 by davidkedz
 ## Define tests to run here!!!
 tests = [
 #'forcerefresh',
-#'makeportfolio',
-#'generateBOCs',
+'makeportfolio',
+'generateBOCs',
 'rungui',
 ]
 
@@ -83,12 +83,12 @@ if 'makeportfolio' in tests:
         P2 = loadobj('test7popsART.prj')
     except:
         print('Project files cannot be found.\nNow generating from scratch...')
-        P1 = Project(name='Test with ART and HTC', spreadsheet='test7pops.xlsx')
-        P2 = Project(name='Test with ART only', spreadsheet='test7pops.xlsx')
+        P1 = Project(name='Test with ART and HTC', spreadsheet='concentrated.xlsx')
+        P2 = Project(name='Test with ART only', spreadsheet='concentrated.xlsx')
         
         # THIS PROGSET CONSTRUCTION IS MOMENTARY UNTIL NICE EXAMPLE PRJ FILES EXIST.
         # ----------
-        R = defaultprogset(P1, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW_programs', 'HTC', 'ART'])
+        R = defaultprogset(P1, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART'])
     
         R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
         R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
@@ -96,14 +96,14 @@ if 'makeportfolio' in tests:
         R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
         R.updateprogset()
     
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM_programs':(0.75,0.85)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW_programs':(0.55,0.65)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW_programs':(0.9,0.95)})
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW_programs':(0.95,0.99)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM_programs':(0.95,0.99)})
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
         R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
         R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
         R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
@@ -145,8 +145,8 @@ if 'generateBOCs' in tests:
 if 'rungui' in tests and doplot:
     from optima import Project, Portfolio, geogui, saveobj
     
-    P = Project(spreadsheet='test.xlsx')
-    Q = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
+    Q = Project(spreadsheet='simple.xlsx')
     F = Portfolio()
     for proj in [P, Q]: F.addproject(proj)
     saveobj('test2.prj', P)
@@ -160,5 +160,5 @@ print('\n\n\nDONE: ran %i tests' % len(tests))
 toc(T)
 
 # The actual GUI is delayed until after the rest of test output, otherwise that too will be displayed in the widget.
-if 'rungui' in tests:
+if 'rungui' in tests and doplot:
     geogui()

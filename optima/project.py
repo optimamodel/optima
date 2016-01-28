@@ -402,7 +402,7 @@ class Project(object):
         
         
     #######################################################################################################
-    ## Methods to handle specialised tasks (i.e. for geospatial analysis)
+    ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
     def genBOC(self, budgetlist=[10000,100000,1000000,10000000], name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
@@ -433,19 +433,20 @@ class Project(object):
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
     
-    def plotBOC(self, objectives, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+    def plotBOC(self, boc=None, objectives=None, deriv = False, returnplot = False, initbudget = None, optbudget = None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
-        boc = self.getBOC(objectives = objectives)
+
+        if boc is None:
+            try: boc = self.getBOC(objectives = objectives)
+            except: raise OptimaException('Cannot plot a nonexistent BOC!')
         
-        if boc == None: print('Cannot plot a nonexistent BOC!')
+        if deriv:
+            print('Plotting BOC for "%s"...' % self.name)
         else:
-            if deriv:
-                print('Plotting BOC for "%s"...' % self.name)
-            else:
-                print('Plotting BOC derivative for "%s"...' % self.name)
-            ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
-            plt.title('Project: %s' % self.name)
-            if returnplot: return ax
-            else: plt.show()
-            return None
+            print('Plotting BOC derivative for "%s"...' % self.name)
+        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+        plt.title('Project: %s' % self.name)
+        if returnplot: return ax
+        else: plt.show()
+        return None
     
