@@ -1,5 +1,5 @@
 '''
-MAKEPLOTS
+PLOTTING
 
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
@@ -87,7 +87,7 @@ def getplotselections(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -114,20 +114,22 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
-        except Exception as E: 
+            allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
+        except OptimaException as E: 
             if die: raise E
+            else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
         
     
-    ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
-        try: 
-            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
-        except Exception as E: 
-            if die: raise E
-        
-    
+    ## Add budget and coverage plots
+    for budcov in ['budget', 'coverage']:
+        if budcov in toplot:
+            toplot.remove(budcov) # Because everything else is passed to plotepi()
+            try: 
+                allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
+            except OptimaException as E: 
+                if die: raise E
+                else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
+            
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
@@ -429,22 +431,29 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
 ##################################################################
     
     
-def plotallocs(results=None, figsize=(14,10), **kwargs):
+def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+
     Results object must be of Multiresultset type.
     
-    Version: 2016jan24    
+    "which" should be either 'budget' or 'coverage'
+    
+    Version: 2016jan27
     '''
     
-    # Validate input
-    if not(hasattr(results, 'budget')): raise OptimaException('No budget found for results object:\n"%s"' % results)
+    # Preliminaries: process inputs and extract needed data
+    try: 
+        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
+    except: 
+        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
+        if die: raise OptimaException(errormsg)
+        else: printv(errormsg, 1, verbose)
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    # Preliminaries: extract needed data
-    budgetstoplot = [budget for budget in results.budget.values() if budget]
-    budgetyearstoplot = [budgetyears for budgetyears in results.budgetyears.values() if budgetyears]
-    proglabels = budgetstoplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(results.budget.keys()) if results.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    proglabels = toplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
@@ -461,24 +470,26 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = [x[y] for x in budgetstoplot[plt][:]]
+            progdata = [x[y] for x in toplot[plt][:]]
+            if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
         if nbudgetyears>1: ax[-1].legend()
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ax[-1].set_ylabel('Spending (US$)')
+        ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
+        ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
-    
+        
     close(fig)
     
     return fig

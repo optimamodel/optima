@@ -102,7 +102,7 @@ class Result(object):
 
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -135,6 +135,7 @@ class Resultset(object):
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
         self.budget = budget # Store budget
+        self.coverage = coverage # Store coverage
         self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
         self.settings = settings if settings is not None else Settings()
@@ -275,6 +276,7 @@ class Multiresultset(Resultset):
         self.nresultsets = len(resultsetlist)
         self.keys = []
         self.budget = odict()
+        self.coverage = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -315,13 +317,14 @@ class Multiresultset(Resultset):
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
-            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+            if getattr(rset,'budget'): # If it has a budget, overwrite coverage information by calculating from budget
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-            except: 
-                pass # Not a problem if doesn't work
-            
-        
+                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+            elif getattr(rset,'coverage'): # If no budget, compute budget from coverage
+                self.coverage[key]      = rset.coverage
+                self.budgetyears[key] = rset.budgetyears
+                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):
