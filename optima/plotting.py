@@ -525,7 +525,10 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from 
-    if type(results)==Resultset: ismultisim = False
+    if type(results)==Resultset: 
+        ismultisim = False
+        nsims = 1
+        titles = ['PLHIV'] # WARNING, not sure what label this should be, if any
     elif type(results)==Multiresultset:
         ismultisim = True
         titles = results.keys # Figure out the labels for the different lines
@@ -537,7 +540,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    cascadelist = ['allplhiv', 'alldx', 'alltx'] 
+    cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
     cascadenames = []
     colors = gridcolormap(len(cascadelist))
     

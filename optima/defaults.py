@@ -1,9 +1,12 @@
 """
 Defines the default parameters for each program.
 
-Version: 2016jan27
+Version: 2016jan28
 """
-from optima import Project, Program, Programset
+from optima import OptimaException, Project, Program, Programset
+
+
+spreadsheetpath = '../tests/' # WARNING, will this work on all systems? If not can just move XLSX files into the Optima directory I suppose...
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
@@ -304,15 +307,30 @@ def defaultproject(which='simple', addprogset=True):
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016jan27    
+    Version: 2016jan28
     '''
+    
+    
+    
+    ##########################################################################################################################
+    ## Simple
+    ##########################################################################################################################
+    
+    if which=='simple':
+        print('Creating simple epidemic project...')
+        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx')
+    
+    
+    
+    
+    
     
     ##########################################################################################################################
     ## Generalized
     ##########################################################################################################################
-    if which=='generalized':
+    elif which=='generalized':
         print('Creating generalized epidemic project...')
-        P = Project(spreadsheet='generalized.xlsx')
+        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx')
         pops = P.data['pops']['short']
         caspships = P.data['pships']['cas']
         compships = P.data['pships']['com']
@@ -360,7 +378,7 @@ def defaultproject(which='simple', addprogset=True):
     ##########################################################################################################################
     elif which=='concentrated':
         # Make project and store results from default sim
-        P = Project(spreadsheet='concentrated.xlsx')
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx')
     
         # Get a default progset 
         R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
@@ -400,7 +418,11 @@ def defaultproject(which='simple', addprogset=True):
         
         # Store this program set in the project
         P.addprogset(R)
-        
+    
+    
+    
+    else:
+        raise OptimaException('Default project type "%s" not understood: choices are "simple", "generalized", or "concentrated"' % which)
     
     
     return P
