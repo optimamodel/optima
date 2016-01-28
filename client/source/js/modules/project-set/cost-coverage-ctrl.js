@@ -17,7 +17,7 @@ define(['./module', 'underscore'], function (module, _) {
         'Please upload spreadsheet to proceed.',
         'Cannot proceed'
       );
-      $scope.missingData = true;
+      $state.go('project.open')
       return;
     }
 
