@@ -290,4 +290,4 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     return data
 
 
-loadspreadsheet('test.xlsx') # Uncomment for debugging
+#loadspreadsheet('test.xlsx') # Uncomment for debugging
