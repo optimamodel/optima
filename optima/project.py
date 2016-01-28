@@ -101,15 +101,15 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default'):
+    def loadspreadsheet(self, filename, name='default', dorun=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-
         self.ensureparset(name)
+        if dorun: self.runsim(name, addresult=True)
         return None
 
 
@@ -169,16 +169,20 @@ class Project(object):
         if isinstance(checkexists, (int, float)): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
             except: raise OptimaException('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
-        if checkabsent is not None and overwrite==False:
+        if checkabsent is not None:
             if checkabsent in structlist:
-                raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
+                if overwrite==False:
+                    raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
+                else:
+                    printv('Structure list "%s" already has item named "%s"' % (what, checkabsent), 2, self.settings.verbose)
+                
         if checkexists is not None:
             if not checkexists in structlist:
                 raise OptimaException('Structure list "%s" has no item named "%s"' % (what, checkexists))
         return None
 
 
-    def add(self, name=None, item=None, what=None, overwrite=False):
+    def add(self, name=None, item=None, what=None, overwrite=False, consistentnames=True):
         ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
         if name is None:
             try: name = item.name # Try getting name from the item
@@ -191,7 +195,7 @@ class Project(object):
         structlist = self.getwhat(item=item, what=what)
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
-        structlist[name].name = name # Make sure names are consistent
+        if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
         printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
         self.modified = today()
         return None
@@ -213,7 +217,10 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = dcp(structlist[orig])
         structlist[new].name = new  # Update name
-        structlist[new].uid = uuid()  # otherwise there will be 2 structures with same unique identifier
+        structlist[new].uid = uuid()  # Otherwise there will be 2 structures with same unique identifier
+        structlist[new].created = today() # Update dates
+        structlist[new].modified = today() # Update dates
+        if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
         printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
         self.modified = today()
         return None
@@ -256,8 +263,23 @@ class Project(object):
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result)
-    def rmresult(self, index=-1):     self.remove(what='result',   name=self.results.keys()[index]) # Remove by index rather than name
+    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result, consistentnames=False) # Use UID for key but keep name
+    
+    
+    def rmresult(self, name=-1):
+        resultuids = self.results.keys() # Pull out UID keys
+        resultnames = [res.name for res in self.results.values()] # Pull out names
+        if isinstance(name, (int, float)) and name<len(self.results):  # Remove by index rather than name
+            self.remove(what='result', name=self.results.keys()[name])
+        elif name in resultuids: # It's a UID: remove directly 
+            self.remove(what='result', name=name)
+        elif name in resultnames: # It's a name: find the UID corresponding to this name and remove
+            self.remove(what='result', name=resultuids[resultnames.index(name)]) # WARNING, if multiple names match, will delete oldest one -- expected behavior?
+        else:
+            validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(self.results))]
+            errormsg = 'Could not remove result "%s": choices are:\n%s' % (name, '\n'.join(validchoices))
+            raise OptimaException(errormsg)
+    
     
     def addscenlist(self, scenlist): 
         ''' Function to make it slightly easier to add scenarios all in one go -- WARNING, should make this a general feature of add()! '''
@@ -272,11 +294,12 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name='default', simpars=None, start=None, end=None, dt=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
+        if name is None and simpars is None: name = 'default' # Set default name
 
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
@@ -291,11 +314,12 @@ class Project(object):
             raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
             rawlist.append(raw)
 
-        # Store results
-        results = Resultset(raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
-        results.project = self # Use hard reference
-        self.addresult(result=results)
-        if simpars is None: self.parsets[name].resultsref = results.uid
+        # Store results -- WARNING, is this correct in all cases?
+        resultname = 'parset-'+name if simpars is None else 'simpars'
+        results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
+        if addresult:
+            self.addresult(result=results)
+            if simpars is None: self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
 
         return results
 
@@ -303,7 +327,7 @@ class Project(object):
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
-        parset = sensitivity(orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
+        parset = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.addparset(name=name, parset=parset) # Store parameters
         self.modified = today()
         return None
@@ -320,8 +344,12 @@ class Project(object):
 
     def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
-        self.copyparset(orig=orig, new=name) # Store parameters
-        autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        self.copyparset(orig=orig, new=name) # Store parameters -- WARNING, shouldn't copy, should create new!
+        self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        results = self.runsim(name=name, addresult=False)
+        results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
+        self.addresult(result=results)
+        self.parsets[name].resultsref = results.uid
         self.modified = today()
         return None
     
