@@ -294,3 +294,11 @@ def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
     R = Programset(programs=programs)   
     return R
+
+
+
+
+def defaultproject(which='simple', addprogset=True):
+    
+    
+    return P
