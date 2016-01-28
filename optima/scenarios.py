@@ -1,6 +1,6 @@
 ## Imports
-from numpy import append #, arange, linspace # array, isnan, zeros, shape, argmax, log, polyfit, exp
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults #, sanitize, uuid, getdate, smoothinterp
+from numpy import append, array
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2budget #, sanitize, uuid, getdate, smoothinterp
 
 
 
@@ -87,7 +87,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
-    multires = Multiresultset(allresults)
+    multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
     printv('...done running scenarios.', 2, verbose)
@@ -144,13 +144,17 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 results = None
 
             if isinstance(scen, Budgetscen):
-                if not isinstance(scen.budget,dict): raise Exception('Currently only accepting budgets as dictionaries.')
+                if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
+                    scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
+                if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
                 scen.budget = scen.budget.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
             elif isinstance(scen, Coveragescen):
-                if not isinstance(scen.coverage,dict): raise Exception('Currently only accepting coverage as dictionaries.')
-                if not isinstance(scen.coverage,odict): scen.budget = odict(scen.budget)
+                if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
+                    scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
+                if not isinstance(scen.coverage,dict): raise OptimaException('Currently only accepting coverage as dictionaries.')
+                if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
                 scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 

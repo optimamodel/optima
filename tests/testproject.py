@@ -91,11 +91,11 @@ if 'loadspreadsheet' in tests:
     from optima import Project
     
     print('  Create a project from a spreadsheet')
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
     
     print('  Load a project, then load a spreadsheet')
     Q = Project()
-    Q.loadspreadsheet('test.xlsx')
+    Q.loadspreadsheet('simple.xlsx')
     
     assert Q.data['const']['effcondom'][0]==0.95, 'Condom efficacy not 95% or not being read in properly'
     
@@ -114,7 +114,7 @@ if 'loadeconomcs' in tests:
     P.loadeconomics(filename='testeconomics.xlsx')
 
     print('  Create a project from a spreadsheet and add economic data')
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
     P.loadeconomics(filename='testeconomics.xlsx')
 
 
@@ -125,7 +125,7 @@ if 'runsim' in tests:
     print('Running runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='test.xlsx')
+    P = Project(spreadsheet='concentrated.xlsx')
     results = P.runsim('default')
     
     done(t)
