@@ -1,12 +1,12 @@
 """
 Functions for running optimizations.
     
-Version: 2016jan26
+Version: 2016jan27
 """
 
 from optima import OptimaException, Multiresultset, asd, runmodel, getresults, vec2budget # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr # Utilities
-from numpy import zeros, arange, array, isnan
+from numpy import zeros, arange, array, isnan, maximum
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -360,11 +360,15 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         weights = dcp(absreductions) # Copy this, since will be modifying it -- not strictly necessary but could come in handy
         weights = 1.0/weights[:] # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
         weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
-        for key in objectives['keys']:
-           objectives[key+'weight'] = weights[key] # Reset objective weights according to the reduction required
+        for k,key in enumerate(objectives['keys']):
+           objectives[key+'weight'] = maximum(weights[k],0) # Reset objective weights according to the reduction required -- don't let it go below 0, though
+        
         
         ##########################################################################################################################
         ## Now run an optimization on the current budget
+        totalbudget = budgetvec1.sum() # Calculate new total funding
+        args['objectives']['budget'] = totalbudget
+        budgethigher = zeros(nprogs) + totalbudget # Reset funding maximum
         budgetvec2, fval, exitflag, output = asd(outcomecalc, budgetvec1, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         
@@ -388,7 +392,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         # Re-optimize based on this fairly close allocation
         budgetvec3 = budgetvec2*fundingfactor # Calculate new budget vector
         totalbudget = budgetvec3.sum() # Calculate new total funding
-        args['objective']['budget'] = totalbudget
+        args['objectives']['budget'] = totalbudget
         budgethigher = zeros(nprogs) + totalbudget # Reset funding maximum
         budgetvec4, fval, exitflag, output = asd(outcomecalc, budgetvec3, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
