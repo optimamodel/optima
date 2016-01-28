@@ -146,32 +146,32 @@ def getvalidyears(years, validdata, defaultind=0):
 
 
 
-def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
+def data2prev(data=None, index=0, blh=0, **defaultargs): # WARNING, "blh" means "best low high", currently upper and lower limits are being thrown away, which is OK here...?
     """ Take an array of data return either the first or last (...or some other) non-NaN entry -- used for initial HIV prevalence only so far... """
     par = Constant(y=odict(), **defaultargs) # Create structure
-    for row,key in enumerate(keys):
+    for row,key in enumerate(par.keys):
         par.y[key] = sanitize(data['hivprev'][blh][row])[index] # Return the specified index -- usually either the first [0] or last [-1]
 
     return par
 
 
 
-def data2popsize(data=None, keys=None, blh=0, **defaultargs):
+def data2popsize(data=None, blh=0, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
     # Parse data into consistent form
     sanitizedy = odict() # Initialize to be empty
     sanitizedt = odict() # Initialize to be empty
-    for row,key in enumerate(keys):
+    for row,key in enumerate(par.keys):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
 
-    largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
+    largestpop = argmax([mean(sanitizedy[key]) for key in par.keys]) # Find largest population size
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
-    for key in keys:
+    for key in par.keys:
         if len(sanitizedy[key])>=2:
             atleast2datapoints.append(key)
     if len(atleast2datapoints)==0:
@@ -193,7 +193,7 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
             raise OptimaException(errormsg)
     
     # Handle populations that have only a single data point
-    only1datapoint = list(set(keys)-set(atleast2datapoints))
+    only1datapoint = list(set(par.keys)-set(atleast2datapoints))
     for key in only1datapoint:
         largestpars = par.p[largestpop] # Get the parameters from the largest population
         if len(sanitizedt[key]) != 1:
@@ -211,7 +211,7 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
 
 
 
-def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
+def data2timepar(data=None, defaultind=0, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     # Check that at minimum, name and short were specified, since can't proceed otherwise
     try: 
@@ -221,7 +221,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
         raise OptimaException(errormsg)
         
     par = Timepar(m=1, y=odict(), t=odict(), **defaultargs) # Create structure
-    for row,key in enumerate(keys):
+    for row,key in enumerate(par.keys):
         try:
             validdata = ~isnan(data[short][row])
             par.t[key] = getvalidyears(data['years'], validdata, defaultind=defaultind) 
@@ -376,9 +376,9 @@ def makepars(data, label=None, verbose=2):
             pars[parname] = data2timepar(data=data, keys=keys, **rawpar)
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
-            pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+            pars[parname] = Constant(y=best, keys=keys, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
-            pars[parname] = Constant(y=odict(), **rawpar)
+            pars[parname] = Constant(y=odict(), keys=keys, **rawpar)
             
     
 
@@ -390,11 +390,13 @@ def makepars(data, label=None, verbose=2):
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
+        pars['birth'].keys = popkeys
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
+        pars['circum'].keys = popkeys
     
     # Metaparameters
     for key in popkeys: # Define values
@@ -478,11 +480,12 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, keys=None, fittable='', auto='', coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
+        self.keys = keys # The allowable keys -- should match e.g. self.y.keys()
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
         self.coverage = coverage # Whether or not this is a coverage parameter
@@ -520,15 +523,14 @@ class Timepar(Par):
     def interp(self, tvec, smoothness=20):
         """ Take parameters and turn them into model parameters """
         if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
-        keys = self.y.keys()
-        npops = len(keys)
+        npops = len(self.keys)
         if self.by=='pship': # Have odict
             output = odict()
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            for pop,key in enumerate(self.keys): # Loop over each population, always returning an [npops x npts] array
                 output[key] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            for pop,key in enumerate(self.keys): # Loop over each population, always returning an [npops x npts] array
                 output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
@@ -556,10 +558,9 @@ class Popsizepar(Par):
     def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
-        keys = self.p.keys()
-        npops = len(keys)
+        npops = len(self.keys)
         output = zeros((npops,len(tvec)))
-        for pop,key in enumerate(keys):
+        for pop,key in enumerate(self.keys):
             output[pop,:] = self.m * popgrow(self.p[key], array(tvec)-self.start)
         return output
 
@@ -584,10 +585,9 @@ class Constant(Par):
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
             output = self.y
         else: # No, it has keys, return as an array
-            keys = self.y.keys()
-            npops = len(keys)
+            npops = len(self.keys)
             output = zeros(npops)
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            for pop,key in enumerate(self.keys): # Loop over each population, always returning an [npops x npts] array
                 output[pop] = self.y[key] # Just copy y values
         return output
 
