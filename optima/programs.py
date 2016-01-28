@@ -318,8 +318,10 @@ class Programset(object):
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
 
         # Set up internal variables
-        nyrs = len(t)        
+        nyrs = len(t)
+        
         budget = self.getprogbudget(coverage=coverage, t=t, parset=parset, results=results, proportion=False)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
@@ -352,8 +354,10 @@ class Programset(object):
                             if thiscovpop: thiscov[thisprog.short] = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=True,total=False)[thiscovpop]
                             else: thiscov[thisprog.short] = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=True, total=False)[thispop]
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
-    
-                    if self.covout[thispartype][thispop].interaction == 'additive':
+                            
+                    # ADDITIVE CALCULATION
+                    # NB, if there's only one program targeting this parameter, just do simple additive calc
+                    if self.covout[thispartype][thispop].interaction == 'additive' or len(self.progs_by_targetpar(thispartype)[thispop])==1:
                         # Outcome += c1*delta_out1 + c2*delta_out2
                         for thisprog in self.progs_by_targetpar(thispartype)[thispop]:
                             if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
@@ -361,6 +365,7 @@ class Programset(object):
                                 outcomes[thispartype][thispop] = None
                             else: outcomes[thispartype][thispop] += thiscov[thisprog.short]*delta[thisprog.short]
                             
+                    # NESTED CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'nested':
                         # Outcome += c3*max(delta_out1,delta_out2,delta_out3) + (c2-c3)*max(delta_out1,delta_out2) + (c1 -c2)*delta_out1, where c3<c2<c1.
                         for yr in range(nyrs):
@@ -374,6 +379,7 @@ class Programset(object):
                                 else: c1 = cov_tuple[j][0]-cov_tuple[j-1][0]
                                 outcomes[thispartype][thispop][yr] += c1*max([ct[1] for ct in cov_tuple[j:]])                
                 
+                    # RANDOM CALCULATION
                     elif self.covout[thispartype][thispop].interaction == 'random':
                         # Outcome += c1(1-c2)* delta_out1 + c2(1-c1)*delta_out2 + c1c2* max(delta_out1,delta_out2)
     
@@ -951,10 +957,11 @@ class Costcov(CCOF):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
+        eps = 1e-3 # TEMP FIX TO STOP LOGGING ZERO
         if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(x/popsize+s)-1)
+        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps)
         else: raise OptimaException('coverage vector should be the same length as params.')
 
     def emptypars(self):

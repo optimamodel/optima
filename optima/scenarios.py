@@ -147,7 +147,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             if isinstance(scen.t,(int,float)): scen.t = [scen.t]
 
             if isinstance(scen, Budgetscen):
-
+                
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
                     scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict

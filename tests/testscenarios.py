@@ -7,7 +7,7 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 'maxbudget',
 ]
 
@@ -188,13 +188,14 @@ if 'maxbudget' in tests:
 
     print('Running maximum budget scenario test...')
     from optima import Budgetscen, odict
+    from optima.defaults import defaultproject
     
     ## Set up default project
     P = defaultproject('generalized')
     
     ## Define scenarios
     scenlist = [
-        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
+#        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=odict([(key, 1e9) for key in P.progsets['default'].programs.keys()])),
         ]
     
