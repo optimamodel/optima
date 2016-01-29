@@ -62,7 +62,7 @@ class Optim(object):
 def objectivecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
     
     # Validate input
-    if None in [budgetvec, progset, objectives, constraints, tvec]:  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+    if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('objectivecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # WARNING -- temp -- normalize budgetvec
@@ -163,13 +163,13 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=tmpresults)
+    multires = Multiresultset(resultsetlist=tmpresults, name='optimization-%s-%s' % (parsetname, progsetname))
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
         
         multires.budgetyears[key] = tmpresults[k].budgetyears
     
-    multires.mismatch = output.fval # Store full function evaluation information
+    multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires

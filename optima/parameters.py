@@ -336,9 +336,11 @@ def makepars(data, label=None, verbose=2):
     pars = odict()
     pars['label'] = label # Add optional label, default None
     
-    # Shorten information on which populations are male, which are female
+    # Shorten information on which populations are male, which are female, which inject, which provide commercial sex
     pars['male'] = array(data['pops']['male']).astype(bool) # Male populations 
     pars['female'] = array(data['pops']['female']).astype(bool) # Female populations
+    pars['injects'] = array(data['pops']['injects']).astype(bool) # Populations that inject
+    pars['sexworker'] = array(data['pops']['sexworker']).astype(bool) # Populations that provide commercial sex
     
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
@@ -453,7 +455,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars = odict() # Used to be called M
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
-    generalkeys = ['male', 'female', 'popkeys']
+    generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
@@ -529,7 +531,7 @@ class Timepar(Par):
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
                 output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-        if npops==1: return output[0,:]
+        if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
 

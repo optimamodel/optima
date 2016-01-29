@@ -60,7 +60,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
             });
           });
           parameter.selectAll = parameter.parameterObj.pships && parameter.pops && parameter.parameterObj.pships.length === parameter.pops.length;
-        } else {
+	      } else if(parameter.pops && parameter.pops.length > 0 && parameter.pops[0]!="tot") {
           var selectedPopulation = _.map(parameter.pops, function(pop) {
             return _.find($scope.state.populations, function(populations) {
               return pop === populations.short_name;
@@ -145,8 +145,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // When selection in parameter drop-down changes this code will add default population set to the parameterObj
     $scope.addPopulations = function(parameter) {
-      if(!parameter.pships || parameter.pships.length === 0) {
-        parameter.populations = $scope.state.populations;
+      if(parameter.parameterObj.by === 'tot'){
+        parameter.populations = [];
+        $scope.formInvalid = false;
+      }else{
+        if(!parameter.pships || parameter.pships.length === 0) {
+          parameter.populations = $scope.state.populations;
+        }
       }
     };
 
@@ -169,7 +174,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         pship.added = param.selectAll;
       });
     };
-
+    $scope.formInvalid = false;
+    $scope.isPopulationSelected = function(parameter, parameterPops) {
+      $scope.formInvalid = !_.find(parameterPops, function(pop) {
+        return pop.added;
+      });
+      return $scope.formInvalid;
+    };
     // Function to remove a parameter
     $scope.removeParameter = function ($index) {
       program.parameters.splice($index,1);
@@ -205,27 +216,34 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         }).map(function(population) {
           return population.short_name;
         });
-
+        
         $scope.state.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
           return $scope.state.eligibility[state];
         }).map(function(state) {
           return state;
         });
+        // tot
+        if($scope.state.program.parameters)
 
         /**
          * The code below will extract the population / parameter arrays to be
          * saved and will delete any unwanted data from it.
          */
         _.forEach($scope.state.program.parameters, function(parameter) {
+          
           parameter.param = parameter.parameterObj.short;
           var addedPopulations = _.filter(parameter.populations, function(population){
             return population.added;
           });
-          if(addedPopulations && addedPopulations.length > 0) {
+
+          if(parameter.parameterObj.by !== 'tot' && addedPopulations && addedPopulations.length > 0) {
             parameter.pops = addedPopulations.map(function (population) {
               return population.short_name;
             });
+          }else{
+            parameter.pops = ['tot'];
           }
+
           var selectedPartnerships = _.filter(parameter.parameterObj.pships, function(pship){
             return pship.added;
           });
@@ -236,9 +254,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           delete parameter.parameterObj;
           delete parameter.selectAll;
         });
-
-        // console.log('$scope.state.program', $scope.state.program);
-
+        
         $modalInstance.close($scope.state.program);
       }
     };

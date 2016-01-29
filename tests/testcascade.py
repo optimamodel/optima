@@ -49,13 +49,13 @@ if 'compare' in tests:
     toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta'] # Specify what plots to display here
     
     from optima import Project
-    P = Project(spreadsheet='test7pops.xlsx')
+    P = Project(spreadsheet='generalized.xlsx')
     P.settings.usecascade = False
     pp = tic()
     P.runsim()
     toc(pp, label='model run without cascade')
     
-    Q = Project(spreadsheet='test7pops.xlsx')
+    Q = Project(spreadsheet='generalized.xlsx')
     Q.settings.usecascade = True
     qq = tic()
     Q.runsim()
