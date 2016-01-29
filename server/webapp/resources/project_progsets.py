@@ -1,5 +1,6 @@
 import mpld3
 import json
+import uuid
 
 from flask import current_app
 
@@ -11,7 +12,7 @@ from flask import helpers
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import load_project, load_progset, load_program, RequestParser, report_exception
-from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist
+from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
 from server.webapp.dbconn import db
@@ -24,6 +25,12 @@ costcov_parser.add_arguments({
     'year': {'required': True, 'location': 'json'},
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
+})
+
+costcov_graph_parser = RequestParser()
+costcov_graph_parser.add_arguments({
+    't': {'required': True, 'type': int, 'location': 'args'},
+    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'}
 })
 
 costcov_data_parser = RequestParser()
@@ -339,17 +346,18 @@ class CostCoverageGraph(Resource):
         t = year ( should be >= startyear in data)
         parset_id - ID of the parset (one of the project parsets - not related to program parameters)
         """
-        from flask import request
-        args = dict(request.args)
+        args = costcov_graph_parser.parse_args()
         print "args", args
-        t = int(args['t'][0])
-        parset_id = args['parset_id'][0]
+        parset_id = args['parset_id']
+        t = args['t']
 
         program_entry = load_program(project_id, progset_id, program_id)
+        if program_entry is None:
+            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
         program_instance = program_entry.hydrate()
         parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
         if parset_entry is None:
-            raise ParsetDoesNotExist(id=parset_id)
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
         parset_instance = parset_entry.hydrate()
 
         plot = program_instance.plotcoverage(t=t, parset=parset_instance)
