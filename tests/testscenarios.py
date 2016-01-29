@@ -58,6 +58,15 @@ if 'standardscen' in tests:
                 parsetname='default',
                 pars=[]),
 
+        Parscen(name='Get lots of people on treatment',
+             parsetname='default',
+             pars=[{'endval': 10000.,
+                'endyear': 2020,
+                'name': 'numtx',
+                'for': 'tot',
+                'startval': 3350.,
+                'startyear': 2015}]),
+
         Parscen(name='Full casual condom use',
              parsetname='default',
              pars=[{'endval': 1.,
