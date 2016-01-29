@@ -69,7 +69,7 @@ define(['./../module', 'underscore'], function (module, _) {
     /* Function definitions */
 
     function changeParameter(){
-      vm.post = {}
+      vm.post = {};
       vm.TableForm.$setPristine();
     }
 
