@@ -183,8 +183,8 @@ if 'standardscen' in tests:
             output += '\n'           
             output += 'PLHIV: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
             output += 'Prop aware: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alldx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Number treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltx,:,findinds(tvec,yr)].sum(axis=(0,1)))
-            output += 'Prop treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltx,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Number treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1)))
+            output += 'Prop treated: %s\n' % (P.results[-1].raw[scenno][0]['people'][settings.alltreat,:,findinds(tvec,yr)].sum(axis=(0,1))/P.results[-1].raw[scenno][0]['people'][settings.allplhiv,:,findinds(tvec,yr)].sum(axis=(0,1)))
             print output
 
 
