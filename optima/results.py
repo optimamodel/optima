@@ -133,7 +133,6 @@ class BOC(object):
     def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
         ''' Plot the budget-outcome curve '''
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
-#        plt.title('BOC: %s' % self.projectname)
         plt.xlabel('Budget')
         if not deriv: plt.ylabel('Outcome')
         else: plt.ylabel('Marginal Outcome')
