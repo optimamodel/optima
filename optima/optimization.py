@@ -146,7 +146,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     Version: 1.0 (2016jan26)
     '''
     
-    ## Introduzione e allegro
+    # Begin and check initial inputs
     printv('Running outcomes optimization...', 1, verbose)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     
@@ -156,8 +156,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     objectives = optim.objectives
     constraints = optim.constraints 
     
-    parset  = project.parsets[parsetname] # Copy the original parameter set
-    progset = project.progsets[progsetname] # Copy the original parameter set
+    parset  = dcp(project.parsets[parsetname]) # Copy the original parameter set
+    progset = dcp(project.progsets[progsetname]) # Copy the original parameter set
     lenparlist = len(parset.pars)
     
     # Process inputs
@@ -179,15 +179,14 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
-        thisparset = dcp(parset)
-        try: thisparset.pars = [parset.pars[ind]] # Turn into a list
+        try: parset.pars = [parset.pars[ind]] # Turn into a list
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         # Calculate limits -- WARNING, kludgy, I guess?
         budgetlower  = zeros(nprogs)
         budgethigher = zeros(nprogs) + totalbudget
         
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
+        args = {'project':project, 'parset':parset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         elif method=='simplex':
@@ -221,7 +220,7 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     ''' Function to evaluate whether or not targets have been met for a given budget vector (note, not time-varying) '''
     # Validate input
     if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise OptimaException('outcomecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
+        raise OptimaException('moneycalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     budget = vec2budget(progset, budgetvec)
@@ -284,8 +283,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     Version: 2016jan26
     '''
     
-     # Specify the amount of 
-    
+     # Being and check vital inputs    
     printv('Running money optimization...', 1, verbose)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     
@@ -300,11 +298,10 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         thisfrac = objectives[key+'frac']
         if thisfrac<0 or thisfrac>=1:
             errormsg = 'Fractional reduction in "%s" must be >=0 and <1; actually %f' % (key, thisfrac)
-            print(errormsg) # WARNING TEMP
-#            raise OptimaException(errormsg) # WARNING TEMP
+            raise OptimaException(errormsg) # WARNING TEMP
     
-    parset  = project.parsets[parsetname] # Copy the original parameter set
-    progset = project.progsets[progsetname] # Copy the original parameter set
+    parset  = dcp(project.parsets[parsetname]) # Copy the original parameter set
+    progset = dcp(project.progsets[progsetname]) # Copy the original parameter set
     lenparlist = len(parset.pars)
     nprogs = len(progset.programs)
     
@@ -317,10 +314,9 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     
     for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
-        thisparset = dcp(parset)
-        try: thisparset.pars = [parset.pars[ind]] # Turn into a list
+        try: parset.pars = [parset.pars[ind]] # Turn into a list
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
+        args = {'project':project, 'parset':parset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
         
         budgetvec0 = progset.getdefaultbudget()[:] # Get the current budget allocation
         budgetvec1 = dcp(budgetvec0)

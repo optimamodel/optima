@@ -103,7 +103,7 @@ if 'generateBOCs' in tests:
     print('Running BOC generation test...')
     from optima import saveobj
     
-    F.genBOCs(maxtime=3)#,forceregen = True)#, maxtime = 20)
+    F.genBOCs(progsetnames=['default','default'], parsetnames=['default','default'], maxtime=3)#,forceregen = True)#, maxtime = 20)
     F.plotBOCs()    
     
     print('Saving projects with BOCs...')
