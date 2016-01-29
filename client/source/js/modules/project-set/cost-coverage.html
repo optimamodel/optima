@@ -76,16 +76,15 @@
       <label class="c-select__label"> Select a parameter: </label>
       <select class="txbox c-select__input"
               ng-options="p.name for p in vm.fakeParams"
-              ng-change="vm.changeParameter()"
               ng-model="vm.selectedParameter">
         <option value="">-- Please select a parameter --</option>
       </select>
     </div>
 
-    <form name="TableForm">
+    <form name="vm.TableForm">
 
-      <div class="c-nested-form" ng-form="'nestedForm[year.id]'" ng-repeat="year in vm.years track by $index">
-        <table class="c-table" ng-if="vm.selectedParameter!==undefined">
+      <div class="c-nested-form" ng-if="vm.selectedParameter!==undefined" ng-form="'nestedForm[year.id]'" ng-repeat="year in vm.years track by $index">
+        <table class="c-table">
 
           <tr class="c-table__row">
             <th class="c-table__header">
@@ -102,7 +101,7 @@
           <tr class="c-table__row">
             <!-- Year -->
             <td class="c-table__column c-table__column--year">
-              <input class="txbox c-table__input" ng-model="vm.post[year.id].year" ng-required="true" type="number"/>
+              <input class="txbox c-table__input" ng-model="vm.post[year.id].year" year-validator from-year="2000" to-year="2015" ng-required="true" type="number"/>
             </td>
 
             <!-- Text-->
@@ -112,9 +111,9 @@
 
             <!-- Inputs -->
             <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" ng-model="vm.post[year.id].valueFrom"/>
+              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" more-than="-1" ng-model="vm.post[year.id].valueFrom"/>
               <span class="c-table__between-input"> - </span>
-              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" ng-model="vm.post[year.id].valueTo"/>
+              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" more-than="vm.post[year.id].valueFrom" ng-model="vm.post[year.id].valueTo"/>
               <span class="c-table__between-input"> % </span>
             </td>
 
@@ -131,9 +130,9 @@
             <td></td>
             <td class="c-table__column"> {{vm.selectedParameter.name}} under maximal coverage of this program</td>
             <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueFrom" ng-required="true" type="number"/>
+              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueFrom" more-than="-1" ng-required="true" type="number"/>
               <span class="c-table__between-input"> - </span>
-              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueTo" ng-required="true" type="number"/>
+              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueTo" more-than="vm.post[year.id].effectsValueFrom" ng-required="true" type="number"/>
               <span class="c-table__between-input"> % </span>
             </td>
           </tr>
@@ -176,7 +175,7 @@
       <button class="btn c-cost-coverage__button" ng-click="vm.addYear()">
         Add year
       </button>
-      <button ng-disabled="TableForm.$invalid" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
+      <button ng-disabled="vm.TableForm.$invalid" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
         Submit
       </button>
     </div>

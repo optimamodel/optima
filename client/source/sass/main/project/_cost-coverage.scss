@@ -88,6 +88,12 @@
 
   &__input {
     width: 60px;
+
+    &.ng-invalid.ng-dirty {
+      border: 1px solid #CE7A7A;
+      color: #CE7A7A;
+    }
+
     &--half {
       width: 50px;
     }

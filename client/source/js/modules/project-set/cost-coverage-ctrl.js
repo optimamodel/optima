@@ -4,11 +4,11 @@ define(['./module', 'underscore'], function (module, _) {
   module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
 
     var vm = this;
-    var openProject = activeProject.data;
 
     /* VM vars */
+    vm.openProject = activeProject.data;
     vm.activeTab = 'outcome';
-    vm.fakeParams = [
+    vm.fakeParams = [/* ToDo: replace with api data */
       {
         name: 'First'
       },
@@ -35,25 +35,34 @@ define(['./module', 'underscore'], function (module, _) {
         slug: 'summary'
       }
     ]
-    vm.selectedParameter = vm.fakeParams[1]
     vm.years = [{
+      /* ToDo: replace with api data */
       id: 1
     }]
 
     /* VM functions */
     vm.populateProgramDropdown = populateProgramDropdown;
-    vm.changeParameter = changeParameter;
     vm.addYear = addYear;
     vm.selectTab = selectTab;
     vm.deleteYear = deleteYear;
+    vm.submit = submit;
+
+    /* Function definitions */
+
+    function submit() {
+      if (vm.TableForm.$invalid) {
+        console.error('form is invalid!');
+        return false;
+      }
+
+      console.log('submitting', vm.post);
+    }
 
     function deleteYear(yearIndex) {
       vm.years = _.reject(vm.years, function (year, index) {
         return index === yearIndex
       });
     }
-
-    /* Function definitions */
 
     function populateProgramDropdown() {
       vm.programs = vm.selectedProgramSet.programs;
@@ -63,18 +72,15 @@ define(['./module', 'underscore'], function (module, _) {
       vm.activeTab = tab;
     }
 
-    function changeParameter(newParameter) {
-      console.log('newParameter', vm.selectedParameter);
-    }
-
     function addYear() {
       vm.years.push({id: _.random(1, 10000)})
+      /* ToDo: replace with api data */
     }
 
     /* Initialize */
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
-    if (!openProject.has_data) {
+    if (!vm.openProject.has_data) {
       modalService.inform(
         function () {
         },
@@ -86,24 +92,17 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
-    $http.get('/api/project/' + openProject.id + '/progsets')
+    $http.get('/api/project/' + vm.openProject.id + '/progsets')
       .success(function (response) {
         if (response.progsets) {
           vm.programSetList = response.progsets;
         }
       });
 
-    $http.get('/api/project/' + openProject.id + '/parsets').success(function (response) {
+    $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
       vm.parsets = response.parsets;
     });
 
-    $scope.$watch(function () {
-      return vm.post
-    }, function () {
-      console.log('post is', vm.post);
-    }, true);
-
   });
-
 
 });
