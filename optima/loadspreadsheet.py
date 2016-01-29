@@ -90,7 +90,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'pdhivcare', 'successprop', 'biofailure']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'vlmonfr', 'restarttreattime', 'phivdx', 'pdhivcare', 'successprop']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
@@ -107,8 +107,6 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
     
     
-
-
     ###########################################################################
     ## Load data sheets
     ###########################################################################
