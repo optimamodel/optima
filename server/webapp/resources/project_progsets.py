@@ -339,9 +339,9 @@ class Programs(Resource):
         return program_entry, 201
 
 
-class CostCoverageParams(Resource):
+class CostCoverage(Resource):
     """
-    Costcoverageparams for a given Program.
+    Costcoverage for a given Program.
     """
     method_decorators = [report_exception, login_required]
 

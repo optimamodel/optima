@@ -68,7 +68,7 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
 from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData
 from server.webapp.resources.project_parsets import Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration
-from server.webapp.resources.project_progsets import Programs, CostCoverageParams, CostCoverageGraph
+from server.webapp.resources.project_progsets import Programs, CostCoverage, CostCoverageGraph
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -91,7 +91,7 @@ api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
-api.add_resource(CostCoverageParams, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/params')
+api.add_resource(CostCoverage, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage')
 api.add_resource(CostCoverageGraph, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(Portfolio, '/api/project/portfolio')
