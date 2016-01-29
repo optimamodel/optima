@@ -36,7 +36,9 @@ define(['./module', 'underscore'], function (module, _) {
       }
     ]
     vm.selectedParameter = vm.fakeParams[1]
-    vm.years = [{}]
+    vm.years = [{
+      id: 1
+    }]
 
     /* VM functions */
     vm.populateProgramDropdown = populateProgramDropdown;
@@ -66,7 +68,7 @@ define(['./module', 'underscore'], function (module, _) {
     }
 
     function addYear() {
-      vm.years.push({})
+      vm.years.push({id: _.random(1, 10000)})
     }
 
     /* Initialize */

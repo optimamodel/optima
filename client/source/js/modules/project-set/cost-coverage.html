@@ -84,7 +84,7 @@
 
     <form name="TableForm">
 
-      <div class="c-nested-form" ng-form="'nestedForm[$index]'" ng-repeat="year in vm.years track by $index">
+      <div class="c-nested-form" ng-form="'nestedForm[year.id]'" ng-repeat="year in vm.years track by $index">
         <table class="c-table" ng-if="vm.selectedParameter!==undefined">
 
           <tr class="c-table__row">
@@ -102,7 +102,7 @@
           <tr class="c-table__row">
             <!-- Year -->
             <td class="c-table__column c-table__column--year">
-              <input class="txbox c-table__input" ng-model="vm.post[$index].year" ng-required="true" type="number"/>
+              <input class="txbox c-table__input" ng-model="vm.post[year.id].year" ng-required="true" type="number"/>
             </td>
 
             <!-- Text-->
@@ -112,9 +112,9 @@
 
             <!-- Inputs -->
             <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" ng-model="vm.post[$index].valueFrom"/>
+              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" ng-model="vm.post[year.id].valueFrom"/>
               <span class="c-table__between-input"> - </span>
-              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" ng-model="vm.post[$index].valueTo"/>
+              <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" ng-model="vm.post[year.id].valueTo"/>
               <span class="c-table__between-input"> % </span>
             </td>
 
@@ -131,9 +131,9 @@
             <td></td>
             <td class="c-table__column"> {{vm.selectedParameter.name}} under maximal coverage of this program</td>
             <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[$index].effectsValueFrom" ng-required="true" type="number"/>
+              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueFrom" ng-required="true" type="number"/>
               <span class="c-table__between-input"> - </span>
-              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[$index].effectsValueTo" ng-required="true" type="number"/>
+              <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueTo" ng-required="true" type="number"/>
               <span class="c-table__between-input"> % </span>
             </td>
           </tr>
@@ -146,17 +146,17 @@
 
           <tr class="c-table__row">
             <td></td>
-            <td class="c-table__column" ng-init="vm.post[$index].interactions='random'">
+            <td class="c-table__column" ng-init="vm.post[year.id].interactions='random'">
               <label class="c-checkbox">
-                <input type="checkbox" ng-model="vm.post[$index].interactions" ng-required="vm.post[$index].interactions===undefined" ng-true-value="'random'"/>
+                <input type="checkbox" ng-model="vm.post[year.id].interactions" ng-required="vm.post[year.id].interactions===undefined" ng-true-value="'random'"/>
                 Random
               </label>
               <label class="c-checkbox">
-                <input type="checkbox" ng-model="vm.post[$index].interactions" ng-required="vm.post[$index].interactions===undefined" ng-true-value="'nested'"/>
+                <input type="checkbox" ng-model="vm.post[year.id].interactions" ng-required="vm.post[year.id].interactions===undefined" ng-true-value="'nested'"/>
                 Nested
               </label>
               <label class="c-checkbox">
-                <input type="checkbox" ng-model="vm.post[$index].interactions" ng-required="vm.post[$index].interactions===undefined" ng-true-value="'additive'"/>
+                <input type="checkbox" ng-model="vm.post[year.id].interactions" ng-required="vm.post[year.id].interactions===undefined" ng-true-value="'additive'"/>
                 Additive
               </label>
             </td>
