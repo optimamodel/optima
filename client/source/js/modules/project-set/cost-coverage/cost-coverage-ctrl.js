@@ -46,13 +46,14 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.parsets = response.parsets;
     });
 
-    // Population program dropdown for selected program-set
-    this.populateProgramDropdown = function() {
+    // Population program drop-down for selected program-set
+    vm.populateProgramDropdown = function() {
       if (vm.selectedProgramSet) {
         vm.programs = vm.selectedProgramSet.programs;
       }
     };
 
+    // todo: move code below to separate controller for outcome
     vm.years = [{
       /* ToDo: replace with api data */
       id: 1
