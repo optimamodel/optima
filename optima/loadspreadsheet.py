@@ -90,7 +90,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'adherenceprop', 'propstop', 'leavecare', 'proploss', 'biofailure']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'pdhivcare', 'successprop', 'biofailure']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
@@ -103,7 +103,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
-                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp', 'successart'],
+                           ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp', 'efftx'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
     
     
