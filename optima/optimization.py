@@ -91,7 +91,7 @@ def defaultobjectives(which='outcome', verbose=2):
         objectives['deathfrac'] = 0.5 # Fraction of deaths to get to
         objectives['incifrac'] = 0.5 # Fraction of incidence to get to
     else: 
-        raise Exception('"which" keyword argument must be either "outcome" or "money"')
+        raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
     
     return objectives
 

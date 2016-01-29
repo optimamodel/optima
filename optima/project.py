@@ -452,20 +452,21 @@ class Project(object):
             self.rmresult(str(ind))
         return None
     
-    def plotBOC(self, boc=None, objectives=None, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
 
         if boc is None:
-            try: boc = self.getBOC(objectives = objectives)
+            try: boc = self.getBOC(objectives=objectives)
             except: raise OptimaException('Cannot plot a nonexistent BOC!')
         else:
             if not deriv:
                 print('Plotting BOC for "%s"...' % self.name)
             else:
                 print('Plotting BOC derivative for "%s"...' % self.name)
-            ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+            ax = boc.plot(deriv=deriv, returnplot=returnplot, initbudget=initbudget, optbudget=optbudget)
             plt.title('Project: %s' % self.name)
             if returnplot: return ax
-            else: plt.show()
-            return None
+            else: 
+                plt.show()
+                return None
     

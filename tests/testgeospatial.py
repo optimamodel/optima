@@ -17,9 +17,9 @@ Version: 2016jan27
 ## Define tests to run here!!!
 tests = [
 #'forcerefresh',
-#'makeportfolio',
-#'generateBOCs',
-'rungui',
+'makeportfolio',
+'generateBOCs',
+#'rungui',
 ]
 
 ##############################################################################
@@ -101,12 +101,10 @@ if 'generateBOCs' in tests:
     t = tic()
 
     print('Running BOC generation test...')
-    from optima import saveobj, defaultobjectives
+    from optima import saveobj
     
-    objectives = defaultobjectives()
-#    objectives['inciweight'] = 5
-    F.genBOCs(objectives=objectives, maxtime=3)#,forceregen = True)#, maxtime = 20)
-    F.plotBOCs(objectives=objectives)    
+    F.genBOCs(maxtime=3)#,forceregen = True)#, maxtime = 20)
+    F.plotBOCs()    
     
     print('Saving projects with BOCs...')
     saveobj(filename1, P1)
