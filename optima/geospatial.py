@@ -106,10 +106,8 @@ def geogui():
         projectpaths = []
         projectslist = []
         if portfolio is None: 
-            print('CREATING portfolio tmp...')
             portfolio = Portfolio()
         if not doadd:
-            print('WIPING portfolio tmp...')
             portfolio = Portfolio()
             projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
@@ -127,14 +125,12 @@ def geogui():
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
         portfolio.addprojects(projectslist)
-        print(portfolio.projects.keys()) # TMP
         return None
     
     def addproj():
         ''' Add a project -- same as creating a portfolio except don't overwrite '''
         global portfolio
         create(doadd=True)
-        print(portfolio.projects.keys()) # TMP
         return None
     
     def loadport():

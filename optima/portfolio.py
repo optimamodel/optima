@@ -405,7 +405,7 @@ class GAOptim(object):
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        for pno,p in enumerate(projects):
+        for pno,p in enumerate(projects.values()):
             self.resultpairs[p.uid] = odict()
 
             # Crash if any project doesn't have progsets
