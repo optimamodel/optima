@@ -340,7 +340,13 @@ def perturb(n=1, span=0.5, randseed=None):
     if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
-
+    
+def scaleratio(inarray,total):
+    """ Multiply a list or array by some factor so that its sum is equal to the total. """
+    from copy import deepcopy as dcp
+    inarray = dcp(inarray)
+    inarray = [float(x)*total/sum(inarray) for x in inarray]
+    return inarray
 
 
 
@@ -582,18 +588,18 @@ def gitinfo():
 ##############################################################################
 
 
-def saveobj(filename, obj):
+def saveobj(filename, obj, verbose=True):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
     from gzip import GzipFile
     
     with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    print('Object saved to "%s"' % filename)
+    if verbose: print('Object saved to "%s"' % filename)
     return None
 
 
-def loadobj(filename):
+def loadobj(filename, verbose=True):
     ''' Load a saved file '''
     try:
         import cPickle as pickle  # For Python 2 compatibility
@@ -607,7 +613,7 @@ def loadobj(filename):
     kwargs = {'mode': 'rb', argtype: filename}
 
     with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
-    print('Object loaded from "%s"' % filename)
+    if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
 

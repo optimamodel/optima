@@ -6,7 +6,9 @@ Version: 2015jan23 by cliffk
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
+import matplotlib.pyplot as plt
 
+from optima import pchip, plotpchip
 
 
 def getresults(project=None, pointer=None, die=True):
@@ -100,9 +102,49 @@ class Result(object):
 
 
 
+class BOC(object):
+    ''' Structure to hold a budget and outcome array for geospatial analysis'''
+    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
+        self.uid = uuid()
+        self.created = today()
+        self.x = x if x else [] # A list of budget totals
+        self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
+        
+        self.name = name # Required by rmresult in Project.
+
+    def __repr__(self):
+        ''' Print out summary stats '''
+        output = '============================================================\n'
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+        
+    def getoutcome(self, budgets):
+        ''' Get interpolated outcome for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets)
+        
+    def getoutcomederiv(self, budgets):
+        ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets, deriv = True)
+        
+    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+        ''' Plot the budget-outcome curve '''
+        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
+        plt.xlabel('Budget')
+        if not deriv: plt.ylabel('Outcome')
+        else: plt.ylabel('Marginal Outcome')
+        
+        if returnplot: return ax
+        else: plt.show()
+        return None
+
+
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -134,9 +176,10 @@ class Resultset(object):
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
-        self.budget = budget # Store budget
-        self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
+        self.budget = budget if budget is not None else odict() # Store budget
+        self.coverage = coverage if coverage is not None else odict()  # Store coverage
+        self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
@@ -265,7 +308,7 @@ class Resultset(object):
 
 
 
-class Multiresultset(Resultset):
+class Multiresultset(object):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, name=None):
         # Basic info
@@ -275,6 +318,7 @@ class Multiresultset(Resultset):
         self.nresultsets = len(resultsetlist)
         self.keys = []
         self.budget = odict()
+        self.coverage = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -315,13 +359,14 @@ class Multiresultset(Resultset):
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
-            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+            if getattr(rset,'budget'): # If it has a budget, overwrite coverage information by calculating from budget
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-            except: 
-                pass # Not a problem if doesn't work
-            
-        
+                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+            elif getattr(rset,'coverage'): # If no budget, compute budget from coverage
+                self.coverage[key]      = rset.coverage
+                self.budgetyears[key] = rset.budgetyears
+                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):

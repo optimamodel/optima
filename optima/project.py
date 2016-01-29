@@ -1,8 +1,10 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, Optim # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, minmoney, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
+from optima import defaultobjectives
+import matplotlib.pyplot as plt
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -43,7 +45,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None):
+    def __init__(self, name='default', spreadsheet=None, dorun=True):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -68,7 +70,7 @@ class Project(object):
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
-            self.loadspreadsheet(spreadsheet)
+            self.loadspreadsheet(spreadsheet, dorun=dorun)
 
         return None
 
@@ -235,8 +237,7 @@ class Project(object):
         printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
         self.modified = today()
         return None
-
-
+        
 
     #######################################################################################################
     ## Convenience functions -- NOTE, do we need these...?
@@ -380,11 +381,94 @@ class Project(object):
         return None
 
     
-    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', saveprocess=True):
         ''' Function to minimize outcomes '''
-        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        optim = Optim(project=self, name=name, which='outcome', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        self.addoptim(optim=optim)
-        self.addresult(result=multires)
-        self.modified = today()
+        if saveprocess:        
+            self.addoptim(optim=optim)
+            self.addresult(result=multires)
+            self.modified = today()
+        return multires
+        
+    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=5, stoppingfunc=None, debug=False, saveprocess=True):
+        ''' Function to minimize money '''
+        optim = Optim(project=self, name=name, which='money', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
+        if saveprocess:        
+            self.addoptim(optim=optim)
+            self.addresult(result=multires)
+            self.modified = today()
+        return multires
+    #######################################################################################################
+    ## Methods to handle tasks for geospatial analysis
+    #######################################################################################################
+        
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+        ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
+        projectBOC = BOC()
+        if objectives == None:
+            printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            objectives = defaultobjectives()
+        projectBOC.objectives = objectives
+        
+        if budgetlist == None:
+            if not progsetname == None:
+                baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
+            else:
+                try:
+                    baseline = sum(self.progsets[0].getdefaultbudget().values())
+                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 0, verbose)
+                except:
+                    OptimaException('Error: No progsets associated with project for which BOC is being generated!')
+            budgetlist = [x*baseline for x in [0.1,0.3,0.6,1.0,3.0,6.0,10.0]]
+                
+        
+        for budget in budgetlist:
+            objectives['budget'] = budget
+            optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+            results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+            projectBOC.x.append(budget)
+            projectBOC.y.append(results.improvement[-1][-1])
+        self.addresult(result=projectBOC)
+        return None        
+    
+    def getBOC(self, objectives):
+        ''' Returns a BOC result with the desired objectives (budget notwithstanding) if it exists, else None '''
+        for x in self.results:
+            if isinstance(self.results[x],BOC):
+                boc = self.results[x]
+                same = True
+                for y in boc.objectives:
+                    if y in ['start','end','deathweight','inciweight'] and not boc.objectives[y] == objectives[y]: same = False
+                if same:
+#                    print('BOC located in project: %s' % self.name)
+                    return boc
+        print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
+        
+    def delBOC(self, objectives):
+        ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
+        while not self.getBOC(objectives = objectives) == None:
+            print('Deleting an old BOC...')
+            ind = self.getBOC(objectives = objectives).uid
+            self.rmresult(str(ind))
+        return None
+    
+    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
+        ''' If a BOC result with the desired objectives exists, return an interpolated object '''
+
+        if boc is None:
+            try: boc = self.getBOC(objectives=objectives)
+            except: raise OptimaException('Cannot plot a nonexistent BOC!')
+        
+        if not deriv:
+            print('Plotting BOC for "%s"...' % self.name)
+        else:
+            print('Plotting BOC derivative for "%s"...' % self.name)
+        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+        plt.title('Project: %s' % self.name)
+        if returnplot: return ax
+        else: plt.show()
+        return None
+    

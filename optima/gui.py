@@ -1,9 +1,8 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, plotting
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections
 import matplotlib as mpl
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
-from PyQt4 import QtGui
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
 
@@ -43,7 +42,7 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = makeplots(results, toplot=toplot, figsize=(width, height))
+    plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
@@ -278,7 +277,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, name='default', ind=0, verbose=4):
+def manualfit(project=None, name='default', ind=0, verbose=2):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -288,9 +287,12 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
     Version: 1.0 (2015dec29) by cliffk
     '''
     
+    # For edit boxes, we need this -- but import it here so only this function will fail
+    from PyQt4 import QtGui
+    
     ## Random housekeeping
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
-    fig = figure(); close(fig) # Open and close figure...dumb, no?
+    fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
     nsigfigs = 3
     
@@ -376,21 +378,21 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
             if fulltypelist[b]=='meta': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].m = eval(str(box.text()))
-                printv('%s.m = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.m = %s' % (key, box.text()), 3, verbose)
             elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship': # Populations or partnerships
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].y[subkey] = eval(str(box.text()))
-                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             if fulltypelist[b]=='const': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
-                printv('%s.y = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.y = %s' % (key, box.text()), 3, verbose)
             else:
                 printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         

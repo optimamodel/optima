@@ -86,6 +86,9 @@ except: _failed()
 try: from asd import asd
 except: _failed()
 
+try: from pchip import pchip, plotpchip
+except: _failed()
+
 try: 
     import colortools # Load high-level module as well
     from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
@@ -93,7 +96,7 @@ except: _failed()
 
 try: 
     import utils # Load high-level module as well
-    from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
+    from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc # odict class
 except: _failed()
 
 
@@ -107,7 +110,9 @@ except: _failed()
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 except: _failed()
 
-try: from results import Result, Resultset, Multiresultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+try: 
+    import results
+    from results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
 try: 
@@ -128,7 +133,9 @@ try:
     from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
 except: _failed()
 
-try: from calibration import sensitivity, autofit # Calibration functions
+try: 
+    import calibration
+    from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
 try: 
@@ -136,7 +143,7 @@ try:
     from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
+try: from optimization import Optim, minoutcomes, minmoney, defaultobjectives # Scenario functions
 except: _failed()
 
 try: 
@@ -187,6 +194,11 @@ except:
 try: from project import Project # Project class
 except: _failed()
 
+try: from portfolio import Portfolio # Portfolio class (container of Projects)
+except: _failed()
+
+try: from geospatial import geogui # Import GUI tools for geospatial analysis
+except: _failed()
 
 
 # Finally, load defaults
