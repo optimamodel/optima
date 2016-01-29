@@ -18,14 +18,13 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs, projectslistbox, projectinfobox
+    global geoguiwindow, portfolio, objectives, objectiveinputs, projectslistbox, projectinfobox
     portfolio = None
-    projectslist = []
     objectives = defaultobjectives()
     
     ## Set parameters
     wid = 1200.0
-    hei = 550.0
+    hei = 600.0
     top = 20
     spacing = 40
     left = 20.
@@ -128,7 +127,7 @@ def geogui():
     
     def loadport():
         ''' Load an existing portfolio '''
-        global portfolio, projectslist, projectslistbox
+        global portfolio, projectslistbox
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
         tmpport = None
         if filepath:
@@ -137,9 +136,7 @@ def geogui():
             if tmpport is not None: 
                 if type(tmpport)==Portfolio:
                     portfolio = tmpport
-                    projectslist = []
                     projectslistbox.clear()
-                    projectslist = portfolio.projects.values()
                     projectslistbox.addItems([proj.name for proj in portfolio.projects.values()])
                     print('Portfolio file "%s" loaded' % filepath)
                 else: print('File "%s" is not an Optima portfolio file' % filepath)
@@ -232,16 +229,15 @@ def geogui():
     ##############################################################################################################################
     
     def updateprojectinfo():
-        global projectslistbox, projectinfobox
+        global portfolio, projectslistbox, projectinfobox
         ind = projectslistbox.currentRow()
-        project = projectslist[ind]
+        project = portfolio.projects[ind]
         projectinfobox.setText(repr(project))
         return None
     
     def removeproject():
         global projectslistbox, projectinfobox, portfolio
         ind = projectslistbox.currentRow()
-        projectslist.pop(ind) # Remove from projects list
         portfolio.projects.pop(portfolio.projects.keys()[ind]) # Remove from portfolio
         projectslistbox.takeItem(ind) # Remove from list
         return None
