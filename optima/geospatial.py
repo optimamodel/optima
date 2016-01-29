@@ -248,7 +248,7 @@ def geogui():
         objectivetextobjs[key].move(left+10, 205+k*30)
     
     objectiveinputs = odict()
-    for k,key in enumerate(objectives.keys()):
+    for k,key in enumerate(objectivetext.keys()):
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
         objectiveinputs[key].setText(str(objectives[key]))
         objectiveinputs[key].move(left+120, 200+k*30)

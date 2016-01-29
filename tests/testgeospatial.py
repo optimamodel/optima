@@ -19,7 +19,7 @@ tests = [
 #'forcerefresh',
 'makeportfolio',
 'generateBOCs',
-#'rungui',
+'rungui',
 ]
 
 ##############################################################################
