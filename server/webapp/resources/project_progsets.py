@@ -1,3 +1,4 @@
+import mpld3
 import json
 
 from flask import current_app
@@ -23,6 +24,12 @@ costcov_parser.add_arguments({
     'year': {'required': True, 'location': 'json'},
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
+})
+
+costcov_data_parser = RequestParser()
+costcov_data_parser.add_arguments({
+    'data': {'type': list, 'location': 'json'},
+    'params': {'type': dict, 'location': 'json'}
 })
 
 program_parser = RequestParser()
@@ -344,7 +351,8 @@ class CostCoverageParams(Resource):
 
         program_entry = load_program(project_id, progset_id, program_id)
 
-        return {"params": program_entry.ccopars or {}}
+        return {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
 
 
     @swagger.operation(
@@ -353,15 +361,15 @@ class CostCoverageParams(Resource):
 
         program_entry = load_program(project_id, progset_id, program_id)
 
-        from flask import request
-        args = json.loads(request.data)
-
-        program_entry.ccopars = args
+        args = costcov_data_parser.parse_args()
+        program_entry.ccopars = args.get('params', {})
+        program_entry.costcov = program_entry.data_api_to_db(args.get('data', []))
 
         db.session.flush()
         db.session.commit()
 
-        return {"params": program_entry.ccopars or {}}
+        return {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
 
 
 class CostCoverageGraph(Resource):
@@ -374,14 +382,15 @@ class CostCoverageGraph(Resource):
     def get(self, project_id, progset_id, program_id):
 
         from flask import request
-
         args = dict(request.args)
 
         program_entry = load_program(project_id, progset_id, program_id)
-
         prog = program_entry.hydrate()
 
         plot = prog.plotcoverage(t=int(args["t"][0]),
                                  parset=program_entry.pars_to_program_pars())
 
-        return plot
+        mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
+        return json.loads(json_string)
