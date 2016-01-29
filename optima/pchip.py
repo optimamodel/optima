@@ -16,7 +16,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
+def pchip(x, y, xnew, deriv = False, method='pchip'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]
@@ -32,17 +32,18 @@ def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
     
     if method=='pchip': # WARNING, need to rename this function something else...
         m = pchip_slopes(x, y) # Compute slopes used by piecewise cubic Hermite interpolator.
-        ynew = pchip_eval(x, y, m, xnew) # Use these slopes (along with the Hermite basis function) to interpolate.
+        ynew = pchip_eval(x, y, m, xnew, deriv) # Use these slopes (along with the Hermite basis function) to interpolate.
     
     elif method=='smoothinterp':
         from utils import smoothinterp
         ynew = smoothinterp(xnew, x, y)
+        if deriv:
+		    ynew = diff(ynew).tolist() # Calculate derivative explicitly
+		    ynew.append(ynew[-1]) # Duplicate the last element so the right length
     else:
         raise Exception('Interpolation method "%s" not understood' % method)
     
-    if deriv:
-        ynew = diff(ynew).tolist() # Calculate derivative explicitly
-        ynew.append(ynew[-1]) # Duplicate the last element so the right length
+    
     
     if type(y)==type(array([])): ynew = array(ynew) # Try to preserve original type
     
@@ -77,7 +78,7 @@ def pchip_slopes(x, y, monotone=True):
     return array(m)
 
 #=========================================================
-def pchip_eval(x, y, m, xvec):
+def pchip_eval(x, y, m, xvec, deriv = False):
     '''
      Evaluate the piecewise cubic Hermite interpolant with  monoticity preserved
     
@@ -107,15 +108,16 @@ def pchip_eval(x, y, m, xvec):
         t = (xc - x[c]) / h
         
         # Hermite basis functions
-        h00 = (2 * t**3) - (3 * t**2) + 1
-        h10 =      t**3  - (2 * t**2) + t
-        h01 = (-2* t**3) + (3 * t**2)
-        h11 =      t**3  -      t**2
-#        else: # Deriv -- WARNING, not correct I don't think
-#            h00 = ((6 * t**2) - (6 * t**1))/h
-#            h10 = ((3 * t**2) - (4 * t**1) + 1)/h
-#            h01 = ((-6* t**2) + (6 * t**1))/h
-#            h11 = ((3 * t**2)  - (2 * t**1))/h
+        if not deriv:
+            h00 = (2 * t**3) - (3 * t**2) + 1
+            h10 =      t**3  - (2 * t**2) + t
+            h01 = (-2* t**3) + (3 * t**2)
+            h11 =      t**3  -      t**2
+        else:
+            h00 = ((6 * t**2) - (6 * t**1))/h
+            h10 = ((3 * t**2) - (4 * t**1) + 1)/h
+            h01 = ((-6* t**2) + (6 * t**1))/h
+            h11 = ((3 * t**2)  - (2 * t**1))/h
         
         # Compute the interpolated value of "y"
         ynew = h00*y[c] + h10*h*m[c] + h01*y[c+1] + h11*h*m[c+1]

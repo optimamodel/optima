@@ -158,7 +158,7 @@ def geogui():
     def rungeo():
         ''' Actually run geospatial analysis!!! '''
         global portfolio, objectives, objectiveinputs
-        for key in objectives.keys():
+        for key in objectiveinputs.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives)
         portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets())
