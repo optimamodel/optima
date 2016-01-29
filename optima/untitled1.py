@@ -3,7 +3,7 @@ Version:
 """
 
 from pylab import *; from optima import *
-norig = 20; 
+norig = 10; 
 nnew = 500;  
 smooth = ceil(nnew/norig/2.); 
 xorig = array([0]+sorted(rand(norig-2).tolist())+[1])
