@@ -37,7 +37,6 @@ def geogui():
     geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
-    projectslist = []
     
     ##############################################################################################################################
     ## Define functions
@@ -103,6 +102,7 @@ def geogui():
         global portfolio, projectslist
         projectslist = []
         projectpaths = []
+        projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
         for filepath in filepaths:
             tmpproj = None
@@ -115,15 +115,14 @@ def geogui():
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
-        projectsbox.setText('\n'.join(projectpaths))
+        projectslistbox.addItems(projectpaths)
         portfolio = Portfolio()
-        for project in projectslist:
-            portfolio.addprojects(project)
+        for project in projectslist: portfolio.addprojects(project)
         return None
     
     def loadport():
         ''' Load an existing portfolio '''
-        global portfolio
+        global portfolio, projectslist
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
         tmpport = None
         if filepath:
@@ -132,10 +131,12 @@ def geogui():
             if tmpport is not None: 
                 if type(tmpport)==Portfolio:
                     portfolio = tmpport
+                    projectslist = []
+                    projectslistbox.clear()
+                    projectslist = portfolio.projects.values()
+                    projectslistbox.addItems([proj.name for proj in portfolio.projects.values()])
                     print('Portfolio file "%s" loaded' % filepath)
                 else: print('File "%s" is not an Optima portfolio file' % filepath)
-            if portfolio and portfolio.projects:
-                    projectsbox.setText('\n'.join([proj.name for proj in portfolio.projects.values()]))
         return None
     
     
@@ -223,11 +224,13 @@ def geogui():
     ##############################################################################################################################
     
     ## List of projects
-    projectsbox = QtGui.QTextEdit(parent=geoguiwindow)
-    projectsbox.move(300, 20)
-    projectsbox.resize(wid-320, hei-40)
-    projectsbox.setReadOnly(True)
-    projectsbox.verticalScrollBar()
+    projectslistlabel = QtGui.QLabel(parent=geoguiwindow)
+    projectslistlabel.setText('Projects in this portfolio:')
+    projectslistlabel.move(300,20)
+    projectslistbox = QtGui.QListWidget(parent=geoguiwindow)
+    projectslistbox.move(300, 40)
+    projectslistbox.resize(wid-320, hei-40)
+    projectslistbox.verticalScrollBar()
     
     ## Objectives
     objectivetext = odict()
