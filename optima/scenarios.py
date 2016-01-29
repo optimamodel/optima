@@ -76,13 +76,15 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)
 
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
-        budget = scenlist[scenno].budget if isinstance(scenlist[scenno],Progscen) else None
-        budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno],Progscen) else None
-        progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno],Progscen) else None
-        result = runmodel(pars=scenparsets[scen].pars[0], parset=project.parsets[scenlist[scenno].parsetname], progset=progset, project=project, budget=budget, budgetyears=budgetyears, verbose=1)
+        budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
+        coverage = scenlist[scenno].coverage if isinstance(scenlist[scenno], Progscen) else None
+        budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
+        progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
+        result = runmodel(pars=scenparsets[scen].pars[0], parset=project.parsets[scenlist[scenno].parsetname], progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=1)
         allresults.append(result) 
         allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -121,6 +123,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = range(npops) if par['for'] > npops else [par['for']]
                     elif type(par['for'])==list: #... if its a population.
                         pops = par['for']
+                    elif par['for']=='tot': #... if its a population.
+                        pops = [par['for']]
                     else: 
                         errormsg = 'Unrecognized population or partnership type.'
                         raise OptimaException(errormsg)
@@ -143,19 +147,40 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             except:
                 results = None
 
+            if isinstance(scen.t,(int,float)): scen.t = [scen.t]
+
             if isinstance(scen, Budgetscen):
+                
+                # If the budget has been passed in as a vector, convert it to an odict & sort by program names
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
                     scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
                 scen.budget = scen.budget.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
+
+                # Ensure budget values are lists
+                for budgetkey, budgetentry in scen.budget.iteritems():
+                    if isinstance(budgetentry,(int,float)):
+                        scen.budget[budgetkey] = [budgetentry]
+
+                # Figure out coverage
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
+
             elif isinstance(scen, Coveragescen):
-                if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
-                    scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
+
+                # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
+                if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
+                    scen.coverage = vec2budget(scen.progset, scen.coverage) # It seems to be a vector: convert to odict
                 if not isinstance(scen.coverage,dict): raise OptimaException('Currently only accepting coverage as dictionaries.')
                 if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
                 scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
+
+                # Ensure coverage level values are lists
+                for covkey, coventry in scen.coverage.iteritems():
+                    if isinstance(coventry,(int,float)):
+                        scen.coverage[covkey] = [coventry]
+
+                # Figure out coverage
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
             thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
