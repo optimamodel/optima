@@ -60,7 +60,7 @@ if 'standardscen' in tests:
 
         Parscen(name='Get lots of people on treatment',
              parsetname='default',
-             pars=[{'endval': 10000.,
+             pars=[{'endval': 100000.,
                 'endyear': 2020,
                 'name': 'numtx',
                 'for': 'tot',
@@ -150,7 +150,7 @@ if 'standardscen' in tests:
                            'FSW programs':array([1e6,1e6,1e6]),
                            'HTC':array([2e7,3e7,4e7]),
                            'OST':array([1e6,1.5e6,2e6]),
-                           'ART':array([1e6,1.5e6,2e6])})
+                               'ART':array([1e6,1.5e6,2e6])})
         ]
     
     # Store these in the project
@@ -209,7 +209,7 @@ if 'maxbudget' in tests:
     
     ## Define scenarios
     scenlist = [
-#        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
+        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
         Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=odict([(key, 1e9) for key in P.progsets['default'].programs.keys()])),
         ]
     

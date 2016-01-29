@@ -76,6 +76,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     # Convert the list of scenarios to the actual parameters to use in the model
     scenparsets = makescenarios(project=project, scenlist=scenlist, verbose=verbose)
 
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
