@@ -93,6 +93,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
     fval = function(x, **args) # Calculate initial value of the objective function
+    fvalorig = fval # Store the original value of the objective function, since fval is overwritten on each step
     count = 0 # Keep track of how many iterations have occurred
     exitflag = -1 # Set default exit flag
     abserrorhistory = zeros(int(StallIterLimit)) # Store previous error changes
@@ -105,7 +106,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     start = time()
     offset = ' '*5 # Offset the print statements
     while 1:
-        if verbose>=1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval))
+        if verbose==1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval)) # For more verbose, use other print statement below
         
         # Calculate next step
         count += 1 # On each iteration there are two function evaluations
@@ -143,7 +144,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
         relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
         if verbose>=3:
-            print(offset+'choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (choice, par, pm, x[par], xnew[par], inrange))
+            print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
         # Check if this step was an improvement
         fvalold = fval # Store old fval
@@ -157,8 +158,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             flag = 'FAILURE'
-        if verbose>=2: print(offset + flag + ' on step %i (old:%0.2e new:%0.2e diff:%0.2e ratio:%0.5f)' % (count, fvalold, fvalnew, fvalnew-fvalold, fvalnew/fvalold) )
-
+        if verbose>=2: 
+            print(offset + 'Step %i (%0.1f s): %s (orig: %s | old:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+sigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
+        
         # Optionally store output information
         if fulloutput: # Include additional output structure
             fulloutputfval[count-1] = fval # Store objective function evaluations
@@ -211,3 +213,37 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     x = reshape(x,origshape)
 
     return x, fval, exitflag, output
+
+
+
+
+def sigfig(X, sigfigs=5):
+    """ Return a string representation of variable x with sigfigs number of significant figures -- WARNING, copied from utils.py so this is self-contained """
+    
+    output = []
+    try: 
+        n=len(X)
+        islist = True
+    except:
+        x = [X]
+        n = 1
+        islist = False
+    for i in range(n):
+        x = X[i]
+        try:
+            if x==0: return '0'
+            from numpy import log10, floor
+            magnitude = floor(log10(abs(x)))
+            factor = 10**(sigfigs-magnitude-1)
+            x = round(x*factor)/float(factor)
+            digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+            decimals = int(max(0,-magnitude+sigfigs-1))
+            strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+            string = strformat % x
+            output.append(string)
+        except:
+            output.append(str(x))
+    if islist:
+        return tuple(output)
+    else:
+        return output[0]
