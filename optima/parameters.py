@@ -23,7 +23,9 @@ Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
 Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	None	0	None
 Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	None
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
-Transitions (% moving/year)	transit	(0, 'maxrate')	array	meta	no	no	None	0	None
+Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	None	0	None
+Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	None	0	None
+Births transitions (% born/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
 HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
 AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
@@ -255,7 +257,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
             if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
-    yearstouse = []
+    yearstouse = []    
     for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
     minyear = Inf
     maxyear = -Inf
@@ -407,17 +409,18 @@ def makepars(data, label=None, verbose=2):
         pars['birth'].t[key] = array([0])
     pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['birth'].t = pars['birth'].t.sort(popkeys)
-
-    # Aging
-    for key in popkeys:
-        pars['birth'].y[key] = array([0])
-        pars['birth'].t[key] = array([0])
-    pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['birth'].t = pars['birth'].t.sort(popkeys)
+    
+#    # Aging
+#    for key in popkeys:
+#        pars['agerate'].y[key] = data['pops']
+#        pars['agerate'].t[key] = array([0])
+#    pars['ageduration'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
+#    pars['ageduration'].t = pars['birth'].t.sort(popkeys)
 
     # Normalise aging matrix
-    normalised_asymtransit = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['asymtransit']]
-    pars['asymtransit'] = normalised_asymtransit 
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    normalised_birthtransit = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['birthtransit']]
+    pars['birthtransit'] = normalised_birthtransit 
 
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
@@ -434,7 +437,7 @@ def makepars(data, label=None, verbose=2):
     # Transitions
     for i,key1 in enumerate(popkeys): # Populate from spreadsheet verbatim
         for j,key2 in enumerate(popkeys):
-            pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
+            pars['risktransit'].y[(key1,key2)] = array(data['risktransit'])[i,j] 
     
     
     # Balance partnerships parameters    
@@ -450,7 +453,6 @@ def makepars(data, label=None, verbose=2):
         tmpcond[act], tmpcondpts[act] = balance(act=act, which='condom', data=data, popkeys=popkeys)
         
     # Convert matrices to lists of of population-pair keys
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     for act in ['reg', 'cas', 'com', 'inj']: # Will probably include birth matrices in here too...
         actsname = 'acts'+act
         condname = 'cond'+act
@@ -486,7 +488,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
-    staticmatrixkeys = ['asymtransit']
+    staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly

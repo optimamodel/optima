@@ -605,12 +605,13 @@ class OptimaSpreadsheet:
         current_row = 0
         names = ['Interactions between regular partners', 'Interactions between casual partners',
         'Interactions between commercial partners', 'Interactions between people who inject drugs',
-        'Births and aging', 'Risk-related population transitions (average number of years before movement)']
+        'Births', 'Aging', 'Risk-related population transitions (average number of years before movement)']
 
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
+            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_child_range)
+            else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_const(self):
         self.current_sheet.set_column(1,1,40)
