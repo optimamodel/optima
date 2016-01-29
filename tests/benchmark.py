@@ -5,7 +5,7 @@ Check how long a single iteration of model.py takes, and store
 to a log file so changes that affect how long the model takes
 to run can be easily pinpointed.
 
-Version: 2016jan25
+Version: 2016jan28
 """
 
 from pylab import loadtxt, savetxt, vstack, array
@@ -18,7 +18,7 @@ filename = 'benchmark.txt'
 dosave = True
 
 ## Run the model
-P = Project(spreadsheet='test7pops.xlsx', dorun=False)
+P = Project(spreadsheet='generalized.xlsx', dorun=False)
 t = time()
 P.runsim()
 elapsed = time()-t
