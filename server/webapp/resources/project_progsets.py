@@ -332,9 +332,9 @@ class Programs(Resource):
         return program_entry, 201
 
 
-class CostCoverage(Resource):
+class CostCoverageParams(Resource):
     """
-    Costcoverage for a given Program.
+    Costcoverageparams for a given Program.
     """
     method_decorators = [report_exception, login_required]
 
@@ -344,10 +344,7 @@ class CostCoverage(Resource):
 
         program_entry = load_program(project_id, progset_id, program_id)
 
-        if not program_entry.blob:
-            return {"params": [], "data": {"t": [], "cost": [], "coverage": []}}
-
-        return program_entry.blob
+        return {"params": program_entry.ccopars or {}}
 
 
     @swagger.operation(
@@ -357,20 +354,14 @@ class CostCoverage(Resource):
         program_entry = load_program(project_id, progset_id, program_id)
 
         from flask import request
-
         args = json.loads(request.data)
-        program_entry.blob = args
+
+        program_entry.ccopars = args
+
         db.session.flush()
         db.session.commit()
 
-        return program_entry.blob
-
-
-@swagger.model
-class CostCoverageGraphFields(object):
-    resource_fields = {
-        "t": fields.String
-    }
+        return {"params": program_entry.ccopars or {}}
 
 
 class CostCoverageGraph(Resource):
@@ -380,21 +371,17 @@ class CostCoverageGraph(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description="Get graph.")
-    @marshal_with(CostCoverageGraphFields.resource_fields)
     def get(self, project_id, progset_id, program_id):
 
         from flask import request
 
         args = dict(request.args)
 
-        # Get and hydrate the parset
-        parset = db.session.query(ParsetsDb).get(args["parset"][0])
-        parset = parset.hydrate()
-
         program_entry = load_program(project_id, progset_id, program_id)
 
         prog = program_entry.hydrate()
 
-        plot = prog.plotcoverage(t=int(args["t"][0]), parset=parset)
+        plot = prog.plotcoverage(t=int(args["t"][0]),
+                                 parset=program_entry.pars_to_program_pars())
 
         return plot
