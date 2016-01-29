@@ -48,17 +48,12 @@ def geogui():
         ''' Helper function to load a project, since used more than once '''
         filepath = QtGui.QFileDialog.getOpenFileNames(caption='Choose project file', filter='*'+projext)
         project = None
-        try: 
-            project = loadobj(filepath, verbose=0)
-        except: 
-            print('Could not load file "%s"' % filepath)
-            return None
-        try: 
-            assert type(project)==Project
-            return project
-        except: 
-            print('File "%s" is not an Optima project file' % filepath)
-            return None
+        if filepath:
+            try: project = loadobj(filepath, verbose=0)
+            except: print('Could not load file "%s"' % filepath)
+            if type(project)==Project: return project
+            else: print('File "%s" is not an Optima project file' % filepath)
+        return None
         
         
     def makesheet():
@@ -131,15 +126,16 @@ def geogui():
         global portfolio
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
         tmpport = None
-        try: tmpport = loadobj(filepath, verbose=0)
-        except: print('Could not load file "%s"' % filepath)
-        if tmpport is not None: 
-            try: 
-                assert type(tmpport)==Portfolio
-                portfolio = tmpport
-                print('Portfolio file "%s" loaded' % filepath)
-            except: print('File "%s" is not an Optima portfolio file' % filepath)
-        projectsbox.setText('\n'.join([proj.name for proj in portfolio.projects.values()]))
+        if filepath:
+            try: tmpport = loadobj(filepath, verbose=0)
+            except: print('Could not load file "%s"' % filepath)
+            if tmpport is not None: 
+                if type(tmpport)==Portfolio:
+                    portfolio = tmpport
+                    print('Portfolio file "%s" loaded' % filepath)
+                else: print('File "%s" is not an Optima portfolio file' % filepath)
+            if portfolio and portfolio.projects:
+                    projectsbox.setText('\n'.join([proj.name for proj in portfolio.projects.values()]))
         return None
     
     

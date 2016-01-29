@@ -7,9 +7,8 @@ Script written by Chris Michalski 2009aug18 used as a basis.
 Version: 2016jan22 by davidkedz
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-from numpy import linspace
+from numpy import linspace, array, diff
 from copy import deepcopy as dcp
 import collections
 #from interpolate import slopes, stineman_interp
@@ -17,7 +16,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False, method='pchip'):
+def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]
@@ -31,19 +30,21 @@ def pchip(x, y, xnew, deriv = False, method='pchip'):
 #    print x
 #    print y
     
-    if method=='pchip':
+    if method=='pchip': # WARNING, need to rename this function something else...
         m = pchip_slopes(x, y) # Compute slopes used by piecewise cubic Hermite interpolator.
-        ynew = pchip_eval(x, y, m, xnew, deriv) # Use these slopes (along with the Hermite basis function) to interpolate.
+        ynew = pchip_eval(x, y, m, xnew) # Use these slopes (along with the Hermite basis function) to interpolate.
+    
     elif method=='smoothinterp':
         from utils import smoothinterp
-        ysmooth = smoothinterp(xnew, x, y)
-        if not deriv:
-            ynew = ysmooth
-#        else:
-            
-            
+        ynew = smoothinterp(xnew, x, y)
     else:
-        raise Exception('Method "%s" not found' % method)
+        raise Exception('Interpolation method "%s" not understood' % method)
+    
+    if deriv:
+        ynew = diff(ynew).tolist() # Calculate derivative explicitly
+        ynew.append(ynew[-1]) # Duplicate the last element so the right length
+    
+    if type(y)==type(array([])): ynew = array(ynew) # Try to preserve original type
     
     return ynew
     
@@ -73,10 +74,10 @@ def pchip_slopes(x, y, monotone=True):
     
 #    print secants
 #    print m
-    return np.array(m)
+    return array(m)
 
 #=========================================================
-def pchip_eval(x, y, m, xvec, deriv = False):
+def pchip_eval(x, y, m, xvec):
     '''
      Evaluate the piecewise cubic Hermite interpolant with  monoticity preserved
     
@@ -106,16 +107,15 @@ def pchip_eval(x, y, m, xvec, deriv = False):
         t = (xc - x[c]) / h
         
         # Hermite basis functions
-        if not deriv:
-            h00 = (2 * t**3) - (3 * t**2) + 1
-            h10 =      t**3  - (2 * t**2) + t
-            h01 = (-2* t**3) + (3 * t**2)
-            h11 =      t**3  -      t**2
-        else:
-            h00 = ((6 * t**2) - (6 * t**1))/h
-            h10 = ((3 * t**2) - (4 * t**1) + 1)/h
-            h01 = ((-6* t**2) + (6 * t**1))/h
-            h11 = ((3 * t**2)  - (2 * t**1))/h
+        h00 = (2 * t**3) - (3 * t**2) + 1
+        h10 =      t**3  - (2 * t**2) + t
+        h01 = (-2* t**3) + (3 * t**2)
+        h11 =      t**3  -      t**2
+#        else: # Deriv -- WARNING, not correct I don't think
+#            h00 = ((6 * t**2) - (6 * t**1))/h
+#            h10 = ((3 * t**2) - (4 * t**1) + 1)/h
+#            h01 = ((-6* t**2) + (6 * t**1))/h
+#            h11 = ((3 * t**2)  - (2 * t**1))/h
         
         # Compute the interpolated value of "y"
         ynew = h00*y[c] + h10*h*m[c] + h01*y[c+1] + h11*h*m[c+1]
