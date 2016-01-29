@@ -7,7 +7,8 @@ define([
   '../common/export-all-charts',
   '../common/export-all-data',
   '../validations/more-than-directive',
-  '../validations/less-than-directive'
+  '../validations/less-than-directive',
+  '../validations/year-directive'
 ], function (angular) {
   'use strict';
 
@@ -18,7 +19,8 @@ define([
     'app.ui.type-selector',
     'ui.router',
     'app.validations.more-than',
-    'app.validations.less-than'
+    'app.validations.less-than',
+    'app.validations.year'
   ])
     .config(function ($stateProvider) {
       $stateProvider
@@ -39,8 +41,9 @@ define([
         })
         .state('project-set.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
-          controller: 'ModelCostCoverageController',
+          controller: 'ModelCostCoverageController as vm',
           templateUrl: 'js/modules/project-set/cost-coverage.html',
+          bindToController: true,
           resolve: {
             activeProject: function (projectApiService) {
               return projectApiService.getActiveProject();
