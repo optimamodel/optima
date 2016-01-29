@@ -198,8 +198,10 @@ try: from portfolio import Portfolio # Portfolio class (container of Projects)
 except: _failed()
 
 try: from geospatial import geogui # Import GUI tools for geospatial analysis
-except: _failed()
-
+except:
+    def geogui(*args, **kwargs): print('Note: geogui() could not be imported, but everything else should work')
+    _failed(doraise=False)
+    
 
 # Finally, load defaults
 try: import defaults
