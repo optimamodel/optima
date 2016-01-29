@@ -97,6 +97,10 @@ Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	No
 Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
+Viral suppression - ART initiators (%)	treatvs	(0, 1)	tot	timepar	meta	other	0	1	random
+Viral load monitoring (number/year)	vlmonfr	(0, 6)	tot	timepar	meta	other	0	1	random
+Time to ART re-initiation (years)	restarttreattime	(0,100)	tot	timepar	meta	other	0	1	random
+PLHIV aware of their status (%)	phivdx	(0, 1)	tot	timepar	meta	other	0	1	random
 '''
 
 
