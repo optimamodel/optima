@@ -55,7 +55,7 @@ def getplotselections(results):
     ## Add selection for budget allocations and coverage
     budcovdict = odict([('budget','Budget allocation'), ('coverage','Program coverage')])
     for budcov in budcovdict.keys():
-        if hasattr(results, budcov) and getattr(results, budcov) is not None:
+        if hasattr(results, budcov) and len(getattr(results, budcov))>0:
             if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
                 plotselections['keys'] += [budcov] # e.g. 'budget'
                 plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
@@ -116,7 +116,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
+            if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
+                allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
         except OptimaException as E: 
             if die: raise E
             else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
@@ -127,7 +128,8 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         if budcov in toplot:
             toplot.remove(budcov) # Because everything else is passed to plotepi()
             try: 
-                allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
+                if hasattr(results, budcov) and len(getattr(results, budcov))>0: # WARNING, duplicated from getplotselections()
+                    allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
             except OptimaException as E: 
                 if die: raise E
                 else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
