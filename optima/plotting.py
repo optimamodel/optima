@@ -542,7 +542,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     fig = figure(figsize=figsize)
     
     cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
-    cascadenames = ['PLHIV', 'Diagnosed', 'Treated']
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
     
     colors = gridcolormap(len(cascadelist))
     
