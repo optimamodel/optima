@@ -20,7 +20,7 @@ epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], [
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
 defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta'] # Default epidemiological plots
-defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
+defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
 
 
 def getplotselections(results):
@@ -578,8 +578,6 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         ax.set_ylim((0,ylim()[1]))
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
-        print('HIIIIIIIIIIIIIIIIIIIII')
-        print(cascadenames)
         
     close(fig)
     
