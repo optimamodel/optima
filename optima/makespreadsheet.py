@@ -610,7 +610,7 @@ class OptimaSpreadsheet:
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_child_range)
+            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range)
             else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_const(self):

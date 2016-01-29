@@ -402,25 +402,31 @@ def makepars(data, label=None, verbose=2):
     ## Tidy up -- things that can't be converted automatically
     ###############################################################################    
     
-    # Births
+    # Births rates. This parameter is coupled with the birth matrix defined below
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
     pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['birth'].t = pars['birth'].t.sort(popkeys)
     
-#    # Aging
-#    for key in popkeys:
-#        pars['agerate'].y[key] = data['pops']
-#        pars['agerate'].t[key] = array([0])
-#    pars['ageduration'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
-#    pars['ageduration'].t = pars['birth'].t.sort(popkeys)
-
-    # Normalise aging matrix
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    normalised_birthtransit = [[col/sum(row) if sum(row) else 0 for col in row] for row in data['birthtransit']]
+    # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
+    normalised_birthtransit = [[0]*len(popkeys)]*len(popkeys)
+    c = 0
+    for pk,popkey in enumerate(popkeys):
+        if data['pops']['female'][pk]:
+            normalised_birthtransit[pk] = [col/sum(data['birthtransit'][c]) if sum(data['birthtransit'][c]) else 0 for col in data['birthtransit'][c]]
+            c += 1
     pars['birthtransit'] = normalised_birthtransit 
 
+    # Aging transitions - these are time-constant transition rates
+    duration = [age[1]-age[0]+1 for age in data['pops']['age']]
+    normalised_agetransit = [[col/sum(row)*1/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
+    pars['agetransit'] = normalised_agetransit
+
+    # Risk transitions - these are time-constant transition rates
+    normalised_risktransit = [[1/col if col else 0 for col in row] for row in data['risktransit']]
+    pars['risktransit'] = normalised_risktransit 
+    
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
@@ -432,11 +438,6 @@ def makepars(data, label=None, verbose=2):
     for key in popkeys: # Define values
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
-    
-    # Transitions
-    for i,key1 in enumerate(popkeys): # Populate from spreadsheet verbatim
-        for j,key2 in enumerate(popkeys):
-            pars['risktransit'].y[(key1,key2)] = array(data['risktransit'])[i,j] 
     
     
     # Balance partnerships parameters    
@@ -494,8 +495,9 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
     
     # Copy default keys by default
-    for key in generalkeys+staticmatrixkeys: simpars[key] = dcp(pars[key])
-    
+    for key in generalkeys: simpars[key] = dcp(pars[key])
+    for key in staticmatrixkeys: simpars[key] = array(pars[key])
+
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example

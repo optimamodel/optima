@@ -125,8 +125,8 @@ if 'runsim' in tests:
     print('Running runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='generalized.xlsx')
-#    results = P.runsim('default')
+    P = Project()
+    P.loadspreadsheet('generalized.xlsx',dorun=True)
     
     done(t)
 
