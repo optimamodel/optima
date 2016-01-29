@@ -114,7 +114,7 @@
         </div>
       </div>
       <div style="display: flex;justify-content: center; margin-top: 25px">
-        <input type="button" value="Update" class="updateGraph btn" ng-click="getGraphs()"/>
+        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>
       </div>
     </div>
     <div class="chart_wrapper">
@@ -132,6 +132,7 @@
       </div>
       <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
         <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>
+        <input type="button" value="Save" class="updateGraph btn" ng-click="processGraphs(true)"/>
         <input type="button" value="Reset" class="btn" ng-click="resetParameters()"/>
       </div>
     </div>
