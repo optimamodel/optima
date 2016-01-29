@@ -4,11 +4,7 @@ define(['./module', 'underscore'], function (module, _) {
   module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
 
     var vm = this;
-
-    /* VM vars */
-    vm.openProject = activeProject.data;
-    vm.activeTab = 'outcome';
-    vm.fakeParams = [/* ToDo: replace with api data */
+    var fakeParams = [
       {
         name: 'First'
       },
@@ -19,7 +15,18 @@ define(['./module', 'underscore'], function (module, _) {
       {
         name: 'Third'
       }
-    ]
+    ];
+
+    /* VM vars */
+    vm.openProject = activeProject.data;
+    console.log('openProject', vm.openProject);
+    vm.activeTab = 'outcome';
+
+    /* ToDo: replace with api data */
+    vm.fakeParams = angular.copy(fakeParams);
+    vm.programSetList = angular.copy(fakeParams);
+    vm.parsets = angular.copy(fakeParams);
+
     vm.post = {}
     vm.tabs = [
       {
@@ -65,7 +72,9 @@ define(['./module', 'underscore'], function (module, _) {
     }
 
     function populateProgramDropdown() {
-      vm.programs = vm.selectedProgramSet.programs;
+      if (vm.selectedProgramSet) {
+        vm.programs = vm.selectedProgramSet.programs;
+      }
     };
 
     function selectTab(tab) {
@@ -95,12 +104,12 @@ define(['./module', 'underscore'], function (module, _) {
     $http.get('/api/project/' + vm.openProject.id + '/progsets')
       .success(function (response) {
         if (response.progsets) {
-          vm.programSetList = response.progsets;
+          //vm.programSetList = response.progsets;
         }
       });
 
     $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
-      vm.parsets = response.parsets;
+      //vm.parsets = response.parsets;
     });
 
   });
