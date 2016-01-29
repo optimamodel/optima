@@ -258,7 +258,7 @@ def geogui():
     projectslistbox.verticalScrollBar()
     projectslistbox.currentItemChanged.connect(updateprojectinfo)
     buttons['remove'] = QtGui.QPushButton('Remove selected project from portfolio', parent=geoguiwindow)
-    buttons['remove'].clicked.connect(removeproject); print('WARNing need to implement click')
+    buttons['remove'].clicked.connect(removeproject)
     projectslistlabel.move(330,20)
     projectslistbox.move(330, 40)
     buttons['remove'].move(330, hei-40)
