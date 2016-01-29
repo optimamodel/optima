@@ -18,13 +18,13 @@ def geogui():
     
     Version: 2016jan23
     '''
-    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs
+    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs, projectslistbox, projectinfobox
     portfolio = None
     projectslist = []
     objectives = defaultobjectives()
     
     ## Set parameters
-    wid = 650.0
+    wid = 1200.0
     hei = 550.0
     top = 20
     spacing = 40
@@ -59,10 +59,10 @@ def geogui():
         ''' Create a geospatial spreadsheet template based on a project file '''
         
         ## 1. Load a project file
-        project = _loadproj()
+#        project = _loadproj()
             
         ## 2. Get destination filename
-        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+#        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
         
         ## 3. Extract data needed from project (population names, program names...)
         # ...
@@ -77,13 +77,13 @@ def geogui():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
-        project = _loadproj()
+#        project = _loadproj()
         
         ## 2. Load a spreadsheet file
-        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+#        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
         
         ## 3. Get a destination folder
-        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+#        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
         
         ## 4. Read the spreadsheet
         # ...
@@ -97,12 +97,14 @@ def geogui():
         return None
 
 
-    def create():
+    def create(doadd=False):
         ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-        global portfolio, projectslist
-        projectslist = []
+        global portfolio, projectslistbox
         projectpaths = []
-        projectslistbox.clear()
+        projectslist = []
+        if not doadd:
+            portfolio = Portfolio()
+            projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
         for filepath in filepaths:
             tmpproj = None
@@ -116,13 +118,17 @@ def geogui():
                     print('Project file "%s" loaded' % filepath)
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
-        portfolio = Portfolio()
         for project in projectslist: portfolio.addprojects(project)
+        return None
+    
+    def addproj():
+        ''' Add a project -- same as creating a portfolio except don't overwrite '''
+        create(doadd=True)
         return None
     
     def loadport():
         ''' Load an existing portfolio '''
-        global portfolio, projectslist
+        global portfolio, projectslist, projectslistbox
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
         tmpport = None
         if filepath:
@@ -190,6 +196,7 @@ def geogui():
     buttons['makesheet'] = QtGui.QPushButton('Make geospatial spreadsheet from project', parent=geoguiwindow)
     buttons['makeproj']  = QtGui.QPushButton('Auto-generate projects from spreadsheet', parent=geoguiwindow)
     buttons['create']    = QtGui.QPushButton('Create portfolio from projects', parent=geoguiwindow)
+    buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
     buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
@@ -201,6 +208,7 @@ def geogui():
     actions['makesheet'] = makesheet
     actions['makeproj']  = makeproj
     actions['create']    = create
+    actions['add']       = addproj
     actions['loadport']  = loadport
     actions['rungeo']    = rungeo
     actions['export']    = export
@@ -223,14 +231,45 @@ def geogui():
     ## Define other objects
     ##############################################################################################################################
     
+    def updateprojectinfo():
+        global projectslistbox, projectinfobox
+        ind = projectslistbox.currentRow()
+        project = projectslist[ind]
+        projectinfobox.setText(repr(project))
+        return None
+    
+    def removeproject():
+        global projectslistbox, projectinfobox, portfolio
+        ind = projectslistbox.currentRow()
+        projectslist.pop(ind) # Remove from projects list
+        portfolio.projects.pop(portfolio.projects.keys()[ind]) # Remove from portfolio
+        projectslistbox.takeItem(ind) # Remove from list
+        return None
+        
+    
     ## List of projects
     projectslistlabel = QtGui.QLabel(parent=geoguiwindow)
     projectslistlabel.setText('Projects in this portfolio:')
     projectslistlabel.move(300,20)
     projectslistbox = QtGui.QListWidget(parent=geoguiwindow)
     projectslistbox.move(300, 40)
-    projectslistbox.resize(wid-320, hei-40)
+    projectslistbox.resize(300, hei-100)
     projectslistbox.verticalScrollBar()
+    projectslistbox.currentItemChanged.connect(updateprojectinfo)
+    buttons['remove'] = QtGui.QPushButton('Remove selected project from portfolio', parent=geoguiwindow)
+    buttons['remove'].move(300, hei-40)
+    buttons['remove'].clicked.connect(removeproject); print('WARNing need to implement click')
+    
+    ## Project info
+    projectsinfolabel = QtGui.QLabel(parent=geoguiwindow)
+    projectsinfolabel.setText('Information about the selected project:')
+    projectsinfolabel.move(620,20)
+    projectinfobox = QtGui.QTextEdit(parent=geoguiwindow)
+    projectinfobox.move(620, 40)
+    projectinfobox.resize(600, hei-100)
+    projectinfobox.setReadOnly(True)
+    projectinfobox.verticalScrollBar()
+    
     
     ## Objectives
     objectivetext = odict()
