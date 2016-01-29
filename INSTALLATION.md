@@ -91,7 +91,10 @@ This file can also be found in:
 
     client/nginx.conf.example
 
-You you must make some changes to path names in the nginx.conf file:
+You must make some changes to path names in `nginx.conf`:
+
+1. change the paths on lines 30 and 98 (marked “CHANGE”) to your local Optima directories. 
+2. change the first line to correspond to your username and group (or whatever user/group you want to run Optima as - this user must have read and execute permissions to both the Optima directory and to all of its parents).
 
 To run nginx, make sure it has been stopped:
 
@@ -161,6 +164,17 @@ More information <https://github.com/optimamodel/Optima/blob/develop/client/READ
 So you've installed the postgres databases, nginx, python webserver and built the front-end. Then in the browser, go to
 
     http://localhost/#/register
+
+A convenient script is provided to run nginx, postgres and the python webserver:
+
+    ./boot_dev_env.sh
+
+This can also be achieved by:
+
+    lunchy start postgres
+    sudo nginx
+    cd server
+    python api.py
 
 Create an account (your email address needs a @ in it), then you should be good to go.
 
