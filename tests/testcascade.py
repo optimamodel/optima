@@ -128,25 +128,40 @@ if 'cascade' in tests:
 
         from matplotlib import pyplot as plt
 
+
+        alive = results.raw[0]['people'][settings.allstates,:,:].sum(axis=(0,1))
+        sus   = results.raw[0]['people'][settings.sus,:,:].sum(axis=(0,1))
         alldx = results.raw[0]['people'][settings.alldx,:,:].sum(axis=(0,1))
-        care = results.raw[0]['people'][settings.care,:,:].sum(axis=(0,1))
+        diag  = results.raw[0]['people'][settings.dx,:,:].sum(axis=(0,1))
+        care  = results.raw[0]['people'][settings.care,:,:].sum(axis=(0,1))
         plhiv = results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
         treat = results.raw[0]['people'][settings.alltreat,:,:].sum(axis=(0,1))
-        supp = results.raw[0]['people'][settings.svl,:,:].sum(axis=(0,1))
-        lost = results.raw[0]['people'][settings.lost,:,:].sum(axis=(0,1))
-        off = results.raw[0]['people'][settings.off,:,:].sum(axis=(0,1))
+        supp  = results.raw[0]['people'][settings.svl,:,:].sum(axis=(0,1))
+        lost  = results.raw[0]['people'][settings.lost,:,:].sum(axis=(0,1))
+        off   = results.raw[0]['people'][settings.off,:,:].sum(axis=(0,1))
+        deadhiv = (results.raw[0]['death'][:,:].sum(axis=0)).cumsum()
+        deadoth = (results.raw[0]['otherdeath'][:,:].sum(axis=0)).cumsum()
 
         fig = plt.figure()
         plt.plot(tvec,plhiv,label='PLHIV')
         plt.plot(tvec,alldx,label='All diagnosed')
+        #plt.plot(tvec,diag,label='diagnosed but not in care/pre-treatment')
         plt.plot(tvec,care,label='care')
         plt.plot(tvec,treat,label='on treatment')
         plt.plot(tvec,supp,label='suppressed viral load')
-        plt.plot(tvec,lost,label='off ART, not in care')
-        plt.plot(tvec,off,label='off ART in care')
+        #plt.plot(tvec,lost,label='off ART, not in care')
+        #plt.plot(tvec,off,label='off ART in care')
         plt.legend(loc='best')
         fig.savefig("cascade_all.png")
 
+
+        fig = plt.figure()
+        plt.plot(tvec,alive,label='alive')
+        plt.plot(tvec,sus,label='susceptibles')
+        plt.plot(tvec,deadhiv,label='dead (HIV)')
+        plt.plot(tvec,deadoth,label='dead (other)')
+        plt.legend(loc='best')
+        fig.savefig("cascade_general.png")
         
 
     done(t)
