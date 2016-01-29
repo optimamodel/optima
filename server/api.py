@@ -10,6 +10,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
+
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if new_path not in sys.path:
@@ -67,7 +68,8 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData
-from server.webapp.resources.project_parsets import Parsets, ParsetsDetail, ParsetsCalibration, ParsetsData
+from server.webapp.resources.project_parsets import (Parsets, ParsetsDetail, ParsetsCalibration,
+                                                     ParsetsData, ParsetsAutomaticCalibration)
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -98,6 +100,7 @@ api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 api.add_resource(ParsetsCalibration, '/api/parset/<uuid:parset_id>/calibration')
+api.add_resource(ParsetsAutomaticCalibration, '/api/parset/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetsData, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 app.register_blueprint(api_bp, url_prefix='')
 
