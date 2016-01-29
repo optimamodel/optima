@@ -76,6 +76,7 @@
         <label class="c-select__label"> Select a parameter: </label>
         <select class="txbox c-select__input"
                 ng-options="p.name for p in vm.fakeParams"
+                ng-change="vm.changeParameter()"
                 ng-model="vm.selectedParameter">
           <option value="">-- Please select a parameter --</option>
         </select>

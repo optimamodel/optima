@@ -53,8 +53,14 @@ define(['./module', 'underscore'], function (module, _) {
     vm.selectTab = selectTab;
     vm.deleteYear = deleteYear;
     vm.submit = submit;
+    vm.changeParameter = changeParameter;
 
     /* Function definitions */
+
+    function changeParameter(){
+      vm.post = {}
+      vm.TableForm.$setPristine();
+    }
 
     function submit() {
       if (vm.TableForm.$invalid) {
