@@ -66,7 +66,7 @@ class ParsetTestCase(OptimaTestCase):
         recalibrated_res = self.client.get('/api/parset/{0}/calibration?which={1}'.format(parset_id, third_graph_key))
         recalibrated_res_data = json.loads(recalibrated_res.data)
         self.assertTrue('calibration' in recalibrated_res_data)
-        self.assertEqual(len(recalibrated_res_data['calibration']['graphs']), 1)
+        self.assertGreaterEqual(len(recalibrated_res_data['calibration']['graphs']), 1)
 
     def test_recalibrate_with_updated_parameters(self):
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
