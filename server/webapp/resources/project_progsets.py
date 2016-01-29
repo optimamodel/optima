@@ -251,51 +251,6 @@ class ProgsetData(Resource):
         return reply
 
 
-
-class Programs(Resource):
-    """
-    Programs for a given progset.
-    """
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(
-        description="Get programs for the progset with the given ID.",
-        responseClass=ProgramsDb.__name__)
-
-    @marshal_with(ProgramsDb.resource_fields, envelope='programs')
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
-
-        progset_entry = load_progset(project_id, progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
-        return reply
-
-    @swagger.operation(
-        description="Create a program for the progset with the given ID.",
-        parameters=program_parser.swagger_parameters())
-    @marshal_with(ProgramsDb.resource_fields)
-    def post(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
-
-        progset_entry = load_progset(project_id, progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        args = query_program_parser.parse_args()
-        args["short"] = args["short_name"]
-        del args["short_name"]
-
-        program_entry = ProgramsDb(project_id, progset_id, **args)
-        db.session.add(program_entry)
-        db.session.flush()
-        db.session.commit()
-
-        return program_entry, 201
-
-
 class Programs(Resource):
     """
     Programs for a given progset.
@@ -354,7 +309,6 @@ class CostCoverage(Resource):
         return {"params": program_entry.ccopars or {},
                 "data": program_entry.data_db_to_api()}
 
-
     @swagger.operation(
         description="Replace costcoverage parameters and data for the given program.")
     def put(self, project_id, progset_id, program_id):
@@ -380,15 +334,25 @@ class CostCoverageGraph(Resource):
 
     @swagger.operation(description="Get graph.")
     def get(self, project_id, progset_id, program_id):
-
+        """
+        parameters:
+        t = year ( should be >= startyear in data)
+        parset_id - ID of the parset (one of the project parsets - not related to program parameters)
+        """
         from flask import request
         args = dict(request.args)
+        print "args", args
+        t = int(args['t'][0])
+        parset_id = args['parset_id'][0]
 
         program_entry = load_program(project_id, progset_id, program_id)
-        prog = program_entry.hydrate()
+        program_instance = program_entry.hydrate()
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
+        if parset_entry is None:
+            raise ParsetDoesNotExist(id=parset_id)
+        parset_instance = parset_entry.hydrate()
 
-        plot = prog.plotcoverage(t=int(args["t"][0]),
-                                 parset=program_entry.pars_to_program_pars())
+        plot = program_instance.plotcoverage(t=t, parset=parset_instance)
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
