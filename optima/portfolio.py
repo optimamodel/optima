@@ -73,7 +73,7 @@ class Portfolio(object):
         if type(projects)==list:
             for project in projects: 
                 self.projects[project.uid] = project        
-                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 4, verbose)
+                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
     def getdefaultbudgets(self, progsetnames=None, verbose=0):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''

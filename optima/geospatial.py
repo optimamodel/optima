@@ -37,6 +37,10 @@ def geogui():
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
     
+    
+    
+    
+    
     ##############################################################################################################################
     ## Define functions
     ##############################################################################################################################
@@ -101,10 +105,15 @@ def geogui():
         global portfolio, projectslistbox
         projectpaths = []
         projectslist = []
+        if portfolio is None: 
+            print('CREATING portfolio tmp...')
+            portfolio = Portfolio()
         if not doadd:
+            print('WIPING portfolio tmp...')
             portfolio = Portfolio()
             projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
+        if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
             tmpproj = None
             try: tmpproj = loadobj(filepath, verbose=0)
@@ -117,12 +126,15 @@ def geogui():
                     print('Project file "%s" loaded' % filepath)
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
-        for project in projectslist: portfolio.addprojects(project)
+        portfolio.addprojects(projectslist)
+        print(portfolio.projects.keys()) # TMP
         return None
     
     def addproj():
         ''' Add a project -- same as creating a portfolio except don't overwrite '''
+        global portfolio
         create(doadd=True)
+        print(portfolio.projects.keys()) # TMP
         return None
     
     def loadport():
@@ -246,26 +258,26 @@ def geogui():
     ## List of projects
     projectslistlabel = QtGui.QLabel(parent=geoguiwindow)
     projectslistlabel.setText('Projects in this portfolio:')
-    projectslistlabel.move(300,20)
     projectslistbox = QtGui.QListWidget(parent=geoguiwindow)
-    projectslistbox.move(300, 40)
-    projectslistbox.resize(300, hei-100)
     projectslistbox.verticalScrollBar()
     projectslistbox.currentItemChanged.connect(updateprojectinfo)
     buttons['remove'] = QtGui.QPushButton('Remove selected project from portfolio', parent=geoguiwindow)
-    buttons['remove'].move(300, hei-40)
     buttons['remove'].clicked.connect(removeproject); print('WARNing need to implement click')
+    projectslistlabel.move(330,20)
+    projectslistbox.move(330, 40)
+    buttons['remove'].move(330, hei-40)
+    projectslistbox.resize(300, hei-100)
+    
     
     ## Project info
     projectsinfolabel = QtGui.QLabel(parent=geoguiwindow)
     projectsinfolabel.setText('Information about the selected project:')
-    projectsinfolabel.move(620,20)
     projectinfobox = QtGui.QTextEdit(parent=geoguiwindow)
-    projectinfobox.move(620, 40)
-    projectinfobox.resize(600, hei-100)
     projectinfobox.setReadOnly(True)
     projectinfobox.verticalScrollBar()
-    
+    projectsinfolabel.move(640,20)
+    projectinfobox.move(640, 40)
+    projectinfobox.resize(530, hei-100)
     
     ## Objectives
     objectivetext = odict()
@@ -279,13 +291,13 @@ def geogui():
     for k,key in enumerate(objectivetext.keys()):
         objectivetextobjs[key] = QtGui.QLabel(parent=geoguiwindow)
         objectivetextobjs[key].setText(str(objectivetext[key]))
-        objectivetextobjs[key].move(left+10, 205+k*30)
+        objectivetextobjs[key].move(left+10, 235+k*30)
     
     objectiveinputs = odict()
     for k,key in enumerate(objectivetext.keys()):
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
         objectiveinputs[key].setText(str(objectives[key]))
-        objectiveinputs[key].move(left+120, 200+k*30)
+        objectiveinputs[key].move(left+120, 230+k*30)
     
 
     geoguiwindow.show()
