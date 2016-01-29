@@ -458,14 +458,14 @@ class Project(object):
         if boc is None:
             try: boc = self.getBOC(objectives = objectives)
             except: raise OptimaException('Cannot plot a nonexistent BOC!')
+        
+        if not deriv:
+            print('Plotting BOC for "%s"...' % self.name)
         else:
-            if not deriv:
-                print('Plotting BOC for "%s"...' % self.name)
-            else:
-                print('Plotting BOC derivative for "%s"...' % self.name)
-            ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
-            plt.title('Project: %s' % self.name)
-            if returnplot: return ax
-            else: plt.show()
-            return None
+            print('Plotting BOC derivative for "%s"...' % self.name)
+        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+        plt.title('Project: %s' % self.name)
+        if returnplot: return ax
+        else: plt.show()
+        return None
     
