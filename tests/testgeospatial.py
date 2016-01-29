@@ -16,10 +16,11 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
+'makeprojects',
 #'forcerefresh',
-'makeportfolio',
-'generateBOCs',
-#'rungui',
+#'makeportfolio',
+#'generateBOCs',
+'rungui',
 ]
 
 ##############################################################################
@@ -50,6 +51,20 @@ filename2 = 'test2.prj'
 
 T = tic()
 
+
+
+## Make projects test
+if 'makeprojects' in tests:
+    t = tic()
+    print('Running makeprojects...')
+    from optima import saveobj, defaults
+    
+    P = defaults.defaultproject('generalized')
+    Q = defaults.defaultproject('concentrated')
+    saveobj('geotestproj1.prj', P)
+    saveobj('geotestproj2.prj', Q)
+    
+    done(t)
 
 
 

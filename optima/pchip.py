@@ -7,9 +7,8 @@ Script written by Chris Michalski 2009aug18 used as a basis.
 Version: 2016jan22 by davidkedz
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-from numpy import linspace
+from numpy import linspace, array, diff
 from copy import deepcopy as dcp
 import collections
 #from interpolate import slopes, stineman_interp
@@ -17,7 +16,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False):
+def pchip(x, y, xnew, deriv = False, method='pchip'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]
@@ -30,12 +29,23 @@ def pchip(x, y, xnew, deriv = False):
     
 #    print x
 #    print y
-
-    # Compute slopes used by piecewise cubic Hermite interpolator.
-    m = pchip_slopes(x, y)
     
-    # Use these slopes (along with the Hermite basis function) to interpolate.
-    ynew = pchip_eval(x, y, m, xnew, deriv)
+    if method=='pchip': # WARNING, need to rename this function something else...
+        m = pchip_slopes(x, y) # Compute slopes used by piecewise cubic Hermite interpolator.
+        ynew = pchip_eval(x, y, m, xnew, deriv) # Use these slopes (along with the Hermite basis function) to interpolate.
+    
+    elif method=='smoothinterp':
+        from utils import smoothinterp
+        ynew = smoothinterp(xnew, x, y)
+        if deriv:
+		    ynew = diff(ynew).tolist() # Calculate derivative explicitly
+		    ynew.append(ynew[-1]) # Duplicate the last element so the right length
+    else:
+        raise Exception('Interpolation method "%s" not understood' % method)
+    
+    
+    
+    if type(y)==type(array([])): ynew = array(ynew) # Try to preserve original type
     
     return ynew
     
@@ -65,7 +75,7 @@ def pchip_slopes(x, y, monotone=True):
     
 #    print secants
 #    print m
-    return np.array(m)
+    return array(m)
 
 #=========================================================
 def pchip_eval(x, y, m, xvec, deriv = False):

@@ -2,3 +2,4 @@
 0.260 2016-Jan-25_18:53:29 d3bf4be geogui-with-plotfixes
 0.253 2016-Jan-25_19:11:54 5cab29f geogui-with-plotfixes
 0.297 2016-Jan-25_19:17:29 1b92bc3 geogui-with-plotfixes
+0.264 2016-Jan-29_05:02:50 d816d87 fix-geogui

@@ -73,7 +73,7 @@ class Portfolio(object):
         if type(projects)==list:
             for project in projects: 
                 self.projects[project.uid] = project        
-                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 4, verbose)
+                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
     def getdefaultbudgets(self, progsetnames=None, verbose=0):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''
@@ -405,7 +405,7 @@ class GAOptim(object):
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        for pno,p in enumerate(projects):
+        for pno,p in enumerate(projects.values()):
             self.resultpairs[p.uid] = odict()
 
             # Crash if any project doesn't have progsets
