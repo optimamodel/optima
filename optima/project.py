@@ -407,7 +407,9 @@ class Project(object):
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC()
-        if objectives == None: objectives = defaultobjectives()
+        if objectives == None:
+            printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            objectives = defaultobjectives()
         projectBOC.objectives = objectives
         
         if budgetlist == None:
@@ -416,6 +418,7 @@ class Project(object):
             else:
                 try:
                     baseline = sum(self.progsets[0].getdefaultbudget().values())
+                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 0, verbose)
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
             budgetlist = [x*baseline for x in [0.1,0.3,0.6,1.0,3.0,6.0,10.0]]
