@@ -86,12 +86,22 @@
 
   .data {
     height: 30px;
+    &.bordered {
+      border-bottom: 1px solid black;
+      padding: 5%;
+    }
+    &.spaced {
+      padding: 5%;
+    }
   }
 
   .column {
     display: flex;
     flex-direction: column;
     width: 80px;
+    &.bordered {
+      border: 1px solid black;
+    }
   }
 
   .numeric {
@@ -117,5 +127,14 @@
 }
 
 .flex-column {
-  display: flex; flex-direction: column
+  display: flex;
+  flex-direction: column;
+}
+
+.margin_left {
+  margin-left: 2%;
+}
+
+.margin_top {
+  margin-top: 10%;
 }
