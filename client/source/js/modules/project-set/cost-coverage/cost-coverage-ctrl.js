@@ -1,4 +1,4 @@
-define(['./module', 'underscore'], function (module, _) {
+define(['./../module', 'underscore'], function (module, _) {
   'use strict';
 
   module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
@@ -20,6 +20,20 @@ define(['./module', 'underscore'], function (module, _) {
       return;
     }
 
+    // Initializing tabs and setting default tab
+    vm.activeTab = 'cost';
+    vm.tabs = [{
+      name: 'Define cost functions',
+      slug: 'cost'
+    }, {
+      name: 'Define outcome functions',
+      slug: 'outcome'
+    }, {
+      name: 'View summary',
+      slug: 'summary'
+    }];
+
+    // Fetch list of program-set for open-project from BE
     $http.get('/api/project/' + vm.openProject.id + '/progsets')
       .success(function (response) {
         if (response.progsets) {
@@ -27,33 +41,25 @@ define(['./module', 'underscore'], function (module, _) {
         }
       });
 
+    // Fetch list of parameter-set for open-project from BE
     $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
       vm.parsets = response.parsets;
     });
 
-    vm.activeTab = 'cost';
-    vm.post = {};
-    vm.tabs = [
-      {
-        name: 'Define cost functions',
-        slug: 'cost'
-      },
-      {
-        name: 'Define outcome functions',
-        slug: 'outcome'
-      },
-      {
-        name: 'View summary',
-        slug: 'summary'
+    // Population program dropdown for selected program-set
+    this.populateProgramDropdown = function() {
+      if (vm.selectedProgramSet) {
+        vm.programs = vm.selectedProgramSet.programs;
       }
-    ];
+    };
+
     vm.years = [{
       /* ToDo: replace with api data */
       id: 1
-    }]
+    }];
 
     /* VM functions */
-    vm.populateProgramDropdown = populateProgramDropdown;
+    vm.post = {};
     vm.addYear = addYear;
     vm.selectTab = selectTab;
     vm.deleteYear = deleteYear;
@@ -82,12 +88,6 @@ define(['./module', 'underscore'], function (module, _) {
       });
     }
 
-    function populateProgramDropdown() {
-      if (vm.selectedProgramSet) {
-        vm.programs = vm.selectedProgramSet.programs;
-      }
-    };
-
     function selectTab(tab) {
       vm.activeTab = tab;
     }
@@ -96,8 +96,6 @@ define(['./module', 'underscore'], function (module, _) {
       vm.years.push({id: _.random(1, 10000)});
       /* ToDo: replace with api data */
     }
-
-    /* Initialize */
 
   });
 
