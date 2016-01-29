@@ -5,7 +5,7 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan06 by cliffk
+Version: 2016jan27 by cliffk
 """
 
 
@@ -54,7 +54,7 @@ if 'plot' in tests and doplot:
     print('Running plot test...')
     from optima import Project, plotresults
     
-    P = Project(spreadsheet='concentrated.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
     plotresults(results, figsize=(14,10))
 
@@ -71,8 +71,7 @@ if 'browser' in tests and doplot:
     from optima import Project, browser
     
     P = Project(spreadsheet='concentrated.xlsx')
-    results = P.runsim('default')
-    browser(results)
+    browser(P.results[-1])
 
     done(t)
 
@@ -88,7 +87,7 @@ if 'gui' in tests and doplot:
     print('Running GUI test...')
     from optima import Project, pygui
     
-    P = Project(spreadsheet='concentrated.xlsx')
+    P = Project(spreadsheet='test7pops.xlsx')
     results = P.runsim('default')
     pygui(results)
 

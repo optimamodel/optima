@@ -11,7 +11,7 @@ Version: 2016jan09 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'attributes',
-#'sensitivity',
+'sensitivity',
 #'manualfit',
 'autofit',
 #'autofitmulti',
@@ -78,7 +78,7 @@ if 'sensitivity' in tests:
     
     if doplot:
         from optima import pygui
-        pygui(results, which=['prev-tot', 'prev-pops', 'numinci-pops'])
+        pygui(results, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
@@ -117,10 +117,9 @@ if 'autofit' in tests:
     results2 = P.runsim('autofit', end=2015)
     
     if doplot:
-        from optima import plotmismatch, plotresults
-        plotmismatch(P.parsets['autofit'])
+        from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 
@@ -139,14 +138,14 @@ if 'autofitmulti' in tests:
     
     P = Project(spreadsheet='generalized.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5) # Create MC initialization
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=100, inds=None) # Run automatic fitting
-    results1 = P.runsim('default', end=2015) # Generate results
-    results2 = P.runsim('autofit', end=2015)
+    P.runsim('sensitivity', end=2015) # Generate results
+    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
+    
     
     if doplot:
-        from gui import plotresults
-        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        from optima import plotresults
+        plotresults(P.parsets['sensitivity'].getresults(), toplot=['prev-tot', 'numinci-sta'])
+        plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-tot', 'numinci-sta'])
     
     done(t)
 
@@ -176,7 +175,7 @@ if 'longfit' in tests:
     if doplot:
         from optima import plotresults
         plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(results2, toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 

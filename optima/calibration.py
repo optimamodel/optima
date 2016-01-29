@@ -9,7 +9,7 @@ from numpy import median, zeros, array, mean
 
 
 
-def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
+def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
     ''' 
     Function to perturb the parameters to get "uncertainties".
     
@@ -36,6 +36,7 @@ def sensitivity(orig=None, ncopies=5, what='force', span=0.5, ind=0, verbose=2):
     
     # Copy things
     parset = dcp(orig) # Copy the original parameter set
+    parset.project = project # Keep original project information
     origpars = dcp(parset.pars[ind])
     parset.pars = []
     for n in range(ncopies):
@@ -88,7 +89,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     if type(name)!=str: raise OptimaException('"name" must be the name or index of a paramete set')
     
     # Initialization
-    parset = project.parsets[name] # Copy the original parameter set
+    parset = project.parsets[name] # Shorten the original parameter set
+    parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
@@ -96,6 +98,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
+    parset.improvement = [] # For storing the improvement for each fit
     pars = origparlist[0] # Just get a copy of the pars for parsing
     
     
@@ -189,7 +192,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         '''
         
         # Validate input -- check everything in one go
-        if None in [parvec, pars, parlist, project]: raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
+        if any([arg is None for arg in [parvec, pars, parlist, project]]): 
+            raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
         
         def extractdata(xdata, ydata):
             ''' Return the x and y data values for non-nan y data '''
@@ -256,6 +260,6 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
         # Save
         pars = convert(pars, parlist, parvecnew)        
         parset.pars.append(pars)
-        parset.mismatch = output.fval # Store mismatch history
+        parset.improvement.append(output.fval) # Store improvement history
     
     return parset
