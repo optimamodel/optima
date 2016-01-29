@@ -26,7 +26,7 @@ To install, run `python setup.py develop` in the root repository directory. This
 ### 2.2.2 Dependencies
 If you use Anaconda, everything should be taken care of, except possibly `pyqt4`, which is needed for the Python GUI.
 
-If you don't want to use Anaconda, you'll need to install the dependencies yourself. If you install the latest versions of `numpy`, `matplotlib`, and `xlrd`, most of the backend should work. `mpld3` is required for viewing plots in the browser (not essential).
+If you don't want to use Anaconda, you'll need to install the dependencies yourself (via e.g. `pip install`). If you install the latest versions of `numpy`, `matplotlib`, `xlrd`, `xlsxwriter`, and `pyqt4`, and `mpld3`, all of the backend should work.
 
 The full list of requirements (including for the frontend) is given in `server/requirements.txt`. However, note that `run.sh` will create a virtual environment with these packages even if you don't have them available on your system.
 
