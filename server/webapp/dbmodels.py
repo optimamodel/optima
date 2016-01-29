@@ -476,6 +476,30 @@ class ProgramsDb(db.Model):
 
         return pars
 
+    def data_api_to_db(self, data):
+        costcov_data = []
+
+        for x in data:
+            costcov_data.append({
+                "cost": x["spending"],
+                "year": x["year"],
+                "cov": x["coverage"]
+            })
+
+        return costcov_data
+
+    def data_db_to_api(self):
+        costcov_data = []
+
+        for x in self.costcov or []:
+            costcov_data.append({
+                "spending": x["cost"],
+                "year": x["year"],
+                "coverage": x["cov"]
+            })
+
+        return costcov_data
+
     def _conv_lg_num(self, num):
         return int(float(num))
 
