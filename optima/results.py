@@ -6,7 +6,9 @@ Version: 2015jan23 by cliffk
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
+import matplotlib.pyplot as plt
 
+from optima import pchip, plotpchip
 
 
 def getresults(project=None, pointer=None, die=True):
@@ -100,9 +102,49 @@ class Result(object):
 
 
 
+class BOC(object):
+    ''' Structure to hold a budget and outcome array for geospatial analysis'''
+    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
+        self.uid = uuid()
+        self.created = today()
+        self.x = x if x else [] # A list of budget totals
+        self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
+        
+        self.name = name # Required by rmresult in Project.
+
+    def __repr__(self):
+        ''' Print out summary stats '''
+        output = '============================================================\n'
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+        
+    def getoutcome(self, budgets):
+        ''' Get interpolated outcome for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets)
+        
+    def getoutcomederiv(self, budgets):
+        ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets, deriv = True)
+        
+    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+        ''' Plot the budget-outcome curve '''
+        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
+        plt.xlabel('Budget')
+        if not deriv: plt.ylabel('Outcome')
+        else: plt.ylabel('Marginal Outcome')
+        
+        if returnplot: return ax
+        else: plt.show()
+        return None
+
+
 class Resultset(object):
     ''' Structure to hold results '''
-    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, budgetyears=None, domake=True):
+    def __init__(self, raw=None, name=None, simpars=None, project=None, settings=None, data=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, domake=True):
         # Basic info
         self.uid = uuid()
         self.created = today()
@@ -134,9 +176,10 @@ class Resultset(object):
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
-        self.budget = budget # Store budget
-        self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
+        self.budget = budget if budget is not None else odict() # Store budget
+        self.coverage = coverage if coverage is not None else odict()  # Store coverage
+        self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
@@ -144,9 +187,10 @@ class Resultset(object):
         self.main['prev'] = Result('HIV prevalence (%)', isnumber=False)
         self.main['force'] = Result('Force-of-infection (%/year)', isnumber=False)
         self.main['numinci'] = Result('New infections')
-        self.main['numplhiv'] = Result('Number of PLHIV')
+        self.main['numnewdiag'] = Result('New diagnoses')
         self.main['numdeath'] = Result('HIV-related deaths')
-        self.main['numdiag'] = Result('New diagnoses')
+        self.main['numplhiv'] = Result('Number of PLHIV')
+        self.main['numdiag'] = Result('Number of diagnosed PLHIV')
         self.main['numtreat'] = Result('Number on treatment')
 
         
@@ -213,8 +257,9 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        alltreat = self.settings.alltreat
         allplhiv = self.settings.allplhiv
+        alldx = self.settings.alldx
+        alltx = self.settings.alltx
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -223,27 +268,30 @@ class Resultset(object):
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
-        
+        self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numinci'].datatot = processdata(data['optnuminfect'])
 
-        self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
+        self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,indices], quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdeath'].datatot = processdata(data['optdeath'])
-
-        self.main['numdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
-        self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+        
+        self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        
+        self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
@@ -265,7 +313,7 @@ class Resultset(object):
 
 
 
-class Multiresultset(Resultset):
+class Multiresultset(object):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, name=None):
         # Basic info
@@ -275,6 +323,7 @@ class Multiresultset(Resultset):
         self.nresultsets = len(resultsetlist)
         self.keys = []
         self.budget = odict()
+        self.coverage = odict()
         self.budgetyears = odict() 
         if type(resultsetlist)==list: pass # It's already a list, carry on
         elif type(resultsetlist) in [odict, dict]: resultsetlist = resultsetlist.values() # Convert from odict to list
@@ -283,9 +332,9 @@ class Multiresultset(Resultset):
                 
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys']
-        commonattrs = ['project', 'data', 'datayears']
-        diffattrs = ['parset', 'progset', 'raw', 'simpars']
+        sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
+        commonattrs = ['project', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
+        diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
@@ -315,13 +364,14 @@ class Multiresultset(Resultset):
                     getattr(self.main[key2], at)[key] = getattr(rset.main[key2], at)[0] # Add data: e.g. self.main['prev'].pops['foo'] = rset.main['prev'].pops[0] -- WARNING, the 0 discards uncertainty data
             
             # Finally, process the budget and budgetyears
-            try: # Not guaranteed to have a budget attribute, e.g. if parameter scenario
+            if getattr(rset,'budget'): # If it has a budget, overwrite coverage information by calculating from budget
                 self.budget[key]      = rset.budget
                 self.budgetyears[key] = rset.budgetyears
-            except: 
-                pass # Not a problem if doesn't work
-            
-        
+                self.coverage[key]    = rset.progset.getprogcoverage(budget=rset.budget, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=True) # Set proportion TRUE here, because coverage will be outputted as PERCENT covered
+            elif getattr(rset,'coverage'): # If no budget, compute budget from coverage
+                self.coverage[key]      = rset.coverage
+                self.budgetyears[key] = rset.budgetyears
+                self.budget[key]    = rset.progset.getprogbudget(coverage=rset.coverage, t=rset.budgetyears, parset=rset.parset, results=rset, proportion=False) # Set proportion FALSE here, because coverage will be inputted as NUMBER covered    
         
         
     def __repr__(self):

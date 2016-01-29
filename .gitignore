@@ -7,8 +7,8 @@ server/build
 server/static
 server/config.py
 *.log
-optima-egg.info/*
 optima.egg-info/*
+optima.egg-info/
 \~\$*
 *.iml
 *.pyc
@@ -17,3 +17,4 @@ optima.egg-info/*
 *.npy
 *.db
 *.prj
+*.prt
