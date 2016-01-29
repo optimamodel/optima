@@ -29,7 +29,7 @@ def getplotselections(results):
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
     plots such as the cascade.
     
-    Version: 2016jan24
+    Version: 2016jan28
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from below
@@ -59,7 +59,10 @@ def getplotselections(results):
             if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
                 plotselections['keys'] += [budcov] # e.g. 'budget'
                 plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
-
+    
+    ## Cascade plot is always available, since epi is always available
+    plotselections['keys'] += ['cascade']
+    plotselections['names'] += ['Treatment cascade']
     
     ## Get plot selections for plotepi
     plotepikeys = list()
@@ -133,7 +136,17 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             except OptimaException as E: 
                 if die: raise E
                 else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
-            
+    
+    ## Add cascade plot
+    if 'cascade' in toplot:
+        toplot.remove('cascade') # Because everything else is passed to plotepi()
+        try: 
+            allplots['cascade'] = plotcascade(results, die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+    
+    
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
@@ -492,6 +505,79 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        
+    close(fig)
+    
+    return fig
+
+
+
+
+
+##################################################################
+## Plot improvements
+##################################################################
+def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
+    ''' 
+    Plot the treatment cascade.
+    
+    NOTE: do not call this function directly; instead, call via plotresults().
+    
+    Version: 2016jan28    
+    '''
+    
+    # Figure out what kind of result it is -- WARNING, copied from 
+    if type(results)==Resultset: 
+        ismultisim = False
+        nsims = 1
+    elif type(results)==Multiresultset:
+        ismultisim = True
+        titles = results.keys # Figure out the labels for the different lines
+        nsims = len(titles) # How ever many things are in results
+    else: 
+        errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig = figure(figsize=figsize)
+    
+    cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+    
+    colors = gridcolormap(len(cascadelist))
+    
+    
+    bottom = 0*results.tvec # Easy way of setting to 0...
+    for plt in range(nsims): # WARNING, copied from plotallocs()
+        
+        ## Do the plotting
+        subplot(nsims,1,plt+1)
+        for k,key in enumerate(cascadelist): # Loop backwards so correct ordering -- first one at the top, not bottom
+            if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata = results.main[key].tot[0] # Get the best estimate
+            fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
+            plot((0, 0), (0, 0), color=colors[k], linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+                            
+        
+        ## Configure plot -- WARNING, copied from plotepi()
+        ax = gca()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.title.set_fontsize(titlesize)
+        ax.xaxis.label.set_fontsize(labelsize)
+        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+        # Configure plot specifics
+        
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+        if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
+        else: ax.set_title('Cascade')
+        ax.set_xlabel('Year')
+        ax.set_ylim((0,ylim()[1]))
+        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
     close(fig)
     

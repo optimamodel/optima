@@ -77,15 +77,16 @@ For the development environment setup Optima needs to use a Postgres database cr
 - username: `optima`
 - password: `optima`
 
-For example, use these commands (may need to run e.g. `sudo su postgres` first):
+For example, use these commands (may need to run e.g. `sudo su postgres` first, but they are run from the shell, not from the `psql` console) *from the root Optima directory*:
 
-```
-    $ createdb optima
-    $ createdb optima_test
-    $ createuser optima -P -s
-    // with password optima
-    $ createuser test -P -s
-    // with password test
+```bash
+createdb optima # Create Optima database -- for run.sh
+createdb test # Create test database -- for test.sh
+createuser optima -P -s # with password optima
+createuser test -P -s # with password test
+source server/p-env/bin/activate # ...not sure what this does
+migrate version_control postgresql://optima:optima@localhost:5432/optima server/db/ # Allow version control
+migrate upgrade postgresql://optima:optima@localhost:5432/optima server/db/ # Run the migrations to be safe
 ```
 
 

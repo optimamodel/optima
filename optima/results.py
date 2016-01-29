@@ -187,9 +187,10 @@ class Resultset(object):
         self.main['prev'] = Result('HIV prevalence (%)', isnumber=False)
         self.main['force'] = Result('Force-of-infection (%/year)', isnumber=False)
         self.main['numinci'] = Result('New infections')
-        self.main['numplhiv'] = Result('Number of PLHIV')
+        self.main['numnewdiag'] = Result('New diagnoses')
         self.main['numdeath'] = Result('HIV-related deaths')
-        self.main['numdiag'] = Result('New diagnoses')
+        self.main['numplhiv'] = Result('Number of PLHIV')
+        self.main['numdiag'] = Result('Number of diagnosed PLHIV')
         self.main['numtreat'] = Result('Number on treatment')
 
         
@@ -256,8 +257,9 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
-        alltreat = self.settings.alltreat
         allplhiv = self.settings.allplhiv
+        alldx = self.settings.alldx
+        alltx = self.settings.alltx
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -266,27 +268,30 @@ class Resultset(object):
             self.main['prev'].datapops = processdata(data['hivprev'], uncertainty=True)
             self.main['prev'].datatot = processdata(data['optprev'])
         
-        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
-        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
-        
+        self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numinci'].datatot = processdata(data['optnuminfect'])
 
-        self.main['force'].pops = quantile(allinci[:,:,indices] / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
-        self.main['force'].tot = quantile(allinci[:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
+        self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
+        if data is not None: self.main['numnewdiag'].datatot = processdata(data['optnumdiag'])
         
         self.main['numdeath'].pops = quantile(alldeaths[:,:,indices], quantiles=quantiles)
         self.main['numdeath'].tot = quantile(alldeaths[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numdeath'].datatot = processdata(data['optdeath'])
-
-        self.main['numdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
-        self.main['numdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
-        if data is not None: self.main['numdiag'].datatot = processdata(data['optnumdiag'])
         
-        self.main['numtreat'].pops = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
-        self.main['numtreat'].tot = quantile(allpeople[:,alltreat,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        self.main['numplhiv'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
+        self.main['numplhiv'].tot = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 2 is populations
+        if data is not None: self.main['numplhiv'].datatot = processdata(data['optplhiv'])
+        
+        self.main['numdiag'].pops = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numdiag'].tot = quantile(allpeople[:,alldx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+        
+        self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+        self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
 
@@ -327,9 +332,9 @@ class Multiresultset(object):
                 
         
         # Fundamental quantities -- populated by project.runsim()
-        sameattrs = ['tvec', 'dt', 'popkeys']
-        commonattrs = ['project', 'data', 'datayears']
-        diffattrs = ['parset', 'progset', 'raw', 'simpars']
+        sameattrs = ['tvec', 'dt', 'popkeys'] # Attributes that should be the same across all results sets
+        commonattrs = ['project', 'data', 'datayears', 'settings'] # Uhh...same as sameattrs, not sure my logic in separating this out, but hesitant to remove because it made sense at the time :)
+        diffattrs = ['parset', 'progset', 'raw', 'simpars'] # Things that differ between between results sets
         for attr in sameattrs+commonattrs: setattr(self, attr, None) # Shared attributes across all resultsets
         for attr in diffattrs: setattr(self, attr, odict()) # Store a copy for each resultset
 
