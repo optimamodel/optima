@@ -298,7 +298,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         thisfrac = objectives[key+'frac']
         if thisfrac<0 or thisfrac>=1:
             errormsg = 'Fractional reduction in "%s" must be >=0 and <1; actually %f' % (key, thisfrac)
-            raise OptimaException(errormsg) # WARNING TEMP
+            print(errormsg) # WARNING TEMP
+#            raise OptimaException(errormsg) # WARNING TEMP
     
     parset  = dcp(project.parsets[parsetname]) # Copy the original parameter set
     progset = dcp(project.progsets[progsetname]) # Copy the original parameter set

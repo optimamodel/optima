@@ -122,6 +122,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = range(npops) if par['for'] > npops else [par['for']]
                     elif type(par['for'])==list: #... if its a population.
                         pops = par['for']
+                    elif par['for']=='tot': #... if its a population.
+                        pops = [par['for']]
                     else: 
                         errormsg = 'Unrecognized population or partnership type.'
                         raise OptimaException(errormsg)

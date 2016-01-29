@@ -453,44 +453,47 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         else: printv(errormsg, 1, verbose)
     budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    proglabels = toplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
-    nprogs = len(proglabels)
-    nallocs = len(alloclabels)
-    
-    fig = figure(figsize=figsize)
-    fig.subplots_adjust(bottom=0.30) # Less space on bottom
-    fig.subplots_adjust(hspace=0.50) # More space between
-    colors = gridcolormap(nprogs)
-    ax = []
-    ymax = 0
-    
-    for plt in range(nallocs):
-        nbudgetyears = len(budgetyearstoplot[plt])
-        ax.append(subplot(nallocs,1,plt+1))
-        ax[-1].hold(True)
-        barwidth = .5/nbudgetyears
-        for y in range(nbudgetyears):
-            progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
-            if which=='coverage': progdata *= 100 
-            xbardata = arange(nprogs)+.75+barwidth*y
-            for p in range(nprogs):
-                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
-                else: barcolor = colors[p] # Only one year? Color by program
-                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
-                else: yearlabel=None
-                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
-        if nbudgetyears>1: ax[-1].legend()
-        ax[-1].set_xticks(arange(nprogs)+1)
-        if plt<nprogs: ax[-1].set_xticklabels('')
-        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
-        ax[-1].set_xlim(0,nprogs+1)
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    ## WARNING: This code dies if there's nothing to plot. Actually, this code is ok, but it dies when it gets to the GUI.
+    if toplot:
+        proglabels = toplot[0].keys() 
+        alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
+        nprogs = len(proglabels)
+        nallocs = len(alloclabels)
         
-        ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
-        ax[-1].set_ylabel(ylabel)
-        ax[-1].set_title(alloclabels[plt])
-        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        fig = figure(figsize=figsize)
+        fig.subplots_adjust(bottom=0.30) # Less space on bottom
+        fig.subplots_adjust(hspace=0.50) # More space between
+        colors = gridcolormap(nprogs)
+        ax = []
+        ymax = 0
         
-    close(fig)
+        for plt in range(nallocs):
+            nbudgetyears = len(budgetyearstoplot[plt])
+            ax.append(subplot(nallocs,1,plt+1))
+            ax[-1].hold(True)
+            barwidth = .5/nbudgetyears
+            for y in range(nbudgetyears):
+                progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
+                if which=='coverage': progdata *= 100 
+                xbardata = arange(nprogs)+.75+barwidth*y
+                for p in range(nprogs):
+                    if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+                    else: barcolor = colors[p] # Only one year? Color by program
+                    if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+                    else: yearlabel=None
+                    ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+            if nbudgetyears>1: ax[-1].legend()
+            ax[-1].set_xticks(arange(nprogs)+1)
+            if plt<nprogs: ax[-1].set_xticklabels('')
+            if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+            ax[-1].set_xlim(0,nprogs+1)
+            
+            ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
+            ax[-1].set_ylabel(ylabel)
+            ax[-1].set_title(alloclabels[plt])
+            ymax = maximum(ymax, ax[-1].get_ylim()[1])
+            
+        close(fig)
     
-    return fig
+        return fig
