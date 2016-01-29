@@ -176,10 +176,10 @@ class Resultset(object):
         self.project = project # ...and just store the whole project
         self.parset = parset # Store parameters
         self.progset = progset # Store programs
-        self.budget = budget # Store budget
-        self.coverage = coverage # Store coverage
-        self.budgetyears = budgetyears # Store budget
         self.data = data # Store data
+        self.budget = budget if budget is not None else odict() # Store budget
+        self.coverage = coverage if coverage is not None else odict()  # Store coverage
+        self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
         self.settings = settings if settings is not None else Settings()
         
         # Main results -- time series, by population
