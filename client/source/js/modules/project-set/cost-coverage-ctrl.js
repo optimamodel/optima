@@ -4,30 +4,35 @@ define(['./module', 'underscore'], function (module, _) {
   module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
 
     var vm = this;
-    var fakeParams = [
-      {
-        name: 'First'
-      },
-      {
-        name: 'Second',
-        coverage: true
-      },
-      {
-        name: 'Third'
-      }
-    ];
 
-    /* VM vars */
     vm.openProject = activeProject.data;
-    console.log('openProject', vm.openProject);
-    vm.activeTab = 'outcome';
 
-    /* ToDo: replace with api data */
-    vm.fakeParams = angular.copy(fakeParams);
-    vm.programSetList = angular.copy(fakeParams);
-    vm.parsets = angular.copy(fakeParams);
+    // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
+    if (!vm.openProject.has_data) {
+      modalService.inform(
+        function () {
+        },
+        'Okay',
+        'Please upload spreadsheet to proceed.',
+        'Cannot proceed'
+      );
+      $state.go('project.open');
+      return;
+    }
 
-    vm.post = {}
+    $http.get('/api/project/' + vm.openProject.id + '/progsets')
+      .success(function (response) {
+        if (response.progsets) {
+          vm.programSetList = response.progsets;
+        }
+      });
+
+    $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
+      vm.parsets = response.parsets;
+    });
+
+    vm.activeTab = 'cost';
+    vm.post = {};
     vm.tabs = [
       {
         name: 'Define cost functions',
@@ -41,7 +46,7 @@ define(['./module', 'underscore'], function (module, _) {
         name: 'View summary',
         slug: 'summary'
       }
-    ]
+    ];
     vm.years = [{
       /* ToDo: replace with api data */
       id: 1
@@ -88,35 +93,11 @@ define(['./module', 'underscore'], function (module, _) {
     }
 
     function addYear() {
-      vm.years.push({id: _.random(1, 10000)})
+      vm.years.push({id: _.random(1, 10000)});
       /* ToDo: replace with api data */
     }
 
     /* Initialize */
-
-    // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
-    if (!vm.openProject.has_data) {
-      modalService.inform(
-        function () {
-        },
-        'Okay',
-        'Please upload spreadsheet to proceed.',
-        'Cannot proceed'
-      );
-      $state.go('project.open')
-      return;
-    }
-
-    $http.get('/api/project/' + vm.openProject.id + '/progsets')
-      .success(function (response) {
-        if (response.progsets) {
-          //vm.programSetList = response.progsets;
-        }
-      });
-
-    $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
-      //vm.parsets = response.parsets;
-    });
 
   });
 
