@@ -274,7 +274,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -288,9 +288,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
         hold(True)
         scatter(origx,origy)
     
-    Version: 2014dec01 by cliffk
+    Version: 2016jan29 by cliffk
     """
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
     # Ensure arrays and remove NaNs
     newx = array(newx)
@@ -305,7 +305,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
         raise Exception(errormsg)
     origy = origy[~isnan(origy)] 
     origx = origx[~isnan(origy)]
-
+    
+    # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
+    if smoothness is None: smoothness = ceil(len(newx)/len(origx))
+    smoothness = int(smoothness) # Make sure it's an appropriate number
     
     # Make sure it's in the correct order
     correctorder = argsort(origx)

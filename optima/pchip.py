@@ -17,7 +17,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False):
+def pchip(x, y, xnew, deriv = False, method='pchip'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]
@@ -30,12 +30,20 @@ def pchip(x, y, xnew, deriv = False):
     
 #    print x
 #    print y
-
-    # Compute slopes used by piecewise cubic Hermite interpolator.
-    m = pchip_slopes(x, y)
     
-    # Use these slopes (along with the Hermite basis function) to interpolate.
-    ynew = pchip_eval(x, y, m, xnew, deriv)
+    if method=='pchip':
+        m = pchip_slopes(x, y) # Compute slopes used by piecewise cubic Hermite interpolator.
+        ynew = pchip_eval(x, y, m, xnew, deriv) # Use these slopes (along with the Hermite basis function) to interpolate.
+    elif method=='smoothinterp':
+        from utils import smoothinterp
+        ysmooth = smoothinterp(xnew, x, y)
+        if not deriv:
+            ynew = ysmooth
+#        else:
+            
+            
+    else:
+        raise Exception('Method "%s" not found' % method)
     
     return ynew
     
