@@ -6,9 +6,6 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016jan23
 """
 
-from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives
-from PyQt4 import QtGui
-from pylab import figure, close
 global geoguiwindow
 geoguiwindow = None
 
@@ -26,6 +23,9 @@ def geogui(redirect = False):
     
     Version: 2016jan23
     '''
+    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives
+    from PyQt4 import QtGui
+    from pylab import figure, close
 
     global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs, oldstdout
     oldstdout = sys.stdout      # Make sure old stdout is remembered for redirection purposes.    

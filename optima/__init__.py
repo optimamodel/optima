@@ -31,7 +31,12 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2016jan26
+Version: 2016jan29
 """
 
+# This means that if Optima is loaded as a module, it's expected to succeed
+import __builtin__
+__builtin__._failsilently = False
+
+# Actually do all the imports
 from optima import *
