@@ -62,6 +62,20 @@ define(['./../module', 'underscore'], function (module, _) {
     }];
 
     /* VM functions */
+    var fakeParams = [
+      {
+        name: 'First'
+      },
+      {
+        name: 'Second',
+        coverage: true
+      },
+      {
+        name: 'Third'
+      }
+    ];
+    vm.fakeParams = angular.copy(fakeParams);
+
     vm.post = {};
     vm.addYear = addYear;
     vm.selectTab = selectTab;
