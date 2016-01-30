@@ -164,6 +164,22 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     
     
+    # More parameters...should maybe be moved somewhere else?
+    breast = simpars['breast']
+    birth = simpars['birth']
+    agetransit = simpars['agetransit']
+    risktransit = simpars['risktransit']
+    birthtransit = simpars['birthtransit']
+    
+    # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
+    agetransitlist = []
+    risktransitlist = []
+    for p1 in range(npops):
+            for p2 in range(npops):
+                if agetransit[p1,p2]: agetransitlist.append((p1,p2))
+                if risktransit[p1,p2]: risktransitlist.append((p1,p2))
+    
+    
     
     
     
@@ -361,7 +377,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 raise OptimaException(errormsg)
         
         
-            
 
         ###############################################################################
         ## Calculate births, age transitions and mother-to-child-transmission
@@ -370,12 +385,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ontreatment = usvl+svl if usecascade else tx
         eligible = dx+care+lost+off if usecascade else dx
 
-        effmtct  = mtctbreast*simpars['breast'][t] + mtctnobreast*(1-simpars['breast'][t]) # Effective MTCT transmission
+        effmtct  = mtctbreast*breast[t] + mtctnobreast*(1-breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
 
+        ## Births....
         for p1 in range(npops):
 
-            allbirthrates = simpars['birthtransit'][p1, :] * simpars['birth'][p1, t]
+            allbirthrates = birthtransit[p1, :] * birth[p1, t]
             alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
             
             for p2 in range(npops):
@@ -400,24 +416,20 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                     
                     people[undx[0], p2, t] += popmtct # HIV+ babies assigned to undiagnosed compartment
                     people[uncirc, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
-
-                # Age-related transitions
-                if simpars['agetransit'][p1,p2]:
-                    peopleaging = people[:, p1, t] * simpars['agetransit'][p1,p2] * dt                        
-                    people[:, p1, t] -= peopleaging # Take away from pop1...
-                    people[:, p2, t] += peopleaging # ... then add to pop2
-                else:
-                    peopleaging = 0
-
-                # Risk-related transitions
-                if simpars['risktransit'][p1,p2]:
-                    peoplemoving1 = people[:, p1, t] * simpars['risktransit'][p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-                    peoplemoving2 = people[:, p2, t] * simpars['risktransit'][p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-                    peoplemoving1 = minimum(peoplemoving1, people[:, p1, t]) # Ensure positive
-                    peoplemoving2 = minimum(peoplemoving2, people[:, p2, t]) # And again
-                else:
-                    peoplemoving1 = 0
-                    peoplemoving2 = 0
+        
+        
+        ## Age-related transitions
+        for p1,p2 in agetransitlist:
+            peopleaging = people[:, p1, t] * agetransit[p1,p2] * dt                        
+            people[:, p1, t] -= peopleaging # Take away from pop1...
+            people[:, p2, t] += peopleaging # ... then add to pop2
+        
+        ## Risk-related transitions
+        for p1,p2 in risktransitlist:
+            peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
+            peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+            peoplemoving1 = minimum(peoplemoving1, people[:, p1, t]) # Ensure positive
+            peoplemoving2 = minimum(peoplemoving2, people[:, p2, t]) # And again
 
 
         ###############################################################################
