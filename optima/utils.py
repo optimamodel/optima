@@ -14,8 +14,8 @@ def printv(string, thisverbose=1, verbose=2, newline=True):
         1 = only essential warnings, e.g. suppressed exceptions
         2 = standard printout
         3 = extra debugging detail (e.g., printout on each iteration)
-        4 = everything possible (e.g., printout on each ​_timestep_​)
-
+        4 = everything possible (e.g., printout on each timestep)
+    
     Thus you a very important statement might be e.g.
         printv('WARNING, everything is wrong', 1, verbose)
 

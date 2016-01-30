@@ -8,9 +8,9 @@ Version: 2016jan19 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-'makespreadsheet',
-'compareexisting',
-'unittests',
+#'makespreadsheet',
+'checkexisting',
+#'unittests',
 ]
 
 dosave = False
@@ -40,6 +40,7 @@ blank()
 ##############################################################################
 
 
+## Just test a basic spreadsheet creation
 if 'makespreadsheet' in tests:
     t = tic()
     print('Running makespreadsheet test...')
@@ -55,6 +56,30 @@ if 'makespreadsheet' in tests:
 
 
 
+
+## Test that the default spreadsheets match the new ones being created
+if 'checkexisting' in tests:
+    t = tic()
+    print('Running check existing spreadsheets test...')
+    
+    ## Define the sheets to check and how many populations
+    existing = {'simple':2, 'generalized':7, 'concentrated':8}
+    prefix = '_tmp' # THe prefix to add to these files for the purposes of checking
+    checksheets = True # Whether or not to check that the numbers and names of the sheets match
+    checkrows = True # Whether or not to check that the number of rows in each sheet is as expected
+    checkblocknames = True # Whether or not to check that the names of each block match
+    checkconstants = True # Whether or not to check that the Constants sheet is identical
+    
+    ## Imports
+    from optima import makespreadsheet
+    from xlrd import open_workbook
+    from os import remove
+    
+    ## Create the sheets
+    for name,pops in existing.items():
+        makespreadsheet(prefix+name+'.xlsx', pops=pops)
+        
+    done(t)
 
 
 
