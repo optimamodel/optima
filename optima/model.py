@@ -497,7 +497,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             currplhiv = people[allplhiv,:,t].sum(axis=0)
             currdx = people[dx,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
-            fractiontodx = maximum(0, propdx[:,t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
+            fractiontodx = maximum(0, propdx[t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
 
         for cd4 in range(ncd4):
             if cd4>0: 

@@ -9,7 +9,7 @@ Version: 2016jan27
 tests = [
 #'standardscen',
 #'maxbudget',
-'generalizedscen'
+'90-90-90'
 ]
 
 ##############################################################################
@@ -193,14 +193,13 @@ if 'standardscen' in tests:
 
 
 
-## Standard scenario test
-if 'generalizedscen' in tests:
+## 90-90-90 scenario test
+if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
     from optima import Parscen, Budgetscen
     from optima.defaults import defaultproject
-    from numpy import array
     
     P = defaultproject('generalized')
     P.settings.usecascade = False
@@ -214,28 +213,26 @@ if 'generalizedscen' in tests:
                 parsetname='default',
                 pars=[]),
 
-#propdiag
-#proptreat
-#successprop
-
          Parscen(name='90-90-90',
               parsetname='default',
-              pars=[{'endval': 1.,
+              pars=[{'endval': .9,
                 'endyear': 2020,
-                'name': 'hivtest',
-                'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
+                'name': 'propdx',
+                'for': ['tot'],
                 'startval': .5,
+                'startyear': 2016},
+                {'endval': .9,
+                'endyear': 2020,
+                'name': 'proptx',
+                'for': ['tot'],
+                'startval': .5,
+                'startyear': 2016},
+                {'endval': .9,
+                'endyear': 2020,
+                'name': 'successprop',
+                'for': ['tot'],
+                'startval': .85,
                 'startyear': 2016}]),
-
-        Budgetscen(name='Double investment in ART, HTC and PMTCT',
-              parsetname='default',
-              progsetname='default',
-              t=[2016,2018,2020],
-              budget={'Condoms': array([1e7,1e7,1e7]),
-                      'FSW programs':array([1e6,1e6,1e6]),
-                      'HTC':array([2e7,2e7,2e7]),
-                      'PMTCT':array([1e6,1e6,1e6]),
-                      'ART':array([1e6,1e6,1e6])})
         ]
 
     # Store these in the project
