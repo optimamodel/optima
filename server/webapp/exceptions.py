@@ -63,6 +63,10 @@ class ProgsetDoesNotExist(RecordDoesNotExist):
     _model = 'progset'
 
 
+class ProgramDoesNotExist(RecordDoesNotExist):
+    _model = 'program'
+
+
 class InvalidCredentials(BaseRESTException):
     code = 401
     description = 'The user or password provided are incorrect'

@@ -1,4 +1,4 @@
-define ['angular-mocks', 'Source/modules/project-set/cost-coverage-service'], ->
+define ['angular-mocks', 'Source/modules/project-set/cost-coverage/cost-coverage-service'], ->
   describe 'costCoverageHelpers service in app.project-set', ->
 
     helpers = null

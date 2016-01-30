@@ -1,7 +1,7 @@
 /**
  *  A service with helper functions for optimization.
  */
-define(['./module', 'angular', 'underscore'], function (module, angular, _) {
+define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.factory('costCoverageHelpers', function () {
