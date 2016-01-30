@@ -1,0 +1,46 @@
+<div class="rich">
+    <div class="section">
+      <div class="6">
+          <h1>Manage economic data</h1>
+      </div>
+    </div>
+    <div class="section">
+      <div class="row">
+        <div class="cols-2">
+          <input type="button" class="btn" value="Create economic data template" ng-click="economicData('create')">
+        </div>
+        <div class="cols-2">
+          <input type="button" class="btn" value="Upload economic data template" ng-click="economicData('upload')">
+        </div>
+        <div class="cols-2">
+          <input type="button" class="btn" value="Remove economic data template" ng-click="economicData('remove')">
+        </div>
+      </div>
+    </div>
+</div>
+
+
+<script type="text/ng-template" id="economicDataUpload.html">
+<div class="modal-header">
+    <a class="modal-close" ng-click="$dismiss('cancel')">×</a>
+    <span class="modal-title">Upload economic data template</span>
+</div>
+<div class="modal-body">
+  <div class="section">
+    <form id="uploadForm" name="UploadEconomicDataForm" method="post" ng-submit="UploadEconomicData()" novalidate="novalidate">
+      <div class="row">
+          <div class="cols-16">
+          <label><b>File</b></label>
+          <input type="file" accept=".xlsx" name="EconomicDataFile" ng-model="dummyFilesModel" file-required ng-file-select="onFileSelect($files)" required>
+          </div>
+      </div>
+
+      <div class="row">
+        <div class="cols-16">
+        <br><button class="btn __green" type="submit" ng-disabled="UploadEconomicDataForm.$invalid">Upload</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+</script>
