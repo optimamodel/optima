@@ -90,7 +90,7 @@ if 'simple' in tests:
         from matplotlib import pyplot as plt
         alldx = results.raw[0]['people'][settings.alldx,:,:].sum(axis=(0,1))
         plhiv = results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
-        treat = results.raw[0]['people'][settings.alltreat,:,:].sum(axis=(0,1))
+        treat = results.raw[0]['people'][settings.alltx,:,:].sum(axis=(0,1))
 
         fig = plt.figure()
         plt.plot(tvec,plhiv,label='PLHIV')
@@ -136,7 +136,7 @@ if 'cascade' in tests:
         care    = results.raw[0]['people'][settings.care,:,:].sum(axis=(0,1))
         allcare = results.raw[0]['people'][settings.allcare,:,:].sum(axis=(0,1))
         plhiv   = results.raw[0]['people'][settings.allplhiv,:,:].sum(axis=(0,1))
-        treat   = results.raw[0]['people'][settings.alltreat,:,:].sum(axis=(0,1))
+        treat   = results.raw[0]['people'][settings.alltx,:,:].sum(axis=(0,1))
         supp    = results.raw[0]['people'][settings.svl,:,:].sum(axis=(0,1))
         lost    = results.raw[0]['people'][settings.lost,:,:].sum(axis=(0,1))
         off     = results.raw[0]['people'][settings.off,:,:].sum(axis=(0,1))
