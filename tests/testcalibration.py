@@ -118,8 +118,8 @@ if 'autofit' in tests:
     
     if doplot:
         from optima import plotresults
-        plotresults(results1, toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
-        plotresults(results2, toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(P.parsets['default'].getresults(), toplot=['prev-tot', 'prev-pops', 'numinci-pops'])
+        plotresults(P.parsets['autofit'].getresults(), toplot=['improvement', 'prev-tot', 'prev-pops', 'numinci-pops'])
     
     done(t)
 

@@ -1,5 +1,5 @@
 '''
-MAKEPLOTS
+PLOTTING
 
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
@@ -13,7 +13,7 @@ Version: 2016jan24
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
 from numpy import array, ndim, maximum, arange, zeros, mean
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, bar, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -29,7 +29,7 @@ def getplotselections(results):
     plot types first (e.g., allocations), followed by the standard epi plots, and finally (if available) other
     plots such as the cascade.
     
-    Version: 2016jan24
+    Version: 2016jan28
     '''
     
     # Figure out what kind of result it is -- WARNING, copied from below
@@ -52,12 +52,17 @@ def getplotselections(results):
         plotselections['names'] += ['Improvement']
     
     
-    ## Add selections for outcome and budget allocations
-    if hasattr(results, 'budget') and results.budget is not None:
-        plotselections['keys'] += ['budget']
-        plotselections['names'] += ['Budget allocation']
+    ## Add selection for budget allocations and coverage
+    budcovdict = odict([('budget','Budget allocation'), ('coverage','Program coverage')])
+    for budcov in budcovdict.keys():
+        if hasattr(results, budcov) and getattr(results, budcov):
+            if all([item is not None for item in getattr(results, budcov).values()]): # Make sure none of the individual budgets are none either
+                plotselections['keys'] += [budcov] # e.g. 'budget'
+                plotselections['names'] += [budcovdict[budcov]] # e.g. 'Budget allocation'
     
-    
+    ## Cascade plot is always available, since epi is always available
+    plotselections['keys'] += ['cascade']
+    plotselections['names'] += ['Treatment cascade']
     
     ## Get plot selections for plotepi
     plotepikeys = list()
@@ -87,7 +92,7 @@ def getplotselections(results):
 
 
 
-def makeplots(results=None, toplot=None, die=False, **kwargs):
+def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     ''' 
     Function that takes all kinds of plots and plots them -- this is the only plotting function the user should use 
     
@@ -114,19 +119,33 @@ def makeplots(results=None, toplot=None, die=False, **kwargs):
     if 'improvement' in toplot:
         toplot.remove('improvement') # Because everything else is passed to plotepi()
         try: 
-            allplots['improvement'] = plotimprovement(results, toplot=toplot, **kwargs)
-        except Exception as E: 
+            if hasattr(results, 'improvement') and results.improvement is not None: # WARNING, duplicated from getplotselections()
+                allplots['improvement'] = plotimprovement(results, die=die, **kwargs)
+        except OptimaException as E: 
             if die: raise E
+            else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
         
     
-    ## Add budget plot
-    if 'budget' in toplot:
-        toplot.remove('budget') # Because everything else is passed to plotepi()
+    ## Add budget and coverage plots
+    for budcov in ['budget', 'coverage']:
+        if budcov in toplot:
+            toplot.remove(budcov) # Because everything else is passed to plotepi()
+            try: 
+                if hasattr(results, budcov) and getattr(results, budcov): # WARNING, duplicated from getplotselections()
+                    allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
+            except OptimaException as E: 
+                if die: raise E
+                else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
+    
+    ## Add cascade plot
+    if 'cascade' in toplot:
+        toplot.remove('cascade') # Because everything else is passed to plotepi()
         try: 
-            allplots['budget'] = plotallocs(results, toplot=toplot, **kwargs)
-        except Exception as E: 
+            allplots['cascade'] = plotcascade(results, die=die, **kwargs)
+        except OptimaException as E: 
             if die: raise E
-        
+            else: printv('Could not plot cascade: "%s"' % E.message, 1, verbose)
+    
     
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
@@ -429,28 +448,34 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
 ##################################################################
     
     
-def plotallocs(results=None, figsize=(14,10), **kwargs):
+def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+
     Results object must be of Multiresultset type.
     
-    Version: 2016jan24    
+    "which" should be either 'budget' or 'coverage'
+    
+    Version: 2016jan27
     '''
     
-    # Validate input
-    if not(hasattr(results, 'budget')): raise OptimaException('No budget found for results object:\n"%s"' % results)
+    # Preliminaries: process inputs and extract needed data
+    try: 
+        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
+    except: 
+        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
+        if die: raise OptimaException(errormsg)
+        else: printv(errormsg, 1, verbose)
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    # Preliminaries: extract needed data
-    budgetstoplot = [budget for budget in results.budget.values() if budget]
-    budgetyearstoplot = [budgetyears for budgetyears in results.budgetyears.values() if budgetyears]
-    proglabels = budgetstoplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(results.budget.keys()) if results.budget.values()[k]] # WARNING, STUPENDOUSLY UGLY
+    proglabels = toplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
     fig = figure(figsize=figsize)
     fig.subplots_adjust(bottom=0.30) # Less space on bottom
-    fig.subplots_adjust(hspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.50) # More space between
     colors = gridcolormap(nprogs)
     ax = []
     ymax = 0
@@ -461,24 +486,99 @@ def plotallocs(results=None, figsize=(14,10), **kwargs):
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = [x[y] for x in budgetstoplot[plt][:]]
+            progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
+            if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
                 if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
                 else: barcolor = colors[p] # Only one year? Color by program
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
-                bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
         if nbudgetyears>1: ax[-1].legend()
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ax[-1].set_ylabel('Spending (US$)')
+        ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
+        ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+        
+    close(fig)
     
+    return fig
+
+
+
+
+
+##################################################################
+## Plot improvements
+##################################################################
+def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
+    ''' 
+    Plot the treatment cascade.
+    
+    NOTE: do not call this function directly; instead, call via plotresults().
+    
+    Version: 2016jan28    
+    '''
+    
+    # Figure out what kind of result it is -- WARNING, copied from 
+    if type(results)==Resultset: 
+        ismultisim = False
+        nsims = 1
+    elif type(results)==Multiresultset:
+        ismultisim = True
+        titles = results.keys # Figure out the labels for the different lines
+        nsims = len(titles) # How ever many things are in results
+    else: 
+        errormsg = 'Results input to plotcascade() must be either Resultset or Multiresultset, not "%s".' % type(results)
+        raise OptimaException(errormsg)
+
+    # Set up figure and do plot
+    fig = figure(figsize=figsize)
+    
+    cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
+    cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+    
+    colors = gridcolormap(len(cascadelist))
+    
+    
+    bottom = 0*results.tvec # Easy way of setting to 0...
+    for plt in range(nsims): # WARNING, copied from plotallocs()
+        
+        ## Do the plotting
+        subplot(nsims,1,plt+1)
+        for k,key in enumerate(cascadelist): # Loop backwards so correct ordering -- first one at the top, not bottom
+            if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
+            else:          thisdata = results.main[key].tot[0] # Get the best estimate
+            fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
+            plot((0, 0), (0, 0), color=colors[k], linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+                            
+        
+        ## Configure plot -- WARNING, copied from plotepi()
+        ax = gca()
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.get_xaxis().tick_bottom()
+        ax.get_yaxis().tick_left()
+        ax.title.set_fontsize(titlesize)
+        ax.xaxis.label.set_fontsize(labelsize)
+        for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
+
+        # Configure plot specifics
+        
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+        if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
+        else: ax.set_title('Cascade')
+        ax.set_xlabel('Year')
+        ax.set_ylim((0,ylim()[1]))
+        ax.set_xlim((results.tvec[0], results.tvec[-1]))
+        ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
+        
     close(fig)
     
     return fig

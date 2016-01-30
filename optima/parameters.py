@@ -3,9 +3,8 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan14 by cliffk
+Version: 2016jan28
 """
-
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
@@ -782,15 +781,15 @@ class Parameterset(object):
             if ptype == 'meta': # Metaparameters
                 vtype = type(tmppars[key].m)
                 tmppars[key].m = vtype(value)
-                printv('%s.m = %s' % (key, value), verbose=verbose)
+                printv('%s.m = %s' % (key, value), verbose)
             elif ptype in ['pop', 'pship']: # Populations or partnerships
                 vtype = type(tmppars[key].y[subkey])
                 tmppars[key].y[subkey] = vtype(value)
-                printv('%s.y[%s] = %s' % (key, subkey, value), verbose=verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, value), verbose)
             elif ptype == 'exp': # Population growth
                 vtype = type(tmppars[key].p[subkey][0])
                 tmppars[key].p[subkey][0] = vtype(value)
-                printv('%s.p[%s] = %s' % (key, subkey, value), verbose=verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, value), verbose)
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
 

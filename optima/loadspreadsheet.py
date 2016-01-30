@@ -1,4 +1,4 @@
-def loadspreadsheet(filename='test.xlsx', verbose=0):
+def loadspreadsheet(filename='simple.xlsx', verbose=2):
     """
     Loads the spreadsheet (i.e. reads its contents into the data).
     This data sheet is used in the next step to update the corresponding model.
@@ -6,7 +6,7 @@ def loadspreadsheet(filename='test.xlsx', verbose=0):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.2 (2016jan19) by cliffk
+    Version: 1.2 (2016jan27) by cliffk
     """
     
     ###########################################################################

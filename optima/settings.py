@@ -3,11 +3,18 @@ SETTINGS
 
 Store all the static data for a project that won't change except between Optima versions.
 
-Version: 2016jan06 by cliffk
+How verbose works:
+  0 = no output except absolutely critical
+  1 = serious warnings/errors only
+  2 = standard output -- fair amount of detail
+  3 = additional detail
+  4 = absolutely everything
+
+Version: 2016jan27 by cliffk
 """
 
 from numpy import arange, array, concatenate as cat, linspace
-from optima import defaultrepr
+from optima import defaultrepr, printv
 
 
 class Settings():
@@ -44,7 +51,7 @@ class Settings():
         self.alldx    = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
         self.allcare  = cat([self.care, self.usvl, self.svl,self.off]) # All people in care
         self.allplhiv = cat([self.undx, self.alldx]) # All PLHIV
-        self.alltreat = cat([self.usvl, self.svl]) # All PLHIV
+        self.alltx = cat([self.usvl, self.svl]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates = len(self.allstates) # Total number of states
 
@@ -54,7 +61,8 @@ class Settings():
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
-        self.verbose = 2 # Default verbosity for how much to print out
+        self.verbose = 2 # Default verbosity for how much to print out -- see definitions above
+        printv('Initialized settings', 4, self.verbose) # And show how it's used
     
     
     def __repr__(self):
@@ -65,6 +73,7 @@ class Settings():
     
     def maketvec(self, start=None, end=None, dt=None):
         ''' Little function for calculating the time vector -- here since start, end, dt are stored here '''
+        printv('Making time vector', 4, self.verbose)
         if start is None: start=self.start
         if end is None: end=self.end
         if dt is None: dt=self.dt
@@ -74,22 +83,32 @@ class Settings():
 
     def setmaxes(self, maxlist=None, dt=None):
         ''' Method to calculate maximum limits '''
+        printv('Setting maximum limits', 4, self.verbose)
         if dt is None: dt = self.dt
         maxrate = 0.9/dt
         maxpopsize = 1e9
         maxmeta = 1000.0
         maxacts = 5000.0
         
+        # It's a single number: just return it
+        if isinstance(maxlist, (int, float)): return maxlist
+        
         # Just return the limits themselves if no input argument
         if maxlist is None: 
             return (maxrate, maxpopsize, maxmeta, maxacts)
         
+        # If it's a string, convert to list, but remember this
+        isstring = (type(maxlist)==str)
+        if isstring: maxlist = [maxlist] # Convert to array
+        
         # If list argument is given, replace text labels with numeric limits
-        else:
-            for i,m in enumerate(maxlist):
-                if m=='maxrate': maxlist[i] = maxrate
-                elif m=='maxpopsize': maxlist[i] = maxpopsize
-                elif m=='maxmeta': maxlist[i] = maxmeta
-                elif m=='maxacts': maxlist[i] = maxacts
-                else: pass
-            return maxlist
+        for i,m in enumerate(maxlist):
+            if m=='maxrate': maxlist[i] = maxrate
+            elif m=='maxpopsize': maxlist[i] = maxpopsize
+            elif m=='maxmeta': maxlist[i] = maxmeta
+            elif m=='maxacts': maxlist[i] = maxacts
+            else: pass # This leaves maxlist[i] untouched if it's a number or something
+        
+        # Wrap up
+        if isstring: return maxlist[0] # Return just a scalar
+        else: return maxlist # Or return the whole list
