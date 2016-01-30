@@ -15,8 +15,8 @@ or:
 Version: 2016jan29
 """
 
-dobenchmark = True
-doprofile = False
+dobenchmark = False
+doprofile = True
 functiontoprofile = 'model' # If running profiling, choose which function to line profile
 
 
