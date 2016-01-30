@@ -2,7 +2,7 @@ import mpld3
 import json
 import uuid
 
-from flask import current_app
+from flask import current_app, request
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, fields
@@ -46,6 +46,11 @@ costcov_data_point_parser.add_arguments({
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
+
+costcov_data_locator_parser = RequestParser()
+costcov_data_locator_parser.add_arguments({
+    'year': {'required': True, 'location': 'args'}
+    })
 
 program_parser = RequestParser()
 program_parser.add_arguments({
@@ -382,6 +387,31 @@ class CostCoverageData(Resource):
     """
     method_decorators = [report_exception, login_required]
 
+    def add_data_for_instance(self, program_instance, args, overwrite=False):
+        program_instance.addcostcovdatum(
+            {'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']},
+            overwrite=overwrite)
+
+    def update_data_for_instance(self, program_instance, args):
+        self.add_data_for_instance(program_instance, args, overwrite=True)
+
+    def delete_data_for_instance(self, program_instance, args):
+        program_instance.rmcostcovdatum(year=args['year'])
+
+    def program_entry_persister(self, project_id, progset_id, program_id, args, program_modifier):
+        program_entry = load_program(project_id, progset_id, program_id)
+        if program_entry is None:
+            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+        program_instance = program_entry.hydrate()
+        program_modifier(program_instance, args)
+        program_entry.restore(program_instance)
+        result = {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
+        db.session.add(program_entry)
+        db.session.commit()
+        return result
+
+
     @swagger.operation(description="Add new data point.",
         parameters=costcov_data_point_parser.swagger_parameters())
     def post(self, project_id, progset_id, program_id):
@@ -395,17 +425,7 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-
-        program_entry = load_program(project_id, progset_id, program_id)
-        if program_entry is None:
-            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-        program_instance = program_entry.hydrate()
-        program_instance.addcostcovdatum({'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']})
-        program_entry.restore(program_instance)
-        result = {"params": program_entry.ccopars or {},
-                "data": program_entry.data_db_to_api()}
-        db.session.add(program_entry)
-        db.session.commit()
+        result = self.program_entry_persister(project_id, progset_id, program_id, args, self.add_data_for_instance)
 
         return result, 201
 
@@ -422,16 +442,16 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-        print "args", args
-        program_entry = load_program(project_id, progset_id, program_id)
-        if program_entry is None:
-            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-        program_instance = program_entry.hydrate()
-        program_instance.addcostcovdatum({'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']}, overwrite = True)
-        program_entry.restore(program_instance)
-        result = {"params": program_entry.ccopars or {},
-                "data": program_entry.data_db_to_api()}
-        db.session.add(program_entry)
-        db.session.commit()
+        result = self.program_entry_persister(project_id, progset_id, program_id, args, self.update_data_for_instance)
 
-        return result, 201        
+        return result
+
+    @swagger.operation(description="Remove a data point.")
+    def delete(self, project_id, progset_id, program_id):
+        """
+        removes data point for the given year from program parameters.
+        """
+        args = costcov_data_locator_parser.parse_args()
+        result = self.program_entry_persister(project_id, progset_id, program_id, args, self.delete_data_for_instance)
+
+        return result
