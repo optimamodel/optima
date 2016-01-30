@@ -52,7 +52,6 @@ HIV-diagnosed people newly linked to care (%/year)	linktocare	(0, 'maxrate')	pop
 Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
 HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
-PLHIV aware of their status (%)	phivdx	(0, 1)	tot	timepar	meta	cascade	0	1	random
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
 People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
 Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
@@ -238,7 +237,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
-    
+
     return par
 
 
@@ -303,29 +302,6 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         output[:,:,t] = thispoint
     
     return output, ctrlpts
-
-# Births
-def birthmatrixcalc(birth=None, birthmatrix=None, popkeys=None, fpopkeys=None):
-    ''' 
-    Combine the birth rates, the birth matrix and the population sizes to figure out how many people are born into each pop
-    '''
-    # Initialise output
-    births_to_pops = odict()
-    
-    # Normalise rows of birth matrix and pad
-    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in birthmatrix]
-
-    # Assign births to mother/child pairs
-    for fpopno, fpop in enumerate(fpopkeys):
-        row = normalised_birthmatrix[fpopno]
-        for colno, col in enumerate(row):
-            if col:
-                key = (fpop, popkeys[colno])
-                births_to_pops[key] = [birth[fpopno][t]*normalised_birthmatrix[fpopno][colno] for t in range(len(birth[fpopno]))]
-
-    return births_to_pops
-
-
 
 
 

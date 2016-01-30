@@ -7,8 +7,9 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxbudget',
+'generalizedscen'
 ]
 
 ##############################################################################
@@ -192,6 +193,62 @@ if 'standardscen' in tests:
 
 
 
+## Standard scenario test
+if 'generalizedscen' in tests:
+    t = tic()
+
+    print('Running standard scenarios test...')
+    from optima import Parscen, Budgetscen
+    from optima.defaults import defaultproject
+    from numpy import array
+    
+    P = defaultproject('generalized')
+    P.settings.usecascade = False
+    P.runsim()
+    
+    pops = P.data['pops']['short']
+
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+#propdiag
+#proptreat
+#successprop
+
+         Parscen(name='90-90-90',
+              parsetname='default',
+              pars=[{'endval': 1.,
+                'endyear': 2020,
+                'name': 'hivtest',
+                'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
+                'startval': .5,
+                'startyear': 2016}]),
+
+        Budgetscen(name='Double investment in ART, HTC and PMTCT',
+              parsetname='default',
+              progsetname='default',
+              t=[2016,2018,2020],
+              budget={'Condoms': array([1e7,1e7,1e7]),
+                      'FSW programs':array([1e6,1e6,1e6]),
+                      'HTC':array([2e7,2e7,2e7]),
+                      'PMTCT':array([1e6,1e6,1e6]),
+                      'ART':array([1e6,1e6,1e6])})
+        ]
+
+    # Store these in the project
+    P.addscenlist(scenlist)
+    
+    # Run the scenarios
+    P.runscenarios() 
+     
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
+    
+    done(t)
 
 
 
