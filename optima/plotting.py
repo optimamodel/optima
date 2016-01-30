@@ -4,9 +4,9 @@ PLOTTING
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
 
-To add a new plot, you need to both add it to getplotselections so it will show up in the interface;
-plotresults so it will be sent to the right spot; and then add the actual function to do the
-polotting.
+To add a new plot, you need to add it to getplotselections (in this file) so it will show up in the interface;
+plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
+plotting to this file.
 
 Version: 2016jan24
 '''
@@ -539,8 +539,13 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
-    cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+    if results.settings.usecascade:
+        cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
+        cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
+    else:
+        cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
+        cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+        
     
     colors = gridcolormap(len(cascadelist))
     

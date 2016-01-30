@@ -448,7 +448,6 @@ class Programset(object):
                 thisoutcome = outcomes[outcome][p] # Shorten
                 lower = float(pars[outcome].limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.setmaxes(pars[outcome].limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
                     errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
                     if die:

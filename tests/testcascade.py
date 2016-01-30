@@ -108,7 +108,7 @@ if 'simple' in tests:
 if 'cascade' in tests:
     t = tic()
     print('Running cascade test...')
-    from optima import Project
+    from optima import Project, plotting
     Q = Project(spreadsheet='cascade2p.xlsx')
     Q.settings.usecascade = True
     qq = tic()
@@ -125,6 +125,7 @@ if 'cascade' in tests:
         settings = Q.settings
         from numpy import linspace
         tvec = linspace(settings.start, settings.end, round((settings.end-settings.start)/settings.dt)+1)
+        plotting.plotcascade(results=results)
 
         from matplotlib import pyplot as plt
 
