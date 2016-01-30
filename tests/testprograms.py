@@ -54,7 +54,7 @@ if 'makeprograms' in tests:
     print('Running make programs test...')
     from optima import Project, Program, Programset, odict
     
-    P = Project(spreadsheet='generalized.xlsx')
+    P = Project(spreadsheet='concentrated.xlsx')
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
     HTC = Program(short='HTC',

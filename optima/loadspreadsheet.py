@@ -32,7 +32,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         
         
     
-    def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checkblank=True):
+    def validatedata(thesedata, sheetname, thispar, row, checkupper=False, checklower=True, checkblank=True):
         ''' Do basic validation on the data: at least one point entered, between 0 and 1 or just above 0 if checkupper=False '''
         
         # Check that only numeric data have been entered
@@ -46,14 +46,17 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         # Now check integrity of data itself
         validdata = array(thesedata)[~isnan(thesedata)]
         if len(validdata):
-            if checkupper: invalid = logical_or(array(validdata)>1, array(validdata)<0)
-            else: invalid = array(validdata)<0
+            invalid = array([False]*len(validdata)) # By default, set everything to valid
+            if checkupper and checklower: invalid = logical_or(array(validdata)>1, array(validdata)<0) # If upper & lower check specified
+            if checkupper and not checklower: invalid = array(validdata)>1
+            if not checkupper and checklower: invalid = array(validdata)<0
             if any(invalid):
                 column = nonzero(invalid)[0]
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
-                if checkupper: errormsg += 'Be sure that all values are >=0 and <=1'
-                else: errormsg += 'Be sure that all values are >=0'
+                if checkupper and checklower: errormsg += 'Be sure that all values are >=0 and <=1'
+                elif checkupper and not checklower: errormsg += 'Be sure that all values are <=1'
+                elif not checkupper and checklower: errormsg += 'Be sure that all values are >=0'
                 raise OptimaException(errormsg)
         
         # No data entered
@@ -95,7 +98,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
-    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','transit']
+    sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','birthtransit','agetransit','risktransit']
     
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
@@ -264,9 +267,12 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     for key in sheets['Partnerships & transitions']:
         thesedata = data[key]
         matrixshape = shape(array(thesedata))
-        if matrixshape[0] != data['npops'] or matrixshape[1] != data['npops']:
-            errormsg = 'Matrix "%s" in partnerships & transitions sheet is not square\n' % key
-            errormsg += '(rows = %i, columns = %i, should be %i)\n' % (matrixshape[0], matrixshape[1], data['npops'])
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        correctfirstdim = data['npops'] if key!='birthtransit' else sum(data['pops']['female'])
+        correctseconddim = data['npops']
+        if matrixshape[0] != correctfirstdim or matrixshape[1] != correctseconddim:
+            errormsg = 'Matrix "%s" in partnerships & transitions sheet is not the correct shape' % key
+            errormsg += '(rows = %i, columns = %i, should be %i and %i)\n' % (matrixshape[0], matrixshape[1], correctfirstdim, correctseconddim)
             errormsg += 'Check for missing rows or added text'
             raise OptimaException(errormsg)
     
