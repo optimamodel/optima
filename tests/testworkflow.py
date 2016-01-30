@@ -17,11 +17,11 @@ Version: 2016jan29
 
 ## Define tests to run here!!!
 tests = [
-'minimal'
+#'minimal'
 #'makeproject',
 #'makeprograms',
 #'autofit',
-#'manualfit',
+'manualfit',
 #'plotresults',
 ]
 
@@ -56,7 +56,7 @@ if 'minimal' in tests:
     print('Running minimal test...')
     
     from optima import Project
-    P = Project(spreadsheet='concentrated.xlsx')
+    P = Project(spreadsheet='simple.xlsx')
     
     done(t)
 

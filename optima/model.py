@@ -69,7 +69,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         vlmonfr     = simpars['vlmonfr']     # Viral load monitoring frequency (N/T)
         restarttreat = simpars['restarttreat']  # Time to restart ART (T)
         successprop = simpars['successprop'] # Proportion of people on ART with viral suppression (P)
-        pdhivcare   = simpars['pdhivcare']   # Percentage of all people who have been diagnosed with HIV who are in care
 
     
     # Calculate other things outside the loop
@@ -201,7 +200,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     ###########################################
     
     # Set parameters
-    prevtoforceinf = 0.1 # Assume force-of-infection is proportional to prevalence -- 0.1 means that if prevalence is 10%, annual force-of-infection is 1%
+    durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     fraccare = 0.5         # Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
     reboundwithinint = 0.5 # Multiplicative increase in rate of ART accounting for interval 
@@ -222,14 +221,17 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
         if treatment > popinfected: # More people on treatment than ever infected, uh oh!
-            treatment = popinfected
+            errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 1, verbose)
+                treatment = popinfected
         
         # Diagnosed & undiagnosed
         nevertreated = popinfected - treatment
-        assumedforceinf = simpars['initprev'][p]*prevtoforceinf # To calculate ratio of people in the initial category, need to estimate the force-of-infection
-        undxdxrates = assumedforceinf + simpars['hivtest'][p,0] # Ratio of undiagnosed to diagnosed
-        undiagnosed = nevertreated * assumedforceinf / undxdxrates     
-        diagnosed = nevertreated * simpars['hivtest'][p,0] / undxdxrates
+        fracundiagnosed = exp(-durationpreaids*simpars['hivtest'][p,0])
+        undiagnosed = nevertreated * fracundiagnosed     
+        diagnosed = nevertreated * (1-fracundiagnosed)
         
         # Set rates within
         progratios = hstack([prog, simpars['deathlt50']]) # For last rate, use CD4<50 death as dominant rate
@@ -562,7 +564,6 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
-            currentunsupp    = people[usvl,:,t]
             # 40% progress, 40% recover, 20% don't change cd4 count
             for cd4 in range(ncd4):
                 if cd4>0: 
