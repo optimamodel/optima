@@ -17,11 +17,11 @@ Version: 2016jan29
 
 ## Define tests to run here!!!
 tests = [
-'minimal'
+#'minimal'
 #'makeproject',
 #'makeprograms',
 #'autofit',
-#'manualfit',
+'manualfit',
 #'plotresults',
 ]
 
@@ -170,6 +170,9 @@ if 'manualfit' in tests and doplot:
     t = tic()
 
     print('Running manual calibration test...')
+    if 'P' not in locals():
+        import optima
+        P = optima.defaults.defaultproject()
     P.manualfit(orig=-1, name='manual') # Demonstrating that you can retrieve things by index as well
     
     done(t)

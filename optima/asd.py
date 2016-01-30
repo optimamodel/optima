@@ -218,7 +218,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
 
 
 def multisigfig(X, sigfigs=5):
-    """ Return a string representation of variable x with sigfigs number of significant figures -- WARNING, copied from utils.py so this is self-contained """
+    """ Return a string representation of variable x with sigfigs number of significant figures """
+    from numpy import log10, floor
     
     output = []
     try: 
@@ -231,15 +232,17 @@ def multisigfig(X, sigfigs=5):
     for i in range(n):
         x = X[i]
         try:
-            from numpy import log10, floor
-            magnitude = floor(log10(abs(x)))
-            factor = 10**(sigfigs-magnitude-1)
-            x = round(x*factor)/float(factor)
-            digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
-            decimals = int(max(0,-magnitude+sigfigs-1))
-            strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
-            string = strformat % x
-            output.append(string)
+            if x==0:
+                output.append('0')
+            else:
+                magnitude = floor(log10(abs(x)))
+                factor = 10**(sigfigs-magnitude-1)
+                x = round(x*factor)/float(factor)
+                digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+                decimals = int(max(0,-magnitude+sigfigs-1))
+                strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+                string = strformat % x
+                output.append(string)
         except:
             output.append(str(x))
     if islist:
