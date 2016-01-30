@@ -572,12 +572,12 @@ class OptimaSpreadsheet:
         current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Viral suppression – ART initiators (%)',                                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Viral suppression - ART initiators (%)',                                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_years_block('Time to ART re-initiation (years)',                                                 current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
-        current_row = self.emit_ref_years_block('PLHIV aware of their status (%)',                                               current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people who are in care (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Rate of ART re-initiation (%/year)',                                                current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('PLHIV aware of their status (%)',                                               current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-diagnosed people who are in care (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Proportion of people on ART with viral suppression (%)',                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
 
