@@ -3,6 +3,8 @@ import json
 from optima_test_base import OptimaTestCase
 from flask import helpers
 from server.api import app
+from server.webapp.dbmodels import ProjectDb
+
 
 class ParsetTestCase(OptimaTestCase):
 
@@ -22,7 +24,6 @@ class ParsetTestCase(OptimaTestCase):
         with open(file_path) as f:
             self.client.post('api/project/{}/spreadsheet'.format(self.project_id), data=dict(file=f))
 
-
     def test_get_parsets(self):
         # retrieve parsets  project -> id -> parsets
         response = self.client.get('api/project/{}/parsets'.format(self.project_id))
@@ -33,6 +34,8 @@ class ParsetTestCase(OptimaTestCase):
         self.assertEqual(data['parsets'][0]['name'], 'default')
 
     def test_retrieve_calibrated_parameters(self):
+        project = ProjectDb.query.get(self.project_id)
+
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
         parsets_data = json.loads(parsets_response.data)
         parset_id = parsets_data['parsets'][0]['id']
@@ -45,7 +48,10 @@ class ParsetTestCase(OptimaTestCase):
         self.assertEqual(calibration_data['parset_id'], parset_id)
         self.assertTrue(len(calibration_data['parameters']) > 0)
         self.assertTrue(len(calibration_data['selectors']) > 0)
-        self.assertEqual(len(calibration_data['graphs']), 2)
+
+        # We should expect len(populations) + 2 graphs -- total + one for each
+        # population + one with all populations together.
+        self.assertTrue(len(calibration_data['graphs']) > 0)
 
     def test_show_other_graph(self):
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
@@ -60,7 +66,7 @@ class ParsetTestCase(OptimaTestCase):
         recalibrated_res = self.client.get('/api/parset/{0}/calibration?which={1}'.format(parset_id, third_graph_key))
         recalibrated_res_data = json.loads(recalibrated_res.data)
         self.assertTrue('calibration' in recalibrated_res_data)
-        self.assertEqual(len(recalibrated_res_data['calibration']['graphs']), 1)
+        self.assertGreaterEqual(len(recalibrated_res_data['calibration']['graphs']), 1)
 
     def test_recalibrate_with_updated_parameters(self):
         parsets_response = self.client.get('api/project/{}/parsets'.format(self.project_id))
@@ -87,7 +93,13 @@ class ParsetTestCase(OptimaTestCase):
 
         self.assertTrue('calibration' in recalibrated_res_data)
         recalibrated_data = recalibrated_res_data['calibration']
-        self.assertEqual(len(recalibrated_data['graphs']), 2)
+
+        project = ProjectDb.query.get(self.project_id)
+
+        # We should expect len(populations) + 2 graphs -- total + one for each
+        # population + one with all populations together.
+        self.assertTrue(len(recalibrated_data['graphs']) > 0)
+
         self.assertIn('aidstest', [p['key'] for p in recalibrated_data['parameters']])
         for p in recalibrated_data['parameters']:
             if p['key'] == 'aidstest':

@@ -1,21 +1,60 @@
 """
 Defines the default parameters for each program.
 
-Version: 2016jan23 by cliffk
+Version: 2016jan28
 """
-from optima import Program, Programset
+from optima import OptimaException, Project, Program, Programset
 
-def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
+
+spreadsheetpath = '../tests/' # WARNING, will this work on all systems? If not can just move XLSX files into the Optima directory I suppose...
+
+def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
     
     # Shorten variable names
-    pops = P.data['pops']['short']
-    malepops = [P.data['pops']['short'][pop] for pop in range(P.data['npops']) if P.data['pops']['male'][pop]]
-    femalepops = [P.data['pops']['short'][pop] for pop in range(P.data['npops']) if P.data['pops']['female'][pop]]
-    caspships = P.data['pships']['cas']
-    compships = P.data['pships']['com']
-#    regpships = P.data['pships']['reg']
-#    injpships = P.data['pships']['inj']
+    pops = project.data['pops']['short']
+    malelist = [pops[i] for i in range(len(pops)) if project.data['pops']['male'][i]]
+    pwidlist = [pops[i] for i in range(len(pops)) if project.data['pops']['injects'][i]]
+    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i]]
+
+    regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
+    caspships = project.parsets['default'].pars[0]['condcas'].y.keys()
+    compships = project.parsets['default'].pars[0]['condcom'].y.keys()
+    
+    # Extract casual partnerships that include at least one female sex worker
+    fsw_caspships = []
+    for fsw in fswlist:
+        for caspship in caspships:
+            if fsw in caspship:
+                fsw_caspships.append(caspship)
+
+    # Extract commercial partnerships that include at least one female sex worker
+    fsw_compships = []
+    for fsw in fswlist:
+        for compship in compships:
+            if fsw in compship:
+                fsw_compships.append(compship)
+
+    # Extract men who have sex with men
+    msmlist = []
+    for pship in regpships+caspships+compships:
+        if pship[0] in malelist and pship[1] in malelist:
+            msmlist.append(pship[0])
+    msmlist = list(set(msmlist))
+
+    # Extract casual partnerships that include at least one man who has sex with men
+    msm_caspships = []
+    for msm in msmlist:
+        for caspship in caspships:
+            if msm in caspship:
+                msm_caspships.append(caspship)
+
+    # Extract casual partnerships that include at least one person who injects drugs
+    pwid_caspships = []
+    for pwid in pwidlist:
+        for caspship in caspships:
+            if pwid in caspship:
+                pwid_caspships.append(caspship)
     
     # Set up default programs
     Condoms = Program(short='Condoms',
@@ -40,48 +79,48 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     VMMC = Program(short='VMMC',
-                  targetpars=[{'param': 'circum', 'pop': malepop} for malepop in malepops],
-                  targetpops=malepops,
+                  targetpars=[{'param': 'circum', 'pop': male} for male in malelist],
+                  targetpops=malelist,
                   category='Prevention',
                   name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
                   
-    FSW_programs = Program(short='FSW_programs',
-                  targetpars=[{'param': 'condcom', 'pop': compship} for compship in [x for x in compships if 'FSW' in x]] + [{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'FSW' in x]] + [{'param': 'hivtest', 'pop': 'FSW'}],
-                  targetpops=['FSW'],
+    FSW_programs = Program(short='FSW programs',
+                  targetpars=[{'param': 'condcom', 'pop': compship} for compship in fsw_compships] + [{'param': 'condcas', 'pop': caspship} for caspship in fsw_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in fswlist],
+                  targetpops=fswlist,
                   category='Prevention',
                   name='Programs for female sex workers and clients',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                  
-    MSM_programs = Program(short='MSM_programs',
-                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'MSM' in x]] + [{'param': 'hivtest', 'pop': 'MSM'}],
-                  targetpops=['MSM'],
+    MSM_programs = Program(short='MSM programs',
+                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in msm_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in msmlist],
+                  targetpops=msmlist,
                   category='Prevention',
                   name='Programs for men who have sex with men',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    PWID_programs = Program(short='PWID_programs',
-                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'PWID' in x]] + [{'param': 'hivtest', 'pop': 'PWID'}] + [{'param': 'sharing', 'pop': 'PWID'}],
-                  targetpops=['PWID'],
+    PWID_programs = Program(short='PWID programs',
+                  targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in pwid_caspships] + [{'param': 'hivtest', 'pop': pop} for pop in pwidlist] + [{'param': 'sharing', 'pop': pop} for pop in pwidlist],
+                  targetpops=pwidlist,
                   category='Prevention',
                   name='Programs for people who inject drugs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     OST = Program(short='OST',
-                  targetpars=[{'param': 'numost', 'pop': 'PWID'}],
-                  targetpops=['PWID'],
+                  targetpars=[{'param': 'numost', 'pop': 'tot'}],
+                  targetpops=['tot'],
                   category='Prevention',
                   name='Opiate substitution therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
     NSP = Program(short='NSP',
-                  targetpars=[{'param': 'sharing', 'pop': 'PWID'}],
-                  targetpops=['PWID'],
+                  targetpars=[{'param': 'sharing', 'pop': pop} for pop in pwidlist],
+                  targetpops=pwidlist,
                   category='Prevention',
                   name='Needle-syringe programs',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
                   
-    Cash_transfers = Program(short='Cash_transfers',
+    Cash_transfers = Program(short='Cash transfers',
                   targetpars=[{'param': 'actscas', 'pop': caspship} for caspship in caspships],
                   targetpops=pops,
                   category='Prevention',
@@ -126,7 +165,7 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
                   name='Orphans and vulnerable children',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
-    Other_care = Program(short='Other_care',
+    Other_care = Program(short='Other care',
                   category='Care and treatment',
                   name='Other HIV care',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200'], 'pregnant': False})
@@ -250,11 +289,140 @@ def defaultprograms(P, addpars=False, addcostcov=False, filterprograms=None):
     
     return finalprograms if filterprograms else allprograms
     
-    
-    
-    
+
+
+
+
 def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
     R = Programset(programs=programs)   
     return R
+
+
+
+
+def defaultproject(which='simple', addprogset=True):
+    ''' 
+    Options for easily creating default projects based on different spreadsheets, including
+    program information -- useful for testing 
+    
+    Version: 2016jan28
+    '''
+    
+    
+    
+    ##########################################################################################################################
+    ## Simple
+    ##########################################################################################################################
+    
+    if which=='simple':
+        print('Creating simple epidemic project...')
+        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx')
+    
+    
+    
+    
+    
+    
+    ##########################################################################################################################
+    ## Generalized
+    ##########################################################################################################################
+    elif which=='generalized':
+        print('Creating generalized epidemic project...')
+        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx')
+        pops = P.data['pops']['short']
+        caspships = P.data['pships']['cas']
+        compships = P.data['pships']['com']
+        
+        condprog = Program(name='Condoms',
+                      targetpars=[{'param': 'condcas', 'pop': caspship} for caspship in caspships],
+                      targetpops=pops,
+                      category='Prevention',
+                      short='Condoms',
+                      criteria = {'hivstatus': 'allstates', 'pregnant': False})    
+                      
+        fswprog = Program(name='FSW programs',
+                      targetpars=[{'param': 'condcom', 'pop': compship} for compship in [x for x in compships if 'FSW' in x]] + [{'param': 'condcas', 'pop': caspship} for caspship in [x for x in caspships if 'FSW' in x]] + [{'param': 'hivtest', 'pop': 'FSW'}],
+                      targetpops=['FSW'],
+                      category='Prevention',
+                      short='FSW programs',
+                      criteria = {'hivstatus': 'allstates', 'pregnant': False})
+        
+        condprog.costcovfn.addccopar({'saturation': (0.75,0.75), 't': 2016.0, 'unitcost': (30,40)})
+        fswprog.costcovfn.addccopar({'saturation': (0.9,0.9), 't': 2016.0, 'unitcost': (50,80)})
+        
+        condprog.addcostcovdatum({'t':2015,
+                                  'cost':2e6,
+                                  'coverage':57143.})
+        
+        fswprog.addcostcovdatum({'t':2015,
+                                  'cost':3e6,
+                                  'coverage':45261.})
+        
+        R = Programset(programs=[condprog, fswprog]) 
+        
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'FSW programs':(0.6,0.65)})
+        P.addprogset(name='default', progset=R)
+    
+    
+    
+    ##########################################################################################################################
+    ## Concentrated
+    ##########################################################################################################################
+    elif which=='concentrated':
+        # Make project and store results from default sim
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx')
+    
+        # Get a default progset 
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
+        
+        # Modify target pars and pops
+        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
+        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
+        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
+        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
+        R.updateprogset()
+    
+        # Add program effects
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('FSW', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('FSW', 'M 15+')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15+', 'PWID')].addccopar({'intercept': (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('PWID', 'F 15+')].addccopar({'intercept': (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['condcom'][('FSW', 'Clients')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+    
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99)})
+    
+        R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['numost']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        
+        # Store this program set in the project
+        P.addprogset(R)
+    
+    
+    
+    else:
+        raise OptimaException('Default project type "%s" not understood: choices are "simple", "generalized", or "concentrated"' % which)
+    
+    
+    return P

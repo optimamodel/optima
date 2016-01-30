@@ -3,10 +3,10 @@
 Functions to read in the economic data and transform it into time series
 '''
 
-from optima import odict, printv, today, smoothinterp
+from optima import OptimaException, odict, printv, today, smoothinterp
 from numpy import nan, isnan, array, logical_or, nonzero
 
-def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):
+def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=2):
     """
     Loads the economics spreadsheet (i.e. reads its contents into the data).
     Version: 2016jan17
@@ -29,7 +29,7 @@ def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
         
         # Now check integrity of data itself
         validdata = array(thesedata)[~isnan(thesedata)]
@@ -42,12 +42,12 @@ def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):
                 errormsg += 'row=%i, column(s)=%s, value(s)=%s\n' % (row+1, column, validdata)
                 if checkupper: errormsg += 'Be sure that all values are >=0 and <=1'
                 else: errormsg += 'Be sure that all values are >=0'
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
                 
         # No data entered
         elif checkblank:
             errormsg = 'No growth rate assumption entered for parameter "%s", row=%i' % (thispar, row) 
-            raise Exception(errormsg)
+            raise OptimaException(errormsg)
 
         return validdata
 
@@ -79,7 +79,7 @@ def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):
         workbook = open_workbook(filename) # Open workbook
     except: 
         errormsg = 'Failed to load spreadsheet: file "%s" not found or other problem' % filename
-        raise Exception(errormsg)
+        raise OptimaException(errormsg)
     
     
     ## Calculate columns for which data are entered, and store the year ranges
@@ -115,7 +115,7 @@ def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=0):
             except:
                 errormsg = 'Incorrect number of headings found. \n'
                 errormsg += 'Check that there is no extra text in the first two columns'
-                raise Exception(errormsg)
+                raise OptimaException(errormsg)
             econdata[thispar] = dict()
             econdata[thispar]['past'] = [] # Initialize to empty list
             econdata[thispar]['growth'] = [] # Initialize to empty list
@@ -150,7 +150,7 @@ def makeecontimeseries(econdata, tvec):
                 
     return econtimeseries
     
-def loadeconomics(filename, tvec, verbose=0):
+def loadeconomics(filename, tvec, verbose=2):
     ''' Loads spreadsheet and converts to time series'''
     econdata = loadeconomicsspreadsheet(filename,verbose=verbose)
     econtimeseries = makeecontimeseries(econdata, tvec)

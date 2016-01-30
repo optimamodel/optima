@@ -18,12 +18,38 @@ print statements.
 
 I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
 
-Version: 2016jan18 by cliffk
+
+
+Now, the legal part:
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Version: 2016jan27 by cliffk
 """
+
+optimalicense = '''
+Optima HIV -- HIV optimization and analysis tool
+Copyright (C) 2016 by the Optima Consortium
+'''
+print(optimalicense)
+
+
+
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0 
-
 
 
 
@@ -60,10 +86,17 @@ except: _failed()
 try: from asd import asd
 except: _failed()
 
-try: from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
+try: from pchip import pchip, plotpchip
 except: _failed()
 
-try: from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, setdate, sigfig, smoothinterp, tic, toc # odict class
+try: 
+    import colortools # Load high-level module as well
+    from colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
+except: _failed()
+
+try: 
+    import utils # Load high-level module as well
+    from utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc # odict class
 except: _failed()
 
 
@@ -77,31 +110,45 @@ except: _failed()
 try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 except: _failed()
 
-try: from results import Result, Resultset, Multiresultset, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+try: 
+    import results
+    from results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
-try: from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults # Parameter and Parameterset classes
+try: 
+    import parameters # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
+    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults # Parameter and Parameterset classes
 except: _failed()
 
 try: from model import model, runmodel # The thing that actually runs the model
 except: _failed()
 
-try: from programs import Program, Programset # Define programs
+try: 
+    import programs # High-level module
+    from programs import Program, Programset, vec2budget # Define programs
 except: _failed()
 
-try: from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
+try: 
+    import economics
+    from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
 except: _failed()
 
-try: from calibration import sensitivity, autofit # Calibration functions
+try: 
+    import calibration
+    from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
-try: from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
+try: 
+    import scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
+    from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import Optim, minoutcomes, defaultobjectives # Scenario functions
+try: from optimization import Optim, minoutcomes, minmoney, defaultobjectives # Scenario functions
 except: _failed()
 
-try: from makeplots import plotepi, plotmismatch, plot2allocs, plotmultiallocs, plotformatslist, plotformatsdict # Create the plots
+try: 
+    import plotting # Load high-level module as well
+    from plotting import getplotselections, makeplots # Create the plots
 except: _failed()
 
 
@@ -110,6 +157,12 @@ except: _failed()
 
 
 ## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
+
+try: import gui # All Python GUI functions
+except:
+    gui = None # If fails, try individual functions as well
+    _failed(doraise=False)
+
 try: from gui import plotresults
 except:
     def plotresults(*args, **kwargs): print('Note: plotresults() could not be imported, but everything else should work')
@@ -130,18 +183,28 @@ except:
     def manualfit(*args, **kwargs): print('Note: manualfit() could not be imported, but everything else should work')
     _failed(doraise=False)
 
+try: from gui import plotpeople # Plot all people
+except:
+    def plotpeople(*args, **kwargs): print('Note: plotpeople() could not be imported, but everything else should work')
+    _failed(doraise=False)
+
 
 
 ## Import the Project class that ties everything together
 try: from project import Project # Project class
 except: _failed()
 
+try: from portfolio import Portfolio # Portfolio class (container of Projects)
+except: _failed()
 
+try: from geospatial import geogui # Import GUI tools for geospatial analysis
+except:
+    def geogui(*args, **kwargs): print('Note: geogui() could not be imported, but everything else should work')
+    _failed(doraise=False)
+    
 
-# Finally, load certain high-level modules -- those that have multiple sub-modules and no name conflicts
-try: 
-    import defaults, plotpeople # Additional features not included in the main part of Optima
-    import colortools, utils, gui
+# Finally, load defaults
+try: import defaults
 except: _failed()
 
 

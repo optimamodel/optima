@@ -1,14 +1,14 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import dcp, printv, sigfig, plotepi, plotformatslist
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, transpose
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections
+import matplotlib as mpl
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
 from matplotlib.widgets import CheckButtons, Button
-from PyQt4 import QtGui
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
 
 
 
-def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
+def addplot(thisfig, thisplot, name=None, nrows=1, ncols=1, n=1):
     ''' Add a plot to an existing figure '''
     thisfig._axstack.add(thisfig._make_key(thisplot), thisplot) # Add a plot to the axis stack
     thisplot.change_geometry(nrows, ncols, n) # Change geometry to be correct
@@ -17,23 +17,23 @@ def addplot(thisfig, thisplot, nrows=1, ncols=1, n=1):
     heightfactor = 0.9/nrows**(1/4.)
     pos2 = [orig.x0, orig.y0,  orig.width*widthfactor, orig.height*heightfactor] 
     thisplot.set_position(pos2) # set a new position
-
     return None
 
 
 
-def plotresults(results, toplot=None, fig=None, **kwargs):
+def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwargs be for figure() or makeplots()???
     ''' 
-    Like update() for pygui, but just open a new window
+    Does the hard work for updateplots() for pygui()
     Keyword arguments if supplied are passed on to figure().
     
     Usage:
         results = P.runsim('default')
         plotresults(results)
         
-    Version: 1.1 (2016jan19) by cliffk
+    Version: 1.3 (2016jan25) by cliffk
     '''
-    if toplot is None: toplot = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta']
+    
+    if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     
     # Do plotting
@@ -42,11 +42,24 @@ def plotresults(results, toplot=None, fig=None, **kwargs):
     width,height = fig.get_size_inches()
     
     # Actually create plots
-    plots = plotepi(results, which=toplot, figsize=(width, height))
+    plots = makeplots(results, toplot=toplot, die=True, figsize=(width, height))
     nplots = len(plots)
     nrows = int(ceil(sqrt(nplots)))  # Calculate rows and columns of subplots
     ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-    for p in range(len(plots)): addplot(fig, plots[p].axes[0], nrows, ncols, p+1)
+    for p in range(len(plots)): 
+        naxes = len(plots[p].axes)
+        if naxes==1: # Usual situation: just plot the normal axis
+            addplot(fig, plots[p].axes[0], name=plots.keys()[p], nrows=nrows, ncols=ncols, n=p+1)
+        elif naxes>1: # Multiple axes, e.g. allocation bar plots -- have to do some maths to figure out where to put the plots
+            origrow = floor(p/ncols)
+            origcol = p%ncols # Column doesn't change
+            newnrows = nrows*naxes
+            newrowstart = naxes*origrow # e.g. 2 axes in 3rd row = 5th row in new system
+            for a in range(naxes):
+                thisrow = newrowstart+a # Increment rows
+                newp = ncols*thisrow + origcol # Calculate new row/column
+                addplot(fig, plots[p].axes[a], name=plots.keys()[p], nrows=int(newnrows), ncols=int(ncols), n=int(newp+1))
+        else: pass # Must have 0 length or something
     if wasinteractive: ion()
     show()
 
@@ -69,7 +82,7 @@ def getchecked(check=None):
     return ischecked
     
     
-def update(event=None, tmpresults=None):
+def updateplots(event=None, tmpresults=None):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
     if tmpresults is not None: results = tmpresults
@@ -84,22 +97,14 @@ def update(event=None, tmpresults=None):
     
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
-        wasinteractive = isinteractive()
-        if wasinteractive: ioff()
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-        
-        # Actually create plots
-        plots = plotepi(results, which=toplot, figsize=(width, height))
-        nplots = len(plots)
-        nrows = int(ceil(sqrt(nplots)))
-        ncols = nrows-1 if nrows*(nrows-1)>=nplots else nrows
-        for p in range(nplots): addplot(plotfig, plots[p].axes[0], nrows, ncols, p+1)
-        if wasinteractive: ion()
-        show()
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height))
+    
+    return None
 
 
 
-def pygui(tmpresults, which=None):
+def pygui(tmpresults, toplot=None):
     '''
     PYGUI
     
@@ -107,47 +112,31 @@ def pygui(tmpresults, which=None):
     and when "Update" is clicked, will clear the contents of the plotting window and replot.
     
     Usage:
-        pygui(results, [which])
+        pygui(results, [toplot])
     
-    where results is the output of e.g. runsim() and which is an optional list of form e.g.
-        which = ['prev-tot', 'inci-pops']
+    where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
+        toplot = ['prev-tot', 'inci-per']
     
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 1.1 (2015dec29) by cliffk
+    Version: 1.2 (2016jan25)
     '''
     global check, checkboxes, updatebutton, closebutton, panelfig, results
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
-    epikeys = results.main.keys()
-    epinames = [thing.name for thing in results.main.values()]
-    episubkeys = transpose(plotformatslist)[-1] # 'tot' = single overall value; 'per' = separate figure for each plot; 'sta' = stacked or multiline plot
-    checkboxes = [] # e.g. 'prev-tot'
-    checkboxnames = [] # e.g. 'HIV prevalence (%) -- total'
-    for key in epikeys: # e.g. 'prev'
-        for subkey in episubkeys: # e.g. 'tot'
-            checkboxes.append(key+'-'+subkey)
-    for name in epinames: # e.g. 'HIV prevalence'
-        for subname in episubkeys: # e.g. 'total'
-            checkboxnames.append(name+' -- '+subname)
-    nboxes = len(checkboxes) # Number of choices
+    plotselections = getplotselections(results)
+    checkboxes = plotselections['keys']
+    checkboxnames = plotselections['names']
+    defaultchecks = plotselections['defaults']
     
-    ## Set up what to plot when screen first opens
-    truebydefault = 2 # Number of boxes to check true by default
-    if which is None: # No inputs: set the first couple true by default
-        defaultchecks = truebydefault*[True]+[False]*(nboxes-truebydefault)
-    else: # They're specified
-        defaultchecks = []
-        for name in checkboxes: # Check to see if they match
-            if name in which: defaultchecks.append(True)
-            else: defaultchecks.append(False)
-            
     ## Set up control panel
+    figwidth = 7
+    figheight = 1+len(checkboxes)*0.35 # Scale dynamically based on how many options are available
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
-    panelfig = figure(num='Optima control panel', figsize=(7,8), facecolor=(0.95, 0.95, 0.95)) # Open control panel
+    panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
     updateaxes = axes([0.1, 0.05, 0.3, 0.05]) # Create update button location
     closeaxes  = axes([0.6, 0.05, 0.3, 0.05]) # Create close button location
@@ -157,9 +146,9 @@ def pygui(tmpresults, which=None):
         label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
     updatebutton = Button(updateaxes, 'Update', color=fc) # Make button pretty and blue
     closebutton = Button(closeaxes, 'Close', color=fc) # Make button pretty and blue
-    updatebutton.on_clicked(update) # Update figure if button is clicked
+    updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     closebutton.on_clicked(closegui) # Close figures
-    update(None) # Plot initially
+    updateplots(None) # Plot initially
 
 
 
@@ -170,16 +159,16 @@ def pygui(tmpresults, which=None):
 
 
 
-def browser(results, which=None, doplot=True):
+def browser(results, toplot=None, doplot=True):
     ''' 
     Create an MPLD3 GUI and display in the browser. This is basically a testbed for 
     the Optima frontend.
     
     Usage:
-        browser(results, [which])
+        browser(results, [toplot])
     
-    where results is the output of e.g. runsim() and which is an optional list of form e.g.
-        which = ['prev-tot', 'inci-pops']
+    where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
+        toplot = ['prev-tot', 'inci-per']
     
     With doplot=True, launch a web server. Otherwise, return the HTML representation of the figures.
     
@@ -263,11 +252,12 @@ def browser(results, which=None, doplot=True):
 
     ## Create the figures to plot
     jsons = [] # List for storing the converted JSONs
-    plots = plotepi(results, which) # Generate the plots
+    plots = makeplots(results=results, toplot=toplot) # Generate the plots
     nplots = len(plots) # Figure out how many plots there are
     for p in range(nplots): # Loop over each plot
         fig = figure() # Create a blank figure
-        addplot(fig, plots[p].axes[0]) # Add this plot to this figure
+        naxes = len(plots[p].axes)
+        for ax in range(naxes): addplot(fig, plots[p].axes[ax], name=plots.keys()[p], nrows=naxes, n=ax+1) # Add this plot to this figure
         mpld3.plugins.connect(fig, mpld3.plugins.MousePosition(fontsize=14,fmt='.4r')) # Add plugins
         jsons.append(str(json.dumps(mpld3.fig_to_dict(fig)))) # Save to JSON
         close(fig) # Close
@@ -289,7 +279,7 @@ def browser(results, which=None, doplot=True):
 
 
 
-def manualfit(project=None, name='default', ind=0, verbose=4):
+def manualfit(project=None, name='default', ind=0, verbose=2):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -299,9 +289,12 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
     Version: 1.0 (2015dec29) by cliffk
     '''
     
+    # For edit boxes, we need this -- but import it here so only this function will fail
+    from PyQt4 import QtGui
+    
     ## Random housekeeping
     global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
-    fig = figure(); close(fig) # Open and close figure...dumb, no?
+    fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
     ion() # We really need this here!
     nsigfigs = 3
     
@@ -362,7 +355,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
                     fullvallist.append(tmppars[key].p[subkey][0])
                     fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
             else:
-                print('Parameter type "%s" not implemented!' % typelist[k])
+                printv('Parameter type "%s" not implemented!' % typelist[k], 2, verbose)
     
     populatelists()
     nfull = len(fulllabellist) # The total number of boxes needed
@@ -387,27 +380,27 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
             if fulltypelist[b]=='meta': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].m = eval(str(box.text()))
-                printv('%s.m = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.m = %s' % (key, box.text()), 3, verbose)
             elif fulltypelist[b]=='pop' or fulltypelist[b]=='pship': # Populations or partnerships
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].y[subkey] = eval(str(box.text()))
-                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             elif fulltypelist[b]=='exp': # Population growth
                 key = fullkeylist[b]
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
-                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 4, verbose=verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
             if fulltypelist[b]=='const': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
-                printv('%s.y = %s' % (key, box.text()), 4, verbose=verbose)
+                printv('%s.y = %s' % (key, box.text()), 3, verbose)
             else:
-                print('Parameter type "%s" not implemented!' % fulltypelist[b])
+                printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
-        update(tmpresults=results)
+        updateplots(tmpresults=results)
         
     
     ## Keep the current parameters in the project; otherwise discard
@@ -430,7 +423,7 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp()
         results = project.runsim(simpars=simparslist)
-        update(tmpresults=results)
+        updateplots(tmpresults=results)
         return None
     
 
@@ -472,3 +465,56 @@ def manualfit(project=None, name='default', ind=0, verbose=4):
     resetbutton.clicked.connect(resetpars)
     closebutton.clicked.connect(closewindows)
     panel.show()
+
+
+
+
+
+
+
+def plotpeople(resultslist, normalized=True):
+    ''' A clunky function to plot every health state -- not part of the main Optima code, but useful for debugging '''
+    if type(resultslist) is not list: resultslist = [resultslist]
+    ppl = resultslist[0].raw[0]['people']
+    tvec = resultslist[0].raw[0]['tvec']
+    if resultslist[0].project: settings = resultslist[0].project.settings
+    else:
+        from optima import Settings
+        settings = Settings()
+    statelabels = []
+    statelabels.append('sus1')
+    statelabels.append('sus2')
+    cd4s = ['Acu', '500', '350', '200', '50', '0']
+    types = ['ud', 'dx', 'ic', 'us', 'sv', 'lo', 'of']
+    for t in types:
+        for cd4 in cd4s:
+            statelabels.append(t+cd4)
+    nstates = len(statelabels) # 
+    if nstates != shape(ppl)[0]:
+        raise OptimaException("Number of states don't match")
+    npops = shape(ppl)[1]
+    count = 0
+    figh = figure(figsize=(24,16), facecolor='w')
+    figh.subplots_adjust(left=0.02, right=0.99, top=0.97, bottom=0.03, wspace=0.00, hspace=0.00) # Less space
+
+    mpl.rcParams.update({'font.size': 8})
+    eps = 1e-9
+    for s in range(nstates):
+        for p in range(npops):
+            normalization = eps
+            count += 1
+            h = subplot(nstates, npops, count)
+            hold(True)
+            for z in range(len(resultslist)):
+                ppl = resultslist[z].raw[0]['people']
+                if normalized:
+                    normalization = maximum(normalization, ppl[settings.allplhiv,p,:].max()*1.1)
+                else:
+                    normalization = maximum(normalization, ppl[s,p,:].max()*1.1)
+                plot(tvec, ppl[s,p,:]) # Plot values normalized across everything
+            if s!=nstates-1: h.set_xticks([])
+            h.set_yticks([])
+            h.set_ylim((0, normalization))
+            if s==0: title('Population %i' % p)
+            if p==0: ylabel('%s' % statelabels[s])
+            

@@ -274,7 +274,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -288,9 +288,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
         hold(True)
         scatter(origx,origy)
     
-    Version: 2014dec01 by cliffk
+    Version: 2016jan29 by cliffk
     """
-    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort
+    from numpy import array, interp, convolve, linspace, concatenate, ones, exp, isnan, argsort, ceil
     
     # Ensure arrays and remove NaNs
     newx = array(newx)
@@ -305,7 +305,10 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=10, growth=None):
         raise Exception(errormsg)
     origy = origy[~isnan(origy)] 
     origx = origx[~isnan(origy)]
-
+    
+    # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
+    if smoothness is None: smoothness = ceil(len(newx)/len(origx))
+    smoothness = int(smoothness) # Make sure it's an appropriate number
     
     # Make sure it's in the correct order
     correctorder = argsort(origx)
@@ -340,7 +343,13 @@ def perturb(n=1, span=0.5, randseed=None):
     if randseed>=0: seed(randseed) # Optionally reset random seed
     output = 1. + 2*span*(rand(n)-0.5)
     return output
-
+    
+def scaleratio(inarray,total):
+    """ Multiply a list or array by some factor so that its sum is equal to the total. """
+    from copy import deepcopy as dcp
+    inarray = dcp(inarray)
+    inarray = [float(x)*total/sum(inarray) for x in inarray]
+    return inarray
 
 
 
@@ -582,18 +591,18 @@ def gitinfo():
 ##############################################################################
 
 
-def saveobj(filename, obj):
+def saveobj(filename, obj, verbose=True):
     ''' Save an object to file '''
     try: import cPickle as pickle # For Python 2 compatibility
     except: import pickle
     from gzip import GzipFile
     
     with GzipFile(filename, 'wb') as fileobj: pickle.dump(obj, fileobj, protocol=2)
-    print('Object saved to "%s"' % filename)
+    if verbose: print('Object saved to "%s"' % filename)
     return None
 
 
-def loadobj(filename):
+def loadobj(filename, verbose=True):
     ''' Load a saved file '''
     try:
         import cPickle as pickle  # For Python 2 compatibility
@@ -607,7 +616,7 @@ def loadobj(filename):
     kwargs = {'mode': 'rb', argtype: filename}
 
     with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
-    print('Object loaded from "%s"' % filename)
+    if verbose: print('Object loaded from "%s"' % filename)
     return obj
 
 
@@ -710,9 +719,7 @@ class odict(OrderedDict):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if type(key)==str: # Treat like a normal dict
-            return OrderedDict.__getitem__(self,key)
-        elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
+        if isinstance(key, (int, float)): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -731,8 +738,14 @@ class odict(OrderedDict):
             listvals = [self.__getitem__(item) for item in key]
             try: return array(listvals)
             except: return listvals
-        else: # Try to convert to a list if it's an array or something
-            return OrderedDict.__getitem__(self, key)
+        else: # Handle string but also everything else
+            try:
+                output = OrderedDict.__getitem__(self,key)
+                return output
+            except: # WARNING, should be KeyError, but this can't print newlines!!!
+                if len(self.keys()): errormsg = 'odict key "%s" not found; available keys are:\n%s' % (key, '\n'.join(self.keys()))
+                else: errormsg = 'Key "%s" not found since odict is empty'% key
+                raise Exception(errormsg)
 
         
     def __setitem__(self, key, value):
@@ -833,3 +846,14 @@ class odict(OrderedDict):
         out = odict()
         for key in allkeys: out[key] = self[key]
         return out
+
+
+
+##############################################################################
+## OPTIMA EXCEPTIONS CLASS
+##############################################################################
+
+class OptimaException(Exception):
+    ''' A tiny class to allow for Optima-specific exceptions '''
+    def __init(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)

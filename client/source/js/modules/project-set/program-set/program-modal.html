@@ -31,8 +31,8 @@
                 ng-options="category for category in state.categories"></select>
       </div>
     </div>
-    <div ng-if="(state.program.populations && state.program.populations.length > 0) || (state.program.parameters && state.program.parameters.length > 0)">
-      <div class="section grid">
+    <div>
+      <div class="section grid" ng-show="state.program.parameters.length">
         <h3>
           Populations
         </h3>
@@ -69,16 +69,16 @@
           </div>
         </div>
       </div>
-      <div class="section grid">
+      <div class="section grid" ng-show="state.program.parameters.length">
         <h3>
           Parameters in model influenced by this program
         </h3>
       </div>
       <div ng-repeat="entry in state.program.parameters">
-        <div class="section well" style="margin: 10px 0">
+        <div class="grid well">
           <button type="button"
                   class="btn __white"
-                  style="float: right; text-align: right; margin-top: 10px"
+                  style="float: right; text-align: right;"
                   ng-click="removeParameter($index)">Remove</button>
           <div class="section grid">
             <div class="++1 10 1++">
@@ -86,22 +86,22 @@
                 <input type="checkbox" ng-model="entry.active">
                 Active
               </label>
-            </div>
-
-            <div class="section grid">
+            </div><br>
+            <div class="section_dashed_border no-border">
               <div class="++1 10 1++">
                 Parameters
               </div>
-              <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)">
+              <select class="txbox" ng-model="entry.parameterObj" ng-options="param.name for param in state.parameters" ng-change="addPopulations(entry)" required>
               </select>
             </div>
           </div>
           <div class="section grid" ng-if="entry.parameterObj.pships.length === 0 && entry.populations && entry.populations.length > 0">
-            <h3>
+            <div class="++1 10 1++">
               Populations
-            </h3>
+            </div>
             <div>
-            <div class="section_dashed_border">
+            <div class="error-hint" ng-show="isPopulationSelected(entry, entry.populations) && entry.parameterObj">Please select population</div>
+            <div class="section_dashed_border no-border">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPopToParameter(entry)" ng-model="entry.selectAll">
                 <span>All populations</span>
@@ -117,6 +117,7 @@
             <h3>
               Partnerships
             </h3>
+            <div class="error-hint" ng-show="isPopulationSelected(entry, entry.parameterObj.pships) && entry.parameterObj">Please select partnership</div>
             <div class="section_dashed_border" ng-if="entry.parameterObj.pships.length > 0">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPshipsToParameter(entry)" ng-model="entry.selectAll">
@@ -129,6 +130,7 @@
             </div>
           </div>
         </div>
+        <br>
       </div>
 
       <div class="section grid">
@@ -171,7 +173,7 @@
 
     <div class="section text-center" style="margin-top: 20px">
       <button type="button" class="btn __white" ng-click="state.showAddData = false;$dismiss('Closed')">Dismiss</button>
-      <button type="submit" class="btn" ng-disabled="programForm.$invalid">Save</button>
+      <button type="submit" class="btn" ng-disabled="programForm.$invalid || formInvalid">Save</button>
     </div>
   </form>
 </div>

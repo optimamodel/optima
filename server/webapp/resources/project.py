@@ -45,6 +45,8 @@ population_parser.add_arguments({
     'name':       {'required': True, 'location': 'json'},
     'female':     {'type': bool, 'required': True, 'location': 'json'},
     'male':       {'type': bool, 'required': True, 'location': 'json'},
+    'injects':    {'type': bool, 'required': True, 'location': 'json'},
+    'sexworker':  {'type': bool, 'required': True, 'location': 'json'},
     'age_from':   {'location': 'json'},
     'age_to':     {'location': 'json'},
 })
@@ -82,6 +84,7 @@ class ProjectsAll(ProjectBase):
         summary='List All Projects',
         note='Requires admin priviledges'
     )
+    @report_exception
     @verify_admin_request
     def get(self):
         return super(ProjectsAll, self).get()
@@ -105,6 +108,7 @@ class Projects(ProjectBase):
         responseClass=ProjectDb.__name__,
         summary="List all project for current user"
     )
+    @report_exception
     def get(self):
         return super(Projects, self).get()
 
@@ -116,6 +120,7 @@ class Projects(ProjectBase):
             spreadsheet with specified name and parameters given back to the user.""",
         parameters=project_parser.swagger_parameters()
     )
+    @report_exception
     @login_required
     def post(self):
         current_app.logger.info(
@@ -169,6 +174,7 @@ class Projects(ProjectBase):
         summary="Bulk delete for project with the provided ids",
         parameters=bulk_project_parser.swagger_parameters()
     )
+    @report_exception
     def delete(self):
         # dirty hack in case the wsgi layer didn't put json data where it belongs
         from flask import request
@@ -209,6 +215,7 @@ class Project(Resource):
         responseClass=ProjectDb.__name__,
         summary='Open a Project'
     )
+    @report_exception
     @marshal_with(ProjectDb.resource_fields)
     def get(self, project_id):
         query = ProjectDb.query
@@ -226,6 +233,7 @@ class Project(Resource):
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         summary='Update a Project'
     )
+    @report_exception
     def put(self, project_id):
         """
         Updates the project with the given id.
@@ -306,6 +314,7 @@ class Project(Resource):
         responseClass=ProjectDb.__name__,
         summary='Deletes the given project (and eventually, corresponding excel files)'
     )
+    @report_exception
     def delete(self, project_id):
         current_app.logger.debug("deleteProject %s" % project_id)
         # only loads the project if current user is either owner or admin
@@ -346,6 +355,7 @@ class ProjectSpreadsheet(Resource):
         if project does not exist, returns an error.
         """
     )
+    @report_exception
     def get(self, project_id):
         cu = current_user
         current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_id))
@@ -389,6 +399,7 @@ class ProjectSpreadsheet(Resource):
         summary='Upload the project workbook',
         parameters=file_upload_form_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(file_resource)
     def post(self, project_id):
 
@@ -487,6 +498,7 @@ class ProjectData(Resource):
         if project does not exist, returns an error.
         """
     )
+    @report_exception
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/data" % project_id)
         project_entry = load_project(project_id, raise_exception=True)
@@ -504,6 +516,7 @@ class ProjectData(Resource):
         summary='Uploads data for already created project',
         parameters=file_upload_form_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(file_resource)
     def post(self, project_id):
         """
@@ -571,6 +584,7 @@ class ProjectFromData(Resource):
         summary='Creates a project & uploads data to initialize it.',
         parameters=project_upload_form_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(project_upload_resource)
     def post(self):
         from optima.optima import __version__ as version
@@ -641,9 +655,9 @@ class ProjectCopy(Resource):
         summary='Copies the given project to a different name',
         parameters=project_copy_parser.swagger_parameters()
     )
+    @report_exception
     @marshal_with(project_copy_fields)
     @login_required
-    @report_exception
     def post(self, project_id):
         from sqlalchemy.orm.session import make_transient
         # from server.webapp.dataio import projectpath
@@ -719,8 +733,8 @@ class Portfolio(Resource):
         summary='Download data for projects with the given ids as a zip file',
         parameters=bulk_project_parser.swagger_parameters()
     )
-    @login_required
     @report_exception
+    @login_required
     def post(self):
         from zipfile import ZipFile
         from uuid import uuid4
@@ -763,6 +777,7 @@ class Defaults(Resource):
         summary="""Gives default programs, program categories and program parameters
                 for the given program"""
     )
+    @report_exception
     @marshal_with(defaults_fields)
     @login_required
     def get(self, project_id):
