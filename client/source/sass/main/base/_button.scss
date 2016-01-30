@@ -34,6 +34,12 @@
     padding: 5px 12px;
   }
 
+  &.__w {
+    @include font-height(13px, 16px);
+    padding: 5px 12px;
+    width: 100px;
+  }
+
   &.__l {
     @include font-height(16px, normal);
     padding: 9px 16px;

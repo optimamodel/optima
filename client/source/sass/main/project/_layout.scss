@@ -93,12 +93,15 @@
     &.spaced {
       padding: 5%;
     }
+    &.high {
+      height: 35px;
+    }
   }
 
   .column {
     display: flex;
     flex-direction: column;
-    width: 92px;
+    width: 95px;
     &.bordered {
       border: 1px solid black;
     }

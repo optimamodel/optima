@@ -15,14 +15,14 @@ define(['./../../module', 'underscore'], function (module, _) {
       fetchDefaultData();
     };
 
-    $scope.addCCData = function() {
-      $scope.state.ccData.push($scope.state.newAddData);
-      $scope.state.newAddData = {};
+    $scope.addDataToList = function(list, data, dataKey) {
+      list.push(data);
+      $scope.state[dataKey] = {};
     };
 
-    $scope.deleteCCData = function(data) {
-      var index = $scope.state.ccData.indexOf(data);
-      $scope.state.ccData.splice(index, 1);
+    $scope.deleteDataFromList = function(list, data) {
+      var index = list.indexOf(data);
+      list.splice(index, 1);
     };
 
     var fetchGraph = function() {
