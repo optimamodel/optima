@@ -325,7 +325,7 @@ class Project(object):
         return results
 
 
-    def reconcileparsets(name=None, orig=None):
+    def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
         if name is None and orig is None: 
             name = 'autofit'
@@ -346,8 +346,7 @@ class Project(object):
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        parset = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
-        self.addparset(name=name, parset=parset) # Store parameters
+        self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.modified = today()
         return None
 
