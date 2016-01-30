@@ -507,7 +507,11 @@ class ProgramsDb(db.Model):
                 if self.costcov[i] is not None 
                 else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None,
-            ccopars=self.ccopars if self.ccopars else None,
+            ccopars={
+                't': self.ccopars['t'],
+                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
+                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
+            } if self.ccopars else None,
         )
         program_entry.id = self.id
         return program_entry

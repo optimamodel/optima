@@ -50,7 +50,7 @@ costcov_data_point_parser.add_arguments({
 
 costcov_data_locator_parser = RequestParser()
 costcov_data_locator_parser.add_arguments({
-    'year': {'required': True, 'location': 'args'}
+    'year': {'required': True, 'type': int, 'location': 'args'}
 })
 
 costcov_param_parser = RequestParser()
