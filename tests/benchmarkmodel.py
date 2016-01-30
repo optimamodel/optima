@@ -15,8 +15,8 @@ or:
 Version: 2016jan29
 """
 
-dobenchmark = True
-doprofile = False
+dobenchmark = False
+doprofile = True
 
 
 ############################################################################################################################
@@ -66,21 +66,9 @@ if doprofile:
         print('Profiling...')
         
         from line_profiler import LineProfiler
-        from model import model
-        from makemodelpars import makemodelpars
-        from time import time
-        from dataio import loaddata
+        from optima import Project
         
-        if D is None:
-            D = loaddata('/tmp/projects/example.prj', verbose=0)
-        D['M'] = makemodelpars(D['P'], D['opt'], verbose=0)
-        
-        t=time()
-        model(D['G'], D['M'], D['F'][0], D['opt'], verbose=0)
-        print('Total time for running model: %0.3f s' % (time()-t))
-        
-        
-        def do_profile(follow=[]):
+        def do_profile(follow=None):
           def inner(func):
               def profiled_func(*args, **kwargs):
                   try:
@@ -95,14 +83,12 @@ if doprofile:
               return profiled_func
           return inner
         
+        P = Project(spreadsheet='generalized.xlsx', dorun=False)
+        runsim = P.runsim        
         
-        
-        @do_profile(follow=[model]) # Add decorator to runmodel function
-        def runmodel():
-            S = model(D['G'], D['M'], D['F'][0], D['opt'], verbose=0)
-            return S
-        
-        result = runmodel()
+        @do_profile(follow=[runsim]) # Add decorator to runmodel function
+        def runsimwrapper(): runsim()
+        runsimwrapper()
         
         print('Done.')
     
