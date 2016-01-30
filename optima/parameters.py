@@ -512,11 +512,19 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 
 
-def applylimits(y, limits=None, warn=True, verbose=2):
-    ''' A small function to intelligently apply limits (supplied as [low, high] list or tuple) to an output '''
+def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
+    ''' 
+    A function to intelligently apply limits (supplied as [low, high] list or tuple) to an output.
+    
+    Needs dt as input since that determines maxrate.
+    
+    Version: 2016jan30
+    '''
     # If no limits supplied, don't do anything
     if limits is None: 
         return y
+    
+    if 
     
     # Apply limits, preserving original class
     origclass = y.__class__ # To restore original type

@@ -30,6 +30,7 @@ tests = [
 ## Initialization -- same for every test script
 ##############################################################################
 
+import optima
 from optima import tic, toc, blank, pd # analysis:ignore
 
 if 'doplot' not in locals(): doplot = True
@@ -152,6 +153,8 @@ if 'autofit' in tests:
     t = tic()
 
     print('Running autofit test...')
+    try: assert type(P)==Project # Maybe it exists already?
+    except: P = optima.defaults.defaultproject() # Or maybe create?
     P.autofit(name='autofit', orig='default', what=['force', 'init'], maxtime=None, maxiters=50, inds=None) # Run automatic fitting
     P.loadeconomics(filename='testeconomics.xlsx')
     results = P.runsim('autofit', end=2015)
@@ -170,9 +173,8 @@ if 'manualfit' in tests and doplot:
     t = tic()
 
     print('Running manual calibration test...')
-    if 'P' not in locals():
-        import optima
-        P = optima.defaults.defaultproject()
+    try: assert type(P)==Project # Maybe it exists already?
+    except: P = optima.defaults.defaultproject() # Or maybe create?
     P.manualfit(orig=-1, name='manual') # Demonstrating that you can retrieve things by index as well
     
     done(t)

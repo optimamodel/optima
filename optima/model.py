@@ -3,11 +3,11 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf, concatenate as cat
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False, die=True):
+def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
-    This function runs the model. Safetymargin is how close to get to moving all people from a compartment in a single timestep.
+    This function runs the model.
     
-    Version: 2016jan05 by cliffk
+    Version: 2016jan30 by cliffk
     """
     
     printv('Running model...', 1, verbose, newline=False)
@@ -39,6 +39,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
     inhomo     = zeros(npops)    # Inhomogeneity calculations
     usecascade = settings.usecascade # Whether or not the full treatment cascade should be used
+    safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
+    if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Initialize arrays
     raw               = odict()    # Sim output structure
