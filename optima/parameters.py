@@ -101,6 +101,8 @@ Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	No
 Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
+PLHIV aware of their status (%)	propdx	(0, 1)	tot	timepar	meta	optional	0	1	None
+Diagnosed PLHIV on treatment (%)	proptx	(0, 1)	tot	timepar	meta	optional	0	1	None
 '''
 
 
