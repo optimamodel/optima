@@ -573,7 +573,8 @@ def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
         else: return y
     
     if shape(newy)!=shape(y):
-        raise OptimaException('Something went wrong with applying limits: input and output do not have the same shape')
+        errormsg = 'Something went wrong with applying limits:\ninput and output do not have the same shape:\n%s vs. %s' % (shape(y), shape(newy))
+        raise OptimaException(errormsg)
     return newy
 
 
