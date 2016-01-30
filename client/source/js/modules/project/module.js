@@ -76,6 +76,19 @@ define([
               return projectApiService.getProjectList();
             }
           }
+        })
+        .state('project.economicdata', {
+          url: '/economic-data',
+          templateUrl: 'js/modules/project/economic-data.html',
+          controller: 'ProjectEconomicDataController',
+          resolve: {
+            info: function (projectApiService) {
+              return projectApiService.getActiveProject();
+            },
+            projects: function (projectApiService) {
+              return projectApiService.getProjectList();
+            }
+          }
         });
     });
 });

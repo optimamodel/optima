@@ -5,6 +5,8 @@
 
 def printv(string, thisverbose=1, verbose=2, newline=True):
     ''' Optionally print a message and automatically indent '''
+    if thisverbose>4 or verbose>4:
+        print('Warning, verbosity should be from 0-4 (you asked for %i and %i)' % (thisverbose, verbose))
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose # Create automatic indenting
         if newline: print(indents+str(string)) # Actually print
