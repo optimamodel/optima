@@ -4,13 +4,32 @@
 
 
 def printv(string, thisverbose=1, verbose=2, newline=True):
-    ''' Optionally print a message and automatically indent '''
-    if thisverbose>4 or verbose>4:
-        print('Warning, verbosity should be from 0-4 (you asked for %i and %i)' % (thisverbose, verbose))
+    '''
+    Optionally print a message and automatically indent. The idea is that
+    a global or shared "verbose" variable is defined, which is passed to
+    subfunctions, determining how much detail to print out.
+
+    The general idea is that verbose is an integer from 0-4 as follows:
+        0 = no printout whatsoever
+        1 = only essential warnings, e.g. suppressed exceptions
+        2 = standard printout
+        3 = extra debugging detail (e.g., printout on each iteration)
+        4 = everything possible (e.g., printout on each ​_timestep_​)
+
+    Thus you a very important statement might be e.g.
+        printv('WARNING, everything is wrong', 1, verbose)
+
+    whereas a much less important message might be
+        printv('This is timestep %i' % i, 4, verbose)
+
+    Version: 2016jan29
+    '''
+    if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (you asked for %i and %i)' % (thisverbose, verbose))
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose # Create automatic indenting
         if newline: print(indents+str(string)) # Actually print
         else: print(indents+str(string)), # Actually print
+    return None
 
 
 def blank(n=3):
