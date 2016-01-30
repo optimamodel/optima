@@ -138,11 +138,11 @@ class Programset(object):
             self.updateprogset()
             printv('\nRemoved program "%s" from programset "%s". \nPrograms in this programset are: %s' % (program, self.name, [thisprog.short for thisprog in self.programs.values()]), 4, verbose)
 
-    def is_optimizable(self):
-        return [True if prog.is_optimizable() else False for prog in self.programs.values()]
+    def optimizable(self):
+        return [True if prog.optimizable() else False for prog in self.programs.values()]
 
     def optimizableprograms(self):
-        return odict((program.short, program) for program in self.programs.values() if program.is_optimizable())
+        return odict((program.short, program) for program in self.programs.values() if program.optimizable())
 
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
@@ -245,7 +245,7 @@ class Programset(object):
 
         # Get program-level coverage for each program
         for thisprog in self.programs.keys():
-            if self.programs[thisprog].is_optimizable():
+            if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     coverage[thisprog] = None
@@ -271,7 +271,7 @@ class Programset(object):
 
         # Get budget for each program
         for thisprog in self.programs.keys():
-            if self.programs[thisprog].is_optimizable():
+            if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     budget[thisprog] = None
@@ -296,7 +296,7 @@ class Programset(object):
 
         # Get population-level coverage for each program
         for thisprog in self.programs.keys():
-            if self.programs[thisprog].is_optimizable():
+            if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program, setting coverage to None...', 1, verbose)
                     popcoverage[thisprog] = None
@@ -473,7 +473,7 @@ class Programset(object):
 
         cost_coverage_figures = {}
         for thisprog in self.programs.keys():
-            if self.programs[thisprog].is_optimizable():
+            if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
@@ -506,7 +506,6 @@ class Program(object):
         except:
             print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
             self.targetpartypes = []
-        self.optimizable = self.is_optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
@@ -524,7 +523,7 @@ class Program(object):
         return output
 
 
-    def is_optimizable(self):
+    def optimizable(self):
         return True if self.targetpars else False
 
 
@@ -536,7 +535,6 @@ class Program(object):
         else:
             index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
             self.targetpars[index] = targetpar # overwrite
-        self.optimizable = self.is_optimizable()
         return None
 
 
@@ -548,7 +546,6 @@ class Program(object):
         else:
             index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
             self.targetpars.pop(index)
-            self.optimizable = self.is_optimizable()
             printv('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.short, self.targetpars), 4, verbose)
         return None
 
