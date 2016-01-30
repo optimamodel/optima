@@ -67,7 +67,7 @@ if doprofile:
         print('Profiling...')
         
         from line_profiler import LineProfiler
-        from optima import Project, model
+        from optima import Project, model # analysis:ignore -- called by eval() function
         
         def do_profile(follow=None):
           def inner(func):

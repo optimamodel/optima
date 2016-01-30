@@ -119,16 +119,14 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             ostprev = minimum(ostprev, 1.0) # Don't let more than 100% of PWID be on OST :)
         except: 
             errormsg = 'Cannot divide by the number of PWID (numost=%f, numpwid=5f' % (numost, numpwid)
-            if die: 
-                raise OptimaException(errormsg)
+            if die: raise OptimaException(errormsg)
             else: 
                 printv(errormsg, 1, verbose)
                 ostprev = zeros(npts) # Reset to zero
     else: # No one injects
         if sum(numost): 
             errormsg = 'You have entered non-zero value for the number of PWID on OST, but you have not specified any populations who inject'
-            if die: 
-                raise OptimaException(errormsg)
+            if die: raise OptimaException(errormsg)
             else: 
                 printv(errormsg, 1, verbose)
                 ostprev = zeros(npts)
@@ -246,7 +244,10 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
         if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
-            raise OptimaException(errormsg)
+            if die: raise OptimaException(errormsg)
+            else:
+                printv(errormsg, 1, verbose)
+                initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
     
@@ -274,8 +275,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             for key in ['acts', 'cond']:
                 if not(all(this[key]>=0)):
                     errormsg = 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
-                    if die: 
-                        raise OptimaException(errormsg)
+                    if die: raise OptimaException(errormsg)
                     else: 
                         printv(errormsg, 1, verbose)
                         this[key][this[key]<0] = 0.0 # Reset values
@@ -322,7 +322,12 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 efftx   = sum(txfactor * people[tx,pop,t]) # ...and treated
                 effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t] # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
 
-            if not(effhivprev[pop]>=0): raise OptimaException('HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop]))
+            if not(effhivprev[pop]>=0): 
+                errormsg = 'HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop])
+                if die: raise OptimaException(errormsg)
+                else:
+                    printv(errormsg, 1, verbose)
+                    effhivprev[pop] = 0.0
         
         ## Calculate inhomogeneity in the force-of-infection based on prevalence
         for pop in range(npops):
@@ -703,8 +708,11 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            printv('WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, errpop, t+1, people[errstate,errpop,t+1]), 1, verbose=verbose)
-                            people[errstate,errpop,t+1] = 0 # Reset
+                            errormsg = 'WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
+                            if die: raise OptimaException(errormsg)
+                            else:
+                                printv(errormsg, 1, verbose=verbose)
+                                people[errstate,errpop,t+1] = 0 # Reset
                 
     # Append final people array to sim output
     raw['people'] = people
