@@ -18,6 +18,7 @@ from server.webapp.resources.common import file_resource, file_upload_form_parse
 from server.webapp.dbconn import db
 
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb
+import optima as op
 
 
 costcov_parser = RequestParser()
@@ -37,6 +38,13 @@ costcov_data_parser = RequestParser()
 costcov_data_parser.add_arguments({
     'data': {'type': list, 'location': 'json'},
     'params': {'type': dict, 'location': 'json'}
+})
+
+costcov_data_point_parser = RequestParser()
+costcov_data_point_parser.add_arguments({
+    'year': {'type': int, 'required': True}, # 't' for BE
+    'cost':{'type': int, 'required': True},
+    'coverage': {'type': float, 'required': True}
 })
 
 program_parser = RequestParser()
@@ -366,3 +374,64 @@ class CostCoverageGraph(Resource):
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
         json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
         return json.loads(json_string)
+
+
+class CostCoverageData(Resource):
+    """
+    Modification of data points for the given program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(description="Add new data point.",
+        parameters=costcov_data_point_parser.swagger_parameters())
+    def post(self, project_id, progset_id, program_id):
+        """
+        adds a _new_ data point to program parameters.
+        It should then be given to BE in this way:
+        program.addcostcovdatum({
+            t=<args.year>,
+            cost=<args.cost>,
+            coverage=<args.coverage>
+            })
+        """
+        args = costcov_data_point_parser.parse_args()
+
+        program_entry = load_program(project_id, progset_id, program_id)
+        if program_entry is None:
+            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+        program_instance = program_entry.hydrate()
+        program_instance.addcostcovdatum({'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']})
+        program_entry.restore(program_instance)
+        result = {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
+        db.session.add(program_entry)
+        db.session.commit()
+
+        return result, 201
+
+    @swagger.operation(description="Edit existing data point.",
+        parameters=costcov_data_point_parser.swagger_parameters())
+    def put(self, project_id, progset_id, program_id):
+        """
+        edits existing data point to program parameters.
+        It should then be given to BE in this way:
+        program.addcostcovdatum({
+            t=<args.year>,
+            cost=<args.cost>,
+            coverage=<args.coverage>
+            })
+        """
+        args = costcov_data_point_parser.parse_args()
+
+        program_entry = load_program(project_id, progset_id, program_id)
+        if program_entry is None:
+            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+        program_instance = program_entry.hydrate()
+        program_instance.addcostcovdatum({'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']}, overwrite = True)
+        program_entry.restore(program_instance)
+        result = {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
+        db.session.add(program_entry)
+        db.session.commit()
+
+        return result, 201        

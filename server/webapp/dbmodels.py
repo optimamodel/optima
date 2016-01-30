@@ -32,7 +32,6 @@ def db_model_as_file(model, loaddir, filename, name_field, extension):
     return filename
 
 
-
 @swagger.model
 class UserDb(db.Model):
 
@@ -379,8 +378,8 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
 
 costcov_fields = {
     'year': fields.String,
-    'spending': LargeInt(attribute='cost'),
-    'coverage': LargeInt(attribute='cov'),
+    'cost': LargeInt(attribute='cost'),
+    'coverage': LargeInt(attribute='coverage'),
 }
 
 
@@ -481,9 +480,9 @@ class ProgramsDb(db.Model):
 
         for x in data:
             costcov_data.append({
-                "cost": x["spending"],
+                "cost": x["cost"],
                 "year": x["year"],
-                "cov": x["coverage"]
+                "coverage": x["coverage"]
             })
 
         return costcov_data
@@ -493,9 +492,9 @@ class ProgramsDb(db.Model):
 
         for x in self.costcov or []:
             costcov_data.append({
-                "spending": x["cost"],
+                "cost": x["cost"],
                 "year": x["year"],
-                "coverage": x["cov"]
+                "coverage": x["coverage"]
             })
 
         return costcov_data
@@ -514,12 +513,31 @@ class ProgramsDb(db.Model):
             costcovdata={
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['cov'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['coverage'] 
+                if self.costcov[i] is not None 
+                else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None,
             ccopars=self.ccopars if self.ccopars else None,
         )
         program_entry.id = self.id
         return program_entry
+
+    def restore(self, program_instance):
+        import json
+        self.category = program_instance.category
+        self.name = program_instance.name
+        self.short = program_instance.short
+        self.pars = self.program_pars_to_pars(program_instance.targetpars)
+        self.targetpops = program_instance.targetpops
+        self.criteria = program_instance.criteria
+        self.costcov = []
+        for i in range(len(program_instance.costcovdata['t'])):
+            self.costcov.append(
+                {'year': program_instance.costcovdata['t'][i],
+                 'cost': program_instance.costcovdata['cost'][i],
+                 'coverage': program_instance.costcovdata['coverage'][i]})
+        self.costcov = json.loads(json.dumps(self.costcov))  # silently bails on floats otherwise. No idea why?
+        self.ccopars = program_instance.costcovfn.ccopars
 
 
 @swagger.model
