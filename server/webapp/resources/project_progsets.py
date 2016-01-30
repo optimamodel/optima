@@ -11,7 +11,8 @@ from flask import helpers
 
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project, load_progset, load_program, RequestParser, report_exception
+from server.webapp.utils import (
+    load_project, load_progset, load_program, RequestParser, report_exception, modify_program)
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
@@ -23,7 +24,7 @@ import optima as op
 
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'json'}, # 't' for BE
+    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
@@ -42,7 +43,7 @@ costcov_data_parser.add_arguments({
 
 costcov_data_point_parser = RequestParser()
 costcov_data_point_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'json'}, # 't' for BE
+    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
@@ -50,7 +51,7 @@ costcov_data_point_parser.add_arguments({
 costcov_data_locator_parser = RequestParser()
 costcov_data_locator_parser.add_arguments({
     'year': {'required': True, 'location': 'args'}
-    })
+})
 
 program_parser = RequestParser()
 program_parser.add_arguments({
@@ -398,22 +399,8 @@ class CostCoverageData(Resource):
     def delete_data_for_instance(self, program_instance, args):
         program_instance.rmcostcovdatum(year=args['year'])
 
-    def program_entry_persister(self, project_id, progset_id, program_id, args, program_modifier):
-        program_entry = load_program(project_id, progset_id, program_id)
-        if program_entry is None:
-            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-        program_instance = program_entry.hydrate()
-        program_modifier(program_instance, args)
-        program_entry.restore(program_instance)
-        result = {"params": program_entry.ccopars or {},
-                "data": program_entry.data_db_to_api()}
-        db.session.add(program_entry)
-        db.session.commit()
-        return result
-
-
     @swagger.operation(description="Add new data point.",
-        parameters=costcov_data_point_parser.swagger_parameters())
+                       parameters=costcov_data_point_parser.swagger_parameters())
     def post(self, project_id, progset_id, program_id):
         """
         adds a _new_ data point to program parameters.
@@ -425,12 +412,12 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-        result = self.program_entry_persister(project_id, progset_id, program_id, args, self.add_data_for_instance)
+        result = modify_program(project_id, progset_id, program_id, args, self.add_data_for_instance)
 
         return result, 201
 
     @swagger.operation(description="Edit existing data point.",
-        parameters=costcov_data_point_parser.swagger_parameters())
+                       parameters=costcov_data_point_parser.swagger_parameters())
     def put(self, project_id, progset_id, program_id):
         """
         edits existing data point to program parameters.
@@ -442,7 +429,7 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-        result = self.program_entry_persister(project_id, progset_id, program_id, args, self.update_data_for_instance)
+        result = modify_program(project_id, progset_id, program_id, args, self.update_data_for_instance)
 
         return result
 
@@ -452,6 +439,6 @@ class CostCoverageData(Resource):
         removes data point for the given year from program parameters.
         """
         args = costcov_data_locator_parser.parse_args()
-        result = self.program_entry_persister(project_id, progset_id, program_id, args, self.delete_data_for_instance)
+        result = modify_program(project_id, progset_id, program_id, args, self.delete_data_for_instance)
 
         return result

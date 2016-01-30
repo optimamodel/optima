@@ -430,6 +430,23 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
     db.session.add(program_record)
 
 
+def modify_program(project_id, progset_id, program_id, args, program_modifier):
+    # looks up a program, hydrates it, calls a modifier
+    # (function defined somewhere) with given args, saves the result
+    # TODO could such things be done as decorators?
+    program_entry = load_program(project_id, progset_id, program_id)
+    if program_entry is None:
+        raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+    program_instance = program_entry.hydrate()
+    program_modifier(program_instance, args)
+    program_entry.restore(program_instance)
+    result = {"params": program_entry.ccopars or {},
+              "data": program_entry.data_db_to_api()}
+    db.session.add(program_entry)
+    db.session.commit()
+    return result
+
+
 def save_result(project_id, result, parset_name='default'):
     # find relevant parset for the result
     project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
