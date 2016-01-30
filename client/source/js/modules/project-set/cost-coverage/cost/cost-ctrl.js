@@ -27,16 +27,16 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     var fetchGraph = function() {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/graph?t=2015&parset_id=' + $scope.vm.selectedParset.id)
+        $scope.selectedProgram.id + '/costcoverage/graph?t=2016&parset_id=' + $scope.vm.selectedParset.id)
         .success(function (response) {
-          console.log('response', response);
+          $scope.state.chartData = response;
         });
     };
 
     var fetchDefaultData = function() {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' + $scope.selectedProgram.id + '/costcoverage')
         .success(function (response) {
-          console.log('response', response);
+          $scope.state.ccData = response.data;
         });
     }
 
