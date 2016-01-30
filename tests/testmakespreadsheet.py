@@ -66,9 +66,10 @@ if 'checkexisting' in tests:
     tocheck = {'simple':2, 'generalized':7, 'concentrated':8}
     prefix = '_tmp' # THe prefix to add to these files for the purposes of checking
     checksheets = True # Whether or not to check that the numbers and names of the sheets match
-    checkrows = False # Whether or not to check that the number of rows in each sheet is as expected; set to False by default since depends on number of female populations, plus doesn't matter
-    checkblocknames = True # Whether or not to check that the names of each block match
+    checkblock = True # Whether or not to check that the names of each block match
     checkconstants = True # Whether or not to check that the Constants sheet is identical
+    checkrows = False # Whether or not to check that the number of rows in each sheet is as expected; set to False by default since depends on number of female populations, plus doesn't matter
+
     
     ## Imports
     from optima import makespreadsheet
@@ -90,61 +91,79 @@ if 'checkexisting' in tests:
         new  = open_workbook(freshnames[ntc])
         
         ## Check sheets names
-        orignames = orig.sheet_names()
-        newnames = new.sheet_names()
-        if  orignames!=newnames:
-            errormsg = 'Sheet names do not match for spreadsheet "%s"!' % tochecknames[ntc]
-            if len(orignames)==len(newnames):
-                for s in range(len(orignames)):
-                    if orignames[s]!=newnames[s]:
-                        errormsg += '\nOriginal: %s | New: %s' % (orignames[s], newnames[s])
+        if checksheets:
+            orignames = orig.sheet_names()
+            newnames = new.sheet_names()
+            if  orignames!=newnames:
+                errormsg = 'Sheet names do not match for spreadsheet "%s"!' % tochecknames[ntc]
+                if len(orignames)==len(newnames):
+                    for s in range(len(orignames)):
+                        if orignames[s]!=newnames[s]:
+                            errormsg += '\nOriginal: %s | New: %s' % (orignames[s], newnames[s])
+                else:
+                    errormsg += '\nOriginal:\n'
+                    errormsg += str(orig.sheet_names())
+                    errormsg += '\nNew:\n'
+                    errormsg += str(new.sheet_names())
+                raise Exception(errormsg)
             else:
-                errormsg += '\nOriginal:\n'
-                errormsg += str(orig.sheet_names())
-                errormsg += '\nNew:\n'
-                errormsg += str(new.sheet_names())
-            raise Exception(errormsg)
-        else:
-            print('Sheet names are OK for spreadsheet "%s" :)' % tochecknames[ntc])
+                print('Sheet names are OK for spreadsheet "%s" :)' % tochecknames[ntc])
         
         
         ## Check block names
-        nsheets = len(orignames)
-        for s in range(nsheets):
-            origsheet = orig.sheet_by_index(s)
-            newsheet  = new.sheet_by_index(s)
-            origcol = []
-            newcol = []
-            ocv = origsheet.col_values(0)
-            ncv = newsheet.col_values(0)
-            for val in ocv: 
-                if len(val): 
-                    origcol.append(val)
-            for val in ncv: 
-                if len(val): 
-                    newcol.append(val)
-            
-            if origcol!=newcol:
-                if len(origcol)==len(newcol):
-                    errormsg = 'Block names differ for spreadsheet "%s"!' % tochecknames[ntc]
-                    for r in range(len(origcol)):
-                        if origcol[r]!=newcol[r]:
-                            errormsg += '\nOriginal: %s | New: %s' % (origcol[r], newcol[r])
+        if checkblocks:
+            nsheets = len(orignames)
+            for s in range(nsheets):
+                origsheet = orig.sheet_by_index(s)
+                newsheet  = new.sheet_by_index(s)
+                origcol = []
+                newcol = []
+                ocv = origsheet.col_values(0)
+                ncv = newsheet.col_values(0)
+                for val in ocv: 
+                    if len(val): 
+                        origcol.append(val)
+                for val in ncv: 
+                    if len(val): 
+                        newcol.append(val)
+                
+                if origcol!=newcol:
+                    if len(origcol)==len(newcol):
+                        errormsg = 'Block names differ for spreadsheet "%s"!' % tochecknames[ntc]
+                        for r in range(len(origcol)):
+                            if origcol[r]!=newcol[r]:
+                                errormsg += '\nOriginal: %s | New: %s' % (origcol[r], newcol[r])
+                    else:
+                        errormsg = 'Number of block names differs for spreadsheet "%s"!' % tochecknames[ntc]
+                        errormsg += '\nOriginal:\n'
+                        errormsg += str(origcol)
+                        errormsg += '\nNew:\n'
+                        errormsg += str(newcol)
+                        raise Exception(errormsg)
                 else:
-                    errormsg = 'Number of block names differs for spreadsheet "%s"!' % tochecknames[ntc]
-                    errormsg += '\nOriginal:\n'
-                    errormsg += str(origcol)
-                    errormsg += '\nNew:\n'
-                    errormsg += str(newcol)
-                    raise Exception(errormsg)
-            else:
-                print('Block names are OK for spreadsheet "%s" :)' % tochecknames[ntc])
+                    print('Block names are OK for spreadsheet "%s" :)' % tochecknames[ntc])
         
         ## Check constants
-        origconst = orig.sheet_by_name('Constants')
-        newconst  = new.sheet_by_name('Constants')
+        if checkconstants:
+            origconst = orig.sheet_by_name('Constants')
+            newconst  = new.sheet_by_name('Constants')
+            nrows = origconst.nrows
+            if nrows!=newconst.nrows: 
+                errormsg = 'Number of rows for constants differ for spreadsheet "%s"!' % tochecknames[ntc]
+                errormsg += 'original: %i; new: %i' % (nrows, newconst.nrows)
+                raise Exception(errormsg)
+            else:
+                for r in range(nrows):
+                    orv = origconst.row_values(r)
+                    nrv = newconst.row_values(r)
+                    if orv!=nrv:
+                        errormsg = 'Row content differs for spreadsheet "%s"!' % tochecknames[ntc]
+                        errormsg += '\nOriginal:\n'
+                        errormsg += str(orv)
+                        errormsg += '\nNew:\n'
+                        errormsg += str(nrv)
+                        raise Exception(errormsg)
                 
-    
     ## Tidy up
     for name in freshnames:
         print('Removing temporary file "%s"...' % name)
