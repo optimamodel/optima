@@ -168,7 +168,7 @@ if 'makeprograms' in tests:
     plotoptions['xupperlim'] = 2e9
     plotoptions['perperson'] = False
 
-    if doplot: HTC.plotcoverage(t=2015,parset=P.parsets['default'],plotoptions=plotoptions)
+    if doplot: HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
 
     print('Running make programs set test...')
 

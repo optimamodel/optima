@@ -1,6 +1,6 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf
+from numpy import zeros, exp, maximum, minimum, hstack, inf, concatenate as cat
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=False, die=True):
@@ -401,8 +401,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ## Calculate births, age transitions and mother-to-child-transmission
         ###############################################################################
 
-        ontreatment = usvl+svl if usecascade else tx
-        eligible = dx+care+lost+off if usecascade else dx
+        ontreatment = cat((usvl,svl)) if usecascade else tx
+        eligible = cat((dx,care,lost,off)) if usecascade else dx
 
         effmtct  = mtctbreast*breast[t] + mtctnobreast*(1-breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
@@ -411,7 +411,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         for p1 in range(npops):
 
             allbirthrates = birthtransit[p1, :] * birth[p1, t]
-            alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+            try: alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
             for p2 in range(npops):
 

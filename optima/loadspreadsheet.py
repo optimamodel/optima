@@ -251,7 +251,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     try:
                         subpar = subparlist[parcount].pop(0) # Pop first entry of subparameter list, which is namelist[parcount][1]
                     except:
-                        errormsg = 'Failed to load constant subparameter from subparlist %i' % parcount
+                        errormsg = 'Failed to load constant subparameter "%s" from subparlist %i' % (thispar, parcount)
                         raise OptimaException(errormsg)
                     validatedata(thesedata, sheetname, thispar, row)
                     data['const'][subpar] = thesedata # Store data
@@ -267,7 +267,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     for key in sheets['Partnerships & transitions']:
         thesedata = data[key]
         matrixshape = shape(array(thesedata))
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         correctfirstdim = data['npops'] if key!='birthtransit' else sum(data['pops']['female'])
         correctseconddim = data['npops']
         if matrixshape[0] != correctfirstdim or matrixshape[1] != correctseconddim:
