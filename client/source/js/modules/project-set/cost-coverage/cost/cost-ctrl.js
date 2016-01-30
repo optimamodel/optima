@@ -6,7 +6,8 @@ define(['./../../module', 'underscore'], function (module, _) {
     var vc = $scope;
     $scope.state = {
       newAddData: {},
-      ccData: []
+      ccData: [],
+      ccDataSaved: []
     };
 
     $scope.changeSelectedProgram = function() {
@@ -36,10 +37,21 @@ define(['./../../module', 'underscore'], function (module, _) {
     var fetchDefaultData = function() {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' + $scope.selectedProgram.id + '/costcoverage')
         .success(function (response) {
-          $scope.state.ccData = response.data;
+          $scope.state.ccDataSaved = angular.copy(response.data);
+          setCCData();
         });
-    }
+    };
 
+    var setCCData = function() {
+      $scope.state.ccData = $scope.state.ccDataSaved;
+    };
+
+    $scope.reset = function() {
+      setCCData();
+      $scope.state.remarks = '';
+      $scope.state.maxFunc = undefined;
+      $scope.state.dispCost = undefined;
+    }
   });
 
 });

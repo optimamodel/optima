@@ -19,8 +19,8 @@
 
     <div style="display: flex">
       <div class="chart-container __medium">
-        <div mpld3-chart="state.chartData" id="{{ state.chartData.id }}"></div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="{{ state.chartData.id }}"></chart-toolbar>
+        <div mpld3-chart="state.chartData" id="cost_cov_chart"></div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="cost_cov_chart"></chart-toolbar>
       </div>
       <div class="flex-column margin_left">
         <div class="flex-column">
@@ -93,23 +93,23 @@
           <h3>Options for displaying curves</h3>
           <div>
             Specify the maximum function (for plotting only):
-            <input placeholder="e.g. 1000000" class="txbox __inline __xl"/>
+            <input placeholder="e.g. 1000000" class="txbox __inline __xl" ng-model="state.maxFunc" type="number"/>
           </div>
           <div>
             Display program costs in dollar spent per person in the targeted population
-            <input type="checkbox"/>
+            <input type="checkbox" ng-model="state.dispCost"/>
           </div>
         </div>
         <div class="flex-column margin_top">
           <h3>Add notes</h3>
-          <textarea/>
+          <textarea ng-model="state.remarks"/>
         </div>
       </div>
     </div>
     <div class="u-center-horizontal margin-top-m">
       <button type="button" class="btn __m" style="margin-left: 15px">Update</button>
       <button type="button" class="btn __m" style="margin-left: 15px">Save</button>
-      <button type="button" class="btn __m" style="margin-left: 15px">Reset</button>
+      <button type="button" class="btn __m" style="margin-left: 15px" ng-click="reset()">Reset</button>
     </div>
   </div>
 </div>
