@@ -4,3 +4,4 @@
 0.297 2016-Jan-25_19:17:29 1b92bc3 geogui-with-plotfixes
 0.264 2016-Jan-29_05:02:50 d816d87 fix-geogui
 0.959 2016-Jan-29_23:54:29 349ae76 births
+1.02 2016-Jan-30_00:04:56 ccb6bb3 births
