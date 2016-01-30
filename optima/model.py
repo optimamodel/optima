@@ -12,6 +12,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
     
     printv('Running model...', 1, verbose, newline=False)
     if benchmark: starttime = tic()
+    
+    print('WARNING, currently circumcised men do not get infected') # Temporary warning because nasty, difficult-to-fix bug discovered
 
     ###############################################################################
     ## Setup
@@ -86,6 +88,10 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         off  = settings.off   # off-ART but still in care
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
+    if len(sus)!=2:
+        errormsg = 'Definition of susceptibles has changed: expecting circumcised+uncircumcised, but actually length %i' % len(sus)
+        raise OptimaException(errormsg)
+
 
     popsize = dcp(simpars['popsize']) # Population sizes
     
@@ -346,7 +352,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         ###############################################################################
         
         # Reset force-of-infection vector for each population group
-        forceinfvec = zeros(npops)
+        forceinfvec = zeros(npops) # WARNING, should be zeros((npops, len(sus)) because uncircumcised+circumcised 
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for this in sexactslist:
@@ -433,8 +439,8 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         for p1,p2 in risktransitlist:
             peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
             peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-            peoplemoving1 = minimum(peoplemoving1, people[:, p1, t]) # Ensure positive
-            peoplemoving2 = minimum(peoplemoving2, people[:, p2, t]) # And again
+            peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
+            peoplemoving2 = minimum(peoplemoving2, safetymargin*people[:, p2, t]) # And again
 
 
         ###############################################################################
@@ -682,7 +688,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
-            change[sus,:] = dS
+            change[uncirc,:] = dS # WARNING, this is wrong, should be susceptibles, but not women, and dS needs to be split up -- argh!!!
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
