@@ -361,7 +361,7 @@ def makepars(data, label=None, verbose=2):
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
     fpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['female'][popno]]
-    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]]
+    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
     pars['popkeys'] = dcp(popkeys)
     
     
@@ -496,7 +496,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
-    for key in staticmatrixkeys: simpars[key] = array(pars[key])
+    for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
 
     # Loop over requested keys
     for key in keys: # Loop over all keys
