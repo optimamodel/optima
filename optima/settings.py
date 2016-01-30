@@ -13,7 +13,7 @@ How verbose works:
 Version: 2016jan29
 """
 
-from numpy import arange, array, concatenate as cat, linspace
+from numpy import arange, array, concatenate as cat, linspace, shape
 from optima import OptimaException, defaultrepr, printv, dcp
 
 
@@ -99,14 +99,44 @@ class Settings():
         return tvec
     
     
-    def convertlimits(self, limits=None, dt=None, safetymargin=None, verbose=None):
+    def convertlimits(self, limits=None, tvec=None, dt=None, safetymargin=None, verbose=None):
         ''' Link to function below '''
-        return convertlimits(settings=self, limits=limits, dt=dt, safetymargin=None, verbose=verbose)
+        return convertlimits(settings=self, limits=limits, tvec=None, dt=dt, safetymargin=None, verbose=verbose)
 
 
+
+
+
+def gettvecdt(tvec=None, dt=None, justdt=False):
+    ''' 
+    Function to encapsulate the logic of returning sensible tvec and dt based on flexible input.
+    
+    If tvec and dt are both supplied, do nothing.
+    
+    Will always work if tvec is not None, but will use default value for dt if dt==None and len(tvec)==1.
+    
+    Usage:
+        tvec,dt = gettvecdt(tvec, dt)
+    
+    Version: 2016jan30
+    '''
+    defaultdt = 0.2 # WARNING, slightly dangerous to hard-code but should be ok, since very rare situation
+    if tvec is None: 
+        if justdt: return defaultdt # If it's a constant, maybe don' need a time vector, and just return dt
+        else: raise OptimaException('No time vector supplied, and unable to figure it out') # Usual case, crash
+    elif isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+    elif shape(tvec): # Make sure it has a length -- if so, overwrite dt
+        if len(tvec)>=2: dt = tvec[1]-tvec[0] # Even if dt supplied, recalculate it from the time vector
+        elif dt is None: dt = defaultdt # Or give up and use default
+        else: dt = dt # Use input
+    else:
+        raise OptimaException('Could not understand tvec of type "%s"' % type(tvec))
+    return tvec, dt
+    
+    
 
     
-def convertlimits(limits=None, dt=None, safetymargin=None, settings=None, verbose=None):
+def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=None, verbose=None):
     ''' 
     Method to calculate numerical limits from qualitative strings.
     
@@ -129,6 +159,9 @@ def convertlimits(limits=None, dt=None, safetymargin=None, settings=None, verbos
     if safetymargin is None:
         if settings is not None: safetymargin = settings.safetymargin
         else: safetymargin = 0.8 # Not that important, so just set safety margin
+    
+    # Update dt 
+    dt = gettvecdt(tvec=tvec, dt=dt, justdt=True)
     
     maxrate = safetymargin/dt
     maxpopsize = 1e9

@@ -107,7 +107,7 @@ except: _failed()
 ## Load Optima functions and classes
 try: 
     import settings as _settings # Inter-project definitions, e.g. health states
-    from settings import Settings, convertlimits
+    from settings import Settings, convertlimits, gettvecdt
 except: _failed()
 
 try: 
