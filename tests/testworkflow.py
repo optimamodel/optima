@@ -56,7 +56,7 @@ if 'minimal' in tests:
     print('Running minimal test...')
     
     from optima import Project
-    P = Project(spreadsheet='simple.xlsx')
+    P = Project(spreadsheet='cascade2p.xlsx')
     
     done(t)
 
