@@ -9,6 +9,7 @@ Version: 2016jan19 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makespreadsheet',
+'compareexisting',
 'unittests',
 ]
 
@@ -153,4 +154,8 @@ class TestEconSpreadsheet(unittest.TestCase):
 
 
 if 'unittests' in tests: # Actually run the unit tests
-    unittest.main()
+    from pylab import isinteractive
+    if not isinteractive():
+        unittest.main()
+    else:
+        print('Note:\nTo run makespreadsheet unit tests, do not run in\ninteractive mode, for your console will die :(')
