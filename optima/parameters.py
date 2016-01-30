@@ -7,7 +7,7 @@ Version: 2016jan28
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults, convertlimits
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 
@@ -495,7 +495,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
-    simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
+    dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
+    simpars['dt'] = dt  # Store dt
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -504,11 +505,34 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
+            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
             except: raise OptimaException('Could not figure out how to interpolate parameter "%s"' % key)
 
     return simpars
 
+
+def gettvecdt(tvec=None, dt=None, justdt=False):
+    ''' 
+    Function to encapsulate the logic of returning sensible tvec and dt based on flexible input.
+    
+    If tvec and dt are both supplied, do nothing.
+    
+    Will always work if tvec is not None, but will use default value for dt if dt==None and len(tvec)==1.
+    
+    Version: 2016jan30
+    '''
+    defaultdt = 0.2 # WARNING, slightly dangerous to hard-code but should be ok, since very rare situation
+    if tvec is None: 
+        if justdt: return defaultdt # If it's a constant, maybe don' need a time vector, and just return dt
+        else: raise OptimaException('No time vector supplied, unable to interpolate') # Usual case, crash
+    elif isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+    elif hasattr(tvec, '__len__'): # Make sure it has a length -- if so, overwrite dt
+        if len(tvec)>=2: dt = tvec[1]-tvec[0] # Even if dt supplied, recalculate it from the time vector
+        elif dt is None: dt = defaultdt # Or give up and use default
+        else: dt = dt # Use input
+    else:
+        raise OptimaException('Could not understand tvec of type "%s"' % type(tvec))
+    return tvec, dt
 
 
 
@@ -524,7 +548,12 @@ def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
     if limits is None: 
         return y
     
-    if 
+    if dt is None:
+        if warn: raise OptimaException('No timestep specified: required for convertlimits()')
+        else: dt = 0.2 # WARNING, should probably not hard code this, although with the warning, and being conservative, probably OK
+    
+    # Convert any text in limits to a numerical value
+    limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
     # Apply limits, preserving original class
     origclass = y.__class__ # To restore original type
@@ -587,26 +616,29 @@ class Timepar(Par):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
     
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
     
-    def interp(self, tvec, smoothness=20):
+    def interp(self, tvec=None, dt=None, smoothness=20):
         """ Take parameters and turn them into model parameters """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        
+        # Set things up and do the interpolation
         keys = self.y.keys()
         npops = len(keys)
         if self.by=='pship': # Have odict
             output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[key] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[key] = applylimits(output[key], self.limits)
+                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[key] = applylimits(y=yinterp, limits=self.limits, dt=dt)
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[pop,:] = applylimits(output[pop,:], self.limits)
+                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[pop,:] = applylimits(y=yinterp, limits=self.limits, dt=dt)
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -625,20 +657,23 @@ class Popsizepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
-    def __repr__(self):
-        ''' Print out useful information when called '''
-        output = defaultrepr(self)
-        return output
 
-    def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        
+        # Do interpolation
         keys = self.p.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys):
-            output[pop,:] = self.m * popgrow(self.p[key], array(tvec)-self.start)
-            output[pop,:] = applylimits(output[pop,:], self.limits)
+            yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            output[pop,:] = applylimits(y=yinterp, limits=self.limits, dt=dt)
         return output
 
 
@@ -652,23 +687,20 @@ class Constant(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
     
-    def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
+        
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-            output = self.y
-            output = applylimits(output, self.limits)
+            output = applylimits(y=self.y, limits=self.limits, dt=dt)
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = self.y[key] # Just copy y values
-                output[pop] = applylimits(output[pop], self.limits)
+                output[pop] = applylimits(y=self.y[key], limits=self.limits, dt=dt)
         return output
 
 
