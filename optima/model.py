@@ -402,15 +402,22 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                     people[uncirc, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
 
                 # Age-related transitions
-                peopleaging = people[:, p1, t] * simpars['agetransit'][p1,p2] * dt                        
-                people[:, p1, t] -= peopleaging # Take away from pop1...
-                people[:, p2, t] += peopleaging # ... then add to pop2
+                if simpars['agetransit'][p1,p2]:
+                    peopleaging = people[:, p1, t] * simpars['agetransit'][p1,p2] * dt                        
+                    people[:, p1, t] -= peopleaging # Take away from pop1...
+                    people[:, p2, t] += peopleaging # ... then add to pop2
+                else:
+                    peopleaging = 0
 
                 # Risk-related transitions
-                peoplemoving1 = people[:, p1, t] * simpars['risktransit'][p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t] * simpars['risktransit'][p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-                peoplemoving1 = minimum(peoplemoving1, people[:, p1, t]) # Ensure positive
-                peoplemoving2 = minimum(peoplemoving2, people[:, p2, t]) # And again
+                if simpars['risktransit'][p1,p2]:
+                    peoplemoving1 = people[:, p1, t] * simpars['risktransit'][p1,p2] * dt # Number of other people who are moving pop1 -> pop2
+                    peoplemoving2 = people[:, p2, t] * simpars['risktransit'][p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+                    peoplemoving1 = minimum(peoplemoving1, people[:, p1, t]) # Ensure positive
+                    peoplemoving2 = minimum(peoplemoving2, people[:, p2, t]) # And again
+                else:
+                    peoplemoving1 = 0
+                    peoplemoving2 = 0
 
 
         ###############################################################################

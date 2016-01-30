@@ -15,8 +15,9 @@ or:
 Version: 2016jan29
 """
 
-dobenchmark = False
-doprofile = True
+dobenchmark = True
+doprofile = False
+functiontoprofile = 'model' # If running profiling, choose which function to line profile
 
 
 ############################################################################################################################
@@ -66,7 +67,7 @@ if doprofile:
         print('Profiling...')
         
         from line_profiler import LineProfiler
-        from optima import Project
+        from optima import Project, model
         
         def do_profile(follow=None):
           def inner(func):
@@ -83,11 +84,12 @@ if doprofile:
               return profiled_func
           return inner
         
-        P = Project(spreadsheet='generalized.xlsx', dorun=False)
-        runsim = P.runsim        
         
-        @do_profile(follow=[runsim]) # Add decorator to runmodel function
-        def runsimwrapper(): runsim()
+        
+        @do_profile(follow=[eval(functiontoprofile)]) # Add decorator to runmodel function
+        def runsimwrapper(): 
+            P = Project(spreadsheet='generalized.xlsx', dorun=False)
+            P.runsim()
         runsimwrapper()
         
         print('Done.')
