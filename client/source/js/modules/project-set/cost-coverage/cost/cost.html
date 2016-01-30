@@ -2,11 +2,11 @@
 <div class="c-tab" ng-controller="CostController">
   <div style="width: 40%">
     <label>
-      Select a program: <br>
+      Select a program:<br>
       <select class="txbox"
               ng-options="p.name for p in vm.programs"
-              ng-change="vc.changeProgram()"
-              ng-model="vc.selectedProgram">
+              ng-change="changeSelectedProgram()"
+              ng-model="selectedProgram">
         <option value="">-- Please select a program --</option>
       </select>
     </label>
@@ -32,23 +32,23 @@
               <div class="data bordered">Coverage</div>
               <div class="data spaced">Delete</div>
             </div>
-            <div class="column bordered" ng-repeat="data in vc.selectedProgram.addData">
+            <div class="column bordered" ng-repeat="data in ccData">
               <div class="data numeric bordered">{{data.year}}</div>
               <div class="data numeric bordered">{{data.spending}}</div>
               <div class="data numeric bordered">{{data.coverage}}</div>
-              <div class="data numeric spaced" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteAddData(data)"></i></div>
+              <div class="data numeric spaced" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteCCData(data)"></i></div>
             </div>
-            <div class="column bordered" ng-if="state.showAddData">
-              <div class="data bordered"><input ng-model="state.newAddData.year" type="number"/></div>
-              <div class="data bordered"><input ng-model="state.newAddData.spending" type="number"/></div>
-              <div class="data bordered"><input ng-model="state.newAddData.coverage" type="number"/></div>
+            <div class="column bordered" ng-if="showCCData">
+              <div class="data bordered"><input ng-model="newAddData.year"/></div>
+              <div class="data bordered"><input ng-model="newAddData.spending"/></div>
+              <div class="data bordered"><input ng-model="newAddData.coverage"/></div>
               <div class="data spaced" style="display: flex;justify-content: center">
-                <i class="fa fa-check" ng-click="addAddData()"></i>
-                <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newAddData = {};state.showAddData = false"></i>
+                <i class="fa fa-check" ng-click="addCCData()"></i>
+                <i class="fa fa-times" style="margin-left: 15px" ng-click="newAddData = {};showCCData = false"></i>
               </div>
             </div>
             <div class="column">
-              <button type="button" class="btn __m" ng-click="state.showAddData = true" style="margin-left: 15px">Add</button>
+              <button type="button" class="btn __m" ng-click="showCCData = true" style="margin-left: 15px">Add</button>
             </div>
           </div>
         </div>

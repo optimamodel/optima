@@ -49,7 +49,9 @@ define(['./../module', 'underscore'], function (module, _) {
     // Population program drop-down for selected program-set
     vm.populateProgramDropdown = function() {
       if (vm.selectedProgramSet) {
-        vm.programs = vm.selectedProgramSet.programs;
+        vm.programs = _.filter(vm.selectedProgramSet.programs, function(program) {
+          return program.parameters && program.parameters.length > 0;
+        });
       }
     };
 
