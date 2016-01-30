@@ -66,7 +66,7 @@ if 'checkexisting' in tests:
     tocheck = {'simple':2, 'generalized':7, 'concentrated':8}
     prefix = '_tmp' # THe prefix to add to these files for the purposes of checking
     checksheets = True # Whether or not to check that the numbers and names of the sheets match
-    checkblock = True # Whether or not to check that the names of each block match
+    checkblocks = True # Whether or not to check that the names of each block match
     checkconstants = True # Whether or not to check that the Constants sheet is identical
     checkrows = False # Whether or not to check that the number of rows in each sheet is as expected; set to False by default since depends on number of female populations, plus doesn't matter
 
@@ -150,7 +150,7 @@ if 'checkexisting' in tests:
             nrows = origconst.nrows
             if nrows!=newconst.nrows: 
                 errormsg = 'Number of rows for constants differ for spreadsheet "%s"!' % tochecknames[ntc]
-                errormsg += 'original: %i; new: %i' % (nrows, newconst.nrows)
+                errormsg += '\nOriginal: %i; new: %i' % (nrows, newconst.nrows)
                 raise Exception(errormsg)
             else:
                 for r in range(nrows):
