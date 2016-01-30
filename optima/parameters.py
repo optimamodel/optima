@@ -24,7 +24,7 @@ Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	Non
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
 Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	None	0	None
-Births transitions (% born/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	None	0	None
+Birth transitions (% born into each population/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
 HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
 AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
@@ -45,12 +45,17 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
-Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	other	0	1	random
-Percentage of HIV-diagnosed people newly linked to care per year (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-Percentage of HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	other	0	1	random
-Percentage of people who receive ART in year who stop taking ART (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-Percentage of people in care who are lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	other	0	1	random
+Proportion of people on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	0	1	random
+Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	0	1	random
+Viral suppression for people initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	0	1	random
+HIV-diagnosed people newly linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
+Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
+HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	0	1	random
+Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
+PLHIV aware of their status (%)	phivdx	(0, 1)	tot	timepar	meta	cascade	0	1	random
+Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
+People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
+Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	None	0	None
@@ -82,7 +87,6 @@ Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const
 Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
 Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	None	0	None
 Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Proportion of people on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	other	None	0	None
 Efficacy of unsuppressive ART (%)	efftxunsupp	(0, 1)	tot	constant	const	const	None	0	None
 Efficacy of suppressive ART (%)	efftxsupp	(0, 1)	tot	constant	const	const	None	0	None
 Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	None	0	None
@@ -98,10 +102,6 @@ Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	No
 Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
 Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
-Viral suppression - ART initiators (%)	treatvs	(0, 1)	tot	timepar	meta	other	0	1	random
-Viral load monitoring (number/year)	vlmonfr	(0, 6)	tot	timepar	meta	other	0	1	random
-Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	other	0	1	random
-PLHIV aware of their status (%)	phivdx	(0, 1)	tot	timepar	meta	other	0	1	random
 '''
 
 
