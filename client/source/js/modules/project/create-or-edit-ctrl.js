@@ -166,19 +166,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     };
 
-    $scope.populationSelected = false;
-
-    $scope.isFormValid = function(){
-      $scope.populationSelected = _.find($scope.populations, function(population) { return population.active === true; });
-
-      if ($scope.CreateOrEditProjectForm.$invalid || !$scope.populationSelected) {
-        return false;
-      }else{
-        return true;
-      }
-    };
 
     $scope.prepareCreateOrEditForm = function () {
+
+      const populationSelected = _.find($scope.populations, function(population) {
+        return population.active === true;
+      });
+
+      if ($scope.CreateOrEditProjectForm.$invalid || !populationSelected) {
+        modalService.informError(
+          [{message: 'Enter a project name'},
+           {message: 'Enter a first year'},
+           {message: 'Enter a final year'},
+           {message: 'Select at least one population'}]);
+        return false;
+      }
+
       var selectedPopulations = toCleanArray($scope.populations);
 
       if ( $state.current.name == "project.edit" ) {
