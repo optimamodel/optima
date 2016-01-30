@@ -8,8 +8,8 @@ Version: 2016jan23 by cliffk
 
 ## Define tests to run here!!!
 tests = [
-#'compare',
-#'simple',
+'compare',
+'simple',
 'cascade'
 ]
 

@@ -411,8 +411,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         for p1 in range(npops):
 
             allbirthrates = birthtransit[p1, :] * birth[p1, t]
-            try: alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
             
             for p2 in range(npops):
 

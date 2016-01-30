@@ -184,7 +184,7 @@ if 'makeprograms' in tests:
     R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
     
     # 3. See which programs are optimizable
-    R.optimizable()
+    R.is_optimizable()
 
     # 4. Produce a dictionary whose keys are populations targeted by some 
     #    program, and values are the programs that target them
