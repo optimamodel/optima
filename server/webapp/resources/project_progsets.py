@@ -23,9 +23,9 @@ import optima as op
 
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
-    'year': {'required': True, 'location': 'json'},
+    'year': {'required': True, 'type': int, 'location': 'json'}, # 't' for BE
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
 
 costcov_graph_parser = RequestParser()
@@ -42,9 +42,9 @@ costcov_data_parser.add_arguments({
 
 costcov_data_point_parser = RequestParser()
 costcov_data_point_parser.add_arguments({
-    'year': {'type': int, 'required': True}, # 't' for BE
-    'cost':{'type': int, 'required': True},
-    'coverage': {'type': float, 'required': True}
+    'year': {'required': True, 'type': int, 'location': 'json'}, # 't' for BE
+    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
 
 program_parser = RequestParser()
@@ -422,7 +422,7 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-
+        print "args", args
         program_entry = load_program(project_id, progset_id, program_id)
         if program_entry is None:
             raise ProgramDoesNotExist(id=program_id, project_id=project_id)

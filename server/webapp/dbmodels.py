@@ -475,28 +475,18 @@ class ProgramsDb(db.Model):
 
         return pars
 
+    def datapoint_api_to_db(self, pt):
+        return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
+
+    def datapoint_db_to_api(self, pt):
+        return {'spending': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
+
     def data_api_to_db(self, data):
-        costcov_data = []
-
-        for x in data:
-            costcov_data.append({
-                "cost": x["cost"],
-                "year": x["year"],
-                "coverage": x["coverage"]
-            })
-
+        costcov_data = [self.datapoint_api_to_db(x) for x in data]
         return costcov_data
 
     def data_db_to_api(self):
-        costcov_data = []
-
-        for x in self.costcov or []:
-            costcov_data.append({
-                "cost": x["cost"],
-                "year": x["year"],
-                "coverage": x["coverage"]
-            })
-
+        costcov_data = [self.datapoint_db_to_api(x) for x in (self.costcov or [])]
         return costcov_data
 
     def _conv_lg_num(self, num):
