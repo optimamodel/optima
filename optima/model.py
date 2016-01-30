@@ -708,7 +708,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
-                            errormsg = 'WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (errstate, popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
+                            errormsg = 'WARNING, Non-positive people found: people[%s, %s, %s] = %s' % (settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
                             if die: raise OptimaException(errormsg)
                             else:
                                 printv(errormsg, 1, verbose=verbose)

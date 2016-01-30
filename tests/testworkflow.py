@@ -10,17 +10,18 @@ python -i tests.py
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2016jan23
+Version: 2016jan29
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'makeproject',
-'makeprograms',
+'minimal'
+#'makeproject',
+#'makeprograms',
 #'autofit',
-'manualfit',
+#'manualfit',
 #'plotresults',
 ]
 
@@ -43,12 +44,21 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
+T = tic()
+
 
 ##############################################################################
 ## The tests
 ##############################################################################
 
-T = tic()
+if 'minimal' in tests:
+    t = tic()
+    print('Running minimal test...')
+    
+    from optima import Project
+    P = Project(spreadsheet='simple.xlsx')
+    
+    done(t)
 
 
 

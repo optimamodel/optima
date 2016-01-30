@@ -57,11 +57,16 @@ class Settings():
         
         # Set labels for each health state
         thesestates = dcp(self.healthstates)
-        self.statelabels = [thesestates.pop('uncirc'), thesestates.pop('circ')] # 
+        self.statelabels = []
         for thisstate in thesestates:
-            for hivstate in self.hivstates:
-                self.statelabels.append(thisstate+'-'+hivstate)
-            
+            n = len(getattr(self, thisstate))
+            if n==1: self.statelabels.append(thisstate)
+            elif n==self.ncd4:
+                for hivstate in self.hivstates: 
+                    self.statelabels.append(thisstate+'-'+hivstate)
+            else:
+                errormsg = 'Cannot understand health state "%s": length %i, expecting 1 or %i' % (thisstate, n, self.ncd4)
+                raise OptimaException(errormsg)
         if len(self.statelabels)!=self.nstates:
             errormsg = 'Incorrect number of health states provided (actually %i, want %i)' % (len(self.statelabels), self.nstates)
             raise OptimaException(errormsg)
