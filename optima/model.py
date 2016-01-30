@@ -65,7 +65,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         treatvs     = simpars['treatvs']     # viral suppression - ART initiators (P)
         biofailure  = simpars['biofailure']  # biological treatment failure rate (P/T)
         vlmonfr     = simpars['vlmonfr']     # Viral load monitoring frequency (N/T)
-        restarttreattime = simpars['restarttreattime']  # Time to restart ART (T)
+        restarttreat = simpars['restarttreat']  # Time to restart ART (T)
         successprop = simpars['successprop'] # Proportion of people on ART with viral suppression (P)
         pdhivcare   = simpars['pdhivcare']   # Percentage of all people who have been diagnosed with HIV who are in care
 
@@ -383,7 +383,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
         newdiagnoses = [0] * ncd4
         if usecascade:
             newtreatCU   = [0] * ncd4
-            restarttreat = [0] * ncd4
+            restarters = [0] * ncd4
             newlinkcare  = [0] * ncd4
             #reengagecareDC = [0] * ncd4
             #reengagecareLO = [0] * ncd4
@@ -600,13 +600,13 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 leavecareOL[cd4] = dt * people[off[cd4],:,t] * leavecare[:,t]
                 inflows  = progin + stopSVLincare[cd4] + stopUSincare[cd4] #  + reengagecareLO[cd4]
                 outflows = progout + hivdeaths + otherdeaths + leavecareOL[cd4]
-                restarttreat[cd4] = (1./restarttreattime[t])*people[off[cd4],:,t]
-                restarttreat[cd4] = minimum(restarttreat[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
-                restarttreat[cd4] = maximum(restarttreat[cd4], -safetymargin*people[usvl[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
-                dO.append(inflows - outflows - restarttreat[cd4])
+                restarters[cd4] = dt * people[off[cd4],:,t] * restarttreat[t]
+                restarters[cd4] = minimum(restarters[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
+                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[usvl[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+                dO.append(inflows - outflows - restarters[cd4])
                 dL[cd4] += leavecareOL[cd4] 
-                dUSVL[cd4] += restarttreat[cd4]*(1.-treatvs[t])
-                dSVL[cd4]  += restarttreat[cd4]*treatvs[t]
+                dUSVL[cd4] += restarters[cd4]*(1.-treatvs[t])
+                dSVL[cd4]  += restarters[cd4]*treatvs[t]
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
 
