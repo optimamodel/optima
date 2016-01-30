@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2016jan28
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
@@ -512,7 +512,40 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 
 
+def applylimits(y, limits=None, warn=True, verbose=2):
+    ''' A small function to intelligently apply limits (supplied as [low, high] list or tuple) to an output '''
+    # If no limits supplied, don't do anything
+    if limits is None: 
+        return y
+    
+    # Apply limits, preserving original class
+    origclass = y.__class__ # To restore original type
+    if isinstance(y, (int, float)):
+        newy = origclass(median([limits[0], y, limits[1]]))
+        if warn and newy!=y: printv('Warning, parameter value reset from %f to %f' % (y, newy), 4, verbose)
+        return newy
+    elif hasattr(y, '__len__'):
+        newy = array(y)
+        newy[newy<limits[0]] = limits[0]
+        newy[newy>limits[1]] = limits[1]
+        newy = origclass(newy)
+        if warn and (sum(newy<limits[0]) or sum(newy<limits[0])):
+            printv('Warning, parameter value reset from:\n%f\nto:\n%f' % (y, newy), 4, verbose)
+    else:
+        if warn: raise OptimaException('Data type not understood for applying limits: "%s"' % type(y))
+        else: return y
+    return newy
+
+
+
+
+
+
+
+#################################################################################################################################
 ### Define the classes
+#################################################################################################################################
+
 
 class Par(object):
     ''' The base class for parameters '''
@@ -531,10 +564,6 @@ class Par(object):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-
-
-
-
 
 
 
@@ -564,10 +593,12 @@ class Timepar(Par):
             output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
                 output[key] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[key] = applylimits(output[key], self.limits)
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
                 output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[pop,:] = applylimits(output[pop,:], self.limits)
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -599,6 +630,7 @@ class Popsizepar(Par):
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys):
             output[pop,:] = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            output[pop,:] = applylimits(output[pop,:], self.limits)
         return output
 
 
@@ -621,12 +653,14 @@ class Constant(Par):
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
             output = self.y
+            output = applylimits(output, self.limits)
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
                 output[pop] = self.y[key] # Just copy y values
+                output[pop] = applylimits(output[pop], self.limits)
         return output
 
 
