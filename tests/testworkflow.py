@@ -1,27 +1,22 @@
 """
-Tests to see if Optima works.
-
-To use: comment out lines in the definition of 'tests' to not run those tests.
-
-NOTE: for best results, run in interactive mode, e.g.
-
-python -i tests.py
+Tests to see if Optima works -- main script that shows basic Optima usage. Other
+files have more detailed usage.
 
 Unlike the other test files, these tests are designed to be run sequentially, 
 and are not intended to be comprehensive, but rather show the key workflow.
 
-Version: 2016jan29
+Version: 2016jan30
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'minimal'
+#'minimal'
 #'makeproject',
 #'makeprograms',
 #'autofit',
-#'manualfit',
+'manualfit',
 #'plotresults',
 ]
 
