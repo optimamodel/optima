@@ -312,7 +312,7 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind in range(len(simparslist)):
-            raw = model(simparslist[ind], self.settings) # THIS IS SPINAL OPTIMA
+            raw = model(simparslist[ind], self.settings) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
