@@ -17,14 +17,14 @@
           Select a parameter set: <br>
           <select class="txbox"
                   ng-options="p.name for p in vm.parsets"
-                  ng-model="vm.selectedProgram">
+                  ng-model="vm.selectedParset">
             <option value="">-- Please select a parameter set --</option>
           </select>
         </label>
       </span>
   </div>
 
-  <div ng-if="vm.selectedProgramSet && vm.selectedProgram">
+  <div ng-if="vm.selectedProgramSet && vm.selectedParset">
     <div style="padding: 40px 0 20px;border-bottom: 1px solid gray;display: flex;">
 
     <span class="small_bordered_section" ng-repeat="tab in vm.tabs"
