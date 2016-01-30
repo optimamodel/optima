@@ -106,8 +106,7 @@ if 'checkexisting' in tests:
                     errormsg += '\nNew:\n'
                     errormsg += str(new.sheet_names())
                 raise Exception(errormsg)
-            else:
-                print('Sheet names are OK for spreadsheet "%s" :)' % tochecknames[ntc])
+            print('Sheet names are OK for spreadsheet "%s"!' % tochecknames[ntc])
         
         
         ## Check block names
@@ -140,8 +139,7 @@ if 'checkexisting' in tests:
                         errormsg += '\nNew:\n'
                         errormsg += str(newcol)
                         raise Exception(errormsg)
-                else:
-                    print('Block names are OK for spreadsheet "%s" :)' % tochecknames[ntc])
+            print('Block names are OK for spreadsheet "%s"!' % tochecknames[ntc])
         
         ## Check constants
         if checkconstants:
@@ -163,6 +161,7 @@ if 'checkexisting' in tests:
                         errormsg += '\nNew:\n'
                         errormsg += str(nrv)
                         raise Exception(errormsg)
+            print('Constants are OK for spreadsheet "%s"!' % tochecknames[ntc])
                 
     ## Tidy up
     for name in freshnames:
