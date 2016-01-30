@@ -1,7 +1,7 @@
 1. Overview
 ========
 
-This README describes the steps involved in installing Optima. For detailed usage instructions, please see other documentation, provided to users on request.
+This README describes the steps involved in installing Optima. For detailed usage instructions, please see other documentation, provided to users on request. Users/developers may also want to look at the final section of this document.
 
 To use the Optima model from Python directly with the browser-based user interface, follow the instructions in "Optima model setup". Otherwise, follow all instructions.
 
@@ -209,3 +209,37 @@ In order to use the application you need to login a registered user. In order to
 and register using any details.
 
 Happy Optimaing!
+
+7. Wisdom
+=========
+
+This section contains random pieces of wisdom we have encountered along the way.
+
+7.1 Workflows
+------------
+- Make sure you pull and push from the repository regularly so you know what everyone else is doing, and everyone else knows what you're doing. If your branch is 378 commits behind develop, you're the sucker who's going to have to merge it.
+- There is very unclear advice about how to debug Python. It's actually fairly simple: if you run Python in interactive mode (e.g. via Spyder or via `python -i`), then if a script raises an exception, enter this in the console just after the crash:  
+`import pdb; pdb.pm()`   
+You will then be in a debugger right where the program crashed. Type `?` for available commands, but it works like how you would expect. Alternatively, if you want to effectively insert a breakpoint into your program, you can do this with  
+`import pdb; pdb.set_trace()`  
+No one knows what these mysterious commands do. Just use them.
+- For benchmarking/profiling, you can use `tests/benchmarkmodel.py`. It's a good idea to run this and see if your changes have slowed things down considerably. It shows how to use the line profiler; Spyder also comes with a good function-level (but not line) profiler.
+
+
+7.2 Python gotchas
+-----------------
+- Do not declare a mutable object in a function definition, e.g. this is bad:
+```
+def myfunc(args=[]):
+  print(args)
+```
+The arguments only get initialized when the function is declared, so every time this function is used, there will be a single `args` object shared between all of them! Instead, do this:
+```
+def myfunc(args=None):
+  if args is None: args = []
+  print(args)
+```
+- It's dangerous to use `type()`; safer to use `isinstance()` (unless you _really_ mean `type()`). For example,   
+`type(rand(1)[0])==float`  
+is `False` because its type is `<type 'numpy.float64'>`; use `isinstance()` instead, e.g.   `isinstance(rand(1)[0], (int, float))`  
+ will catch anything that looks like a number, which is usually what you _really_ want.

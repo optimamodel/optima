@@ -10,11 +10,11 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016jan27 by cliffk
+Version: 2016jan29 by cliffk
 """
 
 from numpy import arange, array, concatenate as cat, linspace
-from optima import defaultrepr, printv
+from optima import OptimaException, defaultrepr, printv, dcp
 
 
 class Settings():
@@ -23,6 +23,7 @@ class Settings():
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
+        self.healthstates = ['uncirc', 'circ', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
         self.ncd4 = len(self.hivstates)
         
         # Health states by diagnosis
@@ -47,13 +48,29 @@ class Settings():
         self.lt50  = 7 + spacing
 
         # Combined states
-        self.sus      = cat([self.uncirc, self.circ]) # All uninfected
-        self.alldx    = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
-        self.allplhiv = cat([self.undx, self.alldx]) # All PLHIV
-        self.alltx = cat([self.usvl, self.svl]) # All PLHIV
+        self.sus       = cat([self.uncirc, self.circ]) # All uninfected
+        self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
+        self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
+        self.alltx     = cat([self.usvl, self.svl]) # All PLHIV
         self.allstates = cat([self.sus, self.allplhiv]) # All states
-        self.nstates = len(self.allstates) # Total number of states
-
+        self.nstates   = len(self.allstates) # Total number of states
+        
+        # Set labels for each health state
+        thesestates = dcp(self.healthstates)
+        self.statelabels = []
+        for thisstate in thesestates:
+            n = len(getattr(self, thisstate))
+            if n==1: self.statelabels.append(thisstate)
+            elif n==self.ncd4:
+                for hivstate in self.hivstates: 
+                    self.statelabels.append(thisstate+'-'+hivstate)
+            else:
+                errormsg = 'Cannot understand health state "%s": length %i, expecting 1 or %i' % (thisstate, n, self.ncd4)
+                raise OptimaException(errormsg)
+        if len(self.statelabels)!=self.nstates:
+            errormsg = 'Incorrect number of health states provided (actually %i, want %i)' % (len(self.statelabels), self.nstates)
+            raise OptimaException(errormsg)
+        
         # Non-cascade settings/states
         self.usecascade = False # Whether or not to actually use the cascade
         self.tx  = self.svl # Infected, on treatment -- not used with the cascade

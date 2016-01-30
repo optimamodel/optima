@@ -1,86 +1,14 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan23 by cliffk
+Version: 2015jan29 by cliffk
 """
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange
 import matplotlib.pyplot as plt
-
 from optima import pchip, plotpchip
 
-
-def getresults(project=None, pointer=None, die=True):
-    '''
-    Function for returning the results associated with something. 'pointer' can eiher be a UID,
-    a string representation of the UID, the actual pointer to the results, or a function to return the
-    results.
-    
-    Example:
-        results = P.parsets[0].results()
-        calls
-        getresults(P, P.parsets[0].resultsref)
-        which returns
-        P.results[P.parsets[0].resultsref]
-    
-    The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
-    
-    Version: 2016jan25
-    '''
-    # Nothing supplied, don't try to guess
-    if pointer is None: 
-        return None 
-    
-    # Normal usage, e.g. getresults(P, 3) will retrieve the 3rd set of results
-    elif isinstance(pointer, (str, int, float)):
-        if project is not None:
-            resultnames = [res.name for res in project.results.values()]
-            resultuids = project.results.keys()
-        else: 
-            if die: raise OptimaException('To get results using a key or index, getresults() must be given the project')
-            else: return None
-        try: # Try using pointer as key -- works if UID
-            results = project.results[pointer]
-            return results
-        except: # If that doesn't match, keep going
-            if pointer in resultnames:
-                results = project.results[resultnames.index(pointer)]
-                return results
-            else:
-                validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(resultnames))]
-                errormsg = 'Could not get result "%s": choices are:\n%s' % (pointer, '\n'.join(validchoices))
-                if die: raise OptimaException(errormsg)
-                else: return None
-    
-    # If it's a UID, have to convert to string, then use as key
-    elif type(pointer)==type(uuid()): 
-        if project is not None: 
-            try: 
-                return project.results[str(pointer)]
-            except: 
-                if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
-                else: return None
-        else:
-            if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
-            else: return None
-    
-    # The pointer is the results object
-    elif isinstance(pointer, (Resultset, Multiresultset)):
-        return pointer # Return pointer directly if it's already a results set
-    
-    # It seems to be some kind of function, so try calling it -- might be useful for the database or something
-    elif callable(pointer): 
-        try: 
-            return pointer()
-        except:
-            if die: raise OptimaException('Results pointer "%s" seems to be callable, but call failed' % str(pointer))
-            else: return None
-    
-    # Could not figure out what to do with it
-    else: 
-        if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
-        else: return None
 
 
 
@@ -102,44 +30,7 @@ class Result(object):
 
 
 
-class BOC(object):
-    ''' Structure to hold a budget and outcome array for geospatial analysis'''
-    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
-        self.uid = uuid()
-        self.created = today()
-        self.x = x if x else [] # A list of budget totals
-        self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
-        self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
-        
-        self.name = name # Required by rmresult in Project.
 
-    def __repr__(self):
-        ''' Print out summary stats '''
-        output = '============================================================\n'
-        output += '      Date created: %s\n'    % getdate(self.created)
-        output += '               UID: %s\n'    % self.uid
-        output += '============================================================\n'
-        output += objrepr(self)
-        return output
-        
-    def getoutcome(self, budgets):
-        ''' Get interpolated outcome for a corresponding list of budgets '''
-        return pchip(self.x, self.y, budgets)
-        
-    def getoutcomederiv(self, budgets):
-        ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
-        return pchip(self.x, self.y, budgets, deriv = True)
-        
-    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
-        ''' Plot the budget-outcome curve '''
-        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
-        plt.xlabel('Budget')
-        if not deriv: plt.ylabel('Outcome')
-        else: plt.ylabel('Marginal Outcome')
-        
-        if returnplot: return ax
-        else: plt.show()
-        return None
 
 
 class Resultset(object):
@@ -184,14 +75,16 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['prev'] = Result('HIV prevalence (%)', isnumber=False)
-        self.main['force'] = Result('Force-of-infection (%/year)', isnumber=False)
-        self.main['numinci'] = Result('New infections')
-        self.main['numnewdiag'] = Result('New diagnoses')
-        self.main['numdeath'] = Result('HIV-related deaths')
-        self.main['numplhiv'] = Result('Number of PLHIV')
-        self.main['numdiag'] = Result('Number of diagnosed PLHIV')
-        self.main['numtreat'] = Result('Number on treatment')
+        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
+        self.main['force']      = Result('Force-of-infection (%/year)', isnumber=False)
+        self.main['numinci']    = Result('Number of new infections')
+        self.main['nummtct']    = Result('Number of HIV+ births')
+        self.main['numnewdiag'] = Result('Number of new diagnoses')
+        self.main['numdeath']   = Result('Number of HIV-related deaths')
+        self.main['numplhiv']   = Result('Number of PLHIV')
+        self.main['numdiag']    = Result('Number of diagnosed PLHIV')
+        self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        
 
         
         # Other quantities
@@ -257,6 +150,7 @@ class Resultset(object):
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
         alldiag   = array([self.raw[i]['diag'] for i in range(len(self.raw))])
+        allmtct   = array([self.raw[i]['mtct'] for i in range(len(self.raw))])
         allplhiv = self.settings.allplhiv
         alldx = self.settings.alldx
         alltx = self.settings.alltx
@@ -274,6 +168,9 @@ class Resultset(object):
         self.main['numinci'].pops = quantile(allinci[:,:,indices], quantiles=quantiles)
         self.main['numinci'].tot = quantile(allinci[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numinci'].datatot = processdata(data['optnuminfect'])
+        
+        self.main['nummtct'].pops = quantile(allmtct[:,:,indices], quantiles=quantiles)
+        self.main['nummtct'].tot = quantile(allmtct[:,:,indices].sum(axis=1), quantiles=quantiles)
 
         self.main['numnewdiag'].pops = quantile(alldiag[:,:,indices], quantiles=quantiles)
         self.main['numnewdiag'].tot = quantile(alldiag[:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is populations
@@ -293,6 +190,9 @@ class Resultset(object):
         self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+        
+        
+
         
 
 # WARNING, need to implement
@@ -384,3 +284,124 @@ class Multiresultset(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
+
+
+
+
+
+
+class BOC(object):
+    ''' Structure to hold a budget and outcome array for geospatial analysis'''
+    def __init__(self, name='unspecified', x=None, y=None, objectives=None):
+        self.uid = uuid()
+        self.created = today()
+        self.x = x if x else [] # A list of budget totals
+        self.y = y if y else [] # A corresponding list of 'maximally' optimised outcomes
+        self.objectives = objectives # Specification for what outcome y represents (objectives['budget'] excluded)
+        
+        self.name = name # Required by rmresult in Project.
+
+    def __repr__(self):
+        ''' Print out summary stats '''
+        output = '============================================================\n'
+        output += '      Date created: %s\n'    % getdate(self.created)
+        output += '               UID: %s\n'    % self.uid
+        output += '============================================================\n'
+        output += objrepr(self)
+        return output
+        
+    def getoutcome(self, budgets):
+        ''' Get interpolated outcome for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets)
+        
+    def getoutcomederiv(self, budgets):
+        ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
+        return pchip(self.x, self.y, budgets, deriv = True)
+        
+    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+        ''' Plot the budget-outcome curve '''
+        ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
+        plt.xlabel('Budget')
+        if not deriv: plt.ylabel('Outcome')
+        else: plt.ylabel('Marginal Outcome')
+        
+        if returnplot: return ax
+        else: plt.show()
+        return None
+
+
+
+
+
+
+
+def getresults(project=None, pointer=None, die=True):
+    '''
+    Function for returning the results associated with something. 'pointer' can eiher be a UID,
+    a string representation of the UID, the actual pointer to the results, or a function to return the
+    results.
+    
+    Example:
+        results = P.parsets[0].results()
+        calls
+        getresults(P, P.parsets[0].resultsref)
+        which returns
+        P.results[P.parsets[0].resultsref]
+    
+    The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
+    
+    Version: 2016jan25
+    '''
+    # Nothing supplied, don't try to guess
+    if pointer is None: 
+        return None 
+    
+    # Normal usage, e.g. getresults(P, 3) will retrieve the 3rd set of results
+    elif isinstance(pointer, (str, int, float)):
+        if project is not None:
+            resultnames = [res.name for res in project.results.values()]
+            resultuids = project.results.keys()
+        else: 
+            if die: raise OptimaException('To get results using a key or index, getresults() must be given the project')
+            else: return None
+        try: # Try using pointer as key -- works if UID
+            results = project.results[pointer]
+            return results
+        except: # If that doesn't match, keep going
+            if pointer in resultnames:
+                results = project.results[resultnames.index(pointer)]
+                return results
+            else:
+                validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(resultnames))]
+                errormsg = 'Could not get result "%s": choices are:\n%s' % (pointer, '\n'.join(validchoices))
+                if die: raise OptimaException(errormsg)
+                else: return None
+    
+    # If it's a UID, have to convert to string, then use as key
+    elif type(pointer)==type(uuid()): 
+        if project is not None: 
+            try: 
+                return project.results[str(pointer)]
+            except: 
+                if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
+                else: return None
+        else:
+            if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
+            else: return None
+    
+    # The pointer is the results object
+    elif isinstance(pointer, (Resultset, Multiresultset)):
+        return pointer # Return pointer directly if it's already a results set
+    
+    # It seems to be some kind of function, so try calling it -- might be useful for the database or something
+    elif callable(pointer): 
+        try: 
+            return pointer()
+        except:
+            if die: raise OptimaException('Results pointer "%s" seems to be callable, but call failed' % str(pointer))
+            else: return None
+    
+    # Could not figure out what to do with it
+    else: 
+        if die: raise OptimaException('Could not retrieve results \n"%s"\n from project \n"%s"' % (pointer, project))
+        else: return None
