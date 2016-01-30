@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 2016jan28
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults, convertlimits
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
@@ -526,7 +526,7 @@ def gettvecdt(tvec=None, dt=None, justdt=False):
         if justdt: return defaultdt # If it's a constant, maybe don' need a time vector, and just return dt
         else: raise OptimaException('No time vector supplied, unable to interpolate') # Usual case, crash
     elif isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
-    elif hasattr(tvec, '__len__'): # Make sure it has a length -- if so, overwrite dt
+    elif shape(tvec): # Make sure it has a length -- if so, overwrite dt
         if len(tvec)>=2: dt = tvec[1]-tvec[0] # Even if dt supplied, recalculate it from the time vector
         elif dt is None: dt = defaultdt # Or give up and use default
         else: dt = dt # Use input
@@ -561,7 +561,7 @@ def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
         newy = origclass(median([limits[0], y, limits[1]]))
         if warn and newy!=y: printv('Warning, parameter value reset from %f to %f' % (y, newy), 4, verbose)
         return newy
-    elif hasattr(y, '__len__'):
+    elif shape(y):
         newy = array(y)
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
@@ -571,6 +571,9 @@ def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
     else:
         if warn: raise OptimaException('Data type not understood for applying limits: "%s"' % type(y))
         else: return y
+    
+    if shape(newy)!=shape(y):
+        raise OptimaException('Something went wrong with applying limits: input and output do not have the same shape')
     return newy
 
 

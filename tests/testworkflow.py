@@ -17,11 +17,11 @@ Version: 2016jan29
 
 ## Define tests to run here!!!
 tests = [
-#'minimal'
+'minimal'
 #'makeproject',
 #'makeprograms',
 #'autofit',
-'manualfit',
+#'manualfit',
 #'plotresults',
 ]
 

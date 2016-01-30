@@ -146,6 +146,10 @@ def convertlimits(limits=None, dt=None, safetymargin=None, settings=None, verbos
     isstring = (type(limits)==str)
     if isstring: limits = [limits] # Convert to list
     
+    # If it's a tuple, convert to a list before converting back at the end
+    istuple = (type(limits)==tuple)
+    if istuple: limits = list(limits)
+    
     # If list argument is given, replace text labels with numeric limits
     for i,m in enumerate(limits):
         if m=='maxrate': limits[i] = maxrate
@@ -156,4 +160,5 @@ def convertlimits(limits=None, dt=None, safetymargin=None, settings=None, verbos
     
     # Wrap up
     if isstring: return limits[0] # Return just a scalar
+    if istuple: return tuple(limits) # Convert back to a tuple
     else: return limits # Or return the whole list
