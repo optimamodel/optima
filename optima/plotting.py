@@ -354,9 +354,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
                 ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
-                if istotal:   plottitle += ' -- total'
-                if isperpop:  plottitle += ' -- ' + results.popkeys[i]
-                if isstacked: plottitle += ' -- by population'
+                if isperpop:  plottitle += ' -- ' + results.popkeys[i] # Add extra information to plot if by population
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))

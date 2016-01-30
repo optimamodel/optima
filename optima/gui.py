@@ -391,7 +391,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
                 printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
-            if fulltypelist[b]=='const': # Metaparameters
+            elif fulltypelist[b]=='const': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
                 printv('%s.y = %s' % (key, box.text()), 3, verbose)

@@ -16,8 +16,8 @@ Version: 2015nov23 by cliffk
 tests = [
 'makeproject',
 'saveload',
-'loadspreadsheet',
-'loadeconomics',
+#'loadspreadsheet',
+#'loadeconomics',
 'runsim'
 ]
 
@@ -125,8 +125,8 @@ if 'runsim' in tests:
     print('Running runsim test...')
     
     from optima import Project
-    P = Project(spreadsheet='concentrated.xlsx')
-    results = P.runsim('default')
+    P = Project()
+    P.loadspreadsheet('generalized.xlsx',dorun=True)
     
     done(t)
 
