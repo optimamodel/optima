@@ -84,7 +84,9 @@ class Resultset(object):
         self.main['numplhiv']   = Result('Number of PLHIV')
         self.main['numdiag']    = Result('Number of diagnosed PLHIV')
         self.main['numtreat']   = Result('Number of PLHIV on treatment')
-        
+        if self.settings.usecascade:
+            self.main['numincare']   = Result('Number of PLHIV in care')
+            self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
 
         
         # Other quantities
@@ -154,6 +156,9 @@ class Resultset(object):
         allplhiv = self.settings.allplhiv
         alldx = self.settings.alldx
         alltx = self.settings.alltx
+        if self.settings.usecascade:
+            allcare = self.settings.allcare
+            svl = self.settings.svl
         data = self.data
         
         self.main['prev'].pops = quantile(allpeople[:,allplhiv,:,:][:,:,:,indices].sum(axis=1) / allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) # Axis 1 is health state
@@ -191,7 +196,11 @@ class Resultset(object):
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
         
-        
+        if self.settings.usecascade:
+            self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+            self.main['numincare'].tot = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
+            self.main['numsuppressed'].pops = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
+            self.main['numsuppressed'].tot = quantile(allpeople[:,svl,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
 
         
 

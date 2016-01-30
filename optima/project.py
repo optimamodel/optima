@@ -325,27 +325,44 @@ class Project(object):
         return results
 
 
+    def reconcileparsets(self, name=None, orig=None):
+        ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
+        if name is None and orig is None: 
+            name = 'autofit'
+            orig = 'default'
+        if name is not None and orig is not None:
+            self.copyparset(orig=orig, new=name, overwrite=True) # Store parameters, user seems to know what she's doing, trust her!
+        if name is None and orig is not None: name = orig # Specify name if not supplied
+        if name not in self.parsets.keys():
+            if orig not in self.parsets.keys(): 
+                errormsg = 'Cannot use original parset "%s": parset does not exist; choices are:\n:%s' % (orig, self.parsets.keys())
+                raise OptimaException(errormsg)
+            else:
+                self.copyparset(orig=orig, new=name) # Store parameters
+        return None
+
+
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
-        parset = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
-        self.addparset(name=name, parset=parset) # Store parameters
+        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.modified = today()
         return None
 
 
     def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
-        self.copyparset(orig=orig, new=name) # Store parameters
+        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
         self.modified = today()
         return None
 
 
-    def autofit(self, name='autofit', orig='default', what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
+    def autofit(self, name=None, orig=None, what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
-        self.copyparset(orig=orig, new=name) # Store parameters -- WARNING, shouldn't copy, should create new!
+        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
@@ -400,6 +417,9 @@ class Project(object):
             self.addresult(result=multires)
             self.modified = today()
         return multires
+
+
+
     #######################################################################################################
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
@@ -418,7 +438,7 @@ class Project(object):
             else:
                 try:
                     baseline = sum(self.progsets[0].getdefaultbudget().values())
-                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 0, verbose)
+                    printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
             budgetlist = [x*baseline for x in [0.1,0.3,0.6,1.0,3.0,6.0,10.0]]
