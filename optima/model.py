@@ -98,7 +98,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         svl   = settings.svl   # On treatment - Suppressed Viral Load
         lost  = settings.lost  # Not on ART (anymore) and lost to follow-up
         off   = settings.off   # off ART but still in care
-#        alltx = settings.alltx # All on treatment -- WARNING, not used?
+        alltx = settings.alltx # All on treatment -- WARNING, not used?
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
     if len(sus)!=2:
@@ -410,9 +410,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ## Calculate births, age transitions and mother-to-child-transmission
         ###############################################################################
 
-        ontreatment = cat((usvl,svl)) if usecascade else tx
-        eligible = cat((dx,care,lost,off)) if usecascade else dx
-
         effmtct  = mtctbreast*breast[t] + mtctnobreast*(1-breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
 
@@ -420,16 +417,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         for p1 in range(npops):
 
             allbirthrates = birthtransit[p1, :] * birth[p1, t]
-            alleligbirths = sum(allbirthrates * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+            alleligbirths = sum(allbirthrates * dt * sum(people[alldx, p1, t])) # Births to diagnosed mothers eligible for PMTCT
             
             for p2 in range(npops):
 
                 thisbirthrate  = allbirthrates[p2]
                 if thisbirthrate:
-                    popbirths      = sum(thisbirthrate * dt * people[:, p1, t])
-                    mtctundx       = (thisbirthrate * dt * sum(people[undx, p1, t])) * effmtct # Births to undiagnosed mothers
-                    mtcttx         = (thisbirthrate * dt * sum(people[ontreatment, p1, t]))  * pmtcteff # Births to mothers on treatment
-                    thiseligbirths = (thisbirthrate * dt * sum(people[eligible, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+                    popbirths      = (thisbirthrate * dt * people[:, p1, t].sum())
+                    mtctundx       = (thisbirthrate * dt * people[undx, p1, t].sum()) * effmtct # Births to undiagnosed mothers
+                    mtcttx         = (thisbirthrate * dt * people[alltx, p1, t].sum())  * pmtcteff # Births to mothers on treatment
+                    thiseligbirths = (thisbirthrate * dt * people[alldx, p1, t].sum()) # Births to diagnosed mothers eligible for PMTCT
     
                     if usepmtctprop: # All numbers less than 1: assume it's a proportion
                         receivepmtct = numpmtct[t]*thiseligbirths # Births protected by PMTCT -- constrained by number eligible 
@@ -696,6 +693,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
 
         # Or, do not use the cascade
         else: 
+            
+            # WARNING, copied from above!!
+            if proptx[t]:
+                print('proptx2')
+                currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+                currtx = people[[usvl,svl],:,t].sum(axis=0)
+                newtreattot =  proptx[t] * currdx - currtx 
+            else:
+                newtreattot = numtx[t] - people[[usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
+
 
             ## Diagnosed
             newtreattot = numtx[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
