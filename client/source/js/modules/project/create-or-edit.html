@@ -4,34 +4,35 @@
 
     <div class="section">
       <div class="6">
-          <h1>Project details</h1>
+        <h1>Project details</h1>
 
-         <b>Project name</b>
+        <b>Project name</b>
         <input class="txbox" type="text" ng-pattern="/^[\x20-\x7E]*$/" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
         <div class="error-hint" ng-show="CreateOrEditProjectForm.projectParams.$error.pattern"> Special characters are not allowed, please choose a different name. </div>
-        <div class="error-hint" ng-show="clickedAndNoName()"> Must enter a name </div>
+        <div class="error-hint" ng-show="noName()"> Please enter a unique name </div>
       </div>
     </div>
 
     <div class="section">
       <div class="3">
-          <b>First year for data entry</b>
+        <b>First year for data entry</b>
         <input class="txbox" type="number" min="1900" placeholder="e.g. 2000" ng-model="projectParams.datastart" required>
-        <div class="error-hint" ng-show="clickedAndNoDataStart()"> Must enter a first year </div>
-        {{ clickedAndNoDataStart() }}
+        <div class="error-hint" ng-show="noDataStart()"> Please enter a first year from 1900 to 2100 </div>
       </div>
+    </div>
+    <div class="section">
       <div class="3">
-          <b>Final year for data entry</b>
-        <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.dataend" required>
-        <div class="error-hint" ng-show="clickedAndNoDataEnd()"> Must enter a final year </div>
+         <b>Final year for data entry</b>
+         <input class="txbox" type="number" min="1900" placeholder="e.g. 2030" ng-model="projectParams.dataend" required>
+         <div class="error-hint" ng-show="noDataEnd()"> Please enter a final year from 1900 to 2100, greater than the first year </div>
       </div>
     </div>
 
     <div class="section">
       <div class="6">
         <h1>Manage populations</h1>
-        <div class="error-hint" ng-show="clickedAndNoPopulationSelected()"> You must select at least one population. </div>
+        <div class="error-hint" ng-show="noPopulationSelected()"> Please select at least one population. </div>
 
         <table class="section table table-bordered">
           <thead>

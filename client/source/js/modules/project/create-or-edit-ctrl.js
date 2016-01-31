@@ -7,36 +7,44 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var allProjects = projects.data.projects;
 
-    var clicked = false;
-
     $scope.projectExists = function () {
       return _.some(allProjects, function (project) {
         return $scope.projectParams.name === project.name && $scope.projectParams.id !== project.id;
       });
     };
 
-    var noPopulationSelected = function() {
+    $scope.noName = function() {
+      return !$scope.projectParams.name;
+    }
+
+    $scope.noDataStart = function() {
+      if ($scope.projectParams.datastart) {
+        var year = parseInt($scope.projectParams.datastart)
+        return year < 1900 || 2100 < year;
+      }
+      return !$scope.projectParams.datastart; 
+    }
+
+    $scope.noDataEnd = function() {
+      if ($scope.projectParams.dataend) {
+        if (!$scope.projectParams.datastart) {
+          return false;
+        }
+        var dataend = parseInt($scope.projectParams.dataend)
+        if (dataend < 1900 || 2100 < dataend) {
+          return false;
+        };
+        var datastart = parseInt($scope.projectParams.datastart)
+        return dataend <= datastart;
+      }
+      return !$scope.projectParams.dataend;  
+    }
+
+    $scope.noPopulationSelected = function() {
       var result = _.find($scope.populations, function(population) {
         return population.active === true;
       });
       return !result;
-    }
-
-    $scope.clickedAndNoName = function() {
-      console.log( $scope.ProjectName);
-      return clicked && !$scope.projectParams.name;
-    }
-
-    $scope.clickedAndNoDataStart = function() {
-      return clicked && !$scope.projectParams.datastart; 
-    }
-
-    $scope.clickedAndNoDataEnd = function() {
-      return clicked && !$scope.projectParams.dataend;  
-    }
-
-    $scope.clickedAndNoPopulationSelected = function() {
-      return clicked && noPopulationSelected();  
     }
 
     $scope.projectParams = {
@@ -195,24 +203,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.prepareCreateOrEditForm = function () {
 
-      clicked = true;
-
       var errors = [];
 
-      if ($scope.clickedAndNoName()) {
+      if ($scope.noName()) {
         errors.push({message: 'Enter a project name'});
       }
-      if ($scope.clickedAndNoDataStart()) {
+      if ($scope.noDataStart()) {
         errors.push({message: 'Enter a first year'});
       }
-      if ($scope.clickedAndNoDataEnd()) {
+      if ($scope.noDataEnd()) {
         errors.push({message: 'Enter a final year'});
       }
-      if (noPopulationSelected()) {
+      if ($scope.noPopulationSelected()) {
         errors.push({message: 'Select at least one population'});
       }
 
-      if ($scope.CreateOrEditProjectForm.$invalid || noPopulationSelected()) {
+      if ($scope.CreateOrEditProjectForm.$invalid || $scope.noPopulationSelected()) {
         modalService.informError(errors);
         return false;
       }
