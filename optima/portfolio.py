@@ -1,5 +1,5 @@
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException # Import utilities
-from optima import gitinfo # Import functions
+from optima import gitinfo, tic, toc # Import functions
 from optima import __version__ # Get current version
 
 from optima import defaultobjectives, asd, Project
@@ -111,8 +111,6 @@ class Portfolio(object):
             printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (p.progsets[progsetnames[pno]].name, p.name, self.name), 4, verbose)
             budgets.append(sum(p.progsets[progsetnames[pno]].getdefaultbudget().values()))
         
-        print('BuDgets are:')
-        print budgets
         return budgets
     
     
@@ -274,6 +272,8 @@ class Portfolio(object):
     def fullGA(self, objectives=None, budgetratio=None, maxtime=None, doplotBOCs=False, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
         printv('Performing full geospatial analysis', 1, verbose)
+        
+        GAstart = tic()
 
 		# Check inputs
         if objectives == None: 
@@ -292,6 +292,8 @@ class Portfolio(object):
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
         gaoptim.printresults()
+        
+        toc(GAstart)
         
         
         

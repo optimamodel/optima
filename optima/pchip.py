@@ -4,7 +4,7 @@ Slopes are constrained via the Fritsch-Carlson method.
 More details: https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
 Script written by Chris Michalski 2009aug18 used as a basis.
 
-Version: 2016jan22 by davidkedz
+Version: 2016jan31
 """
 
 import matplotlib.pyplot as plt
@@ -16,7 +16,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
+def pchip(x, y, xnew, deriv = False, method='pchip'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]

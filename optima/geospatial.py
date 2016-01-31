@@ -183,7 +183,7 @@ def geogui():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         objectives['budget'] *= budgetfactor # Convert back to internal representation
         portfolio.genBOCs(objectives, maxtime=5) # WARNING temp time
-        portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets(), maxtime=5)
+        portfolio.fullGA(objectives, doplotBOCs=True, budgetratio = portfolio.getdefaultbudgets(), maxtime=5)
         return None
     
     
