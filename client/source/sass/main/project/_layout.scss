@@ -86,6 +86,7 @@
 
   .data {
     height: 30px;
+    margin-right: 10px;
     &.bordered {
       border-bottom: 1px solid black;
       padding: 5%;
@@ -113,6 +114,10 @@
 
   input {
     width: 80px;
+    &.invalid{
+      border: solid #FF0000 1px;
+      outline: 0px;
+    }
   }
 }
 

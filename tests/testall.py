@@ -7,7 +7,7 @@ Run all tests, skipping GUI ones by default (doplot = False).
 It runs everything in the same namespace, but deletes variables that get
 added along the way. Extremely un-Pythonic, I know.
 
-Version: 2016jan15 by cliffk
+Version: 2016jan29 by cliffk
 """
 
 ## Initialization
@@ -19,6 +19,7 @@ doplot = False # When running all tests, don't try to run the GUIs
 MASTER = [
 'testimports',
 'testutils',
+'testmakespreadsheet',
 'testproject',
 'testprograms',
 'testmodalities',
