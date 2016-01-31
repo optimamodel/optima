@@ -1,6 +1,6 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
@@ -482,7 +482,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, verbose=2):
+def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -505,11 +505,11 @@ def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, ve
     plotstyles = odict([
     ('uncirc', ('|','|')), 
     ('circ',   ('+','|')), 
-    ('undx',   ('*','*')), 
-    ('dx',     ('+','|')), 
+    ('undx',   ('.','o')), 
+    ('dx',     ('*','*')), 
     ('care',   ('O','o')), 
     ('usvl',   ('-','|')), 
-    ('svl',    ('|','|')), 
+    ('svl',    ('x','|')), 
     ('lost',   ('O','o')), 
     ('off',    ('*','*'))])
     
@@ -532,14 +532,14 @@ def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, ve
     colors = gridcolormap(nstates)
     tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
     bottom = 0*tvec
-    figure(facecolor=(1,1,1))
+    figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,-1,-1):
         this = ppl[:,st]
         if sum(this): thiscolor = colors[st]
         else: thiscolor = nocolor
-        printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 2, verbose)
+        printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 4, verbose)
         fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
         bottom += this
         

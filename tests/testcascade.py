@@ -1,7 +1,7 @@
 """
 Test the cascade
 
-Version: 2016jan23 by cliffk
+Version: 2016jan30 by cliffk
 """
 
 
@@ -9,6 +9,7 @@ Version: 2016jan23 by cliffk
 ## Define tests to run here!!!
 tests = [
 'compare',
+'90-90-90'
 ]
 
 
@@ -48,29 +49,89 @@ if 'compare' in tests:
     
     toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta', 'cascade'] # Specify what plots to display here
     
-    from optima import Project
-    P = Project(spreadsheet='generalized.xlsx')
+    import optima as op
+    P = op.Project(spreadsheet='generalized.xlsx')
     P.settings.usecascade = False
     pp = tic()
     P.runsim()
     toc(pp, label='model run without cascade')
     
-    Q = Project(spreadsheet='generalized.xlsx')
+    Q = op.Project(spreadsheet='generalized.xlsx')
     Q.settings.usecascade = True
     qq = tic()
     Q.runsim()
     toc(qq, label='model run with cascade')
     
-    
-    
     if doplot:
-        from optima import plotresults
-        plotresults(P.results[-1], toplot=toplot, figsize=(16,10), num='No cascade')
-        plotresults(Q.results[-1], toplot=toplot, figsize=(16,10), num='With cascade')
+        op.gui.plotpeople(P, P.results[-1].raw[0]['people'], animate=False, figsize=(16,10), num='No cascade')
+        op.gui.plotpeople(Q, Q.results[-1].raw[0]['people'], animate=False, figsize=(16,10), num='With cascade')
     
     done(t)
 
 
+
+
+
+
+
+#####################################################################################################
+if '90-90-90' in tests:
+    t = tic()
+    print('Running 90-90-90 test...')
+    
+    import optima as op
+    P = op.defaults.defaultproject('simple')
+    P.settings.usecascade = True
+    P.runsim()
+    
+    pops = P.data['pops']['short']
+    
+    ## Define scenarios
+    scenlist = [
+         op.Parscen(name='90-90-90',
+              parsetname='default',
+              pars=[
+              {'name': 'propdx',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+              
+              {'name': 'propcare',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+              
+              {'name': 'proptx',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+              
+              {'name': 'treatvs',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+                ]),
+        ]
+    
+    # Store these in the project
+    P.addscenlist(scenlist)
+    # Run the scenarios
+    P.runscenarios() 
+
+    ppl = P.results[-1].raw['90-90-90'][0]['people']
+    op.gui.plotpeople(P, ppl)
 
 
 print('\n\n\nDONE: ran %i tests' % len(tests))
