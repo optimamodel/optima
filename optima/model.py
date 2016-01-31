@@ -517,7 +517,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             if propdx[t]:
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             else:
-                newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
+                newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
@@ -535,12 +535,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             ## Diagnosed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
             
-            if propcare[t]: # WARNING, this logic of code appears in 5 places, should do it just once!!!
-                currdx     = people[alldx,:,t].sum(axis=0)
-                currcare   = people[allcare,:,t].sum(axis=0)
-                curruncare = currdx[:] - currcare[:]
-                fractiontodx = maximum(0, (propdx[t]*currdx[:] - currcare[:])/(curruncare[:] + eps)) # Don't allow to go negative -- note, this equation is right, I just checked it!
-            
+            if propcare[t]:
+                curralldx = people[alldx,:,t].sum(axis=0)
+                currcare  = people[allcare,:,t].sum(axis=0)
+                curruncare = curralldx[:] - currcare[:]
+                fractiontocare = maximum(0, (propcare[t]*curralldx[:] - currcare[:])/(curruncare[:] + eps)) # Don't allow to go negative -- note, this equation is right, I just checked it!
+
             for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
@@ -552,7 +552,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                     progout = 0 # Cannot progress out of AIDS stage
                 hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[dx[cd4],:,t] * background
-                newlinkcare[cd4] = currentdiagnosed[cd4,:]*linktocare[:,t]*dt # diagnosed moving into care
+                if propcare[t]:
+                    newlinkcare[cd4] = fractiontocare * currentdiagnosed[cd4,:]
+                else:
+                    newlinkcare[cd4] = linktocare[:,t] * dt * currentdiagnosed[cd4,:] # diagnosed moving into care
                 inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) # some go immediately into care after testing
                 outflows = progout + hivdeaths + otherdeaths + newlinkcare[cd4]
                 dD.append(inflows - outflows)
