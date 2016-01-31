@@ -89,7 +89,7 @@ class ProjectDb(db.Model):
         'updated_time': fields.DateTime(attribute='updated'),
         'data_upload_time': fields.DateTime,
         'has_data': fields.Boolean(attribute='has_data_now'),
-        'has_econ': fields.Boolean(attribute='has_econ_now'),
+        'has_econ': fields.Boolean,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -103,7 +103,7 @@ class ProjectDb(db.Model):
     version = db.Column(db.Text)
     settings = db.Column(db.LargeBinary)
     data = db.Column(db.LargeBinary)
-    econ = db.Column(db.LargeBinary)
+    has_econ = db.Column(db.Boolean)
     working_project = db.relationship('WorkingProjectDb', backref='related_project', uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='project', uselist=False)
     project_econ = db.relationship('ProjectEconDb', backref='project', uselist=False)
@@ -112,7 +112,7 @@ class ProjectDb(db.Model):
     progsets = db.relationship('ProgsetsDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
-                 created=None, updated=None, settings=None, data=None, econ=None, parsets=None,
+                 created=None, updated=None, settings=None, data=None, has_econ=False, parsets=None,
                  results=None):
         self.name = name
         self.user_id = user_id
@@ -126,15 +126,12 @@ class ProjectDb(db.Model):
         self.version = version
         self.settings = settings
         self.data = data
-        self.econ = econ
+        self.has_econ = has_econ
         self.parsets = parsets or []
         self.results = results or []
 
     def has_data(self):
         return self.data is not None and len(self.data)
-
-    def has_econ(self):
-        return self.econ is not None and len(self.econ)
 
     def has_model_parameters(self):
         return self.parsets is not None
@@ -153,8 +150,6 @@ class ProjectDb(db.Model):
         project_entry.modified = self.updated
         if self.data:
             project_entry.data = op.loads(self.data)
-        if self.econ:
-            project_entry.econ = op.loads(self.econ)
         if self.settings:
             project_entry.settings = op.loads(self.settings)
         if self.parsets:
@@ -197,9 +192,9 @@ class ProjectDb(db.Model):
             self.updated = datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
         self.data = op.saves(project.data)
-        self.econ = op.saves(project.econ)
 
         if project.data:
+            self.has_econ = 'econ' in project.data
             self.datastart = int(project.data['years'][0])
             self.dataend = int(project.data['years'][-1])
             self.populations = []
@@ -212,6 +207,7 @@ class ProjectDb(db.Model):
                 }
                 self.populations.append(new_pop)
         else:
+            self.has_econ = False
             self.datastart = self.datastart or op.default_datastart
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}

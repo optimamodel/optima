@@ -36,7 +36,6 @@ class ProjectBase(Resource):
         projects = self.get_query().all()
         for p in projects:
             p.has_data_now = p.has_data()
-            p.has_econ_now = p.has_econ()
         return projects
 
 
@@ -227,7 +226,6 @@ class Project(Resource):
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
         project_entry.has_data_now = project_entry.has_data()
-        project_entry.has_econ_now = project_entry.has_econ()
         # no other way to make it work for methods and not attributes?
         return project_entry
 
@@ -535,7 +533,6 @@ class ProjectEcon(Resource):
             return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
     @swagger.operation(
-        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         summary='Upload the project economics data spreadsheet',
         parameters=file_upload_form_parser.swagger_parameters()
     )
@@ -543,9 +540,7 @@ class ProjectEcon(Resource):
     @marshal_with(file_resource)
     def post(self, project_id):
 
-        # TODO replace this with app.config
         DATADIR = current_app.config['UPLOAD_FOLDER']
-        CALIBRATION_TYPE = 'calibration'
 
         current_app.logger.debug(
             "POST /api/project/%s/economics" % project_id)
@@ -609,9 +604,40 @@ class ProjectEcon(Resource):
 
         reply = {
             'file': source_filename,
-            'result': 'Project %s is updated with economics data' % project_name
+            'success': 'Project %s is updated with economics data' % project_name
         }
         return reply
+
+    @swagger.operation(
+        summary='Removes economics data from project'
+    )
+    def delete(self, project_id):
+        cu = current_user
+        current_app.logger.debug("user %s:POST /api/project/%s/economics" % (cu.id, project_id))
+        project_entry = load_project(project_id)
+        if project_entry is None:
+            raise ProjectDoesNotExist(id=project_id)
+
+        # See if there is matching project econ data
+        projecon = ProjectEconDb.query.get(project_entry.id)
+
+        if projecon is not None and len(projecon.meta) > 0:
+            project_instance = project_entry.hydrate()
+            if 'econ' not in project_instance.data:
+                current_app.logger.warning("No economics data has been found in project {}".format(project_id))
+            else:
+                del project_instance.data['econ']
+            project_entry.restore(project_instance)
+            db.session.add(project_entry)
+            db.session.delete(projecon)
+            db.session.commit()
+
+            reply = {
+                'success': 'Project %s economics data has been removed' % project_id
+            }
+            return reply, 204
+        else:
+            raise Exception("No economics data has been uploaded")
 
 
 class ProjectData(Resource):
