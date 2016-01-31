@@ -5,7 +5,8 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     var vc = $scope;
     $scope.state = {
-      newAddData: {},
+      newCCData: {},
+      newCPData: {},
       ccData: [],
       ccDataSaved: []
     };
@@ -26,13 +27,34 @@ define(['./../../module', 'underscore'], function (module, _) {
       list.splice(index, 1);
     };
 
-    $scope.addToCCData = function() {
-      $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/data', $scope.state.newCCData)
-        .success(function (response) {
-          $scope.state.ccData.push($scope.state.newCCData);
-          $scope.state.newCCData = {};
-        });
+    $scope.addToCCData = function(ccDataForm) {
+      ccDataForm.spending.$setValidity("required", !angular.isUndefined($scope.state.newCCData.spending));
+      ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
+      ccDataForm.year.$setValidity("valid", isValidCCDataYear());
+
+      if($scope.state.newCCData.year && $scope.state.newCCData.spending >= 0 && $scope.state.newCCData.coverage >= 0) {
+        $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+          $scope.selectedProgram.id + '/costcoverage/data', $scope.state.newCCData)
+          .success(function () {
+            $scope.state.ccData.push($scope.state.newCCData);
+            $scope.state.newCCData = {};
+          });
+      }
+    };
+
+    var isValidCCDataYear = function() {
+      if ($scope.state.newCCData.year) {
+        if ($scope.state.newCCData.year >= $scope.vm.openProject.dataStart ||
+          $scope.state.newCCData.year <= $scope.vm.openProject.dataEnd) {
+          var recordExisting = _.filter($scope.state.ccData, function(ccData) {
+            return ccData.year === $scope.state.newCCData.year;
+          });
+          if(recordExisting.length === 0) {
+            return true;
+          }
+        }
+      }
+      return false;
     };
 
     $scope.removeFromCCData = function(data) {
