@@ -536,6 +536,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
             
             if propcare[t]:
+                print('YESSSS')
                 curralldx = people[alldx,:,t].sum(axis=0)
                 currcare  = people[allcare,:,t].sum(axis=0)
                 curruncare = curralldx[:] - currcare[:]
@@ -561,7 +562,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 dD.append(inflows - outflows)
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
-
+            
+            if propcare[t]: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
