@@ -169,7 +169,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         subparlist = sheets[sheetname] # List of subparameters
         sheetdata = workbook.sheet_by_name(sheetname) # Load this workbook
         parcount = -1 # Initialize the parameter count
-        printv('Loading "%s"...' % sheetname, 2, verbose)
+        printv('Loading "%s"...' % sheetname, 3, verbose)
         
         # Loop over each row in the workbook, starting from the top
         for row in range(sheetdata.nrows): 
