@@ -8,13 +8,15 @@ define(['./../../module', 'underscore'], function (module, _) {
       newCCData: {},
       newCPData: {},
       ccData: [],
-      cpData: []
+      cpData: [],
+      estdSize: []
     };
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
       $scope.updateGraph();
       fetchDefaultData();
+      fetchEstimatedSize();
     };
 
     $scope.addToCCData = function(ccDataForm) {
@@ -102,6 +104,21 @@ define(['./../../module', 'underscore'], function (module, _) {
         $scope.selectedProgram.id + '/costcoverage/graph?t=2016&parset_id=' + $scope.vm.selectedParset.id)
         .success(function (response) {
           $scope.state.chartData = response;
+        });
+    };
+
+    var fetchEstimatedSize = function() {
+      $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage/popsize?t=2016&parset_id=' + $scope.vm.selectedParset.id)
+        .success(function (response) {
+          if(response.popsizes && response.popsizes.length > 0) {
+            $scope.state.estdSize = {};
+            response.popsizes.forEach(function(popSize){
+              if(popSize.popsize) {
+                $scope.state.estdSize[popSize.year] = (Math.round(popSize.popsize * 100)) / 100;
+              }
+            });
+          }
         });
     };
 

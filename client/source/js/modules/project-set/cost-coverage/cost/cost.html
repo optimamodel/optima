@@ -37,7 +37,7 @@
             </tr>
             <tr ng-repeat="data in state.cpData">
               <td>{{data.year}}</td>
-              <td></td>
+              <td>{{state.estdSize[data.year.toString()]}}</td>
               <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
               <td></td>
               <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
@@ -46,7 +46,7 @@
             <tr ng-if="state.showAddCPData">
               <td><input name="year" class="txbox __inline __m" ng-model="state.newCPData.year"
                          type="number" ng-class="{'invalid': cpDataForm.year.$invalid}"/></td>
-              <td></td>
+              <td>{{state.estdSize[state.newCPData.year]}}</td>
               <td>
                 <input name="splower" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_lower"
                        type="number" min="0" ng-class="{'invalid': cpDataForm.splower.$invalid}"/> -
