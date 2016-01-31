@@ -8,11 +8,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.economicData = function(action){
         switch(action){
           case 'create':
-            /*projectApiService.getProjectData(activeProjectInfo.id)
+            projectApiService.getEconomicsData(activeProjectInfo.id)
             .success(function (response, status, headers, config) {
               var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-              saveAs(blob, (activeProjectInfo.name + '.xlsx'));
-            });*/
+              saveAs(blob, (activeProjectInfo.name + '_economics.xlsx'));
+            });
           break;
           case 'upload':
             var modalInstance = $modal.open({

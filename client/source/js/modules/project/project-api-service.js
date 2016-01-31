@@ -47,6 +47,11 @@ define(['./module'], function (module) {
             {headers: {'Content-type': 'application/octet-stream'},
           responseType:'blob'});
         },
+        getEconomicsData: function(id) {
+          return $http.get('/api/project/'+ id + '/economics',
+            {headers: {'Content-type': 'application/octet-stream'},
+          responseType:'blob'});
+        },
         getProjectList: function () {
           return $http.get('/api/project');
         },

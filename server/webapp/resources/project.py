@@ -14,7 +14,7 @@ import optima as op
 
 from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb
+from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
 
 from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
 from server.webapp.exceptions import ProjectDoesNotExist
@@ -360,7 +360,7 @@ class ProjectSpreadsheet(Resource):
     @report_exception
     def get(self, project_id):
         cu = current_user
-        current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_id))
+        current_app.logger.debug("get ProjectSpreadsheet(%s %s)" % (cu.id, project_id))
         project_entry = load_project(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
@@ -483,6 +483,56 @@ class ProjectSpreadsheet(Resource):
             'result': 'Project %s is updated' % project_name
         }
         return reply
+
+
+class ProjectEcon(Resource):
+    """
+    Economic data export and import for the existing project.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        summary='Generates economic data spreadsheet for the project with the given id.',
+        notes="""
+        if project exists, regenerates economic data spreadsheet for it
+        or returns spreadsheet with existing data,
+        if project does not exist, returns an error.
+        """
+    )
+    def get(self, project_id):
+        cu = current_user
+        current_app.logger.debug("get ProjectEcon(%s %s)" % (cu.id, project_id))
+        project_entry = load_project(project_id)
+        if project_entry is None:
+            raise ProjectDoesNotExist(id=project_id)
+
+        # See if there is matching project econ data
+        projecon = ProjectEconDb.query.get(project_entry.id)
+
+        wb_name = secure_filename('{}_economics.xlsx'.format(project_entry.name))
+        if projecon is not None and len(projecon.meta) > 0:
+            return Response(
+                projecon.meta,
+                mimetype='application/octet-stream',
+                headers={
+                    'Content-Disposition': 'attachment;filename=' + wb_name
+                })
+        else:
+            # if no project econdata found
+            path = templatepath(wb_name)
+            op.makeeconspreadsheet(
+                path,
+                datastart=project_entry.datastart,
+                dataend=project_entry.dataend)
+
+            current_app.logger.debug(
+                "project %s economics spreadsheet created: %s" % (
+                    project_entry.name, wb_name)
+            )
+            (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
+            # deliberately don't save the template as uploaded data
+            return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
 
 class ProjectData(Resource):
