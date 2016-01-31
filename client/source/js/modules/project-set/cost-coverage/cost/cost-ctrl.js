@@ -12,7 +12,7 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
-      fetchGraph();
+      $scope.updateGraph();
       fetchDefaultData();
     };
 
@@ -21,26 +21,30 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.state[dataKey] = {};
     };
 
-    $scope.addToCCData = function(list, data, dataKey) {
-      $scope.state.ccData.push(data);
-      $scope.state.newCCData = {};
-      $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/data', {
-          coverage: 100,
-          spending: 100,
-          year: "2017"
-        })
-        .success(function (response) {
-          $scope.state.chartData = response;
-        });
-    };
-
     $scope.deleteDataFromList = function(list, data) {
       var index = list.indexOf(data);
       list.splice(index, 1);
     };
 
-    var fetchGraph = function() {
+    $scope.addToCCData = function() {
+      $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage/data', $scope.state.newCCData)
+        .success(function (response) {
+          $scope.state.ccData.push($scope.state.newCCData);
+          $scope.state.newCCData = {};
+        });
+    };
+
+    $scope.removeFromCCData = function(data) {
+      $http.delete('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage/data?year=' + data.year)
+        .success(function () {
+          var index = $scope.state.ccData.indexOf(data);
+          $scope.state.ccData.splice(index, 1);
+        });
+    };
+
+    $scope.updateGraph = function() {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
         $scope.selectedProgram.id + '/costcoverage/graph?t=2016&parset_id=' + $scope.vm.selectedParset.id)
         .success(function (response) {
