@@ -22,7 +22,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
       ccDataForm.year.$setValidity("valid", isValidCCDataYear());
 
-      if($scope.state.newCCData.year && $scope.state.newCCData.spending >= 0 && $scope.state.newCCData.coverage >= 0) {
+      if(!ccDataForm.$invalid) {
         $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
           $scope.selectedProgram.id + '/costcoverage/data', $scope.state.newCCData)
           .success(function () {
@@ -57,12 +57,35 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.addToCPData = function(cpDataForm) {
-      $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
-        .success(function () {
-          $scope.state.cpData.push($scope.state.newCPData);
-          $scope.state.newCPData = {};
-        });
+      cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
+      cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
+      cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
+      cpDataForm.ucupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_upper));
+      cpDataForm.year.$setValidity("valid", isValidCPDataYear());
+
+      if(!cpDataForm.$invalid) {
+        $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+          $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
+          .success(function () {
+            $scope.state.cpData.push($scope.state.newCPData);
+            $scope.state.newCPData = {};
+          });
+      }
+    };
+
+    var isValidCPDataYear = function() {
+      if ($scope.state.newCPData.year) {
+        if ($scope.state.newCPData.year >= $scope.vm.openProject.dataStart ||
+          $scope.state.newCPData.year <= $scope.vm.openProject.dataEnd) {
+          var recordExisting = _.filter($scope.state.cpData, function(cpData) {
+            return cpData.year === $scope.state.newCPData.year;
+          });
+          if(recordExisting.length === 0) {
+            return true;
+          }
+        }
+      }
+      return false;
     };
 
     $scope.removeFromCPData = function(data) {

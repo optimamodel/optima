@@ -25,14 +25,15 @@
       <div class="flex-column margin_left">
         <div class="flex-column">
           <h3>Parameters for defining cost function</h3>
+          <form name="cpDataForm">
           <table class="table table-bordered">
             <tr>
-              <th class="wide">Year</th>
-              <th class="wide">Estimated size</th>
-              <th class="wide">Saturation %</th>
-              <th class="wide">Saturation #</th>
-              <th class="wide">Unit cost</th>
-              <th class="wide">Delete</th>
+              <th style="width: 100px;">Year</th>
+              <th style="width: 125px;">Estimated size</th>
+              <th style="width: 150px;">Saturation %</th>
+              <th style="width: 100px;">Saturation #</th>
+              <th style="width: 150px;">Unit cost</th>
+              <th style="width: 50px;">Delete</th>
             </tr>
             <tr ng-repeat="data in state.cpData">
               <td>{{data.year}}</td>
@@ -43,23 +44,29 @@
               <td><i class="fa fa-trash-o" ng-click="removeFromCPData(data)"></i></td>
             </tr>
             <tr ng-if="state.showAddCPData">
-              <td><input class="txbox __inline __ll" ng-model="state.newCPData.year"/></td>
+              <td><input name="year" class="txbox __inline __m" ng-model="state.newCPData.year"
+                         type="number" ng-class="{'invalid': cpDataForm.year.$invalid}"/></td>
               <td></td>
-              <td style="width: 150px;">
-                <input class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_lower"/> -
-                <input class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_upper"/>
+              <td>
+                <input name="splower" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_lower"
+                       type="number" min="0" ng-class="{'invalid': cpDataForm.splower.$invalid}"/> -
+                <input name="spupper" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_upper"
+                       type="number" min="{{state.newCPData.saturationpercent_lower || 0}}" ng-class="{'invalid': cpDataForm.spupper.$invalid}"/>
               </td>
               <td></td>
-              <td style="width: 150px;">
-                <input class="txbox __inline __s" ng-model="state.newCPData.unitcost_lower"/> -
-                <input class="txbox __inline __s" ng-model="state.newCPData.unitcost_upper"/>
+              <td>
+                <input name="uclower" class="txbox __inline __s" ng-model="state.newCPData.unitcost_lower"
+                       type="number" min="0" ng-class="{'invalid': cpDataForm.uclower.$invalid}"/> -
+                <input name="ucupper" class="txbox __inline __s" ng-model="state.newCPData.unitcost_upper"
+                       type="number" min="state.newCPData.unitcost_lower || 0" ng-class="{'invalid': cpDataForm.ucupper.$invalid}"/>
               </td>
               <td>
-                <i class="fa fa-check" ng-click="addToCPData()"></i>
+                <i class="fa fa-check" ng-click="addToCPData(cpDataForm)"></i>
                 <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCPData = {};state.showAddCPData = false"></i>
               </td>
             </tr>
           </table>
+          </form>
           <div>
             <button type="button" class="btn __m" ng-click="state.showAddCPData = true">Add year</button>
           </div>
