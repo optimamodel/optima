@@ -36,18 +36,24 @@
             </tr>
             <tr ng-repeat="data in state.cpData">
               <td>{{data.year}}</td>
-              <td>{{data.unitcost_lower}}</td>
-              <td>{{data.saturationpercent_lower}}</td>
-              <td>{{data.unitcost_upper}}</td>
-              <td>{{data.saturationpercent_upper}}</td>
+              <td></td>
+              <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
+              <td></td>
+              <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
               <td><i class="fa fa-trash-o" ng-click="removeFromCPData(data)"></i></td>
             </tr>
             <tr ng-if="state.showAddCPData">
               <td><input class="txbox __inline __ll" ng-model="state.newCPData.year"/></td>
-              <td><input class="txbox __inline __ll" ng-model="state.newCPData.unitcost_lower"/></td>
-              <td><input class="txbox __inline __ll" ng-model="state.newCPData.saturationpercent_lower"/></td>
-              <td><input class="txbox __inline __ll" ng-model="state.newCPData.unitcost_upper"/></td>
-              <td><input class="txbox __inline __ll" ng-model="state.newCPData.saturationpercent_upper"/></td>
+              <td></td>
+              <td style="width: 150px;">
+                <input class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_lower"/> -
+                <input class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_upper"/>
+              </td>
+              <td></td>
+              <td style="width: 150px;">
+                <input class="txbox __inline __s" ng-model="state.newCPData.unitcost_lower"/> -
+                <input class="txbox __inline __s" ng-model="state.newCPData.unitcost_upper"/>
+              </td>
               <td>
                 <i class="fa fa-check" ng-click="addToCPData()"></i>
                 <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCPData = {};state.showAddCPData = false"></i>
