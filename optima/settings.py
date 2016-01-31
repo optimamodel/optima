@@ -149,7 +149,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     Version: 2016jan30
     '''
     if verbose is None:
-        if settings is not None: verbose = settings.verobse
+        if settings is not None: verbose = settings.verbose
         else: verbose=2
     
     printv('Converting to numerical limits...', 4, verbose)
