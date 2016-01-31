@@ -536,7 +536,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
             
             if propcare[t]:
-                print('YESSSS')
                 curralldx = people[alldx,:,t].sum(axis=0)
                 currcare  = people[allcare,:,t].sum(axis=0)
                 curruncare = curralldx[:] - currcare[:]
@@ -563,8 +562,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
             
-            from numpy import mean, array
-            if propcare[t]: print(mean(fractiontocare), array(newlinkcare).sum())
 
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
@@ -599,6 +596,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
             
+            from numpy import mean, array
+            if propcare[t]: print('hiiii', mean(fractiontocare), array(newlinkcare).sum(), array(dD).sum(), array(dC).sum())
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
             # 40% progress, 40% recover, 20% don't change cd4 count
