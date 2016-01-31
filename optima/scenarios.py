@@ -132,9 +132,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         raise OptimaException(errormsg)
                     for pop in pops:
                         
-                        print('hiiiiiiiiiiiiiiiiiiiii')
-                        print(scenpar)
-                        
                         # Find last good value
                         last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                         last_y = thispar.interp(tvec=last_t, dt=project.settings.dt) # Find what the model would get for this value
