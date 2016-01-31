@@ -91,6 +91,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     undx     = settings.undx     # Undiagnosed
     dx       = settings.dx       # Diagnosed
     alldx    = settings.alldx    # All diagnosed
+    alltx = settings.alltx # All on treatment
     allplhiv = settings.allplhiv # All PLHIV
     if usecascade:
         care  = settings.care  # in care
@@ -98,7 +99,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         svl   = settings.svl   # On treatment - Suppressed Viral Load
         lost  = settings.lost  # Not on ART (anymore) and lost to follow-up
         off   = settings.off   # off ART but still in care
-        alltx = settings.alltx # All on treatment -- WARNING, not used?
+        
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
     if len(sus)!=2:
@@ -558,10 +559,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             if proptx[t]:
                 print('proptx1')
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[[usvl,svl],:,t].sum(axis=0)
+                currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
             else:
-                newtreattot = numtx[t] - people[[usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
+                newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
                 
             for cd4 in range(ncd4):
                 if cd4>0: 
@@ -698,10 +699,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             if proptx[t]:
                 print('proptx2')
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[[usvl,svl],:,t].sum(axis=0)
+                currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
             else:
-                newtreattot = numtx[t] - people[[usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
+                newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
 
 
             ## Diagnosed
