@@ -482,7 +482,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False):
+def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, delay=0.1):
     '''
     A function to plot all people as a stacked plot
     
@@ -490,23 +490,23 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False):
     
     Version: 2016jan30
     '''
-    from optima import gridcolormap
-    from pylab import transpose, legend, fill_between, xlim, pause
+    from optima import gridcolormap, odict
+    from pylab import transpose, legend, fill_between, xlim, pause, xlabel, ylabel
     
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
     
-    plotstyles = {
-    'uncirc': '/', 
-    'circ':   '\\', 
-    'undx':   '|', 
-    'dx':     '-', 
-    'care':   '+', 
-    'usvl':   'x', 
-    'svl':    'o', 
-    'lost':   'O', 
-    'off':    '*'}
+    plotstyles = odict([
+    ('uncirc', '/'), 
+    ('circ',   '\\'), 
+    ('undx',   '|'), 
+    ('dx',     'O'), 
+    ('care',   '*'), 
+    ('usvl',   '/'), 
+    ('svl',    '\\'), 
+    ('lost',   'O'), 
+    ('off',    '*')])
     
     hatchstyles = []
     for key in plotstyles.keys():
@@ -524,6 +524,7 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False):
     colors = gridcolormap(nstates)
     tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
     bottom = 0*tvec
+    figure(facecolor=(1,1,1))
     ax = subplot(111)
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,0,-1):
@@ -534,11 +535,13 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False):
         bottom += this
         
         # Legend stuff
+        xlabel('Year')
+        ylabel('Number of people')
         ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
-        handles, labels = ax.get_legend_handles_labels()
-        legend(reversed(handles), reversed(labels), **legendsettings)
+        handles, legendlabels = ax.get_legend_handles_labels()
+        legend(reversed(handles), reversed(legendlabels), **legendsettings)
         show()
-        pause(0.1)
+        pause(delay)
     
     return None
 
