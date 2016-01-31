@@ -18,7 +18,7 @@ from server.webapp.resources.common import file_resource, file_upload_form_parse
 
 from server.webapp.dbconn import db
 
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb
+from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
 import optima as op
 
 
@@ -63,6 +63,12 @@ costcov_param_parser.add_arguments({
     'saturationpercent_upper': {'required': True, 'type': int},
     'unitcost_lower': {'required': True, 'type': int},
     'unitcost_upper': {'required': True, 'type': int},
+})
+
+popsize_parser = RequestParser()
+popsize_parser.add_arguments({
+#    'year': {'required': True, 'type': int, 'location': 'args'},
+    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
 })
 
 program_parser = RequestParser()
@@ -325,6 +331,38 @@ class Programs(Resource):
         db.session.commit()
 
         return program_entry, 201
+
+
+class PopSize(Resource):
+    """
+    Estimated popsize for the given Program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Calculate popsize for the given program and parset(result).",
+        parameters=popsize_parser.swagger_parameters())
+    def get(self, project_id, progset_id, program_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs/%s/popsize" %
+                                (project_id, progset_id, program_id))
+
+        args = popsize_parser.parse_args()
+        parset_id = args['parset_id']
+
+        program_entry = load_program(project_id, progset_id, program_id)
+        if program_entry is None:
+            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+        program_instance = program_entry.hydrate()
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
+        if parset_entry is None:
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+        parset_instance = parset_entry.hydrate()
+        result_entry = db.session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).first()
+        result_instance = result_entry.hydrate()  # TODO raise exception if none
+        years = range(int(result_instance.settings.start), int(result_instance.settings.end+1))
+        popsizes = program_instance.gettargetpopsize(t=years, parset=parset_instance, results=result_instance)
+        return {'popsizes': [{'year': year, 'popsize': popsize} for (year, popsize) in zip(years, popsizes)]}
 
 
 class CostCoverage(Resource):

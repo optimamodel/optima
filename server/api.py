@@ -66,7 +66,7 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectData, ProjectFromData, Portfolio,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
-from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, Programs
+from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, Programs, PopSize
 from server.webapp.resources.project_parsets import Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
 
@@ -99,6 +99,8 @@ api.add_resource(CostCoverageData,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/data')
 api.add_resource(CostCoverageParam, 
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/param')
+api.add_resource(PopSize, 
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/popsize')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/<project_id>/parameters')
