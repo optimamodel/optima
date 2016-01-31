@@ -3,13 +3,15 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan28
+Version: 2016jan30
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
+from optima import getresults, convertlimits, gettvecdt # Heftier functions
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
+
 
 #############################################################################################################################
 ### Define the parameters!
@@ -24,7 +26,7 @@ Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	Non
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
 Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	None	0	None
-Birth transitions (% born into each population/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	None	0	None
+Birth transitions (% who give birth/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
 HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
 AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
@@ -45,10 +47,10 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
 Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
-Proportion of people on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	0	1	random
+People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	0	1	random
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	0	1	random
-Viral suppression for people initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	0	1	random
-HIV-diagnosed people newly linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
+Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	0	1	random
+HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
 Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
 HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
@@ -273,7 +275,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
     
     # Interpolate over population acts data for each year
-    tmppar = data2timepar(name='tmp', short=which+act, data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
+    tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
     tmpsim = tmppar.interp(tvec=ctrlpts)
     if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
     npts = len(ctrlpts)
@@ -495,7 +497,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
-    simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
+    dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
+    simpars['dt'] = dt  # Store dt
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -504,15 +507,77 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-            except: raise OptimaException('Could not figure out how to interpolate parameter "%s"' % key)
+            try: 
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+            except OptimaException as E: 
+                errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                errormsg += 'Error: "%s"' % E.message
+                raise OptimaException(errormsg)
 
     return simpars
 
 
 
 
+
+def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
+    ''' 
+    A function to intelligently apply limits (supplied as [low, high] list or tuple) to an output.
+    
+    Needs dt as input since that determines maxrate.
+    
+    Version: 2016jan30
+    '''
+    
+    # If parameter object is supplied, use it directly
+    parname = ''
+    if par is not None:
+        if limits is None: limits = par.limits
+        parname = par.name
+        
+    # If no limits supplied, don't do anything
+    if limits is None:
+        printv('No limits supplied for parameter "%s"' % parname, 4, verbose)
+        return y
+    
+    if dt is None:
+        if warn: raise OptimaException('No timestep specified: required for convertlimits()')
+        else: dt = 0.2 # WARNING, should probably not hard code this, although with the warning, and being conservative, probably OK
+    
+    # Convert any text in limits to a numerical value
+    limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
+    
+    # Apply limits, preserving original class
+    if isinstance(y, (int, float)):
+        newy = median([limits[0], y, limits[1]])
+        if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
+    elif shape(y):
+        newy = array(y) # Make sure it's an array and not a list
+        newy[newy<limits[0]] = limits[0]
+        newy[newy>limits[1]] = limits[1]
+        if warn and any(newy!=array(y)):
+            printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
+    else:
+        if warn: raise OptimaException('Data type "%s" not understood for applying limits for parameter "%s"' % (type(y), parname))
+        else: newy = array(y)
+    
+    if shape(newy)!=shape(y):
+        errormsg = 'Something went wrong with applying limits for parameter "%s":\ninput and output do not have the same shape:\n%s vs. %s' % (parname, shape(y), shape(newy))
+        raise OptimaException(errormsg)
+    
+    printv('Limits (%f, %f) applied for parameter "%s":\n%s' % (limits[0], limits[1], parname, y), 4, verbose)
+    return newy
+
+
+
+
+
+
+
+#################################################################################################################################
 ### Define the classes
+#################################################################################################################################
+
 
 class Par(object):
     ''' The base class for parameters '''
@@ -535,10 +600,6 @@ class Par(object):
 
 
 
-
-
-
-
 class Timepar(Par):
     ''' The definition of a single time-varying parameter, which may or may not vary by population '''
     
@@ -550,24 +611,29 @@ class Timepar(Par):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
     
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
     
-    def interp(self, tvec, smoothness=20):
+    def interp(self, tvec=None, dt=None, smoothness=20):
         """ Take parameters and turn them into model parameters """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        
+        # Set things up and do the interpolation
         keys = self.y.keys()
         npops = len(keys)
         if self.by=='pship': # Have odict
             output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[key] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[key] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -586,19 +652,23 @@ class Popsizepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
-    def __repr__(self):
-        ''' Print out useful information when called '''
-        output = defaultrepr(self)
-        return output
 
-    def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        
+        # Do interpolation
         keys = self.p.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys):
-            output[pop,:] = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         return output
 
 
@@ -612,21 +682,20 @@ class Constant(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
     
-    def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
+        
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-            output = self.y
+            output = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = self.y[key] # Just copy y values
+                output[pop] = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
         return output
 
 
@@ -683,7 +752,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         simparslist = []
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:

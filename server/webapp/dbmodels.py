@@ -588,7 +588,7 @@ class ProgsetsDb(db.Model):
                 {
                     'year': program['costcovdata']['t'][i],
                     'cost': program['costcovdata']['cost'][i],
-                    'cov': program['costcovdata']['coverage'][i],
+                    'coverage': program['costcovdata']['coverage'][i],
                 } for i in range(len(program['costcovdata']['t']))
             ]
         return program

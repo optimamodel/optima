@@ -22,9 +22,9 @@ def printv(string, thisverbose=1, verbose=2, newline=True):
     whereas a much less important message might be
         printv('This is timestep %i' % i, 4, verbose)
 
-    Version: 2016jan29
+    Version: 2016jan30
     '''
-    if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (you asked for %i and %i)' % (thisverbose, verbose))
+    if thisverbose>4 or verbose>4: print('Warning, verbosity should be from 0-4 (this message: %i; current: %i)' % (thisverbose, verbose))
     if verbose>=thisverbose: # Only print if sufficiently verbose
         indents = '  '*thisverbose # Create automatic indenting
         if newline: print(indents+str(string)) # Actually print
