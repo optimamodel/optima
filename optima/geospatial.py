@@ -157,7 +157,7 @@ def geogui():
         for key in objectiveinputs.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives, maxtime=5) # WARNING temp time
-        portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets())
+        portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets(), maxtime=5)
         return None
     
     
