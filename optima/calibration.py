@@ -243,7 +243,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     # Create the list of parameters to be fitted and set the limits
     parlist = makeparlist(pars, what)
     parlower  = array([item['limits'][0] for item in parlist])
-    parhigher = array(project.settings.setmaxes([item['limits'][1] for item in parlist])) # Replace text labels with numeric values
+    parhigher = array(project.settings.convertlimits([item['limits'][1] for item in parlist])) # Replace text labels with numeric values
     
     # Loop over each pars
     for ind in inds:

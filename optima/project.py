@@ -327,10 +327,12 @@ class Project(object):
 
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
-        if name is None and orig is None: 
-            name = 'autofit'
+        if name is None and orig is None: # Nothing supplied, just use defaults
+            name = 'default'
             orig = 'default'
-        if name is not None and orig is not None:
+        if isinstance(name, (int, float)): name = self.parsets.keys()[name] # Convert from index to name if required
+        if isinstance(orig, (int, float)): orig = self.parsets.keys()[orig]
+        if name is not None and orig is not None and name!=orig:
             self.copyparset(orig=orig, new=name, overwrite=True) # Store parameters, user seems to know what she's doing, trust her!
         if name is None and orig is not None: name = orig # Specify name if not supplied
         if name not in self.parsets.keys():

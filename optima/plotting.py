@@ -12,7 +12,7 @@ Version: 2016jan24
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
-from numpy import array, ndim, maximum, arange, zeros, mean
+from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -391,7 +391,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
-    elif hasattr(results, '__len__'): improvement = results # Promising, has a length at least, but of course could still be wrong
+    elif shape(results): improvement = results # Promising, has a length at least, but of course could still be wrong
     else: raise OptimaException('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
     ncurves = len(improvement) # Try to figure to figure out how many there are
     
