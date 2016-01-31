@@ -27,7 +27,7 @@ Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	N
 Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None
 Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
 Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
-Birth transitions (% who give birth/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Birth transitions (% born into each population/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
 Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	0	1	random
 HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	0	1	random
 AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1	random
