@@ -2,7 +2,7 @@ import mpld3
 import json
 import uuid
 
-from flask import current_app
+from flask import current_app, request
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, fields
@@ -11,20 +11,22 @@ from flask import helpers
 
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project, load_progset, load_program, RequestParser, report_exception
+from server.webapp.utils import (
+    load_project, load_progset, load_program, RequestParser, report_exception, modify_program)
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
 from server.webapp.dbconn import db
 
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb
+import optima as op
 
 
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
-    'year': {'required': True, 'location': 'json'},
+    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
 
 costcov_graph_parser = RequestParser()
@@ -37,6 +39,27 @@ costcov_data_parser = RequestParser()
 costcov_data_parser.add_arguments({
     'data': {'type': list, 'location': 'json'},
     'params': {'type': dict, 'location': 'json'}
+})
+
+costcov_data_point_parser = RequestParser()
+costcov_data_point_parser.add_arguments({
+    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
+    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
+})
+
+costcov_data_locator_parser = RequestParser()
+costcov_data_locator_parser.add_arguments({
+    'year': {'required': True, 'type': int, 'location': 'args'}
+})
+
+costcov_param_parser = RequestParser()
+costcov_param_parser.add_arguments({
+    'year': {'required': True, 'type': int},
+    'saturationpercent_lower': {'required': True, 'type': int},
+    'saturationpercent_upper': {'required': True, 'type': int},
+    'unitcost_lower': {'required': True, 'type': int},
+    'unitcost_upper': {'required': True, 'type': int},
 })
 
 program_parser = RequestParser()
@@ -366,3 +389,127 @@ class CostCoverageGraph(Resource):
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
         json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
         return json.loads(json_string)
+
+
+class CostCoverageData(Resource):
+    """
+    Modification of data points for the given program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    def add_data_for_instance(self, program_instance, args, overwrite=False):
+        program_instance.addcostcovdatum(
+            {'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']},
+            overwrite=overwrite)
+
+    def update_data_for_instance(self, program_instance, args):
+        self.add_data_for_instance(program_instance, args, overwrite=True)
+
+    def delete_data_for_instance(self, program_instance, args):
+        program_instance.rmcostcovdatum(year=args['year'])
+
+    @swagger.operation(description="Add new data point.",
+                       parameters=costcov_data_point_parser.swagger_parameters())
+    def post(self, project_id, progset_id, program_id):
+        """
+        adds a _new_ data point to program parameters.
+        It should then be given to BE in this way:
+        program.addcostcovdatum({
+            t=<args.year>,
+            cost=<args.cost>,
+            coverage=<args.coverage>
+            })
+        """
+        args = costcov_data_point_parser.parse_args()
+        result = modify_program(project_id, progset_id, program_id, args, self.add_data_for_instance)
+
+        return result, 201
+
+    @swagger.operation(description="Edit existing data point.",
+                       parameters=costcov_data_point_parser.swagger_parameters())
+    def put(self, project_id, progset_id, program_id):
+        """
+        edits existing data point to program parameters.
+        It should then be given to BE in this way:
+        program.addcostcovdatum({
+            t=<args.year>,
+            cost=<args.cost>,
+            coverage=<args.coverage>
+            })
+        """
+        args = costcov_data_point_parser.parse_args()
+        result = modify_program(project_id, progset_id, program_id, args, self.update_data_for_instance)
+
+        return result
+
+    @swagger.operation(description="Remove a data point.")
+    def delete(self, project_id, progset_id, program_id):
+        """
+        removes data point for the given year from program parameters.
+        """
+        args = costcov_data_locator_parser.parse_args()
+        result = modify_program(project_id, progset_id, program_id, args, self.delete_data_for_instance)
+
+        return result
+
+
+class CostCoverageParam(Resource):
+    """
+    Modification of parameters for the given program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    def add_param_for_instance(self, program_instance, args, overwrite=False):
+        program_instance.costcovfn.addccopar(
+            {'saturation': (args['saturationpercent_lower'], args['saturationpercent_upper']),
+                't': args['year'],
+                'unitcost': (args['unitcost_lower'], args['unitcost_upper'])},
+            overwrite=overwrite)
+
+    def update_param_for_instance(self, program_instance, args):
+        self.add_param_for_instance(program_instance, args, overwrite=True)
+
+    def delete_param_for_instance(self, program_instance, args):
+        program_instance.costcovfn.rmccopar(t=args['year'])
+
+    @swagger.operation(description="Add new cco parameter.",
+                       parameters=costcov_param_parser.swagger_parameters())
+    def post(self, project_id, progset_id, program_id):
+        """
+        adds a _new_ cco param to program parameters.
+        It should then be given to BE in this way:
+        program.addccopar({
+            'saturation': (saturationpercent_lower,saturationpercent_upper),
+            't': year,
+            'unitcost': (unitcost_lower,unitcost_upper)})
+        """
+        args = costcov_param_parser.parse_args()
+        result = modify_program(project_id, progset_id, program_id, args, self.add_param_for_instance)
+
+        return result, 201
+
+    @swagger.operation(description="Edit existing cco parameter.",
+                       parameters=costcov_param_parser.swagger_parameters())
+    def put(self, project_id, progset_id, program_id):
+        """
+        edits existing data point to program parameters.
+        It should then be given to BE in this way:
+        program.addccopar({
+            'saturation': (saturationpercent_lower,saturationpercent_upper),
+            't': year,
+            'unitcost': (unitcost_lower,unitcost_upper)})
+        """
+        args = costcov_param_parser.parse_args()
+        result = modify_program(project_id, progset_id, program_id, args, self.update_param_for_instance)
+
+        return result
+
+    @swagger.operation(description="Remove cco parameter.")
+    def delete(self, project_id, progset_id, program_id):
+        """
+        removes cco parameter for the given year from program parameters.
+        """
+        args = costcov_data_locator_parser.parse_args()
+        result = modify_program(project_id, progset_id, program_id, args, self.delete_param_for_instance)
+
+        return result

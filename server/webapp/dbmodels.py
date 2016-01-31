@@ -32,7 +32,6 @@ def db_model_as_file(model, loaddir, filename, name_field, extension):
     return filename
 
 
-
 @swagger.model
 class UserDb(db.Model):
 
@@ -379,8 +378,8 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
 
 costcov_fields = {
     'year': fields.String,
-    'spending': LargeInt(attribute='cost'),
-    'coverage': LargeInt(attribute='cov'),
+    'cost': LargeInt(attribute='cost'),
+    'coverage': LargeInt(attribute='coverage'),
 }
 
 
@@ -476,28 +475,18 @@ class ProgramsDb(db.Model):
 
         return pars
 
+    def datapoint_api_to_db(self, pt):
+        return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
+
+    def datapoint_db_to_api(self, pt):
+        return {'spending': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
+
     def data_api_to_db(self, data):
-        costcov_data = []
-
-        for x in data:
-            costcov_data.append({
-                "cost": x["spending"],
-                "year": x["year"],
-                "cov": x["coverage"]
-            })
-
+        costcov_data = [self.datapoint_api_to_db(x) for x in data]
         return costcov_data
 
     def data_db_to_api(self):
-        costcov_data = []
-
-        for x in self.costcov or []:
-            costcov_data.append({
-                "spending": x["cost"],
-                "year": x["year"],
-                "coverage": x["cov"]
-            })
-
+        costcov_data = [self.datapoint_db_to_api(x) for x in (self.costcov or [])]
         return costcov_data
 
     def _conv_lg_num(self, num):
@@ -514,12 +503,35 @@ class ProgramsDb(db.Model):
             costcovdata={
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['cov'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['coverage'] 
+                if self.costcov[i] is not None 
+                else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None,
-            ccopars=self.ccopars if self.ccopars else None,
+            ccopars={
+                't': self.ccopars['t'],
+                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
+                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
+            } if self.ccopars else None,
         )
         program_entry.id = self.id
         return program_entry
+
+    def restore(self, program_instance):
+        import json
+        self.category = program_instance.category
+        self.name = program_instance.name
+        self.short = program_instance.short
+        self.pars = self.program_pars_to_pars(program_instance.targetpars)
+        self.targetpops = program_instance.targetpops
+        self.criteria = program_instance.criteria
+        self.costcov = []
+        for i in range(len(program_instance.costcovdata['t'])):
+            self.costcov.append(
+                {'year': program_instance.costcovdata['t'][i],
+                 'cost': program_instance.costcovdata['cost'][i],
+                 'coverage': program_instance.costcovdata['coverage'][i]})
+        self.costcov = json.loads(json.dumps(self.costcov))  # silently bails on floats otherwise. No idea why?
+        self.ccopars = program_instance.costcovfn.ccopars
 
 
 @swagger.model
