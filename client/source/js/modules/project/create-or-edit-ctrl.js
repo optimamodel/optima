@@ -13,34 +13,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    $scope.noName = function() {
+    $scope.invalidName = function() {
       return !$scope.projectParams.name;
     }
 
-    $scope.noDataStart = function() {
+    $scope.invalidDataStart = function() {
       if ($scope.projectParams.datastart) {
-        var year = parseInt($scope.projectParams.datastart)
-        return year < 1900 || 2100 < year;
+        var datastart = parseInt($scope.projectParams.datastart)
+        return datastart < 1900 || 2100 < datastart;
       }
       return !$scope.projectParams.datastart; 
     }
 
-    $scope.noDataEnd = function() {
+    $scope.invalidDataEnd = function() {
       if ($scope.projectParams.dataend) {
-        if (!$scope.projectParams.datastart) {
-          return false;
-        }
         var dataend = parseInt($scope.projectParams.dataend)
         if (dataend < 1900 || 2100 < dataend) {
-          return false;
+          return true;
         };
+        if ($scope.invalidDataStart()) {
+          return false;
+        }
         var datastart = parseInt($scope.projectParams.datastart)
         return dataend <= datastart;
       }
       return !$scope.projectParams.dataend;  
     }
 
-    $scope.noPopulationSelected = function() {
+    $scope.invalidPopulationSelected = function() {
       var result = _.find($scope.populations, function(population) {
         return population.active === true;
       });
@@ -205,20 +205,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       var errors = [];
 
-      if ($scope.noName()) {
+      if ($scope.invalidName()) {
         errors.push({message: 'Enter a project name'});
       }
-      if ($scope.noDataStart()) {
+      if ($scope.invalidDataStart()) {
         errors.push({message: 'Enter a first year'});
       }
-      if ($scope.noDataEnd()) {
+      if ($scope.invalidDataEnd()) {
         errors.push({message: 'Enter a final year'});
       }
-      if ($scope.noPopulationSelected()) {
+      if ($scope.invalidPopulationSelected()) {
         errors.push({message: 'Select at least one population'});
       }
 
-      if ($scope.CreateOrEditProjectForm.$invalid || $scope.noPopulationSelected()) {
+      if ($scope.CreateOrEditProjectForm.$invalid || $scope.invalidPopulationSelected()) {
         modalService.informError(errors);
         return false;
       }
