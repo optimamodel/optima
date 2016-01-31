@@ -7,11 +7,37 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var allProjects = projects.data.projects;
 
+    var clicked = false;
+
     $scope.projectExists = function () {
       return _.some(allProjects, function (project) {
         return $scope.projectParams.name === project.name && $scope.projectParams.id !== project.id;
       });
     };
+
+    var noPopulationSelected = function() {
+      var result = _.find($scope.populations, function(population) {
+        return population.active === true;
+      });
+      return !result;
+    }
+
+    $scope.clickedAndNoName = function() {
+      console.log( $scope.ProjectName);
+      return clicked && !$scope.projectParams.name;
+    }
+
+    $scope.clickedAndNoDataStart = function() {
+      return clicked && !$scope.projectParams.datastart; 
+    }
+
+    $scope.clickedAndNoDataEnd = function() {
+      return clicked && !$scope.projectParams.dataend;  
+    }
+
+    $scope.clickedAndNoPopulationSelected = function() {
+      return clicked && noPopulationSelected();  
+    }
 
     $scope.projectParams = {
       name: ''
@@ -169,16 +195,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.prepareCreateOrEditForm = function () {
 
-      const populationSelected = _.find($scope.populations, function(population) {
-        return population.active === true;
-      });
+      clicked = true;
 
-      if ($scope.CreateOrEditProjectForm.$invalid || !populationSelected) {
-        modalService.informError(
-          [{message: 'Enter a project name'},
-           {message: 'Enter a first year'},
-           {message: 'Enter a final year'},
-           {message: 'Select at least one population'}]);
+      var errors = [];
+
+      if ($scope.clickedAndNoName()) {
+        errors.push({message: 'Enter a project name'});
+      }
+      if ($scope.clickedAndNoDataStart()) {
+        errors.push({message: 'Enter a first year'});
+      }
+      if ($scope.clickedAndNoDataEnd()) {
+        errors.push({message: 'Enter a final year'});
+      }
+      if (noPopulationSelected()) {
+        errors.push({message: 'Select at least one population'});
+      }
+
+      if ($scope.CreateOrEditProjectForm.$invalid || noPopulationSelected()) {
+        modalService.informError(errors);
         return false;
       }
 
