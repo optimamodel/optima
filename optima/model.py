@@ -512,7 +512,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx[t]:
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
-            else: 
+            else:
                 newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
@@ -552,7 +552,7 @@ def model(simpars=None, settings=None, verbose=2, safetymargin=0.8, benchmark=Fa
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
-            if proptx[:,t].any(): 
+            if proptx[t]:
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[[usvl,svl],:,t].sum()
                 newtreattot =  proptx[t] * currdx - currtx 
