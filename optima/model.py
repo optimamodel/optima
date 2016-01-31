@@ -476,19 +476,20 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         testingrate  = [0] * ncd4
         newdiagnoses = [0] * ncd4
         if usecascade:
-            newtreat   = [0] * ncd4
-            restarters   = [0] * ncd4
-            newlinkcare  = [0] * ncd4
-            leavecareCD  = [0] * ncd4
-            leavecareOL  = [0] * ncd4
-            virallysupp  = [0] * ncd4
-            failing      = [0] * ncd4
-            stopUSlost   = [0] * ncd4
-            stopSVLlost  = [0] * ncd4
-            stopUSincare = [0] * ncd4
-            stopSVLincare = [0] * ncd4
+            newtreat        = [0] * ncd4
+            restarters      = [0] * ncd4
+            newlinkcaredx   = [0] * ncd4
+            newlinkcarelost = [0] * ncd4
+            leavecareCD     = [0] * ncd4
+            leavecareOL     = [0] * ncd4
+            virallysupp     = [0] * ncd4
+            failing         = [0] * ncd4
+            stopUSlost      = [0] * ncd4
+            stopSVLlost     = [0] * ncd4
+            stopUSincare    = [0] * ncd4
+            stopSVLincare   = [0] * ncd4
         else:
-            newtreat     = [0] * ncd4
+            newtreat        = [0] * ncd4
 
         background   = simpars['death'][:, t] # make OST effect this death rates
         
@@ -533,14 +534,14 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         if usecascade:
 
             ## Diagnosed
-            currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
-            
             if propcare[t]:
                 curralldx = people[alldx,:,t].sum(axis=0)
                 currcare  = people[allcare,:,t].sum(axis=0)
                 curruncare = curralldx[:] - currcare[:]
-                fractiontocare = maximum(0, (propcare[t]*curralldx[:] - currcare[:])/(curruncare[:] + eps)) # Don't allow to go negative -- note, this equation is right, I just checked it!
-
+                fractiontocare = (propcare[t]*curralldx[:] - currcare[:])/(curruncare[:] + eps)
+                fractiontocare = maximum(0, fractiontocare) # Don't allow to go negative -- note, this equation is right, I just checked it!
+                fractiontocare = minimum(safetymargin, fractiontocare) # Cap at safetymargin rate
+    
             for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
@@ -553,15 +554,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[dx[cd4],:,t] * background
                 if propcare[t]:
-                    newlinkcare[cd4] = fractiontocare * currentdiagnosed[cd4,:]
+                    newlinkcaredx[cd4]   = fractiontocare * people[dx[cd4],:,t] # diagnosed moving into care
+                    newlinkcarelost[cd4] = fractiontocare * people[lost[cd4],:,t] # lost moving into care
                 else:
-                    newlinkcare[cd4] = linktocare[:,t] * dt * currentdiagnosed[cd4,:] # diagnosed moving into care
+                    newlinkcaredx[cd4]   = linktocare[:,t] * dt * people[dx[cd4],:,t] # diagnosed moving into care
+                    newlinkcarelost[cd4] = linktocare[:,t] * dt * people[lost[cd4],:,t] # lost moving into care
                 inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) # some go immediately into care after testing
-                outflows = progout + hivdeaths + otherdeaths + newlinkcare[cd4]
+                outflows = progout + hivdeaths + otherdeaths + newlinkcaredx[cd4] # NB, only newlinkcaredx flows out from here!
                 dD.append(inflows - outflows)
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
-#                if t==138 and propcare[t]: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
 
             ## In care
@@ -586,7 +588,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 hivdeaths   = dt * people[care[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[care[cd4],:,t] * background
                 leavecareCD[cd4] = dt * people[care[cd4],:,t] * leavecare[:,t]
-                inflows = progin + newdiagnoses[cd4]*immediatecare[:,t] + newlinkcare[cd4]
+                inflows = progin + newdiagnoses[cd4]*immediatecare[:,t] + newlinkcaredx[cd4] + newlinkcarelost[cd4] # People move in from both diagnosed and lost states
                 outflows = progout + hivdeaths + otherdeaths + leavecareCD[cd4]
                 newtreat[cd4] = newtreattot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
                 newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
@@ -596,10 +598,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
-#                if t==138 and propcare[t]: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            
-            from numpy import mean, array
-            if propcare[t]: print('hiiii', t, mean(fractiontocare), array(newlinkcare).sum(), array(dD).sum(), array(dC).sum())
             
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
@@ -672,7 +670,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 hivdeaths   = dt * people[lost[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[lost[cd4],:,t] * background
                 inflows  = progin + stopSVLlost[cd4] + stopUSlost[cd4]
-                outflows = progout + hivdeaths + otherdeaths
+                outflows = progout + hivdeaths + otherdeaths - newlinkcarelost[cd4] # These people move back into care
                 dL.append(inflows - outflows) 
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
