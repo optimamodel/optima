@@ -198,10 +198,9 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, Budgetscen
-    from optima.defaults import defaultproject
+    from optima import Parscen, defaults
     
-    P = defaultproject('simple')
+    P = defaults.defaultproject('simple')
     P.settings.usecascade = True
     P.runsim()
     
@@ -215,24 +214,39 @@ if '90-90-90' in tests:
 
          Parscen(name='90-90-90',
               parsetname='default',
-              pars=[{'endval': .9,
-                'endyear': 2020,
-                'name': 'propdx',
-                'for': ['tot'],
-                'startval': .5,
-                'startyear': 2016},
-                {'endval': .9,
-                'endyear': 2020,
-                'name': 'proptx',
-                'for': ['tot'],
-                'startval': .5,
-                'startyear': 2016},
-                {'endval': .9,
-                'endyear': 2020,
-                'name': 'treatvs',
-                'for': ['tot'],
-                'startval': .50,
-                'startyear': 2016}]),
+              pars=[
+              {'name': 'propdx',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+              
+              {'name': 'propcare',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+              
+              {'name': 'proptx',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+              
+              {'name': 'treatvs',
+              'for': ['tot'],
+              'startyear': 2016,
+              'endyear': 2020,
+              'startval': .5,
+              'endval': .9,
+              },
+                ]),
         ]
 
     # Store these in the project
