@@ -21,6 +21,7 @@ def geogui():
     global geoguiwindow, portfolio, objectives, objectiveinputs, projectslistbox, projectinfobox
     portfolio = None
     objectives = defaultobjectives()
+    objectives['budget'] = 0.0 # Reset
     
     ## Global options
     budgetfactor = 1e6 # Conversion between screen and internal
@@ -69,10 +70,15 @@ def geogui():
             totalbudget += sum(project.progsets[0].getdefaultbudget().values())
         objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
         return None
+    
+    def not_implemented():
+        global geoguiwindow
+        QtGui.QMessageBox.warning(geoguiwindow, 'Message', "Sorry, this feature has not been implemented.")
         
         
     def makesheet():
         ''' Create a geospatial spreadsheet template based on a project file '''
+        not_implemented()
         
         ## 1. Load a project file
 #        project = _loadproj()
@@ -91,6 +97,7 @@ def geogui():
     
     def makeproj():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
+        not_implemented()
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
 #        project = _loadproj()
@@ -313,6 +320,7 @@ def geogui():
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
         objectiveinputs[key].setText(str(objectives[key]))
         objectiveinputs[key].move(left+120, 230+k*30)
+    objectiveinputs['budget'].setText(str(objectives['budget']/budgetfactor)) # So right units
     
 
     geoguiwindow.show()

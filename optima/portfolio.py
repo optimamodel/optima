@@ -110,7 +110,9 @@ class Portfolio(object):
                 
             printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (p.progsets[progsetnames[pno]].name, p.name, self.name), 4, verbose)
             budgets.append(sum(p.progsets[progsetnames[pno]].getdefaultbudget().values()))
-
+        
+        print('BuDgets are:')
+        print budgets
         return budgets
     
     
