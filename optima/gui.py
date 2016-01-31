@@ -491,53 +491,51 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False):
     Version: 2016jan30
     '''
     from optima import gridcolormap
-    from pylab import transpose, legend, fill_between
+    from pylab import transpose, legend, fill_between, xlim, pause
     
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
-    
-    plotstyles = {
-    'uncirc':(':','/'), 
-    'circ':('-.','\\'), 
-    'undx':('-','|'), 
-    'dx':('--.','-'), 
-    'care':(':','+'), 
-    'usvl':('-','x'), 
-    'svl':('--','o'), 
-    'lost':('-.','O'), 
-    'off':(':','.')}
-    
+    nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
     
-    linestyles = []
+    plotstyles = {
+    'uncirc': '/', 
+    'circ':   '\\', 
+    'undx':   '|', 
+    'dx':     '-', 
+    'care':   '+', 
+    'usvl':   'x', 
+    'svl':    'o', 
+    'lost':   'O', 
+    'off':    '*'}
+    
     hatchstyles = []
     for key in plotstyles.keys():
-        linestyles.extend([plotstyles[key][0] for lab in labels if lab.startswith(key)])
-        hatchstyles.extend([plotstyles[key][1] for lab in labels if lab.startswith(key)])
+        hatchstyles.extend([plotstyles[key] for lab in labels if lab.startswith(key)])
     
     labels = labels[exclude:]
-    statestyles[exclude:]
+    hatchstyles[exclude:]
     pplplot = ppl[exclude:,:,:] # Exclude initial people
     if sumpops: pplplot = pplplot[:,:,:].sum(axis=1) # Sum over people
     else: print('WARNING, not implemented')
     pplplot = transpose(pplplot) # So time is plotted on x-axis
     
-    
     nstates = len(labels)
-    nocolor = (0.9,0.9,0.9)
+    
     colors = gridcolormap(nstates)
     tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
     bottom = 0*tvec
-    subplot(111)
+    ax = subplot(111)
     xlim((tvec[0], tvec[-1]))
     for s in range(nstates-1,0,-1):
         this = pplplot[:,s]
         if sum(this): thiscolor = colors[s]
         else: thiscolor = nocolor
         fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[s])
-        plot((0, 0), (0, 0), color=thiscolor, linewidth=10, linestyle=linestyles[s]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
         bottom += this
-        print labels[-s:]
-        legend(labels[s:], **legendsettings)
+        theselabels = labels[s:]
+        theselabels.reverse()
+        legend(theselabels, **legendsettings)
         show()
         pause(0.1)
     
