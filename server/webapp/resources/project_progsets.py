@@ -362,7 +362,8 @@ class CostCoverageGraph(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description="Get graph.")
+    @swagger.operation(description="Get graph.",
+                       parameters=costcov_graph_parser.swagger_parameters())
     def get(self, project_id, progset_id, program_id):
         """
         parameters:
@@ -442,7 +443,8 @@ class CostCoverageData(Resource):
 
         return result
 
-    @swagger.operation(description="Remove a data point.")
+    @swagger.operation(description="Remove a data point.",
+                       parameters=costcov_data_locator_parser.swagger_parameters())
     def delete(self, project_id, progset_id, program_id):
         """
         removes data point for the given year from program parameters.
@@ -504,7 +506,8 @@ class CostCoverageParam(Resource):
 
         return result
 
-    @swagger.operation(description="Remove cco parameter.")
+    @swagger.operation(description="Remove cco parameter.",
+                       parameters=costcov_data_locator_parser.swagger_parameters())
     def delete(self, project_id, progset_id, program_id):
         """
         removes cco parameter for the given year from program parameters.
