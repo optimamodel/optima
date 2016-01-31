@@ -46,7 +46,7 @@ if 'compare' in tests:
     t = tic()
     print('Running comparison test...')
     
-    toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta'] # Specify what plots to display here
+    toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta', 'cascade'] # Specify what plots to display here
     
     from optima import Project
     P = Project(spreadsheet='generalized.xlsx')
@@ -69,8 +69,6 @@ if 'compare' in tests:
         plotresults(Q.results[-1], toplot=toplot, figsize=(16,10), num='With cascade')
     
     done(t)
-
-
 
 
 

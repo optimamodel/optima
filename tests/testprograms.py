@@ -168,7 +168,7 @@ if 'makeprograms' in tests:
     plotoptions['xupperlim'] = 2e9
     plotoptions['perperson'] = False
 
-    if doplot: HTC.plotcoverage(t=2015,parset=P.parsets['default'],plotoptions=plotoptions)
+    if doplot: HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
 
     print('Running make programs set test...')
 
@@ -184,7 +184,9 @@ if 'makeprograms' in tests:
     R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
     
     # 3. See which programs are optimizable
-    R.optimizable()
+    R.optimizable() # True/False lists
+    R.optimizableprograms() # odict of optimizable programs
+
 
     # 4. Produce a dictionary whose keys are populations targeted by some 
     #    program, and values are the programs that target them

@@ -1,19 +1,23 @@
+import mpld3
+import json
+import uuid
+
 from flask import current_app
 
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with
+from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 from flask import helpers
 
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project, load_progset, RequestParser, report_exception
-from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist
+from server.webapp.utils import load_project, load_progset, load_program, RequestParser, report_exception
+from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
 from server.webapp.dbconn import db
 
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb
 
 
 costcov_parser = RequestParser()
@@ -21,6 +25,18 @@ costcov_parser.add_arguments({
     'year': {'required': True, 'location': 'json'},
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
+})
+
+costcov_graph_parser = RequestParser()
+costcov_graph_parser.add_arguments({
+    't': {'required': True, 'type': int, 'location': 'args'},
+    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'}
+})
+
+costcov_data_parser = RequestParser()
+costcov_data_parser.add_arguments({
+    'data': {'type': list, 'location': 'json'},
+    'params': {'type': dict, 'location': 'json'}
 })
 
 program_parser = RequestParser()
@@ -35,6 +51,16 @@ program_parser.add_arguments({
     'addData': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
 })
 
+query_program_parser = RequestParser()
+query_program_parser.add_arguments({
+    'name': {'required': True},
+    'short': {},
+    'short_name': {},
+    'category': {'required': True},
+    'active': {'type': bool, 'default': False},
+    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
+    'populations': {'type': list, 'dest': 'targetpops', 'location': 'json'},
+})
 
 progset_parser = RequestParser()
 progset_parser.add_arguments({
@@ -230,3 +256,113 @@ class ProgsetData(Resource):
             'result': 'Progset %s is updated' % progset_entry.name,
         }
         return reply
+
+
+class Programs(Resource):
+    """
+    Programs for a given progset.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Get programs for the progset with the given ID.",
+        responseClass=ProgramsDb.__name__)
+    @marshal_with(ProgramsDb.resource_fields, envelope='programs')
+    def get(self, project_id, progset_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+
+        progset_entry = load_progset(project_id, progset_id)
+        if progset_entry is None:
+            raise ProgsetDoesNotExist(id=progset_id)
+
+        reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
+        return reply
+
+    @swagger.operation(
+        description="Create a program for the progset with the given ID.",
+        parameters=program_parser.swagger_parameters())
+    @marshal_with(ProgramsDb.resource_fields)
+    def post(self, project_id, progset_id):
+        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+
+        progset_entry = load_progset(project_id, progset_id)
+        if progset_entry is None:
+            raise ProgsetDoesNotExist(id=progset_id)
+
+        args = query_program_parser.parse_args()
+        args["short"] = args["short_name"]
+        del args["short_name"]
+
+        program_entry = ProgramsDb(project_id, progset_id, **args)
+        db.session.add(program_entry)
+        db.session.flush()
+        db.session.commit()
+
+        return program_entry, 201
+
+
+class CostCoverage(Resource):
+    """
+    Costcoverage for a given Program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Get costcoverage parameters and data for the given program.")
+    def get(self, project_id, progset_id, program_id):
+
+        program_entry = load_program(project_id, progset_id, program_id)
+
+        return {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
+
+    @swagger.operation(
+        description="Replace costcoverage parameters and data for the given program.")
+    def put(self, project_id, progset_id, program_id):
+
+        program_entry = load_program(project_id, progset_id, program_id)
+
+        args = costcov_data_parser.parse_args()
+        program_entry.ccopars = args.get('params', {})
+        program_entry.costcov = program_entry.data_api_to_db(args.get('data', []))
+
+        db.session.flush()
+        db.session.commit()
+
+        return {"params": program_entry.ccopars or {},
+                "data": program_entry.data_db_to_api()}
+
+
+class CostCoverageGraph(Resource):
+    """
+    Costcoverage graph for a Program.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(description="Get graph.")
+    def get(self, project_id, progset_id, program_id):
+        """
+        parameters:
+        t = year ( should be >= startyear in data)
+        parset_id - ID of the parset (one of the project parsets - not related to program parameters)
+        """
+        args = costcov_graph_parser.parse_args()
+        print "args", args
+        parset_id = args['parset_id']
+        t = args['t']
+
+        program_entry = load_program(project_id, progset_id, program_id)
+        if program_entry is None:
+            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+        program_instance = program_entry.hydrate()
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
+        if parset_entry is None:
+            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+        parset_instance = parset_entry.hydrate()
+
+        plot = program_instance.plotcoverage(t=t, parset=parset_instance)
+
+        mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
+        return json.loads(json_string)

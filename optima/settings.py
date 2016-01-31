@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016jan29 by cliffk
+Version: 2016jan29
 """
 
 from numpy import arange, array, concatenate as cat, linspace
@@ -50,8 +50,9 @@ class Settings():
         # Combined states
         self.sus       = cat([self.uncirc, self.circ]) # All uninfected
         self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
+        self.allcare   = cat([self.care, self.usvl, self.svl,self.off]) # All people in care
         self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
-        self.alltx     = cat([self.usvl, self.svl]) # All PLHIV
+        self.alltx     = cat([self.usvl, self.svl]) # All people on treatment
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates   = len(self.allstates) # Total number of states
         

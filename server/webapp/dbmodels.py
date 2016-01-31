@@ -416,13 +416,14 @@ class ProgramsDb(db.Model):
     targetpops = db.Column(ARRAY(db.String), default=[])
     criteria = db.Column(JSON)
     costcov = db.Column(JSON)
-    blob = db.Column(db.LargeBinary)
+    ccopars = db.Column(JSON)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short='',
                  category='No category', active=False, pars=None, created=None,
-                 updated=None, id=None, targetpops=[], criteria=None, costcov=None):
+                 updated=None, id=None, targetpops=[], criteria=None, costcov=None,
+                 ccopars=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -434,6 +435,7 @@ class ProgramsDb(db.Model):
         self.targetpops = targetpops
         self.criteria = criteria
         self.costcov = costcov
+        self.ccopars = ccopars
         if created:
             self.created = created
         if updated:
@@ -474,6 +476,30 @@ class ProgramsDb(db.Model):
 
         return pars
 
+    def data_api_to_db(self, data):
+        costcov_data = []
+
+        for x in data:
+            costcov_data.append({
+                "cost": x["spending"],
+                "year": x["year"],
+                "cov": x["coverage"]
+            })
+
+        return costcov_data
+
+    def data_db_to_api(self):
+        costcov_data = []
+
+        for x in self.costcov or []:
+            costcov_data.append({
+                "spending": x["cost"],
+                "year": x["year"],
+                "coverage": x["cov"]
+            })
+
+        return costcov_data
+
     def _conv_lg_num(self, num):
         return int(float(num))
 
@@ -489,7 +515,8 @@ class ProgramsDb(db.Model):
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'coverage': [self.costcov[i]['cov'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-            } if self.costcov is not None else None
+            } if self.costcov is not None else None,
+            ccopars=self.ccopars if self.ccopars else None,
         )
         program_entry.id = self.id
         return program_entry
