@@ -202,7 +202,7 @@ if '90-90-90' in tests:
     from optima.defaults import defaultproject
     
     P = defaultproject('simple')
-    P.settings.usecascade = False
+    P.settings.usecascade = True
     P.runsim()
     
     pops = P.data['pops']['short']
@@ -229,9 +229,9 @@ if '90-90-90' in tests:
                 'startyear': 2016},
                 {'endval': .9,
                 'endyear': 2020,
-                'name': 'successprop',
+                'name': 'treatvs',
                 'for': ['tot'],
-                'startval': .85,
+                'startval': .50,
                 'startyear': 2016}]),
         ]
 
