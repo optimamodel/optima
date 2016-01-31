@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections
-import matplotlib as mpl
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show
+from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
@@ -482,7 +482,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, exclude=2, pops=None, delay=0.1, verbose=2):
+def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, verbose=2):
     '''
     A function to plot all people as a stacked plot
     
@@ -497,9 +497,6 @@ def plotpeople(project=None, people=None, exclude=2, pops=None, delay=0.1, verbo
     
     Version: 2016jan30
     '''
-    from optima import gridcolormap, odict
-    from pylab import transpose, legend, fill_between, xlim, pause, xlabel, ylabel
-    
     if pops is None: pops = Ellipsis # This is a slice
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
@@ -552,7 +549,8 @@ def plotpeople(project=None, people=None, exclude=2, pops=None, delay=0.1, verbo
         ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
         handles, legendlabels = ax.get_legend_handles_labels()
         legend(reversed(handles), reversed(legendlabels), **legendsettings)
-        show()
-        pause(delay)
+        if animate:
+            show()
+            pause(0.1)
     
     return None
