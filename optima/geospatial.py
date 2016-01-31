@@ -102,7 +102,7 @@ def geogui():
 
     def create(doadd=False):
         ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-        global portfolio, projectslistbox
+        global portfolio, projectslistbox, objectives, objectiveinputs
         projectpaths = []
         projectslist = []
         if portfolio is None: 
@@ -125,12 +125,25 @@ def geogui():
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
         portfolio.addprojects(projectslist)
+        
+        # And reset the budget
+        totalbudget = 0
+        for project in portfolio.projects.values():
+            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
+        objectiveinputs['budget'].setText(str(totalbudget))
+        
         return None
     
     def addproj():
         ''' Add a project -- same as creating a portfolio except don't overwrite '''
-        global portfolio
+        global portfolio, objectives
         create(doadd=True)
+        # And reset the budget
+        totalbudget = 0
+        for project in portfolio.projects.values():
+            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
+        objectiveinputs['budget'].setText(str(totalbudget))
+        
         return None
     
     def loadport():
@@ -148,6 +161,13 @@ def geogui():
                     projectslistbox.addItems([proj.name for proj in portfolio.projects.values()])
                     print('Portfolio file "%s" loaded' % filepath)
                 else: print('File "%s" is not an Optima portfolio file' % filepath)
+            
+        # And reset the budget
+        totalbudget = 0
+        for project in portfolio.projects.values():
+            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
+        objectiveinputs['budget'].setText(str(totalbudget))
+        
         return None
     
     
