@@ -646,7 +646,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
                 otherdeaths        = dt * currentsupp[cd4,:] * background
                 failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
-                fracalive       = 1. - (death[cd4] + background)*dt
+                fracalive          = 1. - (death[cd4] + background)*dt
                 stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * fracalive * fraccare  # People stopping ART but still in care
                 stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4] + newtreat[cd4]*treatvs[t]
