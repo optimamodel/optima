@@ -526,16 +526,17 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False):
     bottom = 0*tvec
     ax = subplot(111)
     xlim((tvec[0], tvec[-1]))
-    for s in range(nstates-1,0,-1):
-        this = pplplot[:,s]
-        if sum(this): thiscolor = colors[s]
+    for st in range(nstates-1,0,-1):
+        this = pplplot[:,st]
+        if sum(this): thiscolor = colors[st]
         else: thiscolor = nocolor
-        fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[s])
-        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+        fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
         bottom += this
-        theselabels = labels[s:]
-        theselabels.reverse()
-        legend(theselabels, **legendsettings)
+        
+        # Legend stuff
+        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+        handles, labels = ax.get_legend_handles_labels()
+        legend(reversed(handles), reversed(labels), **legendsettings)
         show()
         pause(0.1)
     
