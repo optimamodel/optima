@@ -1,13 +1,13 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf, concatenate as cat
+from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
-    This function runs the model. It's Optima, in other words.
+    Runs Optima's epidemiological model.
     
-    Version: 2016jan30
+    Version: 2016jan31
     """
     
     
