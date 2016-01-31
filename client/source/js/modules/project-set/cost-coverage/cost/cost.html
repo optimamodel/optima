@@ -75,13 +75,15 @@
                 <div class="data numeric spaced" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="removeFromCCData(data)"></i></div>
               </div>
               <div class="column bordered" ng-if="state.showAddCCData">
-                <div class="data bordered"><input ng-model="state.newCCData.year" class="txbox __inline __ls"/></div>
-                <div class="data bordered"><input ng-model="state.newCCData.spending" class="txbox __inline __ls"/></div>
-                <div class="data bordered"><input ng-model="state.newCCData.coverage" class="txbox __inline __ls"/></div>
-                <div class="data spaced" style="display: flex;justify-content: center">
-                  <i class="fa fa-check" ng-click="addToCCData(state.ccData, state.newCCData, 'newCCData')"></i>
-                  <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
-                </div>
+                <form name="ccDataForm">
+                  <div class="data bordered"><input ng-model="state.newCCData.year" class="txbox __inline __ls" type="number" ng-class="{'invalid': ccDataForm.year.$invalid}"/></div>
+                  <div class="data bordered"><input ng-model="state.newCCData.spending" class="txbox __inline __ls" type="number" min="0" ng-class="{'invalid': ccDataForm.spending.$invalid}"/></div>
+                  <div class="data bordered"><input ng-model="state.newCCData.coverage" class="txbox __inline __ls" type="number" min="0" ng-class="{'invalid': ccDataForm.coverage.$invalid}"/></div>
+                  <div class="data spaced" style="display: flex;justify-content: center">
+                    <i class="fa fa-check" ng-click="addToCCData(state.ccData, state.newCCData, 'newCCData')"></i>
+                    <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
+                  </div>
+                </form>
               </div>
               <div class="column">
                 <button type="button" class="btn __w" ng-click="state.showAddCCData = true" style="margin-left: 15px">Add year</button>
