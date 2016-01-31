@@ -75,7 +75,7 @@ class Portfolio(object):
                 self.projects[project.uid] = project        
                 printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
-    def getdefaultbudgets(self, progsetnames=None, verbose=0):
+    def getdefaultbudgets(self, progsetnames=None, verbose=2):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''
         budgets = []
         
@@ -313,7 +313,7 @@ def objectivecalc(x, BOClist, grandtotal, minbound):
         totalobj += BOClist[i].getoutcome([x[i]])[-1]     # Outcomes are currently passed to and from pchip as lists.
     return totalobj
     
-def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=5):
+def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
     
     if minbound == None: minbound = [0]*len(BOClist)

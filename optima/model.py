@@ -13,7 +13,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     if benchmark: starttime = tic()
     
-    print('WARNING, currently circumcised men do not get infected') # Temporary warning because nasty, difficult-to-fix bug discovered
+#    print('WARNING, currently circumcised men do not get infected') # Temporary warning because nasty, difficult-to-fix bug discovered
 
     ###############################################################################
     ## Setup
