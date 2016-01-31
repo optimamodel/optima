@@ -9,7 +9,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016jan27
+Version: 2016jan31
 """
 
 
@@ -119,7 +119,7 @@ if 'generateBOCs' in tests:
     from optima import saveobj
     
     F.genBOCs(progsetnames=['default','default'], parsetnames=['default','default'], maxtime=3)#,forceregen = True)#, maxtime = 20)
-    F.plotBOCs()    
+    F.plotBOCs()
     
     print('Saving projects with BOCs...')
     saveobj(filename1, P1)
