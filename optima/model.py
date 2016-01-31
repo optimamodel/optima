@@ -401,9 +401,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             pop2 = this['pop2']
             thisosteff = osteff[t]
             
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2])) 
+            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2]))
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinfvec[pop1,index] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
+                forceinfvec[pop1,index] = 1 - (1-forceinfvec[pop1,index]) * (1-thisforceinf)
             
             if not all(forceinfvec[pop1]>=0):
                 errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
@@ -471,7 +471,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * force * inhomo * people[sus,:,t] 
+        newinfections = zeros((npops, len(sus))) 
+        for index in sus:
+            newinfections[:,index] = forceinfvec[:,index] * force * inhomo * people[index,:,t] 
     
         # Initalise / reset arrays
         dU = []; dD = []
@@ -773,7 +775,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
-            change[sus,:] = dS 
+            change[sus,:] = dS.T # WARNING: could be confusing to take tranpose. Better use tranposed array the whole way through?
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
