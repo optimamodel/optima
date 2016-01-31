@@ -1,13 +1,13 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf, concatenate as cat
+from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
-    This function runs the model. It's Optima, in other words.
+    Runs Optima's epidemiological model.
     
-    Version: 2016jan30
+    Version: 2016jan31
     """
     
     
@@ -173,7 +173,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     osteff = 1 - effost
     stieff  = 1 + effsti
 
-    
     # Behavioural transitions between stages [npop,npts]
     if usecascade:
         immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
@@ -184,9 +183,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     # Force of infection metaparameter
     force = simpars['force']
     inhomopar = simpars['inhomo'] # WARNING, name is not consistent -- should be "inhomo"
-    
-    
-    
+
     # More parameters...should maybe be moved somewhere else?
     breast = simpars['breast']
     birth = simpars['birth']
