@@ -547,7 +547,6 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
         errormsg = 'Something went wrong with applying limits for parameter "%s":\ninput and output do not have the same shape:\n%s vs. %s' % (parname, shape(y), shape(newy))
         raise OptimaException(errormsg)
     
-    printv('Limits (%f, %f) applied for parameter "%s":\n%s' % (limits[0], limits[1], parname, y), 4, verbose)
     return newy
 
 

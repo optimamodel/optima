@@ -15,9 +15,11 @@ or:
 Version: 2016jan29
 """
 
-dobenchmark = False
+dobenchmark = True
 doprofile = True
-functiontoprofile = 'runsim' # If running profiling, choose which function to line profile
+
+# If running profiling, choose which function to line profile. Choices are: model, runsim, makesimpars, interp
+functiontoprofile = 'model' 
 
 
 ############################################################################################################################
@@ -64,9 +66,10 @@ if dobenchmark:
 ############################################################################################################################
 if doprofile:
     from line_profiler import LineProfiler
-    from optima import Project, model # analysis:ignore -- called by eval() function
+    from optima import Project, model, makesimpars, applylimits # analysis:ignore -- called by eval() function
     P = Project(spreadsheet='generalized.xlsx', dorun=False)
     runsim = P.runsim # analysis:ignore
+    interp = P.parsets[0].pars[0]['hivtest'].interp
     
     def profile():
         print('Profiling...')
