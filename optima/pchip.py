@@ -16,7 +16,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False, method='pchip'):
+def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]
@@ -38,8 +38,11 @@ def pchip(x, y, xnew, deriv = False, method='pchip'):
         from utils import smoothinterp
         ynew = smoothinterp(xnew, x, y)
         if deriv:
-		    ynew = diff(ynew).tolist() # Calculate derivative explicitly
-		    ynew.append(ynew[-1]) # Duplicate the last element so the right length
+              if len(xnew)==1:
+                  ynew = [0.0] # WARNING, temp
+              else:
+        		    ynew = (diff(ynew)/diff(xnew)).tolist() # Calculate derivative explicitly
+        		    ynew.append(ynew[-1]) # Duplicate the last element so the right length
     else:
         raise Exception('Interpolation method "%s" not understood' % method)
     
