@@ -130,7 +130,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
     hivtest  = simpars['hivtest']   # HIV testing (P) [npop,npts]
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
-    circum   = simpars['circum']    # Prevalence of circumcision (P)
+#    circum   = simpars['circum']    # Prevalence of circumcision (P)
     stiprev  = simpars['stiprev']   # Prevalence of STIs (P)
     prep     = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
@@ -161,14 +161,14 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     # Further potential effects on transmission
     effsti    = simpars['effsti'] * stiprev  # STI effect
-    effcirc   = simpars['effcirc'] * circum  # Circumcision effect
+    effcirc   = simpars['effcirc']           # Circumcision effect
     effprep   = simpars['effprep'] * prep    # PrEP effect
     effcondom = simpars['effcondom']         # Condom effect
     effpmtct  = simpars['effpmtct']          # PMTCT effect
     effost    = simpars['effost'] * ostprev  # OST effect
     
     # Calculations...used to be inside time loop
-    circeff = 1 - effcirc*circum
+    circeff = 1 - effcirc
     prepeff = 1 - effprep
     osteff = 1 - effost
     stieff  = 1 + effsti
@@ -368,8 +368,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ## Calculate force-of-infection (forceinf)
         ###############################################################################
         
-        # Reset force-of-infection vector for each population group
-        forceinfvec = zeros(npops) # WARNING, should be zeros((npops, len(sus)) because uncircumcised+circumcised 
+        # Reset force-of-infection vector for each population group, handling circs and uncircs separately
+        forceinfvec = zeros((npops, len(sus))) 
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for this in sexactslist:
@@ -379,10 +379,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             pop2 = this['pop2']
             thistrans = this['trans']
             
-            thisforceinf = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-            forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)  
-            
-            if not(forceinfvec[pop1]>=0):
+            if male[pop1]: # Separate FOI calcs for circs vs uncircs
+                thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+                thisforceinf_circ = 1 - mpow((1-thistrans*circeff*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+                forceinfvec[pop1,0] = 1 - (1-forceinfvec[pop1,0]) * (1-thisforceinf_uncirc)
+                forceinfvec[pop1,1] = 1 - (1-forceinfvec[pop1,1]) * (1-thisforceinf_circ)
+            else: # Only have uncircs for females
+                thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+                forceinfvec[pop1,0] = 1 - (1-forceinfvec[pop1,0]) * (1-thisforceinf)
+                
+            if not all(forceinfvec[pop1]>=0):
                 errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -396,9 +402,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             thisosteff = osteff[t]
             
             thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2])) 
-            forceinfvec[pop1] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
+            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
+                forceinfvec[pop1,index] = 1 - (1-forceinfvec[pop1]) * (1-thisforceinf)
             
-            if not(forceinfvec[pop1]>=0):
+            if not all(forceinfvec[pop1]>=0):
                 errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -464,7 +471,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = forceinfvec * force * inhomo * people[0,:,t] # Will be useful to define this way when calculating 'cost per new infection'
+        newinfections = forceinfvec * force * inhomo * people[sus,:,t] 
     
         # Initalise / reset arrays
         dU = []; dD = []
@@ -492,7 +499,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw['inci'][:,t] = (newinfections + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw['inci'][:,t] = (newinfections.sum(axis=1) + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         if propdx[t]:
@@ -522,7 +529,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             raw['diag'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
             raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
-        dU[0] = dU[0] + newinfections # Now add newly infected people
+        dU[0] = dU[0] + newinfections.sum(axis=1) # Now add newly infected people
         
 
         ############################################################################################################
@@ -766,7 +773,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
-            change[uncirc,:] = dS # WARNING, this is wrong, should be susceptibles, but not women, and dS needs to be split up -- argh!!!
+            change[sus,:] = dS 
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
