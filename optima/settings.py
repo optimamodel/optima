@@ -165,6 +165,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     # Update dt 
     dt = gettvecdt(tvec=tvec, dt=dt, justdt=True)
     
+    # Actually define the rates
     maxrate = safetymargin/dt
     maxpopsize = 1e9
     maxmeta = 1000.0

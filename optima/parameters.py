@@ -509,8 +509,6 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             try: 
                 simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
-                if key=='condreg' and simpars[key][0][0]>0.9: 
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message

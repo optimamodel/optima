@@ -5,9 +5,9 @@ from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, R
 
 def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
-    This function runs the model.
+    This function runs the model. It's Optima, in other words.
     
-    Version: 2016jan30 by cliffk
+    Version: 2016jan30
     """
     
     
