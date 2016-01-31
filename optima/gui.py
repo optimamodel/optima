@@ -482,17 +482,25 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, delay=0.1, verbose=2):
+def plotpeople(project=None, people=None, exclude=2, pops=None, delay=0.1, verbose=2):
     '''
     A function to plot all people as a stacked plot
     
-    Exclude excludes the first N health states -- useful for excluding susceptibles.
+    "Exclude" excludes the first N health states -- useful for excluding susceptibles.
+    
+    Usage example:
+        import optima as op
+        P = op.defaults.defaultproject('simple')
+        P.runsim()
+        people = P.results[-1].raw[0]['people']
+        op.gui.plotpeople(P, people)
     
     Version: 2016jan30
     '''
     from optima import gridcolormap, odict
     from pylab import transpose, legend, fill_between, xlim, pause, xlabel, ylabel
     
+    if pops is None: pops = Ellipsis # This is a slice
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
@@ -518,10 +526,10 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
     hatchstyles = hatchstyles[exclude:]
     linestyles = linestyles[exclude:]
     
-    pplplot = ppl[exclude:,:,:] # Exclude initial people
-    if sumpops: pplplot = pplplot[:,:,:].sum(axis=1) # Sum over people
-    else: print('WARNING, not implemented')
-    pplplot = transpose(pplplot) # So time is plotted on x-axis
+    ppl = people[exclude:,:,:] # Exclude initial people
+    ppl = ppl[:,pops,:] # Filter selected populations
+    ppl = ppl[:,:,:].sum(axis=1) # Sum over people
+    ppl = transpose(ppl) # So time is plotted on x-axis
     
     nstates = len(labels)
     colors = gridcolormap(nstates)
@@ -531,7 +539,7 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
     ax = subplot(111)
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,-1,-1):
-        this = pplplot[:,st]
+        this = ppl[:,st]
         if sum(this): thiscolor = colors[st]
         else: thiscolor = nocolor
         printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 2, verbose)
@@ -548,54 +556,3 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
         pause(delay)
     
     return None
-
-
-
-
-
-def plotpeople(resultslist, normalized=True):
-    ''' A clunky function to plot every health state -- not part of the main Optima code, but useful for debugging '''
-    if type(resultslist) is not list: resultslist = [resultslist]
-    ppl = resultslist[0].raw[0]['people']
-    tvec = resultslist[0].raw[0]['tvec']
-    if resultslist[0].project: settings = resultslist[0].project.settings
-    else:
-        from optima import Settings
-        settings = Settings()
-    statelabels = []
-    statelabels.append('sus1')
-    statelabels.append('sus2')
-    cd4s = ['Acu', '500', '350', '200', '50', '0']
-    types = ['ud', 'dx', 'ic', 'us', 'sv', 'lo', 'of']
-    for t in types:
-        for cd4 in cd4s:
-            statelabels.append(t+cd4)
-    nstates = len(statelabels) # 
-    if nstates != shape(ppl)[0]:
-        raise OptimaException("Number of states don't match")
-    npops = shape(ppl)[1]
-    count = 0
-    figh = figure(figsize=(24,16), facecolor='w')
-    figh.subplots_adjust(left=0.02, right=0.99, top=0.97, bottom=0.03, wspace=0.00, hspace=0.00) # Less space
-
-    mpl.rcParams.update({'font.size': 8})
-    eps = 1e-9
-    for s in range(nstates):
-        for p in range(npops):
-            normalization = eps
-            count += 1
-            h = subplot(nstates, npops, count)
-            hold(True)
-            for z in range(len(resultslist)):
-                ppl = resultslist[z].raw[0]['people']
-                if normalized:
-                    normalization = maximum(normalization, ppl[settings.allplhiv,p,:].max()*1.1)
-                else:
-                    normalization = maximum(normalization, ppl[s,p,:].max()*1.1)
-                plot(tvec, ppl[s,p,:]) # Plot values normalized across everything
-            if s!=nstates-1: h.set_xticks([])
-            h.set_yticks([])
-            h.set_ylim((0, normalization))
-            if s==0: title('Population %i' % p)
-            if p==0: ylabel('%s' % statelabels[s])
-            
