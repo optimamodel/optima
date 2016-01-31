@@ -296,7 +296,7 @@ class Project(object):
 
 
     def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True):
-        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list '''
+        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list -- WARNING, do we need this? What's it for? Why not use runmodel()? '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep

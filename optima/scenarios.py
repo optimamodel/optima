@@ -12,6 +12,7 @@ class Scen(object):
         self.t = t
         self.active = active
         self.resultsref = None
+        self.scenparset = None # Store the actual parset generated
     
     def __repr__(self):
         ''' Print out useful information when called'''
@@ -79,13 +80,15 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     # Run scenarios
     allresults = []
     for scenno, scen in enumerate(scenparsets):
+        scenparset = scenparsets[scen]
+        project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
         coverage = scenlist[scenno].coverage if isinstance(scenlist[scenno], Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
-        result = runmodel(pars=scenparsets[scen].pars[0], parset=project.parsets[scenlist[scenno].parsetname], progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=1)
+        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=1)
+        result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
-        allresults[-1].name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
     
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
@@ -129,6 +132,9 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         raise OptimaException(errormsg)
                     for pop in pops:
                         
+                        print('hiiiiiiiiiiiiiiiiiiiii')
+                        print(scenpar)
+                        
                         # Find last good value
                         last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                         last_y = thispar.interp(tvec=last_t, dt=project.settings.dt) # Find what the model would get for this value
@@ -148,6 +154,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         if scenpar['endyear']: 
                             thispar.t[pop] = append(thispar.t[pop], scenpar['endyear'])
                             thispar.y[pop] = append(thispar.y[pop], scenpar['endval'])
+                        
+                    thisparset.pars[pardictno][scenpar['name']] = thispar # WARNING, not sure if this is needed???
     
         elif isinstance(scen,Progscen):
 

@@ -458,7 +458,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=20, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -474,6 +474,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
+    elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt

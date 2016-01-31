@@ -496,7 +496,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
 
         ## Undiagnosed
         if propdx[t]:
-            print('propdx1')
             currplhiv = people[allplhiv,:,t].sum(axis=0)
             currdx = people[alldx,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
@@ -514,7 +513,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx[t]:
-                print('propdx2')
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             else:
                 newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
@@ -557,7 +555,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
             if proptx[t]:
-                print('proptx1')
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
@@ -697,11 +694,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             
             # WARNING, copied from above!!
             if proptx[t]:
-                print('proptx2')
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
-                print newtreattot
             else:
                 newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
 
