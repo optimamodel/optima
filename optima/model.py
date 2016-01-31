@@ -569,7 +569,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
-            if proptx[t]:
+            if proptx[t]: # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currcare - currtx 
@@ -670,7 +670,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 hivdeaths   = dt * people[lost[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[lost[cd4],:,t] * background
                 inflows  = progin + stopSVLlost[cd4] + stopUSlost[cd4]
-                outflows = progout + hivdeaths + otherdeaths - newlinkcarelost[cd4] # These people move back into care
+                outflows = progout + hivdeaths + otherdeaths + newlinkcarelost[cd4] # These people move back into care
                 dL.append(inflows - outflows) 
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
