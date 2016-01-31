@@ -426,8 +426,8 @@ class OptimaSpreadsheet:
             ('popsize', 'Population size'),
             ('key', 'HIV prevalence'),
             ('epi', 'Other epidemiology'),
-            ('opt', 'Optional indicators'),
             ('txrx', 'Testing & treatment'),
+            ('opt', 'Optional indicators'),
             ('casc', 'Cascade'),
             ('sex', 'Sexual behavior'),
             ('inj', 'Injecting behavior'),
@@ -548,15 +548,6 @@ class OptimaSpreadsheet:
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                 row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
-    def generate_opt(self):
-        current_row = 0
-
-        for name in ['Number of HIV tests per year', 'Number of HIV diagnoses per year', 
-        'Modeled estimate of new HIV infections per year', 'Modeled estimate of HIV prevalence', 
-        'Modeled estimate of number of PLHIV', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
-            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
-
-
     def generate_txrx(self):
         current_row = 0
         current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
@@ -566,7 +557,25 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)',           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
-        
+
+
+    def generate_opt(self):
+        current_row = 0
+
+        for name in [
+        'Number of HIV tests per year', 
+        'Number of HIV diagnoses per year', 
+        'Modeled estimate of new HIV infections per year', 
+        'Modeled estimate of HIV prevalence', 
+        'Modeled estimate of number of PLHIV', 
+        'Number of HIV-related deaths', 
+        'Number of people initiating ART each year',
+        'PLHIV aware of their status (%)', 
+        'Diagnosed PLHIV in care (%)',
+        'PLHIV in care on treatment (%)']:
+            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
+
+      
     
     def generate_casc(self):
         current_row = 0
@@ -578,7 +587,6 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Rate of ART re-initiation (%/year)',                                                current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('PLHIV aware of their status (%)',                                               current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-diagnosed people who are in care (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Proportion of people on ART with viral suppression (%)',                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             

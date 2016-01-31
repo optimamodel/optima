@@ -126,7 +126,7 @@ if 'runsim' in tests:
     
     from optima import Project
     P = Project()
-    P.loadspreadsheet('generalized.xlsx',dorun=True)
+    P.loadspreadsheet('simple.xlsx',dorun=True)
     
     done(t)
 
