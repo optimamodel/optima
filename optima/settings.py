@@ -79,7 +79,7 @@ class Settings():
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out -- see definitions in utils.py:printv()
-        self.safetymargin = 0.9 # Do not move more than this fraction of people on a single timestep
+        self.safetymargin = 0.8 # Do not move more than this fraction of people on a single timestep
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
@@ -160,7 +160,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
         if settings is not None: safetymargin = settings.safetymargin
         else: 
             printv('Note, using default safetymargin since could not find it', 4, verbose)
-            safetymargin = 0.9 # Not that important, so just set safety margin
+            safetymargin = 0.8 # Not that important, so just set safety margin
     
     # Update dt 
     dt = gettvecdt(tvec=tvec, dt=dt, justdt=True)
