@@ -75,11 +75,11 @@
                 <div class="data numeric spaced" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteDataFromList(state.ccData, data)"></i></div>
               </div>
               <div class="column bordered" ng-if="state.showAddCCData">
-                <div class="data bordered"><input ng-model="state.newCCData.year" class="txbox __inline __ls"/></div>
-                <div class="data bordered"><input ng-model="state.newCCData.spending" class="txbox __inline __ls"/></div>
-                <div class="data bordered"><input ng-model="state.newCCData.coverage" class="txbox __inline __ls"/></div>
+                <div class="data bordered"><input ng-model="state.newCCData.year" class="txbox __inline __l"/></div>
+                <div class="data bordered"><input ng-model="state.newCCData.spending" class="txbox __inline __l"/></div>
+                <div class="data bordered"><input ng-model="state.newCCData.coverage" class="txbox __inline __l"/></div>
                 <div class="data spaced" style="display: flex;justify-content: center">
-                  <i class="fa fa-check" ng-click="addDataToList(state.ccData, state.newCCData, 'newCCData')"></i>
+                  <i class="fa fa-check" ng-click="addToCCData(state.ccData, state.newCCData, 'newCCData')"></i>
                   <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
                 </div>
               </div>
@@ -108,8 +108,6 @@
     </div>
     <div class="u-center-horizontal margin-top-m">
       <button type="button" class="btn __m" style="margin-left: 15px">Update</button>
-      <button type="button" class="btn __m" style="margin-left: 15px">Save</button>
-      <button type="button" class="btn __m" style="margin-left: 15px" ng-click="reset()">Reset</button>
     </div>
   </div>
 </div>

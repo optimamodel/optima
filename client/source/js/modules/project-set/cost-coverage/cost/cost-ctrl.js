@@ -21,6 +21,20 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.state[dataKey] = {};
     };
 
+    $scope.addToCCData = function(list, data, dataKey) {
+      $scope.state.ccData.push(data);
+      $scope.state.newCCData = {};
+      $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage/data', {
+          coverage: 100,
+          spending: 100,
+          year: "2017"
+        })
+        .success(function (response) {
+          $scope.state.chartData = response;
+        });
+    };
+
     $scope.deleteDataFromList = function(list, data) {
       var index = list.indexOf(data);
       list.splice(index, 1);
@@ -35,7 +49,8 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     var fetchDefaultData = function() {
-      $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' + $scope.selectedProgram.id + '/costcoverage')
+      $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage')
         .success(function (response) {
           $scope.state.ccDataSaved = angular.copy(response.data);
           setCCData();
