@@ -8,23 +8,13 @@ define(['./../../module', 'underscore'], function (module, _) {
       newCCData: {},
       newCPData: {},
       ccData: [],
-      ccDataSaved: []
+      cpData: []
     };
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
       $scope.updateGraph();
       fetchDefaultData();
-    };
-
-    $scope.addDataToList = function(list, data, dataKey) {
-      list.push(data);
-      $scope.state[dataKey] = {};
-    };
-
-    $scope.deleteDataFromList = function(list, data) {
-      var index = list.indexOf(data);
-      list.splice(index, 1);
     };
 
     $scope.addToCCData = function(ccDataForm) {
@@ -66,6 +56,24 @@ define(['./../../module', 'underscore'], function (module, _) {
         });
     };
 
+    $scope.addToCPData = function(cpDataForm) {
+      $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
+        .success(function () {
+          $scope.state.cpData.push($scope.state.newCPData);
+          $scope.state.newCPData = {};
+        });
+    };
+
+    $scope.removeFromCPData = function(data) {
+      $http.delete('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+        $scope.selectedProgram.id + '/costcoverage/param?year=' + data.year)
+        .success(function () {
+          var index = $scope.state.cpData.indexOf(data);
+          $scope.state.cpData.splice(index, 1);
+        });
+    };
+
     $scope.updateGraph = function() {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
         $scope.selectedProgram.id + '/costcoverage/graph?t=2016&parset_id=' + $scope.vm.selectedParset.id)
@@ -78,21 +86,23 @@ define(['./../../module', 'underscore'], function (module, _) {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
         $scope.selectedProgram.id + '/costcoverage')
         .success(function (response) {
-          $scope.state.ccDataSaved = angular.copy(response.data);
-          setCCData();
+          if(response.data) {
+            $scope.state.ccData = angular.copy(response.data);
+          }
+          if(response.params && response.params.t && response.params.t.length > 0) {
+            for(var index = 0;index < response.params.t.length;index++) {
+              $scope.state.cpData.push({
+                year: response.params.t[index],
+                unitcost_lower: response.params.unitcost[index][0],
+                saturationpercent_lower: response.params.saturation[index][0],
+                unitcost_upper: response.params.unitcost[index][1],
+                saturationpercent_upper: response.params.saturation[index][1]
+              })
+            }
+          }
         });
     };
 
-    var setCCData = function() {
-      $scope.state.ccData = $scope.state.ccDataSaved;
-    };
-
-    $scope.reset = function() {
-      setCCData();
-      $scope.state.remarks = '';
-      $scope.state.maxFunc = undefined;
-      $scope.state.dispCost = undefined;
-    }
   });
 
 });
