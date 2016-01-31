@@ -63,25 +63,33 @@
           <div class="section_dashed_border no-border">
             <div class="vertical_list">
               <div class="column bordered">
-                <div class="data bordered">Year</div>
-                <div class="data bordered">Spending</div>
-                <div class="data bordered">Coverage</div>
-                <div class="data spaced">Delete</div>
+                <div class="data data_nomargin bordered">Year</div>
+                <div class="data data_nomargin bordered">Spending</div>
+                <div class="data data_nomargin bordered">Coverage</div>
+                <div class="data data_nomargin spaced">Delete</div>
               </div>
               <div class="column bordered" ng-repeat="data in state.ccData">
-                <div class="data numeric bordered">{{data.year}}</div>
-                <div class="data numeric bordered">{{data.spending}}</div>
-                <div class="data numeric bordered">{{data.coverage}}</div>
-                <div class="data numeric spaced" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="removeFromCCData(data)"></i></div>
+                <div class="data data_nomargin numeric bordered">{{data.year}}</div>
+                <div class="data data_nomargin numeric bordered">{{data.spending}}</div>
+                <div class="data data_nomargin numeric bordered">{{data.coverage}}</div>
+                <div class="data data_nomargin numeric spaced" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="removeFromCCData(data)"></i></div>
               </div>
               <div class="column bordered" ng-if="state.showAddCCData">
-                <div class="data bordered"><input ng-model="state.newCCData.year" class="txbox __inline __ls"/></div>
-                <div class="data bordered"><input ng-model="state.newCCData.spending" class="txbox __inline __ls"/></div>
-                <div class="data bordered"><input ng-model="state.newCCData.coverage" class="txbox __inline __ls"/></div>
-                <div class="data spaced" style="display: flex;justify-content: center">
-                  <i class="fa fa-check" ng-click="addToCCData(state.ccData, state.newCCData, 'newCCData')"></i>
-                  <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
-                </div>
+                <form name="ccDataForm">
+                  <div class="data data_nomargin bordered">
+                    <input ng-model="state.newCCData.year" class="txbox __inline __ls" type="number" name="year" ng-class="{'invalid': ccDataForm.year.$invalid}"/>
+                  </div>
+                  <div class="data data_nomargin bordered">
+                    <input ng-model="state.newCCData.spending" class="txbox __inline __ls" type="number" min="0" name="spending" ng-class="{'invalid': ccDataForm.spending.$invalid}"/>
+                  </div>
+                  <div class="data data_nomargin bordered">
+                    <input ng-model="state.newCCData.coverage" class="txbox __inline __ls" type="number" min="0" name="coverage" ng-class="{'invalid': ccDataForm.coverage.$invalid}"/>
+                  </div>
+                  <div class="data data_nomargin spaced" style="display: flex;justify-content: center">
+                    <i class="fa fa-check" ng-click="addToCCData(ccDataForm)"></i>
+                    <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
+                  </div>
+                </form>
               </div>
               <div class="column">
                 <button type="button" class="btn __w" ng-click="state.showAddCCData = true" style="margin-left: 15px">Add year</button>
