@@ -170,7 +170,7 @@ if 'manualfit' in tests and doplot:
     print('Running manual calibration test...')
     try: assert type(P)==Project # Maybe it exists already?
     except: P = optima.defaults.defaultproject() # Or maybe create?
-    P.manualfit(orig=-1, name='manual') # Demonstrating that you can retrieve things by index as well
+    P.manualfit(orig=-1, name='manual', verbose=4) # Demonstrating that you can retrieve things by index as well
     
     done(t)
 

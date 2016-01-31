@@ -152,7 +152,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
         if settings is not None: verbose = settings.verobse
         else: verbose=2
     
-    printv('Setting maximum limits', 4, verbose)
+    printv('Converting to numerical limits...', 4, verbose)
     if dt is None: 
         if settings is not None: dt = settings.dt
         else: raise OptimaException('convertlimits() must be given either a timestep or a settings object')

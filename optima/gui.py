@@ -279,6 +279,10 @@ def browser(results, toplot=None, doplot=True):
 
 
 
+
+
+
+
 def manualfit(project=None, name='default', ind=0, verbose=2):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
@@ -432,17 +436,24 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     rowheight = 25
     colwidth = 500
     ncols = 3
+    nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
     buttonheight = panelheight-rowheight*1.5
     buttonoffset = panelwidth/ncols
-    boxoffset = 300+leftmargin
+    boxoffset = 330+leftmargin
     
     panel = QtGui.QWidget() # Create panel widget
     panel.setGeometry(100, 100, panelwidth, panelheight)
+    spottaken = [] # Store list of existing entries, to avoid duplicates
     for i in range(nfull):
-        row = (i % floor((nfull+1)/ncols))+1
-        col = floor(ncols*i/nfull)
+        row = (i % nrows) + 1
+        col = floor(i/float(nrows))
+        spot = (row,col)
+        if spot in spottaken: 
+            errormsg = 'Cannot add a button to %s since there already is one!' % str(spot)
+            raise OptimaException(errormsg)
+        else: spottaken.append(spot)
         
         texts.append(QtGui.QLabel(parent=panel))
         texts[-1].setText(fulllabellist[i])
@@ -450,6 +461,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
         
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
+        printv('Setting up GUI checkboxes: %s' % [i, fulllabellist[i], boxoffset+colwidth*col, rowheight*row], 4, verbose)
         boxes[-1].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         boxes[-1].returnPressed.connect(manualupdate)
     

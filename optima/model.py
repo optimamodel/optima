@@ -10,7 +10,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     Version: 2016jan30 by cliffk
     """
     
-    printv('Running model...', 1, verbose, newline=False)
+    
     if benchmark: starttime = tic()
     
     print('WARNING, currently circumcised men do not get infected') # Temporary warning because nasty, difficult-to-fix bug discovered
@@ -41,6 +41,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     usecascade = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
     if verbose is None: verbose = settings.verbose # Verbosity of output
+    
+    # Would be at the top of the script, but need to figure out verbose first
+    printv('Running model...', 1, verbose, newline=False)
     
     # Initialize arrays
     raw               = odict()    # Sim output structure

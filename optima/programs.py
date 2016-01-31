@@ -447,7 +447,7 @@ class Programset(object):
                 # Validate outcome
                 thisoutcome = outcomes[outcome][p] # Shorten
                 lower = float(pars[outcome].limits[0]) # Lower limit, cast to float just to be sure (is probably int)
-                upper = settings.convertlimits(pars[outcome].limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
+                upper = settings.convertlimits(pars[outcome].limits[1], settings=settings) # Upper limit -- have to convert from string to float based on settings for this project
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
                     errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
                     if die:

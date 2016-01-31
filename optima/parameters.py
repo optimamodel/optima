@@ -274,7 +274,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
     
     # Interpolate over population acts data for each year
-    tmppar = data2timepar(name='tmp', short=which+act, data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
+    tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
     tmpsim = tmppar.interp(tvec=ctrlpts)
     if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
     npts = len(ctrlpts)
@@ -506,7 +506,10 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+            try: 
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+                if key=='condreg' and simpars[key][0][0]>0.9: 
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -526,7 +529,6 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     
     Version: 2016jan30
     '''
-    verbose=3
     
     # If parameter object is supplied, use it directly
     parname = ''
@@ -535,7 +537,8 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
         parname = par.name
         
     # If no limits supplied, don't do anything
-    if limits is None: 
+    if limits is None:
+        printv('No limits supplied for parameter "%s"' % parname, 4, verbose)
         return y
     
     if dt is None:
@@ -549,22 +552,21 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     if isinstance(y, (int, float)):
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
-        return newy
     elif shape(y):
         newy = array(y) # Make sure it's an array and not a list
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
-        if warn and (sum(newy<limits[0]) or sum(newy<limits[0])):
-            printv('Note, parameter "%s" value reset from:\n%f\nto:\n%f' % (parname, y, newy), 3, verbose)
+        if warn and any(newy!=array(y)):
+            printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:
         if warn: raise OptimaException('Data type "%s" not understood for applying limits for parameter "%s"' % (type(y), parname))
-        else: newy = y
+        else: newy = array(y)
     
     if shape(newy)!=shape(y):
         errormsg = 'Something went wrong with applying limits for parameter "%s":\ninput and output do not have the same shape:\n%s vs. %s' % (parname, shape(y), shape(newy))
         raise OptimaException(errormsg)
     
-    printv('Limits (%f, %f) applied for parameter "%s", all passed:\n%s' % (limits[0], limits[1], parname, newy), 4, verbose)
+    printv('Limits (%f, %f) applied for parameter "%s":\n%s' % (limits[0], limits[1], parname, y), 4, verbose)
     return newy
 
 
