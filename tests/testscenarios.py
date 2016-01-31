@@ -198,7 +198,7 @@ if '90-90-90' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, defaults
+    from optima import Parscen, defaults, pygui, plotpeople
     
     P = defaults.defaultproject('simple')
     P.settings.usecascade = True
@@ -256,9 +256,10 @@ if '90-90-90' in tests:
     P.runscenarios() 
      
     if doplot:
-        from optima import pygui
-        pygui(P.results[-1], toplot='default')
-    
+        ppl = P.results[-1].raw['90-90-90'][0]['people']
+        plotpeople(P, ppl)
+        pygui(P.results[-1], toplot='cascade')
+
     done(t)
 
 
