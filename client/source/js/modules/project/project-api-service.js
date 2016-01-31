@@ -67,6 +67,9 @@ define(['./module'], function (module) {
         getSpreadsheetUrl: function(id) {
           return '/api/project/' + id + '/spreadsheet';
         },
+        getEconomicsUrl: function(id) {
+          return '/api/project/' + id + '/economics';
+        },
         getDataUploadUrl: function(id) {
           return '/api/project/' + id + '/data';
         }

@@ -466,7 +466,7 @@ class ProjectSpreadsheet(Resource):
         # update existing
         if projdata is not None:
             projdata.meta = filedata
-            projdata.upload_time = data_upload_time
+            projdata.updated = data_upload_time
         else:
             # create new project data
             projdata = ProjectDataDb(
@@ -533,6 +533,85 @@ class ProjectEcon(Resource):
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             # deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename, as_attachment=True)
+
+    @swagger.operation(
+        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        summary='Upload the project economics data spreadsheet',
+        parameters=file_upload_form_parser.swagger_parameters()
+    )
+    @report_exception
+    @marshal_with(file_resource)
+    def post(self, project_id):
+
+        # TODO replace this with app.config
+        DATADIR = current_app.config['UPLOAD_FOLDER']
+        CALIBRATION_TYPE = 'calibration'
+
+        current_app.logger.debug(
+            "POST /api/project/%s/economics" % project_id)
+
+        project_entry = load_project(project_id, raise_exception=True)
+
+        project_name = project_entry.name
+        user_id = current_user.id
+
+        args = file_upload_form_parser.parse_args()
+        uploaded_file = args['file']
+
+        # getting current user path
+        loaddir = upload_dir_user(DATADIR)
+        if not loaddir:
+            loaddir = DATADIR
+
+        source_filename = uploaded_file.source_filename
+
+        filename = secure_filename(project_name + '_economics.xlsx')
+        server_filename = os.path.join(loaddir, filename)
+        uploaded_file.save(server_filename)
+
+        # See if there is matching project
+        current_app.logger.debug("project for user %s name %s: %s" % (
+            current_user.id, project_name, project_entry))
+        from optima.utils import saves  # , loads
+        # from optima.parameters import Parameterset
+        project_instance = project_entry.hydrate()
+        project_instance.loadeconomics(server_filename)
+        project_instance.modified = datetime.now(dateutil.tz.tzutc())
+        current_app.logger.info(
+            "after economics uploading: %s" % project_instance)
+
+        #   now, update relevant project_entry fields
+        # this adds to db.session all dependent entries
+        project_entry.restore(project_instance)
+        db.session.add(project_entry)
+
+        # save data upload timestamp
+        data_upload_time = datetime.now(dateutil.tz.tzutc())
+        # get file data
+        filedata = open(server_filename, 'rb').read()
+        # See if there is matching project econ data
+        projecon = ProjectEconDb.query.get(project_entry.id)
+
+        # update existing
+        if projecon is not None:
+            projecon.meta = filedata
+            projecon.updated = data_upload_time
+        else:
+            # create new project data
+            projecon = ProjectEconDb(
+                project_id=project_entry.id,
+                meta=filedata,
+                updated=data_upload_time)
+
+        # Save to db
+        db.session.add(projecon)
+        db.session.commit()
+
+        reply = {
+            'file': source_filename,
+            'result': 'Project %s is updated with economics data' % project_name
+        }
+        return reply
 
 
 class ProjectData(Resource):
