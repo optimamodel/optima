@@ -482,7 +482,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, delay=0.1):
+def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, delay=0.1, verbose=2):
     '''
     A function to plot all people as a stacked plot
     
@@ -498,13 +498,13 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
     labels = project.settings.statelabels
     
     plotstyles = odict([
-    ('uncirc', ('/','|')), 
-    ('circ',   ('\\','|')), 
-    ('undx',   ('|','|')), 
-    ('dx',     ('O','o')), 
-    ('care',   ('*','*')), 
-    ('usvl',   ('/','|')), 
-    ('svl',    ('\\','|')), 
+    ('uncirc', ('|','|')), 
+    ('circ',   ('+','|')), 
+    ('undx',   ('*','*')), 
+    ('dx',     ('+','|')), 
+    ('care',   ('O','o')), 
+    ('usvl',   ('-','|')), 
+    ('svl',    ('|','|')), 
     ('lost',   ('O','o')), 
     ('off',    ('*','*'))])
     
@@ -515,7 +515,9 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
         linestyles.extend([plotstyles[key][1]  for lab in labels if lab.startswith(key)])
     
     labels = labels[exclude:]
-    hatchstyles[exclude:]
+    hatchstyles = hatchstyles[exclude:]
+    linestyles = linestyles[exclude:]
+    
     pplplot = ppl[exclude:,:,:] # Exclude initial people
     if sumpops: pplplot = pplplot[:,:,:].sum(axis=1) # Sum over people
     else: print('WARNING, not implemented')
@@ -528,10 +530,11 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
     figure(facecolor=(1,1,1))
     ax = subplot(111)
     xlim((tvec[0], tvec[-1]))
-    for st in range(nstates-1,0,-1):
+    for st in range(nstates-1,-1,-1):
         this = pplplot[:,st]
         if sum(this): thiscolor = colors[st]
         else: thiscolor = nocolor
+        printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 2, verbose)
         fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
         bottom += this
         
