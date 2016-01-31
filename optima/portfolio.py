@@ -260,7 +260,7 @@ class Portfolio(object):
 
             BOClist.append(p.getBOC(objectives))
             
-        return minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets)
+        return minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, maxtime=maxtime)
         
         
     def fullGA(self, objectives=None, budgetratio=None, maxtime=None, verbose=2):
@@ -373,7 +373,7 @@ class GAOptim(object):
         output += '\n'
         output += '    Optima version: %0.1f\n' % self.version
         output += '      Date created: %s\n'    % getdate(self.created)
-        if self.modified: output += '     Date modified: %s\n'    % getdate(self.modified)
+        output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '        Git branch: %s\n'    % self.gitbranch
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
