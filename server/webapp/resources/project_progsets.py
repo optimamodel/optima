@@ -31,7 +31,7 @@ costcov_parser.add_arguments({
 
 costcov_graph_parser = RequestParser()
 costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': int, 'location': 'args'},
+    't': {'required': True, 'type': str, 'location': 'args'},
     'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
     'caption': {'type': str, 'location': 'args'},
     'xupperlim': {'type': long, 'location': 'args'},
@@ -370,13 +370,19 @@ class CostCoverageGraph(Resource):
     def get(self, project_id, progset_id, program_id):
         """
         parameters:
-        t = year ( should be >= startyear in data)
+        t = year, or comma-separated list of years (should be >= startyear in data)
         parset_id - ID of the parset (one of the project parsets - not related to program parameters)
         """
         args = costcov_graph_parser.parse_args()
-        print "args", args
         parset_id = args['parset_id']
-        t = args['t']
+
+        try:
+            t = [int(args['t'])]
+        except ValueError:
+            try:
+                t = [int(x) for x in args['t'].split(',')]
+            except ValueError:
+                raise ValueError("t must be a year or a comma-separated list of years.")
 
         plotoptions = {}
         for x in ['caption', 'xupperlim', 'perperson']:
