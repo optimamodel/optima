@@ -77,7 +77,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     # Calculate other things outside the loop
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = simpars['effdx'] * cd4trans # Include diagnosis efficacy
+    dxfactor = (1-simpars['effdx']) # Include diagnosis efficacy
     if usecascade:
         efftxunsupp = simpars['efftxunsupp'] * dxfactor # (~30%) reduction in transmission probability for usVL
         efftxsupp  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL
@@ -98,7 +98,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         svl   = settings.svl   # On treatment - Suppressed Viral Load
         lost  = settings.lost  # Not on ART (anymore) and lost to follow-up
         off   = settings.off   # off ART but still in care
-        alltx = settings.alltx # All on treatment
+#        alltx = settings.alltx # All on treatment -- WARNING, not used?
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
     if len(sus)!=2:
@@ -332,17 +332,17 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 1, verbose)
             effundx = sum(cd4trans * people[undx,pop,t]); # Effective number of infecious undiagnosed people
-            effdx   = sum(dxfactor * people[dx,pop,t]) # ...and diagnosed/failed
+            effdx   = sum(dxfactor * cd4trans * people[dx,pop,t]) # ...and diagnosed/failed -- WARNING, reinstating cd4trans because array multiplication gets ugly...but this should be fixed
             if usecascade:
-                effcare = sum(dxfactor * people[care,pop,t]) # the diagnosis efficacy also applies to those in care??
-                efftxus = sum(efftxunsupp * people[usvl,pop,t]) # ...and treated
-                efftxs  = sum(efftxsupp  * people[svl,pop,t]) # ...and suppressed viral load
-                efflost = sum(dxfactor * people[lost,pop,t]) # the diagnosis efficacy also applies to those lost to follow-up??
-                effoff  = sum(dxfactor * people[off,pop,t])  # the diagnosis efficacy also applies to those off-ART but in care??
+                effcare = sum(dxfactor * cd4trans * people[care,pop,t]) # the diagnosis efficacy also applies to those in care??
+                efftxus = sum(dxfactor * cd4trans * efftxunsupp * people[usvl,pop,t]) # ...and treated
+                efftxs  = sum(dxfactor * cd4trans * efftxsupp  * people[svl,pop,t]) # ...and suppressed viral load
+                efflost = sum(dxfactor * cd4trans * people[lost,pop,t]) # the diagnosis efficacy also applies to those lost to follow-up??
+                effoff  = sum(dxfactor * cd4trans * people[off,pop,t])  # the diagnosis efficacy also applies to those off-ART but in care??
                 # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
                 effhivprev[pop] = (effundx+effdx+effcare+efftxus+efftxs+efflost+effoff) / allpeople[pop,t]
             else:
-                efftx   = sum(txfactor[t] * people[tx,pop,t]) # ...and treated
+                efftx   = sum(dxfactor * cd4trans * txfactor[t] * people[tx,pop,t]) # ...and treated
                 effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t] # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
 
             if not(effhivprev[pop]>=0): 
@@ -500,9 +500,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         if propdx[t]:
             print('propdx1')
             currplhiv = people[allplhiv,:,t].sum(axis=0)
-            currdx = people[dx,:,t].sum(axis=0)
+            currdx = people[alldx,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
-            fractiontodx = maximum(0, propdx[t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
+            fractiontodx = maximum(0, (propdx[t]*currplhiv[:] - currdx[:])/(currundx[:] + eps)) # Don't allow to go negative -- note, this equation is right, I just checked it!
 
         for cd4 in range(ncd4):
             if cd4>0: 
