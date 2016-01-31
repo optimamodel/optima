@@ -563,7 +563,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
             
-            if propcare[t]: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            from numpy import mean, array
+            if propcare[t]: print(mean(fractiontocare), array(newlinkcare).sum())
 
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
