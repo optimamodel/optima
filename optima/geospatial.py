@@ -22,6 +22,9 @@ def geogui():
     portfolio = None
     objectives = defaultobjectives()
     
+    ## Global options
+    budgetfactor = 1e6 # Conversion between screen and internal
+    
     ## Set parameters
     wid = 1200.0
     hei = 600.0
@@ -55,6 +58,16 @@ def geogui():
             except: print('Could not load file "%s"' % filepath)
             if type(project)==Project: return project
             else: print('File "%s" is not an Optima project file' % filepath)
+        return None
+    
+    
+    def resetbudget():
+        ''' Replace current displayed budget with default from portfolio '''
+        global portfolio, objectiveinputs
+        totalbudget = 0
+        for project in portfolio.projects.values():
+            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
+        objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
         return None
         
         
@@ -125,26 +138,17 @@ def geogui():
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
         projectslistbox.addItems(projectpaths)
         portfolio.addprojects(projectslist)
-        
-        # And reset the budget
-        totalbudget = 0
-        for project in portfolio.projects.values():
-            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
-        objectiveinputs['budget'].setText(str(totalbudget))
-        
+        resetbudget() # And reset the budget
         return None
+    
     
     def addproj():
         ''' Add a project -- same as creating a portfolio except don't overwrite '''
         global portfolio, objectives
         create(doadd=True)
-        # And reset the budget
-        totalbudget = 0
-        for project in portfolio.projects.values():
-            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
-        objectiveinputs['budget'].setText(str(totalbudget))
-        
+        resetbudget() # And reset the budget
         return None
+    
     
     def loadport():
         ''' Load an existing portfolio '''
@@ -161,13 +165,7 @@ def geogui():
                     projectslistbox.addItems([proj.name for proj in portfolio.projects.values()])
                     print('Portfolio file "%s" loaded' % filepath)
                 else: print('File "%s" is not an Optima portfolio file' % filepath)
-            
-        # And reset the budget
-        totalbudget = 0
-        for project in portfolio.projects.values():
-            totalbudget += sum(project.progsets[0].getdefaultbudget().values())
-        objectiveinputs['budget'].setText(str(totalbudget))
-        
+        resetbudget() # And reset the budget
         return None
     
     
@@ -176,6 +174,7 @@ def geogui():
         global portfolio, objectives, objectiveinputs
         for key in objectiveinputs.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
+        objectives['budget'] *= budgetfactor # Convert back to internal representation
         portfolio.genBOCs(objectives, maxtime=5) # WARNING temp time
         portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets(), maxtime=5)
         return None
@@ -299,7 +298,7 @@ def geogui():
     objectivetext = odict()
     objectivetext['start']       = 'Start year:'
     objectivetext['end']         = 'End year:'
-    objectivetext['budget']      = 'Total budget:'
+    objectivetext['budget']      = 'Total budget ($m):'
     objectivetext['deathweight'] = 'Deaths weight:'
     objectivetext['inciweight']  = 'Infections weight:'
     
