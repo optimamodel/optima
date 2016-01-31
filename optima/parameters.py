@@ -11,6 +11,7 @@ from optima import OptimaException, odict, printv, sanitize, uuid, today, getdat
 from optima import getresults, convertlimits, gettvecdt # Heftier functions
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
+defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 
 #############################################################################################################################
@@ -458,7 +459,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=20, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -478,6 +479,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
+    if smoothness is None: smoothness = int(defaultsmoothness/dt)
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -591,7 +593,7 @@ class Timepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
     
     
-    def interp(self, tvec=None, dt=None, smoothness=20):
+    def interp(self, tvec=None, dt=None, smoothness=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -599,6 +601,7 @@ class Timepar(Par):
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
         
         # Set things up and do the interpolation
         keys = self.y.keys()
