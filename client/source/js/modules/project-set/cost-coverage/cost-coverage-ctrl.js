@@ -52,6 +52,9 @@ define(['./../module', 'underscore'], function (module, _) {
         vm.programs = _.filter(vm.selectedProgramSet.programs, function(program) {
           return program.parameters && program.parameters.length > 0;
         });
+        vm.programs = _.sortBy(vm.programs, function(program){
+          return program.name;
+        });
       }
     };
 
