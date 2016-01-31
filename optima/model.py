@@ -91,14 +91,15 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     undx     = settings.undx     # Undiagnosed
     dx       = settings.dx       # Diagnosed
     alldx    = settings.alldx    # All diagnosed
-    alltx = settings.alltx # All on treatment
+    alltx    = settings.alltx    # All on treatment
     allplhiv = settings.allplhiv # All PLHIV
     if usecascade:
-        care  = settings.care  # in care
-        usvl  = settings.usvl  # On treatment - Unsuppressed Viral Load
-        svl   = settings.svl   # On treatment - Suppressed Viral Load
-        lost  = settings.lost  # Not on ART (anymore) and lost to follow-up
-        off   = settings.off   # off ART but still in care
+        care    = settings.care    # in care
+        usvl    = settings.usvl    # On treatment - Unsuppressed Viral Load
+        svl     = settings.svl     # On treatment - Suppressed Viral Load
+        lost    = settings.lost    # Not on ART (anymore) and lost to follow-up
+        off     = settings.off     # off ART but still in care
+        allcare = settings.allcare # All people in care
         
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
@@ -108,6 +109,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     # Proportion aware and treated (for 90/90/90)
     propdx = simpars['propdx']
+    if usecascade: propcare = simpars['propcare']
     proptx = simpars['proptx']
 
     # Population sizes
@@ -532,6 +534,13 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
 
             ## Diagnosed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
+            
+            if propcare[t]: # WARNING, this logic of code appears in 5 places, should do it just once!!!
+                currdx     = people[alldx,:,t].sum(axis=0)
+                currcare   = people[allcare,:,t].sum(axis=0)
+                curruncare = currdx[:] - currcare[:]
+                fractiontodx = maximum(0, (propdx[t]*currdx[:] - currcare[:])/(curruncare[:] + eps)) # Don't allow to go negative -- note, this equation is right, I just checked it!
+            
             for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
@@ -555,9 +564,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
             if proptx[t]:
-                currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+                currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
-                newtreattot =  proptx[t] * currdx - currtx 
+                newtreattot =  proptx[t] * currcare - currtx 
             else:
                 newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
                 
