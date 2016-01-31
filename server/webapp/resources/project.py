@@ -36,6 +36,7 @@ class ProjectBase(Resource):
         projects = self.get_query().all()
         for p in projects:
             p.has_data_now = p.has_data()
+            p.has_econ_now = p.has_econ()
         return projects
 
 
@@ -226,6 +227,7 @@ class Project(Resource):
                 str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
         project_entry.has_data_now = project_entry.has_data()
+        project_entry.has_econ_now = project_entry.has_econ()
         # no other way to make it work for methods and not attributes?
         return project_entry
 
