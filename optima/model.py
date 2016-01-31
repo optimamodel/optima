@@ -701,12 +701,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
+                print newtreattot
             else:
                 newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
 
 
             ## Diagnosed
-            newtreattot = numtx[t] - people[tx,:,t].sum() # Calculate difference between current people on treatment and people needed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
             for cd4 in range(ncd4):
                 if cd4>0: 
