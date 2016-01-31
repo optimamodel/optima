@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016jan29
+Version: 2016jan30
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
@@ -50,9 +50,9 @@ class Settings():
         # Combined states
         self.sus       = cat([self.uncirc, self.circ]) # All uninfected
         self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
-        self.allcare   = cat([self.care, self.usvl, self.svl,self.off]) # All people in care
+        self.allcare   = cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
+        self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
         self.allplhiv  = cat([self.undx, self.alldx]) # All PLHIV
-        self.alltx     = cat([self.usvl, self.svl]) # All people on treatment
         self.allstates = cat([self.sus, self.allplhiv]) # All states
         self.nstates   = len(self.allstates) # Total number of states
         
@@ -79,7 +79,7 @@ class Settings():
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out -- see definitions in utils.py:printv()
-        self.safetymargin = 0.8 # Do not move more than this fraction of people on a single timestep
+        self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
