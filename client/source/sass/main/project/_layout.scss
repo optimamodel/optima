@@ -99,6 +99,10 @@
     }
   }
 
+  .data_nomargin {
+    margin-right: 0;
+  }
+
   .column {
     display: flex;
     flex-direction: column;
