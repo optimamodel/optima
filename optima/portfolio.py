@@ -425,7 +425,7 @@ class GAOptim(object):
             if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
                 printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
                 pno=0
-            elif isinstance(progsetnames[pno],int) and len(p.progsets)-1<=progsetnames[pno]:
+            elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
                 printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
                 pno=0
             else: 
@@ -436,7 +436,7 @@ class GAOptim(object):
             if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
                 printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
                 pno=0
-            elif isinstance(parsetnames[pno],int) and len(p.parsets)-1<=parsetnames[pno]:
+            elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
                 printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
                 pno=0
             else: 

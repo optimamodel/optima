@@ -39,6 +39,7 @@ def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
         ynew = smoothinterp(xnew, x, y)
         if deriv:
               if len(xnew)==1:
+                  print('WARNING, length 1 smooth interpolation derivative not implemented')
                   ynew = [0.0] # WARNING, temp
               else:
         		    ynew = (diff(ynew)/diff(xnew)).tolist() # Calculate derivative explicitly
