@@ -32,7 +32,10 @@ costcov_parser.add_arguments({
 costcov_graph_parser = RequestParser()
 costcov_graph_parser.add_arguments({
     't': {'required': True, 'type': int, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'}
+    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
+    'caption': {'type': str, 'location': 'args'},
+    'xupperlim': {'type': long, 'location': 'args'},
+    'perperson': {'type': bool, 'location': 'args'},
 })
 
 costcov_data_parser = RequestParser()
@@ -375,6 +378,11 @@ class CostCoverageGraph(Resource):
         parset_id = args['parset_id']
         t = args['t']
 
+        plotoptions = {}
+        for x in ['caption', 'xupperlim', 'perperson']:
+            if args.get(x):
+                plotoptions[x] = args[x]
+
         program_entry = load_program(project_id, progset_id, program_id)
         if program_entry is None:
             raise ProgramDoesNotExist(id=program_id, project_id=project_id)
@@ -384,7 +392,8 @@ class CostCoverageGraph(Resource):
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
         parset_instance = parset_entry.hydrate()
 
-        plot = program_instance.plotcoverage(t=t, parset=parset_instance)
+        plot = program_instance.plotcoverage(t=t, parset=parset_instance,
+                                             plotoptions=plotoptions)
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
