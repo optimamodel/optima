@@ -69,6 +69,7 @@ class Portfolio(object):
 
     def addprojects(self, projects, verbose=2):
         ''' Store a project within portfolio '''
+        printv('Adding project to portfolio...', 2, verbose)
         if type(projects)==Project: projects = [projects]
         if type(projects)==list:
             for project in projects: 
@@ -78,6 +79,7 @@ class Portfolio(object):
     def getdefaultbudgets(self, progsetnames=None, verbose=2):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''
         budgets = []
+        printv('Getting budgets...', 2, verbose)
         
         # Validate inputs
         if progsetnames==None:
@@ -119,7 +121,8 @@ class Portfolio(object):
         
     def genBOCs(self, objectives=None, progsetnames=None, parsetnames=None, maxtime=None, forceregen=False, verbose=2):
         ''' Loop through stored projects and construct budget-outcome curves '''
-
+        printv('Generating BOCs...', 1, verbose)
+        
         # Validate inputs
         if objectives == None: 
             printv('WARNING, you have called genBOCs on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
@@ -178,6 +181,8 @@ class Portfolio(object):
                 
     def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, verbose=2):
         ''' Loop through stored projects and plot budget-outcome curves '''
+        printv('Plotting BOCs...', 2, verbose)
+        
         if initbudgets == None: initbudgets = [None]*len(self.projects)
         if optbudgets == None: optbudgets = [None]*len(self.projects)
         if objectives == None: 
@@ -198,6 +203,7 @@ class Portfolio(object):
             
     def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
+        printv('Calculating minimum BOC outcomes...', 2, verbose)
 
         # Check inputs
         if objectives == None: 
@@ -265,6 +271,7 @@ class Portfolio(object):
         
     def fullGA(self, objectives=None, budgetratio=None, maxtime=None, verbose=2):
         ''' Complete geospatial analysis process applied to portfolio for a set of objectives '''
+        printv('Performing full geospatial analysis', 1, verbose)
 
 		# Check inputs
         if objectives == None: 
@@ -281,7 +288,7 @@ class Portfolio(object):
         optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
         self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
-        gaoptim.complete(self.projects,initbudgets,optbudgets)
+        gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
         gaoptim.printresults()
         
         
@@ -315,6 +322,7 @@ def objectivecalc(x, BOClist, grandtotal, minbound):
     
 def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
+    printv('Calculating minimum outcomes', 2, verbose)
     
     if minbound == None: minbound = [0]*len(BOClist)
     if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
@@ -446,8 +454,9 @@ class GAOptim(object):
             self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
 
 
-    def printresults(self):
+    def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
+        printv('Printing results...', 2, verbose)
         
         sumbudgetsinit = 0
         sumbudgetsimp = 0
