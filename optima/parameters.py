@@ -518,7 +518,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
 
 
 
-def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
+def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     ''' 
     A function to intelligently apply limits (supplied as [low, high] list or tuple) to an output.
     
@@ -526,6 +526,14 @@ def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
     
     Version: 2016jan30
     '''
+    verbose=3
+    
+    # If parameter object is supplied, use it directly
+    parname = ''
+    if par is not None:
+        if limits is None: limits = par.limits
+        parname = par.name
+        
     # If no limits supplied, don't do anything
     if limits is None: 
         return y
@@ -540,21 +548,23 @@ def applylimits(y, limits=None, dt=None, warn=True, verbose=2):
     # Apply limits, preserving original class
     if isinstance(y, (int, float)):
         newy = median([limits[0], y, limits[1]])
-        if warn and newy!=y: printv('Warning, parameter value reset from %f to %f' % (y, newy), 4, verbose)
+        if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
         return newy
     elif shape(y):
         newy = array(y) # Make sure it's an array and not a list
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
         if warn and (sum(newy<limits[0]) or sum(newy<limits[0])):
-            printv('Warning, parameter value reset from:\n%f\nto:\n%f' % (y, newy), 4, verbose)
+            printv('Note, parameter "%s" value reset from:\n%f\nto:\n%f' % (parname, y, newy), 3, verbose)
     else:
-        if warn: raise OptimaException('Data type not understood for applying limits: "%s"' % type(y))
-        else: return y
+        if warn: raise OptimaException('Data type "%s" not understood for applying limits for parameter "%s"' % (type(y), parname))
+        else: newy = y
     
     if shape(newy)!=shape(y):
-        errormsg = 'Something went wrong with applying limits:\ninput and output do not have the same shape:\n%s vs. %s' % (shape(y), shape(newy))
+        errormsg = 'Something went wrong with applying limits for parameter "%s":\ninput and output do not have the same shape:\n%s vs. %s' % (parname, shape(y), shape(newy))
         raise OptimaException(errormsg)
+    
+    printv('Limits (%f, %f) applied for parameter "%s", all passed:\n%s' % (limits[0], limits[1], parname, newy), 4, verbose)
     return newy
 
 
@@ -617,12 +627,12 @@ class Timepar(Par):
             output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
                 yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[key] = applylimits(y=yinterp, limits=self.limits, dt=dt)
+                output[key] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
                 yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[pop,:] = applylimits(y=yinterp, limits=self.limits, dt=dt)
+                output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -657,7 +667,7 @@ class Popsizepar(Par):
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys):
             yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
-            output[pop,:] = applylimits(y=yinterp, limits=self.limits, dt=dt)
+            output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         return output
 
 
@@ -678,13 +688,13 @@ class Constant(Par):
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
         
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-            output = applylimits(y=self.y, limits=self.limits, dt=dt)
+            output = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = applylimits(y=self.y[key], limits=self.limits, dt=dt)
+                output[pop] = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
         return output
 
 
@@ -741,7 +751,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         simparslist = []
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
