@@ -130,7 +130,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
     hivtest  = simpars['hivtest']   # HIV testing (P) [npop,npts]
     aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
-#    circum   = simpars['circum']    # Prevalence of circumcision (P)
+    circum   = simpars['circum']    # Prevalence of circumcision (P)
     stiprev  = simpars['stiprev']   # Prevalence of STIs (P)
     prep     = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
@@ -223,8 +223,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         # Set up basic calculations
         popinfected = allinfected[p]
         uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
-        uncircumcised = uninfected*(1-simpars['circum'][p,0])
-        circumcised = uninfected*simpars['circum'][p,0]
+        uncircumcised = uninfected*(1-circum[p,0])
+        circumcised = uninfected*circum[p,0]
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
