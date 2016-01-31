@@ -201,7 +201,7 @@ if '90-90-90' in tests:
     from optima import Parscen, Budgetscen
     from optima.defaults import defaultproject
     
-    P = defaultproject('generalized')
+    P = defaultproject('simple')
     P.settings.usecascade = False
     P.runsim()
     
