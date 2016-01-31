@@ -498,19 +498,21 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
     labels = project.settings.statelabels
     
     plotstyles = odict([
-    ('uncirc', '/'), 
-    ('circ',   '\\'), 
-    ('undx',   '|'), 
-    ('dx',     'O'), 
-    ('care',   '*'), 
-    ('usvl',   '/'), 
-    ('svl',    '\\'), 
-    ('lost',   'O'), 
-    ('off',    '*')])
+    ('uncirc', ('/','|')), 
+    ('circ',   ('\\','|')), 
+    ('undx',   ('|','|')), 
+    ('dx',     ('O','o')), 
+    ('care',   ('*','*')), 
+    ('usvl',   ('/','|')), 
+    ('svl',    ('\\','|')), 
+    ('lost',   ('O','o')), 
+    ('off',    ('*','*'))])
     
     hatchstyles = []
+    linestyles = []
     for key in plotstyles.keys():
-        hatchstyles.extend([plotstyles[key] for lab in labels if lab.startswith(key)])
+        hatchstyles.extend([plotstyles[key][0] for lab in labels if lab.startswith(key)])
+        linestyles.extend([plotstyles[key][1]  for lab in labels if lab.startswith(key)])
     
     labels = labels[exclude:]
     hatchstyles[exclude:]
@@ -520,7 +522,6 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
     pplplot = transpose(pplplot) # So time is plotted on x-axis
     
     nstates = len(labels)
-    
     colors = gridcolormap(nstates)
     tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
     bottom = 0*tvec
@@ -537,7 +538,7 @@ def plotppl(project=None, ppl=None, exclude=2, sumpops=True, sumstates=False, de
         # Legend stuff
         xlabel('Year')
         ylabel('Number of people')
-        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
         handles, legendlabels = ax.get_legend_handles_labels()
         legend(reversed(handles), reversed(legendlabels), **legendsettings)
         show()
