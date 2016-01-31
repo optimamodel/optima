@@ -595,9 +595,11 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
                 raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                if t==138 and propcare[t] and cd4==3: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             
             from numpy import mean, array
-            if propcare[t]: print('hiiii', mean(fractiontocare), array(newlinkcare).sum(), array(dD).sum(), array(dC).sum())
+            if propcare[t]: print('hiiii', t, mean(fractiontocare), array(newlinkcare).sum(), array(dD).sum(), array(dC).sum())
+            
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
             # 40% progress, 40% recover, 20% don't change cd4 count
