@@ -68,12 +68,11 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
 
 
     # Defined for total (not by populations) and time dependent [npts]
+    treatvs     = simpars['treatvs']     # viral suppression - ART initiators (P)
     if usecascade:
-        treatvs     = simpars['treatvs']     # viral suppression - ART initiators (P)
         biofailure  = simpars['biofailure']  # biological treatment failure rate (P/T)
         vlmonfr     = simpars['vlmonfr']     # Viral load monitoring frequency (N/T)
         restarttreat = simpars['restarttreat']  # Time to restart ART (T)
-        successprop = simpars['successprop'] # Proportion of people on ART with viral suppression (P)
 
     
     # Calculate other things outside the loop
@@ -83,7 +82,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         efftxunsupp = simpars['efftxunsupp'] * dxfactor # (~30%) reduction in transmission probability for usVL
         efftxsupp  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL
     else:
-        txfactor = simpars['efftxsupp']*simpars['successprop'] + simpars['efftxunsupp']*(1-simpars['successprop']) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
+        txfactor = dxfactor * (simpars['efftxsupp']*treatvs + simpars['efftxunsupp']*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
     # Disease state indices
     uncirc   = settings.uncirc   # Susceptible, uncircumcised
@@ -260,8 +259,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         initpeople[undx, p] = undiagnosed
         if usecascade:
             initpeople[dx, p]   = diagnosed
-            initpeople[usvl, p] = treatment * (1.-successprop[0])
-            initpeople[svl,  p] = treatment * successprop[0]
+            initpeople[usvl, p] = treatment * (1.-treatvs[0])
+            initpeople[svl,  p] = treatment * treatvs[0]
         else:
             initpeople[dx, p] = diagnosed
             initpeople[tx, p] = treatment
@@ -499,6 +498,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
 
         ## Undiagnosed
         if propdx[t]:
+            print('propdx1')
             currplhiv = people[allplhiv,:,t].sum(axis=0)
             currdx = people[dx,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
@@ -516,6 +516,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             if propdx[t]:
+                print('propdx2')
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             else:
                 newdiagnoses[cd4] = dt * people[undx[cd4],:,t] * testingrate[cd4]
@@ -558,12 +559,13 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
             if proptx[t]:
+                print('proptx1')
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[[usvl,svl],:,t].sum()
+                currtx = people[[usvl,svl],:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
             else:
                 newtreattot = numtx[t] - people[[usvl,svl],:,t].sum() # Calculate difference between current people on treatment and people needed
-
+                
             for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
