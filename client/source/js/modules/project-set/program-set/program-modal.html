@@ -152,9 +152,9 @@
               <div class="data numeric" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteAddData(data)"></i></div>
             </div>
             <div class="column" ng-if="state.showAddData">
-              <div class="data"><input ng-model="state.newAddData.year" class="txbox __inline __lm"/></div>
-              <div class="data"><input ng-model="state.newAddData.spending" class="txbox __inline __lm"/></div>
-              <div class="data"><input ng-model="state.newAddData.coverage" class="txbox __inline __lm"/></div>
+              <div class="data"><input name="year" ng-model="state.newAddData.year" type="number" ng-class="{'invalid': programForm.year.$invalid}" min="{{1*state.program.addData[state.program.addData.length-1].year+1 || state.openProject.dataStart}}" max="{{state.openProject.dataEnd}}"/></div>
+              <div class="data"><input name="spending" ng-model="state.newAddData.spending" min="1" type="number" ng-class="{'invalid': programForm.spending.$invalid}"/></div>
+              <div class="data"><input name="coverage" ng-model="state.newAddData.coverage" min="1" type="number" ng-class="{'invalid': programForm.coverage.$invalid}"/></div>
               <div class="data" style="display: flex;justify-content: center">
                 <i class="fa fa-check" ng-click="addAddData()"></i>
                 <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newAddData = {};state.showAddData = false"></i>

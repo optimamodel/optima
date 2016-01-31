@@ -570,13 +570,17 @@ class OptimaSpreadsheet:
     
     def generate_casc(self):
         current_row = 0
-        current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                                        current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people not in care who are linked to care per year (%/year)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                                            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)',            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                                                         current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Biological failure rate (%/year)',                                                             current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Viral suppression - ART initiators (%)',                                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Rate of ART re-initiation (%/year)',                                                current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('PLHIV aware of their status (%)',                                               current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-diagnosed people who are in care (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Proportion of people on ART with viral suppression (%)',                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
 
     def generate_sex(self):
@@ -682,11 +686,10 @@ class OptimaSpreadsheet:
             'PMTCT',
             'Pre-exposure prophylaxis',
             'Unsuppressive ART',
-            'Suppressive ART',
-            'Probability of viral suppression on ART'],
-            [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92, 0.9],
-            [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8, 0.8],
-            [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95, 0.95],
+            'Suppressive ART'],
+            [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92],
+            [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8],
+            [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95],
             OptimaFormats.PERCENTAGE),
         ('Disutility weights',
             ['Untreated HIV, acute',

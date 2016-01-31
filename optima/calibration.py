@@ -231,7 +231,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
                             allmismatches.append(thismismatch)
                             mismatch += thismismatch
         
-        printv('Current mismatch: %s' % array(thismismatch).flatten(), 5, verbose=verbose)
+        printv('Current mismatch: %s' % array(thismismatch).flatten(), 4, verbose=verbose)
         return mismatch
 
 
