@@ -741,6 +741,11 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 hivdeaths   = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths = dt * people[tx[cd4],:,t] * background
                 dT.append(recovin - recovout + newtreat[cd4] - hivdeaths - otherdeaths)
+                if not((people[tx[cd4],:,t]+dT[cd4] >= 0).all()):
+                    errormsg = 'WARNING, Non-positive people found for treatment!\npeople[%s, :, %i] = people[%s, :, %s] = %s' % (tx[cd4], t, settings.statelabels[tx[cd4]], tvec[t], people[tx[cd4],:,t]+dT[cd4])
+                    if die: raise OptimaException(errormsg)
+                    else: printv(errormsg, 1, verbose=verbose)
+                    
                 raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
 
 

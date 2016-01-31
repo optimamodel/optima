@@ -79,7 +79,7 @@ class Settings():
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out -- see definitions in utils.py:printv()
-        self.safetymargin = 0.8 # Do not move more than this fraction of people on a single timestep
+        self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
