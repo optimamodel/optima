@@ -23,8 +23,18 @@ On Ubuntu:
 On MacOS X:
 ---
 
-Follow [these instructions](http://jasdeep.ca/2012/05/installing-redis-on-mac-os-x/)
+`brew install redis`
 
-Then, from the root optima directory, launch `./celery.sh`
+then check
 
-/!\ Note: whenever you make a change that could affect a celery task, you need to restart it manually
+`brew info redis`
+
+for the information how to start Redis on your system.
+
+Or (if no brew) follow [these instructions](http://jasdeep.ca/2012/05/installing-redis-on-mac-os-x/)
+
+Ensure that your server/config.py file has settings for Redis (provided in server/config.example.py)
+
+Then, from the <root>/server optima directory, launch `./celery.sh`
+
+/!\ Note: whenever you make a change that could affect a celery task, you need to restart it manually.
