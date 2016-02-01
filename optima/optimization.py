@@ -426,8 +426,3 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires
-
-
-
-
-
