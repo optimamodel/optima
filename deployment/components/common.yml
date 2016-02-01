@@ -17,7 +17,11 @@
       - gfortran
       - libpq-dev
       - libpng12-dev
+      - supervisor
     tags: api
+
+  - include: "{{prudentia_dir}}/tasks/redis.yml"
+    tags: db
 
   - include: "{{prudentia_dir}}/tasks/github.yml ssh_dir=/home/{{ansible_user_id}}"
     tags: common

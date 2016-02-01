@@ -15,7 +15,7 @@ Let's start of registering a new box that will prompt you with several questions
 Specify the playbook path: /<Path_to_Optima_dir>/deployment/boxes/staging.yml
 Specify the box name [default: optima-staging]: 
 Specify the internal IP: 10.0.0.11
-Specify the amount of RAM in GB [default: 1]: 
+Specify the amount of RAM in GB [default: 1]: 3 (1 is not enough to build matplotlib)
 Do you want to share a folder? [default: N]: y
 Specify the directory on the HOST machine: /<Path_to_Optima_dir>
 Specify the directory on the GUEST machine: /opt/optima
