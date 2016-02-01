@@ -9,6 +9,8 @@ from optima import defaultobjectives, asd, Project
 #######################################################################################################
 
 budgeteps = 1e-8        # Project optimisations will fail for budgets that are optimised by GA to be zero. This avoids zeros.
+tol = 1.0 # Tolerance for checking that budgets match
+
 
 class Portfolio(object):
     """
@@ -254,7 +256,7 @@ class Portfolio(object):
                 if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
                     printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
                     pno=0
-                elif isinstance(parsetnames[pno],int) and len(p.parsets)-1<=parsetnames[pno]:
+                elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
                     printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
                     pno=0
                 else: 
@@ -266,7 +268,9 @@ class Portfolio(object):
 
             BOClist.append(p.getBOC(objectives))
             
-        return minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, maxtime=maxtime)
+        optbudgets = minBOCoutcomes(BOClist, grandtotal, budgetvec=seedbudgets, maxtime=maxtime)
+            
+        return optbudgets
         
         
     def fullGA(self, objectives=None, budgetratio=None, maxtime=None, doplotBOCs=False, verbose=2):
@@ -280,14 +284,12 @@ class Portfolio(object):
             printv('WARNING, you have called fullGA on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
         objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
-        print('HERE1'); print(objectives)
         
         gaoptim = GAOptim(objectives = objectives)
         self.gaoptims[gaoptim.uid] = gaoptim
         
         if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
-        print('HERE2'); print(objectives); print(initbudgets)
         
         optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
@@ -330,7 +332,7 @@ def objectivecalc(x, BOClist, grandtotal, minbound):
     
 def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=1000, maxtime=None, verbose=2):
     ''' Actual runs geospatial optimisation across provided BOCs. '''
-    printv('Calculating minimum outcomes', 2, verbose)
+    printv('Calculating minimum outcomes for grand total budget of %f' % grandtotal, 2, verbose)
     
     if minbound == None: minbound = [0]*len(BOClist)
     if budgetvec == None: budgetvec = [grandtotal/len(BOClist)]*len(BOClist)
@@ -343,6 +345,7 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=
 #    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X = constrainbudgets(X, grandtotal, minbound)
+    assert sum(X)==grandtotal
 
     return X
 
@@ -457,7 +460,7 @@ class GAOptim(object):
             self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
             preibudget = initobjectives['budget']
             postibudget = self.resultpairs[p.uid]['init'].budget[-1]
-            assert preibudget==sum(postibudget[:])
+            assert abs(preibudget-sum(postibudget[:]))<tol
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pno] + budgeteps
@@ -465,7 +468,7 @@ class GAOptim(object):
             self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
             postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
-            assert preobudget==sum(postobudget[:])
+            assert abs(preobudget-sum(postobudget[:]))<tol
 
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
@@ -480,7 +483,7 @@ class GAOptim(object):
         
         output = ''        
         
-        for x in self.resultpairs:          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
+        for x in self.resultpairs.keys():          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
             projectname = self.resultpairs[x]['init'].project.name
             initalloc = self.resultpairs[x]['init'].budget[0]
             impalloc = self.resultpairs[x]['init'].budget[-1]       # Calling this impalloc rather than optalloc to avoid confusion with GA optimisation!
@@ -520,7 +523,11 @@ class GAOptim(object):
         output += '\n'
         output += 'Initial outcome:\t%f\n' % sumoutcomeinit
 #        output += 'Improved Aggregate Outcome:     %f\n' % sumoutcomeimp
-        output += 'Outcome fter optimization:\t%f\n' % sumoutcomegaopt
+        output += 'Outcome after optimization:\t%f\n' % sumoutcomegaopt
+        
+        print(output)
+        
+        return output
         
                 
             

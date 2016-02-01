@@ -15,7 +15,7 @@ def geogui():
     
     Version: 2016jan23
     '''
-    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives
+    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp
     from PyQt4 import QtGui
     from pylab import figure, close
     global geoguiwindow, portfolio, objectives, objectiveinputs, projectslistbox, projectinfobox
@@ -182,8 +182,9 @@ def geogui():
         for key in objectiveinputs.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         objectives['budget'] *= budgetfactor # Convert back to internal representation
-        portfolio.genBOCs(objectives, maxtime=5) # WARNING temp time
-        portfolio.fullGA(objectives, doplotBOCs=True, budgetratio = portfolio.getdefaultbudgets(), maxtime=5)
+        BOCobjectives = dcp(objectives)
+        portfolio.genBOCs(BOCobjectives, maxtime=5) # WARNING temp time
+        portfolio.fullGA(objectives, doplotBOCs=True, budgetratio = portfolio.getdefaultbudgets(), maxtime=5) # WARNING temp time
         return None
     
     
