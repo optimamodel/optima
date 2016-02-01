@@ -464,6 +464,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             peoplemoving2 = minimum(peoplemoving2, safetymargin*people[:, p2, t]) # And again
 
 
+
         ###############################################################################
         ## The ODEs
         ###############################################################################
