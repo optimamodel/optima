@@ -1,7 +1,5 @@
 """
 Test script to see if geospatial analysis works.
-Note that GUI can be extremely dangerous, as it redirects stdout!
-Make sure that GUI is exited normally, otherwise stdout reference will be lost until console reset...
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
