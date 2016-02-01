@@ -18,6 +18,7 @@ def geogui():
     from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp
     from PyQt4 import QtGui
     from pylab import figure, close
+    from time import time
     global geoguiwindow, guiportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
     guiportfolio = None
     guiobjectives = defaultobjectives()
@@ -180,12 +181,14 @@ def geogui():
     def rungeo():
         ''' Actually run geospatial analysis!!! '''
         global guiportfolio, guiobjectives, objectiveinputs
+        starttime = time()
         for key in objectiveinputs.keys():
             guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
         BOCobjectives = dcp(guiobjectives)
         guiportfolio.genBOCs(BOCobjectives, maxtime=3) # WARNING temp time
         guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
+        warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
     
     
