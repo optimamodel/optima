@@ -68,9 +68,10 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, Programs, PopSize
-from server.webapp.resources.project_parsets import Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration
+from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
+                                                     ParsetsAutomaticCalibration)
 from server.webapp.resources.project_progsets import (CostCoverage, CostCoverageGraph, CostCoverageData,
-                                                      CostCoverageParam, ParsetsAutomaticCalibration)
+                                                      CostCoverageParam)
 
 
 app.register_blueprint(model, url_prefix='/api/model')
