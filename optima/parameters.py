@@ -370,13 +370,17 @@ def makepars(data, label=None, verbose=2):
         # Decide how to handle it based on parameter type
         if partype=='initprev': # Initialize prevalence only
             pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
+        
         elif partype=='popsize': # Population size only
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
-        elif partype=='timepar':            
-            pars[parname] = data2timepar(data=data, keys=keys, **rawpar) # Otherwise it's a regular time par, made from data
+        
+        elif partype=='timepar': # Otherwise it's a regular time par, made from data
+            pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+        
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
             pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+        
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
             
