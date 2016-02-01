@@ -640,3 +640,25 @@ class ProgsetsDb(db.Model):
 
     def as_file(self, loaddir, filename=None):
         return db_model_as_file(self, loaddir, filename, 'name', 'prg')
+
+
+@swagger.model
+class Scenario(db.Model):
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.String)
+    scenario_type = db.Column(db.String)
+    active = db.Column(db.Boolean)
+    progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+
+    def __init__(self, project_id, name, scenario_type, active=False,
+                 progset_id=None, parset_id=None):
+
+        self.project_id = project_id
+        self.name = name
+        self.scenario_type = scenario_type
+        self.active = active
+        self.progset_id = progset_id
+        self.parset_id = parset_id
