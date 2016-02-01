@@ -108,3 +108,8 @@
 .c-checkbox {
   margin-right: 40px;
 }
+
+&.invalid{
+  border: solid #FF0000 1px;
+  outline: 0px;
+}

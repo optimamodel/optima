@@ -129,11 +129,11 @@ class OptimaTestCase(unittest.TestCase):
                         {
                             'year': 2011,
                             'cost': '1e6',
-                            'cov': 500000
+                            'coverage': 500000
                         }, {
                             'year': 2012,
                             'cost': 1000000.0,
-                            'cov': '75e4'
+                            'coverage': '75e4'
                         }
                     ]
                 )
