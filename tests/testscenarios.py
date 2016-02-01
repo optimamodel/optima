@@ -283,10 +283,10 @@ if 'maxbudget' in tests:
 
     print('Running maximum budget scenario test...')
     from optima import Budgetscen, odict
-    from optima.defaults import defaultproject
+    from optima import defaults
     
     ## Set up default project
-    P = defaultproject('generalized')
+    P = defaults.defaultproject('generalized')
     
     ## Define scenarios
     scenlist = [
@@ -310,9 +310,9 @@ if 'VMMC' in tests:
 
     print('Running VMMC scenario test...')
     from optima import Parscen, Budgetscen
-    from optima.defaults import defaultproject
+    from optima import defaults
     
-    P = defaultproject('generalized')
+    P = defaults.defaultproject('generalized')
     pops = P.data['pops']['short']
 
     malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
@@ -353,7 +353,7 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui
+        from optima import pygui, plotpeople
         pygui(P.results[-1], toplot='default')
 
     done(t)

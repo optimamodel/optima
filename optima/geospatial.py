@@ -348,7 +348,7 @@ def geogui():
     objectivetext = odict()
     objectivetext['start']       = 'Start year:'
     objectivetext['end']         = 'End year:'
-    objectivetext['budget']      = 'Total budget ($m):'
+    objectivetext['budget']      = 'Total budget (mil.):'
     objectivetext['deathweight'] = 'Deaths weight:'
     objectivetext['inciweight']  = 'Infections weight:'
     
