@@ -747,6 +747,32 @@ class Parameterset(object):
         
         printv('...done making model parameters.', 2, verbose)
         return simparslist
+    
+    
+    def printpars(self, ind=None, output=False):
+        if ind is None: ind = 0
+        outstr = ''
+        count = 0
+        for par in self.pars[ind].values():
+            if hasattr(par,'y'):
+                if hasattr(par.y, 'keys'):
+                    count += 1
+                    if len(par.y.keys())>1:
+                        outstr += '%3i: %s\n' % (count, par.name)
+                        for key in par.y.keys():
+                            outstr += '     %s = %s\n' % (key, par.y[key])
+                    elif len(par.y.keys())==1:
+                        outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y[0])
+                    elif len(par.y.keys())==0:
+                        outstr += '%3i: %s = (empty)' % (count, par.name)
+                    else:
+                        print('WARNING, not sure what to do with %s: %s' % (par.name, par.y))
+                else:
+                    count += 1
+                    outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y)
+        print(outstr)
+        if output: return outstr
+        else: return None
 
 
     def listattributes(self):

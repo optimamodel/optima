@@ -139,7 +139,7 @@ def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objecti
 
 
 
-def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
     ''' 
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
@@ -272,7 +272,7 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=False):
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=False):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
@@ -426,8 +426,3 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires
-
-
-
-
-

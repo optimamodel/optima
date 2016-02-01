@@ -104,7 +104,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     
     ## Loop
     start = time()
-    offset = ' '*5 # Offset the print statements
+    offset = ' '*4 # Offset the print statements
     while 1:
         if verbose==1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval)) # For more verbose, use other print statement below
         
@@ -153,11 +153,11 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             s1[choice] = s1[choice]*sinc # Increase size of step for next time
             x = xnew # Reset current parameters
             fval = fvalnew # Reset current error
-            flag = 'SUCCESS'
+            flag = 'Improvement'
         elif fvalnew >= fvalold: # New parameter set is the same or worse than the previous one
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
-            flag = 'FAILURE'
+            flag = '  No change'
         if verbose>=2: 
             print(offset + 'Step %i (%0.1f s): %s (orig: %s | old:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
         
