@@ -46,11 +46,10 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, Budgetscen, Coveragescen
-    from optima.defaults import defaultproject
+    from optima import Parscen, Budgetscen, Coveragescen, defaults
     from numpy import array
     
-    P = defaultproject('concentrated')
+    P = defaults.defaultproject('concentrated')
     pops = P.data['pops']['short']
     malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
     
@@ -78,6 +77,15 @@ if 'standardscen' in tests:
                 'name': 'circum',
                 'for': malelist,
                 'startval': .97,
+                'startyear': 2015}]),
+
+        Parscen(name='Increase numpmtct',
+             parsetname='default',
+             pars=[{'endval': 0.9,
+                'endyear': 2020,
+                'name': 'numpmtct',
+                'for': ['tot'],
+                'startval': .44,
                 'startyear': 2015}]),
 
         Parscen(name='Full casual condom use',

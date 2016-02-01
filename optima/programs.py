@@ -422,6 +422,8 @@ class Programset(object):
         
         years = t # WARNING, not renaming in the function definition for now so as to not break things
         
+        settings = self.getsettings() # WARNING TEMP shouldn't need this!!!
+        
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
         if type(years) in [int,float]: years = [years]
@@ -442,12 +444,14 @@ class Programset(object):
         # Create a parset and copy over parameter changes
         pars = dcp(parset.pars[ind])
         for outcome in outcomes.keys():
-            for p in outcomes[outcome].keys():
+            thispar = pars[outcome]
+            
+            for popno,pop in enumerate(outcomes[outcome].keys()): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
                 
                 # Validate outcome
-                thisoutcome = outcomes[outcome][p] # Shorten
-                lower = float(pars[outcome].limits[0]) # Lower limit, cast to float just to be sure (is probably int)
-                upper = settings.convertlimits(limits=pars[outcome].limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
+                thisoutcome = outcomes[outcome][pop] # Shorten
+                lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
+                upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
                     errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
                     if die:
@@ -457,14 +461,26 @@ class Programset(object):
                         thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
                         thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
                 
-                # Overwrite parameter indices
-                par_t = pars[outcome].t[p] # Shorten time values
-                par_y = pars[outcome].y[p] # Shorten y values
-                minyear = min(years) # Find the earliest year
-                tokeep = findinds(par_t<minyear) # Keep only the indices from before the program
-                if len(tokeep)==0: tokeep = array([0]) # Keep at least one year
-                pars[outcome].t[p] = append(par_t[tokeep], years) 
-                pars[outcome].y[p] = append(par_y[tokeep], thisoutcome)
+                
+                
+                # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
+                last_t = min(years) - settings.dt # Last timestep before the scenario starts
+                last_y = pars[outcome].interp(tvec=last_t, dt=settings.dt) # Find what the model would get for this value
+
+
+                # Remove years after the last good year
+                if last_t < max(thispar.t[pop]):
+                    thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
+                    thispar.y[pop] = thispar.y[pop][thispar.t[pop] <= last_t]
+                
+                # Append the last good year, and then the new years
+                thispar.t[pop] = append(thispar.t[pop], last_t)
+                thispar.y[pop] = append(thispar.y[pop], last_y[popno]) 
+                thispar.t[pop] = append(thispar.t[pop], years)
+                thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
+                
+                pars[outcome] = thispar # WARNING, probably not needed
+                
 
         return pars
 
