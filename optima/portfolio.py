@@ -263,7 +263,7 @@ class Portfolio(object):
                     printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
                     pno=0
                 
-                    printv('WARNING, project %s does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[0].name, p.progsets[0].name), 1, verbose)
+                    printv('WARNING, project "%s", parset "%s" does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, pno, p.parsets[0].name, p.progsets[0].name), 1, verbose)
                     p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
 
             BOClist.append(p.getBOC(objectives))
@@ -474,56 +474,57 @@ class GAOptim(object):
         ''' Just displays results related to the GA run '''
         printv('Printing results...', 2, verbose)
         
-        sumbudgetsinit = 0
-        sumbudgetsimp = 0
-        sumbudgetsgaopt = 0
-        sumoutcomeinit = 0
-        sumoutcomeimp = 0
-        sumoutcomegaopt = 0
+        overallbudgetinit = 0
+        overallbudgetopt = 0
+        overalloutcomeinit = 0
+        overalloutcomeopt = 0
         
-        output = ''        
+        nprojects = len(self.resultpairs.keys())
+        projnames = []
+        projoutcomes = []
+        projbudgets = []
         
-        for x in self.resultpairs.keys():          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
+        for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
             projectname = self.resultpairs[x]['init'].project.name
             initalloc = self.resultpairs[x]['init'].budget[0]
-            impalloc = self.resultpairs[x]['init'].budget[-1]       # Calling this impalloc rather than optalloc to avoid confusion with GA optimisation!
             gaoptalloc = self.resultpairs[x]['opt'].budget[-1]
             initoutcome = self.resultpairs[x]['init'].improvement[-1][0]
-            impoutcome = self.resultpairs[x]['init'].improvement[-1][-1]
             gaoptoutcome = self.resultpairs[x]['opt'].improvement[-1][-1]
             suminitalloc = sum([x[-1] for x in initalloc.values()])
-            sumimpalloc = sum([x[-1] for x in impalloc.values()])
             sumgaoptalloc = sum([x[-1] for x in gaoptalloc.values()])
             
-            sumbudgetsinit += suminitalloc
-            sumbudgetsimp += sumimpalloc
-            sumbudgetsgaopt += sumgaoptalloc
-            sumoutcomeinit += initoutcome
-            sumoutcomeimp += impoutcome
-            sumoutcomegaopt += gaoptoutcome
+            overallbudgetinit += suminitalloc
+            overallbudgetopt += sumgaoptalloc
+            overalloutcomeinit += initoutcome
+            overalloutcomeopt += gaoptoutcome
             
-            output += '\nProject:\t%s\n' % projectname
-            output += 'Default project budget:\t%f\n' % suminitalloc
-            output += 'Geospatial analysis budget:\t%f\n' % sumgaoptalloc
-            
-            output += '\nInitial allocation:\n'
-            output +=  'Outcome:\t%f\n'  % initoutcome
-            for c in xrange(len(initalloc)): output += '%-15s\t%12.2f\n' % (initalloc.keys()[c], initalloc.values()[c][-1])
-#            output += '\nImproved Allocation...     (Outcome: %f)\n' % impoutcome
-#            for c in xrange(len(initalloc)): output += '%-15s\t%12.2f\n' % (impalloc.keys()[c],impalloc.values()[c][-1])
-            output += '\nOptimal geospatial allocation:\n'
-            output +=  'Outcome:\t%f\n'  % gaoptoutcome
-            for c in xrange(len(initalloc)): output += '%-15s\t%12.2f\n' % (gaoptalloc.keys()[c], gaoptalloc.values()[c][-1])
-                
-        output += '\nGA Summary\n'
-        output += '\n'
-        output += 'Initial portfolio budget:\t%12.2f\n' % sumbudgetsinit
-#        output += 'Improved Portfolio Budget:     %12.2f\n' % sumbudgetsimp
-        output += 'Optimized portfolio budget:\t%12.2f\n' % sumbudgetsgaopt
-        output += '\n'
-        output += 'Initial outcome:\t%f\n' % sumoutcomeinit
-#        output += 'Improved Aggregate Outcome:     %f\n' % sumoutcomeimp
-        output += 'Outcome after optimization:\t%f\n' % sumoutcomegaopt
+            projnames.append(projectname)
+            projbudgets[prj]     = odict()
+            projoutcomes[prj]    = odict()
+            projbudgets[prj]['init']  = initalloc
+            projbudgets[prj]['opt']   = gaoptalloc
+            projoutcomes[prj]['init'] = initoutcome
+            projoutcomes[prj]['opt']  = gaoptoutcome
+                 
+        ## Actually create the output
+        output = ''
+        output += '\n\t\t\tInitial\tOptimal'
+        output += '\nOverall summary\t\t\t'
+        output += '\n\tPortfolio budget:\t%f\t%f' % (overallbudgetinit, overallbudgetopt)
+        output += '\n\tOutcome:\t1%f\t%f' % (overalloutcomeinit, overalloutcomeopt)
+        for prj in range(len(nprojects)):
+            output += '\n'
+            output += '\n'
+            output += '\n\t\tInitial\tOptimal'
+            output += '\nProject: "%s"' % projnames[prj]
+            output += '\n'
+            output += '\n\tBudget:\t%f\t%f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
+            output += '\n\tOutcome:\t%f\t%f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
+            output += '\n'
+            output += '\n\tAllocation:'
+            for prg in projbudgets[prj]['init'].keys():
+                output += '\n\t%s\t%fi\t%f' % (prg, projbudgets[prj]['init'][prg], projbudgets[prj]['opt'][prg])
+
         
         print(output)
         

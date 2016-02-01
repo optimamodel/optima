@@ -131,21 +131,22 @@ def geogui():
             guiportfolio = Portfolio()
             projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
-        if type(filepaths)==str: filepaths = [filepaths] # Convert to list
-        for filepath in filepaths:
-            tmpproj = None
-            try: tmpproj = loadobj(filepath, verbose=0)
-            except: print('Could not load file "%s"; moving on...' % filepath)
-            if tmpproj is not None: 
-                try: 
-                    assert type(tmpproj)==Project
-                    projectslist.append(tmpproj)
-                    projectpaths.append(filepath)
-                    print('Project file "%s" loaded' % filepath)
-                except: print('File "%s" is not an Optima project file; moving on...' % filepath)
-        projectslistbox.addItems(projectpaths)
-        guiportfolio.addprojects(projectslist)
-        resetbudget() # And reset the budget
+        if filepath:
+            if type(filepaths)==str: filepaths = [filepaths] # Convert to list
+            for filepath in filepaths:
+                tmpproj = None
+                try: tmpproj = loadobj(filepath, verbose=0)
+                except: print('Could not load file "%s"; moving on...' % filepath)
+                if tmpproj is not None: 
+                    try: 
+                        assert type(tmpproj)==Project
+                        projectslist.append(tmpproj)
+                        projectpaths.append(filepath)
+                        print('Project file "%s" loaded' % filepath)
+                    except: print('File "%s" is not an Optima project file; moving on...' % filepath)
+            projectslistbox.addItems(projectpaths)
+            guiportfolio.addprojects(projectslist)
+            resetbudget() # And reset the budget
         return None
     
     
@@ -207,22 +208,26 @@ def geogui():
         filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
         
         # 2. Generate spreadsheet according to David's template to store these data
-        workbook = Workbook(filepath)
-        worksheet = workbook.add_worksheet()
-        
-        # Convert from a string to a 2D array
-        outlist = []
-        for line in outstr.split('\n'):
-            outlist.append([])
-            for cell in line.split('\t'):
-                outlist[-1].append(cell)
+        if filepath:
+            workbook = Workbook(filepath)
+            worksheet = workbook.add_worksheet()
             
-        # Iterate over the data and write it out row by row.
-        row, col = 0, 0
-        for row in range(len(outlist)):
-            for col in range(len(outlist[row])):
-                worksheet.write(row, col, outlist[row][col])
-        workbook.close()
+            # Convert from a string to a 2D array
+            outlist = []
+            for line in outstr.split('\n'):
+                outlist.append([])
+                for cell in line.split('\t'):
+                    outlist[-1].append(cell)
+                
+            # Iterate over the data and write it out row by row.
+            row, col = 0, 0
+            for row in range(len(outlist)):
+                for col in range(len(outlist[row])):
+                    worksheet.write(row, col, outlist[row][col])
+            workbook.close()
+            
+            warning('Results saved to "%s".' % filepath)
+        
         return None
         
 

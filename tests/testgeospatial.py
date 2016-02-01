@@ -59,10 +59,12 @@ if 'makeprojects' in tests:
     print('Running makeprojects...')
     from optima import saveobj, defaults
     
-    P = defaults.defaultproject('generalized')
-    Q = defaults.defaultproject('concentrated')
+    P = defaults.defaultproject('generalized', name='District 1')
+    Q = defaults.defaultproject('concentrated', name='District 2')
+    O = defaults.defaultproject('concentrated', name='District 3')
     saveobj('geotestproj1.prj', P)
     saveobj('geotestproj2.prj', Q)
+    saveobj('geotestproj3.prj', O)
     
     done(t)
 

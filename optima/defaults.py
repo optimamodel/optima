@@ -302,7 +302,7 @@ def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
 
 
 
-def defaultproject(which='simple', addprogset=True):
+def defaultproject(which='simple', addprogset=True, **kwargs):
     ''' 
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
@@ -318,7 +318,7 @@ def defaultproject(which='simple', addprogset=True):
     
     if which=='simple':
         print('Creating simple epidemic project...')
-        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx')
+        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', **kwargs)
     
     
     
@@ -330,7 +330,7 @@ def defaultproject(which='simple', addprogset=True):
     ##########################################################################################################################
     elif which=='generalized':
         print('Creating generalized epidemic project...')
-        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx')
+        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
         R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'PMTCT'])
@@ -385,7 +385,7 @@ def defaultproject(which='simple', addprogset=True):
     ##########################################################################################################################
     elif which=='concentrated':
         # Make project and store results from default sim
-        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx')
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
     
         # Get a default progset 
         R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
