@@ -61,7 +61,7 @@
       - update
 
   - name: API | Restart supervisor
-    service: name=supervisor state=restarted
+    command: service supervisor restart
     sudo: yes
     tags:
       - api
