@@ -13,6 +13,40 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
+    $scope.invalidName = function() {
+      return !$scope.projectParams.name;
+    }
+
+    $scope.invalidDataStart = function() {
+      if ($scope.projectParams.datastart) {
+        var datastart = parseInt($scope.projectParams.datastart)
+        return datastart < 1900 || 2100 < datastart;
+      }
+      return !$scope.projectParams.datastart; 
+    }
+
+    $scope.invalidDataEnd = function() {
+      if ($scope.projectParams.dataend) {
+        var dataend = parseInt($scope.projectParams.dataend)
+        if (dataend < 1900 || 2100 < dataend) {
+          return true;
+        };
+        if ($scope.invalidDataStart()) {
+          return false;
+        }
+        var datastart = parseInt($scope.projectParams.datastart)
+        return dataend <= datastart;
+      }
+      return !$scope.projectParams.dataend;  
+    }
+
+    $scope.invalidPopulationSelected = function() {
+      var result = _.find($scope.populations, function(population) {
+        return population.active === true;
+      });
+      return !result;
+    }
+
     $scope.projectParams = {
       name: ''
     };
@@ -166,19 +200,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .value();
     };
 
-    $scope.populationSelected = false;
-
-    $scope.isFormValid = function(){
-      $scope.populationSelected = _.find($scope.populations, function(population) { return population.active === true; });
-
-      if ($scope.CreateOrEditProjectForm.$invalid || !$scope.populationSelected) {
-        return false;
-      }else{
-        return true;
-      }
-    };
 
     $scope.prepareCreateOrEditForm = function () {
+
+      var errors = [];
+
+      if ($scope.invalidName()) {
+        errors.push({message: 'Enter a project name'});
+      }
+      if ($scope.invalidDataStart()) {
+        errors.push({message: 'Enter a first year'});
+      }
+      if ($scope.invalidDataEnd()) {
+        errors.push({message: 'Enter a final year'});
+      }
+      if ($scope.invalidPopulationSelected()) {
+        errors.push({message: 'Select at least one population'});
+      }
+
+      if ($scope.CreateOrEditProjectForm.$invalid || $scope.invalidPopulationSelected()) {
+        modalService.informError(errors);
+        return false;
+      }
+
       var selectedPopulations = toCleanArray($scope.populations);
 
       if ( $state.current.name == "project.edit" ) {

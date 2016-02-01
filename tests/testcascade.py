@@ -1,7 +1,7 @@
 """
 Test the cascade
 
-Version: 2016jan23 by cliffk
+Version: 2016jan30 by cliffk
 """
 
 
@@ -9,6 +9,7 @@ Version: 2016jan23 by cliffk
 ## Define tests to run here!!!
 tests = [
 'compare',
+'90-90-90'
 ]
 
 
@@ -48,27 +49,28 @@ if 'compare' in tests:
     
     toplot = ['prev-tot', 'numinci-sta', 'numplhiv-sta', 'numtreat-sta', 'cascade'] # Specify what plots to display here
     
-    from optima import Project
-    P = Project(spreadsheet='generalized.xlsx')
+    import optima as op
+    P = op.Project(spreadsheet='generalized.xlsx')
     P.settings.usecascade = False
     pp = tic()
     P.runsim()
     toc(pp, label='model run without cascade')
     
-    Q = Project(spreadsheet='generalized.xlsx')
+    Q = op.Project(spreadsheet='generalized.xlsx')
     Q.settings.usecascade = True
     qq = tic()
     Q.runsim()
     toc(qq, label='model run with cascade')
     
-    
-    
     if doplot:
-        from optima import plotresults
-        plotresults(P.results[-1], toplot=toplot, figsize=(16,10), num='No cascade')
-        plotresults(Q.results[-1], toplot=toplot, figsize=(16,10), num='With cascade')
+        op.gui.plotpeople(P, P.results[-1].raw[0]['people'], animate=False, figsize=(16,10), num='No cascade')
+        op.gui.plotpeople(Q, Q.results[-1].raw[0]['people'], animate=False, figsize=(16,10), num='With cascade')
     
     done(t)
+
+
+
+
 
 
 

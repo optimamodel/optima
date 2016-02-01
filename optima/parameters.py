@@ -11,6 +11,7 @@ from optima import OptimaException, odict, printv, sanitize, uuid, today, getdat
 from optima import getresults, convertlimits, gettvecdt # Heftier functions
 
 eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
+defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 
 #############################################################################################################################
@@ -19,91 +20,93 @@ eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
-name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
-Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
-Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	None	0	None
-Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	None
-Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
-Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	None	0	None
-Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	None	0	None
-Birth transitions (% who give birth/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	None	0	None
-Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
-AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
-STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	1	random
-Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	1	random
-Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	1	1	random
-Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
-Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	1	random
-Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	1	random
-Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	1	random
-Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
-Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	1	random
-Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	1	random
-Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
-Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
-Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
-People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	0	1	random
-Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	0	1	random
-Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	0	1	random
-HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
-Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
-HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	0	1	random
-Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
-PLHIV aware of their status (%)	phivdx	(0, 1)	tot	timepar	meta	cascade	0	1	random
-Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
-People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	0	1	random
-Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	0	1	random
-Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
-Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	None	0	None
-Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	None	0	None
-Male-male receptive transmissibility (per act)	transmmr	(0, 1)	tot	constant	const	const	None	0	None
-Injection-related transmissibility (per injection)	transinj	(0, 1)	tot	constant	const	const	None	0	None
-Mother-to-child breastfeeding transmissibility (%)	mtctbreast	(0, 1)	tot	constant	const	const	None	0	None
-Mother-to-child no-breastfeeding transmissibility (%)	mtctnobreast	(0, 1)	tot	constant	const	const	None	0	None
-Relative transmissibility for acute HIV (unitless)	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>500 (unitless)	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>350 (unitless)	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Progression rate for acute HIV (%/year)	progacute	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>500 (%/year)	proggt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>350 (%/year)	proggt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>200 (%/year)	proggt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>50 (%/year)	proggt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>500 (%/year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>350 (%/year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>200 (%/year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>50 (%/year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for acute HIV (%/year)	deathacute	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>500 (%/year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>350 (%/year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>200 (%/year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Efficacy of unsuppressive ART (%)	efftxunsupp	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of suppressive ART (%)	efftxsupp	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of PrEP (%)	effprep	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of condoms (%)	effcondom	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of circumcision (%)	effcirc	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of OST (%)	effost	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of diagnosis for behavior change (%)	effdx	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of acute HIV (%)	disutilacute	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>500 (%)	disutilgt500	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>350 (%)	disutilgt350	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
-Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
+name	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract
+Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None
+Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None
+Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None
+Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None
+Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Birth transitions (% born into each population/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	0	1	random
+HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	0	1	random
+AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1	random
+STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	random
+Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
+Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random
+Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random
+Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	0	1	random
+Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
+Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random
+Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random
+Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random
+People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
+Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
+Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
+HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
+Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+PLHIV aware of their status (%)	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
+Diagnosed PLHIV in care (%)	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
+PLHIV in care on treatment (%)	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
+Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
+Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
+Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None
+Male-male receptive transmissibility (per act)	transmmr	(0, 1)	tot	constant	const	const	0	None	0	None
+Injection-related transmissibility (per injection)	transinj	(0, 1)	tot	constant	const	const	0	None	0	None
+Mother-to-child breastfeeding transmissibility (%)	mtctbreast	(0, 1)	tot	constant	const	const	0	None	0	None
+Mother-to-child no-breastfeeding transmissibility (%)	mtctnobreast	(0, 1)	tot	constant	const	const	0	None	0	None
+Relative transmissibility for acute HIV (unitless)	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>500 (unitless)	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>350 (unitless)	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Progression rate for acute HIV (%/year)	progacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>500 (%/year)	proggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>350 (%/year)	proggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>200 (%/year)	proggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>50 (%/year)	proggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>500 (%/year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>350 (%/year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>200 (%/year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>50 (%/year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for acute HIV (%/year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>500 (%/year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>350 (%/year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>200 (%/year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Efficacy of unsuppressive ART (%)	efftxunsupp	(0, 1)	tot	constant	const	const	1	None	0	None
+Efficacy of suppressive ART (%)	efftxsupp	(0, 1)	tot	constant	const	const	1	None	0	None
+Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of PrEP (%)	effprep	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of condoms (%)	effcondom	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of circumcision (%)	effcirc	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of OST (%)	effost	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of diagnosis for behavior change (%)	effdx	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of acute HIV (%)	disutilacute	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>500 (%)	disutilgt500	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>350 (%)	disutilgt350	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	0	None	0	None
 '''
 
 
@@ -240,7 +243,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
-    
+
     return par
 
 
@@ -305,29 +308,6 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         output[:,:,t] = thispoint
     
     return output, ctrlpts
-
-# Births
-def birthmatrixcalc(birth=None, birthmatrix=None, popkeys=None, fpopkeys=None):
-    ''' 
-    Combine the birth rates, the birth matrix and the population sizes to figure out how many people are born into each pop
-    '''
-    # Initialise output
-    births_to_pops = odict()
-    
-    # Normalise rows of birth matrix and pad
-    normalised_birthmatrix = [[col/sum(row) if sum(row) else 0 for col in row] for row in birthmatrix]
-
-    # Assign births to mother/child pairs
-    for fpopno, fpop in enumerate(fpopkeys):
-        row = normalised_birthmatrix[fpopno]
-        for colno, col in enumerate(row):
-            if col:
-                key = (fpop, popkeys[colno])
-                births_to_pops[key] = [birth[fpopno][t]*normalised_birthmatrix[fpopno][colno] for t in range(len(birth[fpopno]))]
-
-    return births_to_pops
-
-
 
 
 
@@ -480,7 +460,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -496,9 +476,11 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
+    elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
     dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
+    if smoothness is None: smoothness = int(defaultsmoothness/dt)
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
@@ -565,7 +547,6 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
         errormsg = 'Something went wrong with applying limits for parameter "%s":\ninput and output do not have the same shape:\n%s vs. %s' % (parname, shape(y), shape(newy))
         raise OptimaException(errormsg)
     
-    printv('Limits (%f, %f) applied for parameter "%s":\n%s' % (limits[0], limits[1], parname, y), 4, verbose)
     return newy
 
 
@@ -581,13 +562,14 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
+        self.cascade = cascade # Whether or not it's a cascade parameter
         self.coverage = coverage # Whether or not this is a coverage parameter
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
@@ -612,7 +594,7 @@ class Timepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
     
     
-    def interp(self, tvec=None, dt=None, smoothness=20):
+    def interp(self, tvec=None, dt=None, smoothness=None):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -620,6 +602,7 @@ class Timepar(Par):
             errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
             raise OptimaException(errormsg)
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
         
         # Set things up and do the interpolation
         keys = self.y.keys()

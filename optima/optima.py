@@ -127,7 +127,7 @@ except: _failed()
 
 try: 
     import parameters as _parameters # Load high-level module as well
-    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults # Parameter and Parameterset classes
+    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults, applylimits # Parameter and Parameterset classes
 except: _failed()
 
 try: 
