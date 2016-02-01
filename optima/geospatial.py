@@ -71,14 +71,14 @@ def geogui():
         objectiveinputs['budget'].setText(str(totalbudget/budgetfactor))
         return None
     
-    def not_implemented():
+    def warning(message):
         global geoguiwindow
-        QtGui.QMessageBox.warning(geoguiwindow, 'Message', "Sorry, this feature has not been implemented.")
+        QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
         
         
     def makesheet():
         ''' Create a geospatial spreadsheet template based on a project file '''
-        not_implemented()
+        warning("Sorry, this feature has not been implemented.")
         
         ## 1. Load a project file
 #        project = _loadproj()
@@ -97,7 +97,7 @@ def geogui():
     
     def makeproj():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
-        not_implemented()
+        warning("Sorry, this feature has not been implemented.")
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
 #        project = _loadproj()
@@ -188,19 +188,43 @@ def geogui():
         return None
     
     
+    
     def export():
         ''' Save the current results to Excel file '''
         global portfolio
         if type(portfolio)!=Portfolio: print('Warning, must load portfolio first!')
         
+        from xlsxwriter import Workbook
+        
         # 1. Extract data needed from portfolio
-        string = portfolio.outputstring
+        try:
+            outstr = portfolio.outputstring
+        except:
+            warning('Warning, it does not seem that geospatial analysis has been run for this portfolio!')
+            return None
         
+        # 2. Create a new file dialog to save this spreadsheet
+        filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
+        
+
+
         # 2. Generate spreadsheet according to David's template to store these data
-        # ...
+        workbook = Workbook(filepath)
+        worksheet = workbook.add_worksheet()
         
-        # 3. Create a new file dialog to save this spreadsheet
-        # ...
+        # Convert from a string to a 2D array
+        outlist = []
+        for line in outstr.split('\n'):
+            outlist.append([])
+            for cell in line.split('\t'):
+                outlist[-1].append(cell)
+            
+        # Iterate over the data and write it out row by row.
+        row, col = 0, 0
+        for row in range(len(outlist)):
+            for col in range(len(outlist[row])):
+                worksheet.write(row, col, outlist[row][col])
+        workbook.close()
         return None
         
 
