@@ -403,9 +403,11 @@ class GAOptim(object):
         return output
     
     
-    def complete(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, verbose=2):
+    def complete(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
         ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
         printv('Finalizing geospatial analysis...', 1, verbose)
+        printv('Warning, using default programset/programset!', 2, verbose)
+        
         
         # Validate inputs
         if not len(projects) == len(initbudgets) or not len(projects) == len(optbudgets):
@@ -426,7 +428,7 @@ class GAOptim(object):
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        for pno,p in enumerate(projects.values()):
+        for pind,p in enumerate(projects.values()):
             self.resultpairs[p.uid] = odict()
 
             # Crash if any project doesn't have progsets
@@ -434,40 +436,18 @@ class GAOptim(object):
                 errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
                 raise OptimaException(errormsg)
 
-            # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
-            if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
-                pno=0
-            elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
-                pno=0
-            else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
-                pno=0            
-
-            # Check that the parsets that were specified are indeed valid. They could be a string or a list index, so must check both
-            if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
-                printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
-                pno=0
-            elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
-                printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
-                pno=0
-            else: 
-                printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
-                pno=0
-
             initobjectives = dcp(self.objectives)
-            initobjectives['budget'] = initbudgets[pno] + budgeteps
+            initobjectives['budget'] = initbudgets[pind] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
             preibudget = initobjectives['budget']
             postibudget = self.resultpairs[p.uid]['init'].budget[-1]
             assert abs(preibudget-sum(postibudget[:]))<tol
             
             optobjectives = dcp(self.objectives)
-            optobjectives['budget'] = optbudgets[pno] + budgeteps
+            optobjectives['budget'] = optbudgets[pind] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
             postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
             assert abs(preobudget-sum(postobudget[:]))<tol
