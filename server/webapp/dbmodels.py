@@ -378,7 +378,7 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
 
 costcov_fields = {
     'year': fields.String,
-    'cost': LargeInt(attribute='cost'),
+    'spending': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
 
