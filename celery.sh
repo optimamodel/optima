@@ -19,4 +19,4 @@ then
   pip install -r ./server/requirements.txt
 fi
 
-server/p-env/bin/celery -A server.webapp.tasks.celery
+server/p-env/bin/celery -A server.webapp.tasks.celery worker -l info
