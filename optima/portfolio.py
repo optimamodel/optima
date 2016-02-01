@@ -451,12 +451,17 @@ class GAOptim(object):
             initobjectives['budget'] = initbudgets[pno] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
             self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
+            prebudget = initobjectives['budget']
+            postbudget = self.resultpairs[p.uid]['init'].budget[-1]
+            assert sum(prebudget)==sum(postbudget)
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pno] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
             self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-
+            prebudget = initobjectives['budget']
+            postbudget = self.resultpairs[p.uid]['opt'].budget[-1]
+            assert sum(prebudget)==sum(postbudget)
 
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
@@ -468,6 +473,9 @@ class GAOptim(object):
         sumoutcomeinit = 0
         sumoutcomeimp = 0
         sumoutcomegaopt = 0
+        
+        output = ''        
+        
         for x in self.resultpairs:          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
             projectname = self.resultpairs[x]['init'].project.name
             initalloc = self.resultpairs[x]['init'].budget[0]
@@ -487,26 +495,28 @@ class GAOptim(object):
             sumoutcomeimp += impoutcome
             sumoutcomegaopt += gaoptoutcome
             
-            print('\nProject: %s' % projectname)
-            print('Init./Improv. Budget: %f' % suminitalloc)
-            print('GA Optimised Budget: %f' % sumgaoptalloc)
+            output += '\nProject:\t%s\n' % projectname
+            output += 'Default project budget:\t%f\n' % suminitalloc
+            output += 'Geospatial analysis budget:\t%f\n' % sumgaoptalloc
             
-            print('\nInitial Allocation...      (Outcome: %f)' % initoutcome)
-            for c in xrange(len(initalloc)): print('%-15s\t%12.2f' % (initalloc.keys()[c],initalloc.values()[c][-1]))
-            print('\nImproved Allocation...     (Outcome: %f)' % impoutcome)
-            for c in xrange(len(initalloc)): print('%-15s\t%12.2f' % (impalloc.keys()[c],impalloc.values()[c][-1]))
-            print('\nGA Optimal Allocation...   (Outcome: %f)' % gaoptoutcome)
-            for c in xrange(len(initalloc)): print('%-15s\t%12.2f' % (gaoptalloc.keys()[c],gaoptalloc.values()[c][-1]))
+            output += '\nInitial allocation:\n'
+            output +=  'Outcome:\t%f\n'  % initoutcome
+            for c in xrange(len(initalloc)): output += '%-15s\t%12.2f\n' % (initalloc.keys()[c], initalloc.values()[c][-1])
+#            output += '\nImproved Allocation...     (Outcome: %f)\n' % impoutcome
+#            for c in xrange(len(initalloc)): output += '%-15s\t%12.2f\n' % (impalloc.keys()[c],impalloc.values()[c][-1])
+            output += '\nOptimal geospatial allocation:\n'
+            output +=  'Outcome:\t%f\n'  % gaoptoutcome
+            for c in xrange(len(initalloc)): output += '%-15s\t%12.2f\n' % (gaoptalloc.keys()[c], gaoptalloc.values()[c][-1])
                 
-        print('\nGA Summary')
-        print('')
-        print('Initial Portfolio Budget:      %12.2f' % sumbudgetsinit)
-        print('Improved Portfolio Budget:     %12.2f' % sumbudgetsimp)
-        print('GA Optimised Portfolio Budget: %12.2f' % sumbudgetsgaopt)
-        print('')
-        print('Initial Aggregate Outcome:      %f' % sumoutcomeinit)
-        print('Improved Aggregate Outcome:     %f' % sumoutcomeimp)
-        print('GA Optimised Aggregate Outcome: %f' % sumoutcomegaopt)
+        output += '\nGA Summary\n'
+        output += '\n'
+        output += 'Initial portfolio budget:\t%12.2f\n' % sumbudgetsinit
+#        output += 'Improved Portfolio Budget:     %12.2f\n' % sumbudgetsimp
+        output += 'Optimized portfolio budget:\t%12.2f\n' % sumbudgetsgaopt
+        output += '\n'
+        output += 'Initial outcome:\t%f\n' % sumoutcomeinit
+#        output += 'Improved Aggregate Outcome:     %f\n' % sumoutcomeimp
+        output += 'Outcome fter optimization:\t%f\n' % sumoutcomegaopt
         
                 
             

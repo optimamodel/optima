@@ -104,7 +104,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     
     ## Loop
     start = time()
-    offset = ' '*5 # Offset the print statements
+    offset = ' '*4 # Offset the print statements
     while 1:
         if verbose==1: print(offset+'Iteration %i; elapsed %0.1f s; objective: %0.3e' % (count+1, time()-start, fval)) # For more verbose, use other print statement below
         
