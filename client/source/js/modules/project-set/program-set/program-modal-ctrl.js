@@ -140,6 +140,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Add a new parameter
     $scope.addParameter = function() {
+      if ($scope.state.program.parameters == undefined) {
+        $scope.state.program.parameters = [];
+      }
+
       $scope.state.program.parameters.push({active: true});
     };
 
