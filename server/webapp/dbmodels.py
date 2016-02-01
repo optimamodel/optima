@@ -32,7 +32,6 @@ def db_model_as_file(model, loaddir, filename, name_field, extension):
     return filename
 
 
-
 @swagger.model
 class UserDb(db.Model):
 
@@ -380,7 +379,7 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
 costcov_fields = {
     'year': fields.String,
     'spending': LargeInt(attribute='cost'),
-    'coverage': LargeInt(attribute='cov'),
+    'coverage': LargeInt(attribute='coverage'),
 }
 
 
@@ -416,13 +415,14 @@ class ProgramsDb(db.Model):
     targetpops = db.Column(ARRAY(db.String), default=[])
     criteria = db.Column(JSON)
     costcov = db.Column(JSON)
-    blob = db.Column(db.LargeBinary)
+    ccopars = db.Column(JSON)
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
     def __init__(self, project_id, progset_id, name, short='',
                  category='No category', active=False, pars=None, created=None,
-                 updated=None, id=None, targetpops=[], criteria=None, costcov=None):
+                 updated=None, id=None, targetpops=[], criteria=None, costcov=None,
+                 ccopars=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -434,6 +434,7 @@ class ProgramsDb(db.Model):
         self.targetpops = targetpops
         self.criteria = criteria
         self.costcov = costcov
+        self.ccopars = ccopars
         if created:
             self.created = created
         if updated:
@@ -474,6 +475,20 @@ class ProgramsDb(db.Model):
 
         return pars
 
+    def datapoint_api_to_db(self, pt):
+        return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
+
+    def datapoint_db_to_api(self, pt):
+        return {'spending': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
+
+    def data_api_to_db(self, data):
+        costcov_data = [self.datapoint_api_to_db(x) for x in data]
+        return costcov_data
+
+    def data_db_to_api(self):
+        costcov_data = [self.datapoint_db_to_api(x) for x in (self.costcov or [])]
+        return costcov_data
+
     def _conv_lg_num(self, num):
         return int(float(num))
 
@@ -488,11 +503,35 @@ class ProgramsDb(db.Model):
             costcovdata={
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['cov'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-            } if self.costcov is not None else None
+                'coverage': [self.costcov[i]['coverage'] 
+                if self.costcov[i] is not None 
+                else None for i in range(len(self.costcov))],
+            } if self.costcov is not None else None,
+            ccopars={
+                't': self.ccopars['t'],
+                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
+                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
+            } if self.ccopars else None,
         )
         program_entry.id = self.id
         return program_entry
+
+    def restore(self, program_instance):
+        import json
+        self.category = program_instance.category
+        self.name = program_instance.name
+        self.short = program_instance.short
+        self.pars = self.program_pars_to_pars(program_instance.targetpars)
+        self.targetpops = program_instance.targetpops
+        self.criteria = program_instance.criteria
+        self.costcov = []
+        for i in range(len(program_instance.costcovdata['t'])):
+            self.costcov.append(
+                {'year': program_instance.costcovdata['t'][i],
+                 'cost': program_instance.costcovdata['cost'][i],
+                 'coverage': program_instance.costcovdata['coverage'][i]})
+        self.costcov = json.loads(json.dumps(self.costcov))  # silently bails on floats otherwise. No idea why?
+        self.ccopars = program_instance.costcovfn.ccopars
 
 
 @swagger.model
@@ -549,7 +588,7 @@ class ProgsetsDb(db.Model):
                 {
                     'year': program['costcovdata']['t'][i],
                     'cost': program['costcovdata']['cost'][i],
-                    'cov': program['costcovdata']['coverage'][i],
+                    'coverage': program['costcovdata']['coverage'][i],
                 } for i in range(len(program['costcovdata']['t']))
             ]
         return program

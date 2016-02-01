@@ -192,6 +192,26 @@ def load_progset(project_id, progset_id, raise_exception=True):
     return progset_entry
 
 
+def load_program(project_id, progset_id, program_id, raise_exception=True):
+    from server.webapp.dbmodels import ProgramsDb
+    from server.webapp.exceptions import ProgramDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting project {} for user {}".format(progset_id, cu.id))
+
+    progset_entry = load_progset(project_id, progset_id,
+                                 raise_exception=raise_exception)
+
+    program_entry = db.session.query(ProgramsDb).get(program_id)
+
+    if program_entry.progset_id != progset_entry.id:
+        if raise_exception:
+            raise ProgramDoesNotExist(id=program_id)
+        return None
+
+    return program_entry
+
+
 def save_data_spreadsheet(name, folder=None):
     if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
@@ -408,6 +428,23 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
 
     program_record.blob = saves(program_record.hydrate())
     db.session.add(program_record)
+
+
+def modify_program(project_id, progset_id, program_id, args, program_modifier):
+    # looks up a program, hydrates it, calls a modifier
+    # (function defined somewhere) with given args, saves the result
+    # TODO could such things be done as decorators?
+    program_entry = load_program(project_id, progset_id, program_id)
+    if program_entry is None:
+        raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+    program_instance = program_entry.hydrate()
+    program_modifier(program_instance, args)
+    program_entry.restore(program_instance)
+    result = {"params": program_entry.ccopars or {},
+              "data": program_entry.data_db_to_api()}
+    db.session.add(program_entry)
+    db.session.commit()
+    return result
 
 
 def save_result(project_id, result, parset_name='default'):

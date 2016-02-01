@@ -3,13 +3,16 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan28
+Version: 2016jan30
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, getresults
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
+from optima import getresults, convertlimits, gettvecdt # Heftier functions
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
+eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
+defaultsmoothness = 1.0 # The number of years of smoothing to do by default
+
 
 #############################################################################################################################
 ### Define the parameters!
@@ -17,86 +20,93 @@ eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
-name	short	limits	by	partype	fittable	auto	coverage	visible	proginteract
-Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	None	0	None
-Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	None	0	None
-Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	None	0	None
-Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	None	0	None
-Transitions (% moving/year)	transit	(0, 'maxrate')	array	meta	no	no	None	0	None
-Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	1	random
-AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	1	random
-STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	1	random
-Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	1	random
-Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	1	1	random
-Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
-Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	1	random
-Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	1	random
-Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	1	random
-Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	1	1	random
-Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	1	random
-Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	1	random
-Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	1	random
-Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	1	random
-Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	1	random
-Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	1	random
-Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	other	0	1	random
-Linkage to care rate (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	other	0	1	random
-ART adherence achieving viral suppression (%)	adherenceprop	(0, 1)	pop	timepar	meta	other	0	1	random
-Those who stop ART but are still in care (%)	propstop	(0, 1)	pop	timepar	meta	other	0	1	random
-Those in care who are lost to follow-up (%/year)	leavecare	(0, 1)	pop	timepar	meta	other	0	1	random
-PLHIV lost to follow-up (%/year)	proploss	(0, 1)	pop	timepar	meta	other	0	1	random
-Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	other	0	1	random
-Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	None	0	None
-Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	None	0	None
-Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	None	0	None
-Male-male receptive transmissibility (per act)	transmmr	(0, 1)	tot	constant	const	const	None	0	None
-Injection-related transmissibility (per injection)	transinj	(0, 1)	tot	constant	const	const	None	0	None
-Mother-to-child breastfeeding transmissibility (%)	mtctbreast	(0, 1)	tot	constant	const	const	None	0	None
-Mother-to-child no-breastfeeding transmissibility (%)	mtctnobreast	(0, 1)	tot	constant	const	const	None	0	None
-Relative transmissibility for acute HIV (unitless)	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>500 (unitless)	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>350 (unitless)	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Progression rate for acute HIV (%/year)	progacute	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>500 (%/year)	proggt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>350 (%/year)	proggt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>200 (%/year)	proggt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Progression rate for CD4>50 (%/year)	proggt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>500 (%/year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>350 (%/year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>200 (%/year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Treatment recovery rate into CD4>50 (%/year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for acute HIV (%/year)	deathacute	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>500 (%/year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>350 (%/year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>200 (%/year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	None	0	None
-Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	None	0	None
-Probability of viral suppression with ART  (%)	successart	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of unsuppressive ART (%)	efftxunsupp	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of suppressive ART (%)	efftxsupp	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of PrEP (%)	effprep	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of condoms (%)	effcondom	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of circumcision (%)	effcirc	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of OST (%)	effost	(0, 1)	tot	constant	const	const	None	0	None
-Efficacy of diagnosis for behavior change (%)	effdx	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of acute HIV (%)	disutilacute	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>500 (%)	disutilgt500	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>350 (%)	disutilgt350	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	None	0	None
-Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	None	0	None
-Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	None	0	None
+name	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract
+Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None
+Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None
+Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None
+Inhomogeneity (unitless)	inhomo	(0, 'maxmeta')	pop	meta	pop	inhomo	0	None	0	None
+Risk transitions (% moving/year)	risktransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Age transitions (% moving/year)	agetransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Birth transitions (% born into each population/year)	birthtransit	(0, 'maxrate')	array	meta	no	no	0	None	0	None
+Mortality rate (%/year)	death	(0, 'maxrate')	pop	timepar	meta	other	0	0	1	random
+HIV testing rate (%/year)	hivtest	(0, 'maxrate')	pop	timepar	meta	test	0	0	1	random
+AIDS testing rate (%/year)	aidstest	(0, 'maxrate')	tot	timepar	meta	test	0	0	1	random
+STI prevalence (%)	stiprev	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Tuberculosis prevalence (%)	tbprev	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1	1	random
+Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
+Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random
+Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random
+Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	0	1	random
+Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
+Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random
+Number of regular acts (acts/year)	actsreg	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Number of casual acts (acts/year)	actscas	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Number of commercial acts (acts/year)	actscom	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	meta	other	0	0	1	random
+Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random
+Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random
+Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random
+People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
+Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
+Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
+HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
+Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
+Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+PLHIV aware of their status (%)	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
+Diagnosed PLHIV in care (%)	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
+PLHIV in care on treatment (%)	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
+Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
+Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
+Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None
+Male-male receptive transmissibility (per act)	transmmr	(0, 1)	tot	constant	const	const	0	None	0	None
+Injection-related transmissibility (per injection)	transinj	(0, 1)	tot	constant	const	const	0	None	0	None
+Mother-to-child breastfeeding transmissibility (%)	mtctbreast	(0, 1)	tot	constant	const	const	0	None	0	None
+Mother-to-child no-breastfeeding transmissibility (%)	mtctnobreast	(0, 1)	tot	constant	const	const	0	None	0	None
+Relative transmissibility for acute HIV (unitless)	cd4transacute	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>500 (unitless)	cd4transgt500	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>350 (unitless)	cd4transgt350	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>200 (unitless)	cd4transgt200	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4>50 (unitless)	cd4transgt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility for CD4<50 (unitless)	cd4translt50	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative transmissibility with STIs (unitless)	effsti	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Progression rate for acute HIV (%/year)	progacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>500 (%/year)	proggt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>350 (%/year)	proggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>200 (%/year)	proggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Progression rate for CD4>50 (%/year)	proggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>500 (%/year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>350 (%/year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>200 (%/year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Treatment recovery rate into CD4>50 (%/year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for acute HIV (%/year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>500 (%/year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>350 (%/year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>200 (%/year)	deathgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4>50 (%/year)	deathgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Death rate for CD4<50 (%/year)	deathlt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+Relative death rate on treatment (unitless)	deathtreat	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Relative death rate with tuberculosis (unitless)	deathtb	(0, 'maxmeta')	tot	constant	const	const	0	None	0	None
+Efficacy of unsuppressive ART (%)	efftxunsupp	(0, 1)	tot	constant	const	const	1	None	0	None
+Efficacy of suppressive ART (%)	efftxsupp	(0, 1)	tot	constant	const	const	1	None	0	None
+Efficacy of PMTCT (%)	effpmtct	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of PrEP (%)	effprep	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of condoms (%)	effcondom	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of circumcision (%)	effcirc	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of OST (%)	effost	(0, 1)	tot	constant	const	const	0	None	0	None
+Efficacy of diagnosis for behavior change (%)	effdx	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of acute HIV (%)	disutilacute	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>500 (%)	disutilgt500	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>350 (%)	disutilgt350	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	0	None	0	None
+Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	0	None	0	None
 '''
 
 
@@ -233,7 +243,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
-    
+
     return par
 
 
@@ -254,7 +264,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
             if which=='condom': symmetricmatrix[pop1,pop2] = bool(symmetricmatrix[pop1,pop2] + mixmatrix[pop1,pop2] + mixmatrix[pop2,pop1])
         
     # Decide which years to use -- use the earliest year, the latest year, and the most time points available
-    yearstouse = []
+    yearstouse = []    
     for row in range(npops): yearstouse.append(getvalidyears(data['years'], ~isnan(data[which+act][row])))
     minyear = Inf
     maxyear = -Inf
@@ -268,7 +278,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
     
     # Interpolate over population acts data for each year
-    tmppar = data2timepar(name='tmp', short=which+act, data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
+    tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
     tmpsim = tmppar.interp(tvec=ctrlpts)
     if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
     npts = len(ctrlpts)
@@ -298,15 +308,6 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
         output[:,:,t] = thispoint
     
     return output, ctrlpts
-
-
-    
-
-
-
-
-
-
 
 
 
@@ -344,8 +345,8 @@ def makepars(data, label=None, verbose=2):
     # Set up keys
     totkey = ['tot'] # Define a key for when not separated by population
     popkeys = data['pops']['short'] # Convert to a normal string and to lower case...maybe not necessary
-    fpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['female'][i]]
-    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]]
+    fpopkeys = [popkey for popno,popkey in enumerate(popkeys) if data['pops']['female'][popno]]
+    mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
     pars['popkeys'] = dcp(popkeys)
     
     
@@ -386,25 +387,42 @@ def makepars(data, label=None, verbose=2):
     ## Tidy up -- things that can't be converted automatically
     ###############################################################################    
     
-    # Births
+    # Births rates. This parameter is coupled with the birth matrix defined below
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
         pars['birth'].y[key] = array([0])
         pars['birth'].t[key] = array([0])
+    pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['birth'].t = pars['birth'].t.sort(popkeys)
+    
+    # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
+    normalised_birthtransit = [[0]*len(popkeys)]*len(popkeys)
+    c = 0
+    for pk,popkey in enumerate(popkeys):
+        if data['pops']['female'][pk]:
+            normalised_birthtransit[pk] = [col/sum(data['birthtransit'][c]) if sum(data['birthtransit'][c]) else 0 for col in data['birthtransit'][c]]
+            c += 1
+    pars['birthtransit'] = normalised_birthtransit 
+
+    # Aging transitions - these are time-constant transition rates
+    duration = [age[1]-age[0]+1 for age in data['pops']['age']]
+    normalised_agetransit = [[col/sum(row)*1/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
+    pars['agetransit'] = normalised_agetransit
+
+    # Risk transitions - these are time-constant transition rates
+    normalised_risktransit = [[1/col if col else 0 for col in row] for row in data['risktransit']]
+    pars['risktransit'] = normalised_risktransit 
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
         pars['circum'].y[key] = array([0])
         pars['circum'].t[key] = array([0])
-    
+    pars['circum'].y = pars['circum'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['circum'].t = pars['circum'].t.sort(popkeys)
+
     # Metaparameters
     for key in popkeys: # Define values
         pars['force'].y[key] = 1
         pars['inhomo'].y[key] = 0
-    
-    # Transitions
-    for i,key1 in enumerate(popkeys): # Populate from spreadsheet verbatim
-        for j,key2 in enumerate(popkeys):
-            pars['transit'].y[(key1,key2)] = array(data['transit'])[i,j] 
     
     
     # Balance partnerships parameters    
@@ -442,7 +460,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -455,36 +473,103 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetname'] = name
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
+    staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
     if tvec is not None: simpars['tvec'] = tvec
+    elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
-    simpars['dt'] = simpars['tvec'][1] - simpars['tvec'][0] # Calculate and store dt
+    dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
+    simpars['dt'] = dt  # Store dt
+    if smoothness is None: smoothness = int(defaultsmoothness/dt)
     
     # Copy default keys by default
     for key in generalkeys: simpars[key] = dcp(pars[key])
-    
+    for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
+
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
-            try: simpars[key] = pars[key].interp(tvec=simpars['tvec'], smoothness=smoothness) # WARNING, want different smoothness for ART
-            except: raise OptimaException('Could not figure out how to interpolate parameter "%s"' % key)
+            try: 
+                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+            except OptimaException as E: 
+                errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
+                errormsg += 'Error: "%s"' % E.message
+                raise OptimaException(errormsg)
 
     return simpars
 
 
 
 
+
+def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
+    ''' 
+    A function to intelligently apply limits (supplied as [low, high] list or tuple) to an output.
+    
+    Needs dt as input since that determines maxrate.
+    
+    Version: 2016jan30
+    '''
+    
+    # If parameter object is supplied, use it directly
+    parname = ''
+    if par is not None:
+        if limits is None: limits = par.limits
+        parname = par.name
+        
+    # If no limits supplied, don't do anything
+    if limits is None:
+        printv('No limits supplied for parameter "%s"' % parname, 4, verbose)
+        return y
+    
+    if dt is None:
+        if warn: raise OptimaException('No timestep specified: required for convertlimits()')
+        else: dt = 0.2 # WARNING, should probably not hard code this, although with the warning, and being conservative, probably OK
+    
+    # Convert any text in limits to a numerical value
+    limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
+    
+    # Apply limits, preserving original class
+    if isinstance(y, (int, float)):
+        newy = median([limits[0], y, limits[1]])
+        if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
+    elif shape(y):
+        newy = array(y) # Make sure it's an array and not a list
+        newy[newy<limits[0]] = limits[0]
+        newy[newy>limits[1]] = limits[1]
+        if warn and any(newy!=array(y)):
+            printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
+    else:
+        if warn: raise OptimaException('Data type "%s" not understood for applying limits for parameter "%s"' % (type(y), parname))
+        else: newy = array(y)
+    
+    if shape(newy)!=shape(y):
+        errormsg = 'Something went wrong with applying limits for parameter "%s":\ninput and output do not have the same shape:\n%s vs. %s' % (parname, shape(y), shape(newy))
+        raise OptimaException(errormsg)
+    
+    return newy
+
+
+
+
+
+
+
+#################################################################################################################################
 ### Define the classes
+#################################################################################################################################
+
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
         self.by = by # Whether it's by population, partnership, or total
         self.fittable = fittable # Whether or not this parameter can be manually fitted: options are '', 'meta', 'pop', 'exp', etc...
         self.auto = auto # Whether or not this parameter can be automatically fitted -- see parameter definitions above for possibilities; used in calibration.py
+        self.cascade = cascade # Whether or not it's a cascade parameter
         self.coverage = coverage # Whether or not this is a coverage parameter
         self.visible = visible # Whether or not this parameter is visible to the user in scenarios and programs
         self.proginteract = proginteract # How multiple programs with this parameter interact
@@ -493,10 +578,6 @@ class Par(object):
         ''' Print out useful information when called'''
         output = defaultrepr(self)
         return output
-
-
-
-
 
 
 
@@ -512,24 +593,30 @@ class Timepar(Par):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
     
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
     
-    def interp(self, tvec, smoothness=20):
+    def interp(self, tvec=None, dt=None, smoothness=None):
         """ Take parameters and turn them into model parameters """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
+        
+        # Set things up and do the interpolation
         keys = self.y.keys()
         npops = len(keys)
         if self.by=='pship': # Have odict
             output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[key] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[key] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         else: # Have 2D matrix: pop, time
             output = zeros((npops,len(tvec)))
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop,:] = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+                output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -548,19 +635,23 @@ class Popsizepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
-    def __repr__(self):
-        ''' Print out useful information when called '''
-        output = defaultrepr(self)
-        return output
 
-    def interp(self, tvec, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        
+        # Validate input
+        if tvec is None: 
+            errormsg = 'Cannot interpolate parameter "%s" with no time vector specified' % self.name
+            raise OptimaException(errormsg)
+        tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
+        
+        # Do interpolation
         keys = self.p.keys()
         npops = len(keys)
         output = zeros((npops,len(tvec)))
         for pop,key in enumerate(keys):
-            output[pop,:] = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
         return output
 
 
@@ -574,21 +665,20 @@ class Constant(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
-    def __repr__(self):
-        ''' Print out useful information when called'''
-        output = defaultrepr(self)
-        return output
     
-    def interp(self, tvec=None, smoothness=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
+        
+        dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
+        
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-            output = self.y
+            output = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
             output = zeros(npops)
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = self.y[key] # Just copy y values
+                output[pop] = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
         return output
 
 
@@ -645,7 +735,7 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose)
         
         simparslist = []
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:

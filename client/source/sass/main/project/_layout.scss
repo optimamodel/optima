@@ -86,12 +86,30 @@
 
   .data {
     height: 30px;
+    margin-right: 10px;
+    &.bordered {
+      border-bottom: 1px solid black;
+      padding: 5%;
+    }
+    &.spaced {
+      padding: 5%;
+    }
+    &.high {
+      height: 35px;
+    }
+  }
+
+  .data_nomargin {
+    margin-right: 0;
   }
 
   .column {
     display: flex;
     flex-direction: column;
-    width: 80px;
+    width: 95px;
+    &.bordered {
+      border: 1px solid black;
+    }
   }
 
   .numeric {
@@ -100,6 +118,10 @@
 
   input {
     width: 80px;
+    &.invalid{
+      border: solid #FF0000 1px;
+      outline: 0px;
+    }
   }
 }
 
@@ -117,5 +139,14 @@
 }
 
 .flex-column {
-  display: flex; flex-direction: column
+  display: flex;
+  flex-direction: column;
+}
+
+.margin_left {
+  margin-left: 2%;
+}
+
+.margin_top {
+  margin-top: 5%;
 }

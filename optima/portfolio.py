@@ -73,7 +73,7 @@ class Portfolio(object):
         if type(projects)==list:
             for project in projects: 
                 self.projects[project.uid] = project        
-                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 4, verbose)
+                printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
     def getdefaultbudgets(self, progsetnames=None, verbose=0):
         ''' Get the default allocation totals of each project, using the progset names or indices specified '''
@@ -97,13 +97,13 @@ class Portfolio(object):
 
             # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
             if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[progsetnames[0]].name), 0, verbose)
+                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[progsetnames[0]].name), 1, verbose)
                 pno=0
             elif isinstance(progsetnames[pno],int) and len(p.progsets)-1<progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 0, verbose)
+                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
                 pno=0
             else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 0, verbose)
+                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 1, verbose)
                 pno=0            
                 
             printv('\nAdd default budget from progset "%s" for project "%s" and portfolio "%s".' % (p.progsets[progsetnames[pno]].name, p.name, self.name), 4, verbose)
@@ -125,16 +125,16 @@ class Portfolio(object):
             printv('WARNING, you have called genBOCs on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
         if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 0, verbose)
+            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 1, verbose)
             progsetnames = [0]*len(self.projects)
         if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 0, verbose)
+            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
             progsetnames = [0]*len(self.projects)
         if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 0, verbose)
+            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 1, verbose)
             parsetnames = [0]*len(self.projects)
         if not len(parsetnames)==len(self.projects):
-            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 0, verbose)
+            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
             parsetnames = [0]*len(self.projects)
 
         for pno, p in enumerate(self.projects.values()):
@@ -147,28 +147,28 @@ class Portfolio(object):
     
                 # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
                 if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets.values()]:
-                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 0, verbose)
+                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
                     pno=0
                 elif isinstance(progsetnames[pno],int) and len(p.progsets)-1<=progsetnames[pno]:
-                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 0, verbose)
+                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
                     pno=0
                 else: 
-                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 0, verbose)
+                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 1, verbose)
                     pno=0            
 
                 # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
                 if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets.values()]:
-                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 0, verbose)
+                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
                     pno=0
                 elif isinstance(parsetnames[pno],int) and len(p.parsets)-1<=parsetnames[pno]:
-                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 0, verbose)
+                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
                     pno=0
                 else: 
-                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 0, verbose)
+                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 1, verbose)
                     pno=0            
 
                 # Actually generate te BOCs
-                printv('WARNING, project %s does not have BOC, or else it does but you want to regenerate it. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[parsetnames[pno]].name, p.progsets[progsetnames[pno]].name), 0, verbose)
+                printv('WARNING, project %s does not have BOC, or else it does but you want to regenerate it. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[parsetnames[pno]].name, p.progsets[progsetnames[pno]].name), 1, verbose)
                 p.delBOC(objectives)    # Delete BOCs in case forcing regeneration.
                 p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
 
@@ -204,16 +204,16 @@ class Portfolio(object):
             printv('WARNING, you have called minBOCoutcomes on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
         if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 0, verbose)
+            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 1, verbose)
             progsetnames = [0]*len(self.projects)
         if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 0, verbose)
+            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
             progsetnames = [0]*len(self.projects)
         if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 0, verbose)
+            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 1, verbose)
             parsetnames = [0]*len(self.projects)
         if not len(parsetnames)==len(self.projects):
-            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 0, verbose)
+            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
             parsetnames = [0]*len(self.projects)
         
         # Initialise internal parameters
@@ -235,27 +235,27 @@ class Portfolio(object):
     
                 # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
                 if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 0, verbose)
+                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
                     pno=0
                 elif isinstance(progsetnames[pno],int) and len(p.progsets)-1<=progsetnames[pno]:
-                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 0, verbose)
+                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
                     pno=0
                 else: 
-                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 0, verbose)
+                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 1, verbose)
                     pno=0            
     
                 # Check that the parsets that were specified are indeed valid. They could be a string or a list index, so must check both
                 if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
-                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 0, verbose)
+                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
                     pno=0
                 elif isinstance(parsetnames[pno],int) and len(p.parsets)-1<=parsetnames[pno]:
-                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 0, verbose)
+                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
                     pno=0
                 else: 
-                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 0, verbose)
+                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 1, verbose)
                     pno=0
                 
-                    printv('WARNING, project %s does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[0].name, p.progsets[0].name), 0, verbose)
+                    printv('WARNING, project %s does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[0].name, p.progsets[0].name), 1, verbose)
                     p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
 
             BOClist.append(p.getBOC(objectives))
@@ -391,21 +391,21 @@ class GAOptim(object):
             errormsg = 'Cannot complete optimisations for %i projects given %i initial budgets (%i required) and %i optimal budgets (%i required).' % (len(self.projects), len(initbudgets), len(self.projects), len(optbudgets), len(self.projects))
             raise OptimaException(errormsg)
         if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project.', 0, verbose)
+            printv('\nWARNING: no progsets specified. Using first saved progset for each project.', 1, verbose)
             progsetnames = [0]*len(projects)
         if not len(progsetnames)==len(projects):
-            printv('WARNING: %i program set names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), len(self.projects)), 0, verbose)
+            printv('WARNING: %i program set names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), len(self.projects)), 1, verbose)
             progsetnames = [0]*len(projects)
         if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project.', 0, verbose)
+            printv('\nWARNING: no parsets specified. Using first saved parset for each project.', 1, verbose)
             parsetnames = [0]*len(projects)
         if not len(parsetnames)==len(projects):
-            printv('WARNING: %i parset names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), len(self.projects)), 0, verbose)
+            printv('WARNING: %i parset names/indices were provided, but %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), len(self.projects)), 1, verbose)
             parsetnames = [0]*len(projects)
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        for pno,p in enumerate(projects):
+        for pno,p in enumerate(projects.values()):
             self.resultpairs[p.uid] = odict()
 
             # Crash if any project doesn't have progsets
@@ -415,24 +415,24 @@ class GAOptim(object):
 
             # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
             if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets]:
-                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 0, verbose)
+                printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
                 pno=0
             elif isinstance(progsetnames[pno],int) and len(p.progsets)-1<=progsetnames[pno]:
-                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 0, verbose)
+                printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
                 pno=0
             else: 
-                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 0, verbose)
+                printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 1, verbose)
                 pno=0            
 
             # Check that the parsets that were specified are indeed valid. They could be a string or a list index, so must check both
             if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets]:
-                printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 0, verbose)
+                printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
                 pno=0
             elif isinstance(parsetnames[pno],int) and len(p.parsets)-1<=parsetnames[pno]:
-                printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 0, verbose)
+                printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
                 pno=0
             else: 
-                printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 0, verbose)
+                printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 1, verbose)
                 pno=0
 
             initobjectives = dcp(self.objectives)

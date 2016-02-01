@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections
-import matplotlib as mpl
-from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, hold, shape, subplot, title, ylabel, plot, maximum
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict
+from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
+from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
@@ -279,6 +279,10 @@ def browser(results, toplot=None, doplot=True):
 
 
 
+
+
+
+
 def manualfit(project=None, name='default', ind=0, verbose=2):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
@@ -391,7 +395,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
                 subkey = fullsubkeylist[b]
                 tmppars[key].p[subkey][0] = eval(str(box.text()))
                 printv('%s.p[%s] = %s' % (key, subkey, box.text()), 3, verbose)
-            if fulltypelist[b]=='const': # Metaparameters
+            elif fulltypelist[b]=='const': # Metaparameters
                 key = fullkeylist[b]
                 tmppars[key].y = eval(str(box.text()))
                 printv('%s.y = %s' % (key, box.text()), 3, verbose)
@@ -432,6 +436,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     rowheight = 25
     colwidth = 500
     ncols = 3
+    nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
     buttonheight = panelheight-rowheight*1.5
@@ -440,9 +445,15 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     
     panel = QtGui.QWidget() # Create panel widget
     panel.setGeometry(100, 100, panelwidth, panelheight)
+    spottaken = [] # Store list of existing entries, to avoid duplicates
     for i in range(nfull):
-        row = (i % floor((nfull+1)/ncols))+1
-        col = floor(ncols*i/nfull)
+        row = (i % nrows) + 1
+        col = floor(i/float(nrows))
+        spot = (row,col)
+        if spot in spottaken: 
+            errormsg = 'Cannot add a button to %s since there already is one!' % str(spot)
+            raise OptimaException(errormsg)
+        else: spottaken.append(spot)
         
         texts.append(QtGui.QLabel(parent=panel))
         texts[-1].setText(fulllabellist[i])
@@ -450,6 +461,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
         
         boxes.append(QtGui.QLineEdit(parent = panel)) # Actually create the text edit box
         boxes[-1].move(boxoffset+colwidth*col, rowheight*row)
+        printv('Setting up GUI checkboxes: %s' % [i, fulllabellist[i], boxoffset+colwidth*col, rowheight*row], 4, verbose)
         boxes[-1].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         boxes[-1].returnPressed.connect(manualupdate)
     
@@ -470,51 +482,75 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-
-
-def plotpeople(resultslist, normalized=True):
-    ''' A clunky function to plot every health state -- not part of the main Optima code, but useful for debugging '''
-    if type(resultslist) is not list: resultslist = [resultslist]
-    ppl = resultslist[0].raw[0]['people']
-    tvec = resultslist[0].raw[0]['tvec']
-    if resultslist[0].project: settings = resultslist[0].project.settings
-    else:
-        from optima import Settings
-        settings = Settings()
-    statelabels = []
-    statelabels.append('sus1')
-    statelabels.append('sus2')
-    cd4s = ['Acu', '500', '350', '200', '50', '0']
-    types = ['ud', 'dx', 'ic', 'us', 'sv', 'lo', 'of']
-    for t in types:
-        for cd4 in cd4s:
-            statelabels.append(t+cd4)
-    nstates = len(statelabels) # 
-    if nstates != shape(ppl)[0]:
-        raise OptimaException("Number of states don't match")
-    npops = shape(ppl)[1]
-    count = 0
-    figh = figure(figsize=(24,16), facecolor='w')
-    figh.subplots_adjust(left=0.02, right=0.99, top=0.97, bottom=0.03, wspace=0.00, hspace=0.00) # Less space
-
-    mpl.rcParams.update({'font.size': 8})
-    eps = 1e-9
-    for s in range(nstates):
-        for p in range(npops):
-            normalization = eps
-            count += 1
-            h = subplot(nstates, npops, count)
-            hold(True)
-            for z in range(len(resultslist)):
-                ppl = resultslist[z].raw[0]['people']
-                if normalized:
-                    normalization = maximum(normalization, ppl[settings.allplhiv,p,:].max()*1.1)
-                else:
-                    normalization = maximum(normalization, ppl[s,p,:].max()*1.1)
-                plot(tvec, ppl[s,p,:]) # Plot values normalized across everything
-            if s!=nstates-1: h.set_xticks([])
-            h.set_yticks([])
-            h.set_ylim((0, normalization))
-            if s==0: title('Population %i' % p)
-            if p==0: ylabel('%s' % statelabels[s])
-            
+def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
+    '''
+    A function to plot all people as a stacked plot
+    
+    "Exclude" excludes the first N health states -- useful for excluding susceptibles.
+    
+    Usage example:
+        import optima as op
+        P = op.defaults.defaultproject('simple')
+        P.runsim()
+        people = P.results[-1].raw[0]['people']
+        op.gui.plotpeople(P, people)
+    
+    Version: 2016jan30
+    '''
+    if pops is None: pops = Ellipsis # This is a slice
+    legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
+    nocolor = (0.9,0.9,0.9)
+    labels = project.settings.statelabels
+    
+    plotstyles = odict([
+    ('uncirc', ('|','|')), 
+    ('circ',   ('+','|')), 
+    ('undx',   ('.','o')), 
+    ('dx',     ('*','*')), 
+    ('care',   ('O','o')), 
+    ('usvl',   ('-','|')), 
+    ('svl',    ('x','|')), 
+    ('lost',   ('O','o')), 
+    ('off',    ('*','*'))])
+    
+    hatchstyles = []
+    linestyles = []
+    for key in plotstyles.keys():
+        hatchstyles.extend([plotstyles[key][0] for lab in labels if lab.startswith(key)])
+        linestyles.extend([plotstyles[key][1]  for lab in labels if lab.startswith(key)])
+    
+    labels = labels[exclude:]
+    hatchstyles = hatchstyles[exclude:]
+    linestyles = linestyles[exclude:]
+    
+    ppl = people[exclude:,:,:] # Exclude initial people
+    ppl = ppl[:,pops,:] # Filter selected populations
+    ppl = ppl[:,:,:].sum(axis=1) # Sum over people
+    ppl = transpose(ppl) # So time is plotted on x-axis
+    
+    nstates = len(labels)
+    colors = gridcolormap(nstates)
+    tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
+    bottom = 0*tvec
+    figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
+    ax = subplot(111)
+    xlim((tvec[0], tvec[-1]))
+    for st in range(nstates-1,-1,-1):
+        this = ppl[:,st]
+        if sum(this): thiscolor = colors[st]
+        else: thiscolor = nocolor
+        printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 4, verbose)
+        fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
+        bottom += this
+        
+        # Legend stuff
+        xlabel('Year')
+        ylabel('Number of people')
+        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+        handles, legendlabels = ax.get_legend_handles_labels()
+        legend(reversed(handles), reversed(legendlabels), **legendsettings)
+        if animate:
+            show()
+            pause(0.1)
+    
+    return None

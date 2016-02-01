@@ -3,67 +3,43 @@ GEOSPATIAL
 
 This file defines everything needed for the Python GUI for geospatial analysis.
 
-Version: 2016jan23
+Version: 2016jan29
 """
 
 global geoguiwindow
 geoguiwindow = None
 
-
-import sys
-from Queue import Queue
-#from PyQt4.QtCore import *
-#from PyQt4.QtGui import *
-
-
-def geogui(redirect = False):
+def geogui():
     '''
     Open the GUI for doing geospatial analysis.
-    Can redirect stdout to textbox.
     
     Version: 2016jan23
     '''
     from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives
     from PyQt4 import QtGui
     from pylab import figure, close
-
-    global geoguiwindow, portfolio, projectslist, objectives, objectiveinputs, oldstdout
-    oldstdout = sys.stdout      # Make sure old stdout is remembered for redirection purposes.    
-    
+    global geoguiwindow, portfolio, objectives, objectiveinputs, projectslistbox, projectinfobox
     portfolio = None
-    projectslist = []
     objectives = defaultobjectives()
     
     ## Set parameters
-    wid = 650.0*2
-    hei = 550.0
+    wid = 1200.0
+    hei = 600.0
     top = 20
     spacing = 40
     left = 20.
     projext = '.prj'
     portext = '.prt'
     
-    # Extending the normal widget class so that stdout can be restored upon closure.
-    class GAWidget(QtGui.QWidget):
-        def __init__(self):
-            QtGui.QWidget.__init__(self)
-    
-        def closeEvent(self, event):
-            reply = QtGui.QMessageBox.question(self, 'Message',
-                "Are you sure to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-    
-            if reply == QtGui.QMessageBox.Yes:
-                sys.stdout = oldstdout  # The important bit.
-                event.accept()
-            else:
-                event.ignore()    
-    
     ## Housekeeping
     fig = figure(); close(fig) # Open and close figure...dumb, no? Otherwise get "QWidget: Must construct a QApplication before a QPaintDevice"
-    geoguiwindow = GAWidget() # Create panel widget
+    geoguiwindow = QtGui.QWidget() # Create panel widget
     geoguiwindow.setGeometry(100, 100, wid, hei)
     geoguiwindow.setWindowTitle('Optima geospatial analysis')
-    projectslist = []
+    
+    
+    
+    
     
     ##############################################################################################################################
     ## Define functions
@@ -74,27 +50,22 @@ def geogui(redirect = False):
         ''' Helper function to load a project, since used more than once '''
         filepath = QtGui.QFileDialog.getOpenFileNames(caption='Choose project file', filter='*'+projext)
         project = None
-        try: 
-            project = loadobj(filepath, verbose=0)
-        except: 
-            print('Could not load file "%s"' % filepath)
-            return None
-        try: 
-            assert type(project)==Project
-            return project
-        except: 
-            print('File "%s" is not an Optima project file' % filepath)
-            return None
+        if filepath:
+            try: project = loadobj(filepath, verbose=0)
+            except: print('Could not load file "%s"' % filepath)
+            if type(project)==Project: return project
+            else: print('File "%s" is not an Optima project file' % filepath)
+        return None
         
         
     def makesheet():
         ''' Create a geospatial spreadsheet template based on a project file '''
         
         ## 1. Load a project file
-        project = _loadproj()
+#        project = _loadproj()
             
         ## 2. Get destination filename
-        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+#        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
         
         ## 3. Extract data needed from project (population names, program names...)
         # ...
@@ -109,13 +80,13 @@ def geogui(redirect = False):
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
-        project = _loadproj()
+#        project = _loadproj()
         
         ## 2. Load a spreadsheet file
-        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+#        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
         
         ## 3. Get a destination folder
-        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+#        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
         
         ## 4. Read the spreadsheet
         # ...
@@ -129,12 +100,18 @@ def geogui(redirect = False):
         return None
 
 
-    def create():
+    def create(doadd=False):
         ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-        global portfolio, projectslist
-        projectslist = []
+        global portfolio, projectslistbox
         projectpaths = []
+        projectslist = []
+        if portfolio is None: 
+            portfolio = Portfolio()
+        if not doadd:
+            portfolio = Portfolio()
+            projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
+        if type(filepaths)==str: filepaths = [filepaths] # Convert to list
         for filepath in filepaths:
             tmpproj = None
             try: tmpproj = loadobj(filepath, verbose=0)
@@ -146,35 +123,38 @@ def geogui(redirect = False):
                     projectpaths.append(filepath)
                     print('Project file "%s" loaded' % filepath)
                 except: print('File "%s" is not an Optima project file; moving on...' % filepath)
-        projectsbox.setText('\n'.join(projectpaths))
-        portfolio = Portfolio()
-        for project in projectslist:
-            portfolio.addprojects(project)
-        projectsbox.append('\nBudget value to start with initial allocations in each project: %f' % sum(portfolio.getdefaultbudgets()))
+        projectslistbox.addItems(projectpaths)
+        portfolio.addprojects(projectslist)
+        return None
+    
+    def addproj():
+        ''' Add a project -- same as creating a portfolio except don't overwrite '''
+        global portfolio
+        create(doadd=True)
         return None
     
     def loadport():
         ''' Load an existing portfolio '''
-        global portfolio
+        global portfolio, projectslistbox
         filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose portfolio file', filter='*'+portext)
         tmpport = None
-        try: tmpport = loadobj(filepath, verbose=0)
-        except: print('Could not load file "%s"' % filepath)
-        if tmpport is not None: 
-            try: 
-                assert type(tmpport)==Portfolio
-                portfolio = tmpport
-                print('Portfolio file "%s" loaded' % filepath)
-            except: print('File "%s" is not an Optima portfolio file' % filepath)
-        projectsbox.setText('\n'.join([proj.name for proj in portfolio.projects.values()]))
-        projectsbox.append('\nBudget value to start with initial allocations in each project: %f' % sum(portfolio.getdefaultbudgets()))
+        if filepath:
+            try: tmpport = loadobj(filepath, verbose=0)
+            except: print('Could not load file "%s"' % filepath)
+            if tmpport is not None: 
+                if type(tmpport)==Portfolio:
+                    portfolio = tmpport
+                    projectslistbox.clear()
+                    projectslistbox.addItems([proj.name for proj in portfolio.projects.values()])
+                    print('Portfolio file "%s" loaded' % filepath)
+                else: print('File "%s" is not an Optima portfolio file' % filepath)
         return None
     
     
     def rungeo():
         ''' Actually run geospatial analysis!!! '''
         global portfolio, objectives, objectiveinputs
-        for key in objectives.keys():
+        for key in objectiveinputs.keys():
             objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         portfolio.genBOCs(objectives)
         portfolio.fullGA(objectives, budgetratio = portfolio.getdefaultbudgets())
@@ -221,6 +201,7 @@ def geogui(redirect = False):
     buttons['makesheet'] = QtGui.QPushButton('Make geospatial spreadsheet from project', parent=geoguiwindow)
     buttons['makeproj']  = QtGui.QPushButton('Auto-generate projects from spreadsheet', parent=geoguiwindow)
     buttons['create']    = QtGui.QPushButton('Create portfolio from projects', parent=geoguiwindow)
+    buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
     buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
@@ -232,6 +213,7 @@ def geogui(redirect = False):
     actions['makesheet'] = makesheet
     actions['makeproj']  = makeproj
     actions['create']    = create
+    actions['add']       = addproj
     actions['loadport']  = loadport
     actions['rungeo']    = rungeo
     actions['export']    = export
@@ -254,12 +236,44 @@ def geogui(redirect = False):
     ## Define other objects
     ##############################################################################################################################
     
+    def updateprojectinfo():
+        global portfolio, projectslistbox, projectinfobox
+        ind = projectslistbox.currentRow()
+        project = portfolio.projects[ind]
+        projectinfobox.setText(repr(project))
+        return None
+    
+    def removeproject():
+        global projectslistbox, projectinfobox, portfolio
+        ind = projectslistbox.currentRow()
+        portfolio.projects.pop(portfolio.projects.keys()[ind]) # Remove from portfolio
+        projectslistbox.takeItem(ind) # Remove from list
+        return None
+        
+    
     ## List of projects
-    projectsbox = QtGui.QTextEdit(parent=geoguiwindow)
-    projectsbox.move(300, 20)
-    projectsbox.resize(wid-320, hei-40)
-    projectsbox.setReadOnly(True)
-    projectsbox.verticalScrollBar()
+    projectslistlabel = QtGui.QLabel(parent=geoguiwindow)
+    projectslistlabel.setText('Projects in this portfolio:')
+    projectslistbox = QtGui.QListWidget(parent=geoguiwindow)
+    projectslistbox.verticalScrollBar()
+    projectslistbox.currentItemChanged.connect(updateprojectinfo)
+    buttons['remove'] = QtGui.QPushButton('Remove selected project from portfolio', parent=geoguiwindow)
+    buttons['remove'].clicked.connect(removeproject)
+    projectslistlabel.move(330,20)
+    projectslistbox.move(330, 40)
+    buttons['remove'].move(330, hei-40)
+    projectslistbox.resize(300, hei-100)
+    
+    
+    ## Project info
+    projectsinfolabel = QtGui.QLabel(parent=geoguiwindow)
+    projectsinfolabel.setText('Information about the selected project:')
+    projectinfobox = QtGui.QTextEdit(parent=geoguiwindow)
+    projectinfobox.setReadOnly(True)
+    projectinfobox.verticalScrollBar()
+    projectsinfolabel.move(640,20)
+    projectinfobox.move(640, 40)
+    projectinfobox.resize(530, hei-100)
     
     ## Objectives
     objectivetext = odict()
@@ -273,67 +287,13 @@ def geogui(redirect = False):
     for k,key in enumerate(objectivetext.keys()):
         objectivetextobjs[key] = QtGui.QLabel(parent=geoguiwindow)
         objectivetextobjs[key].setText(str(objectivetext[key]))
-        objectivetextobjs[key].move(left+10, 205+k*30)
+        objectivetextobjs[key].move(left+10, 235+k*30)
     
     objectiveinputs = odict()
-    for k,key in enumerate(objectives.keys()):
+    for k,key in enumerate(objectivetext.keys()):
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
         objectiveinputs[key].setText(str(objectives[key]))
-        objectiveinputs[key].move(left+120, 200+k*30)
-        
-    ##############################################################################################################################
-    ## Redirection of stdout
-    ##############################################################################################################################    
-
-#    if redirect: 
-#        
-#        @pyqtSlot(str)
-#        def append_text(text):
-#            projectsbox.moveCursor(QTextCursor.End)
-#            projectsbox.insertPlainText(text)
-#       
-#        # The new Stream Object which replaces the default stream associated with sys.stdout
-#        # This object just puts data in a queue!
-#        class WriteStream(object):
-#            def __init__(self,queue):
-#                self.queue = queue
-#        
-#            def write(self,text):
-#                self.queue.put(text)
-#                
-#            def flush(self):
-#                pass
-#        
-#        # A QObject (to be run in a QThread) which sits waiting for data to come through a Queue.Queue().
-#        # It blocks until data is available, and one it has got something from the queue, it sends
-#        # it to the "MainThread" by emitting a Qt Signal 
-#        class MyReceiver(QObject):
-#            mysignal = pyqtSignal(str)
-#        
-#            def __init__(self,queue,*args,**kwargs):
-#                QObject.__init__(self,*args,**kwargs)
-#                self.queue = queue
-#        
-#            @pyqtSlot()
-#            def run(self):
-#                while True:
-#                    text = self.queue.get()
-#                    self.mysignal.emit(text)    
-#        
-#        # Create Queue and redirect sys.stdout to this queue
-#        queue = Queue()
-#        print('Now redirecting stdout to GUI...')
-#        sys.stdout.flush()
-#        sys.stdout = WriteStream(queue)
-#        print('Output display initialised for GUI.')
-#        
-#        thread = QThread()
-#        my_receiver = MyReceiver(queue)
-#        my_receiver.mysignal.connect(append_text)
-#        my_receiver.moveToThread(thread)
-#        thread.started.connect(my_receiver.run)
-#        thread.start()
+        objectiveinputs[key].move(left+120, 230+k*30)
     
-    #%%
 
     geoguiwindow.show()

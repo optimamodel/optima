@@ -4,15 +4,15 @@ PLOTTING
 This file generates all the figure files -- either for use with the Python backend, or
 for the frontend via MPLD3.
 
-To add a new plot, you need to both add it to getplotselections so it will show up in the interface;
-plotresults so it will be sent to the right spot; and then add the actual function to do the
-polotting.
+To add a new plot, you need to add it to getplotselections (in this file) so it will show up in the interface;
+plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
+plotting to this file.
 
 Version: 2016jan24
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
-from numpy import array, ndim, maximum, arange, zeros, mean
+from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -354,9 +354,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
                 ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
-                if istotal:   plottitle += ' -- total'
-                if isperpop:  plottitle += ' -- ' + results.popkeys[i]
-                if isstacked: plottitle += ' -- by population'
+                if isperpop:  plottitle += ' -- ' + results.popkeys[i] # Add extra information to plot if by population
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
@@ -393,7 +391,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize
     '''
 
     if hasattr(results, 'improvement'): improvement = results.improvement # Get improvement attribute of object if it exists
-    elif hasattr(results, '__len__'): improvement = results # Promising, has a length at least, but of course could still be wrong
+    elif shape(results): improvement = results # Promising, has a length at least, but of course could still be wrong
     else: raise OptimaException('To plot the improvement, you must give either the improvement or an object containing the improvement as the first argument; try again')
     ncurves = len(improvement) # Try to figure to figure out how many there are
     
@@ -541,8 +539,13 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
     # Set up figure and do plot
     fig = figure(figsize=figsize)
     
-    cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
-    cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+    if results.settings.usecascade:
+        cascadelist = ['numplhiv', 'numdiag', 'numincare', 'numtreat', 'numsuppressed'] 
+        cascadenames = ['Undiagnosed', 'Diagnosed', 'In care', 'Treated', 'Virally suppressed']
+    else:
+        cascadelist = ['numplhiv', 'numdiag', 'numtreat'] 
+        cascadenames = ['Undiagnosed', 'Diagnosed', 'Treated']
+        
     
     colors = gridcolormap(len(cascadelist))
     

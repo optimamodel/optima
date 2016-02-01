@@ -1,4 +1,4 @@
-define ['angular-mocks', 'Source/modules/project-set/cost-coverage-ctrl'], ->
+define ['angular-mocks', 'Source/modules/project-set/cost-coverage/cost-coverage-ctrl'], ->
   describe 'ModelCostCoverageController in app.project-set', ->
     scope = null
     subject = null
