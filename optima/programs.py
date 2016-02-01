@@ -13,7 +13,7 @@ import abc
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
 # ...though would be nice to have an easier way!
-coveragepars=['numtx','numpmtct','numost','numcircum'] 
+coveragepars=['numtx','numpmtct','numost'] 
 
 
 class Programset(object):

@@ -349,7 +349,6 @@ def makepars(data, label=None, verbose=2):
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
     pars['popkeys'] = dcp(popkeys)
     
-    
     # Read in parameters automatically -- WARNING, not currently implemented
     rawpars = loadpartable() # Read the parameters structure
     for rawpar in rawpars: # Iterate over all automatically read in parameters
@@ -373,8 +372,8 @@ def makepars(data, label=None, verbose=2):
             pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
         elif partype=='popsize': # Population size only
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
-        elif partype=='timepar': # It's a normal time parameter, e.g. hivtest
-            pars[parname] = data2timepar(data=data, keys=keys, **rawpar)
+        elif partype=='timepar':            
+            pars[parname] = data2timepar(data=data, keys=keys, **rawpar) # Otherwise it's a regular time par, made from data
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
             pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?

@@ -13,8 +13,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     if benchmark: starttime = tic()
     
-    print('WARNING, currently circumcised men do not get infected') # Temporary warning because nasty, difficult-to-fix bug discovered
-
     ###############################################################################
     ## Setup
     ###############################################################################
@@ -126,14 +124,14 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     injects = simpars['injects']    # Boolean array, true for PWID
 
     # Intervention uptake (P=proportion, N=number)
-    sharing  = simpars['sharing']   # Sharing injecting equiptment (P)
-    numtx    = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
-    hivtest  = simpars['hivtest']   # HIV testing (P) [npop,npts]
-    aidstest = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
-    circum   = simpars['circum']    # Prevalence of circumcision (P)
-    stiprev  = simpars['stiprev']   # Prevalence of STIs (P)
-    prep     = simpars['prep']      # Prevalence of PrEP (P)
-    numpmtct = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
+    sharing   = simpars['sharing']   # Sharing injecting equiptment (P)
+    numtx     = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
+    hivtest   = simpars['hivtest']   # HIV testing (P) [npop,npts]
+    aidstest  = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
+    circum    = simpars['circum']    # Prevalence of circumcision (P)
+    stiprev   = simpars['stiprev']   # Prevalence of STIs (P)
+    prep      = simpars['prep']      # Prevalence of PrEP (P)
+    numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
     usepmtctprop=True if all(numpmtct<1) else False
 
     # Uptake of OST
@@ -161,7 +159,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     # Further potential effects on transmission
     effsti    = simpars['effsti'] * stiprev  # STI effect
-    effcirc   = simpars['effcirc']           # Circumcision effect
+    effcirc   = simpars['effcirc'] * circum  # Circumcision effect
     effprep   = simpars['effprep'] * prep    # PrEP effect
     effcondom = simpars['effcondom']         # Condom effect
     effpmtct  = simpars['effpmtct']          # PMTCT effect
@@ -357,10 +355,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             c = inhomopar[pop]
             thisprev = sum(people[allplhiv,pop,t]) / allpeople[pop,t] 
             inhomo[pop] = (c+eps) / (exp(c+eps)-1) * exp(c*(1-thisprev)) # Don't shift the mean, but make it maybe nonlinear based on prevalence
-        
-        
-        
-        
+
         
         
         
@@ -381,7 +376,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             
             if male[pop1]: # Separate FOI calcs for circs vs uncircs
                 thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                thisforceinf_circ = 1 - mpow((1-thistrans*circeff*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+                thisforceinf_circ = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
                 forceinfvec[pop1,0] = 1 - (1-forceinfvec[pop1,0]) * (1-thisforceinf_uncirc)
                 forceinfvec[pop1,1] = 1 - (1-forceinfvec[pop1,1]) * (1-thisforceinf_circ)
             else: # Only have uncircs for females

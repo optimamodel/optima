@@ -7,9 +7,9 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
 #'maxbudget',
-'90-90-90'
+#'90-90-90'
 ]
 
 ##############################################################################
@@ -50,6 +50,8 @@ if 'standardscen' in tests:
     from numpy import array
     
     P = defaultproject('concentrated')
+    pops = P.data['pops']['short']
+    malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
     
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
     
@@ -66,6 +68,15 @@ if 'standardscen' in tests:
                 'name': 'numtx',
                 'for': 'tot',
                 'startval': 3350.,
+                'startyear': 2015}]),
+
+        Parscen(name='Imagine that no-one gets circumcised',
+             parsetname='default',
+             pars=[{'endval': 0.,
+                'endyear': 2020,
+                'name': 'circum',
+                'for': malelist,
+                'startval': .97,
                 'startyear': 2015}]),
 
         Parscen(name='Full casual condom use',
@@ -156,8 +167,8 @@ if 'standardscen' in tests:
     
     # Store these in the project
     P.addscenlist(scenlist)
-#    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
-    P.scens[2].active = False # Turn off another scenario
+    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
+    P.scens[2].active = True # Turn off another scenario
     
     # Turn off budget scenarios
     for i,scen in P.scens.items():
