@@ -504,7 +504,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
-    for thisax in ax: thisax.set_xlim(0,ymax) # So they all have the same scale
+    for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
         
     close(fig)
     
