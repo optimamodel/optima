@@ -89,6 +89,7 @@ class ProjectDb(db.Model):
         'updated_time': fields.DateTime(attribute='updated'),
         'data_upload_time': fields.DateTime,
         'has_data': fields.Boolean(attribute='has_data_now'),
+        'has_econ': fields.Boolean,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -102,14 +103,16 @@ class ProjectDb(db.Model):
     version = db.Column(db.Text)
     settings = db.Column(db.LargeBinary)
     data = db.Column(db.LargeBinary)
+    has_econ = db.Column(db.Boolean)
     working_project = db.relationship('WorkingProjectDb', backref='related_project', uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='project', uselist=False)
+    project_econ = db.relationship('ProjectEconDb', backref='project', uselist=False)
     parsets = db.relationship('ParsetsDb', backref='project')
     results = db.relationship('ResultsDb', backref='project')
     progsets = db.relationship('ProgsetsDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
-                 created=None, updated=None, settings=None, data=None, parsets=None,
+                 created=None, updated=None, settings=None, data=None, has_econ=False, parsets=None,
                  results=None):
         self.name = name
         self.user_id = user_id
@@ -123,6 +126,7 @@ class ProjectDb(db.Model):
         self.version = version
         self.settings = settings
         self.data = data
+        self.has_econ = has_econ
         self.parsets = parsets or []
         self.results = results or []
 
@@ -190,6 +194,7 @@ class ProjectDb(db.Model):
         self.data = op.saves(project.data)
 
         if project.data:
+            self.has_econ = 'econ' in project.data
             self.datastart = int(project.data['years'][0])
             self.dataend = int(project.data['years'][-1])
             self.populations = []
@@ -202,6 +207,7 @@ class ProjectDb(db.Model):
                 }
                 self.populations.append(new_pop)
         else:
+            self.has_econ = False
             self.datastart = self.datastart or op.default_datastart
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}
@@ -233,6 +239,7 @@ class ProjectDb(db.Model):
         # delete all relevant entries explicitly
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
@@ -376,9 +383,22 @@ class ProjectDataDb(db.Model):  # pylint: disable=R0903
         self.meta = meta
         self.updated = updated
 
+class ProjectEconDb(db.Model):  # pylint: disable=R0903
+
+    __tablename__ = 'project_econ'
+
+    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
+    meta = deferred(db.Column(db.LargeBinary))
+    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+
+    def __init__(self, project_id, meta, updated=None):
+        self.id = project_id
+        self.meta = meta
+        self.updated = updated
+
 costcov_fields = {
     'year': fields.String,
-    'cost': LargeInt(attribute='cost'),
+    'spending': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
 
