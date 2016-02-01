@@ -23,7 +23,8 @@ define ['angular-mocks', 'Source/modules/project-set/program-set/program-modal-c
           programList: null, 
           modal: null,
           parameters: null, 
-          categories: null
+          categories: null,
+          openProject: null
         }
 
     it 'should have loaded the subject', ->

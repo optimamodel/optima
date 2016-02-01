@@ -1,9 +1,12 @@
 """
 Defines the default parameters for each program.
 
-Version: 2016jan23 by cliffk
+Version: 2016jan28
 """
-from optima import Program, Programset
+from optima import OptimaException, Project, Program, Programset
+
+
+spreadsheetpath = '../tests/' # WARNING, will this work on all systems? If not can just move XLSX files into the Optima directory I suppose...
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
@@ -286,11 +289,147 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     
     return finalprograms if filterprograms else allprograms
     
-    
-    
-    
+
+
+
+
 def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
     R = Programset(programs=programs)   
     return R
+
+
+
+
+def defaultproject(which='simple', addprogset=True):
+    ''' 
+    Options for easily creating default projects based on different spreadsheets, including
+    program information -- useful for testing 
+    
+    Version: 2016jan28
+    '''
+    
+    
+    
+    ##########################################################################################################################
+    ## Simple
+    ##########################################################################################################################
+    
+    if which=='simple':
+        print('Creating simple epidemic project...')
+        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx')
+    
+    
+    
+    
+    
+    
+    ##########################################################################################################################
+    ## Generalized
+    ##########################################################################################################################
+    elif which=='generalized':
+        print('Creating generalized epidemic project...')
+        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx')
+
+        # Get a default progset 
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'PMTCT'])
+        
+        # Modify target pars and pops
+        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
+        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
+        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
+        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
+        R.updateprogset()
+
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('FSW', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('Clients', 'F 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 50+', 'Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('Clients', 'F 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15-49', 'Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 15-49', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('FSW', 'M 15-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('M 15-49', 'F 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 15-49', 'F 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 50+', 'M 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 50+', 'FSW')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('FSW', 'M 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 50+', 'F 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15-49', 'M 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 50+', 'F 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 50+', 'M 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65)})
+
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['condcom'][('FSW', 'Clients')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+    
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['M 50+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['F 50+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+
+        R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+
+        P.addprogset(name='default', progset=R)
+    
+    
+    
+    ##########################################################################################################################
+    ## Concentrated
+    ##########################################################################################################################
+    elif which=='concentrated':
+        # Make project and store results from default sim
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx')
+    
+        # Get a default progset 
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
+        
+        # Modify target pars and pops
+        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
+        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
+        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
+        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
+        R.updateprogset()
+    
+        # Add program effects
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('FSW', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('Clients', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('FSW', 'M 15+')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
+        R.covout['condcas'][('M 15+', 'F 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('F 15+', 'PWID')].addccopar({'intercept': (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('PWID', 'F 15+')].addccopar({'intercept': (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+    
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['condcom'][('FSW', 'Clients')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+    
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99)})
+    
+        R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['numost']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        
+        # Store this program set in the project
+        P.addprogset(R)
+    
+    
+    
+    else:
+        raise OptimaException('Default project type "%s" not understood: choices are "simple", "generalized", or "concentrated"' % which)
+    
+    
+    return P

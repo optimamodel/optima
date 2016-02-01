@@ -32,6 +32,7 @@
 .section_dashed_border {
   border: 1px dashed gray;
   padding: 15px;
+  &.no-border{border: 0px; padding: 0px; }
   .option {
     display: inline-block;
     width: 33%;
@@ -85,12 +86,30 @@
 
   .data {
     height: 30px;
+    margin-right: 10px;
+    &.bordered {
+      border-bottom: 1px solid black;
+      padding: 5%;
+    }
+    &.spaced {
+      padding: 5%;
+    }
+    &.high {
+      height: 35px;
+    }
+  }
+
+  .data_nomargin {
+    margin-right: 0;
   }
 
   .column {
     display: flex;
     flex-direction: column;
-    width: 80px;
+    width: 95px;
+    &.bordered {
+      border: 1px solid black;
+    }
   }
 
   .numeric {
@@ -99,5 +118,35 @@
 
   input {
     width: 80px;
+    &.invalid{
+      border: solid #FF0000 1px;
+      outline: 0px;
+    }
   }
+}
+
+.small_bordered_section {
+  width: 200px;
+  border: 1px solid black;
+  padding: 5px;
+  display: inline-block;
+  text-align: center;
+  cursor: pointer;
+}
+
+.yellowBg {
+  background-color: lightyellow;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.margin_left {
+  margin-left: 2%;
+}
+
+.margin_top {
+  margin-top: 5%;
 }

@@ -5,15 +5,15 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan06 by cliffk
+Version: 2016jan27 by cliffk
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'plot',
-'browser',
+#'plot',
+#'browser',
 'gui',
 ]
 
@@ -52,11 +52,11 @@ if 'plot' in tests and doplot:
     t = tic()
 
     print('Running plot test...')
-    from optima import Project, plotresults
+    from optima import defaults, plotresults
     
-    P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
-    plotresults(results, figsize=(14,10))
+    P = defaults.defaultproject('concentrated')
+    P.runsim() # Not necessary, but just in case results haven't been saved with the project
+    plotresults(P.results[-1], figsize=(14,10))
 
     done(t)
 
@@ -68,11 +68,11 @@ if 'browser' in tests and doplot:
     t = tic()
 
     print('Running browser test...')
-    from optima import Project, browser
+    from optima import defaults, browser
     
-    P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
-    browser(results)
+    P = defaults.defaultproject('concentrated')
+    P.runsim() # Not necessary, but just in case results haven't been saved with the project
+    browser(P.results[-1])
 
     done(t)
 
@@ -86,10 +86,10 @@ if 'gui' in tests and doplot:
     t = tic()
 
     print('Running GUI test...')
-    from optima import Project, pygui
+    from optima import defaults, pygui
     
-    P = Project(spreadsheet='test7pops.xlsx')
-    results = P.runsim('default')
+    P = defaults.defaultproject('concentrated')
+    results = P.runsim() # Showing another way of running
     pygui(results)
 
     done(t)

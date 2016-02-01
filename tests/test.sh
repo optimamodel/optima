@@ -15,6 +15,4 @@ then
   pip install -r ./requirements.txt
 fi
 
-mkdir -p /tmp/uploads
-cp test.xlsx /tmp/uploads
 NOSE_NOCAPTURE=1 nosetests $@

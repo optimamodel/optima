@@ -1,0 +1,56 @@
+.u {
+
+  /*========== Orientation ==========*/
+
+  &-layout-horizontal {
+    display: flex;
+    flex-direction: row;
+  }
+
+  &-layout-vertical {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &-flex-wrap {
+    flex-wrap: wrap;
+  }
+
+  /*========== Flexing ==========*/
+
+  @for $i from 1 through 12 {
+    &-flex-#{$i} {
+      flex: $i;
+    }
+  }
+
+  /*========== Centering ==========*/
+
+  &-center-horizontal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &-center-horizontal-h {
+    justify-content: center;
+  }
+
+  &-center-horizontal-v {
+    align-items: center;
+  }
+
+  &-center-vertical {
+    align-items: center;
+    justify-content: center;
+  }
+
+  &-center-vertical-h {
+    align-items: center;
+  }
+
+  &-center-vertical-v {
+    justify-content: center;
+  }
+
+}
