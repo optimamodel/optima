@@ -131,7 +131,7 @@ def geogui():
             guiportfolio = Portfolio()
             projectslistbox.clear()
         filepaths = QtGui.QFileDialog.getOpenFileNames(caption='Choose project files', filter='*'+projext)
-        if filepath:
+        if filepaths:
             if type(filepaths)==str: filepaths = [filepaths] # Convert to list
             for filepath in filepaths:
                 tmpproj = None
@@ -184,8 +184,8 @@ def geogui():
             guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
         BOCobjectives = dcp(guiobjectives)
-        guiportfolio.genBOCs(BOCobjectives, maxtime=5) # WARNING temp time
-        guiportfolio.fullGA(guiobjectives, doplotBOCs=True, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=5) # WARNING temp time
+        guiportfolio.genBOCs(BOCobjectives, maxtime=3) # WARNING temp time
+        guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
         return None
     
     
@@ -212,18 +212,33 @@ def geogui():
             workbook = Workbook(filepath)
             worksheet = workbook.add_worksheet()
             
+            # Define formatting
+            formats = dict()
+            formats['plain'] = workbook.add_format({})
+            formats['bold'] = workbook.add_format({'bold': True})
+            formats['number'] = workbook.add_format({'bg_color': '#18C1FF', 'num_format':0x04})
+            
             # Convert from a string to a 2D array
             outlist = []
             for line in outstr.split('\n'):
                 outlist.append([])
                 for cell in line.split('\t'):
                     outlist[-1].append(cell)
-                
+            
             # Iterate over the data and write it out row by row.
             row, col = 0, 0
             for row in range(len(outlist)):
                 for col in range(len(outlist[row])):
-                    worksheet.write(row, col, outlist[row][col])
+                    thistxt = outlist[row][col]
+                    thisformat = 'plain'
+                    if col==0: thisformat = 'bold'
+                    tmptxt = thistxt.lower()
+                    for word in ['budget','outcome','allocation','initial','optimal']:
+                        if tmptxt.find(word)>=0: thisformat = 'bold'
+                    if col in [2,3] and thisformat=='plain': thisformat = 'number'
+                    worksheet.write(row, col, thistxt, formats[thisformat])
+            
+            worksheet.set_column(0, 3, 20) # Make wider
             workbook.close()
             
             warning('Results saved to "%s".' % filepath)

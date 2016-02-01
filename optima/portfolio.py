@@ -481,8 +481,9 @@ class GAOptim(object):
         
         nprojects = len(self.resultpairs.keys())
         projnames = []
-        projoutcomes = []
         projbudgets = []
+        projoutcomes = []
+        ind = -1 # WARNING, should be a single index so doesn't actually matter
         
         for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
             projectname = self.resultpairs[x]['init'].project.name
@@ -490,8 +491,8 @@ class GAOptim(object):
             gaoptalloc = self.resultpairs[x]['opt'].budget[-1]
             initoutcome = self.resultpairs[x]['init'].improvement[-1][0]
             gaoptoutcome = self.resultpairs[x]['opt'].improvement[-1][-1]
-            suminitalloc = sum([x[-1] for x in initalloc.values()])
-            sumgaoptalloc = sum([x[-1] for x in gaoptalloc.values()])
+            suminitalloc = sum([x[ind] for x in initalloc.values()])
+            sumgaoptalloc = sum([x[ind] for x in gaoptalloc.values()])
             
             overallbudgetinit += suminitalloc
             overallbudgetopt += sumgaoptalloc
@@ -499,8 +500,8 @@ class GAOptim(object):
             overalloutcomeopt += gaoptoutcome
             
             projnames.append(projectname)
-            projbudgets[prj]     = odict()
-            projoutcomes[prj]    = odict()
+            projbudgets.append(odict())
+            projoutcomes.append(odict())
             projbudgets[prj]['init']  = initalloc
             projbudgets[prj]['opt']   = gaoptalloc
             projoutcomes[prj]['init'] = initoutcome
@@ -508,11 +509,11 @@ class GAOptim(object):
                  
         ## Actually create the output
         output = ''
-        output += '\n\t\t\tInitial\tOptimal'
-        output += '\nOverall summary\t\t\t'
+        output += '\n\t\tInitial\tOptimal'
+        output += '\nOverall summary'
         output += '\n\tPortfolio budget:\t%f\t%f' % (overallbudgetinit, overallbudgetopt)
         output += '\n\tOutcome:\t1%f\t%f' % (overalloutcomeinit, overalloutcomeopt)
-        for prj in range(len(nprojects)):
+        for prj in range(nprojects):
             output += '\n'
             output += '\n'
             output += '\n\t\tInitial\tOptimal'
@@ -523,7 +524,7 @@ class GAOptim(object):
             output += '\n'
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():
-                output += '\n\t%s\t%fi\t%f' % (prg, projbudgets[prj]['init'][prg], projbudgets[prj]['opt'][prg])
+                output += '\n\t%s\t%f\t%f' % (prg, projbudgets[prj]['init'][prg][ind], projbudgets[prj]['opt'][prg][ind])
 
         
         print(output)
