@@ -10,7 +10,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         modalService.inform(
           function (){ },
           'Okay',
-          'Please upload spreadsheet to proceed.',
+          'Please upload an Optima spreadsheet before adding economic data.',
           'Cannot proceed'
         );
         $scope.missingData = true;
