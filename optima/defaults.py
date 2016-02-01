@@ -213,7 +213,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                                  
         VMMC.costcovfn.addccopar({'saturation': (1.,1.),
                                  't': 2016.0,
-                                 'unitcost': (50,80)})
+                                 'unitcost': (5,8)})
                                  
         FSW_programs.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,

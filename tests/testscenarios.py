@@ -324,7 +324,7 @@ if 'VMMC' in tests:
                 parsetname='default',
                 pars=[]),
 
-        Parscen(name='Imagine that everyone gets circumcised',
+        Parscen(name='Imagine that no-one gets circumcised',
              parsetname='default',
              pars=[{'endval': 0.,
                 'endyear': 2020,
@@ -338,7 +338,7 @@ if 'VMMC' in tests:
               progsetname='default',
               t=2016,
               budget={'Condoms': 1e7,
-                      'VMMC': 1e9, # Needs a ridiculous amount of money tomake a difference
+                      'VMMC': 1e6,
                       'FSW programs': 1e6,
                       'HTC':2e7,
                       'PMTCT':1e6,
