@@ -1,7 +1,5 @@
 """
 Test script to see if geospatial analysis works.
-Note that GUI can be extremely dangerous, as it redirects stdout!
-Make sure that GUI is exited normally, otherwise stdout reference will be lost until console reset...
 
 To use: comment out lines in the definition of 'tests' to not run those tests.
 
@@ -9,7 +7,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016jan27
+Version: 2016jan31
 """
 
 
@@ -59,10 +57,12 @@ if 'makeprojects' in tests:
     print('Running makeprojects...')
     from optima import saveobj, defaults
     
-    P = defaults.defaultproject('generalized')
-    Q = defaults.defaultproject('concentrated')
+    P = defaults.defaultproject('generalized', name='District 1')
+    Q = defaults.defaultproject('concentrated', name='District 2')
+    O = defaults.defaultproject('concentrated', name='District 3')
     saveobj('geotestproj1.prj', P)
     saveobj('geotestproj2.prj', Q)
+    saveobj('geotestproj3.prj', O)
     
     done(t)
 
@@ -119,7 +119,7 @@ if 'generateBOCs' in tests:
     from optima import saveobj
     
     F.genBOCs(progsetnames=['default','default'], parsetnames=['default','default'], maxtime=3)#,forceregen = True)#, maxtime = 20)
-    F.plotBOCs()    
+    F.plotBOCs()
     
     print('Saving projects with BOCs...')
     saveobj(filename1, P1)
