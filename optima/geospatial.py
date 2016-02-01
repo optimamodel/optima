@@ -18,10 +18,10 @@ def geogui():
     from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp
     from PyQt4 import QtGui
     from pylab import figure, close
-    global geoguiwindow, guiportfolio, objectives, objectiveinputs, projectslistbox, projectinfobox
+    global geoguiwindow, guiportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
     guiportfolio = None
-    objectives = defaultobjectives()
-    objectives['budget'] = 0.0 # Reset
+    guiobjectives = defaultobjectives()
+    guiobjectives['budget'] = 0.0 # Reset
     
     ## Global options
     budgetfactor = 1e6 # Conversion between screen and internal
@@ -122,7 +122,7 @@ def geogui():
 
     def create(doadd=False):
         ''' Create a portfolio by selecting a list of projects; silently skip files that fail '''
-        global guiportfolio, projectslistbox, objectives, objectiveinputs
+        global guiportfolio, projectslistbox, guiobjectives, objectiveinputs
         projectpaths = []
         projectslist = []
         if guiportfolio is None: 
@@ -151,7 +151,7 @@ def geogui():
     
     def addproj():
         ''' Add a project -- same as creating a portfolio except don't overwrite '''
-        global guiportfolio, objectives
+        global guiportfolio, guiobjectives
         create(doadd=True)
         resetbudget() # And reset the budget
         return None
@@ -178,13 +178,13 @@ def geogui():
     
     def rungeo():
         ''' Actually run geospatial analysis!!! '''
-        global guiportfolio, objectives, objectiveinputs
+        global guiportfolio, guiobjectives, objectiveinputs
         for key in objectiveinputs.keys():
-            objectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
-        objectives['budget'] *= budgetfactor # Convert back to internal representation
-        BOCobjectives = dcp(objectives)
+            guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
+        guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
+        BOCobjectives = dcp(guiobjectives)
         guiportfolio.genBOCs(BOCobjectives, maxtime=5) # WARNING temp time
-        guiportfolio.fullGA(objectives, doplotBOCs=True, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=5) # WARNING temp time
+        guiportfolio.fullGA(guiobjectives, doplotBOCs=True, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=5) # WARNING temp time
         return None
     
     
@@ -341,9 +341,9 @@ def geogui():
     objectiveinputs = odict()
     for k,key in enumerate(objectivetext.keys()):
         objectiveinputs[key] = QtGui.QLineEdit(parent=geoguiwindow)
-        objectiveinputs[key].setText(str(objectives[key]))
+        objectiveinputs[key].setText(str(guiobjectives[key]))
         objectiveinputs[key].move(left+120, 230+k*30)
-    objectiveinputs['budget'].setText(str(objectives['budget']/budgetfactor)) # So right units
+    objectiveinputs['budget'].setText(str(guiobjectives['budget']/budgetfactor)) # So right units
     
 
     geoguiwindow.show()
