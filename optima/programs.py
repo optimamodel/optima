@@ -736,7 +736,7 @@ class Program(object):
         plotdata['ylinedata_l'] = y_l
         plotdata['ylinedata_m'] = y_m
         plotdata['ylinedata_u'] = y_u
-        plotdata['xlabel'] = 'USD'
+        plotdata['xlabel'] = 'Spending'
         plotdata['ylabel'] = 'Number covered'
 
         # Flag to indicate whether we will adjust by population or not
