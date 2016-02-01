@@ -211,7 +211,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                                  't': 2016.0,
                                  'unitcost': (30,40)})
                                  
-        VMMC.costcovfn.addccopar({'saturation': (0.3,0.3),
+        VMMC.costcovfn.addccopar({'saturation': (1.,1.),
                                  't': 2016.0,
                                  'unitcost': (50,80)})
                                  
@@ -376,10 +376,11 @@ def defaultproject(which='simple', addprogset=True):
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
-        R.covout['circum']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
-        R.covout['circum']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['circum']['M 15-49'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['circum']['M 50+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['circum']['MSM'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['Clients'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['M 15-49'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['M 50+'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['M 0-14'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
 
 
         P.addprogset(name='default', progset=R)

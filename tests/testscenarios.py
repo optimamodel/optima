@@ -7,9 +7,10 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxbudget',
 #'90-90-90'
+'VMMC'
 ]
 
 ##############################################################################
@@ -300,3 +301,59 @@ if 'maxbudget' in tests:
     if doplot:
         from optima import pygui
         pygui(P.results[-1], toplot='default')
+
+
+
+## Set up project etc.
+if 'VMMC' in tests:
+    t = tic()
+
+    print('Running VMMC scenario test...')
+    from optima import Parscen, Budgetscen
+    from optima.defaults import defaultproject
+    
+    P = defaultproject('generalized')
+    pops = P.data['pops']['short']
+
+    malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
+    caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+        Parscen(name='Imagine that everyone gets circumcised',
+             parsetname='default',
+             pars=[{'endval': 0.,
+                'endyear': 2020,
+                'name': 'circum',
+                'for': malelist,
+                'startval': .85,
+                'startyear': 2015}]),
+
+         Budgetscen(name='Scale up VMMC program',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={'Condoms': 1e7,
+                      'VMMC': 1e9, # Needs a ridiculous amount of money tomake a difference
+                      'FSW programs': 1e6,
+                      'HTC':2e7,
+                      'PMTCT':1e6,
+                      'ART':1e6}),
+
+        ]
+    
+    # Store these in the project
+    P.addscenlist(scenlist)
+    
+    # Run the scenarios
+    P.runscenarios() 
+     
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
+
+    done(t)
