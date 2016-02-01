@@ -1,8 +1,7 @@
 define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories) {
-
+  module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories, openProject) {
     // Default list of criteria
     var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
 
@@ -16,6 +15,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         parameters: parameters,
         categories: categories,
         program: program,
+        openProject: openProject,
         eligibility: {
           pregnantFalse: true,
           allstates: true
@@ -140,6 +140,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Add a new parameter
     $scope.addParameter = function() {
+      if ($scope.state.program.parameters == undefined) {
+        $scope.state.program.parameters = [];
+      }
+
       $scope.state.program.parameters.push({active: true});
     };
 
@@ -194,7 +198,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to add additional data
     $scope.addAddData = function () {
-      if($scope.state.newAddData.year && $scope.state.newAddData.spending && $scope.state.newAddData.coverage) {
+      if($scope.state.newAddData.year && $scope.state.newAddData.spending >= 0 && $scope.state.newAddData.coverage >= 0) {
         if(!$scope.state.program.addData) {
           $scope.state.program.addData = [];
         }

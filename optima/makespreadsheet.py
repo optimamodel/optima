@@ -175,6 +175,7 @@ def filter_by_properties(param_refs, base_params, the_filter):
 
 class OptimaFormats:
     """ the formats used in the spreadsheet """
+    darkgray = '#413839'
     originalblue = '#18C1FF'
     hotpink = '#FFC0CB'
     BG_COLOR = hotpink
@@ -425,8 +426,8 @@ class OptimaSpreadsheet:
             ('popsize', 'Population size'),
             ('key', 'HIV prevalence'),
             ('epi', 'Other epidemiology'),
-            ('opt', 'Optional indicators'),
             ('txrx', 'Testing & treatment'),
+            ('opt', 'Optional indicators'),
             ('casc', 'Cascade'),
             ('sex', 'Sexual behavior'),
             ('inj', 'Injecting behavior'),
@@ -523,6 +524,7 @@ class OptimaSpreadsheet:
         self.ref_pop_range = self.pop_range.param_refs()
         self.ref_females_range = filter_by_properties(self.ref_pop_range, self.pops, {'female':True})
         self.ref_males_range = filter_by_properties(self.ref_pop_range, self.pops, {'male':True})
+        self.ref_child_range = filter_by_properties(self.ref_pop_range, self.pops, {'age_from':0})
 
     def generate_key(self):
         row_levels = ['high', 'best', 'low']
@@ -546,15 +548,6 @@ class OptimaSpreadsheet:
             current_row = self.emit_ref_years_block(name, current_row, self.pop_range, 
                 row_format = OptimaFormats.DECIMAL_PERCENTAGE, assumption = True)
 
-    def generate_opt(self):
-        current_row = 0
-
-        for name in ['Number of HIV tests per year', 'Number of HIV diagnoses per year', 
-        'Modeled estimate of new HIV infections per year', 'Modeled estimate of HIV prevalence', 
-        'Modeled estimate of number of PLHIV', 'Number of HIV-related deaths', 'Number of people initiating ART each year']:
-            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
-
-
     def generate_txrx(self):
         current_row = 0
         current_row = self.emit_ref_years_block('Percentage of population tested for HIV in the last 12 months',current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
@@ -564,17 +557,38 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)',           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
-        
+
+
+    def generate_opt(self):
+        current_row = 0
+
+        for name in [
+        'Number of HIV tests per year', 
+        'Number of HIV diagnoses per year', 
+        'Modeled estimate of new HIV infections per year', 
+        'Modeled estimate of HIV prevalence', 
+        'Modeled estimate of number of PLHIV', 
+        'Number of HIV-related deaths', 
+        'Number of people initiating ART each year',
+        'PLHIV aware of their status (%)', 
+        'Diagnosed PLHIV in care (%)',
+        'PLHIV in care on treatment (%)']:
+            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
+
+      
     
     def generate_casc(self):
         current_row = 0
-        current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                                        current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of HIV-diagnosed people not in care who are linked to care per year (%/year)',  current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('ART adherence achieving viral suppression (%)',                                            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)',            current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_ref_years_block('PLHIV lost to follow-up (%/year)',                                                         current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Biological failure rate (%/year)',                                                             current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care from diagnosis within 1 month (%)',                             current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Linkage to care rate (%/year)',                                                 current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people who receive ART in the year who stop taking ART (%/year)', current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_ref_years_block('Percentage of people in care who are lost to follow-up per year (%/year)',      current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Viral suppression - ART initiators (%)',                                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
+        current_row = self.emit_years_block('Rate of ART re-initiation (%/year)',                                                current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Percentage of HIV-diagnosed people who are in care (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+        current_row = self.emit_years_block('Proportion of people on ART with viral suppression (%)',                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
             
 
     def generate_sex(self):
@@ -603,12 +617,13 @@ class OptimaSpreadsheet:
         current_row = 0
         names = ['Interactions between regular partners', 'Interactions between casual partners',
         'Interactions between commercial partners', 'Interactions between people who inject drugs',
-        'Risk-related population transitions (average number of years before movement)']
+        'Births', 'Aging', 'Risk-related population transitions (average number of years before movement)']
 
         for ind in range(len(self.pops)):
             self.current_sheet.set_column(2+ind,2+ind,12)
         for name in names:
-            current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
+            if name=='Births': current_row = self.emit_matrix_block(name, current_row, self.ref_females_range, self.ref_pop_range)
+            else: current_row = self.emit_matrix_block(name, current_row, self.ref_pop_range, self.ref_pop_range)
 
     def generate_const(self):
         self.current_sheet.set_column(1,1,40)
@@ -679,11 +694,10 @@ class OptimaSpreadsheet:
             'PMTCT',
             'Pre-exposure prophylaxis',
             'Unsuppressive ART',
-            'Suppressive ART',
-            'Probability of viral suppression on ART'],
-            [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92, 0.9],
-            [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8, 0.8],
-            [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95, 0.95],
+            'Suppressive ART'],
+            [0.95, 0.58, 0.0, 2.65, 0.54, 0.9, 0.73, 0.5, 0.92],
+            [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8],
+            [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95],
             OptimaFormats.PERCENTAGE),
         ('Disutility weights',
             ['Untreated HIV, acute',

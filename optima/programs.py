@@ -141,6 +141,9 @@ class Programset(object):
     def optimizable(self):
         return [True if prog.optimizable() else False for prog in self.programs.values()]
 
+    def optimizableprograms(self):
+        return odict((program.short, program) for program in self.programs.values() if program.optimizable())
+
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
 
@@ -444,8 +447,7 @@ class Programset(object):
                 # Validate outcome
                 thisoutcome = outcomes[outcome][p] # Shorten
                 lower = float(pars[outcome].limits[0]) # Lower limit, cast to float just to be sure (is probably int)
-                upper = settings.setmaxes(pars[outcome].limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                upper = settings.convertlimits(limits=pars[outcome].limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
                     errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
                     if die:
@@ -504,7 +506,6 @@ class Program(object):
         except:
             print("Error while initializing targetpartypes in program %s for targetpars %s" % (short, self.targetpars))
             self.targetpartypes = []
-        self.optimizable()
         self.costcovfn = Costcov(ccopars=ccopars)
         self.costcovdata = costcovdata if costcovdata else {'t':[],'cost':[],'coverage':[]}
         self.category = category
@@ -534,7 +535,6 @@ class Program(object):
         else:
             index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
             self.targetpars[index] = targetpar # overwrite
-        self.optimizable
         return None
 
 
@@ -546,7 +546,6 @@ class Program(object):
         else:
             index = [(tp['param'],tp['pop']) for tp in self.targetpars].index((targetpar['param'],targetpar['pop']))
             self.targetpars.pop(index)
-            self.optimizable
             printv('\nRemoved model parameter "%s" from the list of model parameters affected by "%s". \nAffected parameters are: %s' % (targetpar, self.short, self.targetpars), 4, verbose)
         return None
 

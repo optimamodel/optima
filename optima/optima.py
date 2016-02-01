@@ -36,7 +36,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-Version: 2016jan27 by cliffk
+Version: 2016jan30 by cliffk
 """
 
 optimalicense = '''
@@ -83,10 +83,14 @@ except: _failed()
 
 
 ## Load non-Optima-specific custom functions
-try: from asd import asd
+try: 
+    import asd as _asd
+    from asd import asd
 except: _failed()
 
-try: from pchip import pchip, plotpchip
+try: 
+    import pchip as _pchip
+    from pchip import pchip, plotpchip
 except: _failed()
 
 try: 
@@ -101,53 +105,63 @@ except: _failed()
 
 
 ## Load Optima functions and classes
-try: from settings import Settings # Inter-project definitions, e.g. health states
-except: _failed()
-
-try: from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
-except: _failed()
-
-try: from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
+try: 
+    import settings as _settings # Inter-project definitions, e.g. health states
+    from settings import Settings, convertlimits, gettvecdt
 except: _failed()
 
 try: 
-    import results
+    import makespreadsheet as _makespreadsheet
+    from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
+except: _failed()
+
+try: 
+    import loadspreadsheet as _loadspreadsheet
+    from loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
+except: _failed()
+
+try: 
+    import results as _results
     from results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 except: _failed()
 
 try: 
-    import parameters # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
-    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults # Parameter and Parameterset classes
-except: _failed()
-
-try: from model import model, runmodel # The thing that actually runs the model
+    import parameters as _parameters # Load high-level module as well
+    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults, applylimits # Parameter and Parameterset classes
 except: _failed()
 
 try: 
-    import programs # High-level module
+    import model as _model
+    from model import model, runmodel # The thing that actually runs the model
+except: _failed()
+
+try: 
+    import programs as _programs # High-level module
     from programs import Program, Programset, vec2budget # Define programs
 except: _failed()
 
 try: 
-    import economics
+    import economics as _economics
     from economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
 except: _failed()
 
 try: 
-    import calibration
+    import calibration as _calibration
     from calibration import sensitivity, autofit # Calibration functions
 except: _failed()
 
 try: 
-    import scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
+    import scenarios as _scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
     from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
-try: from optimization import Optim, minoutcomes, minmoney, defaultobjectives # Scenario functions
+try: 
+    import optimization as _optimization
+    from optimization import Optim, minoutcomes, minmoney, defaultobjectives # Scenario functions
 except: _failed()
 
 try: 
-    import plotting # Load high-level module as well
+    import plotting as _plotting # Load high-level module as well
     from plotting import getplotselections, makeplots # Create the plots
 except: _failed()
 
@@ -191,13 +205,19 @@ except:
 
 
 ## Import the Project class that ties everything together
-try: from project import Project # Project class
+try: 
+    import project as _project
+    from project import Project # Project class
 except: _failed()
 
-try: from portfolio import Portfolio # Portfolio class (container of Projects)
+try: 
+    import portfolio as _portfolio
+    from portfolio import Portfolio # Portfolio class (container of Projects)
 except: _failed()
 
-try: from geospatial import geogui # Import GUI tools for geospatial analysis
+try: 
+    import geospatial as _geospatial
+    from geospatial import geogui # Import GUI tools for geospatial analysis
 except:
     def geogui(*args, **kwargs): print('Note: geogui() could not be imported, but everything else should work')
     _failed(doraise=False)
