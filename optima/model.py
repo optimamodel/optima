@@ -272,6 +272,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
     
+    
+    
     ###############################################################################
     ## Compute the effective numbers of acts outside the time loop
     ###############################################################################
@@ -364,7 +366,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ###############################################################################
         
         # Reset force-of-infection vector for each population group, handling circs and uncircs separately
-        forceinfvec = zeros((npops, len(sus))) 
+        forceinfvec = zeros((len(sus), npops)) 
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for this in sexactslist:
@@ -374,16 +376,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             pop2 = this['pop2']
             thistrans = this['trans']
             
-            if male[pop1]: # Separate FOI calcs for circs vs uncircs
-                thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                thisforceinf_circ = 1 - mpow((1-thistrans*circeff[pop1,t]*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[pop1,0] = 1 - (1-forceinfvec[pop1,0]) * (1-thisforceinf_uncirc)
-                forceinfvec[pop1,1] = 1 - (1-forceinfvec[pop1,1]) * (1-thisforceinf_circ)
+            if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
+                thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]),                 (dt*cond*acts*effhivprev[pop2]))
+                thisforceinf_circ   = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+                forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinf_uncirc)
+                forceinfvec[1,pop1] = 1 - (1-forceinfvec[1,pop1]) * (1-thisforceinf_circ)
             else: # Only have uncircs for females
                 thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[pop1,0] = 1 - (1-forceinfvec[pop1,0]) * (1-thisforceinf)
+                forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinf)
                 
-            if not all(forceinfvec[pop1]>=0):
+            if not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -398,9 +400,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             
             thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2]))
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinfvec[pop1,index] = 1 - (1-forceinfvec[pop1,index]) * (1-thisforceinf)
+                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
             
-            if not all(forceinfvec[pop1]>=0):
+            if not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -467,9 +469,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ## Set up
     
         # New infections -- through pre-calculated force of infection
-        newinfections = zeros((npops, len(sus))) 
+        newinfections = zeros((len(sus), npops)) 
         for index in sus:
-            newinfections[:,index] = forceinfvec[:,index] * force * inhomo * people[index,:,t] 
+            newinfections[index,:] = forceinfvec[index,:] * force * inhomo * people[index,:,t] 
     
         # Initalise / reset arrays
         dU = []; dD = []
@@ -497,7 +499,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw['inci'][:,t] = (newinfections.sum(axis=1) + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw['inci'][:,t] = (newinfections.sum(axis=0) + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         if propdx[t]:
@@ -527,7 +529,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             raw['diag'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
             raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
-        dU[0] = dU[0] + newinfections.sum(axis=1) # Now add newly infected people
+        dU[0] = dU[0] + newinfections.sum(axis=0) # Now add newly infected people
         
 
         ############################################################################################################
@@ -771,7 +773,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
-            change[sus,:] = dS.T # WARNING: could be confusing to take tranpose. Better use tranposed array the whole way through?
+            change[sus,:] = dS # WARNING: could be confusing to take tranpose. Better use tranposed array the whole way through?
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
