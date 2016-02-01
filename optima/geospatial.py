@@ -188,12 +188,12 @@ def geogui():
     
     
     def export():
-        ''' Save the current portfolio to disk '''
+        ''' Save the current results to Excel file '''
         global portfolio
         if type(portfolio)!=Portfolio: print('Warning, must load portfolio first!')
         
         # 1. Extract data needed from portfolio
-        # ...
+        string = portfolio.outputstring
         
         # 2. Generate spreadsheet according to David's template to store these data
         # ...

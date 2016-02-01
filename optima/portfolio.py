@@ -280,18 +280,22 @@ class Portfolio(object):
             printv('WARNING, you have called fullGA on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
         objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
+        print('HERE1'); print(objectives)
         
         gaoptim = GAOptim(objectives = objectives)
         self.gaoptims[gaoptim.uid] = gaoptim
         
         if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
+        print('HERE2'); print(objectives); print(initbudgets)
         
         optbudgets = self.minBOCoutcomes(objectives, seedbudgets = initbudgets, maxtime = maxtime)
         if doplotBOCs: self.plotBOCs(objectives, initbudgets = initbudgets, optbudgets = optbudgets)
         
         gaoptim.complete(self.projects, initbudgets,optbudgets, maxtime=maxtime)
-        gaoptim.printresults()
+        outputstring = gaoptim.printresults()
+        
+        self.outputstring = outputstring # Store the results as an output string
         
         toc(GAstart)
         
@@ -451,17 +455,17 @@ class GAOptim(object):
             initobjectives['budget'] = initbudgets[pno] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
             self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
-            prebudget = initobjectives['budget']
-            postbudget = self.resultpairs[p.uid]['init'].budget[-1]
-            assert sum(prebudget)==sum(postbudget)
+            preibudget = initobjectives['budget']
+            postibudget = self.resultpairs[p.uid]['init'].budget[-1]
+            assert preibudget==sum(postibudget[:])
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pno] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
             self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-            prebudget = initobjectives['budget']
-            postbudget = self.resultpairs[p.uid]['opt'].budget[-1]
-            assert sum(prebudget)==sum(postbudget)
+            preobudget = optobjectives['budget']
+            postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
+            assert preobudget==sum(postobudget[:])
 
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
