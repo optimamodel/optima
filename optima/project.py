@@ -434,6 +434,14 @@ class Project(object):
             objectives = defaultobjectives()
         projectBOC.objectives = objectives
         
+        if parsetname is None:
+            printv('Warning, using default parset', 3, verbose)
+            parsetname = 0
+        
+        if progsetname is None:
+            printv('Warning, using default progset', 3, verbose)
+            progsetname = 0
+        
         if budgetlist == None:
             if not progsetname == None:
                 baseline = sum(self.progsets[progsetname].getdefaultbudget().values())
@@ -462,7 +470,7 @@ class Project(object):
                 boc = self.results[x]
                 same = True
                 for y in boc.objectives:
-                    if y in ['start','end','deathweight','inciweight'] and not boc.objectives[y] == objectives[y]: same = False
+                    if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
 #                    print('BOC located in project: %s' % self.name)
                     return boc

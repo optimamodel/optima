@@ -127,58 +127,60 @@ class Portfolio(object):
         
         # Validate inputs
         if objectives == None: 
-            printv('WARNING, you have called genBOCs on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
+            printv('genBOCs(): WARNING, you have called genBOCs on portfolio %s without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
         if progsetnames==None:
-            printv('\nWARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 3, verbose)
+            printv('\ngenBOCs(): WARNING: no progsets specified. Using first saved progset for each project for portfolio "%s".' % (self.name), 3, verbose)
             progsetnames = [0]*len(self.projects)
         if not len(progsetnames)==len(self.projects):
-            printv('WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
+            printv('genBOCs(): WARNING: %i program set names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved progset for each project.' % (len(progsetnames), self.name, len(self.projects)), 1, verbose)
             progsetnames = [0]*len(self.projects)
         if parsetnames==None:
-            printv('\nWARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 3, verbose)
+            printv('\ngenBOCs(): WARNING: no parsets specified. Using first saved parset for each project for portfolio "%s".' % (self.name), 3, verbose)
             parsetnames = [0]*len(self.projects)
         if not len(parsetnames)==len(self.projects):
-            printv('WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
+            printv('genBOCs(): WARNING: %i parset names/indices were provided, but portfolio "%s" contains %i projects. OVERWRITING INPUTS and using first saved parset for each project.' % (len(parsetnames), self.name, len(self.projects)), 1, verbose)
             parsetnames = [0]*len(self.projects)
 
         for pno, p in enumerate(self.projects.values()):
-            if p.getBOC(objectives) == None or forceregen:
+            getBOCtest = (p.getBOC(objectives) == None)
+            if getBOCtest or forceregen:
+                printv('genBOCs(): Regenerating BOC because getBOC=%s, forceregen=%s ' % (getBOCtest, forceregen), 2, verbose)
 
                 # Crash if any project doesn't have progsets
                 if not p.progsets or not p.parsets: 
-                    errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
+                    errormsg = 'genBOCs(): Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
                     raise OptimaException(errormsg)
     
                 # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
                 if isinstance(progsetnames[pno],str) and progsetnames[pno] not in [progset.name for progset in p.progsets.values()]:
-                    printv('\nCannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
+                    printv('\ngenBOCs(): Cannot find progset "%s" in project "%s". Using progset "%s" instead.' % (progsetnames[pno], p.name, p.progsets[0].name), 1, verbose)
                     pno=0
                 elif isinstance(progsetnames[pno],int) and len(p.progsets)<=progsetnames[pno]:
-                    printv('\nCannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
+                    printv('\ngenBOCs(): Cannot find progset number %i in project "%s", there are only %i progsets in that project. Using progset 0 instead.' % (progsetnames[pno], p.name, len(p.progsets)), 1, verbose)
                     pno=0
                 else: 
-                    printv('\nCannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
+                    printv('\ngenBOCs(): Cannot understand what program set to use for project "%s". Using progset 0 instead.' % (p.name), 3, verbose)
                     pno=0            
 
                 # Check that the progsets that were specified are indeed valid. They could be a string or a list index, so must check both
                 if isinstance(parsetnames[pno],str) and parsetnames[pno] not in [parset.name for parset in p.parsets.values()]:
-                    printv('\nCannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
+                    printv('\ngenBOCs(): Cannot find parset "%s" in project "%s". Using pargset "%s" instead.' % (progsetnames[pno], p.name, p.parsets[0].name), 1, verbose)
                     pno=0
                 elif isinstance(parsetnames[pno],int) and len(p.parsets)<=parsetnames[pno]:
-                    printv('\nCannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
+                    printv('\ngenBOCs(): Cannot find parset number %i in project "%s", there are only %i parsets in that project. Using parset 0 instead.' % (parsetnames[pno], p.name, len(p.parsets)), 1, verbose)
                     pno=0
                 else: 
-                    printv('\nCannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
+                    printv('\ngenBOCs(): Cannot understand what parset to use for project "%s". Using parset 0 instead.' % (p.name), 3, verbose)
                     pno=0            
 
                 # Actually generate te BOCs
-                printv('WARNING, project %s does not have BOC, or else it does but you want to regenerate it. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[parsetnames[pno]].name, p.progsets[progsetnames[pno]].name), 1, verbose)
+                printv('genBOCs(): WARNING, project %s does not have BOC, or else it does but you want to regenerate it. Generating one using parset %s and progset %s... ' % (p.name, p.parsets[parsetnames[pno]].name, p.progsets[progsetnames[pno]].name), 1, verbose)
                 p.delBOC(objectives)    # Delete BOCs in case forcing regeneration.
                 p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
 
             else:
-                printv('Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
+                printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
                 
     def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, verbose=2):
@@ -234,7 +236,7 @@ class Portfolio(object):
             
         for pno,p in enumerate(self.projects.values()):
             
-            if p.getBOC(objectives) is not None:
+            if p.getBOC(objectives) is None:
 
                 # Crash if any project doesn't have progsets
                 if not p.progsets or not p.parsets: 
@@ -264,7 +266,7 @@ class Portfolio(object):
                     pno=0
                 
                     printv('WARNING, project "%s", parset "%s" does not have BOC. Generating one using parset %s and progset %s... ' % (p.name, pno, p.parsets[0].name, p.progsets[0].name), 1, verbose)
-                    p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
+                p.genBOC(parsetname=p.parsets[parsetnames[pno]].name, progsetname=p.progsets[progsetnames[pno]].name, objectives=objectives, maxtime=maxtime)
 
             BOClist.append(p.getBOC(objectives))
             
