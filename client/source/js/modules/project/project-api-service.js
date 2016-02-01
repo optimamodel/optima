@@ -52,6 +52,9 @@ define(['./module'], function (module) {
             {headers: {'Content-type': 'application/octet-stream'},
           responseType:'blob'});
         },
+        deteleEconomicsData: function(id) {
+          return $http.delete('/api/project/' + id + '/economics');
+        },
         getProjectList: function () {
           return $http.get('/api/project');
         },

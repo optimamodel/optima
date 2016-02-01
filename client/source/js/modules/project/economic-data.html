@@ -10,12 +10,11 @@
           <input type="button" class="btn" value="Create economic data template" ng-click="economicData('create')" style="margin:0 1% 1% 0">
           <!--a href="/assets/economics.xlsx" class="btn" style="margin:0 1% 1% 0">Create economic data template</a-->
           <input type="button" class="btn" value="Upload economic data template" ng-click="economicData('upload')" style="margin:0 1% 1% 0">
-          <input type="button" class="btn" value="Remove economic data template" ng-click="economicData('remove')" style="margin:0 1% 1% 0">
+          <input type="button" class="btn" value="Remove economic data template" ng-click="economicData('remove')" style="margin:0 1% 1% 0" ng-disabled="!hasEconData">
         </div>
       </div>
     </div>
 </div>
-
 
 <script type="text/ng-template" id="economicDataUpload.html">
 <div class="modal-header">
