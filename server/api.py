@@ -63,7 +63,7 @@ from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,
                                           UserLogin, UserLogout)
 from server.webapp.resources.project import (Projects, ProjectsAll, Project,
-                                             ProjectCopy, ProjectSpreadsheet,
+                                             ProjectCopy, ProjectSpreadsheet, ProjectEcon,
                                              ProjectData, ProjectFromData, Portfolio,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
@@ -91,6 +91,7 @@ api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
