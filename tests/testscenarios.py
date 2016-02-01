@@ -350,7 +350,7 @@ if 'VMMC' in tests:
     P.addscenlist(scenlist)
     
     # Run the scenarios
-    P.runscenarios() 
+    P.runscenarios()
      
     if doplot:
         from optima import pygui
