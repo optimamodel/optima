@@ -68,7 +68,7 @@ def start_or_report_calculation(db_session, project_id, parset_id, work_type):
 @celery.task()
 def run_autofit(project_id, parset_name, maxtime=60):
     import traceback
-    app.logger.debug("started autofit")
+    app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
     error_text = ""
     status = 'completed'
     db_session = init_db_session()
@@ -77,14 +77,16 @@ def run_autofit(project_id, parset_name, maxtime=60):
     close_db_session(db_session)
     result = None
     try:
-        result = project_instance.autofit(
-            name='{}_copy'.format(parset_name),
-            orig=parset_name,
+        project_instance.autofit(
+            name=str(parset_name),
+            orig=str(parset_name),
             maxtime=maxtime
         )
+        result = project_instance.parsets[str(parset_name)].getresults()
+        print "result", result
     except Exception:
         var = traceback.format_exc()
-        print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, parset_name, autofit, var))
+        print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, parset_name, 'autofit', var))
         error_text = var
         status='error'
 

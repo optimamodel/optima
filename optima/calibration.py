@@ -86,7 +86,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     
     # Validate input
     if project is None: raise OptimaException('autofit() requires a project in order to run')
-    if type(name)!=str: raise OptimaException('"name" must be the name or index of a paramete set')
+    if type(name)!=str: raise OptimaException('%s must be the name or index of a paramete set' % name)
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set

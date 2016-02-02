@@ -347,7 +347,7 @@ manual_calibration_parser.add_argument('maxtime', required=False, default=60)
 class ParsetsAutomaticCalibration(Resource):
 
     @swagger.operation(
-        summary='Launch manual calibration for the selected parset',
+        summary='Launch auto calibration for the selected parset',
         parameters=manual_calibration_parser.swagger_parameters()
     )
     def post(self, parset_id):
