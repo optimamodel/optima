@@ -1,8 +1,9 @@
 from server.celery_app import make_celery
+from flask.ext.sqlalchemy import SQLAlchemy
 
 from sqlalchemy.orm import sessionmaker, scoped_session
 from server.api import app
-from server.webapp.dbconn import db
+#from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ParsetsDb, WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.utils import save_result, load_project
@@ -14,7 +15,7 @@ import dateutil.tz
 
 
 celery = make_celery(app)
-
+db = SQLAlchemy(app)
 
 def init_db_session():
     return scoped_session(sessionmaker(db.engine)) #creating scoped_session, eventually bound to engine
