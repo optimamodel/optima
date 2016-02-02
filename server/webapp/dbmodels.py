@@ -671,6 +671,18 @@ class ProgsetsDb(db.Model):
 @swagger.model
 class ScenariosDb(db.Model):
 
+    __tablename__ = 'scenarios'
+
+    resource_fields = {
+        'id': Uuid,
+        'progset_id': Uuid,
+        'scenario_type': fields.String,
+        'active': fields.Boolean,
+        'name': fields.String,
+        'parset_id': Uuid,
+        'pars': Json(attribute='pars')
+    }
+
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.String)
@@ -680,8 +692,8 @@ class ScenariosDb(db.Model):
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
     blob = db.Column(JSON)
 
-    def __init__(self, project_id, name, scenario_type, active=False,
-                 progset_id=None, parset_id=None, blob={}):
+    def __init__(self, project_id, parset_id, name, scenario_type,
+                 active=False, progset_id=None, blob={}):
 
         self.project_id = project_id
         self.name = name
@@ -690,6 +702,11 @@ class ScenariosDb(db.Model):
         self.progset_id = progset_id
         self.parset_id = parset_id
         self.blob = blob
+
+    @property
+    def pars(self):
+        print(self.blob)
+        return self.blob.get('pars', [])
 
     def hydrate(self):
 

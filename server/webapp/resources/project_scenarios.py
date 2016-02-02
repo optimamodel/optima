@@ -20,6 +20,26 @@ from server.webapp.dbmodels import ScenariosDb
 
 import optima as op
 
+
+pars_parser = RequestParser()
+pars_parser.add_arguments({
+    'endval': {'type': int, 'location': 'json'},
+    'endyear': {'type': int, 'location': 'json'},
+    'name': {'type': str, 'location': 'json'},
+    'for': {'type': int, 'location': 'json'},
+    'startval': {'type': int, 'location': 'json'},
+    'startyear': {'type': int, 'location': 'json'},
+})
+
+
+scenario_parser = RequestParser()
+scenario_parser.add_arguments({
+    'name': {'type': str, 'location': 'args', 'required': True},
+    'parset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
+    'scenario_type': {'type': str, 'location': 'args', 'required': True},
+    'active': {'type': bool, 'location': 'args', 'required': True}
+})
+
 # /api/project/<project-id>/scenarios
 
 class Scenarios(Resource):
@@ -31,6 +51,7 @@ class Scenarios(Resource):
     @swagger.operation(
         description="Get the scenarios for the given project."
     )
+    @marshal_with(ScenariosDb.resource_fields)
     def get(self, project_id):
         project_entry = load_project(project_id)
         if project_entry is None:
@@ -38,3 +59,29 @@ class Scenarios(Resource):
 
         reply = db.session.query(ScenariosDb).filter_by(project_id=project_entry.id).all()
         return reply
+
+    @swagger.operation(
+        operation="Create a new scenario for the given project.",
+        parameters=scenario_parser.swagger_parameters()
+    )
+    @marshal_with(ScenariosDb.resource_fields)
+    def post(self, project_id):
+
+        args = scenario_parser.parse_args()
+
+        if args.get('scenario_type') not in ["Parameter", "Program"]:
+            raise ValueError("Type needs to be 'Parameter' or 'Program'.")
+
+        try:
+            blob = json.loads(request.data)
+        except ValueError as e:
+            print(e)
+            blob = {}
+
+        scenario_entry = ScenariosDb(project_id, blob=blob, **args)
+
+        db.session.add(scenario_entry)
+        db.session.flush()
+        db.session.commit()
+
+        return scenario_entry, 201
