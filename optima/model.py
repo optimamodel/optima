@@ -596,8 +596,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 outflows = progout + hivdeaths + otherdeaths + leavecareCD[cd4]
                 newtreat[cd4] = newtreattot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
                 newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[usvl[cd4],:,t]/(1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[svl[cd4],:,t]/treatvs[t]) # Make sure it doesn't remove everyone from the svl treatment compartment
+                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[usvl[cd4],:,t]/(eps+1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
+                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
                 dC.append(inflows - outflows - newtreat[cd4])
                 dD[cd4] += leavecareCD[cd4]
                 raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
@@ -698,8 +698,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 outflows = progout + hivdeaths + otherdeaths + leavecareOL[cd4]
                 restarters[cd4] = dt * people[off[cd4],:,t] * restarttreat[t]
                 restarters[cd4] = minimum(restarters[cd4], safetymargin*(people[off[cd4],:,t]+inflows-outflows)) # Allow it to go negative
-                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[usvl[cd4],:,t]/(1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
-                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[svl[cd4],:,t]/treatvs[t]) # Make sure it doesn't remove everyone from the svl treatment compartment
+                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[usvl[cd4],:,t]/(eps+1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
+                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
                 dO.append(inflows - outflows - restarters[cd4])
                 dL[cd4] += leavecareOL[cd4] 
                 dUSVL[cd4] += restarters[cd4]*(1.-treatvs[t])
