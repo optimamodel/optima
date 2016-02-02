@@ -683,4 +683,4 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     plotparsbackbut.on_clicked(updateb)
     plotparsnextbut.on_clicked(updaten)
     plotparslider.on_changed(update)
-    return plotparsbackbut, plotparsnextbut, plotparslider
+    return allplotdata
