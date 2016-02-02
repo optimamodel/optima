@@ -12,8 +12,8 @@ from flask import helpers
 from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import (
-    load_project, load_progset, load_program, RequestParser, report_exception, modify_program)
-from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
+    load_project, load_progset, load_program, load_scenario, RequestParser, report_exception, modify_program)
+from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ScenarioDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ScenariosDb
@@ -51,7 +51,7 @@ class Scenarios(Resource):
     @swagger.operation(
         description="Get the scenarios for the given project."
     )
-    @marshal_with(ScenariosDb.resource_fields)
+    @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
     def get(self, project_id):
         project_entry = load_project(project_id)
         if project_entry is None:
@@ -85,3 +85,31 @@ class Scenarios(Resource):
         db.session.commit()
 
         return scenario_entry, 201
+
+
+# /api/project/<project-id>/scenarios/<scenarios-id>
+class Scenario(Resource):
+    """
+    A given scenario.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        description="Get a single scenario."
+    )
+    @marshal_with(ScenariosDb.resource_fields)
+    def get(self, project_id, scenario_id):
+        """
+        Get a single scenario.
+        """
+        return load_scenario(project_id, scenario_id)
+
+    @swagger.operation(
+        description="Update a single scenario."
+    )
+    @marshal_with(ScenariosDb.resource_fields)
+    def put(self, project_id, scenario_id):
+        """
+        Replace a single scenario.
+        """
+        scenario_entry = load_scenario(project_id, scenario_id)
