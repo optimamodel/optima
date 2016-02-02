@@ -343,6 +343,35 @@ class ParsetsCalibration(Resource):
         }
 
 
+manual_calibration_parser = RequestParser()
+manual_calibration_parser.add_argument('maxtime', required=False, default=60)
+
+
+class ParsetsAutomaticCalibration(Resource):
+
+    @swagger.operation(
+        summary='Launch manual calibration for the selected parset',
+        parameters=manual_calibration_parser.swagger_parameters()
+    )
+    def post(self, parset_id):
+        from server.webapp.utils import load_project
+        from server.webapp.tasks import run_autofit
+        from server.webapp.dbmodels import ParsetsDb
+
+        args = manual_calibration_parser.parse_args()
+
+        # FixMe: use load_parset once the branch having it is merged
+        parset_entry = ParsetsDb.query.get(parset_id)
+
+        project_entry = load_project(parset_entry.project_id, raise_exception=True)
+
+        project_be = project_entry.hydrate()
+
+        run_autofit.delay(project_be, parset_entry.name, args['maxtime'])
+
+        return '', 201
+
+
 file_upload_form_parser = RequestParser()
 file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)
 

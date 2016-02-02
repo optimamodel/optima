@@ -15,6 +15,13 @@
       - api
       - update
 
+  - name: API | Copy Celery configuration
+    template: src={{root_dir}}/components/templates/celery-optima.conf.j2 dest=/etc/supervisor/conf.d/celery-optima.conf backup=yes
+    sudo: yes
+    tags:
+      - api
+      - update
+
   - name: API | Install gunicorn
     pip: name=gunicorn state=present
     sudo: yes
@@ -48,6 +55,13 @@
 
   - name: API | Restart
     service: name=optima-api state=restarted
+    sudo: yes
+    tags:
+      - api
+      - update
+
+  - name: API | Restart supervisor
+    command: service supervisor restart
     sudo: yes
     tags:
       - api

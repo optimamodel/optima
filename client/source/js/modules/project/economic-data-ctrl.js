@@ -4,15 +4,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProjectEconomicDataController',
     function ($scope, projects, modalService, $upload, $state, info, projectApiService, $modal) {
       var activeProjectInfo = info.data;
-      
+      $scope.hasEconData = activeProjectInfo.has_econ;
+
+      if (!activeProjectInfo.has_data) {
+        modalService.inform(
+          function (){ },
+          'Okay',
+          'Please upload an Optima spreadsheet before adding economic data.',
+          'Cannot proceed'
+        );
+        $scope.missingData = true;
+        return;
+      }
+
       $scope.economicData = function(action){
         switch(action){
           case 'create':
-            /*projectApiService.getProjectData(activeProjectInfo.id)
+            projectApiService.getEconomicsData(activeProjectInfo.id)
             .success(function (response, status, headers, config) {
               var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-              saveAs(blob, (activeProjectInfo.name + '.xlsx'));
-            });*/
+              saveAs(blob, (activeProjectInfo.name + '_economics.xlsx'));
+            });
           break;
           case 'upload':
             var modalInstance = $modal.open({
@@ -32,11 +44,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           case 'remove':
             if(!angular.isDefined(activeProjectInfo.econ)){ // Economic data exist
               // Modal and http call to save project
-              var message = 'Are you sure want to remove economic data?';
+              var message = 'Are you sure want to remove economic data template?';
               modalService.confirm(
                 function (){ 
-                  activeProjectInfo.econ = '';
-                  projectApiService.updateProject(activeProjectInfo.id, activeProjectInfo);
+                  projectApiService.deteleEconomicsData(activeProjectInfo.id).then(function(response){
+                    $scope.hasEconData = false;
+                  });
                 },
                 function (){},
                 'Yes',
@@ -59,20 +72,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     })
     .controller('EconomicModalInstanceCtrl',
     function ($scope, activeProjectInfo, $upload) {
+      var uploadedFile;
       $scope.onFileSelect = function(files) {
-        activeProjectInfo.file = files[0];
+        uploadedFile = files[0];
       };
       $scope.UploadEconomicData = function() {
-          var fileName = activeProjectInfo.file.name;
+          var fileName = uploadedFile.name;
           var fileExt = fileName.substr(fileName.lastIndexOf('.') + 1, fileName.length);
           if (fileExt !== 'xlsx') {
             modalService.informError([{message: 'Please upload an excel file. This should have the file extension .xlsx.'}]);
             return false;
           } else {
-             $upload.upload({
-               url: '/api/project/data',
-               file: activeProjectInfo.file
-             }).success(function (data, status, headers, config) {
+            $upload.upload({
+              url: '/api/project/'+activeProjectInfo.id+'/economics',
+              file: uploadedFile
+            }).success(function(){
               window.location.reload();
             });
           }
