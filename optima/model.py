@@ -7,18 +7,19 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
     Runs Optima's epidemiological model.
     
-    Version: 2016jan31
+    Version: 2016feb01
     """
     
     
     if benchmark: starttime = tic()
+    
     
     ###############################################################################
     ## Setup
     ###############################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
-    eps = 1e-3 # Define another small number to avoid divide-by-zero errors
+    eps = 1.0101e-3 # Define another small number to avoid divide-by-zero errors
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
@@ -132,7 +133,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     stiprev   = simpars['stiprev']   # Prevalence of STIs (P)
     prep      = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
-    usepmtctprop=True if all(numpmtct<1) else False
+    usepmtctprop=False # WARNING, causes horrific bugs if enabled !!!!!! True if all(numpmtct<1) else False
 
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)

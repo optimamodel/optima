@@ -334,23 +334,31 @@ if 'VMMC' in tests:
 
         Parscen(name='Imagine that no-one gets circumcised',
              parsetname='default',
-             pars=[{'endval': 0.,
+             pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'circum',
                 'for': malelist,
                 'startval': .85,
-                'startyear': 2015}]),
+                'startyear': 2015.2}]),
+        
+        Budgetscen(name='Default budget',
+              parsetname='default',
+              progsetname='default',
+              t=2015,
+              budget=P.progsets['default'].getdefaultbudget()),
 
          Budgetscen(name='Scale up VMMC program',
               parsetname='default',
               progsetname='default',
               t=2016,
-              budget={'Condoms': 1e7,
-                      'VMMC': 1e6,
+              budget={
+                      'Condoms': 1e7,
+                      'VMMC': 1e8,
                       'FSW programs': 1e6,
                       'HTC':2e7,
                       'PMTCT':1e6,
-                      'ART':1e6}),
+                      'ART':1e6
+                      }),
 
         ]
     
@@ -361,10 +369,13 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui, plotpeople, findinds
+        from optima import pygui, plotpeople, findinds, plotpars
         ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
-        plotpeople(P, ppl, start=0, end=2, pops=findinds(malelist))
-        pygui(P.results[-1], toplot='default')
+        ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
+#        plotpeople(P, ppl, start=0, end=None, pops=findinds(malelist))
+        plotpeople(P, ppl, start=0, end=2, pops=[1])
+#        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+#        pygui(P.results[-1], toplot='default')
         
 
     done(t)
