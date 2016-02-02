@@ -561,7 +561,7 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
 
 
 
-global plotparsbackbut, plotparsnextbut
+
 def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
@@ -573,7 +573,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button
     
-    global plotparsbackbut, plotparsnextbut
+    global position
     position = 0
     
     if type(parslist)!=list: parslist = [parslist] # Convert to list
@@ -625,13 +625,13 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     
     backframe = plotparsfig.add_axes([0.2, 0.03, 0.2, 0.03])
     nextframe = plotparsfig.add_axes([0.6, 0.03, 0.2, 0.03])
-    plotparsbackbut = Button(backframe, 'Back')
-    plotparsnextbut = Button(nextframe, 'Next')
+    backbut = Button(backframe, 'Back')
+    nextbut = Button(nextframe, 'Next')
     
     def updateb(event=None): update(-1)
     def updaten(event=None): update(1)
     def update(move=0):
-        global position, plotparsaxs
+        global position
         position += move*nperscreen
         position = max(0,position)
         position = min(nplots-nperscreen, position)
@@ -657,6 +657,6 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                 ax.set_xlim((tvec[0],tvec[-1]))
                 
     update()
-    plotparsbackbut.on_clicked(updateb)
-    plotparsnextbut.on_clicked(updaten)
-    return None
+    backbut.on_clicked(updateb)
+    nextbut.on_clicked(updaten)
+    return backbut, nextbut
