@@ -561,7 +561,7 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
 
 
 
-
+global plotparsbackbut, plotparsnextbut
 def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
@@ -572,6 +572,9 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     from numpy import array, vstack
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button
+    
+    global plotparsbackbut, plotparsnextbut
+    position = 0
     
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     
@@ -611,35 +614,30 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     ncols = 4
     nperscreen = nrows*ncols
 
-    fig = plt.figure()
+    plotparsfig = plt.figure()
     plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.2, hspace=0.4)
-    axs = []
+    plotparsaxs = []
     count = 0
     for row in range(nrows):
         for col in range(ncols):
             count += 1
-            axs.append(fig.add_subplot(nrows, ncols, count))
+            plotparsaxs.append(plotparsfig.add_subplot(nrows, ncols, count))
     
-    position = [0]
-    backframe = plt.axes([0.2, 0.03, 0.2, 0.03])
-    nextframe = plt.axes([0.6, 0.03, 0.2, 0.03])
-    backbut = Button(backframe, 'Back')
-    nextbut = Button(nextframe, 'Next')
+    backframe = plotparsfig.add_axes([0.2, 0.03, 0.2, 0.03])
+    nextframe = plotparsfig.add_axes([0.6, 0.03, 0.2, 0.03])
+    plotparsbackbut = Button(backframe, 'Back')
+    plotparsnextbut = Button(nextframe, 'Next')
     
-    def updateb(event=None): 
-        print('hi')
-        update(position, -1)
-    def updaten(event=None): 
-        print('hi')
-        update(position, 1)
-    def update(position, move):
-        print(position, move)
-        position[0] += move*nperscreen
-        position[0] = max(0,position[0])
-        position[0] = min(nplots-nperscreen, position[0])
-        for i,ax in enumerate(axs):
+    def updateb(event=None): update(-1)
+    def updaten(event=None): update(1)
+    def update(move=0):
+        global position, plotparsaxs
+        position += move*nperscreen
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
+        for i,ax in enumerate(plotparsaxs):
             ax.cla()
-            nplt = i+position[0]
+            nplt = i+position
             if nplt<nplots:
                 try:
                     this = plotdata[nplt,:]
@@ -657,9 +655,8 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                     print('Problem with "%s": "%s"' % (this[0], E.message))
                 ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                 ax.set_xlim((tvec[0],tvec[-1]))
-        return None
                 
-    update(position, 0)
-    backbut.on_clicked(updateb)
-    nextbut.on_clicked(updaten)
+    update()
+    plotparsbackbut.on_clicked(updateb)
+    plotparsnextbut.on_clicked(updaten)
     return None
