@@ -499,10 +499,12 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
         ax[-1].set_xlim(0,nprogs+1)
         
-        ylabel = 'Spending (US$)' if which=='budget' else 'Coverage (% of targeted)'
+        ylabel = 'Spending' if which=='budget' else 'Coverage (% of targeted)'
         ax[-1].set_ylabel(ylabel)
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    
+    for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
         
     close(fig)
     

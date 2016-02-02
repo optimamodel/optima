@@ -3,14 +3,13 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan30
+Version: 2016feb02
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
-from optima import getresults, convertlimits, gettvecdt # Heftier functions
+from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 
@@ -248,12 +247,14 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None):
+def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None, eps=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
     Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
     '''
+    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings  
+    
     if which not in ['numacts','condom']: raise OptimaException('Can only balance numacts or condom, not "%s"' % which)
     mixmatrix = array(data['part'+act]) # Get the partnerships matrix
     npops = len(popkeys) # Figure out the number of populations
@@ -349,7 +350,6 @@ def makepars(data, label=None, verbose=2):
     mpopkeys = [popkeys[i] for i in range(len(popkeys)) if pars['male'][i]] # WARNING, these two lines should be consistent -- they both work, so the question is which is more elegant -- if pars['male'] is a dict then could do: [popkeys[key] for key in popkeys if pars['male'][key]]
     pars['popkeys'] = dcp(popkeys)
     
-    
     # Read in parameters automatically -- WARNING, not currently implemented
     rawpars = loadpartable() # Read the parameters structure
     for rawpar in rawpars: # Iterate over all automatically read in parameters
@@ -371,13 +371,17 @@ def makepars(data, label=None, verbose=2):
         # Decide how to handle it based on parameter type
         if partype=='initprev': # Initialize prevalence only
             pars['initprev'] = data2prev(data=data, keys=keys, **rawpar) # Pull out first available HIV prevalence point
+        
         elif partype=='popsize': # Population size only
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
-        elif partype=='timepar': # It's a normal time parameter, e.g. hivtest
-            pars[parname] = data2timepar(data=data, keys=keys, **rawpar)
+        
+        elif partype=='timepar': # Otherwise it's a regular time par, made from data
+            pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+        
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
             pars[parname] = Constant(y=best, **rawpar) # WARNING, should the limits be the limits defined in the spreadsheet? Or the actual mathematical limits?
+        
         elif partype=='meta': # Force-of-infection and inhomogeneity and transitions
             pars[parname] = Constant(y=odict(), **rawpar)
             
@@ -447,8 +451,9 @@ def makepars(data, label=None, verbose=2):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                        pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                        if i>=j:
+                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
     printv('...done converting data to parameters.', 2, verbose)
     
@@ -744,6 +749,32 @@ class Parameterset(object):
         
         printv('...done making model parameters.', 2, verbose)
         return simparslist
+    
+    
+    def printpars(self, ind=None, output=False):
+        if ind is None: ind = 0
+        outstr = ''
+        count = 0
+        for par in self.pars[ind].values():
+            if hasattr(par,'y'):
+                if hasattr(par.y, 'keys'):
+                    count += 1
+                    if len(par.y.keys())>1:
+                        outstr += '%3i: %s\n' % (count, par.name)
+                        for key in par.y.keys():
+                            outstr += '     %s = %s\n' % (key, par.y[key])
+                    elif len(par.y.keys())==1:
+                        outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y[0])
+                    elif len(par.y.keys())==0:
+                        outstr += '%3i: %s = (empty)' % (count, par.name)
+                    else:
+                        print('WARNING, not sure what to do with %s: %s' % (par.name, par.y))
+                else:
+                    count += 1
+                    outstr += '%3i: %s = %s\n\n' % (count, par.name, par.y)
+        print(outstr)
+        if output: return outstr
+        else: return None
 
 
     def listattributes(self):

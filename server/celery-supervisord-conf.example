@@ -1,0 +1,4 @@
+[program:celery-optima]
+command=<optima_root>/server/p-env/bin/celery -A server.webapp.tasks.celery worker -l ERROR -f <log_file_location>
+directory=<optima_root>
+user=<same_user_as_wsgi_process>

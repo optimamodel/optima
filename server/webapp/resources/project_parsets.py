@@ -223,7 +223,10 @@ class ParsetsCalibration(Resource):
         graph_selectors = op.getplotselections(result)
         keys = graph_selectors['keys']
         names = graph_selectors['names']
-        checks = graph_selectors['defaults']
+        if which is None:
+            checks = graph_selectors['defaults']
+        else:
+            checks = [key in which for key in keys]
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
         return selectors
@@ -338,6 +341,35 @@ class ParsetsCalibration(Resource):
             "graphs": graphs,
             "selectors": selectors
         }
+
+
+manual_calibration_parser = RequestParser()
+manual_calibration_parser.add_argument('maxtime', required=False, default=60)
+
+
+class ParsetsAutomaticCalibration(Resource):
+
+    @swagger.operation(
+        summary='Launch manual calibration for the selected parset',
+        parameters=manual_calibration_parser.swagger_parameters()
+    )
+    def post(self, parset_id):
+        from server.webapp.utils import load_project
+        from server.webapp.tasks import run_autofit
+        from server.webapp.dbmodels import ParsetsDb
+
+        args = manual_calibration_parser.parse_args()
+
+        # FixMe: use load_parset once the branch having it is merged
+        parset_entry = ParsetsDb.query.get(parset_id)
+
+        project_entry = load_project(parset_entry.project_id, raise_exception=True)
+
+        project_be = project_entry.hydrate()
+
+        run_autofit.delay(project_be, parset_entry.name, args['maxtime'])
+
+        return '', 201
 
 
 file_upload_form_parser = RequestParser()

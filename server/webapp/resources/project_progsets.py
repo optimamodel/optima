@@ -177,7 +177,7 @@ class ProgsetData(Resource):
         parameters=file_upload_form_parser.swagger_parameters()
     )
     @marshal_with(file_resource)
-    def post(self, project_id, progset_id, parset_id):
+    def post(self, project_id, progset_id):
         """
         Uploads Data file, uses it to update the progrset and program models.
         Precondition: model should exist.
