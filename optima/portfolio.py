@@ -463,6 +463,12 @@ class GAOptim(object):
         overalloutcomeinit = 0
         overalloutcomeopt = 0
         
+        overalloutcomesplit = odict()
+        for key in self.objectives['keys']:
+            overalloutcomesplit['num'+key] = odict()
+            overalloutcomesplit['num'+key]['init'] = 0
+            overalloutcomesplit['num'+key]['opt'] = 0
+        
         nprojects = len(self.resultpairs.keys())
         projnames = []
         projbudgets = []
@@ -501,10 +507,13 @@ class GAOptim(object):
             projoutcomesplit.append(odict())
             projoutcomesplit[prj]['init'] = odict()
             projoutcomesplit[prj]['opt'] = odict()
+            
             for key in self.objectives['keys']:
-                print key
                 projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot[0][indices].sum()
                 projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[0][indices].sum()
+                overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
+                overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
+                
                  
         ## Actually create the output
         output = ''
@@ -512,6 +521,8 @@ class GAOptim(object):
         output += '\nOverall summary'
         output += '\n\tPortfolio budget:\t%f\t%f' % (overallbudgetinit, overallbudgetopt)
         output += '\n\tOutcome:\t1%f\t%f' % (overalloutcomeinit, overalloutcomeopt)
+        for key in self.objectives['keys']:
+            output += '\n\t' + key.title() + ':\t%f\t%f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
         for prj in range(nprojects):
             output += '\n'
             output += '\n'
