@@ -223,7 +223,10 @@ class ParsetsCalibration(Resource):
         graph_selectors = op.getplotselections(result)
         keys = graph_selectors['keys']
         names = graph_selectors['names']
-        checks = graph_selectors['defaults']
+        if which is None:
+            checks = graph_selectors['defaults']
+        else:
+            checks = [(key in which) for key in keys]
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
         return selectors
