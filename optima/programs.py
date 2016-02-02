@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb02
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
+from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
@@ -324,6 +324,7 @@ class Programset(object):
         nyrs = len(t)
         
         budget = self.getprogbudget(coverage=coverage, t=t, parset=parset, results=results, proportion=False)
+        infbudget = odict((k,array([1e9]*len(budget[k]))) if self.programs[k].optimizable() else (k,None) for k in budget.keys())
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
@@ -353,8 +354,15 @@ class Programset(object):
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                             x = budget[thisprog.short]
-                            if thiscovpop: thiscov[thisprog.short] = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=True,total=False)[thiscovpop]
-                            else: thiscov[thisprog.short] = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=True, total=False)[thispop]
+                            fullx = infbudget[thisprog.short]
+                            if thiscovpop:
+                                part1 = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
+                                part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
+                                thiscov[thisprog.short] = part1/part2
+                            else:
+                                part1 = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                thiscov[thisprog.short] = part1/part2
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
@@ -457,7 +465,7 @@ class Programset(object):
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
-                    errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
+                    errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
                     if die:
                         raise OptimaException(errormsg)
                     else:
@@ -713,7 +721,7 @@ class Program(object):
 
 
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        randseed=None, bounds=None, npts=100, maxupperlim=1e8):
+        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
@@ -722,6 +730,7 @@ class Program(object):
         import textwrap
 
         if type(t) in [int,float]: t = [t]
+        colors = gridcolormap(len(t))
         plotdata = {}
         
         # Get caption & scatter data 
@@ -779,19 +788,15 @@ class Program(object):
                     plotdata['ylinedata_m'][yr],
                     linestyle='-',
                     linewidth=2,
-                    color='#a6cee3')
-                axis.plot(
-                    plotdata['xlinedata'],
-                    plotdata['ylinedata_l'][yr],
-                    linestyle='--',
-                    linewidth=2,
-                    color='#000000')
-                axis.plot(
-                    plotdata['xlinedata'],
-                    plotdata['ylinedata_u'][yr],
-                    linestyle='--',
-                    linewidth=2,
-                    color='#000000')
+                    color=colors[yr],
+                    label=t[yr])
+                if plotbounds:
+                    axis.fill_between(plotdata['xlinedata'],
+                                      plotdata['ylinedata_l'][yr],
+                                      plotdata['ylinedata_u'][yr],
+                                      facecolor=colors[yr],
+                                      alpha=.1,
+                                      lw=0)
         axis.scatter(
             costdata,
             self.costcovdata['coverage'],
@@ -807,6 +812,7 @@ class Program(object):
         axis.set_title(self.short)
         axis.get_xaxis().get_major_formatter().set_scientific(False)
         axis.get_yaxis().get_major_formatter().set_scientific(False)
+        if len(t)>1: axis.legend(loc=4)
 
         return cost_coverage_figure
 
@@ -927,7 +933,8 @@ class CCOF(object):
         return ccopar
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
-        if (not toplot) and (not len(x)==len(t)): raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
+        if (not toplot) and (not len(x)==len(t)): 
+            raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
