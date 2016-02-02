@@ -760,6 +760,7 @@ class Parameterset(object):
         outstr = ''
         count = 0
         for par in self.pars[ind].values():
+            if hasattr(par,'p'): print('WARNING, population size not implemented!')
             if hasattr(par,'y'):
                 if hasattr(par.y, 'keys'):
                     count += 1

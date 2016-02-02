@@ -149,10 +149,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
                         thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
                         
-                        if last_y[popno]<1e-2:
-                            print('PARAMETER SCENARIO: %s' % thispar.name)
-                            print last_y
-                        
                         # Add end year values if supplied
                         if scenpar['endyear']: 
                             thispar.t[pop] = append(thispar.t[pop], scenpar['endyear'])

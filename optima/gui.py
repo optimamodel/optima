@@ -588,23 +588,25 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         for i,key1 in enumerate(pars):
             par = pars[key1]
             if isinstance(par, Par):
-                if hasattr(par,'y'):# WARNING, add par.m as well?
-                    if hasattr(par.y, 'keys') and len(par.y.keys())>0: # Only ones that don't have a len are temp pars
-                        nkeys = len(par.y.keys())
-                        for k,key2 in enumerate(par.y.keys()):
-                            if hasattr(par, 't'): t = par.t[key2]
-                            else: t = tvec[0] # For a constant
-                            count += 1
-                            if nkeys==1: thissimpar = simpars[key1]
-                            else: thissimpar = simpars[key1][k]
-                            thisplot = array(['%3i. %s - %s' % (count-1, key1, key2), thissimpar, t, par.y[key2]], dtype=object)
-                            if array(thissimpar).sum()==0: thisplot[0] += ' (zero)'
-                            plotdata = vstack([plotdata, thisplot])
-                    else:
-                        t = tvec[0] # For a constant
+                if   hasattr(par,'y'): pardata = par.y # WARNING, add par.m as well?
+                elif hasattr(par,'p'): pardata = par.p # Population size
+                else: raise Exception('???')
+                if hasattr(pardata, 'keys') and len(pardata.keys())>0: # Only ones that don't have a len are temp pars
+                    nkeys = len(pardata.keys())
+                    for k,key2 in enumerate(pardata.keys()):
+                        if hasattr(par, 't'): t = par.t[key2]
+                        else: t = tvec[0] # For a constant
                         count += 1
-                        thisplot = array(['%3i. %s' % (count-1, key1), simpars[key1], t, par.y], dtype=object)
+                        if nkeys==1: thissimpar = simpars[key1]
+                        else: thissimpar = simpars[key1][k]
+                        thisplot = array(['%3i. %s - %s' % (count-1, key1, key2), thissimpar, t, pardata[key2]], dtype=object)
+                        if array(thissimpar).sum()==0: thisplot[0] += ' (zero)'
                         plotdata = vstack([plotdata, thisplot])
+                else:
+                    t = tvec[0] # For a constant
+                    count += 1
+                    thisplot = array(['%3i. %s' % (count-1, key1), simpars[key1], t, pardata], dtype=object)
+                    plotdata = vstack([plotdata, thisplot])
         plotdata = plotdata[1:,:] # Remove header
         allplotdata.append(plotdata)
     
@@ -669,7 +671,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                         elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
                         elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
-                        else: print('Problem with "%s": "%s"' % (this[0], this[1]))
+                        else: pass # Population size, doesn't use control points
                     except: print('??????')
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
