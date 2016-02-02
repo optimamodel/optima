@@ -721,7 +721,7 @@ class Program(object):
 
 
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        randseed=None, plotbounds=False, npts=100, maxupperlim=1e8):
+        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
@@ -791,18 +791,12 @@ class Program(object):
                     color=colors[yr],
                     label=t[yr])
                 if plotbounds:
-                    axis.plot(
-                        plotdata['xlinedata'],
-                        plotdata['ylinedata_l'][yr],
-                        linestyle='--',
-                        linewidth=2,
-                        color='#000000')
-                    axis.plot(
-                        plotdata['xlinedata'],
-                        plotdata['ylinedata_u'][yr],
-                        linestyle='--',
-                        linewidth=2,
-                        color='#000000')
+                    axis.fill_between(plotdata['xlinedata'],
+                                      plotdata['ylinedata_l'][yr],
+                                      plotdata['ylinedata_u'][yr],
+                                      facecolor=colors[yr],
+                                      alpha=.1,
+                                      lw=0)
         axis.scatter(
             costdata,
             self.costcovdata['coverage'],
