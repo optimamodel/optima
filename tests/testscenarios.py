@@ -372,7 +372,7 @@ if 'VMMC' in tests:
         from optima import pygui, plotpeople, findinds, plotpars
         ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
         apd = plotpars([P.scens[0].scenparset.pars[0], P.scens[1].scenparset.pars[0], P.scens[2].scenparset.pars[0]])
-#        plotpeople(P, ppl, start=0, end=None, pops=findinds(malelist))
+        plotpeople(P, ppl, start=0, end=None, pops=findinds(malelist))
         pygui(P.results[-1], toplot='default')
         
 

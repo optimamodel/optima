@@ -143,7 +143,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True, 
     stiprev   = simpars['stiprev']   # Prevalence of STIs (P)
     prep      = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
-    usepmtctprop=True if all(numpmtct<1) else False
+    usepmtctprop=False # WARNING, causes horrific bugs if enabled !!!!!! True if all(numpmtct<1) else False
 
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
