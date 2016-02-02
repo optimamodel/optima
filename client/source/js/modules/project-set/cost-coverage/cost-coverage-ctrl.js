@@ -78,9 +78,8 @@ define(['./../module', 'underscore'], function (module, _) {
             return _.extend(par, vm.selectedParset.pars[0][par.name])
           });
 
+          console.log('vm.params', vm.params);
         });
-
-        console.log('vm.params', vm.params);
 
       }
     }
@@ -147,6 +146,10 @@ define(['./../module', 'underscore'], function (module, _) {
       console.group('get existing population', parsetId, parameterShort)
       var effects = vm.existingEffects.effects;
       var parametersForThisParset = _.findWhere(effects, {parset: parsetId})
+      if (parametersForThisParset === undefined) {
+        console.log('no existing populations')
+        return [];
+      }
       var currentParameterProps = _.filter(parametersForThisParset.parameters, {name: parameterShort})
       var groupedByName = _.groupBy(currentParameterProps, 'name');
 
