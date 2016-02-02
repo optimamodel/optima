@@ -129,7 +129,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     numtx     = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
     hivtest   = simpars['hivtest']   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
-    circum    = simpars['circum']    # Prevalence of circumcision (P)
+    circum    = 0*simpars['circum']    # Prevalence of circumcision (P)
     stiprev   = simpars['stiprev']   # Prevalence of STIs (P)
     prep      = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)

@@ -7,10 +7,10 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxbudget',
 #'90-90-90'
-#'VMMC'
+'VMMC'
 ]
 
 ##############################################################################
@@ -372,10 +372,10 @@ if 'VMMC' in tests:
         from optima import pygui, plotpeople, findinds, plotpars
         ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
         ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
-#        plotpeople(P, ppl, start=0, end=None, pops=findinds(malelist))
-        plotpeople(P, ppl, start=0, end=2, pops=[1])
-#        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-#        pygui(P.results[-1], toplot='default')
+        plotpeople(P, ppl, start=0, end=None, pops=-2)
+#        plotpeople(P, ppl, start=0, end=2, pops=[1])
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+        pygui(P.results[-1], toplot='default')
         
 
     done(t)
