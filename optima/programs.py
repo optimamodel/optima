@@ -3,7 +3,7 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016jan27
+Version: 2016feb02
 """
 
 from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
@@ -965,11 +965,11 @@ class Costcov(CCOF):
                 y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
             return y
 
-    def inversefunction(self, x, ccopar, popsize):
+    def inversefunction(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
-        eps = 1e-3 # TEMP FIX TO STOP LOGGING ZERO
+        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
         if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)

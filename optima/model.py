@@ -19,26 +19,26 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     ###############################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
-    eps = 1.0101e-3 # Define another small number to avoid divide-by-zero errors
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
     if simpars is None: raise OptimaException('model() requires simpars as an input')
     if settings is None: raise OptimaException('model() requires settings as an input')
-    popkeys    = simpars['popkeys']
-    npops      = len(popkeys)
-    simpars    = dcp(simpars)
-    tvec       = simpars['tvec']
-    dt         = simpars['dt']      # Shorten dt
-    npts       = len(tvec) # Number of time points
-    ncd4       = settings.ncd4      # Shorten number of CD4 states
-    nstates    = settings.nstates   # Shorten number of health states
-    people     = zeros((nstates, npops, npts)) # Matrix to hold everything
-    allpeople  = zeros((npops, npts)) # Population sizes
-    effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
-    inhomo     = zeros(npops)    # Inhomogeneity calculations
-    usecascade = settings.usecascade # Whether or not the full treatment cascade should be used
+    popkeys      = simpars['popkeys']
+    npops        = len(popkeys)
+    simpars      = dcp(simpars)
+    tvec         = simpars['tvec']
+    dt           = simpars['dt']      # Shorten dt
+    npts         = len(tvec) # Number of time points
+    ncd4         = settings.ncd4      # Shorten number of CD4 states
+    nstates      = settings.nstates   # Shorten number of health states
+    people       = zeros((nstates, npops, npts)) # Matrix to hold everything
+    allpeople    = zeros((npops, npts)) # Population sizes
+    effhivprev   = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
+    inhomo       = zeros(npops)    # Inhomogeneity calculations
+    usecascade   = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
+    eps          = settings.eps # Define another small number to avoid divide-by-zero errors
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
@@ -614,7 +614,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 outflows = progout + hivdeaths + otherdeaths + leavecareCD[cd4]
                 newtreat[cd4] = newtreattot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
                 newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[usvl[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[usvl[cd4],:,t]/(eps+1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
+                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
                 dC.append(inflows - outflows - newtreat[cd4])
                 dD[cd4] += leavecareCD[cd4]
                 raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
@@ -715,7 +716,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                 outflows = progout + hivdeaths + otherdeaths + leavecareOL[cd4]
                 restarters[cd4] = dt * people[off[cd4],:,t] * restarttreat[t]
                 restarters[cd4] = minimum(restarters[cd4], safetymargin*(people[off[cd4],:,t]+inflows-outflows)) # Allow it to go negative
-                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[usvl[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[usvl[cd4],:,t]/(eps+1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
+                restarters[cd4] = maximum(restarters[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
                 dO.append(inflows - outflows - restarters[cd4])
                 dL[cd4] += leavecareOL[cd4] 
                 dUSVL[cd4] += restarters[cd4]*(1.-treatvs[t])
