@@ -805,7 +805,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                     change[tx[cd4],:]  = dT[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-#            newpeople *= 0 # TEMP
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
                 propcirc = circum[pop,t]
                 circarr = [1-propcirc, propcirc] # Store circumcision proportions
