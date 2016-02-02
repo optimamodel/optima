@@ -116,6 +116,7 @@ def send_as_json_file(data):
     print "server_filename", server_filename
     with open(server_filename, 'wb') as filedata:
         json.dump(data, filedata)
+
     response = helpers.send_from_directory(loaddir, filename)
 #    response.headers.add('content-length', str(os.path.getsize(server_filename)))
     return response
@@ -166,30 +167,41 @@ def load_project(project_id, all_data=False, raise_exception=False):
     return project
 
 
+def _load_project_child(project_id, record_id, record_class, exception_class, raise_exception=True):
+    cu = current_user
+    current_app.logger.debug("getting {} {} for user {}".format(record_class.__name__, record_id, cu.id))
+
+    entry = db.session.query(record_class).get(record_id)
+    if entry is None:
+        if raise_exception:
+            raise exception_class(id=record_id)
+        return None
+
+    if entry.project_id != project_id:
+        if raise_exception:
+            raise exception_class(id=record_id)
+        return None
+
+    if not cu.is_admin and entry.project.user_id != cu.id:
+        if raise_exception:
+            raise exception_class(id=record_id)
+        return None
+
+    return entry
+
+
 def load_progset(project_id, progset_id, raise_exception=True):
     from server.webapp.dbmodels import ProgsetsDb
     from server.webapp.exceptions import ProgsetDoesNotExist
 
-    cu = current_user
-    current_app.logger.debug("getting progset {} for user {}".format(progset_id, cu.id))
+    return _load_project_child(project_id, progset_id, ProgsetsDb, ProgsetDoesNotExist, raise_exception)
 
-    progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-    if progset_entry is None:
-        if raise_exception:
-            raise ProgsetDoesNotExist(id=progset_id)
-        return None
 
-    if progset_entry.project_id != project_id:
-        if raise_exception:
-            raise ProgsetDoesNotExist(id=progset_id)
-        return None
+def load_parset(project_id, parset_id, raise_exception=True):
+    from server.webapp.dbmodels import ParsetsDb
+    from server.webapp.exceptions import ParsetDoesNotExist
 
-    if not cu.is_admin and progset_entry.project.user_id != cu.id:
-        if raise_exception:
-            raise ProgsetDoesNotExist(id=progset_id)
-        return None
-
-    return progset_entry
+    return _load_project_child(project_id, parset_id, ParsetsDb, ParsetDoesNotExist, raise_exception)
 
 
 def load_program(project_id, progset_id, program_id, raise_exception=True):
