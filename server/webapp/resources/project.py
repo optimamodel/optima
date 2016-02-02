@@ -14,7 +14,7 @@ import optima as op
 
 from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb
+from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
 
 from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
 from server.webapp.exceptions import ProjectDoesNotExist
@@ -358,7 +358,7 @@ class ProjectSpreadsheet(Resource):
     @report_exception
     def get(self, project_id):
         cu = current_user
-        current_app.logger.debug("giveWorkbook(%s %s)" % (cu.id, project_id))
+        current_app.logger.debug("get ProjectSpreadsheet(%s %s)" % (cu.id, project_id))
         project_entry = load_project(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
@@ -464,7 +464,7 @@ class ProjectSpreadsheet(Resource):
         # update existing
         if projdata is not None:
             projdata.meta = filedata
-            projdata.upload_time = data_upload_time
+            projdata.updated = data_upload_time
         else:
             # create new project data
             projdata = ProjectDataDb(
@@ -481,6 +481,163 @@ class ProjectSpreadsheet(Resource):
             'result': 'Project %s is updated' % project_name
         }
         return reply
+
+
+class ProjectEcon(Resource):
+    """
+    Economic data export and import for the existing project.
+    """
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        summary='Generates economic data spreadsheet for the project with the given id.',
+        notes="""
+        if project exists, regenerates economic data spreadsheet for it
+        or returns spreadsheet with existing data,
+        if project does not exist, returns an error.
+        """
+    )
+    def get(self, project_id):
+        cu = current_user
+        current_app.logger.debug("get ProjectEcon(%s %s)" % (cu.id, project_id))
+        project_entry = load_project(project_id)
+        if project_entry is None:
+            raise ProjectDoesNotExist(id=project_id)
+
+        # See if there is matching project econ data
+        projecon = ProjectEconDb.query.get(project_entry.id)
+
+        wb_name = secure_filename('{}_economics.xlsx'.format(project_entry.name))
+        if projecon is not None and len(projecon.meta) > 0:
+            return Response(
+                projecon.meta,
+                mimetype='application/octet-stream',
+                headers={
+                    'Content-Disposition': 'attachment;filename=' + wb_name
+                })
+        else:
+            # if no project econdata found
+            path = templatepath(wb_name)
+            op.makeeconspreadsheet(
+                path,
+                datastart=project_entry.datastart,
+                dataend=project_entry.dataend)
+
+            current_app.logger.debug(
+                "project %s economics spreadsheet created: %s" % (
+                    project_entry.name, wb_name)
+            )
+            (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
+            # deliberately don't save the template as uploaded data
+            return helpers.send_from_directory(dirname, basename, as_attachment=True)
+
+    @swagger.operation(
+        summary='Upload the project economics data spreadsheet',
+        parameters=file_upload_form_parser.swagger_parameters()
+    )
+    @report_exception
+    @marshal_with(file_resource)
+    def post(self, project_id):
+
+        DATADIR = current_app.config['UPLOAD_FOLDER']
+
+        current_app.logger.debug(
+            "POST /api/project/%s/economics" % project_id)
+
+        project_entry = load_project(project_id, raise_exception=True)
+
+        project_name = project_entry.name
+        user_id = current_user.id
+
+        args = file_upload_form_parser.parse_args()
+        uploaded_file = args['file']
+
+        # getting current user path
+        loaddir = upload_dir_user(DATADIR)
+        if not loaddir:
+            loaddir = DATADIR
+
+        source_filename = uploaded_file.source_filename
+
+        filename = secure_filename(project_name + '_economics.xlsx')
+        server_filename = os.path.join(loaddir, filename)
+        uploaded_file.save(server_filename)
+
+        # See if there is matching project
+        current_app.logger.debug("project for user %s name %s: %s" % (
+            current_user.id, project_name, project_entry))
+        from optima.utils import saves  # , loads
+        # from optima.parameters import Parameterset
+        project_instance = project_entry.hydrate()
+        project_instance.loadeconomics(server_filename)
+        project_instance.modified = datetime.now(dateutil.tz.tzutc())
+        current_app.logger.info(
+            "after economics uploading: %s" % project_instance)
+
+        #   now, update relevant project_entry fields
+        # this adds to db.session all dependent entries
+        project_entry.restore(project_instance)
+        db.session.add(project_entry)
+
+        # save data upload timestamp
+        data_upload_time = datetime.now(dateutil.tz.tzutc())
+        # get file data
+        filedata = open(server_filename, 'rb').read()
+        # See if there is matching project econ data
+        projecon = ProjectEconDb.query.get(project_entry.id)
+
+        # update existing
+        if projecon is not None:
+            projecon.meta = filedata
+            projecon.updated = data_upload_time
+        else:
+            # create new project data
+            projecon = ProjectEconDb(
+                project_id=project_entry.id,
+                meta=filedata,
+                updated=data_upload_time)
+
+        # Save to db
+        db.session.add(projecon)
+        db.session.commit()
+
+        reply = {
+            'file': source_filename,
+            'success': 'Project %s is updated with economics data' % project_name
+        }
+        return reply
+
+    @swagger.operation(
+        summary='Removes economics data from project'
+    )
+    def delete(self, project_id):
+        cu = current_user
+        current_app.logger.debug("user %s:POST /api/project/%s/economics" % (cu.id, project_id))
+        project_entry = load_project(project_id)
+        if project_entry is None:
+            raise ProjectDoesNotExist(id=project_id)
+
+        # See if there is matching project econ data
+        projecon = ProjectEconDb.query.get(project_entry.id)
+
+        if projecon is not None and len(projecon.meta) > 0:
+            project_instance = project_entry.hydrate()
+            if 'econ' not in project_instance.data:
+                current_app.logger.warning("No economics data has been found in project {}".format(project_id))
+            else:
+                del project_instance.data['econ']
+            project_entry.restore(project_instance)
+            db.session.add(project_entry)
+            db.session.delete(projecon)
+            db.session.commit()
+
+            reply = {
+                'success': 'Project %s economics data has been removed' % project_id
+            }
+            return reply, 204
+        else:
+            raise Exception("No economics data has been uploaded")
 
 
 class ProjectData(Resource):

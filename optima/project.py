@@ -410,7 +410,7 @@ class Project(object):
             self.modified = today()
         return multires
         
-    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=5, stoppingfunc=None, debug=False, saveprocess=True):
+    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, debug=False, saveprocess=True):
         ''' Function to minimize money '''
         optim = Optim(project=self, name=name, which='money', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
@@ -426,13 +426,21 @@ class Project(object):
     ## Methods to handle tasks for geospatial analysis
     #######################################################################################################
         
-    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=5, stoppingfunc=None, method='asd'):
+    def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
         projectBOC = BOC()
         if objectives == None:
             printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
         projectBOC.objectives = objectives
+        
+        if parsetname is None:
+            printv('Warning, using default parset', 3, verbose)
+            parsetname = 0
+        
+        if progsetname is None:
+            printv('Warning, using default progset', 3, verbose)
+            progsetname = 0
         
         if budgetlist == None:
             if not progsetname == None:
@@ -462,7 +470,7 @@ class Project(object):
                 boc = self.results[x]
                 same = True
                 for y in boc.objectives:
-                    if y in ['start','end','deathweight','inciweight'] and not boc.objectives[y] == objectives[y]: same = False
+                    if y in ['start','end','deathweight','inciweight'] and boc.objectives[y] != objectives[y]: same = False
                 if same:
 #                    print('BOC located in project: %s' % self.name)
                     return boc

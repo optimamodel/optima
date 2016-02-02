@@ -112,7 +112,7 @@ except: _failed()
 
 try: 
     import makespreadsheet as _makespreadsheet
-    from makespreadsheet import makespreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
+    from makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
 except: _failed()
 
 try: 

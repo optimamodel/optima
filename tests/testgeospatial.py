@@ -9,7 +9,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016jan27
+Version: 2016jan31
 """
 
 
@@ -58,30 +58,24 @@ if 'makeprojects' in tests:
     t = tic()
     print('Running makeprojects...')
     from optima import saveobj, defaults
+    import os
+
+    projtypes = ['generalized', 'concentrated']
+    filenames = ['geotestproj1.prj','geotestproj2.prj']
     
-    P = defaults.defaultproject('generalized')
-    Q = defaults.defaultproject('concentrated')
-    saveobj('geotestproj1.prj', P)
-    saveobj('geotestproj2.prj', Q)
+    for i in range(len(projtypes)):
+        thisfile = filenames[i]
+        refreshtest = 'forcerefresh' in tests
+        notexiststest = not(os.path.exists(thisfile))
+        if refreshtest or notexiststest:
+            print('You are rerunning "%s" because forcerefresh=%s and notexists=%s' % (thisfile, refreshtest, notexiststest)) 
+            thisproj = defaults.defaultproject(projtypes[i], name='District %i'%(i+1))
+            thisproj.genBOC(maxtime=3)
+            saveobj(thisfile, thisproj)
     
     done(t)
 
 
-
-## Force refresh test
-if 'forcerefresh' in tests:
-    t = tic()
-    print('Running force refresh test...')
-    from os import remove
-    
-    try:
-        print('Deleting project files to be used in this test...')
-        remove(filename1)
-        remove(filename2)
-    except OSError:
-        print('No relevant project files can be found...')
-    
-    done(t)
 
 
 
@@ -119,7 +113,7 @@ if 'generateBOCs' in tests:
     from optima import saveobj
     
     F.genBOCs(progsetnames=['default','default'], parsetnames=['default','default'], maxtime=3)#,forceregen = True)#, maxtime = 20)
-    F.plotBOCs()    
+    F.plotBOCs()
     
     print('Saving projects with BOCs...')
     saveobj(filename1, P1)

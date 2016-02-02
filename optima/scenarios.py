@@ -130,12 +130,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     else: 
                         errormsg = 'Unrecognized population or partnership type.'
                         raise OptimaException(errormsg)
-                    for pop in pops:
-                        
-                        # Find last good value
-                        last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
-                        last_y = thispar.interp(tvec=last_t, dt=project.settings.dt) # Find what the model would get for this value
-                        
+
+                    # Find last good value
+                    last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
+                    last_y = thispar.interp(tvec=last_t, dt=project.settings.dt) # Find what the model would get for this value
+
+                    # Loop over populations
+                    for popno, pop in enumerate(pops):
+
                         # Remove years after the last good year
                         if last_t < max(thispar.t[pop]):
                             thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
@@ -143,7 +145,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         
                         # Append the last good year, and then the new years
                         thispar.t[pop] = append(thispar.t[pop], last_t)
-                        thispar.y[pop] = append(thispar.y[pop], last_y) 
+                        thispar.y[pop] = append(thispar.y[pop], last_y[popno]) 
                         thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
                         thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
                         

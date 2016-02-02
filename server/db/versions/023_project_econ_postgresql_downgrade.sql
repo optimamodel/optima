@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS project_econ;
+ALTER TABLE projects DROP COLUMN IF EXISTS econ;

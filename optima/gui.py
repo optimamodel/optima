@@ -482,7 +482,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -519,11 +519,11 @@ def plotpeople(project=None, people=None, exclude=2, pops=None, animate=True, ve
         hatchstyles.extend([plotstyles[key][0] for lab in labels if lab.startswith(key)])
         linestyles.extend([plotstyles[key][1]  for lab in labels if lab.startswith(key)])
     
-    labels = labels[exclude:]
-    hatchstyles = hatchstyles[exclude:]
-    linestyles = linestyles[exclude:]
+    labels = labels[start:end]
+    hatchstyles = hatchstyles[start:end]
+    linestyles = linestyles[start:end]
     
-    ppl = people[exclude:,:,:] # Exclude initial people
+    ppl = people[start:end,:,:] # Exclude initial people
     ppl = ppl[:,pops,:] # Filter selected populations
     ppl = ppl[:,:,:].sum(axis=1) # Sum over people
     ppl = transpose(ppl) # So time is plotted on x-axis

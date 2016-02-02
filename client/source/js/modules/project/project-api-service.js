@@ -47,6 +47,14 @@ define(['./module'], function (module) {
             {headers: {'Content-type': 'application/octet-stream'},
           responseType:'blob'});
         },
+        getEconomicsData: function(id) {
+          return $http.get('/api/project/'+ id + '/economics',
+            {headers: {'Content-type': 'application/octet-stream'},
+          responseType:'blob'});
+        },
+        deteleEconomicsData: function(id) {
+          return $http.delete('/api/project/' + id + '/economics');
+        },
         getProjectList: function () {
           return $http.get('/api/project');
         },
@@ -61,6 +69,9 @@ define(['./module'], function (module) {
         },
         getSpreadsheetUrl: function(id) {
           return '/api/project/' + id + '/spreadsheet';
+        },
+        getEconomicsUrl: function(id) {
+          return '/api/project/' + id + '/economics';
         },
         getDataUploadUrl: function(id) {
           return '/api/project/' + id + '/data';
