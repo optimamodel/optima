@@ -123,20 +123,20 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         pops = [scenpar['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
                     elif type(scenpar['for'])==int: #... if its a population.
                         pops = range(npops) if scenpar['for'] > npops else [scenpar['for']]
-                    elif type(scenpar['for'])==list: #... if its a population.
+                    elif type(scenpar['for']) in [list, type(array([]))]: #... if its a population.
                         pops = scenpar['for']
                     elif scenpar['for']=='tot': #... if its a population.
                         pops = [scenpar['for']]
                     else: 
-                        errormsg = 'Unrecognized population or partnership type.'
+                        errormsg = 'Unrecognized population or partnership type: %s' % scenpar['for']
                         raise OptimaException(errormsg)
 
                     # Find last good value
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
-                    last_y = thispar.interp(tvec=last_t, dt=project.settings.dt) # Find what the model would get for this value
+                    last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False) # Find what the model would get for this value
 
                     # Loop over populations
-                    for popno, pop in enumerate(pops):
+                    for pop in pops:
 
                         # Remove years after the last good year
                         if last_t < max(thispar.t[pop]):
@@ -145,7 +145,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         
                         # Append the last good year, and then the new years
                         thispar.t[pop] = append(thispar.t[pop], last_t)
-                        thispar.y[pop] = append(thispar.y[pop], last_y[popno]) 
+                        thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
                         thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
                         thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
                         
