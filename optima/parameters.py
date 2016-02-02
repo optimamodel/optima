@@ -3,14 +3,13 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan30
+Version: 2016feb02
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
-from optima import getresults, convertlimits, gettvecdt # Heftier functions
+from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 
@@ -248,12 +247,14 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None):
+def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None, eps=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
     Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
     '''
+    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings  
+    
     if which not in ['numacts','condom']: raise OptimaException('Can only balance numacts or condom, not "%s"' % which)
     mixmatrix = array(data['part'+act]) # Get the partnerships matrix
     npops = len(popkeys) # Figure out the number of populations
