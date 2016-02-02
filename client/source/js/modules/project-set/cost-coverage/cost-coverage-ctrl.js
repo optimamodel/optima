@@ -28,12 +28,37 @@ define(['./../module', 'underscore'], function (module, _) {
     vm.changeParameter = changeParameter;
     vm.changeDropdown = changeDropdown;
     vm.getPopulationTitle = getPopulationTitle;
+    vm.initYearPrograms = initYearPrograms;
+    vm.getFullProgramName = getFullProgramName;
 
     /* Function definitions */
 
+    function getFullProgramName(short_name) {
+      var program = _.filter(vm.selectedProgramSet.programs, {short_name: short_name});
+      if (program.length === 0) {
+        return '';
+      }
+      return program[0].name;
+    }
+
+    function initYearPrograms(pop) {
+      console.log('initYearPrograms called with', pop);
+      var currentPop = _.filter(vm.selectedParameter.populations, {pop: pop});
+      console.log('currentPop', currentPop);
+      if (currentPop.length === 0) {
+        return [];
+      }
+      console.log('programs', currentPop[0].programs);
+      return _.map(currentPop[0].programs, function(program) {
+        return {
+          name: program.short_name
+        }
+      });
+    }
+
     function getPopulationTitle(population) {
-      if (population && population.pop) {
-        var title = population.pop;
+      if (population) {
+        var title = population;
         return title === undefined ? '' : (typeof title === 'string' ? title : title.join(' - '))
       }
       return ''
@@ -182,6 +207,30 @@ define(['./../module', 'underscore'], function (module, _) {
       );
       console.log('parameter is', vm.currentParameter);
       console.groupEnd();
+      var parsetEffects = _.filter(vm.existingEffects.effects, {parset: vm.selectedParset.id});
+      console.log('parsetEffects', parsetEffects);
+      var currentParsetEffect;
+      if (parsetEffects.length === 0) {
+        currentParsetEffect = {
+          parset: vm.selectedParset.id,
+          parameters: []
+        }
+        vm.existingEffects.effects.push(currentParsetEffect);
+      } else {
+        currentParsetEffect = parsetEffects[0];
+      }
+      console.log('currentParsetEffect', currentParsetEffect);
+      _.each(vm.currentParameter.populations, function(pop) {
+        var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short, pop: pop.pop});
+        if (paramPops.length === 0) {
+          currentParsetEffect.parameters.push({
+            name: vm.selectedParameter.short,
+            pop: pop.pop,
+            years: []
+          });
+        }
+      });
+      console.log('currentParsetEffect', currentParsetEffect);
     }
 
     function getParameters(currentParameter) {
@@ -209,23 +258,24 @@ define(['./../module', 'underscore'], function (module, _) {
       //   return false;
       // }
 
-      console.log('submitting', vm.currentParameter);
+      console.log('submitting', vm.existingEffects);
 
-      var finalJson = {
-        effects: [
-          {
-            "parset": vm.selectedParset.id,
-            "parameters": getParameters(angular.copy(vm.currentParameter))
-          }
-        ]
-      };
+      // var finalJson = {
+      //   effects: [
+      //     {
+      //       "parset": vm.selectedParset.id,
+      //       "parameters": getParameters(angular.copy(vm.currentParameter))
+      //     }
+      //   ]
+      // };
 
-      console.log('final result', finalJson);
-      console.log(JSON.stringify(finalJson, null, ' '))
+      // console.log('final result', finalJson);
+      // console.log(JSON.stringify(finalJson, null, ' '))
 
-      $http.put('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/effects', finalJson).success(function (result) {
+      $http.put('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/effects', vm.existingEffects).success(function (result) {
         console.log('result is', result);
-      })
+        vm.existingEffects = result;
+      });
     }
 
     function selectTab(tab) {
@@ -236,10 +286,14 @@ define(['./../module', 'underscore'], function (module, _) {
       yearObject.years = _.reject(yearObject.years, function (year, index) {
         return index === yearIndex
       });
+      console.log(vm.existingEffects);
     }
 
     function addYear(yearObject) {
-      yearObject.years.push({id: _.random(1, 10000)});
+      yearObject.years.push({
+        id: _.random(1, 10000),
+        programs: vm.initYearPrograms(yearObject.pop)
+      });
 
     }
 
