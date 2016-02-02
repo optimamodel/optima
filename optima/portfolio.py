@@ -482,8 +482,8 @@ class GAOptim(object):
             gaoptalloc = self.resultpairs[x]['opt'].budget[-1]
             initoutcome = self.resultpairs[x]['init'].improvement[-1][0]
             gaoptoutcome = self.resultpairs[x]['opt'].improvement[-1][-1]
-            suminitalloc = sum([x[ind] for x in initalloc.values()])
-            sumgaoptalloc = sum([x[ind] for x in gaoptalloc.values()])
+            suminitalloc = sum([k[ind] for k in initalloc.values()])
+            sumgaoptalloc = sum([k[ind] for k in gaoptalloc.values()])
             
             overallbudgetinit += suminitalloc
             overallbudgetopt += sumgaoptalloc
