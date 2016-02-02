@@ -192,6 +192,27 @@ def load_progset(project_id, progset_id, raise_exception=True):
     return progset_entry
 
 
+def load_parset(project_id, parset_id, raise_exception=True):
+    from server.webapp.dbmodels import ParsetsDb
+    from server.webapp.exceptions import ParsetDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting parset {} for user {}".format(parset_id, cu.id))
+
+    parset_entry = db.session.query(ParsetssDb).get(parset_id)
+    if parset_entry is None:
+        if raise_exception:
+            raise ParsetDoesNotExist(id=parset_id)
+        return None
+
+    if parset_entry.project_id != project_id:
+        if raise_exception:
+            raise ParsetDoesNotExist(id=parset_id)
+        return None
+
+    return parset_entry
+
+
 def load_program(project_id, progset_id, program_id, raise_exception=True):
     from server.webapp.dbmodels import ProgramsDb
     from server.webapp.exceptions import ProgramDoesNotExist
