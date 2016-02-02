@@ -285,18 +285,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         for key in simpars['acts'+act]:
             this = {}
             this['acts'] = simpars['acts'+act][key]
-            try:
-                if simpars['cond'+act].get(key) is not None:
-                    condkey = simpars['cond'+act][key]
-                elif simpars['cond'+act].get((key[1],key[0])) is not None:
-                    condkey = simpars['cond'+act][(key[1],key[0])]
-                else:
-                    errormsg = 'Cannot find condom use between "%s" and "%s", assuming there is none.' % (key[0], key[1]) # NB, this might not be the most reasonable assumption
-                    if die: raise OptimaException(errormsg)
-                    else: 
-                        printv(errormsg, 1, verbose)
-                        condkey = 0.0
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            if simpars['cond'+act].get(key) is not None:
+                condkey = simpars['cond'+act][key]
+            elif simpars['cond'+act].get((key[1],key[0])) is not None:
+                condkey = simpars['cond'+act][(key[1],key[0])]
+            else:
+                errormsg = 'Cannot find condom use between "%s" and "%s", assuming there is none.' % (key[0], key[1]) # NB, this might not be the most reasonable assumption
+                if die: raise OptimaException(errormsg)
+                else: 
+                    printv(errormsg, 1, verbose)
+                    condkey = 0.0
                 
             this['cond'] = 1 - condkey*effcondom
             this['pop1'] = popkeys.index(key[0])

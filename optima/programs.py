@@ -452,23 +452,18 @@ class Programset(object):
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-                try:
-                    if any(thisoutcome<lower) or any(thisoutcome>upper):
-                        errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
-                        if die:
-                            raise OptimaException(errormsg)
-                        else:
-                            printv(errormsg, 1, verbose)
-                            thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
-                            thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
-                except:
-                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-                
-                
+                if any(thisoutcome<lower) or any(thisoutcome>upper):
+                    errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
+                    if die:
+                        raise OptimaException(errormsg)
+                    else:
+                        printv(errormsg, 1, verbose)
+                        thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
+                        thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
+
                 # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
                 last_t = min(years) - settings.dt # Last timestep before the scenario starts
                 last_y = pars[outcome].interp(tvec=last_t, dt=settings.dt) # Find what the model would get for this value
-
 
                 # Remove years after the last good year
                 if last_t < max(thispar.t[pop]):
