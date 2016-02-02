@@ -16,8 +16,8 @@ Version: 2016jan31
 
 ## Define tests to run here!!!
 tests = [
+'forcerefresh',
 'makeprojects',
-#'forcerefresh',
 #'makeportfolio',
 #'generateBOCs',
 'rungui',
@@ -84,19 +84,15 @@ if 'makeprojects' in tests:
 if 'makeportfolio' in tests:
     t = tic()
     print('Running make portfolio test...')
-    from optima import Portfolio, loadobj
+    from optima import Portfolio
     from optima.defaults import defaultproject
     
-    try:
-        P1 = loadobj(filename1)
-        P2 = loadobj(filename2)
-    except:
-        P1 = defaultproject('concentrated')
-        P2 = defaultproject('concentrated')
-    
-        P1.progsets[0].rmprogram('OST')
-        P2.progsets[0].rmprogram('OST')
-        P2.progsets[0].rmprogram('HTC')
+    P1 = defaultproject('concentrated')
+    P2 = defaultproject('concentrated')
+
+    P1.progsets[0].rmprogram('OST')
+    P2.progsets[0].rmprogram('OST')
+    P2.progsets[0].rmprogram('HTC')
 
     F = Portfolio(projects=[P1,P2])
 
