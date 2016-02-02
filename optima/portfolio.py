@@ -520,7 +520,7 @@ class GAOptim(object):
         output += '\n\t\tInitial\tOptimal'
         output += '\nOverall summary'
         output += '\n\tPortfolio budget:\t%f\t%f' % (overallbudgetinit, overallbudgetopt)
-        output += '\n\tOutcome:\t1%f\t%f' % (overalloutcomeinit, overalloutcomeopt)
+        output += '\n\tOutcome:\t%f\t%f' % (overalloutcomeinit, overalloutcomeopt)
         for key in self.objectives['keys']:
             output += '\n\t' + key.title() + ':\t%f\t%f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
         for prj in range(nprojects):
