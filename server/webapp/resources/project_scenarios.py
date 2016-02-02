@@ -16,7 +16,7 @@ from server.webapp.utils import (
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
+from server.webapp.dbmodels import ScenariosDb
 
 import optima as op
 
@@ -31,3 +31,10 @@ class Scenarios(Resource):
     @swagger.operation(
         description="Get the scenarios for the given project."
     )
+    def get(self, project_id):
+        project_entry = load_project(project_id)
+        if project_entry is None:
+            raise ProjectDoesNotExist(id=project_id)
+
+        reply = db.session.query(ScenariosDb).filter_by(project_id=project_entry.id).all()
+        return reply

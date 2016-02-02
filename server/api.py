@@ -69,6 +69,7 @@ from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, Programs, PopSize
 from server.webapp.resources.project_parsets import Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
+from server.webapp.resources.project_scenarios import Scenarios
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -89,6 +90,7 @@ api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
 api.add_resource(CostCoverage,
