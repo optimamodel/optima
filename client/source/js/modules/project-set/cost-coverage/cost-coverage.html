@@ -102,9 +102,9 @@
                 <td></td>
                 <td class="c-table__column"> {{program.name}} under maximal coverage of this program</td>
                 <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-                  <input class="txbox c-table__input c-table__input--half" ng-model="year.programs[program.short_name].intercept_lower" more-than="-1" ng-required="true" type="number"/>
+                  <input class="txbox c-table__input c-table__input--half" ng-model="year.programs[program.short_name].intercept_lower" more-than="-1" ng-required="true" type="number" ng-init="year.programs[program.short_name].intercept_lower = program.intercept_lower"/>
                   <span class="c-table__between-input"> - </span>
-                  <input class="txbox c-table__input c-table__input--half" ng-model="year.programs[program.short_name].intercept_upper" more-than="population.year.programs[program.short_name].intercept_lower" ng-required="true" type="number"/>
+                  <input class="txbox c-table__input c-table__input--half" ng-model="year.programs[program.short_name].intercept_upper" more-than="population.year.programs[program.short_name].intercept_lower" ng-required="true" type="number" ng-init="year.programs[program.short_name].intercept_upper = program.intercept_upper"/>
                 </td>
               </tr>
 
