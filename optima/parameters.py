@@ -848,7 +848,6 @@ class Parameterset(object):
             raise OptimaException("Parameter with index {} not found!".format(ind))
 
         tmppars = self.pars[ind]
-
         mflists = {'keys':[], 'subkeys':[], 'types':[], 'values':[], 'labels':[]}
         keylist = mflists['keys']
         subkeylist = mflists['subkeys']
@@ -858,30 +857,35 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-                continue
-            if par.fittable == 'meta':
-                keylist.append(key)
-                subkeylist.append(None)
-                typelist.append(par.fittable)
-                valuelist.append(par.m)
-                labellist.append('{} -- meta'.format(par.name))
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
+            if hasattr(par,'fittable') and par.fittable != 'no': # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                if par.fittable == 'meta':
                     keylist.append(key)
-                    subkeylist.append(subkey)
+                    subkeylist.append(None)
                     typelist.append(par.fittable)
-                    valuelist.append(par.y[subkey])
-                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            elif par.fittable == 'exp':
-                for subkey in par.p.keys():
+                    valuelist.append(par.m)
+                    labellist.append('%s -- meta' % par.name)
+                elif par.fittable == 'const':
                     keylist.append(key)
-                    subkeylist.append(subkey)
+                    subkeylist.append(None)
                     typelist.append(par.fittable)
-                    valuelist.append(par.p[subkey][0])
-                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            else:
-                print('Parameter type "%s" not implemented!' % par.fittable)
+                    valuelist.append(par.y)
+                    labellist.append(par.name)
+                elif par.fittable in ['pop', 'pship']:
+                    for subkey in par.y.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.y[subkey])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                elif par.fittable == 'exp':
+                    for subkey in par.p.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.p[subkey][0])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                else:
+                    print('Parameter type "%s" not implemented!' % par.fittable)
 
         return mflists
 

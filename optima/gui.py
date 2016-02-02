@@ -302,66 +302,19 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     ion() # We really need this here!
     nsigfigs = 3
     
-    ## Initialize lists that do not initialize themselves
     boxes = []
     texts = []
-    keylist = []
-    namelist = []
-    typelist = [] # Valid types are meta, pop, exp
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
-    tmppars = parset.pars[0]
-    origpars = dcp(tmppars)
-
-    for key in tmppars.keys():
-        if hasattr(tmppars[key],'fittable'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-            if tmppars[key].fittable is not 'no':
-                keylist.append(key) # e.g. "initprev"
-                namelist.append(tmppars[key].name) # e.g. "HIV prevalence"
-                typelist.append(tmppars[key].fittable) # e.g. 'pop'
-    nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
-    ## Convert to the full list of parameters to be fitted
-    def populatelists():
-        global tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
-        fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
-        fullkeylist = [] # e.g. "initprev"
-        fullsubkeylist = [] # e.g. "fsw"
-        fulltypelist = [] # e.g. "pop"
-        fullvallist = [] # e.g. 0.3
-        for k in range(nkeys):
-            key = keylist[k]
-            if typelist[k]=='meta':
-                fullkeylist.append(key)
-                fullsubkeylist.append(None)
-                fulltypelist.append(typelist[k])
-                fullvallist.append(tmppars[key].m)
-                fulllabellist.append(namelist[k] + ' -- meta')
-            elif typelist[k]=='const':
-                fullkeylist.append(key)
-                fullsubkeylist.append(None)
-                fulltypelist.append(typelist[k])
-                fullvallist.append(tmppars[key].y)
-                fulllabellist.append(namelist[k])
-            elif typelist[k] in ['pop', 'pship']:
-                for subkey in tmppars[key].y.keys():
-                    fullkeylist.append(key)
-                    fullsubkeylist.append(subkey)
-                    fulltypelist.append(typelist[k])
-                    fullvallist.append(tmppars[key].y[subkey])
-                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-            elif typelist[k]=='exp':
-                for subkey in tmppars[key].p.keys():
-                    fullkeylist.append(key)
-                    fullsubkeylist.append(subkey)
-                    fulltypelist.append(typelist[k])
-                    fullvallist.append(tmppars[key].p[subkey][0])
-                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-            else:
-                printv('Parameter type "%s" not implemented!' % typelist[k], 2, verbose)
+    mflists = parset.manualfitlists()
+    fullkeylist    = mflists['keys']
+    fullsubkeylist = mflists['subkeys']
+    fulltypelist   = mflists['types']
+    fullvallist    = mflists['values']
+    fulllabellist  = mflists['labels']
     
-    populatelists()
     nfull = len(fulllabellist) # The total number of boxes needed
     results = project.runsim(name)
     pygui(results)
