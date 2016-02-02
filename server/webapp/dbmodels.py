@@ -369,7 +369,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
-    def __init__(self, project_id, parset_id = parset_id, work_type=None):
+    def __init__(self, project_id, parset_id, work_type=None):
         self.project_id = project_id
         self.parset_id = parset_id
         self.work_type = work_type
@@ -528,8 +528,8 @@ class ProgramsDb(db.Model):
             costcovdata={
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['coverage'] 
-                if self.costcov[i] is not None 
+                'coverage': [self.costcov[i]['coverage']
+                if self.costcov[i] is not None
                 else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None,
             ccopars={
