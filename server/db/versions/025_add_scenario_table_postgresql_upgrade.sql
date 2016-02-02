@@ -1,4 +1,4 @@
-CREATE TABLE scenario (
+CREATE TABLE scenarios (
     id UUID DEFAULT uuid_generate_v1mc() NOT NULL,
     project_id UUID,
     name VARCHAR,
