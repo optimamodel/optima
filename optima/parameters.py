@@ -618,7 +618,7 @@ class Timepar(Par):
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
-        if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
+        if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
 
