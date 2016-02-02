@@ -317,8 +317,7 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen
-    from optima import defaults
+    from optima import Parscen, Budgetscen, findinds, defaults
     
     P = defaults.defaultproject('generalized')
     pops = P.data['pops']['short']
