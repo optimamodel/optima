@@ -234,7 +234,10 @@ class ProgsetParams(Resource):
             'name': name,
             'populations': [{
                 'pop': pop,
-                'programs': [program.name for program in progs]
+                'programs': [{
+                    'name': program.name,
+                    'short_name': program.short,
+                } for program in progs ]
             } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
             'coverage': parset_be.pars[0][name].coverage,
             'proginteract': parset_be.pars[0][name].proginteract

@@ -117,7 +117,7 @@ param_year_effect_parser.add_arguments({
     'year': {'required': False, 'location': 'json'},
     'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
     'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
-    'interact': {'location': 'json', 'required': False, 'type': JsonInput},
+    'interact': {'location': 'json', 'required': False},
     'programs': {
         'type': SubParser(program_effect_parser),
         # 'action': 'append',
@@ -170,7 +170,7 @@ param_year_effect_fields = {
     'year': fields.Integer,
     'intercept_lower': fields.Float,
     'intercept_upper': fields.Float,
-    'interact': fields.List(fields.String),
+    'interact': fields.String,
     'programs': fields.List(fields.Nested(program_effect_fields), default=[])
 }
 
