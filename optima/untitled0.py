@@ -4,10 +4,12 @@ Version:
 from optima import defaults, plotpars
 
 P = defaults.defaultproject()
-parset = P.parsets[0]
+P.sensitivity()
+parset = P.parsets[-1]
+
 ind = 0
 
-plotpars(parset.pars[0])
+#plotpars(parset.pars[0])
 
 
 ##def plotpars(parset, ind=None):

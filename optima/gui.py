@@ -578,9 +578,10 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     
-    count = 0
+    
     allplotdata = []
     for pars in parslist:
+        count = 0
         simpars = makesimpars(pars)
         tvec = simpars['tvec']
         plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
@@ -604,12 +605,15 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                         count += 1
                         thisplot = array(['%3i. %s' % (count-1, key1), simpars[key1], t, par.y], dtype=object)
                         plotdata = vstack([plotdata, thisplot])
+        plotdata = plotdata[1:,:] # Remove header
         allplotdata.append(plotdata)
     
     
     ## Do plotting
-    plotdata = plotdata[1:,:] # Remove header
     nplots = len(plotdata)
+    if any([len(pltd)!=nplots for pltd in allplotdata]): 
+        print('Warning, not all pars are the same length, only plotting first')
+        allplotdata = allplotdata[0]
     nrows = 5
     ncols = 4
     nperscreen = nrows*ncols
@@ -653,24 +657,27 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         position = min(nplots-nperscreen, position)
         for i,ax in enumerate(plotparsaxs):
             ax.cla()
+            ax.hold(True)
             nplt = i+position
             if nplt<nplots:
-                try:
-                    this = plotdata[nplt,:]
-    #                print(this)
-                    ax.set_title(this[0])
-                    if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
-                    elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
-                    elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
-                    elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
-                    else: print('Problem with "%s": "%s"' % (this[0], this[1]))
-                except: print('??????')
-                try: 
-                    if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
-                except Exception as E: 
-                    print('Problem with "%s": "%s"' % (this[0], E.message))
-                ax.set_ylim((0,1.1*ax.get_ylim()[1]))
-                ax.set_xlim((tvec[0],tvec[-1]))
+                for pd,plotdata in enumerate(allplotdata):
+                    try:
+                        this = plotdata[nplt,:]
+        #                print(this)
+                        ax.set_title(this[0])
+                        if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
+                        elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
+                        else: print('Problem with "%s": "%s"' % (this[0], this[1]))
+                    except: print('??????')
+                    try: 
+                        if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
+                    except Exception as E: 
+                        print('Problem with "%s": "%s"' % (this[0], E.message))
+                    if pd==len(allplotdata)-1: # Do this for the last plot only
+                        ax.set_ylim((0,1.1*ax.get_ylim()[1]))
+                        ax.set_xlim((tvec[0],tvec[-1]))
                 
     update()
     plotparsbackbut.on_clicked(updateb)
