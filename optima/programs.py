@@ -460,13 +460,10 @@ class Programset(object):
                         printv(errormsg, 1, verbose)
                         thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
                         thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
-                
-                
-                
+
                 # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
                 last_t = min(years) - settings.dt # Last timestep before the scenario starts
                 last_y = pars[outcome].interp(tvec=last_t, dt=settings.dt) # Find what the model would get for this value
-
 
                 # Remove years after the last good year
                 if last_t < max(thispar.t[pop]):
