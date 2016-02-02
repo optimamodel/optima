@@ -79,13 +79,15 @@ def update():
         nplt = i+position
         if nplt<nplots:
             this = plotdata[nplt,:]
+            print(this)
             ax.set_title(this[0])
             if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
             elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
             elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
             elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
-            else: raise Exception('No idea what to do')
-            ax.scatter(this[2],this[3])
+            else: print('Problem with "%s": "%s"' % (this[0], this[1]))
+            try: ax.scatter(this[2],this[3])
+            except Exception as E: print('Problem with "%s": "%s"' % (this[0], E.message))
             ax.set_ylim((0,1.1*ax.get_ylim()[1]))
             ax.set_xlim((tvec[0],tvec[-1]))
             
