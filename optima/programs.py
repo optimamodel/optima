@@ -324,6 +324,7 @@ class Programset(object):
         nyrs = len(t)
         
         budget = self.getprogbudget(coverage=coverage, t=t, parset=parset, results=results, proportion=False)
+        infbudget = odict((k,array([1e9]*len(budget[k]))) if self.programs[k].optimizable() else (k,None) for k in budget.keys())
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
@@ -353,8 +354,16 @@ class Programset(object):
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                             x = budget[thisprog.short]
-                            if thiscovpop: thiscov[thisprog.short] = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=True,total=False)[thiscovpop]
-                            else: thiscov[thisprog.short] = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=True, total=False)[thispop]
+                            fullx = infbudget[thisprog.short]
+#                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                            if thiscovpop:
+                                part1 = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
+                                part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
+                                thiscov[thisprog.short] = part1/part2
+                            else:
+                                part1 = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                thiscov[thisprog.short] = part1/part2
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
@@ -927,7 +936,9 @@ class CCOF(object):
         return ccopar
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
-        if (not toplot) and (not len(x)==len(t)): raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
+        if (not toplot) and (not len(x)==len(t)): 
+#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
