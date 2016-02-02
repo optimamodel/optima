@@ -620,21 +620,26 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
             count += 1
             axs.append(fig.add_subplot(nrows, ncols, count))
     
-    position = 0
+    position = [0]
     backframe = plt.axes([0.2, 0.03, 0.2, 0.03])
     nextframe = plt.axes([0.6, 0.03, 0.2, 0.03])
     backbut = Button(backframe, 'Back')
     nextbut = Button(nextframe, 'Next')
     
-    def updateb(event=None): update(position, -1)
-    def updaten(event=None): update(position, 1)
-    def update(position=0, move=0):
-        position += move*nperscreen
-        position = max(0,position)
-        position = min(nplots-nperscreen, position)
+    def updateb(event=None): 
+        print('hi')
+        update(position, -1)
+    def updaten(event=None): 
+        print('hi')
+        update(position, 1)
+    def update(position, move):
+        print(position, move)
+        position[0] += move*nperscreen
+        position[0] = max(0,position[0])
+        position[0] = min(nplots-nperscreen, position[0])
         for i,ax in enumerate(axs):
             ax.cla()
-            nplt = i+position
+            nplt = i+position[0]
             if nplt<nplots:
                 try:
                     this = plotdata[nplt,:]
@@ -654,7 +659,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                 ax.set_xlim((tvec[0],tvec[-1]))
         return None
                 
-    update()
+    update(position, 0)
     backbut.on_clicked(updateb)
     nextbut.on_clicked(updaten)
     return None
