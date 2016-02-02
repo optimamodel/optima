@@ -5,8 +5,8 @@
         <label>
           Select a program set: <br>
           <select class="txbox"
-                  ng-options="p.name for p in vm.programSetList"
-                  ng-change="vm.populateProgramDropdown()"
+                  ng-options="program as program.name for program in vm.programSetList"
+                  ng-change="vm.changeDropdown()"
                   ng-model="vm.selectedProgramSet">
             <option value="">-- Please select a program set --</option>
           </select>
@@ -16,7 +16,8 @@
         <label>
           Select a parameter set: <br>
           <select class="txbox"
-                  ng-options="p.name for p in vm.parsets"
+                  ng-options="parset as parset.name for parset in vm.parsets"
+                  ng-change="vm.changeDropdown()"
                   ng-model="vm.selectedParset">
             <option value="">-- Please select a parameter set --</option>
           </select>
@@ -33,7 +34,7 @@
     </div>
 
     <!-- Cost functions tab -->
-    <div ng-if="vm.activeTab === 'cost'"  ng-include="'js/modules/project-set/cost-coverage/cost/cost.html'"></div>
+    <div ng-if="vm.activeTab === 'cost'" ng-include="'js/modules/project-set/cost-coverage/cost/cost.html'"></div>
 
     <!-- Outcome functions tab -->
     <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
@@ -41,110 +42,117 @@
       <div class="c-select">
         <label class="c-select__label"> Select a parameter: </label>
         <select class="txbox c-select__input"
-                ng-options="p.name for p in vm.fakeParams"
+                ng-options="p.name for p in vm.params"
                 ng-change="vm.changeParameter()"
                 ng-model="vm.selectedParameter">
           <option value="">-- Please select a parameter --</option>
         </select>
       </div>
 
-      <form name="vm.TableForm">
+      <form name="vm.TableForm" class="c-populations" novalidate ng-if="vm.currentParameter!==undefined">
 
-        <div class="c-nested-form" ng-if="vm.selectedParameter!==undefined" ng-form="'nestedForm[year.id]'" ng-repeat="year in vm.years track by $index">
-          <table class="c-table">
+        <div class="c-population-wrap u-layout-vertical" ng-repeat="population in vm.currentParameter.populations">
 
-            <tr class="c-table__row">
-              <th class="c-table__header">
-                Year
-              </th>
-              <th class="c-table__header">
-                Description of program impact
-              </th>
-              <th class="c-table__header">
-                Parameter value
-              </th>
-            </tr>
+          <div class="c-population-form__title">{{vm.getPopulationTitle(population)}}</div>
 
-            <tr class="c-table__row">
-              <!-- Year -->
-              <td class="c-table__column c-table__column--year">
-                <input class="txbox c-table__input" ng-model="vm.post[year.id].year" year-validator from-year="2000" ng-required="true" type="number"/>
-              </td>
+          <div class="c-population-form" ng-repeat="year in population.years track by $index">
 
-              <!-- Text-->
-              <td class="c-table__column c-table__column--text">
-                {{vm.selectedParameter.name}} in the absence of any programs
-              </td>
+            <table class="c-table">
 
-              <!-- Inputs -->
-              <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-                <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" more-than="-1" ng-model="vm.post[year.id].valueFrom"/>
-                <span class="c-table__between-input"> - </span>
-                <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" more-than="vm.post[year.id].valueFrom" ng-model="vm.post[year.id].valueTo"/>
-              </td>
+              <tr class="c-table__row">
+                <th class="c-table__header">
+                  Year
+                </th>
+                <th class="c-table__header">
+                  Description of program impact
+                </th>
+                <th class="c-table__header">
+                  Parameter value
+                </th>
+              </tr>
 
-            </tr>
-            <tbody ng-if="vm.selectedParameter.coverage">
+              <tr class="c-table__row">
+                <!-- Year -->
+                <td class="c-table__column c-table__column--year">
+                  <input class="txbox c-table__input" ng-model="year.year" year-validator from-year="2000" ng-required="true" type="number"/>
+                </td>
 
-            <tr class="c-table__row">
-              <td></td>
-              <td class="c-table__column"><b> Program effects </b></td>
-              <td></td>
-            </tr>
+                <!-- Text-->
+                <td class="c-table__column c-table__column--text">
+                  {{vm.currentParameter.name}} in the absence of any programs
+                </td>
 
-            <tr class="c-table__row">
-              <td></td>
-              <td class="c-table__column"> {{vm.selectedParameter.name}} under maximal coverage of this program</td>
-              <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
-                <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueFrom" more-than="-1" ng-required="true" type="number"/>
-                <span class="c-table__between-input"> - </span>
-                <input class="txbox c-table__input c-table__input--half" ng-model="vm.post[year.id].effectsValueTo" more-than="vm.post[year.id].effectsValueFrom" ng-required="true" type="number"/>
-                <span class="c-table__between-input"> % </span>
-              </td>
-            </tr>
+                <!-- Inputs -->
+                <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
+                  <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" more-than="-1" ng-model="year.intercept_lower"/>
+                  <span class="c-table__between-input"> - </span>
+                  <input class="txbox c-table__input c-table__input--half" type="number" ng-required="true" more-than="year.intercept_lower" ng-model="year.intercept_upper"/>
+                </td>
 
-            <tr class="c-table__row">
-              <td></td>
-              <td class="c-table__column"><b>Program interactions</b></td>
-              <td></td>
-            </tr>
+              </tr>
 
-            <tr class="c-table__row">
-              <td></td>
-              <td class="c-table__column" ng-init="vm.post[year.id].interactions='random'">
-                <label class="c-checkbox">
-                  <input type="checkbox" ng-model="vm.post[year.id].interactions" ng-required="vm.post[year.id].interactions===undefined" ng-true-value="'random'"/>
-                  Random
-                </label>
-                <label class="c-checkbox">
-                  <input type="checkbox" ng-model="vm.post[year.id].interactions" ng-required="vm.post[year.id].interactions===undefined" ng-true-value="'nested'"/>
-                  Nested
-                </label>
-                <label class="c-checkbox">
-                  <input type="checkbox" ng-model="vm.post[year.id].interactions" ng-required="vm.post[year.id].interactions===undefined" ng-true-value="'additive'"/>
-                  Additive
-                </label>
-              </td>
-              <td></td>
-            </tr>
-            </tbody>
-          </table>
-          <div class="c-nested-form__delete" ng-click="vm.deleteYear($index)" ng-if="vm.years.length > 1">
-            x
+              <tbody ng-if="vm.currentParameter.coverage!==null || vm.currentParameter.coverage!==0">
+              <tr class="c-table__row">
+                <td></td>
+                <td class="c-table__column"><b> Program effects </b></td>
+                <td></td>
+              </tr>
+
+              <tr class="c-table__row" ng-repeat="program in population.programs track by $index" ng-init="year.programs[program.short_name].name = program.short_name">
+                <td></td>
+                <td class="c-table__column"> {{program.name}} under maximal coverage of this program</td>
+                <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
+                  <input class="txbox c-table__input c-table__input--half" ng-model="year.programs[program.name].intercept_lower" more-than="-1" ng-required="true" type="number"/>
+                  <span class="c-table__between-input"> - </span>
+                  <input class="txbox c-table__input c-table__input--half" ng-model="year.programs[program.name].intercept_upper" more-than="population.year.programs[program.short_name].intercept_lower" ng-required="true" type="number"/>
+                </td>
+              </tr>
+
+              <tr class="c-table__row">
+                <td></td>
+                <td class="c-table__column"><b>Program interactions</b></td>
+                <td></td>
+              </tr>
+
+              <tr class="c-table__row">
+                <td></td>
+                <td class="c-table__column" ng-init="year.interact= year.interact === undefined ? 'random' : year.interact">
+                  <label class="c-checkbox">
+                    <input type="checkbox" ng-model="year.interact" ng-required="year.interact===undefined" ng-true-value="'random'"/>
+                    Random
+                  </label>
+                  <label class="c-checkbox">
+                    <input type="checkbox" ng-model="year.interact" ng-required="year.interact===undefined" ng-true-value="'nested'"/>
+                    Nested
+                  </label>
+                  <label class="c-checkbox">
+                    <input type="checkbox" ng-model="year.interact" ng-required="year.interact===undefined" ng-true-value="'additive'"/>
+                    Additive
+                  </label>
+                </td>
+                <td></td>
+              </tr>
+              </tbody>
+
+            </table>
+            <div class="c-population-form__delete" ng-click="vm.deleteYear(vm.currentParameter.populations[population.key], $index)" ng-if="vm.currentParameter.populations[population.key].years.length > 1">
+              x
+            </div>
           </div>
+
+          <button ng-if="vm.currentParameter!==undefined" class="btn c-cost-coverage__button c-cost-coverage__button--add-year" ng-click="vm.addYear(vm.currentParameter.populations[population.key])">
+            Add year
+          </button>
+
         </div>
+
       </form>
 
       <br/>
 
-      <div class="c-cost-coverage__buttons u-layout-vertical" ng-if="vm.selectedParameter!==undefined">
-        <button class="btn c-cost-coverage__button" ng-click="vm.addYear()">
-          Add year
-        </button>
-        <button ng-disabled="vm.TableForm.$invalid" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
-          Submit
-        </button>
-      </div>
+      <button ng-disabled="vm.TableForm.$invalid" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
+        Submit
+      </button>
 
     </div>
   </div>
