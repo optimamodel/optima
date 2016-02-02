@@ -447,8 +447,9 @@ def makepars(data, label=None, verbose=2):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                        pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                        if i>=j:
+                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
     printv('...done converting data to parameters.', 2, verbose)
     
@@ -486,6 +487,21 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     for key in generalkeys: simpars[key] = dcp(pars[key])
     for key in staticmatrixkeys: simpars[key] = dcp(array(pars[key]))
 
+#    # Append the other permutation of partnerships
+#    for act in ['reg', 'cas', 'com']: # Will probably include birth matrices in here too...
+#        condname = 'cond'+act
+#        for key in simpars['condname']:
+#            
+#        for i,key1 in enumerate(simpars['popkeys']):
+#            for j,key2 in enumerate(simpars['popkeys']):
+#                if sum(array(tmpacts[act])[i,j,:])>0:
+#                    pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
+#                    pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
+#                    if act!='inj':
+#                        if i>=j:
+#                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+#                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+#
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
