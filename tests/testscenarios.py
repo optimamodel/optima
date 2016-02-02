@@ -368,11 +368,10 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui, plotpeople, findinds, plotpars
-        ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
+        from optima import pygui, plotpeople, plotpars
+        ppl1 = P.results[-1].raw['Scale up VMMC program'][0]['people']
         ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
-        plotpeople(P, ppl, start=0, end=None, pops=[-2], animate=False)
-#        plotpeople(P, ppl, start=0, end=2, pops=[1])
+        plotpeople(P, ppl1, start=0, end=None, pops=[-2], animate=False)
         apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
         
