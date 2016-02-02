@@ -157,7 +157,7 @@ class ProjectDb(db.Model):
             for progset_record in self.progsets:
                 progset_entry = progset_record.hydrate()
                 project_entry.addprogset(progset_entry.name, progset_entry)
-        if self.scenario:
+        if self.scenarios:
             for scenario_record in self.scenarios:
                 scenario_entry = scenario_record.hydrate()
                 project_entry.addscen(scenario_entry.name, scenario_entry)
