@@ -1,0 +1,1 @@
+ALTER TABLE progsets ADD COLUMN effects JSON;
