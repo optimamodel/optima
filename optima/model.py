@@ -18,26 +18,26 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     ###############################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
-    eps = 1e-3 # Define another small number to avoid divide-by-zero errors
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
     if simpars is None: raise OptimaException('model() requires simpars as an input')
     if settings is None: raise OptimaException('model() requires settings as an input')
-    popkeys    = simpars['popkeys']
-    npops      = len(popkeys)
-    simpars    = dcp(simpars)
-    tvec       = simpars['tvec']
-    dt         = simpars['dt']      # Shorten dt
-    npts       = len(tvec) # Number of time points
-    ncd4       = settings.ncd4      # Shorten number of CD4 states
-    nstates    = settings.nstates   # Shorten number of health states
-    people     = zeros((nstates, npops, npts)) # Matrix to hold everything
-    allpeople  = zeros((npops, npts)) # Population sizes
-    effhivprev = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
-    inhomo     = zeros(npops)    # Inhomogeneity calculations
-    usecascade = settings.usecascade # Whether or not the full treatment cascade should be used
+    popkeys      = simpars['popkeys']
+    npops        = len(popkeys)
+    simpars      = dcp(simpars)
+    tvec         = simpars['tvec']
+    dt           = simpars['dt']      # Shorten dt
+    npts         = len(tvec) # Number of time points
+    ncd4         = settings.ncd4      # Shorten number of CD4 states
+    nstates      = settings.nstates   # Shorten number of health states
+    people       = zeros((nstates, npops, npts)) # Matrix to hold everything
+    allpeople    = zeros((npops, npts)) # Population sizes
+    effhivprev   = zeros((npops, 1))    # HIV effective prevalence (prevalence times infectiousness)
+    inhomo       = zeros(npops)    # Inhomogeneity calculations
+    usecascade   = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
+    eps          = settings.eps # Define another small number to avoid divide-by-zero errors
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
