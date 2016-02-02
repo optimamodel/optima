@@ -561,7 +561,7 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
 
 
 
-global plotparsbacktbut, plotparsnextbut
+global plotparsbacktbut, plotparsnextbut, plotparslider
 def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
@@ -571,9 +571,9 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     from optima import Par, makesimpars
     from numpy import array, vstack
     import matplotlib.pyplot as plt
-    from matplotlib.widgets import Button
+    from matplotlib.widgets import Button, Slider
     
-    global position, plotparsbacktbut, plotparsnextbut
+    global position, plotparsbacktbut, plotparsnextbut, plotparslider
     position = 0
     
     if type(parslist)!=list: parslist = [parslist] # Convert to list
@@ -614,7 +614,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     ncols = 4
     nperscreen = nrows*ncols
 
-    plotparsfig = plt.figure()
+    plotparsfig = plt.figure(facecolor=(0.9,0.9,0.9))
     plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.2, hspace=0.4)
     plotparsaxs = []
     count = 0
@@ -623,16 +623,32 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
             count += 1
             plotparsaxs.append(plotparsfig.add_subplot(nrows, ncols, count))
     
-    backframe = plotparsfig.add_axes([0.2, 0.03, 0.2, 0.03])
-    nextframe = plotparsfig.add_axes([0.6, 0.03, 0.2, 0.03])
+    backframe = plotparsfig.add_axes([0.1, 0.03, 0.1, 0.03])
+    sliderframe = plotparsfig.add_axes([0.3, 0.03, 0.4, 0.03])
+    nextframe = plotparsfig.add_axes([0.8, 0.03, 0.1, 0.03])
     plotparsbackbut = Button(backframe, 'Back')
     plotparsnextbut = Button(nextframe, 'Next')
+    plotparslider = Slider(sliderframe, '', 0, nplots, valinit=0, valfmt='%d')
     
-    def updateb(event=None): update(-1)
-    def updaten(event=None): update(1)
-    def update(move=0):
+    def updateb(event=None): 
         global position
-        position += move*nperscreen
+        position -= nperscreen
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
+        plotparslider.set_val(position)
+        update(position)
+    
+    def updaten(event=None): 
+        global position
+        position += nperscreen
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
+        plotparslider.set_val(position)
+        update(position)
+    
+    def update(tmp=0):
+        global position, plotparslider
+        position = tmp
         position = max(0,position)
         position = min(nplots-nperscreen, position)
         for i,ax in enumerate(plotparsaxs):
@@ -659,4 +675,5 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     update()
     plotparsbackbut.on_clicked(updateb)
     plotparsnextbut.on_clicked(updaten)
-    return plotparsbackbut, plotparsnextbut
+    plotparslider.on_changed(update)
+    return plotparsbackbut, plotparsnextbut, plotparslider
