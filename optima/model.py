@@ -3,26 +3,16 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True, debug=False):
+def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
     Runs Optima's epidemiological model.
     
-    Version: 2016jan31
+    Version: 2016feb01
     """
     
     
     if benchmark: starttime = tic()
     
-    if debug:
-        ''' Save inputs to randomly-generated file '''
-        from optima import uuid, saveobj, today, getdate
-        from pylab import rand
-        filename = 'debugmodel %s-$02i.mod' % (getdate(today()), 100*rand())
-        data = odict()
-        data['uid'] = uuid()
-        data['simpars'] = simpars
-        data['settings'] = settings
-        saveobj(filename, data)
     
     ###############################################################################
     ## Setup

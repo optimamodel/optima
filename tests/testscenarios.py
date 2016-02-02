@@ -334,31 +334,31 @@ if 'VMMC' in tests:
 
         Parscen(name='Imagine that no-one gets circumcised',
              parsetname='default',
-             pars=[{'endval': 0.,
+             pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'circum',
                 'for': malelist,
                 'startval': .85,
                 'startyear': 2015.2}]),
         
-        Budgetscen(name='Default budget',
-              parsetname='default',
-              progsetname='default',
-              t=2015,
-              budget=P.progsets['default'].getdefaultbudget()),
-
-         Budgetscen(name='Scale up VMMC program',
-              parsetname='default',
-              progsetname='default',
-              t=2016,
-              budget={
-                      'Condoms': 1e7,
-                      'VMMC': 1e6,
-                      'FSW programs': 1e6,
-                      'HTC':2e7,
-                      'PMTCT':1e6,
-                      'ART':1e6
-                      }),
+#        Budgetscen(name='Default budget',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2015,
+#              budget=P.progsets['default'].getdefaultbudget()),
+#
+#         Budgetscen(name='Scale up VMMC program',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2016,
+#              budget={
+#                      'Condoms': 1e7,
+#                      'VMMC': 1e6,
+#                      'FSW programs': 1e6,
+#                      'HTC':2e7,
+#                      'PMTCT':1e6,
+#                      'ART':1e6
+#                      }),
 
         ]
     
@@ -370,9 +370,9 @@ if 'VMMC' in tests:
      
     if doplot:
         from optima import pygui, plotpeople, findinds, plotpars
-        ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
-        apd = plotpars([P.scens[0].scenparset.pars[0], P.scens[1].scenparset.pars[0], P.scens[2].scenparset.pars[0]])
-        plotpeople(P, ppl, start=0, end=None, pops=findinds(malelist))
+#        ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
+#        plotpeople(P, ppl, start=0, end=None, pops=findinds(malelist))
+        apd = plotpars([P.scens[0].scenparset.pars[0], P.scens[1].scenparset.pars[0]])
         pygui(P.results[-1], toplot='default')
         
 
