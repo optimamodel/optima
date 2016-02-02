@@ -211,9 +211,9 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                                  't': 2016.0,
                                  'unitcost': (30,40)})
                                  
-        VMMC.costcovfn.addccopar({'saturation': (0.3,0.3),
+        VMMC.costcovfn.addccopar({'saturation': (1.,1.),
                                  't': 2016.0,
-                                 'unitcost': (50,80)})
+                                 'unitcost': (5,8)})
                                  
         FSW_programs.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
@@ -333,7 +333,7 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'PMTCT'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'PMTCT', 'VMMC'])
         
         # Modify target pars and pops
         R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
@@ -375,6 +375,13 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
 
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+
+        R.covout['circum']['MSM'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['Clients'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['M 15-49'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['M 50+'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['circum']['M 0-14'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+
 
         P.addprogset(name='default', progset=R)
     
