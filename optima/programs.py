@@ -452,15 +452,17 @@ class Programset(object):
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-                if any(thisoutcome<lower) or any(thisoutcome>upper):
-                    errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
-                    if die:
-                        raise OptimaException(errormsg)
-                    else:
-                        printv(errormsg, 1, verbose)
-                        thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
-                        thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
-                
+                try:
+                    if any(thisoutcome<lower) or any(thisoutcome>upper):
+                        errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
+                        if die:
+                            raise OptimaException(errormsg)
+                        else:
+                            printv(errormsg, 1, verbose)
+                            thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
+                            thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
+                except:
+                    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 
                 # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
