@@ -614,13 +614,13 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     ## Do plotting
     nplots = len(plotdata)
     if any([len(pltd)!=nplots for pltd in allplotdata]): 
-        print('Warning, not all pars are the same length, only plotting first')
+        printv('Warning, not all pars are the same length, only plotting first', 2, verbose)
         allplotdata = allplotdata[0]
     nrows = 5
     ncols = 4
     nperscreen = nrows*ncols
 
-    plotparsfig = plt.figure(facecolor=(0.9,0.9,0.9))
+    plotparsfig = plt.figure(facecolor=(0.9,0.9,0.9), figsize=figsize)
     plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.2, hspace=0.4)
     plotparsaxs = []
     count = 0
@@ -665,7 +665,6 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                 for pd,plotdata in enumerate(allplotdata):
                     try:
                         this = plotdata[nplt,:]
-        #                print(this)
                         ax.set_title(this[0])
                         if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
@@ -675,8 +674,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                     except: print('??????')
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
-                    except Exception as E: 
-                        print('Problem with "%s": "%s"' % (this[0], E.message))
+                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.message))
                     if pd==len(allplotdata)-1: # Do this for the last plot only
                         ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                         ax.set_xlim((tvec[0],tvec[-1]))
