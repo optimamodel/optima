@@ -1,8 +1,10 @@
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException, findinds # Import utilities
 from optima import gitinfo, tic, toc # Import functions
 from optima import __version__ # Get current version
 
 from optima import defaultobjectives, asd, Project
+
+from numpy import arange
 
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
@@ -465,9 +467,16 @@ class GAOptim(object):
         projnames = []
         projbudgets = []
         projoutcomes = []
+        projoutcomesplit = []
         ind = -1 # WARNING, should be a single index so doesn't actually matter
         
         for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
+            # Figure out which indices to use
+            tvector = self.resultpairs[x]['init'].tvec          # WARNING: NOT USING DT NORMALISATIONS LATER, SO ASSUME DT = 1 YEAR.
+            initial = findinds(tvector, self.objectives['start'])
+            final = findinds(tvector, self.objectives['end'])
+            indices = arange(initial, final)
+            
             projectname = self.resultpairs[x]['init'].project.name
             initalloc = self.resultpairs[x]['init'].budget[0]
             gaoptalloc = self.resultpairs[x]['opt'].budget[-1]
@@ -488,6 +497,14 @@ class GAOptim(object):
             projbudgets[prj]['opt']   = gaoptalloc
             projoutcomes[prj]['init'] = initoutcome
             projoutcomes[prj]['opt']  = gaoptoutcome
+            
+            projoutcomesplit.append(odict())
+            projoutcomesplit[prj]['init'] = odict()
+            projoutcomesplit[prj]['opt'] = odict()
+            for key in self.objectives['keys']:
+                print key
+                projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot[0][indices].sum()
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[0][indices].sum()
                  
         ## Actually create the output
         output = ''
@@ -503,6 +520,8 @@ class GAOptim(object):
             output += '\n'
             output += '\n\tBudget:\t%f\t%f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
             output += '\n\tOutcome:\t%f\t%f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
+            for key in self.objectives['keys']:
+                output += '\n\t' + key.title() + ':\t%f\t%f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
             output += '\n'
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():
