@@ -107,6 +107,7 @@ class ProjectDb(db.Model):
     parsets = db.relationship('ParsetsDb', backref='project')
     results = db.relationship('ResultsDb', backref='project')
     progsets = db.relationship('ProgsetsDb', backref='project')
+    scenarios = db.relationship('ScenariosDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
                  created=None, updated=None, settings=None, data=None, parsets=None,
@@ -156,6 +157,11 @@ class ProjectDb(db.Model):
             for progset_record in self.progsets:
                 progset_entry = progset_record.hydrate()
                 project_entry.addprogset(progset_entry.name, progset_entry)
+        if self.scenario:
+            for scenario_record in self.scenarios:
+                scenario_entry = scenario_record.hydrate()
+                project_entry.addscen(scenario_entry.name, scenario_entry)
+
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -503,8 +509,8 @@ class ProgramsDb(db.Model):
             costcovdata={
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['coverage'] 
-                if self.costcov[i] is not None 
+                'coverage': [self.costcov[i]['coverage']
+                if self.costcov[i] is not None
                 else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None,
             ccopars={
@@ -643,7 +649,7 @@ class ProgsetsDb(db.Model):
 
 
 @swagger.model
-class Scenario(db.Model):
+class ScenariosDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
@@ -652,9 +658,10 @@ class Scenario(db.Model):
     active = db.Column(db.Boolean)
     progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    blob = db.Column(JSON)
 
     def __init__(self, project_id, name, scenario_type, active=False,
-                 progset_id=None, parset_id=None):
+                 progset_id=None, parset_id=None, blob={}):
 
         self.project_id = project_id
         self.name = name
@@ -662,3 +669,25 @@ class Scenario(db.Model):
         self.active = active
         self.progset_id = progset_id
         self.parset_id = parset_id
+        self.blob = blob
+
+    def hydrate(self):
+
+        from server.utils import load_progset, load_parset
+
+        parset = load_parset(self.project_id, self.parset_id)
+
+        if self.scenario_type == "Program":
+
+            progset = utils.load_progset(self.project_id, self.progset_id)
+
+            return op.Progscen(name=self.name,
+                               parsetname=parset.name,
+                               progsetname=progset.name,
+                               **self.blob)
+
+        elif self.scenario_type == "Parameters":
+
+            return op.Parscen(name=self.name,
+                              parsetname=parset.name,
+                              **self.blob)

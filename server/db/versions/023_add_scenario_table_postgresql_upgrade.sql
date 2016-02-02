@@ -6,6 +6,7 @@ CREATE TABLE scenario (
     active BOOLEAN,
     progset_id UUID,
     parset_id UUID,
+    blob JSON,
 
     PRIMARY KEY (id),
     FOREIGN KEY(project_id) REFERENCES projects (id),
