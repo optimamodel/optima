@@ -7,11 +7,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
     Runs Optima's epidemiological model.
     
-    Version: 2016jan31
+    Version: 2016feb02
     """
     
     
     if benchmark: starttime = tic()
+    
     
     ###############################################################################
     ## Setup
@@ -132,7 +133,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     stiprev   = simpars['stiprev']   # Prevalence of STIs (P)
     prep      = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
-    usepmtctprop=True if all(numpmtct<1) else False
+    usepmtctprop=False # WARNING, causes horrific bugs if enabled !!!!!! True if all(numpmtct<1) else False
 
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
@@ -159,7 +160,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     # Further potential effects on transmission
     effsti    = simpars['effsti'] * stiprev  # STI effect
-    effcirc   = simpars['effcirc'] * circum  # Circumcision effect
+    effcirc   = simpars['effcirc']  # Circumcision effect
     effprep   = simpars['effprep'] * prep    # PrEP effect
     effcondom = simpars['effcondom']         # Condom effect
     effpmtct  = simpars['effpmtct']          # PMTCT effect
@@ -388,8 +389,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             thistrans = this['trans']
             
             if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-                thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]),                 (dt*cond*acts*effhivprev[pop2]))
-                thisforceinf_circ   = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+                thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]),         (dt*cond*acts*effhivprev[pop2]))
+                thisforceinf_circ   = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff), (dt*cond*acts*effhivprev[pop2]))
                 forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinf_uncirc)
                 forceinfvec[1,pop1] = 1 - (1-forceinfvec[1,pop1]) * (1-thisforceinf_circ)
             else: # Only have uncircs for females
@@ -422,8 +423,14 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         
 
         ###############################################################################
-        ## Calculate births, age transitions and mother-to-child-transmission
+        ## Calculate circumcision, births, age transitions and mother-to-child-transmission
         ###############################################################################
+
+        ## Circumcision -- WARNING, will make aging irrelevant!!!!
+        for p in range(npops):
+            totalsus = people[sus,p,t].sum()
+            people[uncirc,p,t] = (1-circum[p,t])*totalsus
+            people[circ,p,t]   = circum[p,t]*totalsus
 
         effmtct  = mtctbreast*breast[t] + mtctnobreast*(1-breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
@@ -801,13 +808,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             for pop in range(npops): # Loop over each population, since some might grow and others might shrink
-                if newpeople[pop]>=0: # People are entering: they enter the susceptible population
-                    people[0,pop,t+1] += newpeople[pop]
-                else: # People are leaving: they leave from susceptible still
-                    if (people[0,pop,t+1] + newpeople[pop])>0: # Don't allow negative people
-                        people[0,pop,t+1] += newpeople[pop]
-                    else:
-                        people[:,pop,t+1] *= popsize[pop,t]/sum(people[:,pop,t]);
+                propcirc = circum[pop,t]
+                circarr = [1-propcirc, propcirc] # Store circumcision proportions
+                for index in sus: people[index,pop,t+1] += circarr[index]*newpeople[pop] # Add new people in proportion to circumcision
             if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations

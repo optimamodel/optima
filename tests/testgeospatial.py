@@ -16,11 +16,11 @@ Version: 2016jan31
 
 ## Define tests to run here!!!
 tests = [
-'makeprojects',
+#'makeprojects',
 #'forcerefresh',
-#'makeportfolio',
+'makeportfolio',
 #'generateBOCs',
-'rungui',
+#'rungui',
 ]
 
 ##############################################################################
