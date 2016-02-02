@@ -226,7 +226,7 @@ class ParsetsCalibration(Resource):
         if which is None:
             checks = graph_selectors['defaults']
         else:
-            checks = [(key in which) for key in keys]
+            checks = [key in which for key in keys]
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
         return selectors
