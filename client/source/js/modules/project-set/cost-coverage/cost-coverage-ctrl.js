@@ -203,11 +203,11 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function submit() {
-      if (vm.TableForm.$invalid) {
-        console.error('form is invalid!');
+      // if (vm.TableForm.$invalid) {
+      //   console.error('form is invalid!');
 
-        return false;
-      }
+      //   return false;
+      // }
 
       console.log('submitting', vm.currentParameter);
 
