@@ -450,8 +450,9 @@ def makepars(data, label=None, verbose=2):
                     pars[actsname].y[(key1,key2)] = array(tmpacts[act])[i,j,:]
                     pars[actsname].t[(key1,key2)] = array(tmpactspts[act])
                     if act!='inj':
-                        pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
-                        pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
+                        if i>=j:
+                            pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
+                            pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
     printv('...done converting data to parameters.', 2, verbose)
     

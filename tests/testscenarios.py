@@ -7,10 +7,10 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
 #'maxbudget',
 #'90-90-90'
-'VMMC'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -179,10 +179,10 @@ if 'standardscen' in tests:
     P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
     P.scens[2].active = True # Turn off another scenario
     
-    # Turn off budget scenarios
-    for i,scen in P.scens.items():
-        if isinstance(scen, (Budgetscen, Coveragescen)):
-            P.scens[i].active = False
+#    # Turn off budget scenarios
+#    for i,scen in P.scens.items():
+#        if isinstance(scen, (Budgetscen, Coveragescen)):
+#            P.scens[i].active = False
     
     # Run the scenarios
     P.runscenarios() 
