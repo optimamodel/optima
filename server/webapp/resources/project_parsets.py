@@ -352,21 +352,24 @@ class ParsetsAutomaticCalibration(Resource):
     )
     def post(self, parset_id):
         from server.webapp.utils import load_project
-        from server.webapp.tasks import run_autofit
+        from server.webapp.tasks import run_autofit, start_or_report_calculation
         from server.webapp.dbmodels import ParsetsDb
 
         args = manual_calibration_parser.parse_args()
 
         # FixMe: use load_parset once the branch having it is merged
         parset_entry = ParsetsDb.query.get(parset_id)
+        parset_name = parset_entry.name
 
-        project_entry = load_project(parset_entry.project_id, raise_exception=True)
+        project_id = parset_entry.project_id
 
-        project_be = project_entry.hydrate()
+        can_start, can_join, work_type = start_or_report_calculation(db.session, parset_entry.project_id, parset_id, 'autofit')
 
-        run_autofit.delay(project_be, parset_entry.name, args['maxtime'])
-
-        return '', 201
+        if not can_start or not can_join:
+            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 303
+        else:
+            run_autofit.delay(project_id, parset_name, args['maxtime'])
+            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 201
 
 
 file_upload_form_parser = RequestParser()
