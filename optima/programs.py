@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb02
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth
+from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap
 from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
@@ -721,7 +721,7 @@ class Program(object):
 
 
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        randseed=None, bounds=None, npts=100, maxupperlim=1e8):
+        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
@@ -730,6 +730,7 @@ class Program(object):
         import textwrap
 
         if type(t) in [int,float]: t = [t]
+        colors = gridcolormap(len(t))
         plotdata = {}
         
         # Get caption & scatter data 
@@ -787,19 +788,15 @@ class Program(object):
                     plotdata['ylinedata_m'][yr],
                     linestyle='-',
                     linewidth=2,
-                    color='#a6cee3')
-                axis.plot(
-                    plotdata['xlinedata'],
-                    plotdata['ylinedata_l'][yr],
-                    linestyle='--',
-                    linewidth=2,
-                    color='#000000')
-                axis.plot(
-                    plotdata['xlinedata'],
-                    plotdata['ylinedata_u'][yr],
-                    linestyle='--',
-                    linewidth=2,
-                    color='#000000')
+                    color=colors[yr],
+                    label=t[yr])
+                if plotbounds:
+                    axis.fill_between(plotdata['xlinedata'],
+                                      plotdata['ylinedata_l'][yr],
+                                      plotdata['ylinedata_u'][yr],
+                                      facecolor=colors[yr],
+                                      alpha=.1,
+                                      lw=0)
         axis.scatter(
             costdata,
             self.costcovdata['coverage'],
@@ -815,6 +812,7 @@ class Program(object):
         axis.set_title(self.short)
         axis.get_xaxis().get_major_formatter().set_scientific(False)
         axis.get_yaxis().get_major_formatter().set_scientific(False)
+        if len(t)>1: axis.legend(loc=4)
 
         return cost_coverage_figure
 
