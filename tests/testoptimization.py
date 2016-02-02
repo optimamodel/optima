@@ -85,7 +85,13 @@ if 'minimizemoney' in tests:
     print('Running minimize money test...')
     from optima import defaultobjectives
     
-    P = defaultproject(which='generalized') 
+    P = defaultproject(which='generalized')
+
+    coverage = P.progsets[-1].getprogcoverage(budget=P.progsets[-1].getdefaultbudget(),
+                      t=2016,
+                      parset=P.parsets['default'])
+
+    outcomes = P.progsets[-1].getoutcomes(coverage=coverage,t=2016, parset=P.parsets['default'])
     
     objectives = defaultobjectives(which='money')
     objectives['deathfrac'] = 0.1

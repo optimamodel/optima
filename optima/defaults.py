@@ -261,8 +261,8 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
         SBCC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
         STI.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
         VMMC.addcostcovdatum({'t':2014,'cost':1e7,'coverage':3e5})
-        FSW_programs.addcostcovdatum({'t':2014,'cost':1e6,'coverage':15000})
-        MSM_programs.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
+        FSW_programs.addcostcovdatum({'t':2014,'cost':8e6,'coverage':240000})
+        MSM_programs.addcostcovdatum({'t':2014,'cost':8e6,'coverage':240000})
         PWID_programs.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         OST.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
         NSP.addcostcovdatum({'t':2014,'cost':2e6,'coverage':25000})
@@ -371,7 +371,7 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
                                  't': 2016.0,
                                  'unitcost': (4,8)})
 
-        HTC_workplace.addcostcovdatum({'t':2014,'cost':1e6,'coverage':2e5})
+        HTC_workplace.addcostcovdatum({'t':2014,'cost':1e7,'coverage':9e6})
         HTC_mobile.addcostcovdatum({'t':2014,'cost':1e6,'coverage':2e5})
         HTC_medical.addcostcovdatum({'t':2014,'cost':1e6,'coverage':4e5})
         
@@ -390,7 +390,7 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
 
         R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
     
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.05,0.15), 
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 
                                               't': 2016.0,
                                               'HTC mobile clinics': (0.85,0.9),
                                               'HTC medical facilities': (0.65,0.75),
@@ -408,17 +408,17 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
                                                   'HTC mobile clinics': (0.85,0.9),
                                                   'HTC medical facilities': (0.65,0.75)})
                                                   
-        R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.15,0.2),
+        R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.35,0.4),
                                                   't': 2016.0,
                                                   'HTC workplace programs': (0.85,0.9),
                                                   'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.65,0.75)})
+                                                  'HTC medical facilities': (0.85,0.95)})
 
-        R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.15,0.2),
+        R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.4),
                                                   't': 2016.0, 
                                                   'HTC workplace programs': (0.85,0.9),
                                                   'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.65,0.75)})
+                                                  'HTC medical facilities': (0.85,0.95)})
 
         R.covout['hivtest']['M 50+'].addccopar({'intercept': (0.15,0.2), 
                                                 't': 2016.0,
