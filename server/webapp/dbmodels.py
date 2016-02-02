@@ -341,10 +341,12 @@ class WorkingProjectDb(db.Model):  # pylint: disable=R0903
     is_working = db.Column(db.Boolean, unique=False, default=False)
     work_type = db.Column(db.String(32), default=None)
     project = db.Column(db.LargeBinary)
+    parset_id = db.Column(UUID(True)) # not sure if we should make it foreign key here
     work_log_id = db.Column(UUID(True), default=None)
 
-    def __init__(self, project_id, is_working=False, project=None, work_type=None, work_log_id=None):  # pylint: disable=R0913
+    def __init__(self, project_id, parset_id, is_working=False, project=None, work_type=None, work_log_id=None):  # pylint: disable=R0913
         self.id = project_id
+        self.parset_id = parset_id
         self.project = project
         self.is_working = is_working
         self.work_type = work_type
@@ -360,13 +362,16 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
     id = db.Column(UUID(True), primary_key=True)
     work_type = db.Column(db.String(32), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    parset_id = db.Column(UUID(True))
+    result_id = db.Column(UUID(True), default=None)
     start_time = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     stop_time = db.Column(db.DateTime(timezone=True), default=None)
     status = db.Column(work_status, default='started')
     error = db.Column(db.Text, default=None)
 
-    def __init__(self, project_id, work_type=None):
+    def __init__(self, project_id, parset_id, work_type=None):
         self.project_id = project_id
+        self.parset_id = parset_id
         self.work_type = work_type
 
 
@@ -523,8 +528,8 @@ class ProgramsDb(db.Model):
             costcovdata={
                 't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
                 'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['coverage'] 
-                if self.costcov[i] is not None 
+                'coverage': [self.costcov[i]['coverage']
+                if self.costcov[i] is not None
                 else None for i in range(len(self.costcov))],
             } if self.costcov is not None else None,
             ccopars={
@@ -563,7 +568,8 @@ class ProgsetsDb(db.Model):
         'name': fields.String,
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'programs': fields.Nested(ProgramsDb.resource_fields)
+        'programs': fields.Nested(ProgramsDb.resource_fields),
+        'targetpartypes': fields.Raw,
     }
 
     __tablename__ = 'progsets'
@@ -574,8 +580,9 @@ class ProgsetsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     programs = db.relationship('ProgramsDb', backref='progset', lazy='joined')
+    effects = db.Column(JSON)
 
-    def __init__(self, project_id, name, created=None, updated=None, id=None):
+    def __init__(self, project_id, name, created=None, updated=None, id=None, effects=[]):
         self.project_id = project_id
         self.name = name
         if created:
@@ -584,6 +591,8 @@ class ProgsetsDb(db.Model):
             self.updated = updated
         if id:
             self.id = id
+        self.targetpartypes = []
+        self.effects = effects
 
     def hydrate(self):
         # In BE, programs don't have an "active" flag
@@ -612,6 +621,11 @@ class ProgsetsDb(db.Model):
                 } for i in range(len(program['costcovdata']['t']))
             ]
         return program
+
+    def get_targetpartypes(self):
+        be_progset = self.hydrate()
+        be_progset.gettargetpartypes()
+        self.targetpartypes = be_progset.targetpartypes
 
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
