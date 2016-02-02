@@ -355,7 +355,6 @@ class Programset(object):
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                             x = budget[thisprog.short]
                             fullx = infbudget[thisprog.short]
-#                            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                             if thiscovpop:
                                 part1 = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
                                 part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
@@ -462,7 +461,7 @@ class Programset(object):
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
                 if any(thisoutcome<lower) or any(thisoutcome>upper):
-                    errormsg = 'Parameter value based on coverage is outside allowed limits: value=%s (%f, %f)' % (thisoutcome, lower, upper)
+                    errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
                     if die:
                         raise OptimaException(errormsg)
                     else:
@@ -937,7 +936,6 @@ class CCOF(object):
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
         if (not toplot) and (not len(x)==len(t)): 
-#            import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
