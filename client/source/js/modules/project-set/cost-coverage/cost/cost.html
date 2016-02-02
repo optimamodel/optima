@@ -24,7 +24,7 @@
           <table class="table table-bordered">
             <tr>
               <th style="width: 100px;">Year</th>
-              <th style="width: 125px;">Estimated size</th>
+              <th style="width: 125px;">Estimated size TEMP</th>
               <th style="width: 150px;">Saturation %</th>
               <th style="width: 100px;">Saturation #</th>
               <th style="width: 150px;">Unit cost</th>
@@ -32,12 +32,12 @@
             </tr>
             <tr ng-repeat="data in state.cpData">
               <td>{{data.year}}</td>
-              <td>{{state.estdSize[data.year.toString()]}}</td>
+              <td>{{state.estdSize[data.year.toFixed(0)]}}</td>
               <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
-              <td>({{((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
-                state.estdSize[data.year.toString()] * data.saturationpercent_lower : '') + '-' +
-                ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_upper !== undefined) ?
-                state.estdSize[data.year.toString()] * data.saturationpercent_upper: '')}})</td>
+              <td>({{((state.estdSize[data.year.toFixed(0)] !== undefined && data.saturationpercent_lower !== undefined ) ?
+                state.estdSize[data.year.toFixed(0)] * data.saturationpercent_lower : '') + '-' +
+                ((state.estdSize[data.year.toFixed(0)] !== undefined && data.saturationpercent_upper !== undefined) ?
+                state.estdSize[data.year.toFixed(0)] * data.saturationpercent_upper: '')}})</td>
               <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
               <td><i class="fa fa-trash-o" ng-click="removeFromCPData(data)"></i></td>
             </tr>
