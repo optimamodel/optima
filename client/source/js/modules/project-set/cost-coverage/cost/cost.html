@@ -11,13 +11,7 @@
       </select>
     </label>
   </div>
-
-  <div ng-if="selectedProgram">
-    <div style="margin-top: 2%;width: 40%">
-      <h2>FSW Programs</h2>
-    </div>
-
-    <div style="display: flex">
+    <div style="display: flex; margin-top: 2%">
       <div class="chart-container __medium">
         <div mpld3-chart="state.chartData" id="cost_cov_chart"></div>
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="cost_cov_chart"></chart-toolbar>
