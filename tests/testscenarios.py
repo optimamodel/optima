@@ -345,12 +345,14 @@ if 'VMMC' in tests:
               parsetname='default',
               progsetname='default',
               t=2016,
-              budget={'Condoms': 1e7,
+              budget={
+                      'Condoms': 1e7,
                       'VMMC': 1e6,
                       'FSW programs': 1e6,
                       'HTC':2e7,
                       'PMTCT':1e6,
-                      'ART':1e6}),
+                      'ART':1e6
+                      }),
 
         ]
     
