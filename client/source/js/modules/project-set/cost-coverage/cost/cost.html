@@ -11,6 +11,7 @@
       </select>
     </label>
   </div>
+  <div ng-if="selectedProgram">
     <div style="display: flex; margin-top: 2%">
       <div class="chart-container __medium">
         <div mpld3-chart="state.chartData" id="cost_cov_chart"></div>
@@ -33,7 +34,10 @@
               <td>{{data.year}}</td>
               <td>{{state.estdSize[data.year.toString()]}}</td>
               <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
-              <td></td>
+              <td>({{((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
+                state.estdSize[data.year.toString()] * data.saturationpercent_lower : '') + '-' +
+                ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_upper !== undefined) ?
+                state.estdSize[data.year.toString()] * data.saturationpercent_upper: '')}})</td>
               <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
               <td><i class="fa fa-trash-o" ng-click="removeFromCPData(data)"></i></td>
             </tr>
@@ -47,7 +51,10 @@
                 <input name="spupper" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_upper"
                        type="number" min="{{state.newCPData.saturationpercent_lower || 0}}" ng-class="{'invalid': cpDataForm.spupper.$invalid}"/>
               </td>
-              <td></td>
+              <td>({{((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_lower !== undefined)
+                ? state.estdSize[state.newCPData.year] * state.newCPData.saturationpercent_lower : '') + '-' +
+                ((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_upper !== undefined) ?
+                state.estdSize[state.newCPData.year] * state.newCPData.saturationpercent_upper : '')}})</td>
               <td>
                 <input name="uclower" class="txbox __inline __s" ng-model="state.newCPData.unitcost_lower"
                        type="number" min="0" ng-class="{'invalid': cpDataForm.uclower.$invalid}"/> -
