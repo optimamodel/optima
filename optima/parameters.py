@@ -597,7 +597,7 @@ class Timepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -610,16 +610,14 @@ class Timepar(Par):
         # Set things up and do the interpolation
         keys = self.y.keys()
         npops = len(keys)
-        if self.by=='pship': # Have odict
-            output = odict()
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[key] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
-        else: # Have 2D matrix: pop, time
-            output = zeros((npops,len(tvec)))
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+        if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
+        if asarray: output = zeros((npops,len(tvec)))
+        else: output = odict()
+        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[pop,:] = yinterp
+            else: output[key] = yinterp
         if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
@@ -639,7 +637,7 @@ class Popsizepar(Par):
         self.start = start # Year for which population growth start is calibrated to
     
 
-    def interp(self, tvec=None, dt=None, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -651,10 +649,13 @@ class Popsizepar(Par):
         # Do interpolation
         keys = self.p.keys()
         npops = len(keys)
-        output = zeros((npops,len(tvec)))
+        if asarray: output = zeros((npops,len(tvec)))
+        else: output = odict()
         for pop,key in enumerate(keys):
             yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
-            output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[pop,:] = yinterp
+            else: output[key] = yinterp
         return output
 
 
@@ -669,19 +670,24 @@ class Constant(Par):
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
         
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-            output = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
+            if asarray: output = yinterp
+            else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
-            output = zeros(npops)
+            if asarray: output = zeros(npops)
+            else: output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
+                yinterp = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
+                if asarray: output[pop] = yinterp
+                else: output[key] = yinterp
         return output
 
 

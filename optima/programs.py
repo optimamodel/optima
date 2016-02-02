@@ -448,7 +448,7 @@ class Programset(object):
             
             # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
             last_t = min(years) - settings.dt # Last timestep before the scenario starts
-            last_y = thispar.interp(tvec=last_t, dt=settings.dt) # Find what the model would get for this value
+            last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False) # Find what the model would get for this value
             
             for pop in outcomes[outcome].keys(): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
                 
@@ -475,11 +475,7 @@ class Programset(object):
                 thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
                 thispar.t[pop] = append(thispar.t[pop], years)
                 thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
-                
-                if last_y[pop]<0.01:
-                    print('GETPARS SCENARIO: %s' % thispar.name)
-                    print last_y
-                
+
             pars[outcome] = thispar # WARNING, probably not needed
                 
 
