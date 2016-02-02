@@ -3,7 +3,7 @@ Defines the default parameters for each program.
 
 Version: 2016jan28
 """
-from optima import OptimaException, Project, Program, Programset
+from optima import OptimaException, Project, Program, Programset, printv
 
 
 spreadsheetpath = '../tests/' # WARNING, will this work on all systems? If not can just move XLSX files into the Optima directory I suppose...
@@ -302,12 +302,12 @@ def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
 
 
 
-def defaultproject(which='simple', addprogset=True, **kwargs):
+def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     ''' 
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016jan28
+    Version: 2016feb02
     '''
     
     
@@ -317,7 +317,7 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
     ##########################################################################################################################
     
     if which=='simple':
-        print('Creating simple epidemic project...')
+        printv('Creating simple epidemic project...', 2, verbose)
         P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', **kwargs)
     
     
@@ -329,7 +329,7 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
     ## Generalized
     ##########################################################################################################################
     elif which=='generalized':
-        print('Creating generalized epidemic project...')
+        printv('Creating generalized epidemic project...', 2, verbose)
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
@@ -381,6 +381,7 @@ def defaultproject(which='simple', addprogset=True, **kwargs):
     ## Concentrated
     ##########################################################################################################################
     elif which=='concentrated':
+        printv('Creating concentrated example...', 2, verbose)
         # Make project and store results from default sim
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
     
