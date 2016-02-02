@@ -459,8 +459,9 @@ def modify_program(project_id, progset_id, program_id, args, program_modifier):
     return result
 
 
-def save_result(project_id, result, parset_name='default'):
+def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE):
     # find relevant parset for the result
+    print("save_result(%s, %s, %s" % (project_id, parset_name, calculation_type))
     project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
     default_parset = [item for item in project_parsets if item.name == parset_name]
     if default_parset:
@@ -474,7 +475,7 @@ def save_result(project_id, result, parset_name='default'):
 
     result_record = [item for item in project_results if
                      item.parset_id == result_parset_id and
-                     item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+                     item.calculation_type == calculation_type]
     if result_record:
         if len(result_record) > 1:
             abort(500, "Found multiple records for result")
@@ -484,7 +485,7 @@ def save_result(project_id, result, parset_name='default'):
         result_record = ResultsDb(
             parset_id=result_parset_id,
             project_id=project_id,
-            calculation_type=ResultsDb.CALIBRATION_TYPE,
+            calculation_type=calculation_type,
             blob=op.saves(result)
         )
     return result_record
