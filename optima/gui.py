@@ -562,46 +562,46 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
 
 
 
-def plotpars(pars=None, verbose=2, figsize=(16,10), **kwargs):
+def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
     Version: 2016jan30
     '''
-    from optima import Par
+    from optima import Par, makesimpars
     from numpy import array, vstack
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button
     
-    if type(pars)!=list: pars = [pars] # Convert to list
+    if type(parslist)!=list: parslist = [parslist] # Convert to list
     
-    if ind is None: ind = 0
     count = 0
-    pars = parset.pars[ind].values()
-    simpars = parset.interp(inds=ind)[0]
-    tvec = simpars['tvec']
-    plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
-    for i in range(len(pars)):
-        par = pars[i]
-        if isinstance(par, Par):
-            key1 = par.short
-            if hasattr(par,'y'):# WARNING, add par.m as well?
-                if hasattr(par.y, 'keys') and len(par.y.keys())>0: # Only ones that don't have a len are temp pars
-                    nkeys = len(par.y.keys())
-                    for k,key2 in enumerate(par.y.keys()):
-                        if hasattr(par, 't'): t = par.t[key2]
-                        else: t = tvec[0] # For a constant
+    allplotdata = []
+    for pars in parslist:
+        simpars = makesimpars(pars)
+        tvec = simpars['tvec']
+        plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
+        for i,key1 in enumerate(pars):
+            par = pars[key1]
+            if isinstance(par, Par):
+                if hasattr(par,'y'):# WARNING, add par.m as well?
+                    if hasattr(par.y, 'keys') and len(par.y.keys())>0: # Only ones that don't have a len are temp pars
+                        nkeys = len(par.y.keys())
+                        for k,key2 in enumerate(par.y.keys()):
+                            if hasattr(par, 't'): t = par.t[key2]
+                            else: t = tvec[0] # For a constant
+                            count += 1
+                            if nkeys==1: thissimpar = simpars[key1]
+                            else: thissimpar = simpars[key1][k]
+                            thisplot = array(['%3i. %s - %s' % (count-1, key1, key2), thissimpar, t, par.y[key2]], dtype=object)
+                            if array(thissimpar).sum()==0: thisplot[0] += ' (zero)'
+                            plotdata = vstack([plotdata, thisplot])
+                    else:
+                        t = tvec[0] # For a constant
                         count += 1
-                        if nkeys==1: thissimpar = simpars[key1]
-                        else: thissimpar = simpars[key1][k]
-                        thisplot = array(['%3i. %s - %s' % (count-1, key1, key2), thissimpar, t, par.y[key2]], dtype=object)
-                        if sum(thissimpar)==0: thisplot[0] += ' (zero)'
+                        thisplot = array(['%3i. %s' % (count-1, key1), simpars[key1], t, par.y], dtype=object)
                         plotdata = vstack([plotdata, thisplot])
-                else:
-                    t = tvec[0] # For a constant
-                    count += 1
-                    thisplot = array(['%3i. %s' % (count-1, key1), simpars[key1], t, par.y], dtype=object)
-                    plotdata = vstack([plotdata, thisplot])
+        allplotdata.append(plotdata)
     
     
     ## Do plotting
@@ -620,16 +620,18 @@ def plotpars(pars=None, verbose=2, figsize=(16,10), **kwargs):
             count += 1
             axs.append(fig.add_subplot(nrows, ncols, count))
     
-    global position
     position = 0
     backframe = plt.axes([0.2, 0.03, 0.2, 0.03])
     nextframe = plt.axes([0.6, 0.03, 0.2, 0.03])
     backbut = Button(backframe, 'Back')
     nextbut = Button(nextframe, 'Next')
     
-    def update():
-        global position
-        print(position)
+    def updateb(event=None): update(position, -1)
+    def updaten(event=None): update(position, 1)
+    def update(position=0, move=0):
+        position += move*nperscreen
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
         for i,ax in enumerate(axs):
             ax.cla()
             nplt = i+position
@@ -650,22 +652,9 @@ def plotpars(pars=None, verbose=2, figsize=(16,10), **kwargs):
                     print('Problem with "%s": "%s"' % (this[0], E.message))
                 ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                 ax.set_xlim((tvec[0],tvec[-1]))
+        return None
                 
-    def updateback(event=None):
-        global position
-        position -= nperscreen
-        position = max(0,position)
-        print(position)
-        update()
-    
-    def updatenext(event=None):
-        global position
-        position += nperscreen
-        position = min(nplots-nperscreen, position)
-        print(position)
-        update()
-    
     update()
-    backbut.on_clicked(updateback)
-    nextbut.on_clicked(updatenext)
+    backbut.on_clicked(updateb)
+    nextbut.on_clicked(updaten)
     return None
