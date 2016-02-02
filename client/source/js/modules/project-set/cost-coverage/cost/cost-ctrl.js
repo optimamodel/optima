@@ -14,9 +14,9 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
-      $scope.updateGraph();
       fetchDefaultData();
       fetchEstimatedSize();
+      $scope.updateGraph();
     };
 
     $scope.addToCCData = function(ccDataForm) {
@@ -126,6 +126,8 @@ define(['./../../module', 'underscore'], function (module, _) {
       $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
         $scope.selectedProgram.id + '/costcoverage')
         .success(function (response) {
+          $scope.state.ccData = [];
+          $scope.state.cpData = [];
           if(response.data) {
             $scope.state.ccData = angular.copy(response.data);
           }

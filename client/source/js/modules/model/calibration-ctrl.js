@@ -152,14 +152,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               }
             });
         };
-        modalService.confirm(
-          function () {
-            remove()
-          }, function () {
-          }, 'Yes, remove this parameter set', 'No',
-          'Are you sure you want to permanently remove parameter set "' + $scope.activeParset.name + '"?',
-          'Delete parameter set'
-        );
+        if ($scope.activeParset.name === "default") {
+          modalService.informError([{message: 'Deleting the default parameter set is not permitted.'}]);
+        } else {
+          modalService.confirm(
+            function () {
+              remove()
+            }, function () {
+            }, 'Yes, remove this parameter set', 'No',
+            'Are you sure you want to permanently remove parameter set "' + $scope.activeParset.name + '"?',
+            'Delete parameter set'
+          );
+        }
       }
     };
 

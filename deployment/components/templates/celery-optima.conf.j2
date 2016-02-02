@@ -1,4 +1,4 @@
 [program:celery-optima]
-command=/usr/local/bin/celery -A server.webapp.tasks.celery worker -l ERROR
+command=/usr/local/bin/celery -A server.webapp.tasks.celery worker -l info
 directory=/opt/optima
 user={{ansible_user_id}}
