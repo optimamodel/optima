@@ -10,7 +10,7 @@ from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum,
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
 from optima import getresults, convertlimits, gettvecdt # Heftier functions
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
+eps = 1.0202e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 

@@ -134,10 +134,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     # Find last good value
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
                     last_y = thispar.interp(tvec=last_t, dt=project.settings.dt) # Find what the model would get for this value
-                    print('PARAMETER SCENARIO: %s' % thispar.name)
-                    print last_y
-                    print('and')
-                    print last_y[0]
 
                     # Loop over populations
                     for popno, pop in enumerate(pops):
@@ -152,6 +148,10 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                         thispar.y[pop] = append(thispar.y[pop], last_y[popno]) 
                         thispar.t[pop] = append(thispar.t[pop], scenpar['startyear'])
                         thispar.y[pop] = append(thispar.y[pop], scenpar['startval']) 
+                        
+                        if last_y[popno]<1e-2:
+                            print('PARAMETER SCENARIO: %s' % thispar.name)
+                            print last_y
                         
                         # Add end year values if supplied
                         if scenpar['endyear']: 

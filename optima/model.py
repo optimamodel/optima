@@ -18,7 +18,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     ###############################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
-    eps = 1e-3 # Define another small number to avoid divide-by-zero errors
+    eps = 1.0101e-3 # Define another small number to avoid divide-by-zero errors
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities

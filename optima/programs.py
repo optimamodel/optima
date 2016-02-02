@@ -446,7 +446,11 @@ class Programset(object):
         for outcome in outcomes.keys():
             thispar = pars[outcome]
             
-            for popno,pop in enumerate(outcomes[outcome].keys()): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
+            # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
+            last_t = min(years) - settings.dt # Last timestep before the scenario starts
+            last_y = thispar.interp(tvec=last_t, dt=settings.dt) # Find what the model would get for this value
+            
+            for pop in outcomes[outcome].keys(): # WARNING, 'pop' should be renamed 'key' or something for e.g. partnerships
                 
                 # Validate outcome
                 thisoutcome = outcomes[outcome][pop] # Shorten
@@ -461,17 +465,6 @@ class Programset(object):
                         thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
                         thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
                 
-                
-                
-                # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
-                last_t = min(years) - settings.dt # Last timestep before the scenario starts
-                last_y = thispar.interp(tvec=last_t, dt=settings.dt) # Find what the model would get for this value
-                print('GetPARS: %s' % thispar.name)
-                print last_y
-                print('and')
-                print last_y[0]
-
-
                 # Remove years after the last good year
                 if last_t < max(thispar.t[pop]):
                     thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
@@ -479,11 +472,15 @@ class Programset(object):
                 
                 # Append the last good year, and then the new years
                 thispar.t[pop] = append(thispar.t[pop], last_t)
-                thispar.y[pop] = append(thispar.y[pop], last_y[popno]) 
+                thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
                 thispar.t[pop] = append(thispar.t[pop], years)
                 thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
                 
-                pars[outcome] = thispar # WARNING, probably not needed
+                if last_y[pop]<0.01:
+                    print('GETPARS SCENARIO: %s' % thispar.name)
+                    print last_y
+                
+            pars[outcome] = thispar # WARNING, probably not needed
                 
 
         return pars
@@ -976,7 +973,7 @@ class Costcov(CCOF):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
-        eps = 1e-3 # TEMP FIX TO STOP LOGGING ZERO
+        eps = 1.0303e-3 # TEMP FIX TO STOP LOGGING ZERO
         if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
