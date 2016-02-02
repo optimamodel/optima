@@ -563,7 +563,8 @@ class ProgsetsDb(db.Model):
         'name': fields.String,
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'programs': fields.Nested(ProgramsDb.resource_fields)
+        'programs': fields.Nested(ProgramsDb.resource_fields),
+        'targetpartypes': fields.Raw,
     }
 
     __tablename__ = 'progsets'
@@ -574,8 +575,9 @@ class ProgsetsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     programs = db.relationship('ProgramsDb', backref='progset', lazy='joined')
+    effects = db.Column(JSON)
 
-    def __init__(self, project_id, name, created=None, updated=None, id=None):
+    def __init__(self, project_id, name, created=None, updated=None, id=None, effects=[]):
         self.project_id = project_id
         self.name = name
         if created:
@@ -584,6 +586,8 @@ class ProgsetsDb(db.Model):
             self.updated = updated
         if id:
             self.id = id
+        self.targetpartypes = []
+        self.effects = effects
 
     def hydrate(self):
         # In BE, programs don't have an "active" flag
@@ -612,6 +616,11 @@ class ProgsetsDb(db.Model):
                 } for i in range(len(program['costcovdata']['t']))
             ]
         return program
+
+    def get_targetpartypes(self):
+        be_progset = self.hydrate()
+        be_progset.gettargetpartypes()
+        self.targetpartypes = be_progset.targetpartypes
 
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
