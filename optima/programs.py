@@ -969,7 +969,7 @@ class Costcov(CCOF):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
-        eps = 1.0303e-3 # TEMP FIX TO STOP LOGGING ZERO
+        eps = 1e-3 # TEMP FIX TO STOP LOGGING ZERO
         if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
