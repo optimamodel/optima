@@ -148,6 +148,7 @@ class Resultset(object):
         else: 
             indices = arange(0, len(self.tvec), int(round(1.0/(self.tvec[1]-self.tvec[0])))) # Subsample results vector -- WARNING, should dt be taken from e.g. Settings()?
             self.tvec = self.tvec[indices] # Subsample time vector too
+            self.dt = self.tvec[1] - self.tvec[0] # Reset results.dt as well
         allpeople = array([self.raw[i]['people'] for i in range(len(self.raw))])
         allinci   = array([self.raw[i]['inci'] for i in range(len(self.raw))])
         alldeaths = array([self.raw[i]['death'] for i in range(len(self.raw))])
