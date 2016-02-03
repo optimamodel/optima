@@ -290,7 +290,9 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
             for prog in allprograms:
                 if prog.short==name:
                     finalprograms.append(prog)
-            
+    print('HIIIIIII')
+    print finalprograms
+    
     return finalprograms if filterprograms else allprograms
     
 

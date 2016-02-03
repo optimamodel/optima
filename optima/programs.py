@@ -122,7 +122,7 @@ class Programset(object):
             for newprogram in newprograms: 
                 if newprogram not in self.programs.values():
                     self.programs[newprogram.short] = newprogram
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]))
+                    printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]), 3, verbose)
                 else:
                     raise OptimaException('Program "%s" is already present in programset "%s".' % (newprogram.short, self.name))
         self.updateprogset()
