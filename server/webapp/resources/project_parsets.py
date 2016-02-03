@@ -380,7 +380,7 @@ class ParsetsAutomaticCalibration(Resource):
             return result, 208
         else:
             run_autofit.delay(project_id, parset_name, args['maxtime'])
-            result['status'] = 'started'
+            result['status'] = 'started - ' + args['maxtime']
             return result, 201
 
     @report_exception
