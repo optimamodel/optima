@@ -414,8 +414,8 @@ class Programset(object):
                             # Iterate over overlap levels
                             for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
                                 for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                                    outcomes[thispartype][thispop] += overlap_calc([j],i)
-        
+                                    outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
+
                             # All programs together
                             outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
                     
