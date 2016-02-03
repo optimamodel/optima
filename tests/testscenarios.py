@@ -7,9 +7,9 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
-#'maxbudget',
-#'90-90-90'
+'standardscen',
+'maxbudget',
+'90-90-90'
 'VMMC'
 ]
 
@@ -74,7 +74,7 @@ if 'standardscen' in tests:
              parsetname='default',
              pars=[{'endval': 0.,
                 'endyear': 2020,
-                'name': 'circum',
+                'name': 'propcirc',
                 'for': malelist,
                 'startval': .97,
                 'startyear': 2015}]),
@@ -335,7 +335,7 @@ if 'VMMC' in tests:
              parsetname='default',
              pars=[{'endval': 0.2,
                 'endyear': 2020,
-                'name': 'circum',
+                'name': 'propcirc',
                 'for': malelist,
                 'startval': .85,
                 'startyear': 2015.2}]),

@@ -599,7 +599,8 @@ class OptimaSpreadsheet:
         ('Percentage of people who used a condom at last act with regular partners', OptimaFormats.PERCENTAGE, self.ref_pop_range),
         ('Percentage of people who used a condom at last act with casual partners', OptimaFormats.PERCENTAGE, self.ref_pop_range),
         ('Percentage of people who used a condom at last act with commercial partners', OptimaFormats.PERCENTAGE, self.ref_pop_range),
-        ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE, self.ref_males_range)]
+        ('Percentage of males who have been circumcised', OptimaFormats.PERCENTAGE, self.ref_males_range),
+        ('Number of voluntary medical male circumcisions performed', OptimaFormats.GENERAL, self.ref_males_range)]
 
         for (name, row_format, row_range) in names_formats_ranges:
             current_row = self.emit_years_block(name, current_row, row_range, row_format = row_format, assumption = True)
