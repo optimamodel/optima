@@ -725,9 +725,12 @@ class Program(object):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
-        from pylab import figure, figtext
+        from pylab import figure, figtext, isinteractive, ioff, ion, close
         from matplotlib.ticker import MaxNLocator
         import textwrap
+        
+        wasinteractive = isinteractive() # Get current state of interactivity
+        ioff() # Just in case, so we don't flood the user's screen with figures
 
         if type(t) in [int,float]: t = [t]
         colors = gridcolormap(len(t))
@@ -813,6 +816,10 @@ class Program(object):
         axis.get_xaxis().get_major_formatter().set_scientific(False)
         axis.get_yaxis().get_major_formatter().set_scientific(False)
         if len(t)>1: axis.legend(loc=4)
+        
+        # Tidy up
+        close(cost_coverage_figure)
+        if wasinteractive: ion() 
 
         return cost_coverage_figure
 
