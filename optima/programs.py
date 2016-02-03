@@ -721,7 +721,7 @@ class Program(object):
 
 
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8):
+        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
@@ -818,7 +818,7 @@ class Program(object):
         if len(t)>1: axis.legend(loc=4)
         
         # Tidy up
-        close(cost_coverage_figure)
+        if not doplot: close(cost_coverage_figure)
         if wasinteractive: ion() 
 
         return cost_coverage_figure
