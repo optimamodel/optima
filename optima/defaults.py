@@ -343,21 +343,21 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
 
         # Add different modalities of testing
-        HTC_workplace = Program(short='HTC workplace programs',
+        HTC_workplace = Program(short='HTC workplace',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in ['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients']],
                       targetpops=['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients'],
                       category='Care and treatment',
                       name='HIV testing and counseling - workplace programs',
                       criteria = {'hivstatus': 'allstates', 'pregnant': False})
         
-        HTC_mobile = Program(short='HTC mobile clinics',
+        HTC_mobile = Program(short='HTC mobile',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
                       targetpops=adultlist,
                       category='Care and treatment',
                       name='HIV testing and counseling - mobile clinics',
                       criteria = {'hivstatus': 'allstates', 'pregnant': False})
         
-        HTC_medical = Program(short='HTC medical facilities',
+        HTC_medical = Program(short='HTC medical',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
                       targetpops=adultlist,
                       category='Care and treatment',
