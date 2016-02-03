@@ -465,7 +465,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -483,7 +483,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
-    dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
+    if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
     
@@ -495,7 +495,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             try: 
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+                if not(onlyvisible) or pars[key].visible: # Optionally only show user-visible parameters
+                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -741,7 +742,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
@@ -750,7 +751,7 @@ class Parameterset(object):
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uid=self.uid)
+            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         printv('...done making model parameters.', 2, verbose)
@@ -847,7 +848,6 @@ class Parameterset(object):
             raise OptimaException("Parameter with index {} not found!".format(ind))
 
         tmppars = self.pars[ind]
-
         mflists = {'keys':[], 'subkeys':[], 'types':[], 'values':[], 'labels':[]}
         keylist = mflists['keys']
         subkeylist = mflists['subkeys']
@@ -857,30 +857,35 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-                continue
-            if par.fittable == 'meta':
-                keylist.append(key)
-                subkeylist.append(None)
-                typelist.append(par.fittable)
-                valuelist.append(par.m)
-                labellist.append('{} -- meta'.format(par.name))
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
+            if hasattr(par,'fittable') and par.fittable != 'no': # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                if par.fittable == 'meta':
                     keylist.append(key)
-                    subkeylist.append(subkey)
+                    subkeylist.append(None)
                     typelist.append(par.fittable)
-                    valuelist.append(par.y[subkey])
-                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            elif par.fittable == 'exp':
-                for subkey in par.p.keys():
+                    valuelist.append(par.m)
+                    labellist.append('%s -- meta' % par.name)
+                elif par.fittable == 'const':
                     keylist.append(key)
-                    subkeylist.append(subkey)
+                    subkeylist.append(None)
                     typelist.append(par.fittable)
-                    valuelist.append(par.p[subkey][0])
-                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            else:
-                print('Parameter type "%s" not implemented!' % par.fittable)
+                    valuelist.append(par.y)
+                    labellist.append(par.name)
+                elif par.fittable in ['pop', 'pship']:
+                    for subkey in par.y.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.y[subkey])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                elif par.fittable == 'exp':
+                    for subkey in par.p.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.p[subkey][0])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                else:
+                    print('Parameter type "%s" not implemented!' % par.fittable)
 
         return mflists
 
