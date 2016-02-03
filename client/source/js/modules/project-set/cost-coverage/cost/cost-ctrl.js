@@ -107,6 +107,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         var url = '/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
           $scope.selectedProgram.id + '/costcoverage/graph?t=' + years.join(',') + '&parset_id=' + $scope.vm.selectedParset.id;
         if ($scope.state.remarks) {
+          $scope.state.displayCaption = angular.copy($scope.state.remarks);
           url += '&caption=' + encodeURIComponent($scope.state.remarks);
         }
         if ($scope.state.maxFunc) {
