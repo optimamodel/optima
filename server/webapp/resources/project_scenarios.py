@@ -104,6 +104,9 @@ class ScenarioResults(Resource):
 
     method_decorators = [report_exception, login_required]
 
+    @swagger.operation(
+        operation="Run the scenarios for the given project."
+    )
     def get(self, project_id):
 
         project_entry = load_project(project_id)
