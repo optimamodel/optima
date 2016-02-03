@@ -338,9 +338,6 @@ class Programset(object):
                         if thispop == 'tot':
                             popcoverage = coverage[thisprog.short]
                         else: popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
-#                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-#                        try: popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
-#                        except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                         outcomes[thispartype][thispop] += popcoverage
 
                 # If it's an outcome parameter, need to get outcomes

@@ -10,7 +10,7 @@ Version: 2016jan28
 
 ## Define tests to run here!!!
 tests = [
-#'minimizeoutcomes',
+'minimizeoutcomes',
 'minimizemoney',
 ]
 
@@ -93,18 +93,18 @@ if 'minimizemoney' in tests:
 
     outcomes = P.progsets[-1].getoutcomes(coverage=coverage,t=2016, parset=P.parsets['default'])
     
-#    objectives = defaultobjectives(which='money')
-#    objectives['deathfrac'] = 0.1
-#    objectives['incifrac'] = 0.5
-#    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=False)
-#    
-#    print('Original allocation: '),
-#    print(P.results[-1].budget[0])
-#    print('Optimal allocation: '),
-#    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
-#    if doplot: 
-#        from optima import pygui
-#        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+    objectives = defaultobjectives(which='money')
+    objectives['deathfrac'] = 0.1
+    objectives['incifrac'] = 0.5
+    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=False)
+    
+    print('Original allocation: '),
+    print(P.results[-1].budget[0])
+    print('Optimal allocation: '),
+    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
+    if doplot: 
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
     
     done(t)
 
