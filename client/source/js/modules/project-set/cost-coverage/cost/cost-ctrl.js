@@ -112,6 +112,9 @@ define(['./../../module', 'underscore'], function (module, _) {
         if ($scope.state.maxFunc) {
           url += '&xupperlim=' + $scope.state.maxFunc;
         }
+        if ($scope.state.dispCost) {
+          url += '&perperson=1'
+        }
         $http.get(url)
           .success(function (response) {
             $scope.state.chartData = response;
