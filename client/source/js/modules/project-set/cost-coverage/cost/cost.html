@@ -15,6 +15,7 @@
     <div style="display: flex; margin-top: 2%">
       <div class="chart-container __medium">
         <div mpld3-chart="state.chartData" id="cost_cov_chart"></div>
+        <div class="c-caption" ng-if="state.displayCaption">{{state.displayCaption}}</div>
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="cost_cov_chart"></chart-toolbar>
       </div>
       <div class="flex-column margin_left">
