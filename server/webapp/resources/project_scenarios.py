@@ -40,6 +40,31 @@ scenario_parser.add_arguments({
     'active': {'type': bool, 'location': 'args', 'required': True}
 })
 
+def check_pars(blob):
+    """
+    Check the pars attribute for scenarios.
+    """
+    if 'pars' not in blob.keys():
+        raise ValueError("JSON body requires 'pars' parameter")
+
+    if not isinstance(blob['pars'], list):
+        raise ValueError("'pars' needs to be a list.")
+
+    pars = []
+
+    for i in blob['pars']:
+
+        pars.append({
+            'endval': int(i['endval']),
+            'endyear': int(i['endyear']),
+            'name': str(i['name']),
+            'for': int(i['for']),
+            'startval': int(i['startval']),
+            'startyear': int(i['startyear'])
+        })
+
+    return pars
+
 # /api/project/<project-id>/scenarios
 
 class Scenarios(Resource):
@@ -72,10 +97,9 @@ class Scenarios(Resource):
         if args.get('scenario_type') not in ["Parameter", "Program"]:
             raise ValueError("Type needs to be 'Parameter' or 'Program'.")
 
-        try:
-            blob = json.loads(request.data)
-        except ValueError as e:
-            print(e)
+        if args['scenario_type'] == "Parameter":
+            blob = {'pars': check_pars(json.loads(request.data))}
+        else:
             blob = {}
 
         scenario_entry = ScenariosDb(project_id, blob=blob, **args)
@@ -110,6 +134,36 @@ class Scenario(Resource):
     @marshal_with(ScenariosDb.resource_fields)
     def put(self, project_id, scenario_id):
         """
-        Replace a single scenario.
+        Update a single scenario.
         """
+        args = scenario_parser.parse_args()
+
+        if args['scenario_type'] == "Parameter":
+            blob = {'pars': check_pars(json.loads(request.data))}
+        else:
+            blob = {}
+
         scenario_entry = load_scenario(project_id, scenario_id)
+
+        scenario_entry.name = args['name']
+        scenario_entry.scenario_type = args['scenario_type']
+        scenario_entry.parset_id = args['parset_id']
+        scenario_entry.progset_id = args.get('progset_id')
+        scenario_entry.active = args['active']
+        scenario_entry.blob = blob
+
+        db.session.commit()
+
+        return scenario_entry
+
+    @swagger.operation(
+        description="Delete a scenario."
+    )
+    def delete(self, project_id, scenario_id):
+
+        scenario_entry = load_scenario(project_id, scenario_id)
+
+        db.session.delete(scenario_entry)
+        db.session.commit()
+
+        return b'', 204

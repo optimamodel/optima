@@ -242,6 +242,11 @@ def load_scenario(project_id, scenario_id, raise_exception=True):
 
     scenario_entry = db.session.query(ScenariosDb).get(scenario_id)
 
+    if scenario_entry is None:
+        if raise_exception:
+            raise ScenarioDoesNotExist(id=scenario_id)
+        return None
+
     if scenario_entry.project_id != project_id:
         if raise_exception:
             raise ScenarioDoesNotExist(id=scenario_id)
