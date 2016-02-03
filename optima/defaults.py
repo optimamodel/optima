@@ -435,11 +435,11 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
-        R.covout['numcirc']['MSM'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['numcirc']['Clients'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['numcirc']['M 15-49'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['numcirc']['M 50+'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['numcirc']['M 0-14'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['M 15-49'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['M 50+'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['M 0-14'].addccopar({'intercept': (0,0), 't': 2016.0})
 
 
         P.addprogset(name='default', progset=R)

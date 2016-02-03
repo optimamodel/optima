@@ -322,22 +322,21 @@ class Programset(object):
 
         # Set up internal variables
         nyrs = len(t)
-        
-        budget = self.getprogbudget(coverage=coverage, t=t, parset=parset, results=results, proportion=False)
-        infbudget = odict((k,array([1e9]*len(budget[k]))) if self.programs[k].optimizable() else (k,None) for k in budget.keys())
+        infbudget = odict((k,array([1e9]*len(coverage[k]))) if self.programs[k].optimizable() else (k,None) for k in coverage.keys())
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
             outcomes[thispartype] = odict()
             
-            # Loop over populations releavent for this parameter type
-            for thispop in self.progs_by_targetpar(thispartype).keys():
+            # Loop over populations relevant for this parameter type
+            for popno, thispop in enumerate(self.progs_by_targetpar(thispartype).keys()):
 
                 # If it's a coverage parameter, you are done
-                if thispartype in coveragepars: # and thispop.lower() in ['total','tot','all']:
+                if thispartype in coveragepars:
                     outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
-                        outcomes[thispartype][thispop] += coverage[thisprog.short]
+                        popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                        outcomes[thispartype][thispop] += popcoverage
 
                 # If it's an outcome parameter, need to get outcomes
                 else:
@@ -353,14 +352,13 @@ class Programset(object):
                             outcomes[thispartype][thispop] = None
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
-                            x = budget[thisprog.short]
                             fullx = infbudget[thisprog.short]
                             if thiscovpop:
-                                part1 = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
+                                part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
                                 part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
                                 thiscov[thisprog.short] = part1/part2
                             else:
-                                part1 = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                                 part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
                                 thiscov[thisprog.short] = part1/part2
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
@@ -676,7 +674,7 @@ class Program(object):
 
     def gettargetcomposition(self, t, parset=None, results=None, total=True):
         '''Tells you the proportion of the total population targeted by a program that is comprised of members from each sub-population group.'''
-        targetcomposition = {}
+        targetcomposition = odict()
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
         totaltargeted = sum(poptargeted.values())
@@ -958,18 +956,23 @@ class CCOF(object):
 class Costcov(CCOF):
     '''Cost-coverage objects'''
 
-    def function(self, x, ccopar, popsize):
+    def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
+        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
         if isinstance(popsize,(float,int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts: return (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
+        if nyrs==npts:
+            y = zeros(nyrs)
+            for yr in range(nyrs):
+                y[yr] = max((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
+            return y
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
+                y[yr,:] = max((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],[eps]*len(npts))
             return y
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
@@ -980,7 +983,13 @@ class Costcov(CCOF):
         if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps)
+        if nyrs==npts:
+            y = zeros(nyrs)
+            for yr in range(nyrs):
+                y[yr] = max((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
+            return y
+            
+#            return max(-0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps),eps)
         else: raise OptimaException('coverage vector should be the same length as params.')
 
     def emptypars(self):
