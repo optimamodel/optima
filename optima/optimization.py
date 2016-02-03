@@ -128,35 +128,19 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
     constraints = odict() # Dictionary of all constraints
+    constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
     constraints['max'] = odict() # Maximum budgets
+    for prog in progset.programs:
+        constraints['name'][prog.short] = prog.name
+        if prog.optimizable():
+            constraints['min'][prog.short] = 0
+            constraints['max'][prog.short] = None
+        else:
+            constraints['min'][prog.short] = 1
+            constraints['max'][prog.short] = 1
     
-    objectives['keys'] = ['death', 'inci'] # Define valid keys
-    objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
-    if which=='outcome':
-        objectives['base'] = None # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
-        objectives['end'] = 2030 # "Year to project outcomes to"
-        objectives['budget'] = defaultbudget # "Annual budget to optimize"
-        objectives['deathweight'] = 5 # "Death weighting"
-        objectives['inciweight'] = 1 # "Incidence weighting"
-        objectives['deathfrac'] = None # Fraction of deaths to get to
-        objectives['incifrac'] = None # Fraction of incidence to get to
-    elif which=='money':
-        objectives['base'] = 2015 # "Baseline year to compare outcomes to"
-        objectives['start'] = 2017 # "Year to begin optimization"
-        objectives['end'] = 2027 # "Year by which to achieve objectives"
-        objectives['budget'] = None # "Annual budget to optimize"
-        objectives['deathweight'] = None # "Death weighting"
-        objectives['inciweight'] = None # "Incidence weighting"
-        objectives['deathfrac'] = 0.5 # Fraction of deaths to get to
-        objectives['incifrac'] = 0.5 # Fraction of incidence to get to
-    else: 
-        raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
-    
-    return objectives
-
-
+    return constraints
 
 
 
