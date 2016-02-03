@@ -277,7 +277,9 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         raise OptimaException(errormsg)
     
     # Trim out non-optimizable programs and calculate limits
-    totalbudget -= budgetvec[progfixed].sum() # Remove fixed costs from budget
+    minlimsvec = constraints['min'][:] # Convert to vector
+    minfixedcosts = budgetvec[progfixed]*minlimsvec[progfixed] # Calculate the minimum allowed costs of fixed programs
+    totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
     budgetvec = budgetvec[progoptim] # ...then remove them from the vector
     origbudgetvec = dcp(budgetvec) # Store original budget vector
     budgetvec *= totalbudget/sum(budgetvec) # Rescale so the total matches the new total
@@ -287,8 +289,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     budgetlims['min'] = zeros(nprogs)
     budgetlims['max'] = zeros(nprogs)
     for p in range(nprogs):
-        minfrac = constraints[progoptim[p]]['min']
-        maxfrac = constraints[progoptim[p]]['max']
+        minfrac = constraints['min'][progoptim[p]]
+        maxfrac = constraints['max'][progoptim[p]]
         budgetlims['min'][p] = minfrac * origbudgetvec[p] # Note: 'constraints' includes non-optimizable programs, must be careful
         if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p]
         else:                   budgetlims['max'][p] = infmoney
