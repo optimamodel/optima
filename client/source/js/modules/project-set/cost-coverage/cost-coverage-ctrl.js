@@ -49,7 +49,7 @@ define(['./../module', 'underscore'], function (module, _) {
         return [];
       }
       console.log('programs', currentPop[0].programs);
-      return _.map(currentPop[0].programs, function(program) {
+      return _.map(currentPop[0].programs, function (program) {
         return {
           name: program.short_name
         }
@@ -109,104 +109,10 @@ define(['./../module', 'underscore'], function (module, _) {
       }
     }
 
-    function getPopulationKey(population) {
-      var title = population.pop;
-      var titleIsString = typeof title === 'string';
-      return titleIsString ? title : title.join('+++');
-    }
-
-    function getPopulationsWithKey(populations) {
-      var existingPopulations = angular.copy(getExistingPopulation(vm.selectedParset.id, vm.selectedParameter.short));
-
-      var obj = {}
-
-      _.each(populations, function (population) {
-        var populationKey = getPopulationKey(population);
-        obj[populationKey] = _.extend(population, {
-          key: populationKey,
-          years: [{}]
-        })
-
-        if (existingPopulations[populationKey] !== undefined) {
-          obj[populationKey] = _.extend(obj[populationKey], existingPopulations[populationKey])
-        }
-      })
-
-      return obj
-    }
-
-    function getYearsFromParamGroup(paramGroup) {
-      var years = [];
-      _.each(paramGroup, function (pg) {
-        years = years.concat(_.map(pg.years, function (y) {
-          return _.pick(y, ['intercept_lower', 'intercept_upper', 'year', 'interact'])
-        }))
-      })
-      return years
-    }
-
-    function getProgramsFromParamGroup(paramGroup) {
-      console.group('getProgramsFromParamGroup', paramGroup);
-
-      var programs = [];
-      _.each(paramGroup, function (pg) {
-        _.each(pg.years, function (year) {
-          _.each(year.programs, function (program) {
-            var foundPrograms = _.filter(programs, {name: program.name});
-            if (foundPrograms.length === 0) {
-              console.log('program', program);
-              programs.push(program)
-            }
-          })
-        })
-      })
-
-      console.log('programs', programs);
-      console.groupEnd();
-
-      return programs;
-    }
-
-    function getExistingPopulation(parsetId, parameterShort) {
-      console.group('get existing population', parsetId, parameterShort)
-      var effects = vm.existingEffects.effects;
-      var parametersForThisParset = _.findWhere(effects, {parset: parsetId})
-      if (parametersForThisParset === undefined) {
-        console.log('no existing populations')
-        return [];
-      }
-      var currentParameterProps = _.filter(parametersForThisParset.parameters, {name: parameterShort})
-      var groupedByName = _.groupBy(currentParameterProps, 'name');
-
-      console.log('groupedByName', groupedByName);
-      var existingPopulations = {}
-
-      _.each(groupedByName, function (paramGroup) {
-        console.log('paramGroup', paramGroup);
-
-        var key = getPopulationKey(paramGroup[0]);
-        existingPopulations[key] = {
-          key: key,
-          years: getYearsFromParamGroup(paramGroup),
-          programs: getProgramsFromParamGroup(paramGroup)
-        }
-      })
-      console.log('existingPopulations', existingPopulations);
-      console.groupEnd()
-      return existingPopulations;
-    }
-
-
     function changeParameter() {
       console.group('changing parameter', vm.selectedParameter)
-      vm.currentParameter = _.extend(
-        _.pick(vm.selectedParameter, ['name', 'short', 'coverage']),
-        {
-          populations: getPopulationsWithKey(vm.selectedParameter.populations)
-        }
-      );
-      console.log('parameter is', vm.currentParameter);
-      console.groupEnd();
+
+      console.log('parameter is', vm.selectedParameter);
       var parsetEffects = _.filter(vm.existingEffects.effects, {parset: vm.selectedParset.id});
       console.log('parsetEffects', parsetEffects);
       var currentParsetEffect;
@@ -220,7 +126,8 @@ define(['./../module', 'underscore'], function (module, _) {
         currentParsetEffect = parsetEffects[0];
       }
       console.log('currentParsetEffect', currentParsetEffect);
-      _.each(vm.currentParameter.populations, function(pop) {
+
+      _.each(vm.selectedParameter.populations, function (pop) {
         var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short, pop: pop.pop});
         if (paramPops.length === 0) {
           currentParsetEffect.parameters.push({
@@ -231,24 +138,8 @@ define(['./../module', 'underscore'], function (module, _) {
         }
       });
       console.log('currentParsetEffect', currentParsetEffect);
-    }
+      console.groupEnd();
 
-    function getParameters(currentParameter) {
-      var newMap = _.map(currentParameter.populations, function (population) {
-        console.log('population', population);
-        return {
-          name: currentParameter.short,
-          pop: population.pop,
-          interact: population.interact,
-          years: _.map(population.years, function (year) {
-            year.programs = _.map(year.programs, function (program) {
-              return program
-            })
-            return year
-          })
-        }
-      });
-      return newMap
     }
 
     function submit() {
@@ -259,18 +150,6 @@ define(['./../module', 'underscore'], function (module, _) {
       // }
 
       console.log('submitting', vm.existingEffects);
-
-      // var finalJson = {
-      //   effects: [
-      //     {
-      //       "parset": vm.selectedParset.id,
-      //       "parameters": getParameters(angular.copy(vm.currentParameter))
-      //     }
-      //   ]
-      // };
-
-      // console.log('final result', finalJson);
-      // console.log(JSON.stringify(finalJson, null, ' '))
 
       $http.put('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/effects', vm.existingEffects).success(function (result) {
         console.log('result is', result);
@@ -296,12 +175,6 @@ define(['./../module', 'underscore'], function (module, _) {
       });
 
     }
-
-    $scope.$watch(function () {
-      return vm.effects
-    }, function () {
-      console.log('current form and parameter', vm.currentParameter);
-    }, true)
 
     /* Initialize */
 
