@@ -62,6 +62,8 @@ class ParsetAlreadyExists(BaseRESTException):
 class ProgsetDoesNotExist(RecordDoesNotExist):
     _model = 'progset'
 
+class ScenarioDoesNotExist(RecordDoesNotExist):
+    _model = 'scenario'
 
 class ProgramDoesNotExist(RecordDoesNotExist):
     _model = 'program'

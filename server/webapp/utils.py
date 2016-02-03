@@ -204,6 +204,27 @@ def load_parset(project_id, parset_id, raise_exception=True):
     return _load_project_child(project_id, parset_id, ParsetsDb, ParsetDoesNotExist, raise_exception)
 
 
+def load_parset(project_id, parset_id, raise_exception=True):
+    from server.webapp.dbmodels import ParsetsDb
+    from server.webapp.exceptions import ParsetDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting parset {} for user {}".format(parset_id, cu.id))
+
+    parset_entry = db.session.query(ParsetsDb).get(parset_id)
+    if parset_entry is None:
+        if raise_exception:
+            raise ParsetDoesNotExist(id=parset_id)
+        return None
+
+    if parset_entry.project_id != project_id:
+        if raise_exception:
+            raise ParsetDoesNotExist(id=parset_id)
+        return None
+
+    return parset_entry
+
+
 def load_program(project_id, progset_id, program_id, raise_exception=True):
     from server.webapp.dbmodels import ProgramsDb
     from server.webapp.exceptions import ProgramDoesNotExist
@@ -222,6 +243,29 @@ def load_program(project_id, progset_id, program_id, raise_exception=True):
         return None
 
     return program_entry
+
+
+def load_scenario(project_id, scenario_id, raise_exception=True):
+    from server.webapp.dbmodels import ScenariosDb
+    from server.webapp.exceptions import ScenarioDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting scenario {} for user {}".format(scenario_id, cu.id))
+
+    scenario_entry = db.session.query(ScenariosDb).get(scenario_id)
+
+    if scenario_entry is None:
+        if raise_exception:
+            raise ScenarioDoesNotExist(id=scenario_id)
+        return None
+
+    if scenario_entry.project_id != project_id:
+        if raise_exception:
+            raise ScenarioDoesNotExist(id=scenario_id)
+        return None
+
+    return scenario_entry
+
 
 
 def save_data_spreadsheet(name, folder=None):
