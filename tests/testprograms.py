@@ -90,7 +90,7 @@ if 'makeprograms' in tests:
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
                   
     VMMC = Program(short='VMMC',
-                  targetpars=[{'param': 'circum', 'pop': 'M 15+'}],
+                  targetpars=[{'param': 'propcirc', 'pop': 'M 15+'}],
                   targetpops=['M 15+'],
                   category='Prevention',
                   name='Voluntary medical male circumcision',

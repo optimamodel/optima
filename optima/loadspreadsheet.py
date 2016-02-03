@@ -229,7 +229,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
-                    checkblank = False if sheetname=='Optional indicators' else True # Don't check optional indicators, check everything else
+                    checkblank = False if sheetname=='Optional indicators' or thispar=='numcirc' else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank)
                     if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'propcirc',  'sharing']: # All probabilities
                         validatedata(thesedata, sheetname, thispar, row, checkupper=True)                        

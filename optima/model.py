@@ -160,7 +160,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     
     # Other interventions
     effcondom = simpars['effcondom']         # Condom effect
-    circeff = 1 - simpars['effcirc'] # Actual efficacy 
+    circconst = 1 - simpars['effcirc'] # Actual efficacy 
+    circeff = (1 - simpars['effcirc']) * simpars['propcirc'] # Actual efficacy 
     prepeff = (1 - simpars['effprep']) * prep  # PrEP effect
     osteff = (1 - simpars['effost']) * ostprev  # OST effect
     stieff  = (1 + simpars['effsti']) * stiprev # STI effect
@@ -377,10 +378,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             thistrans = this['trans']
             
             if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-                thisforceinf_uncirc = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]),         (dt*cond*acts*effhivprev[pop2]))
-                thisforceinf_circ   = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinf_uncirc)
-                forceinfvec[1,pop1] = 1 - (1-forceinfvec[1,pop1]) * (1-thisforceinf_circ)
+                thisforceinfsusreg  = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]),   (dt*cond*acts*effhivprev[pop2]))
+                thisforceinfcirc    = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circconst), (dt*cond*acts*effhivprev[pop2]))
+                forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinfsusreg)
+                forceinfvec[1,pop1] = 1 - (1-forceinfvec[1,pop1]) * (1-thisforceinfcirc)
             else: # Only have uncircs for females
                 thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
                 forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinf)
@@ -435,10 +436,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                     mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
                     popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
                     
-                    raw['mtct'][p2, t] += popmtct                        
+                    raw['mtct'][p2, t] += popmtct[t]                       
                     
-                    people[undx[0], p2, t] += popmtct # HIV+ babies assigned to undiagnosed compartment
-                    people[susreg, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+                    people[undx[0], p2, t] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
+                    people[susreg, p2, t] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
         
         
         ## Age-related transitions
