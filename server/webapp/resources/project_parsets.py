@@ -353,6 +353,7 @@ class ParsetsAutomaticCalibration(Resource):
         summary='Launch auto calibration for the selected parset',
         parameters=manual_calibration_parser.swagger_parameters()
     )
+    @report_exception
     def post(self, parset_id):
         from server.webapp.utils import load_project
         from server.webapp.tasks import run_autofit, start_or_report_calculation
@@ -366,13 +367,14 @@ class ParsetsAutomaticCalibration(Resource):
 
         project_id = parset_entry.project_id
 
-        can_start, can_join, work_type = start_or_report_calculation(db.session, parset_entry.project_id, parset_id, 'autofit')
+        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(parset_entry.project_id, parset_id, 'autofit')
 
+        result = {'can_start':can_start, 'can_join':can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
         if not can_start or not can_join:
-            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 303
+            return result, 303
         else:
             run_autofit.delay(project_id, parset_name, args['maxtime'])
-            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 201
+            return result, 201
 
 
 file_upload_form_parser = RequestParser()
