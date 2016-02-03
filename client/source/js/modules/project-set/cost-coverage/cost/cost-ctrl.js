@@ -11,6 +11,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpData: [],
       estdSize: []
     };
+    $scope.Math = window.Math;
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
@@ -65,6 +66,8 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpDataForm.year.$setValidity("valid", isValidCPDataYear());
 
       if(!cpDataForm.$invalid) {
+        $scope.state.newCPData.saturationpercent_lower /= 100;
+        $scope.state.newCPData.saturationpercent_upper /= 100;
         $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
           $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
           .success(function () {
@@ -131,7 +134,7 @@ define(['./../../module', 'underscore'], function (module, _) {
             $scope.state.estdSize = {};
             response.popsizes.forEach(function(popSize){
               if(popSize.popsize) {
-                $scope.state.estdSize[popSize.year] = (Math.round(popSize.popsize * 100)) / 100;
+                $scope.state.estdSize[popSize.year] = Math.round(popSize.popsize);
               }
             });
           }
