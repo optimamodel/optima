@@ -381,6 +381,7 @@ class ParsetsAutomaticCalibration(Resource):
         else:
             run_autofit.delay(project_id, parset_name, args['maxtime'])
             result['status'] = 'started'
+            result['maxtime'] = args['maxtime']
             return result, 201
 
     @report_exception
