@@ -211,7 +211,7 @@ def load_parset(project_id, parset_id, raise_exception=True):
     cu = current_user
     current_app.logger.debug("getting parset {} for user {}".format(parset_id, cu.id))
 
-    parset_entry = db.session.query(ParsetssDb).get(parset_id)
+    parset_entry = db.session.query(ParsetsDb).get(parset_id)
     if parset_entry is None:
         if raise_exception:
             raise ParsetDoesNotExist(id=parset_id)

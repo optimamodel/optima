@@ -726,7 +726,7 @@ class ScenariosDb(db.Model):
 
     def hydrate(self):
 
-        from server.utils import load_progset, load_parset
+        from server.webapp.utils import load_progset, load_parset
 
         parset = load_parset(self.project_id, self.parset_id)
 
@@ -739,7 +739,7 @@ class ScenariosDb(db.Model):
                                progsetname=progset.name,
                                **self.blob)
 
-        elif self.scenario_type == "Parameters":
+        elif self.scenario_type == "Parameter":
 
             return op.Parscen(name=self.name,
                               parsetname=parset.name,

@@ -20,18 +20,6 @@ from server.webapp.dbmodels import ScenariosDb
 
 import optima as op
 
-
-pars_parser = RequestParser()
-pars_parser.add_arguments({
-    'endval': {'type': int, 'location': 'json'},
-    'endyear': {'type': int, 'location': 'json'},
-    'name': {'type': str, 'location': 'json'},
-    'for': {'type': int, 'location': 'json'},
-    'startval': {'type': int, 'location': 'json'},
-    'startyear': {'type': int, 'location': 'json'},
-})
-
-
 scenario_parser = RequestParser()
 scenario_parser.add_arguments({
     'name': {'type': str, 'location': 'args', 'required': True},
@@ -58,7 +46,7 @@ def check_pars(blob):
             'endval': int(i['endval']),
             'endyear': int(i['endyear']),
             'name': str(i['name']),
-            'for': int(i['for']),
+            'for': list(i['for']),
             'startval': int(i['startval']),
             'startyear': int(i['startyear'])
         })
@@ -109,6 +97,30 @@ class Scenarios(Resource):
         db.session.commit()
 
         return scenario_entry, 201
+
+
+# /api/project/<project-id>/scenarios/results
+class ScenarioResults(Resource):
+
+    method_decorators = [report_exception, login_required]
+
+    def get(self, project_id):
+
+        project_entry = load_project(project_id)
+        project = project_entry.hydrate()
+        project.runscenarios()
+
+        graphs = op.plotting.makeplots(project.results[-1], figsize=(4, 3))
+
+        jsons = []
+        for graph in graphs:
+            # Add necessary plugins here
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
+            jsons.append(json.loads(json_string))
+
+        return jsons
 
 
 # /api/project/<project-id>/scenarios/<scenarios-id>
