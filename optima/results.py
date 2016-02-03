@@ -88,22 +88,7 @@ class Resultset(object):
             self.main['numincare']   = Result('Number of PLHIV in care')
             self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
 
-        
-        # Other quantities
-#        self.main['dalys'] = Result('Number of DALYs')
-#        self.main['numnewtreat'] = Result('Number of people newly treated')
-#        self.main['numnewdiag'] = Result('Number of new diagnoses')
-#        self.other = odict() # For storing main results
-#        self.births = Result()
-#        self.mtct = Result()
-#        self.newtreat = Result()
-#        self.newcircum = Result()
-#        self.numcircum = Result()
-#        self.reqcircum = Result()
-#        self.sexinci = Result()
-        
         if domake: self.make()
-#    
     
     
     def __repr__(self):
