@@ -131,8 +131,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     aidstest  = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
     propcirc  = simpars['propcirc']  # Prevalence of circumcision (P)
     numcirc   = simpars['numcirc']   # Prevalence of circumcision (P)
-    stiprev   = simpars['stiprev']   # Prevalence of STIs (P)
-    prep      = simpars['prep']      # Prevalence of PrEP (P)
     numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
 
     # Uptake of OST
@@ -161,12 +159,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     # Other interventions
     effcondom = simpars['effcondom']         # Condom effect
     circconst = 1 - simpars['effcirc'] # Actual efficacy 
-    circeff = (1 - simpars['effcirc']) * simpars['propcirc'] # Actual efficacy 
-    prepeff = (1 - simpars['effprep']) * prep  # PrEP effect
-    osteff = (1 - simpars['effost']) * ostprev  # OST effect
-    stieff  = (1 + simpars['effsti']) * stiprev # STI effect
-    effmtct  = simpars['mtctbreast']*simpars['breast'] + simpars['mtctnobreast']*(1-simpars['breast']) # Effective MTCT transmission
-    pmtcteff = (1 - simpars['effpmtct']) * effmtct # Effective MTCT transmission whilst on PMTCT
+    circeff   = 1 - simpars['propcirc']*simpars['effcirc']  # Actual efficacy 
+    prepeff   = 1 - simpars['effprep']*simpars['prep']  # PrEP effect
+    osteff    = 1 - simpars['effost']*ostprev  # OST effect
+    stieff    = 1 + simpars['effsti']*simpars['stiprev'] # STI effect
+    effmtct   = simpars['mtctbreast']*simpars['breast'] + simpars['mtctnobreast']*(1-simpars['breast']) # Effective MTCT transmission
+    pmtcteff  = (1 - simpars['effpmtct']) * effmtct # Effective MTCT transmission whilst on PMTCT
 
 
     # Force of infection metaparameter
