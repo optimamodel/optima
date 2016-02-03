@@ -6,7 +6,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.2 (2016jan27) by cliffk
+    Version: 1.3 (2016feb03) by cliffk
     """
     
     ###########################################################################
@@ -93,8 +93,8 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'vlmonfr', 'restarttreat', 'pdhivcare', 'successprop']
-    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'freqvlmon', 'restarttreat', 'pdhivcare', 'successprop']
+    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
@@ -229,9 +229,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
-                    checkblank = False if sheetname=='Optional indicators' else True # Don't check optional indicators, check everything else
+                    checkblank = False if sheetname=='Optional indicators' or thispar=='numcirc' else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank)
-                    if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
+                    if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'propcirc',  'sharing']: # All probabilities
                         validatedata(thesedata, sheetname, thispar, row, checkupper=True)                        
 
 

@@ -24,8 +24,16 @@
       <div ng-click="goIfProjectActive('project.economicdata')">Add economic data</div>
     </div>
   </div>
-  <div>
-    <div class="btn __blue" ng-click="goIfProjectActive('model')">Calibrate parameters</div>
+  <div ng-click="showCalibrateMenu = !showCalibrateMenu" ng-mouseleave="showCalibrateMenu = false">
+    <div class="btn __blue">
+      Calibrate model
+      <i class="fa fa-angle-up" ng-if="showCalibrateMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showCalibrateMenu"></i>
+    </div>
+    <div ng-if="showCalibrateMenu" class="menu-dropdown" style="width: 200px;">
+      <div ng-click="goIfProjectActive('model.manual')">Manual calibration</div>
+      <div ng-click="goIfProjectActive('model.auto')">Automatic calibration</div>
+    </div>
   </div>
   <div ng-click="showProjectSetMenu = !showProjectSetMenu" ng-mouseleave="showProjectSetMenu = false">
     <div class="btn __blue">

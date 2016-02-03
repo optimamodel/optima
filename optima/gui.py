@@ -456,7 +456,7 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
     labels = project.settings.statelabels
     
     plotstyles = odict([
-    ('uncirc', ('|','|')), 
+    ('susreg', ('|','|')), 
     ('circ',   ('+','|')), 
     ('undx',   ('.','o')), 
     ('dx',     ('*','*')), 
