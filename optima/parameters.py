@@ -19,7 +19,7 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
-name	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract
+nname	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract
 Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None
 Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None
 Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None
@@ -52,7 +52,7 @@ People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cas
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
 Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
