@@ -3,14 +3,13 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016jan30
+Version: 2016feb02
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
-from optima import getresults, convertlimits, gettvecdt # Heftier functions
+from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
-eps = 1e-3 # TODO WARNING KLUDGY avoid divide-by-zero when calculating acts
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 
 
@@ -248,12 +247,14 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
 
 
 ## Acts
-def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None):
+def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizepar=None, eps=None):
     ''' 
     Combine the different estimates for the number of acts or condom use and return the "average" value.
     
     Set which='numacts' to compute for number of acts, which='condom' to compute for condom.
     '''
+    if eps is None: eps = Settings().eps   # If not supplied (it won't be), get from default settings  
+    
     if which not in ['numacts','condom']: raise OptimaException('Can only balance numacts or condom, not "%s"' % which)
     mixmatrix = array(data['part'+act]) # Get the partnerships matrix
     npops = len(popkeys) # Figure out the number of populations
@@ -464,7 +465,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -482,7 +483,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
-    dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
+    if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
     
@@ -494,7 +495,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             try: 
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+                if not(onlyvisible) or pars[key].visible: # Optionally only show user-visible parameters
+                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -598,7 +600,7 @@ class Timepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -611,17 +613,15 @@ class Timepar(Par):
         # Set things up and do the interpolation
         keys = self.y.keys()
         npops = len(keys)
-        if self.by=='pship': # Have odict
-            output = odict()
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[key] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
-        else: # Have 2D matrix: pop, time
-            output = zeros((npops,len(tvec)))
-            for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-                output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
-        if npops==1 and self.by=='tot': return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
+        if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
+        if asarray: output = zeros((npops,len(tvec)))
+        else: output = odict()
+        for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
+            yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[pop,:] = yinterp
+            else: output[key] = yinterp
+        if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
         else: return output
 
 
@@ -640,7 +640,7 @@ class Popsizepar(Par):
         self.start = start # Year for which population growth start is calibrated to
     
 
-    def interp(self, tvec=None, dt=None, smoothness=None): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -652,10 +652,13 @@ class Popsizepar(Par):
         # Do interpolation
         keys = self.p.keys()
         npops = len(keys)
-        output = zeros((npops,len(tvec)))
+        if asarray: output = zeros((npops,len(tvec)))
+        else: output = odict()
         for pop,key in enumerate(keys):
             yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
-            output[pop,:] = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            if asarray: output[pop,:] = yinterp
+            else: output[key] = yinterp
         return output
 
 
@@ -670,19 +673,24 @@ class Constant(Par):
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
         
         if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
-            output = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
+            yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
+            if asarray: output = yinterp
+            else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
             keys = self.y.keys()
             npops = len(keys)
-            output = zeros(npops)
+            if asarray: output = zeros(npops)
+            else: output = odict()
             for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-                output[pop] = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
+                yinterp = applylimits(par=self, y=self.y[key], limits=self.limits, dt=dt)
+                if asarray: output[pop] = yinterp
+                else: output[key] = yinterp
         return output
 
 
@@ -734,7 +742,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
@@ -743,7 +751,7 @@ class Parameterset(object):
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uid=self.uid)
+            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         printv('...done making model parameters.', 2, verbose)
@@ -755,6 +763,7 @@ class Parameterset(object):
         outstr = ''
         count = 0
         for par in self.pars[ind].values():
+            if hasattr(par,'p'): print('WARNING, population size not implemented!')
             if hasattr(par,'y'):
                 if hasattr(par.y, 'keys'):
                     count += 1
@@ -839,7 +848,6 @@ class Parameterset(object):
             raise OptimaException("Parameter with index {} not found!".format(ind))
 
         tmppars = self.pars[ind]
-
         mflists = {'keys':[], 'subkeys':[], 'types':[], 'values':[], 'labels':[]}
         keylist = mflists['keys']
         subkeylist = mflists['subkeys']
@@ -849,30 +857,35 @@ class Parameterset(object):
 
         for key in tmppars.keys():
             par = tmppars[key]
-            if (not hasattr(par,'fittable')) or (par.fittable == 'no'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-                continue
-            if par.fittable == 'meta':
-                keylist.append(key)
-                subkeylist.append(None)
-                typelist.append(par.fittable)
-                valuelist.append(par.m)
-                labellist.append('{} -- meta'.format(par.name))
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
+            if hasattr(par,'fittable') and par.fittable != 'no': # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+                if par.fittable == 'meta':
                     keylist.append(key)
-                    subkeylist.append(subkey)
+                    subkeylist.append(None)
                     typelist.append(par.fittable)
-                    valuelist.append(par.y[subkey])
-                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            elif par.fittable == 'exp':
-                for subkey in par.p.keys():
+                    valuelist.append(par.m)
+                    labellist.append('%s -- meta' % par.name)
+                elif par.fittable == 'const':
                     keylist.append(key)
-                    subkeylist.append(subkey)
+                    subkeylist.append(None)
                     typelist.append(par.fittable)
-                    valuelist.append(par.p[subkey][0])
-                    labellist.append('{} -- {}'.format(par.name, str(subkey)))
-            else:
-                print('Parameter type "%s" not implemented!' % par.fittable)
+                    valuelist.append(par.y)
+                    labellist.append(par.name)
+                elif par.fittable in ['pop', 'pship']:
+                    for subkey in par.y.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.y[subkey])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                elif par.fittable == 'exp':
+                    for subkey in par.p.keys():
+                        keylist.append(key)
+                        subkeylist.append(subkey)
+                        typelist.append(par.fittable)
+                        valuelist.append(par.p[subkey][0])
+                        labellist.append('%s -- %s' % (par.name, str(subkey)))
+                else:
+                    print('Parameter type "%s" not implemented!' % par.fittable)
 
         return mflists
 

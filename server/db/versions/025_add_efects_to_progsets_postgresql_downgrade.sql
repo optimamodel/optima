@@ -1,0 +1,1 @@
+ALTER TABLE progsets DROP COLUMN IF EXISTS effects;

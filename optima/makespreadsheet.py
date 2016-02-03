@@ -554,7 +554,7 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Probability of a person with CD4 <200 being tested per year',      current_row, ['Average'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Number of people on treatment',                                    current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_ref_years_block('Percentage of people covered by pre-exposure prophylaxis',     current_row, self.pop_range, row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Number (or percentage) of women on PMTCT (Option B/B+)',           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
+        current_row = self.emit_years_block('Number of women on PMTCT (Option B/B+)',                           current_row, ['Total'], row_format = OptimaFormats.GENERAL, assumption = True)
         current_row = self.emit_years_block('Birth rate (births per woman per year)',                           current_row, self.ref_females_range, row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Percentage of HIV-positive women who breastfeed',                  current_row, ['Total'], row_format = OptimaFormats.PERCENTAGE, assumption = True)        
 

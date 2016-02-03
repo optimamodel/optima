@@ -86,7 +86,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     
     # Validate input
     if project is None: raise OptimaException('autofit() requires a project in order to run')
-    if type(name)!=str: raise OptimaException('"name" must be the name or index of a paramete set')
+    if type(name)!=str: raise OptimaException('%s must be the name or index of a paramete set' % name)
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
@@ -181,14 +181,13 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     
 
 
-    def errorcalc(parvec=None, pars=None, parlist=None, project=None, eps=0.001, bestindex=0):
+    def errorcalc(parvec=None, pars=None, parlist=None, project=None, bestindex=0):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
         does.
         
         WARNING, 'bestindex' is kludgy -- discard upper and lower limits for the data
-        WARNING, 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
         '''
         
         # Validate input -- check everything in one go
@@ -204,6 +203,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
 
         printv(parvec, 4, verbose)
         
+        eps = project.settings.eps # 'eps' is also kludgy -- specify absolute error -- can't be larger than ~0.001 because then general population prevalence might get screwed
         pars = convert(pars, parlist, parvec)
         results = runmodel(pars=pars, start=project.data['years'][0], end=project.data['years'][-1], project=project, verbose=0)
         

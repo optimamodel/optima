@@ -1348,9 +1348,11 @@
     this.buttons = [];
     this.root = d3.select("#" + figid).append("div").style("position", "relative");
     this.axes = [];
-    for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
+    if(this.props.axes)
+      for (var i = 0; i < this.props.axes.length; i++) this.axes.push(new mpld3_Axes(this, this.props.axes[i]));
     this.plugins = [];
-    for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
+    if(this.props.plugins)
+      for (var i = 0; i < this.props.plugins.length; i++) this.add_plugin(this.props.plugins[i]);
     this.toolbar = new mpld3.Toolbar(this, {
       buttons: this.buttons
     });

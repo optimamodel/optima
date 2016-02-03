@@ -6,6 +6,9 @@
       margin-top: 50px;
       transition: all linear 100ms;
     }
+    &--add-year {
+      margin-top: 15px;
+    }
   }
 }
 
@@ -16,26 +19,45 @@
 .c-select {
   &__input {
     margin-top: 3px;
-    width: 200px;
+    width: auto;
   }
 }
 
-.c-nested-form {
-  border-radius: 3px;
+.c-populations {
+  margin-top: 50px;
+}
+
+.c-population-wrap {
   background-color: #fbfbfb;
   border: 1px solid #E2E2E2;
+  max-width: 760px;
+  padding: 15px;
+  margin-bottom: 35px;
+}
+
+.c-population-form {
+
+  background-color: white;
+  border: 1px solid #E0E0E0;
+  border-radius: 3px;
   transition: all linear 100ms;
   max-width: 760px;
   width: 100%;
-  margin-top: 50px;
   padding: 10px;
   position: relative;
+  margin-bottom: 15px;
 
   &:hover {
-    background-color: #f8f8f8;
-    .c-nested-form__delete {
+    border: 1px solid #C7C7C7;
+
+    .c-population-form__delete {
       opacity: 1;
     }
+  }
+
+  &__title {
+    font-size: 17px;
+    margin-bottom: 15px;
   }
 
   &__delete {
@@ -109,7 +131,7 @@
   margin-right: 40px;
 }
 
-&.invalid{
+&.invalid {
   border: solid #FF0000 1px;
   outline: 0px;
 }

@@ -302,66 +302,19 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     ion() # We really need this here!
     nsigfigs = 3
     
-    ## Initialize lists that do not initialize themselves
     boxes = []
     texts = []
-    keylist = []
-    namelist = []
-    typelist = [] # Valid types are meta, pop, exp
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
-    tmppars = parset.pars[0]
-    origpars = dcp(tmppars)
-
-    for key in tmppars.keys():
-        if hasattr(tmppars[key],'fittable'): # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
-            if tmppars[key].fittable is not 'no':
-                keylist.append(key) # e.g. "initprev"
-                namelist.append(tmppars[key].name) # e.g. "HIV prevalence"
-                typelist.append(tmppars[key].fittable) # e.g. 'pop'
-    nkeys = len(keylist) # Number of keys...note, this expands due to different populations etc.
     
-    ## Convert to the full list of parameters to be fitted
-    def populatelists():
-        global tmppars, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist
-        fulllabellist = [] # e.g. "Initial HIV prevalence -- FSW"
-        fullkeylist = [] # e.g. "initprev"
-        fullsubkeylist = [] # e.g. "fsw"
-        fulltypelist = [] # e.g. "pop"
-        fullvallist = [] # e.g. 0.3
-        for k in range(nkeys):
-            key = keylist[k]
-            if typelist[k]=='meta':
-                fullkeylist.append(key)
-                fullsubkeylist.append(None)
-                fulltypelist.append(typelist[k])
-                fullvallist.append(tmppars[key].m)
-                fulllabellist.append(namelist[k] + ' -- meta')
-            elif typelist[k]=='const':
-                fullkeylist.append(key)
-                fullsubkeylist.append(None)
-                fulltypelist.append(typelist[k])
-                fullvallist.append(tmppars[key].y)
-                fulllabellist.append(namelist[k])
-            elif typelist[k] in ['pop', 'pship']:
-                for subkey in tmppars[key].y.keys():
-                    fullkeylist.append(key)
-                    fullsubkeylist.append(subkey)
-                    fulltypelist.append(typelist[k])
-                    fullvallist.append(tmppars[key].y[subkey])
-                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-            elif typelist[k]=='exp':
-                for subkey in tmppars[key].p.keys():
-                    fullkeylist.append(key)
-                    fullsubkeylist.append(subkey)
-                    fulltypelist.append(typelist[k])
-                    fullvallist.append(tmppars[key].p[subkey][0])
-                    fulllabellist.append(namelist[k] + ' -- ' + str(subkey))
-            else:
-                printv('Parameter type "%s" not implemented!' % typelist[k], 2, verbose)
+    mflists = parset.manualfitlists()
+    fullkeylist    = mflists['keys']
+    fullsubkeylist = mflists['subkeys']
+    fulltypelist   = mflists['types']
+    fullvallist    = mflists['values']
+    fulllabellist  = mflists['labels']
     
-    populatelists()
     nfull = len(fulllabellist) # The total number of boxes needed
     results = project.runsim(name)
     pygui(results)
@@ -554,3 +507,133 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
             pause(0.1)
     
     return None
+    
+
+
+
+
+
+
+global plotparsbacktbut, plotparsnextbut, plotparslider
+def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
+    '''
+    A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
+    
+    Version: 2016jan30
+    '''
+    from optima import Par, makesimpars
+    from numpy import array, vstack
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Button, Slider
+    
+    global position, plotparsbacktbut, plotparsnextbut, plotparslider
+    position = 0
+    
+    if type(parslist)!=list: parslist = [parslist] # Convert to list
+    
+    
+    allplotdata = []
+    for pars in parslist:
+        count = 0
+        simpars = makesimpars(pars)
+        tvec = simpars['tvec']
+        plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
+        for i,key1 in enumerate(pars):
+            par = pars[key1]
+            if isinstance(par, Par):
+                if   hasattr(par,'y'): pardata = par.y # WARNING, add par.m as well?
+                elif hasattr(par,'p'): pardata = par.p # Population size
+                else: raise Exception('???')
+                if hasattr(pardata, 'keys') and len(pardata.keys())>0: # Only ones that don't have a len are temp pars
+                    nkeys = len(pardata.keys())
+                    for k,key2 in enumerate(pardata.keys()):
+                        if hasattr(par, 't'): t = par.t[key2]
+                        else: t = tvec[0] # For a constant
+                        count += 1
+                        if nkeys==1: thissimpar = simpars[key1]
+                        else: thissimpar = simpars[key1][k]
+                        thisplot = array(['%3i. %s - %s' % (count-1, key1, key2), thissimpar, t, pardata[key2]], dtype=object)
+                        if array(thissimpar).sum()==0: thisplot[0] += ' (zero)'
+                        plotdata = vstack([plotdata, thisplot])
+                else:
+                    t = tvec[0] # For a constant
+                    count += 1
+                    thisplot = array(['%3i. %s' % (count-1, key1), simpars[key1], t, pardata], dtype=object)
+                    plotdata = vstack([plotdata, thisplot])
+        plotdata = plotdata[1:,:] # Remove header
+        allplotdata.append(plotdata)
+    
+    
+    ## Do plotting
+    nplots = len(plotdata)
+    if any([len(pltd)!=nplots for pltd in allplotdata]): 
+        printv('Warning, not all pars are the same length, only plotting first', 2, verbose)
+        allplotdata = allplotdata[0]
+    nrows = 5
+    ncols = 4
+    nperscreen = nrows*ncols
+
+    plotparsfig = plt.figure(facecolor=(0.9,0.9,0.9), figsize=figsize)
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.2, hspace=0.4)
+    plotparsaxs = []
+    count = 0
+    for row in range(nrows):
+        for col in range(ncols):
+            count += 1
+            plotparsaxs.append(plotparsfig.add_subplot(nrows, ncols, count))
+    
+    backframe = plotparsfig.add_axes([0.1, 0.03, 0.1, 0.03])
+    sliderframe = plotparsfig.add_axes([0.3, 0.03, 0.4, 0.03])
+    nextframe = plotparsfig.add_axes([0.8, 0.03, 0.1, 0.03])
+    plotparsbackbut = Button(backframe, 'Back')
+    plotparsnextbut = Button(nextframe, 'Next')
+    plotparslider = Slider(sliderframe, '', 0, nplots, valinit=0, valfmt='%d')
+    
+    def updateb(event=None): 
+        global position
+        position -= nperscreen
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
+        plotparslider.set_val(position)
+        update(position)
+    
+    def updaten(event=None): 
+        global position
+        position += nperscreen
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
+        plotparslider.set_val(position)
+        update(position)
+    
+    def update(tmp=0):
+        global position, plotparslider
+        position = tmp
+        position = max(0,position)
+        position = min(nplots-nperscreen, position)
+        for i,ax in enumerate(plotparsaxs):
+            ax.cla()
+            ax.hold(True)
+            nplt = i+position
+            if nplt<nplots:
+                for pd,plotdata in enumerate(allplotdata):
+                    try:
+                        this = plotdata[nplt,:]
+                        ax.set_title(this[0])
+                        if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
+                        elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
+                        else: pass # Population size, doesn't use control points
+                    except: print('??????')
+                    try: 
+                        if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
+                    except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.message))
+                    if pd==len(allplotdata)-1: # Do this for the last plot only
+                        ax.set_ylim((0,1.1*ax.get_ylim()[1]))
+                        ax.set_xlim((tvec[0],tvec[-1]))
+                
+    update()
+    plotparsbackbut.on_clicked(updateb)
+    plotparsnextbut.on_clicked(updaten)
+    plotparslider.on_changed(update)
+    return allplotdata

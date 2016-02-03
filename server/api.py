@@ -67,11 +67,10 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectData, ProjectFromData, Portfolio,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
-from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, Programs, PopSize
+from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Programs, PopSize
 from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
                                                      ParsetsAutomaticCalibration)
-from server.webapp.resources.project_progsets import (CostCoverage, CostCoverageGraph, CostCoverageData,
-                                                      CostCoverageParam)
+from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
 from server.webapp.resources.project_scenarios import Scenarios, Scenario
 
 
@@ -109,6 +108,8 @@ api.add_resource(CostCoverageParam,
 api.add_resource(PopSize,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/popsize')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
+api.add_resource(ProgsetParams, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
+api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
 api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/<project_id>/parameters')
 api.add_resource(Populations, '/api/project/populations')

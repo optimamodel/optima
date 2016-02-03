@@ -223,7 +223,10 @@ class ParsetsCalibration(Resource):
         graph_selectors = op.getplotselections(result)
         keys = graph_selectors['keys']
         names = graph_selectors['names']
-        checks = graph_selectors['defaults']
+        if which is None:
+            checks = graph_selectors['defaults']
+        else:
+            checks = [key in which for key in keys]
         selectors = [{'key': key, 'name': name, 'checked': checked}
                      for (key, name, checked) in zip(keys, names, checks)]
         return selectors
@@ -347,26 +350,29 @@ manual_calibration_parser.add_argument('maxtime', required=False, default=60)
 class ParsetsAutomaticCalibration(Resource):
 
     @swagger.operation(
-        summary='Launch manual calibration for the selected parset',
+        summary='Launch auto calibration for the selected parset',
         parameters=manual_calibration_parser.swagger_parameters()
     )
     def post(self, parset_id):
         from server.webapp.utils import load_project
-        from server.webapp.tasks import run_autofit
+        from server.webapp.tasks import run_autofit, start_or_report_calculation
         from server.webapp.dbmodels import ParsetsDb
 
         args = manual_calibration_parser.parse_args()
 
         # FixMe: use load_parset once the branch having it is merged
         parset_entry = ParsetsDb.query.get(parset_id)
+        parset_name = parset_entry.name
 
-        project_entry = load_project(parset_entry.project_id, raise_exception=True)
+        project_id = parset_entry.project_id
 
-        project_be = project_entry.hydrate()
+        can_start, can_join, work_type = start_or_report_calculation(db.session, parset_entry.project_id, parset_id, 'autofit')
 
-        run_autofit.delay(project_be, parset_entry.name, args['maxtime'])
-
-        return '', 201
+        if not can_start or not can_join:
+            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 303
+        else:
+            run_autofit.delay(project_id, parset_name, args['maxtime'])
+            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 201
 
 
 file_upload_form_parser = RequestParser()

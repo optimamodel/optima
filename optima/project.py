@@ -364,7 +364,9 @@ class Project(object):
 
     def autofit(self, name=None, orig=None, what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
+        print ("autofit(%s, %s, %s)" % (name, orig, what))
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        print ("name=%s, orig=%s" % (name, orig))
         self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results

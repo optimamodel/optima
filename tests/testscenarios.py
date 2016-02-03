@@ -7,10 +7,10 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxbudget',
 #'90-90-90'
-#'VMMC'
+'VMMC'
 ]
 
 ##############################################################################
@@ -317,13 +317,12 @@ if 'VMMC' in tests:
     t = tic()
 
     print('Running VMMC scenario test...')
-    from optima import Parscen, Budgetscen
-    from optima import defaults
+    from optima import Parscen, Budgetscen, findinds, defaults
     
     P = defaults.defaultproject('generalized')
     pops = P.data['pops']['short']
 
-    malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
+    malelist = findinds(P.data['pops']['male'])
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
     
     ## Define scenarios
@@ -334,23 +333,34 @@ if 'VMMC' in tests:
 
         Parscen(name='Imagine that no-one gets circumcised',
              parsetname='default',
-             pars=[{'endval': 0.,
+             pars=[{'endval': 0.2,
                 'endyear': 2020,
                 'name': 'circum',
                 'for': malelist,
                 'startval': .85,
-                'startyear': 2015}]),
+                'startyear': 2015.2}]),
+        
+        Budgetscen(name='Default budget',
+              parsetname='default',
+              progsetname='default',
+              t=2015,
+              budget=P.progsets['default'].getdefaultbudget()),
 
          Budgetscen(name='Scale up VMMC program',
               parsetname='default',
               progsetname='default',
               t=2016,
-              budget={'Condoms': 1e7,
-                      'VMMC': 1e6,
+              budget={
+                      'Condoms': 1e7,
+                      'VMMC': 1e8,
                       'FSW programs': 1e6,
-                      'HTC':2e7,
+                      'MSM programs': 1e6,
+                      'ART':1e6,
                       'PMTCT':1e6,
-                      'ART':1e6}),
+                      'HTC workplace programs':2e7,
+                      'HTC mobile clinics':2e7,
+                      'HTC medical facilities':2e7
+                      }),
 
         ]
     
@@ -361,9 +371,11 @@ if 'VMMC' in tests:
     P.runscenarios()
      
     if doplot:
-        from optima import pygui, plotpeople, findinds
-        ppl = P.results[-1].raw['Scale up VMMC program'][0]['people']
-        plotpeople(P, ppl, start=0, end=2, pops=findinds(malelist))
+        from optima import pygui, plotpeople, plotpars
+        ppl1 = P.results[-1].raw['Scale up VMMC program'][0]['people']
+        ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
+        plotpeople(P, ppl1, start=0, end=None, pops=[-2], animate=False)
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
         
 
