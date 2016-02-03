@@ -376,7 +376,7 @@ class ParsetsAutomaticCalibration(Resource):
 
         result = {'can_start':can_start, 'can_join':can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
         if not can_start or not can_join:
-            return result, 303
+            return result, 208
         else:
             run_autofit.delay(project_id, parset_name, args['maxtime'])
             return result, 201
