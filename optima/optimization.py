@@ -6,7 +6,7 @@ Version: 2016feb02
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults, vec2budget # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr # Utilities
-from numpy import zeros, arange, array, isnan, maximum
+from numpy import zeros, arange, isnan, maximum
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -17,6 +17,8 @@ class Optim(object):
     ''' An object for storing an optimization '''
     
     def __init__(self, project=None, name='default', which='outcome', objectives=None, constraints=None, parsetname=None, progsetname=None):
+        if project is None:     raise OptimaException('To create an optimization, you must supply a project')
+        if progsetname is None: raise OptimaException('To create an optimization, you must supply a program set name')
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
@@ -27,8 +29,8 @@ class Optim(object):
         self.progsetname = progsetname # Program set name
         self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
         self.constraints = constraints # List of populations
-        if objectives is None: self.objectives = defaultobjectives()
-        if constraints is None: self.constraints = 'WARNING, not implemented'
+        if objectives is None: self.objectives = defaultobjectives(progset=project.progsets[progsetname])
+        if constraints is None: self.constraints = defaultconstraints(progset=project.progsets[progsetname])
         self.resultsref = None # Store pointer to results
         
     
@@ -144,15 +146,15 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
 
 
 
-def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False):
+def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, budgetlims=None, tvec=None, outputresults=False):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
     # Validate input
-    if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+    if any([arg is None for arg in [budgetvec, progset, objectives, budgetlims, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    budgetvec *=  objectives['budget']/budgetvec.sum() 
-    budget = vec2budget(progset, budgetvec)
+    normbudgetvec = constrainbudget(origbudget=budgetvec, total=objectives['budget'], limits=budgetlims)
+    budget = vec2budget(progset, normbudgetvec)
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
@@ -181,6 +183,56 @@ def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objecti
         return outcome
 
 
+def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
+    """ Take an unnormalized/unconstrained budget and normalize and constrain it """
+    normbudget = dcp(origbudget)
+    
+    if total < sum(limits['min']) or total > sum(limits['max']):
+        errormsg = 'Budget cannot be constrained since the total %f is outside the low-high limits [%f, %f]' % (total, sum(limits['dec']), sum(limits['inc']))
+        raise OptimaException(errormsg)
+    
+    # Not strictly needed, but get close to correct answer in one go
+    normbudget *= total/sum(normbudget) # Rescale
+    
+    nprogs = len(normbudget)
+    proginds = arange(nprogs)
+    limlow = zeros(nprogs, dtype=bool)
+    limhigh = zeros(nprogs, dtype=bool)
+    for p in proginds:
+        if normbudget[p] <= limits['min'][p]:
+            normbudget[p] = limits['min'][p]
+            limlow[p] = True
+        if normbudget[p] >= limits['max'][p]:
+            normbudget[p] = limits['max'][p]
+            limhigh[p] = True
+    
+    # Too high
+    while sum(normbudget) > total+eps:
+        overshoot = sum(normbudget) - total
+        toomuch = sum(normbudget[~limlow]) / (sum(normbudget[~limlow]) - overshoot)
+        for p in proginds[~limlow]:
+            proposed = normbudget[p] / toomuch
+            if proposed <= limits['min'][p]:
+                proposed = limits['min'][p]
+                limlow[p] = True
+            normbudget[p] = proposed
+        
+    # Too low
+    while sum(normbudget) < total-eps:
+        undershoot = total - sum(normbudget)
+        toolittle = (sum(normbudget[~limhigh]) + undershoot) / sum(normbudget[~limhigh])
+        for p in proginds[~limhigh]:
+            proposed = normbudget[p] * toolittle
+            if proposed >= limits['max'][p]:
+                proposed = limits['max'][p]
+                limhigh[p] = True
+            normbudget[p] = proposed
+    
+    return normbudget
+
+
+
+
 
 
 
@@ -188,7 +240,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     ''' 
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
-    Version: 1.0 (2016jan26)
+    Version: 1.1 (2016feb03)
     '''
     
     # Begin and check initial inputs
@@ -253,10 +305,10 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         budgetlower  = zeros(nprogs)
         budgethigher = zeros(nprogs) + totalbudget
         
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'tvec': tvec}
+        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'budgetlims': budgetlims, 'tvec': tvec}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        elif method=='simplex':
+        elif method=='simplex': # WARNING, not fully implemented
             from scipy.optimize import minimize
             budgetvecnew = minimize(outcomecalc, budgetvec, args=args).x
         else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
