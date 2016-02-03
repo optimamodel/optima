@@ -529,31 +529,34 @@ class GAOptim(object):
                 
                  
         ## Actually create the output
+        keylabels = {'death':'Total deaths', 'inci':'Total new infections'}
         output = ''
+        output += 'Geospatial analysis results: minimize oucomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
+        output += '\n\n'
         output += '\n\t\tInitial\tOptimal'
         output += '\nOverall summary'
-        output += '\n\tPortfolio budget:\t%f\t%f' % (overallbudgetinit, overallbudgetopt)
-        output += '\n\tOutcome:\t%f\t%f' % (overalloutcomeinit, overalloutcomeopt)
+        output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbudgetinit, overallbudgetopt)
+        output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
         for key in self.objectives['keys']:
-            output += '\n\t' + key.title() + ':\t%f\t%f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
+            output += '\n\t' + keylabels[key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
         for prj in range(nprojects):
             output += '\n'
             output += '\n'
             output += '\n\t\tInitial\tOptimal'
             output += '\nProject: "%s"' % projnames[prj]
             output += '\n'
-            output += '\n\tBudget:\t%f\t%f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
-            output += '\n\tOutcome:\t%f\t%f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
+            output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
+            output += '\n\tOutcome:\t%0.0f\t%0.0f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
             for key in self.objectives['keys']:
-                output += '\n\t' + key.title() + ':\t%f\t%f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
+                output += '\n\t' + key.title() + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
             output += '\n'
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():
-                output += '\n\t%s\t%f\t%f' % (prg, projbudgets[prj]['init'][prg][ind], projbudgets[prj]['opt'][prg][ind])
+                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projbudgets[prj]['init'][prg][ind], projbudgets[prj]['opt'][prg][ind])
             output += '\n'
             output += '\n\tCoverage (%i):' % (self.objectives['start'])
             for prg in projbudgets[prj]['init'].keys():
-                output += '\n\t%s\t%f\t%f' % (prg, projcov[prj]['init'][prg][ind], projcov[prj]['opt'][prg][ind])
+                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projcov[prj]['init'][prg][ind], projcov[prj]['opt'][prg][ind])
         
         print(output)
         

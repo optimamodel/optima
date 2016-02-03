@@ -220,6 +220,7 @@ def geogui():
             formats['plain'] = workbook.add_format({})
             formats['bold'] = workbook.add_format({'bold': True})
             formats['number'] = workbook.add_format({'bg_color': '#18C1FF', 'num_format':0x04})
+            colwidth = 30
             
             # Convert from a string to a 2D array
             outlist = []
@@ -241,7 +242,7 @@ def geogui():
                     if col in [2,3] and thisformat=='plain': thisformat = 'number'
                     worksheet.write(row, col, thistxt, formats[thisformat])
             
-            worksheet.set_column(0, 3, 20) # Make wider
+            worksheet.set_column(0, 3, colwidth) # Make wider
             workbook.close()
             
             warning('Results saved to "%s".' % filepath)
