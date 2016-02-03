@@ -423,19 +423,13 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         
 
         ###############################################################################
-        ## Calculate circumcision, births, age transitions and mother-to-child-transmission
+        ## Calculate births, age transitions and mother-to-child-transmission
         ###############################################################################
-
-        ## Circumcision
-        for p in range(npops):
-            totalsus = people[sus,p,t].sum()
-            people[susreg,p,t] = (1-circum[p,t])*totalsus
-            people[susreg,p,t]   = circum[p,t]*totalsus
 
         effmtct  = mtctbreast*breast[t] + mtctnobreast*(1-breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
 
-        ## Births....
+        ## Births.... # WARNING, maybe some of this could be taken out of the time loop?
         for p1 in range(npops):
 
             allbirthrates = birthtransit[p1, :] * birth[p1, t]
