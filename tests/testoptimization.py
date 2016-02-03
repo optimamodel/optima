@@ -5,13 +5,14 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan28
+Version: 2016feb03
 """
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
-'minimizemoney',
+#'minimizeoutcomes',
+#'minimizemoney',
+'constraints',
 ]
 
 
@@ -108,6 +109,33 @@ if 'minimizemoney' in tests:
     
     done(t)
 
+
+
+
+
+
+## Minimize outcomes constraints test
+if 'constraints' in tests:
+    t = tic()
+
+    print('Running constraints test...')
+    from optima import defaultobjectives, defaultconstraints
+    
+    P = defaultproject(which='generalized') 
+    
+    objectives = defaultobjectives(P)
+    constraints = defaultconstraints(P)
+    P.minoutcomes(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
+    
+    print('Original allocation: '),
+    print(P.results[-1].budget[0])
+    print('Optimal allocation: '),
+    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
+    if doplot: 
+        from optima import pygui
+        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
+    
+    done(t)
 
 
 

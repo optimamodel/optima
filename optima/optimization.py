@@ -18,7 +18,8 @@ class Optim(object):
     
     def __init__(self, project=None, name='default', which='outcome', objectives=None, constraints=None, parsetname=None, progsetname=None):
         if project is None:     raise OptimaException('To create an optimization, you must supply a project')
-        if progsetname is None: raise OptimaException('To create an optimization, you must supply a program set name')
+        if parsetname is None:  parsetname = 0 # If none supplied, assume defaults
+        if progsetname is None: progsetname = 0
         self.name = name # Name of the parameter set, e.g. 'default'
         self.uid = uuid() # ID
         self.project = project # Store pointer for the project, if available
@@ -146,15 +147,15 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
 
 
 
-def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, budgetlims=None, tvec=None, outputresults=False):
+def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, budgetlims=None, optiminds=None, tvec=None, outputresults=False):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
     # Validate input
-    if any([arg is None for arg in [budgetvec, progset, objectives, budgetlims, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise OptimaException('outcomecalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
+    if any([arg is None for arg in [budgetvec, progset, objectives, budgetlims, optiminds, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+        raise OptimaException('outcomecalc() requires a budgetvec, progset, objectives, budgetlims, optiminds, and tvec at minimum')
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     normbudgetvec = constrainbudget(origbudget=budgetvec, total=objectives['budget'], limits=budgetlims)
-    budget = vec2budget(progset, normbudgetvec)
+    budget = vec2budget(progset, normbudgetvec, optiminds)
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
@@ -177,7 +178,7 @@ def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objecti
         results.outcome = outcome
         results.budgetvec = budgetvec # WARNING, not sure this should be here
         results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
-        results.budget = vec2budget(progset, budgetvec) # Convert to budget
+        results.budget = vec2budget(progset, budgetvec, optiminds) # Convert to budget
         return results
     else: 
         return outcome
@@ -266,9 +267,9 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     # Handle budget and remove fixed costs
     totalbudget = objectives['budget']
     progkeys = progset.programs.keys()
-    progoptim = findinds(progset.optimizable())
-    progfixed = findinds(~progset.optimizable())
-    nprogs = len(progoptim) # Only count optimizable programs
+    optiminds = findinds(progset.optimizable())
+    fixedinds = findinds(~progset.optimizable())
+    nprogs = len(optiminds) # Only count optimizable programs
     budgetvec = progset.getdefaultbudget()[:]
     
     # Error checking
@@ -278,9 +279,9 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     # Trim out non-optimizable programs and calculate limits
     minlimsvec = constraints['min'][:] # Convert to vector
-    minfixedcosts = budgetvec[progfixed]*minlimsvec[progfixed] # Calculate the minimum allowed costs of fixed programs
+    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
-    budgetvec = budgetvec[progoptim] # ...then remove them from the vector
+    budgetvec = budgetvec[optiminds] # ...then remove them from the vector
     origbudgetvec = dcp(budgetvec) # Store original budget vector
     budgetvec *= totalbudget/sum(budgetvec) # Rescale so the total matches the new total
     
@@ -289,8 +290,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     budgetlims['min'] = zeros(nprogs)
     budgetlims['max'] = zeros(nprogs)
     for p in range(nprogs):
-        minfrac = constraints['min'][progoptim[p]]
-        maxfrac = constraints['max'][progoptim[p]]
+        minfrac = constraints['min'][optiminds[p]]
+        maxfrac = constraints['max'][optiminds[p]]
         budgetlims['min'][p] = minfrac * origbudgetvec[p] # Note: 'constraints' includes non-optimizable programs, must be careful
         if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p]
         else:                   budgetlims['max'][p] = infmoney
@@ -307,7 +308,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         budgetlower  = zeros(nprogs)
         budgethigher = zeros(nprogs) + totalbudget
         
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'budgetlims': budgetlims, 'tvec': tvec}
+        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         elif method=='simplex': # WARNING, not fully implemented
@@ -337,10 +338,10 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
 
 
-def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, constraints=None, tvec=None, outputresults=False, verbose=2, debug=False):
+def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, optiminds=None, tvec=None, outputresults=False, verbose=2, debug=False):
     ''' Function to evaluate whether or not targets have been met for a given budget vector (note, not time-varying) '''
     # Validate input
-    if any([arg is None for arg in [budgetvec, progset, objectives, constraints, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+    if any([arg is None for arg in [budgetvec, progset, objectives, optiminds, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('moneycalc() requires a budgetvec, progset, objectives, constraints, and tvec at minimum')
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?

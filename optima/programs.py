@@ -1025,20 +1025,25 @@ class Covout(CCOF):
 ########################################################
 # HELPER FUNCTIONS
 ########################################################
-def vec2budget(progset=None, budgetvec=None):
-    ''' Function to convert a budget/coverage vector into a budget/coverage odict '''
+def vec2budget(progset=None, budgetvec=None, indices=None):
+    ''' 
+    Function to convert a budget/coverage vector into a budget/coverage odict 
+    
+    "Indices" is used to e.g. supply optimizable parameters only
+    '''
     
     # Validate input
     if any([item is None for item in [progset, budgetvec]]): raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
     if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
+    if indices is None: indices = arange(len(budgetvec)) # If no indices supplied, assume it's the right length
     
     # Get budget structure and populate
     budget = progset.getdefaultbudget() # Returns an odict with the correct structure
-    if len(budget)==len(budgetvec):
-        for k,key in enumerate(budget.keys()):
-            budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
-    else:
-        errormsg = 'Could not convert budget vector into budget: incompatible lengths (%i vs. %i)' % (len(budgetvec), len(budget))
+    try:
+        for k in range(len(budgetvec)):
+            budget[indices[k]] = [budgetvec[k]] # Make this budget value a list so has len()
+    except:
+        errormsg = 'Could not convert budget vector into budget. Budget:\n%s\nBudgetvec:"%s"' % (budget, budgetvec)
         raise OptimaException(errormsg)
     
     return budget
