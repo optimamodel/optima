@@ -896,8 +896,7 @@ class Parameterset(object):
 
     ## Define update step
     def update(self, mflists, ind=0):
-        from optima import printv
-        ''' Update Parameterset with new results '''
+        ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
         if not self.pars:
             raise OptimaException("No parameters available!")
         elif len(self.pars)<=ind:
@@ -916,15 +915,19 @@ class Parameterset(object):
             if ptype == 'meta': # Metaparameters
                 vtype = type(tmppars[key].m)
                 tmppars[key].m = vtype(value)
-                printv('%s.m = %s' % (key, value), verbose)
+                printv('%s.m = %s' % (key, value), 4, verbose)
             elif ptype in ['pop', 'pship']: # Populations or partnerships
                 vtype = type(tmppars[key].y[subkey])
                 tmppars[key].y[subkey] = vtype(value)
-                printv('%s.y[%s] = %s' % (key, subkey, value), verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'exp': # Population growth
                 vtype = type(tmppars[key].p[subkey][0])
                 tmppars[key].p[subkey][0] = vtype(value)
-                printv('%s.p[%s] = %s' % (key, subkey, value), verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
+            elif ptype == 'const': # Metaparameters
+                vtype = type(tmppars[key].y)
+                tmppars[key].y = vtype(value)
+                printv('%s.y = %s' % (key, value), 4, verbose)
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
 
