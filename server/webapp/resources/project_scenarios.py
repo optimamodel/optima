@@ -61,11 +61,12 @@ class Scenarios(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description="Get the scenarios for the given project."
-    )
+    @swagger.operation()
     @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
     def get(self, project_id):
+        """
+        Get the scenarios for the given project
+        """
         project_entry = load_project(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
@@ -74,12 +75,19 @@ class Scenarios(Resource):
         return reply
 
     @swagger.operation(
-        operation="Create a new scenario for the given project.",
-        parameters=scenario_parser.swagger_parameters()
+        parameters=scenario_parser.swagger_parameters(),
+        notes="""
+            Create a new scenario.
+
+            If it is a Parameter scenario, the request body should be a JSON
+            dict with the 'pars' key.
+        """
     )
     @marshal_with(ScenariosDb.resource_fields)
     def post(self, project_id):
-
+        """
+        Create a new scenario for the given project.
+        """
         args = scenario_parser.parse_args()
 
         if args.get('scenario_type') not in ["Parameter", "Program"]:
@@ -104,11 +112,11 @@ class ScenarioResults(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        operation="Run the scenarios for the given project."
-    )
+    @swagger.operation()
     def get(self, project_id):
-
+        """
+        Run the scenarios for a given project.
+        """
         project_entry = load_project(project_id)
         project = project_entry.hydrate()
         project.runscenarios()
@@ -133,23 +141,27 @@ class Scenario(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description="Get a single scenario."
-    )
+    @swagger.operation()
     @marshal_with(ScenariosDb.resource_fields)
     def get(self, project_id, scenario_id):
         """
-        Get a single scenario.
+        Get a given single scenario.
         """
         return load_scenario(project_id, scenario_id)
 
     @swagger.operation(
-        description="Update a single scenario."
+        parameters=scenario_parser.swagger_parameters(),
+        notes="""
+            Update an existing scenario.
+
+            If it is a Parameter scenario, the request body should be a JSON
+            dict with the 'pars' key.
+        """
     )
     @marshal_with(ScenariosDb.resource_fields)
     def put(self, project_id, scenario_id):
         """
-        Update a single scenario.
+        Update the given single scenario.
         """
         args = scenario_parser.parse_args()
 
@@ -171,11 +183,11 @@ class Scenario(Resource):
 
         return scenario_entry
 
-    @swagger.operation(
-        description="Delete a scenario."
-    )
+    @swagger.operation()
     def delete(self, project_id, scenario_id):
-
+        """
+        Delete the given scenario.
+        """
         scenario_entry = load_scenario(project_id, scenario_id)
 
         db.session.delete(scenario_entry)
