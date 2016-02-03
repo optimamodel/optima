@@ -216,10 +216,12 @@ def geogui():
             worksheet = workbook.add_worksheet()
             
             # Define formatting
+            originalblue = '#18C1FF' # analysis:ignore
+            hotpink = '#FFC0CB' # analysis:ignore
             formats = dict()
             formats['plain'] = workbook.add_format({})
             formats['bold'] = workbook.add_format({'bold': True})
-            formats['number'] = workbook.add_format({'bg_color': '#18C1FF', 'num_format':0x04})
+            formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
             colwidth = 30
             
             # Convert from a string to a 2D array
@@ -240,6 +242,7 @@ def geogui():
                     for word in ['budget','outcome','allocation','initial','optimal','coverage']:
                         if tmptxt.find(word)>=0: thisformat = 'bold'
                     if col in [2,3] and thisformat=='plain': thisformat = 'number'
+                    if thisformat=='number':thistxt = float(thistxt)
                     worksheet.write(row, col, thistxt, formats[thisformat])
             
             worksheet.set_column(0, 3, colwidth) # Make wider
