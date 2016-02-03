@@ -33,7 +33,7 @@
             <tr ng-repeat="data in state.cpData">
               <td>{{data.year}}</td>
               <td>{{state.estdSize[data.year.toString()]}}</td>
-              <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
+              <td>{{data.saturationpercent_lower * 100}} - {{data.saturationpercent_upper * 100}}</td>
               <td>{{
                 ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
                 Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_lower/100)) : '') + '-' +
