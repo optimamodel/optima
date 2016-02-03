@@ -43,7 +43,11 @@
     <!-- Outcome functions tab -->
     <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
 
-      <div class="c-select">
+      <div ng-if="vm.params.length === 0 "> The selected program set doesn't have any parameters.
+        <a ui-sref="project-set.manageProgramSet"> Click here to manage your program sets. </a>
+      </div>
+
+      <div class="c-select" ng-if="vm.params.length > 0">
         <label class="c-select__label"> Select a parameter: </label>
         <select class="txbox c-select__input"
                 ng-options="p.name for p in vm.params"
@@ -157,7 +161,7 @@
 
       <br/>
 
-      <button unused-ng-disabled="vm.TableForm.$invalid" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
+      <button unused-ng-disabled="vm.TableForm.$invalid" ng-if="vm.params.length > 0" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
         Submit
       </button>
 
