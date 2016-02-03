@@ -36,7 +36,8 @@ Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1
 Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
 Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random
 Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random
-Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	0	1	random
+Male circumcision prevalence (%)	propcirc	(0, 1)	mpop	timepar	meta	other	0	0	1	random
+Number of circumcisions	numcirc	(0, 'maxpopsize')	mpop	timepar	meta	other	0	1	1	random
 Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
 Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random
 Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random
@@ -51,7 +52,7 @@ People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cas
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
 Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
@@ -409,19 +410,23 @@ def makepars(data, label=None, verbose=2):
 
     # Aging transitions - these are time-constant transition rates
     duration = [age[1]-age[0]+1 for age in data['pops']['age']]
-    normalised_agetransit = [[col/sum(row)*1/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
+    normalised_agetransit = [[col/sum(row)*1.0/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
     pars['agetransit'] = normalised_agetransit
 
     # Risk transitions - these are time-constant transition rates
-    normalised_risktransit = [[1/col if col else 0 for col in row] for row in data['risktransit']]
+    normalised_risktransit = [[1.0/col if col else 0 for col in row] for row in data['risktransit']]
     pars['risktransit'] = normalised_risktransit 
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
-        pars['circum'].y[key] = array([0])
-        pars['circum'].t[key] = array([0])
-    pars['circum'].y = pars['circum'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['circum'].t = pars['circum'].t.sort(popkeys)
+        pars['propcirc'].y[key] = array([0])
+        pars['propcirc'].t[key] = array([0])
+        pars['numcirc'].y[key]  = array([0])
+        pars['numcirc'].t[key]  = array([0])
+    pars['propcirc'].y = pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
+    pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
 
     # Metaparameters
     for key in popkeys: # Define values
