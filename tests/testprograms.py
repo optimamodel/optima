@@ -82,6 +82,13 @@ if 'makeprograms' in tests:
                   targetpops=['Total'],
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
+    PMTCT = Program(short='PMTCT',
+                  targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
+                  targetpops=['tot'],
+                  category='Care and treatment',
+                  name='Prevention of mother-to-child transmission',
+                  criteria = {'hivstatus': 'allstates', 'pregnant': True})
+                  
     # Testing methods of program class
     # 1. Adding a target parameter to a program
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'M 15+'})
@@ -128,6 +135,14 @@ if 'makeprograms' in tests:
                               't': 2013.0,
                               'unitcost': (8,12)})
 
+    ART.costcovfn.addccopar({'saturation': (0.8,0.9),
+                              't': 2013.0,
+                              'unitcost': (100,200)})
+
+    PMTCT.costcovfn.addccopar({'saturation': (0.9,0.9),
+                             't': 2016.0,
+                             'unitcost': (100,200)})
+
     # 7. Overwrite parameters for defining cost-coverage function.
     HTC.costcovfn.addccopar({'t': 2016.0,
                              'unitcost': (20,30)},
@@ -168,7 +183,14 @@ if 'makeprograms' in tests:
     plotoptions['xupperlim'] = 2e9
     plotoptions['perperson'] = False
 
-    if doplot: HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
+    from numpy import linspace
+    xlinedata = linspace(0,1e8,100)
+    ART.getcoverage(x=xlinedata, t=[2014, 2015], parset=P.parsets['default'], total=True, proportion=False, toplot=True, bounds=None)
+
+    if doplot:
+        ART.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
+        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
+        PMTCT.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
 
     print('Running make programs set test...')
 
