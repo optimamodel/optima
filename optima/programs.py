@@ -626,7 +626,7 @@ class Program(object):
                 print('Warning, could not find settings for program "%s", using default' % self.name)
                 settings = Settings()
         
-        
+        npops = len(parset.pars[ind]['popkeys'])
 
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
@@ -642,9 +642,9 @@ class Program(object):
                         parset.resultsref = results.uid # So it doesn't have to be rerun
                 
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
-                eligplhiv = results.raw[ind]['people'][cd4index,:,:].sum(axis=0)
-                for yr in t:
-                    initpopsizes = eligplhiv[:,findinds(results.tvec,yr)]
+                initpopsizes = zeros((npops,len(t))) 
+                for yrno,yr in enumerate(t):
+                    initpopsizes[:,yrno] = results.raw[ind]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0)
                 
         # ... or if it's a program for pregnant women.
         else:
@@ -662,8 +662,8 @@ class Program(object):
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
-        for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
-            popsizes[pop] = initpopsizes[popnumber,:]
+        for popno, pop in enumerate(parset.pars[ind]['popkeys']):
+            popsizes[pop] = initpopsizes[popno,:]
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
                 targetpopsize[targetpop] = sum(popsizes.values())
@@ -721,13 +721,16 @@ class Program(object):
 
 
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8):
+        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
-        from pylab import figure, figtext
+        from pylab import figure, figtext, isinteractive, ioff, ion, close
         from matplotlib.ticker import MaxNLocator
         import textwrap
+        
+        wasinteractive = isinteractive() # Get current state of interactivity
+        ioff() # Just in case, so we don't flood the user's screen with figures
 
         if type(t) in [int,float]: t = [t]
         colors = gridcolormap(len(t))
@@ -813,6 +816,10 @@ class Program(object):
         axis.get_xaxis().get_major_formatter().set_scientific(False)
         axis.get_yaxis().get_major_formatter().set_scientific(False)
         if len(t)>1: axis.legend(loc=4)
+        
+        # Tidy up
+        if not doplot: close(cost_coverage_figure)
+        if wasinteractive: ion() 
 
         return cost_coverage_figure
 

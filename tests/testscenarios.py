@@ -354,9 +354,12 @@ if 'VMMC' in tests:
                       'Condoms': 1e7,
                       'VMMC': 1e8,
                       'FSW programs': 1e6,
-                      'HTC':2e7,
+                      'MSM programs': 1e6,
+                      'ART':1e6,
                       'PMTCT':1e6,
-                      'ART':1e6
+                      'HTC workplace programs':2e7,
+                      'HTC mobile clinics':2e7,
+                      'HTC medical facilities':2e7
                       }),
 
         ]
