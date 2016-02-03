@@ -130,8 +130,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     hivtest   = simpars['hivtest']   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
     propcirc  = simpars['propcirc']  # Prevalence of circumcision (P)
-    numcirc   = simpars['numcirc']   # Prevalence of circumcision (P)
-    numpmtct  = simpars['numpmtct']  # Number (or proportion?) of people receiving PMTCT (P/N)
+    numcirc   = simpars['numcirc']   # Number of programmatic circumcisions performed (N)
+    numpmtct  = simpars['numpmtct']  # Number of people receiving PMTCT (N)
 
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)

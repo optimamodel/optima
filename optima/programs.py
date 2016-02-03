@@ -7,7 +7,7 @@ Version: 2016feb02
 """
 
 from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -971,15 +971,12 @@ class Costcov(CCOF):
         if isinstance(popsize,(float,int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts:
-            y = zeros(nyrs)
-            for yr in range(nyrs):
-                y[yr] = max((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
-            return y
+        eps = array([eps]*npts)
+        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = max((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],[eps]*len(npts))
+                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
             return y
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
@@ -990,11 +987,12 @@ class Costcov(CCOF):
         if isinstance(popsize, (float, int)): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts:
-            y = zeros(nyrs)
-            for yr in range(nyrs):
-                y[yr] = max((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
-            return y
+        eps = array([eps]*npts)
+        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+#            y = zeros(nyrs)
+#            for yr in range(nyrs):
+#                y[yr] = maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+#            return y
             
 #            return max(-0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps),eps)
         else: raise OptimaException('coverage vector should be the same length as params.')

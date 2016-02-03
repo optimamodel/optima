@@ -199,10 +199,10 @@ if 'makeprograms' in tests:
     plotoptions['perperson'] = False
 
     if doplot:
-        ART.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
-        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
-        PMTCT.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
-        VMMC.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
+        ART.plotcoverage(t=[2014,2015],parset=P.parsets['default'],doplot=doplot)
+        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions,doplot=doplot)
+        PMTCT.plotcoverage(t=[2014,2015],parset=P.parsets['default'],doplot=doplot)
+        VMMC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],doplot=doplot)
 
     print('Running make programs set test...')
 
