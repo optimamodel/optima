@@ -631,7 +631,6 @@ class Program(object):
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
             if self.criteria['hivstatus']=='allstates':
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
     
             else: # If it's a program for HIV+ people, need to find the number of positives
@@ -643,10 +642,9 @@ class Program(object):
                         parset.resultsref = results.uid # So it doesn't have to be rerun
                 
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
-                initpopsizes = zeros((npops,len(t))) #array([[0]*len(t)]*len(parset.pars[ind]['popkeys'])) # This is stupid
+                initpopsizes = zeros((npops,len(t))) 
                 for yrno,yr in enumerate(t):
                     initpopsizes[:,yrno] = results.raw[ind]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0)
-
                 
         # ... or if it's a program for pregnant women.
         else:
@@ -697,11 +695,9 @@ class Program(object):
         if isinstance(x, list): x = array(x)
         if isinstance(t, list): t = array(t)
 
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, bounds=bounds)
-
 
         if total: return totalreached/totaltargeted if proportion else totalreached
         else:
