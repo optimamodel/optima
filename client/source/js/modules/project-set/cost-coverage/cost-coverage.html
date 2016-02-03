@@ -161,7 +161,7 @@
 
       <br/>
 
-      <button unused-ng-disabled="vm.TableForm.$invalid" ng-if="vm.params.length > 0" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
+      <button ng-disabled="vm.TableForm.$invalid" ng-if="vm.params.length > 0 && vm.selectedParameter!==undefined" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
         Submit
       </button>
 
