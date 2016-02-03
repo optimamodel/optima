@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016jan30
+Version: 2016feb02
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
