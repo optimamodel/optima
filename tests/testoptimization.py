@@ -40,7 +40,7 @@ blank()
 ## The tests
 ##############################################################################
 
-from optima.defaults import defaultproject
+from optima import defaults
 
 T = tic()
 
@@ -58,7 +58,7 @@ if 'minimizeoutcomes' in tests:
     print('Running minimize outcomes test...')
     from optima import defaultobjectives
     
-    P = defaultproject(which='generalized') 
+    P = defaults.defaultproject(which='generalized') 
     
     objectives = defaultobjectives()
     objectives['budget'] = 6e6 # Change default budget to optimize
@@ -86,7 +86,7 @@ if 'minimizemoney' in tests:
     print('Running minimize money test...')
     from optima import defaultobjectives
     
-    P = defaultproject(which='generalized')
+    P = defaults.defaultproject(which='generalized')
 
     coverage = P.progsets[-1].getprogcoverage(budget=P.progsets[-1].getdefaultbudget(),
                       t=2016,
@@ -121,7 +121,7 @@ if 'constraints' in tests:
     print('Running constraints test...')
     from optima import defaultobjectives, defaultconstraints
     
-    P = defaultproject(which='generalized') 
+    P = defaults.defaultproject(which='generalized') 
     
     objectives = defaultobjectives(P)
     constraints = defaultconstraints(P)

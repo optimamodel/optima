@@ -195,7 +195,7 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
         raise OptimaException(errormsg)
     
     # Not strictly needed, but get close to correct answer in one go
-    normbudget *= total/sum(normbudget) # Rescale
+    normbudget *= total/float(sum(normbudget)) # Rescale
     
     nprogs = len(normbudget)
     proginds = arange(nprogs)
@@ -212,9 +212,9 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
     # Too high
     while sum(normbudget) > total+eps:
         overshoot = sum(normbudget) - total
-        toomuch = sum(normbudget[~limlow]) / (sum(normbudget[~limlow]) - overshoot)
+        toomuch = sum(normbudget[~limlow]) / float((sum(normbudget[~limlow]) - overshoot))
         for p in proginds[~limlow]:
-            proposed = normbudget[p] / toomuch
+            proposed = normbudget[p] / float(toomuch)
             if proposed <= limits['min'][p]:
                 proposed = limits['min'][p]
                 limlow[p] = True
@@ -223,7 +223,7 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
     # Too low
     while sum(normbudget) < total-eps:
         undershoot = total - sum(normbudget)
-        toolittle = (sum(normbudget[~limhigh]) + undershoot) / sum(normbudget[~limhigh])
+        toolittle = (sum(normbudget[~limhigh]) + undershoot) / float(sum(normbudget[~limhigh]))
         for p in proginds[~limhigh]:
             proposed = normbudget[p] * toolittle
             if proposed >= limits['max'][p]:
