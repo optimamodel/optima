@@ -194,8 +194,13 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
         errormsg = 'Budget cannot be constrained since the total %f is outside the low-high limits [%f, %f]' % (total, sum(limits['dec']), sum(limits['inc']))
         raise OptimaException(errormsg)
     
+    print('HI!!!!')
+    print total
+    print normbudget
+    
     # Not strictly needed, but get close to correct answer in one go
     normbudget *= total/float(sum(normbudget)) # Rescale
+    
     
     nprogs = len(normbudget)
     proginds = arange(nprogs)
