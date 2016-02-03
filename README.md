@@ -166,19 +166,22 @@ Install virtual env:
 
 `$ pip install virtualenv`
 
+Install Celery and start the Redis server:  
+`$ pip install celery`  
+`$ sudo apt-get install redis-server`  
 
-Copy the example config and configure it accordingly:
-
+Copy the example config and configure it accordingly:  
 `$ cp src/config.example.py src/config.py`
 
 
-Run the server:
 
+
+Run the server in two separate terminals:  
+`$ ./celery.sh`  
 `$ ./run.sh`
 
-To use pre-installed system-wide python libraries, you can also run the server using:
-
- $ ./run.sh --system
+To use pre-installed system-wide python libraries, you can also run the server using:  
+ `$ ./run.sh --system`
 
 ATTENTION: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
 

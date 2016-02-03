@@ -51,8 +51,8 @@ costcov_data_locator_parser.add_arguments({
 costcov_param_parser = RequestParser()
 costcov_param_parser.add_arguments({
     'year': {'required': True, 'type': int},
-    'saturationpercent_lower': {'required': True, 'type': int},
-    'saturationpercent_upper': {'required': True, 'type': int},
+    'saturationpercent_lower': {'required': True, 'type': float},
+    'saturationpercent_upper': {'required': True, 'type': float},
     'unitcost_lower': {'required': True, 'type': int},
     'unitcost_upper': {'required': True, 'type': int},
 })
