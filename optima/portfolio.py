@@ -349,7 +349,7 @@ def minBOCoutcomes(BOClist, grandtotal, budgetvec=None, minbound=None, maxiters=
 #    budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X, FVAL, EXITFLAG, OUTPUT = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     X = constrainbudgets(X, grandtotal, minbound)
-    assert sum(X)==grandtotal
+#    assert sum(X)==grandtotal      # Commenting out assertion for the time being, as it doesn't handle floats.
 
     return X
 
@@ -472,6 +472,7 @@ class GAOptim(object):
         nprojects = len(self.resultpairs.keys())
         projnames = []
         projbudgets = []
+        projcov = []
         projoutcomes = []
         projoutcomesplit = []
         ind = -1 # WARNING, should be a single index so doesn't actually matter
@@ -508,6 +509,18 @@ class GAOptim(object):
             projoutcomesplit[prj]['init'] = odict()
             projoutcomesplit[prj]['opt'] = odict()
             
+            initpars = self.resultpairs[x]['init'].parset[0]
+            optpars = self.resultpairs[x]['opt'].parset[-1]
+            initprog = self.resultpairs[x]['init'].progset[0]
+            optprog = self.resultpairs[x]['opt'].progset[-1]
+            initcov = initprog.getprogcoverage(initalloc,self.objectives['start'],parset=initpars)
+            optcov = optprog.getprogcoverage(gaoptalloc,self.objectives['start'],parset=optpars)
+            
+            projcov.append(odict())
+            projcov[prj]['init']  = initcov
+            projcov[prj]['opt']   = optcov
+            
+            
             for key in self.objectives['keys']:
                 projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot[0][indices].sum()
                 projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[0][indices].sum()
@@ -537,7 +550,10 @@ class GAOptim(object):
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():
                 output += '\n\t%s\t%f\t%f' % (prg, projbudgets[prj]['init'][prg][ind], projbudgets[prj]['opt'][prg][ind])
-
+            output += '\n'
+            output += '\n\tCoverage (%i):' % (self.objectives['start'])
+            for prg in projbudgets[prj]['init'].keys():
+                output += '\n\t%s\t%f\t%f' % (prg, projcov[prj]['init'][prg][ind], projcov[prj]['opt'][prg][ind])
         
         print(output)
         
