@@ -44,7 +44,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      $http.get('/api/parset/' + $scope.activeParset.id + '/calibration', {params: data})
+      $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
         .success(function (response) {
           setCalibrationData(response.calibration);
         });
@@ -66,7 +66,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      var url = '/api/parset/' + $scope.activeParset.id + '/calibration';
+      var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
@@ -184,7 +184,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .element('<input type=\'file\'>')
         .change(function(event){
           $upload.upload({
-            url: '/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id + '/data',
+            url: '/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id + '/data',
             file: event.target.files[0]
           }).success(function () {
             window.location.reload();

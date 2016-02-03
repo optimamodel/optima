@@ -49,6 +49,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
         work_type = wp.work_type
     else:
         work_log = WorkLogDb(project_id=project_entry.id, parset_id=parset_id, work_type = work_type)
+        work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
         db_session.add(work_log)
         db_session.flush()
         if wp is None:
@@ -77,6 +78,25 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     return can_start, can_join, wp_parset_id, work_type
 
 
+def check_calculation_status(project_id, parset_id, work_type):
+    from sqlalchemy import desc
+    db_session = init_db_session()
+    status = 'unknown'
+    error_text = None
+    stop_time = None
+    result_id = None
+    wp = db_session.query(WorkingProjectDb).get(project_id)
+    work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
+    if work_log is not None:
+        status = work_log.status
+        error_text = work_log.error
+        start_time = work_log.start_time
+        stop_time = work_log.stop_time
+        result_id = work_log.result_id
+    close_db_session(db_session)
+    return status, error_text, start_time, stop_time, result_id
+
+
 @celery.task()
 def run_autofit(project_id, parset_name, maxtime=60):
     import traceback
@@ -103,6 +123,8 @@ def run_autofit(project_id, parset_name, maxtime=60):
         status='error'
 
     db_session = init_db_session()
+    wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+    wp.project = op.saves(project_instance)
     work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
     work_log.status = status
     work_log.error = error_text
