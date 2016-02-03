@@ -84,7 +84,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         txfactor = dxfactor * (simpars['efftxsupp']*treatvs + simpars['efftxunsupp']*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
     # Disease state indices
-    uncirc   = settings.uncirc   # Susceptible, uncircumcised
+    susreg   = settings.susreg      # Susceptible, regular
     circ     = settings.circ     # Susceptible, circumcised
     sus      = settings.sus      # Susceptible, both circumcised and uncircumcised
     undx     = settings.undx     # Undiagnosed
@@ -253,7 +253,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         treatment *= recovratios
         
         # Populated equilibrated array
-        initpeople[uncirc, p] = uncircumcised
+        initpeople[susreg, p] = uncircumcised
         initpeople[circ, p] = circumcised
         initpeople[undx, p] = undiagnosed
         if usecascade:
@@ -426,11 +426,11 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ## Calculate circumcision, births, age transitions and mother-to-child-transmission
         ###############################################################################
 
-        ## Circumcision -- WARNING, will make aging irrelevant!!!!
+        ## Circumcision
         for p in range(npops):
             totalsus = people[sus,p,t].sum()
-            people[uncirc,p,t] = (1-circum[p,t])*totalsus
-            people[circ,p,t]   = circum[p,t]*totalsus
+            people[susreg,p,t] = (1-circum[p,t])*totalsus
+            people[susreg,p,t]   = circum[p,t]*totalsus
 
         effmtct  = mtctbreast*breast[t] + mtctnobreast*(1-breast[t]) # Effective MTCT transmission
         pmtcteff = (1 - effpmtct) * effmtct # Effective MTCT transmission whilst on PMTCT
@@ -462,7 +462,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                     raw['mtct'][p2, t] += popmtct                        
                     
                     people[undx[0], p2, t] += popmtct # HIV+ babies assigned to undiagnosed compartment
-                    people[uncirc, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+                    people[susreg, p2, t] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
         
         
         ## Age-related transitions
