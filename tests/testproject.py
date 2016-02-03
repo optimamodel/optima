@@ -15,6 +15,7 @@ Version: 2015nov23 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
+'parametercheck',
 'saveload',
 #'loadspreadsheet',
 #'loadeconomics',
@@ -57,6 +58,53 @@ if 'makeproject' in tests:
     print(P)
     done(t)
 
+
+
+
+
+if 'parametercheck' in tests:
+    from optima import defaults, OptimaException
+    
+    t = tic()
+    print('Running parameters check test...')
+    
+    P = defaults.defaultproject()
+
+    datakeys = P.data.keys()
+    datakeys += P.data['const'].keys()
+    
+    parkeys = P.parsets[0].pars[0].keys()
+    
+    dataonly = set([
+    'condomcas', 'condomcom', 'condomreg', 
+    'const', 'hivprev', 'meta', 'npops', 
+    'numactscas', 'numactscom', 'numactsinj', 'numactsreg', 
+    'optdeath', 'optnewtreat', 'optnumdiag', 'optnuminfect', 'optnumtest', 'optplhiv', 'optprev', 
+    'partcas', 'partcom', 'partinj', 'partreg', 
+    'pops', 'pships', 'years'])
+    
+    parsonly = set([
+    'actscas', 'actscom', 'actsinj', 'actsreg', 
+    'condcas', 'condcom', 'condreg', 
+    'female', 'force', 'inhomo', 'initprev', 
+    'injects', 'label', 'male', 'popkeys', 'sexworker'])
+    
+    dataminuspars = set(datakeys) - set(parkeys)
+    parsminusdata = set(parkeys) - set(datakeys)
+    
+    if dataminuspars != dataonly:
+        mismatch1 = list(dataonly -  dataminuspars)
+        mismatch2 = list(dataminuspars - dataonly)
+        errormsg = 'Unexpected "dataminuspars" parameter in "%s" or "%s"' % (mismatch1, mismatch2)
+        raise OptimaException(errormsg)
+    
+    if parsminusdata != parsonly:
+        mismatch1 = list(parsonly -  parsminusdata)
+        mismatch2 = list(parsminusdata - parsonly)
+        errormsg = 'Unexpected "parsminusdata" parameter in "%s" or "%s"' % (mismatch1, mismatch2)
+        raise OptimaException(errormsg)
+    
+    done(t)
 
 
 
