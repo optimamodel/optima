@@ -9,7 +9,8 @@ define([
   '../common/export-all-data',
   '../validations/more-than-directive',
   '../validations/less-than-directive',
-  '../validations/year-directive'
+  '../validations/year-directive',
+  '../validations/limit-value-directive',
 ], function (angular) {
   'use strict';
 
@@ -21,6 +22,7 @@ define([
     'ui.router',
     'app.validations.more-than',
     'app.validations.less-than',
+    'app.validations.limit',
     'app.validations.year',
     'toastr'
   ])
