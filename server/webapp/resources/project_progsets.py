@@ -430,7 +430,7 @@ class CostCoverageGraph(Resource):
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
+        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null').replace('None', args.get('caption'), '')
         return json.loads(json_string)
 
 
