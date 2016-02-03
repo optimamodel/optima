@@ -890,7 +890,7 @@ class Parameterset(object):
                         valuelist.append(par.p[subkey][0])
                         labellist.append('%s -- %s' % (par.name, str(subkey)))
                 else:
-                    print('Parameter type "%s" not implemented!' % (par.fittable, par.fittable == 'const'))
+                    print('Parameter type "%s" not implemented!' % par.fittable)
 
         return mflists
 
