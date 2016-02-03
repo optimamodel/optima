@@ -10,6 +10,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
+
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if new_path not in sys.path:
@@ -66,9 +67,11 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectData, ProjectFromData, Portfolio,
                                              Defaults)
 from server.webapp.resources.project_constants import Parameters, Populations
-from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, Programs, PopSize
-from server.webapp.resources.project_parsets import Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration
+from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Programs, PopSize
+from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
+                                                     ParsetsAutomaticCalibration)
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
+from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -90,19 +93,24 @@ api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
+api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/results')
+api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scenario_id>')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
 api.add_resource(CostCoverage,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage')
 api.add_resource(CostCoverageGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
-api.add_resource(CostCoverageData, 
+api.add_resource(CostCoverageData,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/data')
-api.add_resource(CostCoverageParam, 
+api.add_resource(CostCoverageParam,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/param')
-api.add_resource(PopSize, 
+api.add_resource(PopSize,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/popsize')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
+api.add_resource(ProgsetParams, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
+api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
 api.add_resource(Portfolio, '/api/project/portfolio')
 api.add_resource(Parameters, '/api/project/<project_id>/parameters')
 api.add_resource(Populations, '/api/project/populations')
@@ -110,7 +118,8 @@ api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
-api.add_resource(ParsetsCalibration, '/api/parset/<uuid:parset_id>/calibration')
+api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetsData, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 app.register_blueprint(api_bp, url_prefix='')
 

@@ -48,7 +48,7 @@ Drop and re-create your database
 
 /!\ If you do this, you will loose the full content of the database
 
-First exit and db shell (psql) that might be running and stop the flask server. Then, from the repository's root directory, run the following commands:
+First exit any database shell (e.g. `psql`) that might be running, and stop the Flask server. Then, from the repository's root directory, run the following commands:
 
     dropdb optima
     createdb optima -O optima

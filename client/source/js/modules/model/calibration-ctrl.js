@@ -44,7 +44,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      $http.get('/api/parset/' + $scope.activeParset.id + '/calibration', {params: data})
+      $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
         .success(function (response) {
           setCalibrationData(response.calibration);
         });
@@ -66,7 +66,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      var url = '/api/parset/' + $scope.activeParset.id + '/calibration';
+      var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
@@ -152,14 +152,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               }
             });
         };
-        modalService.confirm(
-          function () {
-            remove()
-          }, function () {
-          }, 'Yes, remove this parameter set', 'No',
-          'Are you sure you want to permanently remove parameter set "' + $scope.activeParset.name + '"?',
-          'Delete parameter set'
-        );
+        if ($scope.activeParset.name === "default") {
+          modalService.informError([{message: 'Deleting the default parameter set is not permitted.'}]);
+        } else {
+          modalService.confirm(
+            function () {
+              remove()
+            }, function () {
+            }, 'Yes, remove this parameter set', 'No',
+            'Are you sure you want to permanently remove parameter set "' + $scope.activeParset.name + '"?',
+            'Delete parameter set'
+          );
+        }
       }
     };
 
@@ -180,7 +184,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .element('<input type=\'file\'>')
         .change(function(event){
           $upload.upload({
-            url: '/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id + '/data',
+            url: '/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id + '/data',
             file: event.target.files[0]
           }).success(function () {
             window.location.reload();

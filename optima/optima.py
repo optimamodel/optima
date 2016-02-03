@@ -202,6 +202,11 @@ except:
     def plotpeople(*args, **kwargs): print('Note: plotpeople() could not be imported, but everything else should work')
     _failed(doraise=False)
 
+try: from gui import plotpars # Plot all people
+except:
+    def plotpars(*args, **kwargs): print('Note: plotpars() could not be imported, but everything else should work')
+    _failed(doraise=False)
+
 
 
 ## Import the Project class that ties everything together

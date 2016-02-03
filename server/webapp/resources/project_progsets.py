@@ -1,104 +1,26 @@
 import mpld3
 import json
-import uuid
 
-from flask import current_app, request
+from flask import current_app
 
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, fields
+from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 from flask import helpers
 
-from server.webapp.inputs import SubParser
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import (
-    load_project, load_progset, load_program, RequestParser, report_exception, modify_program)
-from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist
+from server.webapp.utils import load_project, load_progset, report_exception, modify_program, load_program
+from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ParsetDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
 from server.webapp.dbconn import db
 
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
-import optima as op
 
-
-costcov_parser = RequestParser()
-costcov_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
-    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
-})
-
-costcov_graph_parser = RequestParser()
-costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': str, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
-    'caption': {'type': str, 'location': 'args'},
-    'xupperlim': {'type': long, 'location': 'args'},
-    'perperson': {'type': bool, 'location': 'args'},
-})
-
-costcov_data_parser = RequestParser()
-costcov_data_parser.add_arguments({
-    'data': {'type': list, 'location': 'json'},
-    'params': {'type': dict, 'location': 'json'}
-})
-
-costcov_data_point_parser = RequestParser()
-costcov_data_point_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
-    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
-})
-
-costcov_data_locator_parser = RequestParser()
-costcov_data_locator_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'args'}
-})
-
-costcov_param_parser = RequestParser()
-costcov_param_parser.add_arguments({
-    'year': {'required': True, 'type': int},
-    'saturationpercent_lower': {'required': True, 'type': int},
-    'saturationpercent_upper': {'required': True, 'type': int},
-    'unitcost_lower': {'required': True, 'type': int},
-    'unitcost_upper': {'required': True, 'type': int},
-})
-
-popsize_parser = RequestParser()
-popsize_parser.add_arguments({
-#    'year': {'required': True, 'type': int, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
-})
-
-program_parser = RequestParser()
-program_parser.add_arguments({
-    'name': {'required': True, 'location': 'json'},
-    'short': {'location': 'json'},
-    'short_name': {'location': 'json'},
-    'category': {'required': True, 'location': 'json'},
-    'active': {'type': bool, 'default': False, 'location': 'json'},
-    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
-    'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
-    'addData': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
-})
-
-query_program_parser = RequestParser()
-query_program_parser.add_arguments({
-    'name': {'required': True},
-    'short': {},
-    'short_name': {},
-    'category': {'required': True},
-    'active': {'type': bool, 'default': False},
-    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
-    'populations': {'type': list, 'dest': 'targetpops', 'location': 'json'},
-})
-
-progset_parser = RequestParser()
-progset_parser.add_arguments({
-    'name': {'required': True},
-    'programs': {'required': True, 'type': SubParser(program_parser), 'action': 'append'}
-})
+from server.webapp.serializers.project_progsets import (progset_parser, param_fields,
+    effect_parser, progset_effects_fields, program_parser, query_program_parser,
+    popsize_parser, costcov_data_parser, costcov_graph_parser, costcov_data_point_parser,
+    costcov_data_locator_parser, costcov_param_parser)
 
 
 class Progsets(Resource):
@@ -115,7 +37,6 @@ class Progsets(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields, envelope='progsets')
     def get(self, project_id):
 
@@ -125,13 +46,14 @@ class Progsets(Resource):
             raise ProjectDoesNotExist(id=project_id)
 
         reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
+        for progset in reply:
+            progset.get_targetpartypes()
         return reply
 
     @swagger.operation(
         description='Create a progset for the project with the given id.',
         parameters=progset_parser.swagger_parameters()
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
@@ -148,6 +70,8 @@ class Progsets(Resource):
         progset_entry.create_programs_from_list(args['programs'])
 
         db.session.commit()
+
+        progset_entry.get_targetpartypes()
 
         return progset_entry, 201
 
@@ -166,11 +90,13 @@ class Progset(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
+
+        progset_entry.get_targetpartypes()
+
         return progset_entry
 
     @swagger.operation(
@@ -181,7 +107,6 @@ class Progset(Resource):
         """,
         responseClass=ProgsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -195,6 +120,8 @@ class Progset(Resource):
 
         db.session.commit()
 
+        progset_entry.get_targetpartypes()
+
         return progset_entry
 
     @swagger.operation(
@@ -204,7 +131,6 @@ class Progset(Resource):
             if progset does not exist, returns an error.
         """
     )
-    @report_exception
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
@@ -234,7 +160,6 @@ class ProgsetData(Resource):
         """,
 
     )
-    @report_exception
     def get(self, project_id, progset_id):
         current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
@@ -251,7 +176,6 @@ class ProgsetData(Resource):
         summary='Uploads data for already created progset',
         parameters=file_upload_form_parser.swagger_parameters()
     )
-    @report_exception
     @marshal_with(file_resource)
     def post(self, project_id, progset_id):
         """
@@ -288,6 +212,71 @@ class ProgsetData(Resource):
             'result': 'Progset %s is updated' % progset_entry.name,
         }
         return reply
+
+
+class ProgsetParams(Resource):
+
+    @swagger.operation(
+        description='Get param/populations sets for the selected progset'
+    )
+    @marshal_with(param_fields)
+    def get(self, project_id, progset_id, parset_id):
+        from server.webapp.utils import load_progset, load_parset
+
+        progset_entry = load_progset(project_id, progset_id)
+        progset_be = progset_entry.hydrate()
+
+        parset_entry = load_parset(project_id, parset_id)
+        parset_be = parset_entry.hydrate()
+
+        param_names = set([p['param'] for p in progset_be.targetpars])
+        params = [{
+            'name': name,
+            'populations': [{
+                'pop': pop,
+                'programs': [{
+                    'name': program.name,
+                    'short_name': program.short,
+                } for program in progs ]
+            } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
+            'coverage': parset_be.pars[0][name].coverage,
+            'proginteract': parset_be.pars[0][name].proginteract
+        } for name in param_names]
+
+        return params
+
+
+class ProgsetEffects(Resource):
+
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        summary='Get List of existing Progset effects for the selected progset'
+    )
+    @marshal_with(progset_effects_fields)
+    def get(self, project_id, progset_id):
+        from server.webapp.utils import load_progset
+
+        progset_entry = load_progset(project_id, progset_id)
+        return progset_entry
+
+    @swagger.operation(
+        summary='Saves a list of Progset effects for the selected progset',
+        parameters=effect_parser.swagger_parameters()
+    )
+    @marshal_with(progset_effects_fields)
+    def put(self, project_id, progset_id):
+        from server.webapp.utils import load_progset
+
+        progset_entry = load_progset(project_id, progset_id)
+
+        args = effect_parser.parse_args()
+        progset_entry.effects = args.get('effects', [])
+
+        db.session.add(progset_entry)
+        db.session.commit()
+
+        return progset_entry
 
 
 class Programs(Resource):
@@ -360,7 +349,7 @@ class PopSize(Resource):
         result_entry = db.session.query(ResultsDb).filter_by(
             project_id=project_id, parset_id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).first()
         result_instance = result_entry.hydrate()  # TODO raise exception if none
-        years = range(int(result_instance.settings.start), int(result_instance.settings.end+1))
+        years = range(int(result_instance.settings.start), int(result_instance.settings.end + 1))
         popsizes = program_instance.gettargetpopsize(t=years, parset=parset_instance, results=result_instance)
         return {'popsizes': [{'year': year, 'popsize': popsize} for (year, popsize) in zip(years, popsizes)]}
 
@@ -441,7 +430,7 @@ class CostCoverageGraph(Resource):
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
+        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null').replace('None', '')
         return json.loads(json_string)
 
 

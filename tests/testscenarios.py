@@ -7,9 +7,10 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
-#'maxbudget',
+'standardscen',
+'maxbudget',
 '90-90-90'
+'VMMC'
 ]
 
 ##############################################################################
@@ -45,11 +46,12 @@ if 'standardscen' in tests:
     t = tic()
 
     print('Running standard scenarios test...')
-    from optima import Parscen, Budgetscen, Coveragescen
-    from optima.defaults import defaultproject
+    from optima import Parscen, Budgetscen, Coveragescen, defaults
     from numpy import array
     
-    P = defaultproject('concentrated')
+    P = defaults.defaultproject('concentrated')
+    pops = P.data['pops']['short']
+    malelist = [i for i in range(len(pops)) if P.data['pops']['male'][i]]
     
     caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
     
@@ -66,6 +68,24 @@ if 'standardscen' in tests:
                 'name': 'numtx',
                 'for': 'tot',
                 'startval': 3350.,
+                'startyear': 2015}]),
+
+        Parscen(name='Imagine that no-one gets circumcised',
+             parsetname='default',
+             pars=[{'endval': 0.,
+                'endyear': 2020,
+                'name': 'propcirc',
+                'for': malelist,
+                'startval': .97,
+                'startyear': 2015}]),
+
+        Parscen(name='Increase numpmtct',
+             parsetname='default',
+             pars=[{'endval': 0.9,
+                'endyear': 2020,
+                'name': 'numpmtct',
+                'for': ['tot'],
+                'startval': .44,
                 'startyear': 2015}]),
 
         Parscen(name='Full casual condom use',
@@ -156,13 +176,13 @@ if 'standardscen' in tests:
     
     # Store these in the project
     P.addscenlist(scenlist)
-#    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
-    P.scens[2].active = False # Turn off another scenario
+    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
+    P.scens[2].active = True # Turn off another scenario
     
-    # Turn off budget scenarios
-    for i,scen in P.scens.items():
-        if isinstance(scen, (Budgetscen, Coveragescen)):
-            P.scens[i].active = False
+#    # Turn off budget scenarios
+#    for i,scen in P.scens.items():
+#        if isinstance(scen, (Budgetscen, Coveragescen)):
+#            P.scens[i].active = False
     
     # Run the scenarios
     P.runscenarios() 
@@ -271,10 +291,10 @@ if 'maxbudget' in tests:
 
     print('Running maximum budget scenario test...')
     from optima import Budgetscen, odict
-    from optima.defaults import defaultproject
+    from optima import defaults
     
     ## Set up default project
-    P = defaultproject('generalized')
+    P = defaults.defaultproject('generalized')
     
     ## Define scenarios
     scenlist = [
@@ -289,3 +309,74 @@ if 'maxbudget' in tests:
     if doplot:
         from optima import pygui
         pygui(P.results[-1], toplot='default')
+
+
+
+## Set up project etc.
+if 'VMMC' in tests:
+    t = tic()
+
+    print('Running VMMC scenario test...')
+    from optima import Parscen, Budgetscen, findinds, defaults
+    
+    P = defaults.defaultproject('generalized')
+    pops = P.data['pops']['short']
+
+    malelist = findinds(P.data['pops']['male'])
+    caspships = P.parsets['default'].pars[0]['condcas'].y.keys()
+    
+    ## Define scenarios
+    scenlist = [
+        Parscen(name='Current conditions',
+                parsetname='default',
+                pars=[]),
+
+        Parscen(name='Imagine that no-one gets circumcised',
+             parsetname='default',
+             pars=[{'endval': 0.2,
+                'endyear': 2020,
+                'name': 'propcirc',
+                'for': malelist,
+                'startval': .85,
+                'startyear': 2015.2}]),
+        
+        Budgetscen(name='Default budget',
+              parsetname='default',
+              progsetname='default',
+              t=2015,
+              budget=P.progsets['default'].getdefaultbudget()),
+
+         Budgetscen(name='Scale up VMMC program',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={
+                      'Condoms': 1e7,
+                      'VMMC': 1e8,
+                      'FSW programs': 1e6,
+                      'MSM programs': 1e6,
+                      'ART':1e6,
+                      'PMTCT':1e6,
+                      'HTC workplace programs':2e7,
+                      'HTC mobile clinics':2e7,
+                      'HTC medical facilities':2e7
+                      }),
+
+        ]
+    
+    # Store these in the project
+    P.addscenlist(scenlist)
+    
+    # Run the scenarios
+    P.runscenarios()
+     
+    if doplot:
+        from optima import pygui, plotpeople, plotpars
+        ppl1 = P.results[-1].raw['Scale up VMMC program'][0]['people']
+        ppl2 = P.results[-1].raw['Imagine that no-one gets circumcised'][0]['people']
+        plotpeople(P, ppl1, start=0, end=None, pops=[-2], animate=False)
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+        pygui(P.results[-1], toplot='default')
+        
+
+    done(t)

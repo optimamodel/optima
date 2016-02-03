@@ -18,6 +18,7 @@ def geogui():
     from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp
     from PyQt4 import QtGui
     from pylab import figure, close
+    from time import time
     global geoguiwindow, guiportfolio, guiobjectives, objectiveinputs, projectslistbox, projectinfobox
     guiportfolio = None
     guiobjectives = defaultobjectives()
@@ -180,12 +181,14 @@ def geogui():
     def rungeo():
         ''' Actually run geospatial analysis!!! '''
         global guiportfolio, guiobjectives, objectiveinputs
+        starttime = time()
         for key in objectiveinputs.keys():
             guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
         BOCobjectives = dcp(guiobjectives)
         guiportfolio.genBOCs(BOCobjectives, maxtime=3) # WARNING temp time
         guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
+        warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
     
     
@@ -219,6 +222,7 @@ def geogui():
             formats['plain'] = workbook.add_format({})
             formats['bold'] = workbook.add_format({'bold': True})
             formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
+            colwidth = 30
             
             # Convert from a string to a 2D array
             outlist = []
@@ -235,13 +239,13 @@ def geogui():
                     thisformat = 'plain'
                     if col==0: thisformat = 'bold'
                     tmptxt = thistxt.lower()
-                    for word in ['budget','outcome','allocation','initial','optimal']:
+                    for word in ['budget','outcome','allocation','initial','optimal','coverage']:
                         if tmptxt.find(word)>=0: thisformat = 'bold'
                     if col in [2,3] and thisformat=='plain': thisformat = 'number'
                     if thisformat=='number':thistxt = float(thistxt)
                     worksheet.write(row, col, thistxt, formats[thisformat])
             
-            worksheet.set_column(0, 3, 20) # Make wider
+            worksheet.set_column(0, 3, colwidth) # Make wider
             workbook.close()
             
             warning('Results saved to "%s".' % filepath)
@@ -351,7 +355,7 @@ def geogui():
     objectivetext = odict()
     objectivetext['start']       = 'Start year:'
     objectivetext['end']         = 'End year:'
-    objectivetext['budget']      = 'Total budget ($m):'
+    objectivetext['budget']      = 'Total budget (mil.):'
     objectivetext['deathweight'] = 'Deaths weight:'
     objectivetext['inciweight']  = 'Infections weight:'
     

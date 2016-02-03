@@ -7,9 +7,9 @@
     <div class="section">
       <div class="row">
         <div class="cols-16">
-          <input type="button" class="btn" value="Create economic data template" ng-click="economicData('create')" style="margin:0 1% 1% 0">
-          <input type="button" class="btn" value="Upload economic data template" ng-click="economicData('upload')" style="margin:0 1% 1% 0">
-          <input type="button" class="btn" value="Remove economic data template" ng-click="economicData('remove')" style="margin:0 1% 1% 0" ng-disabled="!hasEconData">
+          <input type="button" class="btn" value="Create economic data template" ng-click="economicData('create')" style="margin:0 1% 1% 0" ng-disabled="missingData">
+          <input type="button" class="btn" value="Upload economic data template" ng-click="economicData('upload')" style="margin:0 1% 1% 0" ng-disabled="missingData">
+          <input type="button" class="btn" value="Remove economic data template" ng-click="economicData('remove')" style="margin:0 1% 1% 0" ng-disabled="!hasEconData || missingData">
         </div>
       </div>
     </div>
