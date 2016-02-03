@@ -52,7 +52,7 @@ People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cas
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
 Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random

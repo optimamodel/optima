@@ -16,7 +16,6 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
       fetchDefaultData();
       fetchEstimatedSize();
-      $scope.updateGraph();
     };
 
     $scope.addToCCData = function(ccDataForm) {
@@ -100,11 +99,17 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.updateGraph = function() {
-      $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/graph?t=2016&parset_id=' + $scope.vm.selectedParset.id)
-        .success(function (response) {
-          $scope.state.chartData = response;
-        });
+      var years = _.map($scope.state.cpData, function(data) {
+        return data.year;
+      });
+
+      if (years.length > 0) {
+        $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+          $scope.selectedProgram.id + '/costcoverage/graph?t=' + years.join(',') + '&parset_id=' + $scope.vm.selectedParset.id)
+          .success(function (response) {
+            $scope.state.chartData = response;
+          });
+      }
     };
 
     var fetchEstimatedSize = function() {
@@ -141,6 +146,7 @@ define(['./../../module', 'underscore'], function (module, _) {
                 saturationpercent_upper: response.params.saturation[index][1]
               })
             }
+            $scope.updateGraph();
           }
         });
     };

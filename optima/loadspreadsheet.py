@@ -6,7 +6,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.2 (2016jan27) by cliffk
+    Version: 1.3 (2016feb03) by cliffk
     """
     
     ###########################################################################
@@ -93,7 +93,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'vlmonfr', 'restarttreat', 'pdhivcare', 'successprop']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'freqvlmon', 'restarttreat', 'pdhivcare', 'successprop']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
