@@ -529,7 +529,6 @@ class GAOptim(object):
                 
                  
         ## Actually create the output
-        keylabels = {'death':'Total deaths', 'inci':'Total new infections'}
         output = ''
         output += 'Geospatial analysis results: minimize oucomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
@@ -538,7 +537,7 @@ class GAOptim(object):
         output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbudgetinit, overallbudgetopt)
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
         for key in self.objectives['keys']:
-            output += '\n\t' + keylabels[key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
+            output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
         for prj in range(nprojects):
             output += '\n'
             output += '\n'
@@ -548,7 +547,7 @@ class GAOptim(object):
             output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
             output += '\n\tOutcome:\t%0.0f\t%0.0f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
             for key in self.objectives['keys']:
-                output += '\n\t' + key.title() + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
+                output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
             output += '\n'
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():

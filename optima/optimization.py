@@ -4,7 +4,7 @@ Functions for running optimizations.
 Version: 2016feb02
 """
 
-from optima import OptimaException, Multiresultset, asd, runmodel, getresults, vec2budget # Main functions
+from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults, vec2budget # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr # Utilities
 from numpy import zeros, arange, array, isnan, maximum
 
@@ -58,25 +58,36 @@ class Optim(object):
 
 
 
-def defaultobjectives(which='outcome', verbose=2):
+def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
     """
     Define default objectives for the optimization. Some objectives are shared
     between outcome and money minimizations, while others are different. However,
     outcome minimization is performed as part of money minimization, so it's useful
     to keep all the keys for both. Still, ugly.
     
-    Version: 2016jan26
+    Version: 2016feb02
     """
 
     printv('Defining default objectives...', 3, verbose=verbose)
+    
+    
+    
+    if type(progset)==Programset:
+        defaultbudget = sum(progset.getdefaultbudget()[:])
+    elif project is not None:
+        if progset is None: progset = 0
+        defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
+    else:
+        defaultbudget = 1e6 # If can't find programs
 
     objectives = odict() # Dictionary of all objectives
     objectives['keys'] = ['death', 'inci'] # Define valid keys
+    objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
     if which=='outcome':
         objectives['base'] = None # "Baseline year to compare outcomes to"
         objectives['start'] = 2017 # "Year to begin optimization"
         objectives['end'] = 2030 # "Year to project outcomes to"
-        objectives['budget'] = 1e6 # "Annual budget to optimize"
+        objectives['budget'] = defaultbudget # "Annual budget to optimize"
         objectives['deathweight'] = 5 # "Death weighting"
         objectives['inciweight'] = 1 # "Incidence weighting"
         objectives['deathfrac'] = None # Fraction of deaths to get to
