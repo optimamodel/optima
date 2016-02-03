@@ -123,11 +123,11 @@
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
       </div>
     </div>
-    <div class="small_bordered_list" style="width: 18%;" ng-if="parameters.length > 0">
+    <div class="small_bordered_list" style="width: 18%;">
       <div class="option_list" style="height:70vh">
         <div style="margin-top: 20px">
-          <span style="width: 125px;display: inline-block;">Set max time</span>
-          <select ng-model="maxtime">
+          <span style="width: 100px;display: inline-block;">Set max time</span>
+          <select ng-model="state.maxtime">
             <option value="">Select Max Times</option>
             <option value="1">1 Second</option>
             <option value="2">2 Seconds</option>
@@ -141,7 +141,7 @@
         </div>
         <div>
           <div style="margin-top: 20px">
-            <span style="width: 125px;display: inline-block;">Start calibration</span>
+            <span style="width: 100px;display: inline-block;">Start calibration</span>
             <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
           </div>
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
@@ -150,7 +150,7 @@
         </div>
         <div style="margin-top: 20px">
           <div>
-            <span style="width: 125px;display: inline-block;">Save calibration</span>
+            <span style="width: 100px;display: inline-block;">Save calibration</span>
             <button class="btn __m">Save</button>
           </div>
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
@@ -158,14 +158,9 @@
           </div>
         </div>
         <div style="margin-top: 20px">
-          <span style="width: 125px;display: inline-block;">Reset</span>
-          <button class="btn __m">Reset</button>
+          <span style="width: 100px;display: inline-block;">Reset</span>
+          <button class="btn __m" ng-click="processGraphs()">Reset</button>
         </div>
-      </div>
-      <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
-        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>
-        <input type="button" value="Save" class="updateGraph btn" ng-click="processGraphs(true)"/>
-        <input type="button" value="Reset" class="btn" ng-click="resetParameters()"/>
       </div>
     </div>
   </div>

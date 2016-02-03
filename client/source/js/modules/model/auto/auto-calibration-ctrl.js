@@ -7,7 +7,7 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
     var defaultParameters;
     $scope.parsets = [];
     $scope.activeParset = undefined;
-    $scope.maxtime = '';
+    $scope.state = {maxtime: ''};
 
     // Check if current active project has spreadsheet uploaded for it.
     if (!activeProjectInfo.has_data) {
@@ -51,7 +51,6 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    // Sending parameters to re-process graphs for active parset
     $scope.processGraphs = function(shouldSave) {
       var data = {};
       if($scope.parameters) {
@@ -227,9 +226,13 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.startAutoCalibration = function() {
-      $http.post('/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/automatic_calibration', {
-          maxtime: $scope.maxtime
-        })
+      var data = {};
+      if ($scope.state.maxtime) {
+        data.maxtime = Number($scope.state.maxtime);
+      }
+      $http.post('/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/automatic_calibration',
+        data
+      )
         .success(function(response) {
           if(response.status === 'started') {
             console.log('response', response);
@@ -264,6 +267,8 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    // $scope.resetAutoCalibration
+    $scope.resetAutoCalibration = function() {
+      $scope.processGraphs();
+    }
   });
 });
