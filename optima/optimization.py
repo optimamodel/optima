@@ -65,15 +65,15 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
     outcome minimization is performed as part of money minimization, so it's useful
     to keep all the keys for both. Still, ugly.
     
-    Version: 2016feb02
+    Version: 2016feb03
     """
 
     printv('Defining default objectives...', 3, verbose=verbose)
     
-    
-    
     if type(progset)==Programset:
         defaultbudget = sum(progset.getdefaultbudget()[:])
+    if type(project)==Programset: # Not actually a project, but proceed anyway
+        defaultbudget = sum(project.getdefaultbudget()[:])
     elif project is not None:
         if progset is None: progset = 0
         defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
@@ -81,6 +81,56 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
         defaultbudget = 1e6 # If can't find programs
 
     objectives = odict() # Dictionary of all objectives
+    objectives['keys'] = ['death', 'inci'] # Define valid keys
+    objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
+    if which=='outcome':
+        objectives['base'] = None # "Baseline year to compare outcomes to"
+        objectives['start'] = 2017 # "Year to begin optimization"
+        objectives['end'] = 2030 # "Year to project outcomes to"
+        objectives['budget'] = defaultbudget # "Annual budget to optimize"
+        objectives['deathweight'] = 5 # "Death weighting"
+        objectives['inciweight'] = 1 # "Incidence weighting"
+        objectives['deathfrac'] = None # Fraction of deaths to get to
+        objectives['incifrac'] = None # Fraction of incidence to get to
+    elif which=='money':
+        objectives['base'] = 2015 # "Baseline year to compare outcomes to"
+        objectives['start'] = 2017 # "Year to begin optimization"
+        objectives['end'] = 2027 # "Year by which to achieve objectives"
+        objectives['budget'] = None # "Annual budget to optimize"
+        objectives['deathweight'] = None # "Death weighting"
+        objectives['inciweight'] = None # "Incidence weighting"
+        objectives['deathfrac'] = 0.5 # Fraction of deaths to get to
+        objectives['incifrac'] = 0.5 # Fraction of incidence to get to
+    else: 
+        raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
+    
+    return objectives
+
+
+def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
+    """
+    Define default objectives for the optimization. Some objectives are shared
+    between outcome and money minimizations, while others are different. However,
+    outcome minimization is performed as part of money minimization, so it's useful
+    to keep all the keys for both. Still, ugly.
+    
+    Version: 2016feb03
+    """
+
+    printv('Defining default objectives...', 3, verbose=verbose)
+    
+    if type(progset)==Programset: pass
+    if type(project)==Programset: progset = project
+    elif project is not None:
+        if progset is None: progset = 0
+        progset = project.progsets[progset]
+    else:
+        raise OptimaException('To define constraints, you must supply a program set as an input')
+
+    constraints = odict() # Dictionary of all constraints
+    constraints['min'] = odict() # Minimum budgets
+    constraints['max'] = odict() # Maximum budgets
+    
     objectives['keys'] = ['death', 'inci'] # Define valid keys
     objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
     if which=='outcome':

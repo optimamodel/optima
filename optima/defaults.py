@@ -284,9 +284,13 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
         
     allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash_transfers, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
-    if filterprograms:
-        finalprograms = [prog for prog in allprograms if prog.short in filterprograms]
-    
+    if filterprograms: # WARNING, could be made simpler probably :)
+        finalprograms = []
+        for name in filterprograms:
+            for prog in allprograms:
+                if prog.short==name:
+                    finalprograms.append(prog)
+            
     return finalprograms if filterprograms else allprograms
     
 
@@ -333,7 +337,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
 
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
@@ -455,7 +459,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
     
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST', 'Other'])
         
         # Modify target pars and pops
         R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
