@@ -19,7 +19,7 @@ defaultsmoothness = 1.0 # The number of years of smoothing to do by default
 ##  Edit there, then copy and paste from there into here; be sure to include header row
 #############################################################################################################################
 partable = '''
-nname	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract
+name	short	limits	by	partype	fittable	auto	cascade	coverage	visible	proginteract
 Initial HIV prevalence (%)	initprev	(0, 1)	pop	initprev	pop	init	0	None	0	None
 Population size	popsize	(0, 'maxpopsize')	pop	popsize	exp	popsize	0	None	0	None
 Force-of-infection (unitless)	force	(0, 'maxmeta')	pop	meta	pop	force	0	None	0	None
