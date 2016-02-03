@@ -24,8 +24,29 @@ define([
       $stateProvider
         .state('model', {
           url: '/model',
+          abstract: true,
+          template: '<div ui-view=""></div>'
+        })
+        .state('model.manual', {
+          url: '/manual',
           templateUrl: 'js/modules/model/calibration.html',
           controller: 'ModelCalibrationController',
+          resolve: {
+            parameters: function (Model) {
+              //return Model.getCalibrateParameters().$promise;
+            },
+            meta: function (Model) {
+              // return Model.getKeyDataMeta().$promise;
+            },
+            info: function (projectApiService) {
+              return projectApiService.getActiveProject();
+            }
+          }
+        })
+        .state('model.auto', {
+          url: '/auto',
+          templateUrl: 'js/modules/model/auto/auto-calibration.html',
+          controller: 'ModelAutoCalibrationController',
           resolve: {
             parameters: function (Model) {
               //return Model.getCalibrateParameters().$promise;

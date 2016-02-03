@@ -136,9 +136,11 @@ def project_exists(project_id, raise_exception=False):
     return count > 0
 
 
-def load_project(project_id, all_data=False, raise_exception=False):
+def load_project(project_id, all_data=False, raise_exception=False, db_session=None):
     from sqlalchemy.orm import undefer, defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
+    if not db_session:
+        db_session = db.session
     cu = current_user
     current_app.logger.debug("getting project {} for user {} (admin:{})".format(
         project_id,
@@ -151,9 +153,9 @@ def load_project(project_id, all_data=False, raise_exception=False):
         else:
             return None
     if cu.is_admin:
-        query = ProjectDb.query.filter_by(id=project_id)
+        query = db_session.query(ProjectDb).filter_by(id=project_id)
     else:
-        query = ProjectDb.query.filter_by(id=project_id, user_id=cu.id)
+        query = db_session.query(ProjectDb).filter_by(id=project_id, user_id=cu.id)
     if all_data:
         query = query.options(
             # undefer('model'),
@@ -503,10 +505,13 @@ def modify_program(project_id, progset_id, program_id, args, program_modifier):
     return result
 
 
-def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE):
+def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE,
+    db_session=None):
+    if not db_session:
+        db_session=db.session
     # find relevant parset for the result
     print("save_result(%s, %s, %s" % (project_id, parset_name, calculation_type))
-    project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
+    project_parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
     default_parset = [item for item in project_parsets if item.name == parset_name]
     if default_parset:
         default_parset = default_parset[0]
@@ -515,7 +520,7 @@ def save_result(project_id, result, parset_name='default', calculation_type = Re
     result_parset_id = default_parset.id
 
     # update results (after runsim is invoked)
-    project_results = db.session.query(ResultsDb).filter_by(project_id=project_id)
+    project_results = db_session.query(ResultsDb).filter_by(project_id=project_id)
 
     result_record = [item for item in project_results if
                      item.parset_id == result_parset_id and

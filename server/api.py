@@ -118,8 +118,8 @@ api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
-api.add_resource(ParsetsCalibration, '/api/parset/<uuid:parset_id>/calibration')
-api.add_resource(ParsetsAutomaticCalibration, '/api/parset/<uuid:parset_id>/automatic_calibration')
+api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetsData, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 app.register_blueprint(api_bp, url_prefix='')
 

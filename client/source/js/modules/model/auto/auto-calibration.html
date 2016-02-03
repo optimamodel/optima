@@ -1,0 +1,167 @@
+<script>
+  function format_xaxis() {
+    var axes = $('.mpld3-xaxis');
+    if (axes.length > 0 && !$(axes[0]).attr('data-pro')) {
+      $(axes).find('g.tick > text').each(function() {
+        $(this).text($(this).text().replace(',',''));
+      });
+      axes.attr('data-pro', true);
+    } else {
+      setTimeout(format_xaxis, 150);
+    }
+  }
+  function add_lines_to_legends() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro1')) {
+      svgGraphFigures.each(function() {
+        var paths = $(this).find('.mpld3-baseaxes > text');
+        if (paths) {
+          var legend_length = paths.length - 2;
+          var lines = $(this).find('.mpld3-axes > path');
+          var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+          $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+        }
+        $(this).attr('data-pro1', true);
+      });
+    } else {
+      setTimeout(add_lines_to_legends, 150);
+    }
+  }
+  function set_overflow_visible() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro2')) {
+      svgGraphFigures.each(function() {
+        $(this).css('overflow', 'visible');
+        $(this).attr('data-pro2', true);
+      });
+    } else {
+      setTimeout(set_overflow_visible, 150);
+    }
+  }
+  function fix_mouse_pointer() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro3')) {
+      svgGraphFigures.each(function () {
+        var that = this;
+        $(that).on('mouseover', function() {
+          $(that).find('.mpld3-coordinates').each(function () {
+            $(this).attr('y', parseInt($(that).attr('height')) + 7);
+          });
+          $(that).find('.mpld3-toolbar').each(function () {
+            $(this).remove();
+          });
+        });
+        $(this).attr('data-pro3', true);
+      });
+    } else {
+      setTimeout(fix_mouse_pointer, 150);
+    }
+  }
+  function remove_default_plugin() {
+    var svgGraphFigures = $('mpld3-toolbar');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro4')) {
+      svgGraphFigures.each(function () {
+        $(this).remove();
+        $(this).attr('data-pro4', true);
+      });
+    } else {
+      setTimeout(remove_default_plugin, 150);
+    }
+  }
+
+  function fix_graphs() {
+    format_xaxis();
+    add_lines_to_legends();
+    set_overflow_visible();
+    fix_mouse_pointer();
+    remove_default_plugin();
+  }
+
+  $(document).ready(function() {
+    fix_graphs();
+    $(document.body).on('click', '.updateGraph' ,function() {
+      fix_graphs();
+    });
+  });
+</script>
+<div class="rich" style="margin: 0 -25px;">
+  <div class="3">
+    <label for="programSet-selection">Select a parameter set:</label>
+  </div>
+  <div style="display: flex;justify-content: flex-start;">
+    <select id="programSet-selection"
+            name="programSet-selection"
+            class="updateGraph txbox"
+            ng-model="activeParset"
+            ng-change="getGraphs()"
+            ng-options="parset.name for parset in parsets"
+            style="width: 20%;">
+    </select>
+    <button ng-click="addParameterSet()" type="button" class="btn" style="margin-left:2%">New parameter set</button>
+    <button ng-click="copyParameterSet()" type="button" class="btn" style="margin-left:2%">Copy parameter set</button>
+    <button ng-click="renameParameterSet()" type="button" class="btn" style="margin-left:2%">Rename parameter set</button>
+    <button ng-click="downloadParameterSet()" type="button" class="btn" style="margin-left:2%">Download parameter set</button>
+    <button ng-click="uploadParameterSet()" type="button" class="btn" style="margin-left:2%">Upload parameter set</button>
+    <button ng-click="deleteParameterSet()" type="button" class="btn" style="margin-left:2%">Delete parameter set</button>
+  </div>
+
+  <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 70vh">  <!-- CK: maybe a more robust solution than 70vh -->
+    <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
+      <div class="option_list" style="height:70vh">
+        <div ng-repeat="selector in selectors" class="option">
+          <span><input type="checkbox" ng-model="selector.checked"/></span>
+          <span style="margin-left: 10px">{{selector.name}}</span>
+        </div>
+      </div>
+      <div style="display: flex;justify-content: center; margin-top: 25px">
+        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>
+      </div>
+    </div>
+    <div class="chart_wrapper">
+      <div ng-repeat="chart in calibrationChart" class="chart-container __small">
+        <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+      </div>
+    </div>
+    <div class="small_bordered_list" style="width: 18%;">
+      <div class="option_list" style="height:70vh">
+        <div style="margin-top: 20px">
+          <span style="width: 100px;display: inline-block;">Set max time</span>
+          <select ng-model="state.maxtime">
+            <option value="">Select Max Times</option>
+            <option value="1">1 Second</option>
+            <option value="2">2 Seconds</option>
+            <option value="5">5 Seconds</option>
+            <option value="10">10 Seconds</option>
+            <option value="20">20 Seconds</option>
+            <option value="30">30 Seconds</option>
+            <option value="40">40 Seconds</option>
+            <option value="50">50 Seconds</option>
+          </select>
+        </div>
+        <div>
+          <div style="margin-top: 20px">
+            <span style="width: 100px;display: inline-block;">Start calibration</span>
+            <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
+          </div>
+          <div style="font-style: italic;color: lightgreen;margin-top: 5px">
+            {{ statusMessage }}
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <div>
+            <span style="width: 100px;display: inline-block;">Save calibration</span>
+            <button class="btn __m">Save</button>
+          </div>
+          <div style="font-style: italic;color: lightgreen;margin-top: 5px">
+            {{ saveSuccessMessage }}
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <span style="width: 100px;display: inline-block;">Reset</span>
+          <button class="btn __m" ng-click="processGraphs()">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
