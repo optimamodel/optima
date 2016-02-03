@@ -236,7 +236,7 @@ def geogui():
                     thisformat = 'plain'
                     if col==0: thisformat = 'bold'
                     tmptxt = thistxt.lower()
-                    for word in ['budget','outcome','allocation','initial','optimal']:
+                    for word in ['budget','outcome','allocation','initial','optimal','coverage']:
                         if tmptxt.find(word)>=0: thisformat = 'bold'
                     if col in [2,3] and thisformat=='plain': thisformat = 'number'
                     worksheet.write(row, col, thistxt, formats[thisformat])
