@@ -9,11 +9,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-<<<<<<< HEAD
-Version: 2016feb01
-=======
 Version: 2016feb02
->>>>>>> develop
 """
 
 
