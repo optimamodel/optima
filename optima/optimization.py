@@ -137,11 +137,13 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
     for prog in progset.programs:
         constraints['name'][prog.short] = prog.name
         if prog.optimizable():
-            constraints['min'][prog.short] = 0
+            constraints['min'][prog.short] = 0.0
             constraints['max'][prog.short] = None
         else:
-            constraints['min'][prog.short] = 1
-            constraints['max'][prog.short] = 1
+            constraints['min'][prog.short] = 1.0
+            constraints['max'][prog.short] = 1.0
+    if 'ART' in constraints['min'].keys():
+        constraints['min']['ART'] = 1.0 # By default, don't let ART funding decrease
     
     return constraints
 
