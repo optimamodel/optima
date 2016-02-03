@@ -465,7 +465,7 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
@@ -483,7 +483,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
-    dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
+    if len(simpars['tvec'])>1: dt = simpars['tvec'][1] - simpars['tvec'][0] # Recalculate dt since must match tvec
     simpars['dt'] = dt  # Store dt
     if smoothness is None: smoothness = int(defaultsmoothness/dt)
     
@@ -495,7 +495,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
             try: 
-                simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness) # WARNING, want different smoothness for ART
+                if not(onlyvisible) or pars[key].visible: # Optionally only show user-visible parameters
+                    simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -741,7 +742,7 @@ class Parameterset(object):
         return None
 
 
-    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, verbose=2):
+    def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
         printv('Making model parameters...', 1, verbose)
         
@@ -750,7 +751,7 @@ class Parameterset(object):
         if isinstance(inds, (int, float)): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
-            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, verbose=verbose, name=self.name, uid=self.uid)
+            simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
         printv('...done making model parameters.', 2, verbose)
