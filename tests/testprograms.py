@@ -89,6 +89,13 @@ if 'makeprograms' in tests:
                   name='Prevention of mother-to-child transmission',
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
                   
+    VMMC = Program(short='VMMC',
+                  targetpars=[{'param': 'circum', 'pop': 'M 15+'}],
+                  targetpops=['M 15+'],
+                  category='Prevention',
+                  name='Voluntary medical male circumcision',
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})              
+                  
     # Testing methods of program class
     # 1. Adding a target parameter to a program
     HTC.addtargetpar({'param': 'hivtest', 'pop': 'M 15+'})
@@ -143,6 +150,10 @@ if 'makeprograms' in tests:
                              't': 2016.0,
                              'unitcost': (100,200)})
 
+    VMMC.costcovfn.addccopar({'saturation': (.5,.6),
+                             't': 2016.0,
+                             'unitcost': (15,25)})
+                             
     # 7. Overwrite parameters for defining cost-coverage function.
     HTC.costcovfn.addccopar({'t': 2016.0,
                              'unitcost': (20,30)},
@@ -183,14 +194,11 @@ if 'makeprograms' in tests:
     plotoptions['xupperlim'] = 2e9
     plotoptions['perperson'] = False
 
-    from numpy import linspace
-    xlinedata = linspace(0,1e8,100)
-    ART.getcoverage(x=xlinedata, t=[2014, 2015], parset=P.parsets['default'], total=True, proportion=False, toplot=True, bounds=None)
-
     if doplot:
         ART.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
         HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
         PMTCT.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
+        VMMC.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
 
     print('Running make programs set test...')
 

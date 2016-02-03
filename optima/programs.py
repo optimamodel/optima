@@ -626,11 +626,12 @@ class Program(object):
                 print('Warning, could not find settings for program "%s", using default' % self.name)
                 settings = Settings()
         
-        npops = len(parset.pars[ind]['popkeys'])        
+        npops = len(parset.pars[ind]['popkeys'])
 
         # If it's a program for everyone... 
         if not self.criteria['pregnant']:
             if self.criteria['hivstatus']=='allstates':
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
     
             else: # If it's a program for HIV+ people, need to find the number of positives
@@ -641,7 +642,6 @@ class Program(object):
                         results = runmodel(pars=parset.pars[ind], settings=settings)
                         parset.resultsref = results.uid # So it doesn't have to be rerun
                 
-#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
                 initpopsizes = zeros((npops,len(t))) #array([[0]*len(t)]*len(parset.pars[ind]['popkeys'])) # This is stupid
                 for yrno,yr in enumerate(t):
@@ -664,8 +664,8 @@ class Program(object):
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
-        for popnumber, pop in enumerate(parset.pars[ind]['popkeys']):
-            popsizes[pop] = initpopsizes[popnumber,:]
+        for popno, pop in enumerate(parset.pars[ind]['popkeys']):
+            popsizes[pop] = initpopsizes[popno,:]
         for targetpop in self.targetpops:
             if targetpop.lower() in ['total','tot','all']:
                 targetpopsize[targetpop] = sum(popsizes.values())
