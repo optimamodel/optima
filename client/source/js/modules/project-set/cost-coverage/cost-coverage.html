@@ -1,6 +1,10 @@
 <div class="page rich c-cost-coverage">
 
-  <div style="display: flex">
+  <div ng-if="vm.programSetList && vm.programSetList.length === 0">
+    You don't have any programs. <a ui-sref="project-set.manageProgramSet"> Click here to add one </a>
+  </div>
+
+  <div style="display: flex" ng-if="vm.programSetList && vm.programSetList.length> 0">
       <span style="width: 25%;margin-right: 10%">
         <label>
           Select a program set: <br>
