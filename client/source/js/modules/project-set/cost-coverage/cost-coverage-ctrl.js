@@ -1,7 +1,7 @@
 define(['./../module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, $modal, projectApiService) {
+  module.controller('ModelCostCoverageController', function ($scope, toastr, $http, $state, activeProject, modalService, $modal, projectApiService) {
 
     var vm = this;
 
@@ -239,6 +239,7 @@ define(['./../module', 'underscore'], function (module, _) {
           });
         }
       });
+
       console.log('currentParsetEffect', currentParsetEffect);
     }
 
@@ -261,11 +262,10 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function submit() {
-      // if (vm.TableForm.$invalid) {
-      //   console.error('form is invalid!');
-
-      //   return false;
-      // }
+      if (vm.TableForm.$invalid) {
+        console.error('form is invalid!');
+        return false;
+      }
 
       console.log('submitting', vm.existingEffects);
 
@@ -284,6 +284,7 @@ define(['./../module', 'underscore'], function (module, _) {
       $http.put('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/effects', vm.existingEffects).success(function (result) {
         console.log('result is', result);
         vm.existingEffects = result;
+        toastr.success('The parameters were successfully saved!', 'Success');
       });
     }
 
