@@ -163,8 +163,9 @@ class ProjectDb(db.Model):
                 project_entry.addprogset(progset_entry.name, progset_entry)
         if self.scenarios:
             for scenario_record in self.scenarios:
-                scenario_entry = scenario_record.hydrate()
-                project_entry.addscen(scenario_entry.name, scenario_entry)
+                if scenario_record.active:
+                    scenario_entry = scenario_record.hydrate()
+                    project_entry.addscen(scenario_entry.name, scenario_entry)
 
         return project_entry
 
@@ -243,6 +244,7 @@ class ProjectDb(db.Model):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
+        db.session.query(ScenariosDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
