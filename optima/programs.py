@@ -853,8 +853,8 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if not ccopar.get(ccopartype): 
-                        printv('WARNING: no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 1, verbose)
+                    if not ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+                        printv('Warning, no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 3, verbose)
                         ccopar[ccopartype] = (0,0)
                     self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
@@ -1041,7 +1041,7 @@ def vec2budget(progset=None, budgetvec=None, indices=None):
     budget = progset.getdefaultbudget() # Returns an odict with the correct structure
     try:
         for k in range(len(budgetvec)):
-            budget[indices[k]] = [budgetvec[k]] # Make this budget value a list so has len()
+            budget[indices[k]] = budgetvec[k] # Make this budget value a list so has len()
     except:
         errormsg = 'Could not convert budget vector into budget. Budget:\n%s\nBudgetvec:"%s"' % (budget, budgetvec)
         raise OptimaException(errormsg)

@@ -6,7 +6,7 @@ Version: 2016feb02
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults, vec2budget # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr # Utilities
-from numpy import zeros, arange, isnan, maximum
+from numpy import zeros, arange, isnan, maximum, array
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -123,7 +123,7 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
     printv('Defining default objectives...', 3, verbose=verbose)
     
     if type(progset)==Programset: pass
-    if type(project)==Programset: progset = project
+    elif type(project)==Programset: progset = project
     elif project is not None:
         if progset is None: progset = 0
         progset = project.progsets[progset]
@@ -134,7 +134,7 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
     constraints['max'] = odict() # Maximum budgets
-    for prog in progset.programs:
+    for prog in progset.programs.values():
         constraints['name'][prog.short] = prog.name
         if prog.optimizable():
             constraints['min'][prog.short] = 0.0
@@ -270,7 +270,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     totalbudget = objectives['budget']
     progkeys = progset.programs.keys()
     optiminds = findinds(progset.optimizable())
-    fixedinds = findinds(~progset.optimizable())
+    fixedinds = findinds(1-array(progset.optimizable()))
     nprogs = len(optiminds) # Only count optimizable programs
     budgetvec = progset.getdefaultbudget()[:]
     
@@ -405,7 +405,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     
     "tolerance" specifies how close the funding amount needs to converge.
     
-    Version: 2016jan26
+    Version: 2016feb03
     '''
     
      # Being and check vital inputs    
