@@ -192,7 +192,7 @@ def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objecti
         return outcome
 
 
-def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
+def constrainbudget(origbudget, total=None, limits=None, tolerance=1e-3):
     """ Take an unnormalized/unconstrained budget and normalize and constrain it """
     normbudget = dcp(origbudget)
     
@@ -216,7 +216,7 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
             limhigh[p] = True
     
     # Too high
-    while sum(normbudget) > total+eps:
+    while sum(normbudget) > total+tolerance:
         overshoot = sum(normbudget) - total
         toomuch = sum(normbudget[~limlow]) / float((sum(normbudget[~limlow]) - overshoot))
         for p in proginds[~limlow]:
@@ -227,7 +227,7 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
             normbudget[p] = proposed
         
     # Too low
-    while sum(normbudget) < total-eps:
+    while sum(normbudget) < total-tolerance:
         undershoot = total - sum(normbudget)
         toolittle = (sum(normbudget[~limhigh]) + undershoot) / float(sum(normbudget[~limhigh]))
         for p in proginds[~limhigh]:
