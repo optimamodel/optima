@@ -1,7 +1,7 @@
 define(['./../module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
+  module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, $modal, projectApiService) {
 
     var vm = this;
 
@@ -49,7 +49,7 @@ define(['./../module', 'underscore'], function (module, _) {
         return [];
       }
       console.log('programs', currentPop[0].programs);
-      return _.map(currentPop[0].programs, function(program) {
+      return _.map(currentPop[0].programs, function (program) {
         return {
           name: program.short_name
         }
@@ -327,6 +327,16 @@ define(['./../module', 'underscore'], function (module, _) {
     $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
       vm.parsets = response.parsets;
     });
+
+    var openParameterScenariosModal = function () {
+      return $modal.open({
+        templateUrl: 'js/modules/create-program-scenario-modal/create-program-scenario-modal.html',
+        controller: 'CreateProgramScenarioModalController',
+        resolve: {}
+      });
+    }
+
+    openParameterScenariosModal()
 
   });
 

@@ -8,20 +8,22 @@ define([
   '../common/export-all-data',
   '../validations/more-than-directive',
   '../validations/less-than-directive',
-  '../validations/year-directive'
+  '../validations/year-directive',
+  '../create-program-scenario-modal/create-program-scenario-modal-ctrl'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.project-set', [
-    'app.export-all-charts',
-    'app.export-all-data',
-    'app.resources.model',
-    'app.ui.type-selector',
-    'ui.router',
-    'app.validations.more-than',
-    'app.validations.less-than',
-    'app.validations.year'
-  ])
+      'app.export-all-charts',
+      'app.export-all-data',
+      'app.resources.model',
+      'app.ui.type-selector',
+      'ui.router',
+      'app.validations.more-than',
+      'app.validations.less-than',
+      'app.validations.year',
+      'app.program-scenario-modal'
+    ])
     .config(function ($stateProvider) {
       $stateProvider
         .state('project-set', {
@@ -34,7 +36,7 @@ define([
           templateUrl: 'js/modules/project-set/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
-            currentProject: function(projectApiService) {
+            currentProject: function (projectApiService) {
               return projectApiService.getActiveProject();
             }
           }

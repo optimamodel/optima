@@ -1,0 +1,60 @@
+<div class="c-prosce-modal">
+  <div class="modal-header c-prosce-modal__header"> CREATE A PARAMETER SCENARIO</div>
+
+  <form class="modal-body c-prosce-modal__body">
+
+    <!-- Name -->
+    <div class="c-prosce-modal__field-wrap">
+      <label class="c-prosce-modal__label"> Name </label>
+      <input class="c-prosce-modal__input txbox" type="text"/>
+    </div>
+
+    <!--  Select a parameter set to use as baseline  -->
+    <div class="c-prosce-modal__selects u-layout-horizontal">
+      <div class="c-prosce-modal__field-wrap">
+        <label class="c-prosce-modal__label"> Select a parameter set to use as baseline </label>
+        <select class="c-prosce-modal__input txbox" type="text">
+          <option value=""> -- Select a parameter --</option>
+          <option value="par1"> Parameter 1</option>
+          <option value="par2"> Parameter 2</option>
+          <option value="par3"> Parameter 3</option>
+        </select>
+      </div>
+
+      <!--  Select a program set to use as baseline  -->
+      <div class="c-prosce-modal__field-wrap">
+        <label class="c-prosce-modal__label"> Select a program set to use as baseline </label>
+        <select class="c-prosce-modal__input txbox" type="text">
+          <option value=""> -- Select a parameter --</option>
+          <option value="par1"> Parameter 1</option>
+          <option value="par2"> Parameter 2</option>
+          <option value="par3"> Parameter 3</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="c-prosce-modal__checkboxes u-layout-horizontal">
+      <div class="c-prosce-modal__checkbox-wrap">
+        <input type="checkbox" name="checkbox" id="set-budget-checkbox" value="value" class="c-prosce-modal__checkbox-input">
+        <label for="set-budget-checkbox" class="c-prosce-modal__checkbox-class">Set budget</label>
+      </div>
+
+      <div class="c-prosce-modal__checkbox-wrap">
+        <input type="checkbox" name="checkbox" id="set-coverage-checkbox" value="value" class="c-prosce-modal__checkbox-input">
+        <label for="set-coverage-checkbox" class="c-prosce-modal__checkbox-class">Set coverage goals</label>
+      </div>
+
+    </div>
+
+    <div class="c-prosce-modal__buttons u-layout-horizontal">
+      <button class="btn __l __white c-prosce-modal__button c-prosce-modal__button--dismiss" ng-click="vm.addYear(effect)">
+        Dismiss
+      </button>
+      <button class="btn __l c-prosce-modal__button c-prosce-modal__button--save" ng-click="vm.addYear(effect)">
+        Save
+      </button>
+    </div>
+
+  </form>
+
+</div>
