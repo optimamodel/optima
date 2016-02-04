@@ -11,12 +11,12 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpData: [],
       estdSize: []
     };
+    $scope.Math = window.Math;
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
       fetchDefaultData();
       fetchEstimatedSize();
-      $scope.updateGraph();
     };
 
     $scope.addToCCData = function(ccDataForm) {
@@ -66,6 +66,8 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpDataForm.year.$setValidity("valid", isValidCPDataYear());
 
       if(!cpDataForm.$invalid) {
+        $scope.state.newCPData.saturationpercent_lower /= 100;
+        $scope.state.newCPData.saturationpercent_upper /= 100;
         $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
           $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
           .success(function () {
@@ -100,11 +102,28 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.updateGraph = function() {
-      $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/graph?t=2016&parset_id=' + $scope.vm.selectedParset.id)
-        .success(function (response) {
-          $scope.state.chartData = response;
-        });
+      var years = _.map($scope.state.cpData, function(data) {
+        return data.year;
+      });
+
+      if (years.length > 0) {
+        var url = '/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+          $scope.selectedProgram.id + '/costcoverage/graph?t=' + years.join(',') + '&parset_id=' + $scope.vm.selectedParset.id;
+        if ($scope.state.remarks) {
+          $scope.state.displayCaption = angular.copy($scope.state.remarks);
+          url += '&caption=' + encodeURIComponent($scope.state.remarks);
+        }
+        if ($scope.state.maxFunc) {
+          url += '&xupperlim=' + $scope.state.maxFunc;
+        }
+        if ($scope.state.dispCost) {
+          url += '&perperson=1'
+        }
+        $http.get(url)
+          .success(function (response) {
+            $scope.state.chartData = response;
+          });
+      }
     };
 
     var fetchEstimatedSize = function() {
@@ -115,7 +134,7 @@ define(['./../../module', 'underscore'], function (module, _) {
             $scope.state.estdSize = {};
             response.popsizes.forEach(function(popSize){
               if(popSize.popsize) {
-                $scope.state.estdSize[popSize.year] = (Math.round(popSize.popsize * 100)) / 100;
+                $scope.state.estdSize[popSize.year] = Math.round(popSize.popsize);
               }
             });
           }
@@ -141,6 +160,7 @@ define(['./../../module', 'underscore'], function (module, _) {
                 saturationpercent_upper: response.params.saturation[index][1]
               })
             }
+            $scope.updateGraph();
           }
         });
     };

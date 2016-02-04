@@ -1,7 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
-
+console.log('loaded');
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector, $state) {
+      console.log('Called');
 
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.

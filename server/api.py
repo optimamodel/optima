@@ -71,6 +71,7 @@ from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetD
 from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
                                                      ParsetsAutomaticCalibration)
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
+from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -92,6 +93,9 @@ api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
+api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
+api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/results')
+api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scenario_id>')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
 api.add_resource(CostCoverage,
@@ -114,8 +118,8 @@ api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
-api.add_resource(ParsetsCalibration, '/api/parset/<uuid:parset_id>/calibration')
-api.add_resource(ParsetsAutomaticCalibration, '/api/parset/<uuid:parset_id>/automatic_calibration')
+api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
+api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetsData, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
 app.register_blueprint(api_bp, url_prefix='')
 

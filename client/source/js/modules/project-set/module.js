@@ -11,6 +11,7 @@ define([
   '../validations/less-than-directive',
   '../validations/year-directive',
   '../validations/limit-value-directive',
+  '../parameter-scenarios-modal/parameter-scenarios-modal'
 ], function (angular) {
   'use strict';
 
@@ -24,7 +25,8 @@ define([
     'app.validations.less-than',
     'app.validations.limit',
     'app.validations.year',
-    'toastr'
+    'toastr',
+    'app.parameter-scenarios-modal'
   ])
     .config(function ($stateProvider) {
       $stateProvider

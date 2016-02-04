@@ -127,7 +127,7 @@ define(['./../module', 'underscore'], function (module, _) {
       }
       console.log('currentParsetEffect', currentParsetEffect);
 
-      _.each(vm.selectedParameter.populations, function (pop) {
+      _.each(vm.currentParameter.populations, function (pop) {
         var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short, pop: pop.pop});
         if (paramPops.length === 0) {
           currentParsetEffect.parameters.push({

@@ -86,7 +86,7 @@
 </script>
 
 <div class="grid" style="margin: 0 -25px;">
-  <h1>Calibrate model &#8594; Manual calibration</h1>
+  <h1>Calibrate model &#8594; Automatic calibration</h1>
 </div>
 
 <div class="rich" style="margin: 0 -25px;">
@@ -128,17 +128,42 @@
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
       </div>
     </div>
-    <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
+    <div class="small_bordered_list" style="width: 18%;">
       <div class="option_list" style="height:70vh">
-        <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
-          <span style="width: 45%">{{parameter.label}}</span>
-          <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
+        <span style="width: 200px;display: inline-block;"><b>Automatic calibration</b></span>
+        <div style="margin-top: 20px">
+
+          <select ng-model="state.maxtime">
+            <option value="">Select max time</option>
+            <option value="10">10 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="300">5 minutes</option>
+            <option value="600">10 minutes</option>
+          </select>
         </div>
-      </div>
-      <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
-        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/> <!-- WARNING, automatically saves! -->
-        <input type="button" value="Save" class="updateGraph btn" ng-click="processGraphs(true)"/>
-        <input type="button" value="Reset" class="btn" ng-click="resetParameters()"/>
+        <div>
+          <div style="margin-top: 20px">
+            <!--<span style="width: 100px;display: inline-block;"></span>-->
+            <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
+          </div>
+          <div style="font-style: italic;color: lightgreen;margin-top: 5px">
+            {{ statusMessage }}
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <div>
+            <!--<span style="width: 100px;display: inline-block;">Save calibration</span>-->
+            <button class="btn __m" ng-click="saveAutoCalibration()" ng-if="parameters && result_id">Save</button>
+          </div>
+          <div style="font-style: italic;color: lightgreen;margin-top: 5px">
+            {{ saveSuccessMessage }}
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+          <!--<span style="width: 100px;display: inline-block;"></span>-->
+          <button class="btn __m" ng-click="processGraphs()">Reset</button>
+        </div>
       </div>
     </div>
   </div>

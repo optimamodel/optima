@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016jan30
+Version: 2016feb02
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
@@ -23,11 +23,11 @@ class Settings():
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-        self.healthstates = ['uncirc', 'circ', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
+        self.healthstates = ['susreg', 'circ', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
         self.ncd4 = len(self.hivstates)
         
         # Health states by diagnosis
-        self.uncirc = arange(0,1) # Uninfected, uncircumcised
+        self.susreg = arange(0,1) # Regular uninfected, may be uncircumcised
         self.circ   = arange(1,2) # Uninfected, circumcised
         self.undx   = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
         self.dx     = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
@@ -48,7 +48,7 @@ class Settings():
         self.lt50  = 7 + spacing
 
         # Combined states
-        self.sus       = cat([self.uncirc, self.circ]) # All uninfected
+        self.sus       = cat([self.susreg, self.circ]) # All uninfected
         self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
         self.allcare   = cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
         self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment

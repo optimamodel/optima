@@ -8,14 +8,15 @@ from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import SubParser, secure_filename_input, AllowedSafeFilenameStorage
+from server.webapp.inputs import (SubParser, secure_filename_input, AllowedSafeFilenameStorage,
+                                  Json as JsonInput)
 
 from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
                                  upload_dir_user, save_result)
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
@@ -184,11 +185,13 @@ calibration_fields = {
     "parset_id": Uuid,
     "parameters": Json,
     "graphs": Json,
-    "selectors": Json
+    "selectors": Json,
+    "result_id": Uuid,
 }
 
 calibration_parser = RequestParser()
 calibration_parser.add_argument('which', location='args', default=None, action='append')
+calibration_parser.add_argument('autofit', location='args', default=False, type=bool)
 
 
 calibration_update_parser = RequestParser()
@@ -196,6 +199,14 @@ calibration_update_parser.add_arguments({
     'which': {'default': None, 'action': 'append'},
     'parameters': {'required': True, 'type': dict, 'action': 'append'},
     'doSave': {'default': False, 'type': bool, 'location': 'args'},
+    'autofit': {'default': False, 'type': bool, 'location': 'args'}
+})
+
+
+parset_save_with_autofit_parser = RequestParser()
+parset_save_with_autofit_parser.add_arguments({
+    'parameters': {'type': JsonInput, 'required': True, 'action': 'append'},
+    'result_id': {'type': uuid.UUID, 'required': True},
 })
 
 
@@ -243,17 +254,27 @@ class ParsetsCalibration(Resource):
     )
     @report_exception
     @marshal_with(calibration_fields, envelope="calibration")
-    def get(self, parset_id):
-        current_app.logger.debug("/api/parsets/{}/calibration".format(parset_id))
+    def get(self, project_id, parset_id):
+        current_app.logger.debug("/api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
         args = calibration_parser.parse_args()
         which = args.get('which')
+        autofit = args.get('autofit', False)
+        print "autofit", autofit
 
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_entry is None:
-            raise ParsetDoesNotExist(id=parset_id)
-
+        if not autofit:
+            project_entry = load_project(project_id, raise_exception=True)
+            project_instance = project_entry.hydrate()
+        else: # todo bail out if no working project
+            wp = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
+            project_instance = op.loads(wp.project)
+        
+        parset_instance = [project_instance.parsets[item] for item in project_instance.parsets
+            if project_instance.parsets[item].uid == parset_id]
+        if not parset_instance:
+            raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
+        else:
+            parset_instance = parset_instance[0]
         # get manual parameters
-        parset_instance = parset_entry.hydrate()
         mflists = parset_instance.manualfitlists()
         parameters = [{"key": key, "label": label, "subkey": subkey, "value": value, "type": ptype}
                       for (key, label, subkey, value, ptype) in
@@ -261,12 +282,10 @@ class ParsetsCalibration(Resource):
         # REMARK: manualfitlists() in parset returns the lists compatible with usage on BE,
         # but for FE we prefer list of dicts
 
-        project_entry = load_project(parset_entry.project_id, raise_exception=True)
-        project_instance = project_entry.hydrate()
-        result_entry = [item for item in project_entry.results if
-                        item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
+        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
+        result_entry = db.session.query(ResultsDb).filter_by(parset_id=parset_id, calculation_type=calculation_type)
         if result_entry:
-            result = result_entry[0].hydrate()
+            result = result_entry[-1].hydrate()
         else:
             simparslist = parset_instance.interp()
             result = project_instance.runsim(simpars=simparslist)
@@ -279,21 +298,22 @@ class ParsetsCalibration(Resource):
             "parset_id": parset_id,
             "parameters": parameters,
             "graphs": graphs,
-            "selectors": selectors
+            "selectors": selectors,
+            "result_id": result_entry[-1].id if result_entry else None
         }
 
     @report_exception
     @marshal_with(calibration_fields, envelope="calibration")
-    def put(self, parset_id):
-        current_app.logger.debug("PUT /api/parsets/{}/calibration".format(parset_id))
+    def put(self, project_id, parset_id):
+        current_app.logger.debug("PUT /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
         args = calibration_update_parser.parse_args()
         parameters = args.get('parameters', [])
         which = args.get('which')
         doSave = args.get('doSave')
-        # TODO save if doSave=true
+        autofit = args.get('autofit', False)
 
         parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_entry is None:
+        if parset_entry is None or parset_entry.project_id!=project_id:
             raise ParsetDoesNotExist(id=parset_id)
 
         # get manual parameters
@@ -311,6 +331,7 @@ class ParsetsCalibration(Resource):
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
         result = project_instance.runsim(simpars=simparslist)
+        result_entry = None
 
         if doSave:  # save the updated results
             parset_entry.pars = op.saves(parset_instance.pars)
@@ -319,7 +340,7 @@ class ParsetsCalibration(Resource):
             result_entry = [item for item in project_entry.results if
                             item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
             if result_entry:
-                result_entry = result_entry[0]
+                result_entry = result_entry[-1]
                 result_entry.blob = op.saves(result)
             else:
                 result_entry = ResultsDb(
@@ -339,12 +360,53 @@ class ParsetsCalibration(Resource):
             "parset_id": parset_id,
             "parameters": args['parameters'],
             "graphs": graphs,
-            "selectors": selectors
+            "selectors": selectors,
+            "result_id": result_entry.id if result_entry is not None else None
+        }
+
+    @report_exception
+    @marshal_with(calibration_fields, envelope="calibration")
+    def post(self, project_id, parset_id):
+        current_app.logger.debug("POST /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
+        args = parset_save_with_autofit_parser.parse_args()
+        parameters = args['parameters']
+
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_entry is None or parset_entry.project_id != project_id:
+            raise ParsetDoesNotExist(id=parset_id)
+
+        # get manual parameters
+        parset_instance = parset_entry.hydrate()
+        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
+        for param in parameters:
+            mflists['keys'].append(param['key'])
+            mflists['subkeys'].append(param['subkey'])
+            mflists['types'].append(param['type'])
+            mflists['labels'].append(param['label'])
+            mflists['values'].append(param['value'])
+        parset_instance.update(mflists)
+
+        parset_entry.pars = op.saves(parset_instance.pars)
+        parset_entry.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.add(parset_entry)
+        ResultsDb.query.filter_by(parset_id=parset_id, project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        ResultsDb.query.filter_by(id=args['result_id']).first()
+        result_entry = ResultsDb.query.filter_by(id=args['result_id']).first()
+        result_entry.parset_id = parset_id
+        result_entry.project_id = project_id
+        result_entry.calculation_type = ResultsDb.CALIBRATION_TYPE
+        db.session.add(result_entry)
+        db.session.commit()
+
+        return {
+            "parset_id": parset_id,
+            "parameters": args['parameters'],
+            "result_id": result_entry.id
         }
 
 
 manual_calibration_parser = RequestParser()
-manual_calibration_parser.add_argument('maxtime', required=False, default=60)
+manual_calibration_parser.add_argument('maxtime', required=False, type=int, default=60)
 
 
 class ParsetsAutomaticCalibration(Resource):
@@ -353,26 +415,37 @@ class ParsetsAutomaticCalibration(Resource):
         summary='Launch auto calibration for the selected parset',
         parameters=manual_calibration_parser.swagger_parameters()
     )
-    def post(self, parset_id):
-        from server.webapp.utils import load_project
+    @report_exception
+    def post(self, project_id, parset_id):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         from server.webapp.dbmodels import ParsetsDb
 
         args = manual_calibration_parser.parse_args()
-
-        # FixMe: use load_parset once the branch having it is merged
         parset_entry = ParsetsDb.query.get(parset_id)
         parset_name = parset_entry.name
 
-        project_id = parset_entry.project_id
+        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, parset_id, 'autofit')
 
-        can_start, can_join, work_type = start_or_report_calculation(db.session, parset_entry.project_id, parset_id, 'autofit')
-
+        result = {'can_start': can_start, 'can_join': can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
         if not can_start or not can_join:
-            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 303
+            result['status'] = 'running'
+            return result, 208
         else:
             run_autofit.delay(project_id, parset_name, args['maxtime'])
-            return {'can_start':can_start, 'can_join':can_join, 'work_type': work_type}, 201
+            result['status'] = 'started'
+            result['maxtime'] = args['maxtime']
+            return result, 201
+
+    @report_exception
+    def get(self, project_id, parset_id):
+        from server.webapp.tasks import check_calculation_status
+        from server.webapp.dbmodels import ParsetsDb
+
+        parset_entry = ParsetsDb.query.get(parset_id)
+        project_id = parset_entry.project_id
+
+        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, parset_id, 'autofit')
+        return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
 
 
 file_upload_form_parser = RequestParser()

@@ -1,3 +1,7 @@
+<div class="grid" style="margin:0">
+  <h1> Define programs &#8594; Define cost and outcome functions </h1>
+</div>
+
 <div class="page rich c-cost-coverage">
 
   <div ng-if="vm.programSetList && vm.programSetList.length === 0">
@@ -59,10 +63,10 @@
 
       <form name="vm.TableForm" class="c-populations" novalidate ng-if="vm.selectedParameter!==undefined">
         <div ng-repeat="parset in vm.existingEffects.effects" ng-if="parset.parset === vm.selectedParset.id">
-          <div class="c-population-wrap u-layout-vertical" ng-repeat="effect in parset.parameters" ng-if="effect.name === vm.selectedParameter.short">
-            <div class="c-population-form__title">{{vm.getPopulationTitle(effect.pop)}}</div>
+          <div class="c-population-wrap o-form__wrap u-layout-vertical" ng-repeat="effect in parset.parameters" ng-if="effect.name === vm.selectedParameter.short">
+            <div class="c-population-form__title o-form__title">{{vm.getPopulationTitle(effect.pop)}}</div>
 
-            <div class="c-population-form" ng-repeat="year in effect.years track by $index">
+            <div class="c-population-form o-card" ng-repeat="year in effect.years track by $index">
 
               <table class="c-table">
 
@@ -146,7 +150,7 @@
                 </tr>
                 </tbody>
               </table>
-              <div class="c-population-form__delete" ng-click="vm.deleteYear(effect, $index)" ng-if="effect.years.length > 1">
+              <div class="c-population-form__delete o-card__delete" ng-click="vm.deleteYear(effect, $index)" ng-if="effect.years.length > 1">
                 x
               </div>
             </div>

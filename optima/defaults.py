@@ -79,7 +79,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     VMMC = Program(short='VMMC',
-                  targetpars=[{'param': 'circum', 'pop': male} for male in malelist],
+                  targetpars=[{'param': 'numcirc', 'pop': male} for male in malelist],
                   targetpops=malelist,
                   category='Prevention',
                   name='Voluntary medical male circumcision',
@@ -108,7 +108,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   
     OST = Program(short='OST',
                   targetpars=[{'param': 'numost', 'pop': 'tot'}],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   category='Prevention',
                   name='Opiate substitution therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
@@ -148,14 +148,14 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     
     ART = Program(short='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   category='Care and treatment',
                   name='Antiretroviral therapy',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   category='Care and treatment',
                   name='Prevention of mother-to-child transmission',
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
@@ -284,8 +284,12 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
         
     allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash_transfers, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
-    if filterprograms:
-        finalprograms = [prog for prog in allprograms if prog.short in filterprograms]
+    if filterprograms: # WARNING, could be made simpler probably :)
+        finalprograms = []
+        for name in filterprograms:
+            for prog in allprograms:
+                if prog.short==name:
+                    finalprograms.append(prog)
     
     return finalprograms if filterprograms else allprograms
     
@@ -333,27 +337,27 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
 
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
 
         # Add different modalities of testing
-        HTC_workplace = Program(short='HTC workplace programs',
+        HTC_workplace = Program(short='HTC workplace',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in ['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients']],
                       targetpops=['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients'],
                       category='Care and treatment',
                       name='HIV testing and counseling - workplace programs',
                       criteria = {'hivstatus': 'allstates', 'pregnant': False})
         
-        HTC_mobile = Program(short='HTC mobile clinics',
+        HTC_mobile = Program(short='HTC mobile',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
                       targetpops=adultlist,
                       category='Care and treatment',
                       name='HIV testing and counseling - mobile clinics',
                       criteria = {'hivstatus': 'allstates', 'pregnant': False})
         
-        HTC_medical = Program(short='HTC medical facilities',
+        HTC_medical = Program(short='HTC medical',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
                       targetpops=adultlist,
                       category='Care and treatment',
@@ -435,15 +439,15 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
 
-        R.covout['circum']['MSM'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['circum']['Clients'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['circum']['M 15-49'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['circum']['M 50+'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
-        R.covout['circum']['M 0-14'].addccopar({'intercept': (0.8,0.9), 't': 2016.0, 'VMMC': (0.95,0.99)})
+        R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['M 15-49'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['M 50+'].addccopar({'intercept': (0,0), 't': 2016.0})
+        R.covout['numcirc']['M 0-14'].addccopar({'intercept': (0,0), 't': 2016.0})
 
 
         P.addprogset(name='default', progset=R)
-    
+
     
     
     ##########################################################################################################################
@@ -455,7 +459,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
     
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST', 'Other'])
         
         # Modify target pars and pops
         R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})

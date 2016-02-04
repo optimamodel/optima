@@ -24,8 +24,16 @@
       <div ng-click="goIfProjectActive('project.economicdata')">Add economic data</div>
     </div>
   </div>
-  <div>
-    <div class="btn __blue" ng-click="goIfProjectActive('model')">Calibrate parameters</div>
+  <div ng-click="showCalibrateMenu = !showCalibrateMenu" ng-mouseleave="showCalibrateMenu = false">
+    <div class="btn __blue">
+      Calibrate model
+      <i class="fa fa-angle-up" ng-if="showCalibrateMenu"></i>
+      <i class="fa fa-angle-down" ng-if="!showCalibrateMenu"></i>
+    </div>
+    <div ng-if="showCalibrateMenu" class="menu-dropdown" style="width: 200px;">
+      <div ng-click="goIfProjectActive('model.manual')">Manual calibration</div>
+      <div ng-click="goIfProjectActive('model.auto')">Automatic calibration</div>
+    </div>
   </div>
   <div ng-click="showProjectSetMenu = !showProjectSetMenu" ng-mouseleave="showProjectSetMenu = false">
     <div class="btn __blue">
@@ -34,13 +42,13 @@
       <i class="fa fa-angle-down" ng-if="!showProjectSetMenu"></i>
     </div>
     <div ng-if="showProjectSetMenu" class="menu-dropdown" style="width: 250px;">
-      <div ng-click="goIfProjectActive('project-set.manageProgramSet')">Define programs</div>
+      <div ng-click="goIfProjectActive('project-set.manageProgramSet')">Define/manage program set</div>
       <div ng-click="goIfProjectActive('project-set.define-cost-coverage-outcome')">Define cost and outcome functions</div>
     </div>
   </div>
   <div ng-click="showAnalysisMenu = !showAnalysisMenu" ng-mouseleave="showAnalysisMenu = false">
     <div class="btn __blue">
-      Perform Analysis
+      Perform analyses
       <i class="fa fa-angle-up" ng-if="showAnalysisMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showAnalysisMenu"></i>
     </div>

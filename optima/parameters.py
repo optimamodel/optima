@@ -36,7 +36,8 @@ Number of people on treatment	numtx	(0, 'maxpopsize')	tot	timepar	meta	treat	0	1
 Number of people on PMTCT	numpmtct	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
 Proportion of women who breastfeed (%)	breast	(0, 1)	tot	timepar	meta	other	0	0	1	random
 Birth rate (births/woman/year)	birth	(0, 'maxrate')	fpop	timepar	meta	other	0	0	1	random
-Male circumcision prevalence (%)	circum	(0, 1)	mpop	timepar	meta	other	0	0	1	random
+Male circumcision prevalence (%)	propcirc	(0, 1)	mpop	timepar	meta	other	0	0	1	random
+Number of circumcisions	numcirc	(0, 'maxpopsize')	mpop	timepar	meta	other	0	1	1	random
 Number of PWID on OST	numost	(0, 'maxpopsize')	tot	timepar	meta	other	0	1	1	random
 Probability of needle sharing (%/injection)	sharing	(0, 1)	pop	timepar	meta	other	0	0	1	random
 Proportion of people on PrEP (%)	prep	(0, 1)	pop	timepar	meta	other	0	0	1	random
@@ -51,7 +52,7 @@ People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cas
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
 Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
-Viral load monitoring (number/year)	vlmonfr	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
@@ -237,7 +238,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
-                print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
+                printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, defaultargs['verbose']) # Probably ok...
                 par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
@@ -359,6 +360,8 @@ def makepars(data, label=None, verbose=2):
         partype = rawpar.pop('partype')
         parname = rawpar['short']
         by = rawpar['by']
+        rawpar['verbose'] = verbose # Easiest way to pass it in
+        
         
         # Decide what the keys are
         if by=='tot': keys = totkey
@@ -409,24 +412,28 @@ def makepars(data, label=None, verbose=2):
 
     # Aging transitions - these are time-constant transition rates
     duration = [age[1]-age[0]+1 for age in data['pops']['age']]
-    normalised_agetransit = [[col/sum(row)*1/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
+    normalised_agetransit = [[col/sum(row)*1.0/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
     pars['agetransit'] = normalised_agetransit
 
     # Risk transitions - these are time-constant transition rates
-    normalised_risktransit = [[1/col if col else 0 for col in row] for row in data['risktransit']]
+    normalised_risktransit = [[1.0/col if col else 0 for col in row] for row in data['risktransit']]
     pars['risktransit'] = normalised_risktransit 
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
-        pars['circum'].y[key] = array([0])
-        pars['circum'].t[key] = array([0])
-    pars['circum'].y = pars['circum'].y.sort(popkeys) # Sort them so they have the same order as everything else
-    pars['circum'].t = pars['circum'].t.sort(popkeys)
+        pars['propcirc'].y[key] = array([0])
+        pars['propcirc'].t[key] = array([0])
+        pars['numcirc'].y[key]  = array([0])
+        pars['numcirc'].t[key]  = array([0])
+    pars['propcirc'].y = pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
+    pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
+    pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
 
     # Metaparameters
     for key in popkeys: # Define values
-        pars['force'].y[key] = 1
-        pars['inhomo'].y[key] = 0
+        pars['force'].y[key] = 1.0
+        pars['inhomo'].y[key] = 0.0
     
     
     # Balance partnerships parameters    
@@ -568,7 +575,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
@@ -744,7 +751,7 @@ class Parameterset(object):
 
     def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
-        printv('Making model parameters...', 1, verbose)
+        printv('Making model parameters...', 1, verbose),
         
         simparslist = []
         if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
@@ -891,8 +898,7 @@ class Parameterset(object):
 
     ## Define update step
     def update(self, mflists, ind=0):
-        from optima import printv
-        ''' Update Parameterset with new results '''
+        ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
         if not self.pars:
             raise OptimaException("No parameters available!")
         elif len(self.pars)<=ind:
@@ -911,15 +917,19 @@ class Parameterset(object):
             if ptype == 'meta': # Metaparameters
                 vtype = type(tmppars[key].m)
                 tmppars[key].m = vtype(value)
-                printv('%s.m = %s' % (key, value), verbose)
+                printv('%s.m = %s' % (key, value), 4, verbose)
             elif ptype in ['pop', 'pship']: # Populations or partnerships
                 vtype = type(tmppars[key].y[subkey])
                 tmppars[key].y[subkey] = vtype(value)
-                printv('%s.y[%s] = %s' % (key, subkey, value), verbose)
+                printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'exp': # Population growth
                 vtype = type(tmppars[key].p[subkey][0])
                 tmppars[key].p[subkey][0] = vtype(value)
-                printv('%s.p[%s] = %s' % (key, subkey, value), verbose)
+                printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
+            elif ptype == 'const': # Metaparameters
+                vtype = type(tmppars[key].y)
+                tmppars[key].y = vtype(value)
+                printv('%s.y = %s' % (key, value), 4, verbose)
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
 
