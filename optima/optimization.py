@@ -323,8 +323,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     budgetvecnew = constrainbudget(origbudget=budgetvecnew, total=totalbudget, limits=budgetlims) # WARNING, not sure why this is needed, but it is
-    orig = outcomecalc(budgetvec, outputresults=True, debug=True, **args)
-    new = outcomecalc(budgetvecnew, outputresults=True, debug=True, **args)
+    orig = outcomecalc(budgetvec, outputresults=True, debug=False, **args)
+    new = outcomecalc(budgetvecnew, outputresults=True, debug=False, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
