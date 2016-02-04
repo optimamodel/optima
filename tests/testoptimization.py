@@ -61,7 +61,7 @@ if 'minimizeoutcomes' in tests:
     
     objectives = defaultobjectives(P)
     constraints = defaultconstraints(P)
-    P.minoutcomes(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
+    P.optimize(which='outcomes', name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
@@ -91,7 +91,7 @@ if 'minimizemoney' in tests:
     objectives['deathfrac'] = 0.1
     objectives['incifrac'] = 0.5
     constraints = defaultconstraints(P)
-    P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=False)
+    P.optimize(which='money', name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=False)
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
