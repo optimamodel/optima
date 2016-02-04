@@ -662,9 +662,8 @@ class ProgsetsDb(db.Model):
 
     def recreate_programs_from_list(self, programs, progset_id):
         from optima.utils import saves
-
         prog_shorts = []
-        desired_shorts = set([program.get('short', program.get('short_name', '')) for program in programs])
+        desired_shorts = set([program.get('short_ name', program.get('short', '')) for program in programs])
         existing_programs = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
 
         existing_shorts = {}
@@ -678,7 +677,7 @@ class ProgsetsDb(db.Model):
 
         for program in programs:
             # Kind of a hack but sometimes we receive short ans sometimes short_name
-            short = program.get('short', program.get('short_name', ''))
+            short = program.get('short_name', program.get('short', ''))
             if short in existing_shorts:
                 program_entry = existing_shorts[short]
                 for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
