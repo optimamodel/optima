@@ -484,7 +484,10 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
+            progdata = zeros(len(toplot[plt]))
+            for i,x in enumerate(toplot[plt][:]):
+                if hasattr(x, '__len__'): progdata[i] = x[y]
+                else:                     progdata[i] = x
             if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):

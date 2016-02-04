@@ -238,7 +238,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
-                print('WARNING, no data entered for parameter "%s", key "%s"' % (name, key))
+                printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, defaultargs['verbose']) # Probably ok...
                 par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
@@ -360,6 +360,8 @@ def makepars(data, label=None, verbose=2):
         partype = rawpar.pop('partype')
         parname = rawpar['short']
         by = rawpar['by']
+        rawpar['verbose'] = verbose # Easiest way to pass it in
+        
         
         # Decide what the keys are
         if by=='tot': keys = totkey
@@ -573,7 +575,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 
 class Par(object):
     ''' The base class for parameters '''
-    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None): # "type" data needed for parameter table, but doesn't need to be stored
+    def __init__(self, name=None, short=None, limits=(0,1), by=None, fittable='', auto='', cascade=False, coverage=None, visible=0, proginteract=None, verbose=None): # "type" data needed for parameter table, but doesn't need to be stored
         self.name = name # The full name, e.g. "HIV testing rate"
         self.short = short # The short name, e.g. "hivtest"
         self.limits = limits # The limits, e.g. (0,1) -- a tuple since immutable
@@ -749,7 +751,7 @@ class Parameterset(object):
 
     def interp(self, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, smoothness=20, asarray=True, onlyvisible=False, verbose=2):
         """ Prepares model parameters to run the simulation. """
-        printv('Making model parameters...', 1, verbose)
+        printv('Making model parameters...', 1, verbose),
         
         simparslist = []
         if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
