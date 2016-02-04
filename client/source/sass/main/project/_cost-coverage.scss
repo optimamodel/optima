@@ -28,58 +28,13 @@
 }
 
 .c-population-wrap {
-  background-color: #fbfbfb;
-  border: 1px solid #E2E2E2;
-  max-width: 760px;
-  padding: 15px;
   margin-bottom: 35px;
 }
 
 .c-population-form {
-
-  background-color: white;
-  border: 1px solid #E0E0E0;
-  border-radius: 3px;
-  transition: all linear 100ms;
   max-width: 760px;
   width: 100%;
-  padding: 10px;
-  position: relative;
   margin-bottom: 15px;
-
-  &:hover {
-    border: 1px solid #C7C7C7;
-
-    .c-population-form__delete {
-      opacity: 1;
-    }
-  }
-
-  &__title {
-    font-size: 17px;
-    margin-bottom: 15px;
-  }
-
-  &__delete {
-    background-color: #d46060;
-    color: white;
-    position: absolute;
-    top: -13px;
-    right: -12px;
-    width: 25px;
-    height: 25px;
-    text-align: center;
-    border-radius: 100%;
-    font-size: 15px;
-    line-height: 24px;
-    cursor: pointer;
-    transition: all linear 100ms;
-    opacity: 0;
-
-    &:hover {
-      background-color: #bf444f;
-    }
-  }
 }
 
 .c-table {
