@@ -389,11 +389,12 @@ class ParsetsCalibration(Resource):
         parset_entry.pars = op.saves(parset_instance.pars)
         parset_entry.updated = datetime.now(dateutil.tz.tzutc())
         db.session.add(parset_entry)
+        ResultsDb.query.filter_by(parset_id=parset_id, project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         ResultsDb.query.filter_by(id=args['result_id']).first()
         result_entry = ResultsDb.query.filter_by(id=args['result_id']).first()
         result_entry.parset_id = parset_id
         result_entry.project_id = project_id
-        result_entry.calculation_type=ResultsDb.CALIBRATION_TYPE
+        result_entry.calculation_type = ResultsDb.CALIBRATION_TYPE
         db.session.add(result_entry)
         db.session.commit()
 
