@@ -27,21 +27,21 @@
                         <input type="checkbox" ng-model="row.active">
                     </td>
                     <td>{{ row.name }}</td>
-                    <td> {{ row.parsetname || 'Default'}}</td>
-                    <td> {{ row.pars || 'Default'}}</td>
+                    <td> {{ row.parsetname[0].name || ' '}}</td>
+                    <td> {{ row.pars[0].name || ' '}}</td>
                     <td> {{ row.scenario_type }}</td>
                     <td style="white-space: nowrap;">
-                        <button type="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
-                        <button type="button" class="btn" ng-click="openCopyScenarioModal($event, row)">Copy</button>
-                        <button type="button" class="btn" ng-click="openDeleteScenarioModal($event, row)">Delete</button>
+                        <button type="button" class="btn" ng-click="openScenarioModal(row, 'edit', $event)">Edit</button>
+                        <button type="button" class="btn" ng-click="openScenarioModal(row, 'copy', $event)">Copy</button>
+                        <button type="button" class="btn" ng-click="openScenarioModal(row, 'delete', $event)">Delete</button>
                     </td>
                 </tr>
                 </tbody>
                 <tfoot>
                   <tr>
                     <td colspan="6" class="text-right">
-                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a program scenario</button>
-                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a parameter scenario</button>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Program'}, 'add', $event)">Add a program scenario</button>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Parameter'}, 'add', $event)">Add a parameter scenario</button>
                     </td>
                   </tr>
                   <tr>

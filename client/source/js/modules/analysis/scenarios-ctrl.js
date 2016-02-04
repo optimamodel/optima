@@ -211,34 +211,50 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // Helper function to open a population modal
         var openScenarioModal = function(scenario) {
           return $modal.open({
-            templateUrl: 'js/modules/analysis/scenarios-modal.html',
-            controller: 'AnalysisScenariosModalController',
+            templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
+            controller: 'ParameterScenariosModalController',
             resolve: {
               scenario: function () {
                 return scenario;
               },
-              availableScenarioParameters: function() {
-                return availableScenarioParameters;
+              parsets: function() {
+                return $http.get('/api/project/' + openProject.id + '/parsets');
               },
-              populationNames: function() {
-                return meta.data.pops.long;
+              openProject: function(){
+                return openProject;
               }
             }
           });
         };
 
-        $scope.openAddScenarioModal = function ($event) {
-            if ($event) {
-                $event.preventDefault();
-            }
+        $scope.openScenarioModal = function (row, action, $event) {
+            if ($event) { $event.preventDefault(); }
 
-            var scenario = {};
-            return openScenarioModal(scenario).result.then(
+            if(action === 'add'){
+              return openScenarioModal(row).result.then(
                 function (newscenario) {
                     newscenario.active = true;
                     newscenario.pars = newscenario.pars || [];
                     $scope.scenarios.push(newscenario);
                 });
+            }else if(action === 'edit'){
+              return openScenarioModal(row).result.then(
+                function (updatescenario) {
+                    console.log('Updated ', updatescenario);
+                });
+            }else if(action === 'copy'){
+              var newscenario = angular.copy(row);
+              newscenario.name = row.name +' Copy'
+              $scope.scenarios.push(newscenario);
+            }else if(action === 'delete'){
+              $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
+            }
+            /*return openScenarioModal(scenario).result.then(
+                function (newscenario) {
+                    newscenario.active = true;
+                    newscenario.pars = newscenario.pars || [];
+                    $scope.scenarios.push(newscenario);
+                });*/
         };
 
         $scope.openEditScenarioModal = function ($event, scenario) {
