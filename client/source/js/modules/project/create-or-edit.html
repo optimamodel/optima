@@ -1,10 +1,12 @@
-<div class="rich">
+<div class="grid" style="margin-left:0px">
+  <h1>Manage project &#8594; Create new project</h1>
+</div>
 
+<div class="rich">
   <form id="createForm" name="CreateOrEditProjectForm" ng-submit="prepareCreateOrEditForm()" novalidate="novalidate">
 
     <div class="section">
       <div class="6">
-        <h1>Project details</h1>
 
         <b>Project name</b>
         <input class="txbox" type="text" ng-pattern="/^[\x20-\x7E]*$/" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>

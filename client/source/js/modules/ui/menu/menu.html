@@ -42,13 +42,13 @@
       <i class="fa fa-angle-down" ng-if="!showProjectSetMenu"></i>
     </div>
     <div ng-if="showProjectSetMenu" class="menu-dropdown" style="width: 250px;">
-      <div ng-click="goIfProjectActive('project-set.manageProgramSet')">Define programs</div>
+      <div ng-click="goIfProjectActive('project-set.manageProgramSet')">Define/manage program set</div>
       <div ng-click="goIfProjectActive('project-set.define-cost-coverage-outcome')">Define cost and outcome functions</div>
     </div>
   </div>
   <div ng-click="showAnalysisMenu = !showAnalysisMenu" ng-mouseleave="showAnalysisMenu = false">
     <div class="btn __blue">
-      Perform Analysis
+      Perform analyses
       <i class="fa fa-angle-up" ng-if="showAnalysisMenu"></i>
       <i class="fa fa-angle-down" ng-if="!showAnalysisMenu"></i>
     </div>

@@ -7,10 +7,10 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 'maxbudget',
-'90-90-90'
-'VMMC'
+#'90-90-90'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -290,16 +290,18 @@ if 'maxbudget' in tests:
     t = tic()
 
     print('Running maximum budget scenario test...')
-    from optima import Budgetscen, odict
-    from optima import defaults
+    from optima import Budgetscen, defaults, dcp
     
     ## Set up default project
     P = defaults.defaultproject('generalized')
     
     ## Define scenarios
+    defaultbudget = P.progsets['default'].getdefaultbudget()
+    maxbudget = dcp(defaultbudget)
+    for key in maxbudget: maxbudget[key] += 1e14
     scenlist = [
-        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
-        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=odict([(key, 1e9) for key in P.progsets['default'].programs.keys()])),
+        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
@@ -350,17 +352,7 @@ if 'VMMC' in tests:
               parsetname='default',
               progsetname='default',
               t=2016,
-              budget={
-                      'Condoms': 1e7,
-                      'VMMC': 1e8,
-                      'FSW programs': 1e6,
-                      'MSM programs': 1e6,
-                      'ART':1e6,
-                      'PMTCT':1e6,
-                      'HTC workplace programs':2e7,
-                      'HTC mobile clinics':2e7,
-                      'HTC medical facilities':2e7
-                      }),
+              budget={'VMMC': 1e8}),
 
         ]
     

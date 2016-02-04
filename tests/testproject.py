@@ -7,19 +7,20 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015nov23 by cliffk
+Version: 2016feb03 by cliffk
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'makeproject',
+#'makeproject',
 'parametercheck',
-'saveload',
-#'loadspreadsheet',
+'resultsaddition',
+#'saveload',
+'loadspreadsheet',
 #'loadeconomics',
-'runsim'
+#'runsim'
 ]
 
 ##############################################################################
@@ -105,6 +106,39 @@ if 'parametercheck' in tests:
         raise OptimaException(errormsg)
     
     done(t)
+
+
+
+
+
+
+
+## Adding results
+if 'resultsaddition' in tests:
+    t = tic()
+    print('Running results addition test...')
+    
+    import optima as op
+
+    P = op.defaults.defaultproject()
+    Q = op.defaults.defaultproject()
+    
+    R1 = P.results[0]
+    R2 = Q.results[0]
+    
+    R3 = R1+R2
+    
+    if doplot:
+        multires = op.Multiresultset([R1,R3])
+        op.pygui(multires, toplot=['prev-tot','numplhiv-tot'])
+    
+    done(t)
+
+
+
+
+
+
 
 
 

@@ -1,5 +1,9 @@
+
 <div class="grid">
-  <h2>Manage program set</h2>
+  <h1>Define programs &#8594; Define/manage program set</h1>
+</div>
+
+<div class="grid">
   <div ng-if="!missingData">
     <div class="3">
       <label for="programSet-selection">Select a saved program set:</label>
@@ -25,7 +29,7 @@
       <div class="section" ng-repeat="category in categories">
         <table class="section table table-bordered">
           <tr>
-            <td colspan="5"><b>{{category.category}}</b></td>
+            <td colspan="5"><b>{{category}}</b></td>
           </tr>
           <tr>
             <td><b>Active</b></td>
