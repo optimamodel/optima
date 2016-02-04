@@ -5,6 +5,7 @@ from collections import defaultdict
 from flask_restful_swagger import swagger
 from flask_restful import fields
 from server.webapp.fields import Json
+from server.webapp.exceptions import DuplicateProgram
 
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
@@ -661,10 +662,21 @@ class ProgsetsDb(db.Model):
 
     def create_programs_from_list(self, programs):
         from optima.utils import saves
+
+        prog_shorts = []
         for program in programs:
             kwargs = {}
             for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
                 kwargs[field] = program[field]
+
+            # Kind of a hack but sometimes we receive short ans sometimes short_name
+            if 'short_name' in program and program['short_name'] is not None:
+                kwargs['short'] = program['short_name']
+
+            if kwargs['short'] in prog_shorts:
+                raise DuplicateProgram(kwargs['short'])
+            else:
+                prog_shorts.append(kwargs['short'])
 
             program_entry = ProgramsDb(
                 self.project_id,
