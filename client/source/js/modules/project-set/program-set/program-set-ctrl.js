@@ -230,6 +230,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       var program = angular.copy(existingProgram);
       program.name = program.name + ' copy';
       program.short_name = (program.short || program.short_name ) + ' copy';
+      program.short = undefined;
 
       return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
         function (newProgram) {
