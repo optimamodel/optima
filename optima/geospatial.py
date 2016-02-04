@@ -245,8 +245,15 @@ def geogui():
         guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
         warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
-    
-    
+        
+        
+    def plotgeo():
+        ''' Actually plot geospatial analysis!!! '''
+        global guiportfolio
+        gaoptim = guiportfolio.gaoptims[-1]
+        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets())
+        return None
+        
     
     def export():
         ''' Save the current results to Excel file '''
@@ -335,6 +342,7 @@ def geogui():
     buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
+    buttons['plotgeo']   = QtGui.QPushButton('Plot last geospatial results', parent=geoguiwindow)
     buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
     buttons['saveport']  = QtGui.QPushButton('Save portfolio', parent=geoguiwindow)
     buttons['close']     = QtGui.QPushButton('Close', parent=geoguiwindow)
@@ -347,6 +355,7 @@ def geogui():
     actions['add']       = addproj
     actions['loadport']  = loadport
     actions['rungeo']    = rungeo
+    actions['plotgeo']   = plotgeo
     actions['export']    = export
     actions['saveport']  = saveport
     actions['close']     = closewindow

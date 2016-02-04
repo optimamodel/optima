@@ -562,6 +562,16 @@ class GAOptim(object):
         
         return output
         
-                
+    def getinitbudgets(self):
+        bl = []
+        for proj in self.resultpairs:
+            bl.append(sum([k[0] for k in self.resultpairs[proj]['init'].budget[0].values()]))
+        return bl
+        
+    def getoptbudgets(self):
+        bl = []
+        for proj in self.resultpairs:
+            bl.append(sum([k[0] for k in self.resultpairs[proj]['opt'].budget[-1].values()]))
+        return bl
             
             
