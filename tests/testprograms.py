@@ -55,6 +55,7 @@ if 'makeprograms' in tests:
     from optima import Project, Program, Programset, odict
     
     P = Project(spreadsheet='concentrated.xlsx')
+    pops = P.data['pops']['short']
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
     HTC = Program(short='HTC',
@@ -79,7 +80,7 @@ if 'makeprograms' in tests:
 
     ART = Program(short='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
     PMTCT = Program(short='PMTCT',
