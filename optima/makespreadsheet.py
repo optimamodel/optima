@@ -587,8 +587,7 @@ class OptimaSpreadsheet:
         current_row = self.emit_years_block('Biological failure rate (%/year)',                                                  current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
         current_row = self.emit_years_block('Viral load monitoring (number/year)',                                               current_row, ['Average'], row_format = OptimaFormats.NUMBER, assumption = True)
         current_row = self.emit_years_block('Rate of ART re-initiation (%/year)',                                                current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Percentage of HIV-diagnosed people who are in care (%)',                        current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
-        current_row = self.emit_years_block('Proportion of people on ART with viral suppression (%)',                            current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
+
             
 
     def generate_sex(self):
