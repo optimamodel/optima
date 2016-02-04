@@ -11,21 +11,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         var responseData, availableScenarioParameters, availableScenarios;
         $scope.scenarios = scenariosResponse.data.scenarios;
-        $scope.scenarios = [{
-          'endval': '',
-          'endyear': 2050,
-          'name': 'Test',
-          'for': '',
-          'startval': 'startval1',
-          'startyear': 2010
-        }];
+
+        /*$scope.runScenariosOptions = {
+          dosave: false
+        };
+
+        $scope.saveScenariosOptions = {
+          dosave: false
+        };*/
         // initialize all necessary data for this controller
         var initialize = function() {
           $scope.scenarios = [];
 
-          $scope.runScenariosOptions = {
-            dosave: false
-          };
+          
 
           // add All option in population list
           //meta.data.pops.long.push("All");
@@ -190,13 +188,24 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.runScenarios = function (saveScenario) {
-          $scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
-          $scope.runScenariosOptions.dosave = saveScenario === true;
-          $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
+          //$scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
+          //$scope.runScenariosOptions.dosave = saveScenario === true;
+          var activeScenarios = _.filter($scope.scenarios, function(scenario){ return scenario.active; });
+          $http.get('/api/project/'+openProject.id+'/scenarios/results')
             .success(function(data) {
               responseData = data;
               updateGraphs(responseData);
             });
+        };
+
+        $scope.saveScenarios = function (saveScenario) {
+          angular.forEach($scope.scenarios, function(sc){
+            console.log(sc);
+            $http.post('/api/project/'+openProject.id+'/scenarios?name='+sc.name+'&parset_id='+sc.parset_id+'&scenario_type='+sc.scenario_type+'&active='+sc.active+'', { pars: sc.pars })
+              .success(function(response) {
+                console.log(response);
+              });
+          });
         };
 
         // Helper function to open a population modal

@@ -41,7 +41,7 @@ define([
                 controller: 'AnalysisScenariosController',
                 resolve: {
                   scenarioParametersResponse: function($http, info) {
-                    //return $http.get('/api/project/'+info.data.id+'/scenarios');
+                    //return $http.get('/api/analysis/scenarios/list');
                   },
                   scenariosResponse: function($http, info) {
                     return $http.get('/api/project/'+info.data.id+'/scenarios');
