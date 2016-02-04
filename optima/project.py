@@ -111,6 +111,7 @@ class Project(object):
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
         self.ensureparset(name)
+        self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True)
         return None
 

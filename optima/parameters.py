@@ -430,8 +430,8 @@ def makepars(data, label=None, verbose=2):
 
     # Metaparameters
     for key in popkeys: # Define values
-        pars['force'].y[key] = 1
-        pars['inhomo'].y[key] = 0
+        pars['force'].y[key] = 1.0
+        pars['inhomo'].y[key] = 0.0
     
     
     # Balance partnerships parameters    
