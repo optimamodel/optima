@@ -70,7 +70,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     treatvs     = simpars['treatvs']     # viral suppression - ART initiators (P)
     if usecascade:
         biofailure    = simpars['biofailure']  # biological treatment failure rate (P/T)
-        freqvlmon       = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
+        freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
         # Behavioural transitions between stages [npop,npts]
         immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
@@ -198,7 +198,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     fraccare = 0.5         # Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
-    reboundwithinint = 0.5 # Multiplicative increase in rate of ART accounting for interval 
+    reboundwithinint = 2.0 # Average number of rebounds between viral load tests
     
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
@@ -619,7 +619,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
                 hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths       = dt * people[usvl[cd4],:,t] * background
-                virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] / reboundwithinint
+                virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] * reboundwithinint
                 fracalive         = 1. - (death[cd4]*deathtx + background)*dt
                 stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * fraccare  # People stopping ART but still in care
                 stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
