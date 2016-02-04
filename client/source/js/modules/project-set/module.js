@@ -8,7 +8,8 @@ define([
   '../common/export-all-data',
   '../validations/more-than-directive',
   '../validations/less-than-directive',
-  '../validations/year-directive'
+  '../validations/year-directive',
+  '../parameter-scenarios-modal/parameter-scenarios-modal'
 ], function (angular) {
   'use strict';
 
@@ -20,7 +21,8 @@ define([
     'ui.router',
     'app.validations.more-than',
     'app.validations.less-than',
-    'app.validations.year'
+    'app.validations.year',
+    'app.parameter-scenarios-modal'
   ])
     .config(function ($stateProvider) {
       $stateProvider
