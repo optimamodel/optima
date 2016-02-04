@@ -666,7 +666,7 @@ class ProgsetsDb(db.Model):
         prog_shorts = []
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov']:
+            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
                 kwargs[field] = program[field]
 
             # Kind of a hack but sometimes we receive short ans sometimes short_name

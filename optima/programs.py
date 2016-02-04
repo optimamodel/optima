@@ -335,7 +335,9 @@ class Programset(object):
                 if thispartype in coveragepars:
                     outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
-                        popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                        if thispop == 'tot':
+                            popcoverage = coverage[thisprog.short]
+                        else: popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                         outcomes[thispartype][thispop] += popcoverage
 
                 # If it's an outcome parameter, need to get outcomes
