@@ -280,6 +280,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     nprogs = len(optiminds) # Only count optimizable programs
     budgetvec = progset.getdefaultbudget()[:]
     origbudget = sum(budgetvec)
+    scaledorigbudgetvec = budgetvec*totalbudget/origbudget
     
     # Error checking
     if isnan(budgetvec).any():
@@ -457,6 +458,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     nprogs = len(optiminds) # Only count optimizable programs
     budgetvec = progset.getdefaultbudget()[:]
     totalbudget = sum(budgetvec) # WARNING, correct?
+    origbudget = 
+    scaledorigbudgetvec = budgetvec*totalbudget/origbudget
     
     # Error checking
     if isnan(budgetvec).any():
