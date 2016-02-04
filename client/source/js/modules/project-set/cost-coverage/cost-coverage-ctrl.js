@@ -328,16 +328,6 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.parsets = response.parsets;
     });
 
-    var openParameterScenariosModal = function () {
-      return $modal.open({
-        templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
-        controller: 'ParameterScenariosModalController',
-        resolve: {}
-      });
-    };
-
-    openParameterScenariosModal()
-
   });
 
 });
