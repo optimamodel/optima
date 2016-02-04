@@ -663,7 +663,7 @@ class ProgsetsDb(db.Model):
         from optima.utils import saves
         for program in programs:
             kwargs = {}
-            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov']:
+            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
                 kwargs[field] = program[field]
 
             program_entry = ProgramsDb(

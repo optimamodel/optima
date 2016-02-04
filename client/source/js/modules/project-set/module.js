@@ -9,7 +9,8 @@ define([
   '../validations/more-than-directive',
   '../validations/less-than-directive',
   '../validations/year-directive',
-  '../create-program-scenario-modal/create-program-scenario-modal-ctrl'
+  '../create-program-scenario-modal/create-program-scenario-modal-ctrl',
+  '../parameter-scenarios-modal/parameter-scenarios-modal'
 ], function (angular) {
   'use strict';
 
@@ -22,7 +23,8 @@ define([
       'app.validations.more-than',
       'app.validations.less-than',
       'app.validations.year',
-      'app.program-scenario-modal'
+      'app.program-scenario-modal',
+      'app.parameter-scenarios-modal'
     ])
     .config(function ($stateProvider) {
       $stateProvider
@@ -36,7 +38,7 @@ define([
           templateUrl: 'js/modules/project-set/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
-            currentProject: function (projectApiService) {
+            currentProject: function(projectApiService) {
               return projectApiService.getActiveProject();
             }
           }

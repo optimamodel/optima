@@ -49,7 +49,7 @@ define(['./../module', 'underscore'], function (module, _) {
         return [];
       }
       console.log('programs', currentPop[0].programs);
-      return _.map(currentPop[0].programs, function (program) {
+      return _.map(currentPop[0].programs, function(program) {
         return {
           name: program.short_name
         }
