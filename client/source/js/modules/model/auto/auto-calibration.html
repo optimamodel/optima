@@ -125,23 +125,21 @@
     </div>
     <div class="small_bordered_list" style="width: 18%;">
       <div class="option_list" style="height:70vh">
+        <span style="width: 200px;display: inline-block;"><b>Automatic calibration</b></span>
         <div style="margin-top: 20px">
-          <span style="width: 100px;display: inline-block;">Set max time</span>
+
           <select ng-model="state.maxtime">
-            <option value="">Select Max Times</option>
-            <option value="1">1 Second</option>
-            <option value="2">2 Seconds</option>
-            <option value="5">5 Seconds</option>
-            <option value="10">10 Seconds</option>
-            <option value="20">20 Seconds</option>
-            <option value="30">30 Seconds</option>
-            <option value="40">40 Seconds</option>
-            <option value="50">50 Seconds</option>
+            <option value="">Select max time</option>
+            <option value="10">10 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="300">5 minutes</option>
+            <option value="600">10 minutes</option>
           </select>
         </div>
         <div>
           <div style="margin-top: 20px">
-            <span style="width: 100px;display: inline-block;">Start calibration</span>
+            <!--<span style="width: 100px;display: inline-block;"></span>-->
             <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
           </div>
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
@@ -150,7 +148,7 @@
         </div>
         <div style="margin-top: 20px">
           <div>
-            <span style="width: 100px;display: inline-block;">Save calibration</span>
+            <!--<span style="width: 100px;display: inline-block;">Save calibration</span>-->
             <button class="btn __m" ng-click="saveAutoCalibration()" ng-if="parameters && result_id">Save</button>
           </div>
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
@@ -158,8 +156,8 @@
           </div>
         </div>
         <div style="margin-top: 20px">
-          <span style="width: 100px;display: inline-block;">Reset</span>
-          <button class="btn __m" ng-click="processGraphs()">Reset</button>
+          <!--<span style="width: 100px;display: inline-block;">Reset</span>-->
+          <!--<button class="btn __m" ng-click="processGraphs()">Reset</button>-->
         </div>
       </div>
     </div>
