@@ -7,6 +7,7 @@ define({
   // Here paths are set relative to `/source/js` folder
   paths: {
     'angular'       : './vendor/angular/angular',
+    'toastr'       : './vendor/angular-toastr/dist/angular-toastr.tpls',
     'angular-loading-bar'  : './js/modules/angular-loading-bar/loading-bar',
     'async'         : './vendor/requirejs-plugins/src/async',
     'canvg'         : './vendor/canvg/dist/canvg.bundle',

@@ -1,6 +1,7 @@
 define([
   'angular',
   'ui.router',
+  'toastr',
   '../project/project-api-service',
   '../resources/model',
   '../ui/type-selector/index',
@@ -9,6 +10,7 @@ define([
   '../validations/more-than-directive',
   '../validations/less-than-directive',
   '../validations/year-directive',
+  '../validations/limit-value-directive',
   '../parameter-scenarios-modal/parameter-scenarios-modal'
 ], function (angular) {
   'use strict';
@@ -21,7 +23,9 @@ define([
     'ui.router',
     'app.validations.more-than',
     'app.validations.less-than',
+    'app.validations.limit',
     'app.validations.year',
+    'toastr',
     'app.parameter-scenarios-modal'
   ])
     .config(function ($stateProvider) {

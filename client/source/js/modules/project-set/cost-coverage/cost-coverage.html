@@ -4,7 +4,11 @@
 
 <div class="page rich c-cost-coverage">
 
-  <div style="display: flex">
+  <div ng-if="vm.programSetList && vm.programSetList.length === 0">
+    You don't have any programs. <a ui-sref="project-set.manageProgramSet"> Click here to add one </a>
+  </div>
+
+  <div style="display: flex" ng-if="vm.programSetList && vm.programSetList.length> 0">
       <span style="width: 25%;margin-right: 10%">
         <label>
           Select a program set: <br>
@@ -43,7 +47,11 @@
     <!-- Outcome functions tab -->
     <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
 
-      <div class="c-select">
+      <div ng-if="vm.params.length === 0 "> The selected program set doesn't have any parameters.
+        <a ui-sref="project-set.manageProgramSet"> Click here to manage your program sets. </a>
+      </div>
+
+      <div class="c-select" ng-if="vm.params.length > 0">
         <label class="c-select__label"> Select a parameter: </label>
         <select class="txbox c-select__input"
                 ng-options="p.name for p in vm.params"
@@ -53,7 +61,7 @@
         </select>
       </div>
 
-      <form name="vm.TableForm" class="c-populations" novalidate ng-if="vm.currentParameter!==undefined">
+      <form name="vm.TableForm" class="c-populations" novalidate ng-if="vm.selectedParameter!==undefined">
         <div ng-repeat="parset in vm.existingEffects.effects" ng-if="parset.parset === vm.selectedParset.id">
           <div class="c-population-wrap o-form__wrap u-layout-vertical" ng-repeat="effect in parset.parameters" ng-if="effect.name === vm.selectedParameter.short">
             <div class="c-population-form__title o-form__title">{{vm.getPopulationTitle(effect.pop)}}</div>
@@ -82,7 +90,7 @@
 
                   <!-- Text-->
                   <td class="c-table__column c-table__column--text">
-                    {{vm.currentParameter.name}} in the absence of any programs
+                    {{vm.selectedParameter.name}} in the absence of any programs targeting this parameter
                   </td>
 
                   <!-- Inputs -->
@@ -94,17 +102,20 @@
 
                 </tr>
 
-                <tbody ng-if="!vm.currentParameter.coverage">
+                <tbody ng-if="!vm.selectedParameter.coverage">
                 <tr class="c-table__row">
                   <td></td>
                   <td class="c-table__column"><b> Program effects </b></td>
                   <td></td>
                 </tr>
 
-                <tr class="c-table__row" ng-repeat="program in year.programs track by $index" ng-init="year.programs= !year.programs ? vm.initYearPrograms(effect.pop) : year.programs">
+                <tr class="c-table__row"
+                    ng-repeat="program in year.programs track by $index"
+                    ng-init="year.programs= !year.programs ? vm.initYearPrograms(effect.pop) : year.programs"
+                >
                   <td></td>
-                  <td class="c-table__column"> {{vm.getFullProgramName(program.name)}} under maximal coverage of this
-                                               program
+                  <td class="c-table__column"> {{vm.selectedParameter.name}} under maximal attainable coverage of
+                                               {{vm.getFullProgramName(program.name)}}
                   </td>
                   <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
                     <input class="txbox c-table__input c-table__input--half" ng-model="program.intercept_lower" more-than="-1" ng-required="true" type="number"/>
@@ -144,7 +155,7 @@
               </div>
             </div>
 
-            <button ng-if="vm.currentParameter!==undefined" class="btn c-cost-coverage__button c-cost-coverage__button--add-year" ng-click="vm.addYear(effect)">
+            <button ng-if="vm.selectedParameter!==undefined" class="btn c-cost-coverage__button c-cost-coverage__button--add-year" ng-click="vm.addYear(effect)">
               Add year
             </button>
 
@@ -154,7 +165,7 @@
 
       <br/>
 
-      <button unused-ng-disabled="vm.TableForm.$invalid" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
+      <button ng-disabled="vm.TableForm.$invalid" ng-if="vm.params.length > 0 && vm.selectedParameter!==undefined" ng-click="vm.submit()" class="btn __l c-cost-coverage__button c-cost-coverage__button--submit" ng-click="vm.addYear()">
         Submit
       </button>
 
