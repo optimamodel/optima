@@ -110,6 +110,7 @@ class Resultset(object):
             if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
                 raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
         R1 = dcp(self) # Keep the properties of this first one
+        R1.name += ' + ' + R2.name
         R1.uid = uuid()
         R1.created = today()
         keys = R1.main.keys()
@@ -133,7 +134,7 @@ class Resultset(object):
             else: 
                 R1.main[key].tot  = 0*res1.tot  # Reset
                 R1.main[key].pops = 0*res1.pops # Reset
-                for t in shape(res1.tot)[-1]:
+                for t in range(shape(res1.tot)[-1]):
                     R1.main[key].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
                     for p in range(len(R1.popkeys)):
                         R1.main[key].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])

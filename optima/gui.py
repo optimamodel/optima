@@ -129,7 +129,11 @@ def pygui(tmpresults, toplot=None):
     plotselections = getplotselections(results)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
-    defaultchecks = plotselections['defaults']
+    if toplot is None: isselected = plotselections['defaults']
+    else:
+        isselected = []
+        for key in checkboxes:
+            isselected.append(True if key in toplot else False)
     
     ## Set up control panel
     figwidth = 7
@@ -140,7 +144,7 @@ def pygui(tmpresults, toplot=None):
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
     updateaxes = axes([0.1, 0.05, 0.3, 0.05]) # Create update button location
     closeaxes  = axes([0.6, 0.05, 0.3, 0.05]) # Create close button location
-    check = CheckButtons(checkboxaxes, checkboxnames, defaultchecks) # Actually create checkboxes
+    check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     for label in check.labels: # Loop over each checkbox
         thispos = label.get_position() # Get their current location
         label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
