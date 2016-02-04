@@ -105,7 +105,7 @@ class Resultset(object):
     
     def __add__(self, R2):
         ''' Define how to add two Resultsets '''
-        if type(R2)!=Resultset: raise OptimaException('Can only add two results sets')
+        if type(R2)!=Resultset: raise OptimaException('Can only add results sets with other results sets')
         for attr in ['tvec','popkeys']:
             if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
                 raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
