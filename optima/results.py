@@ -84,6 +84,7 @@ class Resultset(object):
         self.main['numplhiv']   = Result('Number of PLHIV')
         self.main['numdiag']    = Result('Number of diagnosed PLHIV')
         self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        self.main['popsize']    = Result('Population size')
         if self.settings.usecascade:
             self.main['numincare']   = Result('Number of PLHIV in care')
             self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
@@ -181,6 +182,10 @@ class Resultset(object):
         self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+
+        self.main['popsize'].pops = quantile(allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) 
+        self.main['popsize'].tot = quantile(allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) 
+
         
         if self.settings.usecascade:
             self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
