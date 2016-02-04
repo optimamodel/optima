@@ -1,11 +1,13 @@
+<div class="grid">
+  <h1>Manage project &#8594; Upload new project</h1>
+</div>
+
 <div class="rich">
 
   <form id="createForm" name="UploadProjectForm" method="post" ng-submit="uploadProject()" novalidate="novalidate">
 
     <div class="section grid">
       <div class="4 8++">
-        <h1>Project</h1>
-
         <label><b>Project name</b></label>
         <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
         <div class="error-hint" ng-show="projectExists()"> Project with this name already exists, please choose a different name. </div>
