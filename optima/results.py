@@ -183,8 +183,8 @@ class Resultset(object):
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
-        self.main['popsize'].pops = quantile(allpeople[:,:,:,:].sum(axis=1), quantiles=quantiles) 
-        self.main['popsize'].tot = quantile(allpeople[:,:,:,:].sum(axis=(1,2)), quantiles=quantiles) 
+        self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) 
+        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) 
 
         
         if self.settings.usecascade:

@@ -133,7 +133,7 @@ def pygui(tmpresults, toplot=None):
     
     ## Set up control panel
     figwidth = 7
-    figheight = 1+len(checkboxes)*0.35 # Scale dynamically based on how many options are available
+    figheight = 1+len(checkboxes)*0.27 # Scale dynamically based on how many options are available
     try: fc = results.project.settings.optimablue # Try loading global optimablue
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
