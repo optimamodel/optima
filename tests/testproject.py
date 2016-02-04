@@ -128,8 +128,9 @@ if 'resultsaddition' in tests:
     
     R3 = R1+R2
     
-    multires = op.Multiresultset([R1,R3])
-    op.pygui(multires, toplot=['prev-tot','numplhiv-tot'])
+    if doplot:
+        multires = op.Multiresultset([R1,R3])
+        op.pygui(multires, toplot=['prev-tot','numplhiv-tot'])
     
     done(t)
 
