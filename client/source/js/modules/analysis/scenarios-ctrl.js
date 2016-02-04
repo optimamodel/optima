@@ -201,11 +201,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.saveScenarios = function (saveScenario) {
-          angular.forEach($scope.scenarios, function(sc){
-            $http.post('/api/project/'+openProject.id+'/scenarios?name='+sc.name+'&parset_id='+sc.parset_id+'&scenario_type='+sc.scenario_type+'&active='+sc.active+'', { pars: sc.pars })
-              .success(function(response) {
-                console.log(response);
-              });
+          $http.put('/api/project/'+openProject.id+'/scenarios', {
+            'scenarios': $scope.scenarios
+          }).success(function(response) {
+            $scope.scenarios = response.scenarios;
           });
         };
 

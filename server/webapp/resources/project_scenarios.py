@@ -145,7 +145,7 @@ class Scenarios(Resource):
         parameters=scenario_list_parser.swagger_parameters(),
         responseClass=ScenariosDb.__name__
     )
-    @marshal_with(ScenariosDb.resource_fields)
+    @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
     def put(self, project_id):
         args = scenario_list_parser.parse_args()
 
