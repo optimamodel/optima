@@ -1,19 +1,19 @@
 <div class="c-prosce-modal">
-  <div class="modal-header c-prosce-modal__header"> CREATE A PARAMETER SCENARIO</div>
+  <div class="modal-header c-prosce-modal__header"> CREATE A PROGRAM SCENARIO</div>
 
   <form class="modal-body c-prosce-modal__body">
 
     <!-- Name -->
-    <div class="c-prosce-modal__field-wrap">
-      <label class="c-prosce-modal__label"> Name </label>
-      <input class="c-prosce-modal__input txbox" type="text"/>
+    <div class="o-form__field-wrap">
+      <label class="o-form__label"> Name </label>
+      <input class="o-form__input txbox" type="text"/>
     </div>
 
     <!--  Select a parameter set to use as baseline  -->
     <div class="c-prosce-modal__selects u-layout-horizontal">
-      <div class="c-prosce-modal__field-wrap">
-        <label class="c-prosce-modal__label"> Select a parameter set to use as baseline </label>
-        <select class="c-prosce-modal__input txbox" type="text">
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <label class="o-form__label"> Select a parameter set to use as baseline </label>
+        <select class="o-form__input txbox" type="text">
           <option value=""> -- Select a parameter --</option>
           <option value="par1"> Parameter 1</option>
           <option value="par2"> Parameter 2</option>
@@ -22,9 +22,9 @@
       </div>
 
       <!--  Select a program set to use as baseline  -->
-      <div class="c-prosce-modal__field-wrap">
-        <label class="c-prosce-modal__label"> Select a program set to use as baseline </label>
-        <select class="c-prosce-modal__input txbox" type="text">
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <label class="o-form__label"> Select a program set to use as baseline </label>
+        <select class="o-form__input txbox" type="text">
           <option value=""> -- Select a parameter --</option>
           <option value="par1"> Parameter 1</option>
           <option value="par2"> Parameter 2</option>
@@ -34,23 +34,51 @@
     </div>
 
     <div class="c-prosce-modal__checkboxes u-layout-horizontal">
-      <div class="c-prosce-modal__checkbox-wrap">
+      <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
         <input type="checkbox" name="checkbox" id="set-budget-checkbox" value="value" class="c-prosce-modal__checkbox-input">
-        <label for="set-budget-checkbox" class="c-prosce-modal__checkbox-class">Set budget</label>
+        <label for="set-budget-checkbox" class="c-prosce-modal__checkbox-label">Set budget</label>
       </div>
 
-      <div class="c-prosce-modal__checkbox-wrap">
+      <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
         <input type="checkbox" name="checkbox" id="set-coverage-checkbox" value="value" class="c-prosce-modal__checkbox-input">
-        <label for="set-coverage-checkbox" class="c-prosce-modal__checkbox-class">Set coverage goals</label>
+        <label for="set-coverage-checkbox" class="c-prosce-modal__checkbox-label">Set coverage goals</label>
       </div>
 
     </div>
 
-    <div class="c-prosce-modal__buttons u-layout-horizontal">
-      <button class="btn __l __white c-prosce-modal__button c-prosce-modal__button--dismiss" ng-click="vm.addYear(effect)">
+    <div class="o-card">
+      <div class="c-input-table">
+
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
+          <div class="c-input-table__label">
+            Year
+          </div>
+          <input type="text" class="c-input-table__input txbox"/>
+          <button class="btn"> Add year</button>
+        </div>
+
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
+          <div class="c-input-table__label">
+            Program 1 can have a bigger name
+          </div>
+          <input type="text" class="c-input-table__input txbox"/>
+        </div>
+
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
+          <div class="c-input-table__label">
+            Program 2
+          </div>
+          <input type="text" class="c-input-table__input txbox"/>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="o-form__buttons u-layout-horizontal">
+      <button class="btn __l __white o-form__button o-form__button--dismiss" ng-click="vm.addYear(effect)">
         Dismiss
       </button>
-      <button class="btn __l c-prosce-modal__button c-prosce-modal__button--save" ng-click="vm.addYear(effect)">
+      <button class="btn __l o-form__button o-form__button--save" ng-click="vm.addYear(effect)">
         Save
       </button>
     </div>

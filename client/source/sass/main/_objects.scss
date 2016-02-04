@@ -49,3 +49,26 @@
     }
   }
 }
+
+.o-form {
+  &__field-wrap {
+    margin-bottom: 10px;
+  }
+
+  &__input {
+    margin-top: 5px;
+    &--small {
+      width: 55px;
+    }
+  }
+
+  &__buttons {
+    justify-content: flex-end;
+  }
+
+  &__button {
+    &--dismiss {
+      margin-right: 10px;
+    }
+  }
+}

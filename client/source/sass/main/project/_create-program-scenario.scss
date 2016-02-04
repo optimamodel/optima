@@ -1,4 +1,40 @@
 .c-prosce-modal {
+
   &__header {
+  }
+
+  &__input-with-space {
+    &:first-child {
+      margin-right: 15px;
+    }
+  }
+
+  &__checkboxes {
+    margin: 15px 10px
+  }
+
+  .o-form__field-wrap {
+    margin: 15px 10px;
+  }
+
+}
+
+.c-input-table {
+  &__field {
+    border: 1px solid #ECECEC;
+    padding: 5px 8px;
+    &:nth-child(odd) {
+      background-color: #F7F7F7;
+    }
+  }
+
+  &__label {
+    width: 150px;
+    margin-right: 15px;
+  }
+
+  &__input {
+    width: 50px;
+    margin-right: 10px;
   }
 }
