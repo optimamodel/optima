@@ -80,8 +80,10 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
     elif project is not None:
         if progset is None: progset = 0
         defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
+        printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
     else:
         defaultbudget = 1e6 # If can't find programs
+        printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
 
     objectives = odict() # Dictionary of all objectives
     objectives['keys'] = ['death', 'inci'] # Define valid keys
@@ -112,10 +114,9 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
 
 def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
     """
-    Define default objectives for the optimization. Some objectives are shared
-    between outcome and money minimizations, while others are different. However,
-    outcome minimization is performed as part of money minimization, so it's useful
-    to keep all the keys for both. Still, ugly.
+    Define constraints for minimize outcomes optimization: at the moment, just
+    total budget constraints defned as a fraction of current spending. Fixed costs
+    are treated differently, and ART is hard-coded to not decrease.
     
     Version: 2016feb03
     """
@@ -127,6 +128,8 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
     elif project is not None:
         if progset is None: progset = 0
         progset = project.progsets[progset]
+        printv('defaultconstraints() did not get a progset input, so using default', 2, verbose)
+
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
