@@ -151,7 +151,7 @@
         <div style="margin-top: 20px">
           <div>
             <span style="width: 100px;display: inline-block;">Save calibration</span>
-            <button class="btn __m">Save</button>
+            <button class="btn __m" ng-click="saveAutoCalibration()" ng-if="parameters && result_id">Save</button>
           </div>
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
             {{ saveSuccessMessage }}
