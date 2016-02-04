@@ -12,6 +12,8 @@
     - db_url: "postgresql://{{db_user}}:{{db_password}}@{{db_host}}:5432/{{db_name}}"
     - num_workers: "{{ansible_processor_count * 2}}"
 
+    - timezone: Europe/Amsterdam
+
   vars_files:
     - "{{prudentia_dir}}/vars/global.yml"
     - ./common_vars.yml
