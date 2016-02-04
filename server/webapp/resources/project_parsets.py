@@ -331,6 +331,7 @@ class ParsetsCalibration(Resource):
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
         result = project_instance.runsim(simpars=simparslist)
+        result_entry = None
 
         if doSave:  # save the updated results
             parset_entry.pars = op.saves(parset_instance.pars)
@@ -360,7 +361,7 @@ class ParsetsCalibration(Resource):
             "parameters": args['parameters'],
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_entry.id
+            "result_id": result_entry.id if result_entry is not None else None
         }
 
     @report_exception
