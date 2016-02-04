@@ -1,18 +1,24 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
-console.log('loaded');
     module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector, $state) {
-      console.log('Called');
-
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
-        if (!info.has_data) {
+        var openProject  = info.data;
+        if (!openProject.has_data) {
           $scope.missingModelData = true;
           return;
         }
 
         var responseData, availableScenarioParameters, availableScenarios;
-
+        $scope.scenarios = scenariosResponse.data.scenarios;
+        $scope.scenarios = [{
+          'endval': '',
+          'endyear': 2050,
+          'name': 'Test',
+          'for': '',
+          'startval': 'startval1',
+          'startyear': 2010
+        }];
         // initialize all necessary data for this controller
         var initialize = function() {
           $scope.scenarios = [];
@@ -22,7 +28,7 @@ console.log('loaded');
           };
 
           // add All option in population list
-          meta.data.pops.long.push("All");
+          //meta.data.pops.long.push("All");
 
           // transform scenarioParameters to use attribute `names` instead of `keys`
           // it is the same for the data we have to send to run scenarios
@@ -247,7 +253,7 @@ console.log('loaded');
           updateGraphs(responseData);
         }, true);
 
-        initialize();
+        //initialize();
 
     });
 

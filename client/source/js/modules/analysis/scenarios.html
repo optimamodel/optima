@@ -15,7 +15,10 @@
                 <tr>
                     <td><b>Active</b></td>
                     <td><b>Name</b></td>
-                    <td>&nbsp;</td>
+                    <td><b>Parameter set</b></td>
+                    <td><b>Program set</b></td>
+                    <td><b>Type</b></td>
+                    <td><b>Manage</b></td>
                 </tr>
                 </thead>
                 <tbody>
@@ -24,23 +27,29 @@
                         <input type="checkbox" ng-model="row.active">
                     </td>
                     <td>{{ row.name }}</td>
-                    <td style="text-align: right; width: 10%">
+                    <td> - </td>
+                    <td> - </td>
+                    <td> - </td>
+                    <td>
                         <button type="button" class="btn" ng-click="openEditScenarioModal($event, row)">Edit</button>
+                        <button type="button" class="btn" ng-click="openEditScenarioModal($event, row)">Copy</button>
+                        <button type="button" class="btn" ng-click="openEditScenarioModal($event, row)">Delete</button>
                     </td>
                 </tr>
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colspan="5" class="text-right">
-                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a scenario</button>
+                    <td colspan="6" class="text-right">
+                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a program scenario</button>
+                      <button type="button" class="btn" ng-click="openAddScenarioModal($event)">Add a parameter scenario</button>
                     </td>
                   </tr>
                   <tr>
-                    <td colspan="5">
-                        <div style="float: right">
-                          <button type="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
-                        </div>
-                        <button type="button" class="btn" ng-click="runScenarios(true)">Save scenarios</button>
+                    <td colspan="3">
+                      <button type="button" class="btn" ng-click="runScenarios(true)">Save scenarios</button>
+                    </td>
+                    <td colspan="3" class="text-right">
+                      <button type="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
                     </td>
                   </tr>
                 </tfoot>
