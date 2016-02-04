@@ -8,7 +8,7 @@ define(['./../module', 'underscore'], function (module, _) {
     vm.openProject = activeProject.data;
     console.log('vm.openProject', vm.openProject);
 
-    vm.activeTab = 'outcome'; //todo: revert to first
+    vm.activeTab = 'cost';
     vm.tabs = [{
       name: 'Define cost functions',
       slug: 'cost'
