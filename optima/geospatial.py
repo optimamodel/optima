@@ -250,7 +250,9 @@ def geogui():
     def plotgeo():
         ''' Actually plot geospatial analysis!!! '''
         global guiportfolio
-        if guiportfolio is None: warning('Please load a portfolio first')
+        if guiportfolio is None: 
+            warning('Please load a portfolio first')
+            return None
         gaoptim = guiportfolio.gaoptims[-1]
         guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False)
         return None

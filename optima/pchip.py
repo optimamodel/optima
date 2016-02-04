@@ -150,7 +150,7 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
         xend = max(xend,optbudget[-1])
     xnew = linspace(xstart,xend,200)
     
-    fig = plt.figure()
+    fig = plt.figure(facecolor=(1,1,1))
     ax = fig.add_subplot(111)
 #    print(xnew)
 #    print(pchip(x,y,xnew,deriv))
@@ -158,7 +158,7 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
 #    print(pchip(x,y,optbudget,deriv))
     plt.plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
     xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
-    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, label='Budget-objective curve')
+    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=50, label='Budget-objective curve')
 #        print(x)
 #        print(pchip(x,y,x,deriv))
     if not initbudget == None:
