@@ -569,5 +569,159 @@ class GAOptim(object):
         for proj in self.resultpairs:
             bl.append(sum([k[0] for k in self.resultpairs[proj]['opt'].budget[-1].values()]))
         return bl
+        
+    
+#%% 'EASY' STACK-PLOTTING CODE PULLED FROM v1.5 FOR CLIFF. DOES NOT WORK.   :)
+    
+
+#    def sortfixed(somelist):
+#        # Prog array help: [VMMC, FSW, MSM, HTC, ART, PMTCT, OVC, Other Care, MGMT, HR, ENV, SP, M&E, Other, SBCC, CT]
+#        sortingarray = [2, 4, 5, 7, 8, 6, 1, 9, 10, 11, 12, 13, 14, 15, 3, 0]
+#        return [y for x,y in sorted(zip(sortingarray,somelist), key = lambda x:x[0])]
+#    #    return [y for x,y in sorted(enumerate(somelist), key = lambda x: -len(progs[x[0]]['effects']))]
+        
+    
+    def superplot(self):
+        
+        from matplotlib.pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
+        from gridcolormap import gridcolormap
+        from matplotlib import gridspec
+        import numpy
+        
+        progs = p1.regionlist[0].metadata['programs']    
+        
+        figure(figsize=(22,15))
+        
+        nprograms = len(p1.gpalist[-1][0].region.data['origalloc'])
+#        colors = sortfixed(gridcolormap(nprograms))
+#        colors[0] = numpy.array([ 0.20833333,  0.20833333,  0.54166667])  #CT
+#        colors[1] = numpy.array([ 0.45833333,  0.875     ,  0.79166667])  #OVC
+#        colors[2] = numpy.array([0.125, 0.125, 0.125])  #VMMC
+#        colors[3] = numpy.array([ 0.79166667,  0.45833333,  0.875     ])+numpy.array([ 0.125,  0.125,  0.125     ])  #SBCC
+#        colors[4] = numpy.array([ 0.54166667,  0.20833333,  0.20833333])  #FSW
+#        colors[5] = numpy.array([ 0.875     ,  0.45833333,  0.125     ])  #MSM
+#        colors[6] = numpy.array([ 0.125     ,  0.875     ,  0.45833333])+numpy.array([ 0.0,  0.125,  0.0     ])  #PMTCT
+#        colors[7] = numpy.array([ 0.54166667,  0.875     ,  0.125     ])   #HTC
+#        colors[8] = numpy.array([ 0.20833333,  0.54166667,  0.20833333])  #ART
+#        for i in xrange(7): colors[-(i+1)] = numpy.array([0.25+0.5*i/6.0, 0.25+0.5*i/6.0, 0.25+0.5*i/6.0])
+    
+        
+        
+        gpl = sorted(p1.gpalist[-1], key=lambda sbo: sbo.name)
+        ind = [val for pair in ([x, 0.25+x] for x in xrange(len(gpl))) for val in pair]
+        width = [0.25, 0.55]*(len(gpl))       # the width of the bars: can also be len(x) sequence
+        
+        bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-1] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
+        for p in xrange(2,nprograms+1):
+            bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-p] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val*1e-6 for pair in zip([sum(sortfixed(sb.simlist[1].alloc)[1-p:]) for sb in gpl], [sum(sortfixed(sb.simlist[2].alloc)[1-p:]) for sb in gpl]) for val in pair])
+        
+        xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
+        xlim([0,32])
+        tick_params(axis='both', which='major', labelsize=15)
+        tick_params(axis='both', which='minor', labelsize=15)
+        ylabel('Budget Allocation (US$m)', fontsize=15)
+        
+    
+    
+        fig = figure(figsize=(22,15))    
+        
+        gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
+        
+        for x in xrange(len(gpl)):
+            sb = gpl[x]
+            r = sb.region
+    
+            ind = xrange(len(sb.simlist[1:]))
+            width = 0.8       # the width of the bars: can also be len(x) sequence
             
+            if x < 10: subplot(gs[x])
+            else: subplot(gs[x+1])
+            bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+            for p in xrange(2,nprograms+1):
+                bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed([x*1e-6 for x in sim.alloc])[1-p:]) for sim in sb.simlist[1:]])
+            #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+            xlabel(r.getregionname(), fontsize=18)
+            if x in [0,10,21]: ylabel('Budget Allocation (US$m)', fontsize=18)
+            tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+        
+    #        ax = gca()
+    #        ax.ticklabel_format(style='sci', axis='y')
+    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
             
+            tick_params(axis='both', which='major', labelsize=14)
+            tick_params(axis='both', which='minor', labelsize=14)
+        
+        fig.tight_layout()
+        
+        
+        
+    #    bar(ind, [val for pair in zip([sb.simlist[1].alloc[-1] for sb in gpl], [sb.simlist[2].alloc[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
+    #    for p in xrange(2,nprograms+1):
+    #        bar(ind, [val for pair in zip([sb.simlist[1].alloc[-p] for sb in gpl], [sb.simlist[2].alloc[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val for pair in zip([sum(sb.simlist[1].alloc[1-p:]) for sb in gpl], [sum(sb.simlist[2].alloc[1-p:]) for sb in gpl]) for val in pair])
+    #    
+    #    xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
+    #    xlim([0,32])
+    #    tick_params(axis='both', which='major', labelsize=15)
+    #    tick_params(axis='both', which='minor', labelsize=15)
+    #    ylabel('Budget Allocation ($)', fontsize=15)
+    #    
+    #
+    #
+    #    fig = figure(figsize=(22,15))    
+    #    
+    #    gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
+    #    
+    #    for x in xrange(len(gpl)):
+    #        sb = gpl[x]
+    #        r = sb.region
+    #
+    #        ind = xrange(len(sb.simlist[1:]))
+    #        width = 0.8       # the width of the bars: can also be len(x) sequence
+    #        
+    #        if x < 10: subplot(gs[x])
+    #        else: subplot(gs[x+1])
+    #        bar(ind, [sim.alloc[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+    #        for p in xrange(2,nprograms+1):
+    #            bar(ind, [sim.alloc[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sim.alloc[1-p:]) for sim in sb.simlist[1:]])
+    #        #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+    #        xlabel(r.getregionname(), fontsize=18)
+    #        if x in [0,10,21]: ylabel('Budget Allocation ($)', fontsize=18)
+    #        tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+    #    
+    #        ax = gca()
+    #        ax.ticklabel_format(style='sci', axis='y')
+    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
+    #        
+    #        tick_params(axis='both', which='major', labelsize=13)
+    #        tick_params(axis='both', which='minor', labelsize=13)
+    #    
+    #    fig.tight_layout()    
+        
+        
+        
+    #    for x in xrange(len(p1.gpalist[-1])):
+        for x in xrange(1):
+            sb = p1.gpalist[-1][x]
+            r = sb.region
+            
+            nprograms = len(r.data['origalloc'])
+    #        colors = sortfixed(gridcolormap(nprograms))
+            
+            figure(figsize=(len(sb.simlist[1:])*2+4,nprograms/2))
+            gs = gridspec.GridSpec(1, 2, width_ratios=[len(sb.simlist[1:]), 2]) 
+            ind = xrange(len(sb.simlist[1:]))
+            width = 0.8       # the width of the bars: can also be len(x) sequence
+            
+            subplot(gs[0])
+            bar(ind, [sortfixed(sim.alloc)[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+            for p in xrange(2,nprograms+1):
+                bar(ind, [sortfixed(sim.alloc)[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed(sim.alloc)[1-p:]) for sim in sb.simlist[1:]])
+            xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+            ylabel('Budget Allocation ($)')
+            
+            subplot(gs[1])
+            for prog in xrange(nprograms): plot(0, 0, linewidth=3, color=colors[prog])
+            legend(sortfixed(r.data['meta']['progs']['short']))
+            
+        show()
+                
