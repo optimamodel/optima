@@ -170,16 +170,20 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
+                tmpbudget = dcp(thisprogset.getdefaultbudget())
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
                     scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
-                scen.budget = scen.budget.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
 
                 # Ensure budget values are lists
                 for budgetkey, budgetentry in scen.budget.iteritems():
                     if isinstance(budgetentry,(int,float)):
                         scen.budget[budgetkey] = [budgetentry]
+                
+                # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
+                tmpbudget.update(scen.budget)
+                scen.budget = tmpbudget
 
                 # Figure out coverage
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
