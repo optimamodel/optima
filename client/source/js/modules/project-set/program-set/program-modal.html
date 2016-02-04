@@ -100,7 +100,6 @@
               Populations
             </div>
             <div>
-            <div class="error-hint" ng-show="isPopulationSelected(entry, entry.populations) && entry.parameterObj">Please select population</div>
             <div class="section_dashed_border no-border">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPopToParameter(entry)" ng-model="entry.selectAll">
@@ -117,7 +116,6 @@
             <h3>
               Partnerships
             </h3>
-            <div class="error-hint" ng-show="isPopulationSelected(entry, entry.parameterObj.pships) && entry.parameterObj">Please select partnership</div>
             <div class="section_dashed_border" ng-if="entry.parameterObj.pships.length > 0">
               <span class="option">
                 <input type="checkbox" ng-click="addRemoveAllPshipsToParameter(entry)" ng-model="entry.selectAll">

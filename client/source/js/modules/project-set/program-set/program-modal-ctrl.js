@@ -179,12 +179,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
     $scope.formInvalid = false;
-    $scope.isPopulationSelected = function(parameter, parameterPops) {
-      $scope.formInvalid = !_.find(parameterPops, function(pop) {
-        return pop.added;
-      });
-      return $scope.formInvalid;
-    };
     // Function to remove a parameter
     $scope.removeParameter = function ($index) {
       program.parameters.splice($index,1);
