@@ -75,7 +75,6 @@ from server.webapp.resources.project_scenarios import Scenarios, Scenario, Scena
 
 
 app.register_blueprint(model, url_prefix='/api/model')
-app.register_blueprint(scenarios, url_prefix='/api/analysis/scenarios')
 app.register_blueprint(optimization, url_prefix='/api/analysis/optimization')
 
 api.add_resource(User, '/api/user')
