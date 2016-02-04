@@ -8,9 +8,9 @@ Version: 2016jan27
 ## Define tests to run here!!!
 tests = [
 #'standardscen',
-#'maxbudget',
+'maxbudget',
 #'90-90-90'
-'VMMC'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -290,16 +290,18 @@ if 'maxbudget' in tests:
     t = tic()
 
     print('Running maximum budget scenario test...')
-    from optima import Budgetscen, defaults
+    from optima import Budgetscen, defaults, dcp
     
     ## Set up default project
     P = defaults.defaultproject('generalized')
     
     ## Define scenarios
     defaultbudget = P.progsets['default'].getdefaultbudget()
+    maxbudget = dcp(defaultbudget)
+    for key in maxbudget: maxbudget[key] += 1e14
     scenlist = [
         Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
-        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget[:]+1e9),
+        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios

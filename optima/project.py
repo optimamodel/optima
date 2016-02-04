@@ -400,20 +400,13 @@ class Project(object):
         return None
 
     
-    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', saveprocess=True):
-        ''' Function to minimize outcomes '''
-        optim = Optim(project=self, name=name, which='outcome', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        if saveprocess:        
-            self.addoptim(optim=optim)
-            self.addresult(result=multires)
-            self.modified = today()
-        return multires
-        
-    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, debug=False, saveprocess=True):
-        ''' Function to minimize money '''
-        optim = Optim(project=self, name=name, which='money', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
+    def optimize(self, which=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True):
+        ''' Function to minimize outcomes or money '''
+        if which is None: raise OptimaException('optimize(): You must specify whether to minimize outcomes or money')
+        optim = Optim(project=self, name=name, which=which, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        if which=='outcomes': multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        elif which=='money':  multires =    minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
+        else: raise OptimaException('optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which)
         if saveprocess:        
             self.addoptim(optim=optim)
             self.addresult(result=multires)

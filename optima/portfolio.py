@@ -441,7 +441,7 @@ class GAOptim(object):
             initobjectives = dcp(self.objectives)
             initobjectives['budget'] = initbudgets[pind] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[p.uid]['init'] = p.optimize(which='outcomes', name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
             preibudget = initobjectives['budget']
             postibudget = self.resultpairs[p.uid]['init'].budget[-1]
             assert abs(preibudget-sum(postibudget[:]))<tol
@@ -449,7 +449,7 @@ class GAOptim(object):
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pind] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[p.uid]['opt'] = p.optimize(which='outcomes', name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
             postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
             assert abs(preobudget-sum(postobudget[:]))<tol
