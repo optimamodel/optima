@@ -235,7 +235,6 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
       )
         .success(function(response) {
           if(response.status === 'started') {
-            console.log('response', response);
             $scope.statusMessage = 'Automatic calibration started.';
             pollAutoCalibration();
           } else if(response.status === 'running') {
@@ -261,7 +260,6 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
     var getAutoCalibratedGraphs = function() {
       $http.get('/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/calibration?autofit=true')
         .success(function(response) {
-          console.log('getAutoCalibratedGraphs', response);
           $scope.calibrationChart = response.calibration.graphs;
           $scope.statusMessage = 'Charts updated.';
           $scope.parameters = response.calibration.parameters;
@@ -278,7 +276,6 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
         parameters: $scope.parameters,
         result_id: $scope.result_id
       }).success(function(response) {
-        console.log('saveAutoFit', response);
         $scope.statusMessage = 'Result saved';
       });
     };
