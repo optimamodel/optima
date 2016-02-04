@@ -5,6 +5,19 @@ This README describes the steps involved in installing Optima. For detailed usag
 
 To use the Optima model from Python directly with the browser-based user interface, follow the instructions in "Optima model setup". Otherwise, follow all instructions.
 
+1.1 Step-by-step standard installation instructions
+------------
+0. Sign up for an account on GitHub (http://github.com) with a free plan.
+0. Download and install the GitHub app (http://desktop.github.com).
+0. Go to the Optima GitHub page and click on the small button next to "Download ZIP":  
+![](http://optimamodel.com/figs/optima-github-button.png)
+0. Download and install Anaconda, using default options (https://store.continuum.io/cshop/anaconda/). **Make sure you download Python 2.7, not 3.5.**
+0. Finally, set up the Python path:
+    0. Run Spyder (part of Anaconda)
+    0. Under the “Tools” (Linux and Windows) or “python” (under Mac) menu, go to “PYTHONPATH Manager”
+    0. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.
+0. To check that everything works, run Spyder, go to the `Optima/tests` folder, open `testworkflow.py`, and run (F5, or select "Run" from the "Run" menu). You should see a figure appear.
+
 
 
 2. Optima model setup
