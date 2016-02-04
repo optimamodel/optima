@@ -354,7 +354,7 @@ class ParsetsCalibration(Resource):
 
 
 manual_calibration_parser = RequestParser()
-manual_calibration_parser.add_argument('maxtime', required=False, default=60)
+manual_calibration_parser.add_argument('maxtime', required=False, type=int, default=60)
 
 
 class ParsetsAutomaticCalibration(Resource):
