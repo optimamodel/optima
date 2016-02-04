@@ -16,7 +16,7 @@ define(['angular', 'underscore'], function (angular, _) {
               toYear = 2050
             }
             var currentValue = parseInt(value);
-            var isValid = value !== undefined && value.toString().length === 4 && (fromYear && currentValue >= fromYear) && (toYear && value <= toYear);
+            var isValid = value !== undefined && value.toString().length === 4 && (fromYear && currentValue >= fromYear) && (toYear && currentValue <= toYear);
             ctrl.$setValidity('yearValidator', isValid);
           };
 
