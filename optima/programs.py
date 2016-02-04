@@ -1027,7 +1027,7 @@ class Covout(CCOF):
 ########################################################
 # HELPER FUNCTIONS
 ########################################################
-def vec2budget(progset=None, budgetvec=None, indices=None):
+def vec2budget(budgetvec=None, origbudget=None, progset=None, indices=None):
     ''' 
     Function to convert a budget/coverage vector into a budget/coverage odict 
     
@@ -1035,12 +1035,15 @@ def vec2budget(progset=None, budgetvec=None, indices=None):
     '''
     
     # Validate input
-    if any([item is None for item in [progset, budgetvec]]): raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
+    if budgetvec is None: raise OptimaException('vec2budget() requires a budget vector as input')
+    if origbudget is None and progset is None: raise OptimaException('vec2budget() requires a program set or an original budget as input')
+
     if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
     if indices is None: indices = arange(len(budgetvec)) # If no indices supplied, assume it's the right length
     
     # Get budget structure and populate
-    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+    if origbudget is None: budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+    else: budget = origbudget
     try:
         for k in range(len(budgetvec)):
             budget[indices[k]] = budgetvec[k] # Make this budget value a list so has len()

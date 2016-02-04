@@ -279,6 +279,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     fixedinds = findinds(1-array(progset.optimizable()))
     nprogs = len(optiminds) # Only count optimizable programs
     budgetvec = progset.getdefaultbudget()[:]
+    origbudget = sum(budgetvec)
     
     # Error checking
     if isnan(budgetvec).any():
@@ -287,7 +288,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     # Trim out non-optimizable programs and calculate limits
     minlimsvec = constraints['min'][:] # Convert to vector
-    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
+    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds]*totalbudget/origbudget # Calculate the minimum allowed costs of fixed programs -- scaled to new spending amount
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
     budgetvec = budgetvec[optiminds] # ...then remove them from the vector
     origbudgetvec = dcp(budgetvec) # Store original budget vector
@@ -464,7 +465,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     
     # Trim out non-optimizable programs and calculate limits
     minlimsvec = constraints['min'][:] # Convert to vector
-    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
+    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds]*totalbudget/origbudget # Calculate the minimum allowed costs of fixed programs
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
     budgetvec = budgetvec[optiminds] # ...then remove them from the vector
     origbudgetvec = dcp(budgetvec) # Store original budget vector

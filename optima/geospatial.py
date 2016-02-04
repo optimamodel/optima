@@ -221,7 +221,10 @@ def geogui():
         tmpport = None
         if filepath:
             try: tmpport = loadobj(filepath, verbose=0)
-            except: print('Could not load file "%s"' % filepath)
+            except Exception as E: 
+                warning('Could not load file "%s" because "%s"' % (filepath, E.message))
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                return None
             if tmpport is not None: 
                 if type(tmpport)==Portfolio:
                     guiportfolio = tmpport
