@@ -9,7 +9,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016feb02
+Version: 2016feb04
 """
 
 

@@ -4,7 +4,7 @@ Slopes are constrained via the Fritsch-Carlson method.
 More details: https://en.wikipedia.org/wiki/Monotone_cubic_interpolation
 Script written by Chris Michalski 2009aug18 used as a basis.
 
-Version: 2016jan31
+Version: 2016feb04
 """
 
 import matplotlib.pyplot as plt
@@ -16,7 +16,7 @@ import collections
 pchipeps = 1e-8
 
 #=========================================================
-def pchip(x, y, xnew, deriv = False, method='smoothinterp'):
+def pchip(x, y, xnew, deriv = False, method='pchip'):
     
     xs = [a for a,b in sorted(zip(x,y))]
     ys = [b for a,b in sorted(zip(x,y))]
@@ -156,15 +156,15 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
 #    print(pchip(x,y,xnew,deriv))
 #    print(optbudget)
 #    print(pchip(x,y,optbudget,deriv))
-    plt.plot(xnew, pchip(x,y,xnew,deriv))
+    plt.plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
     xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
-    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=1.5, label='BOC Data')
+    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, label='Budget-objective curve')
 #        print(x)
 #        print(pchip(x,y,x,deriv))
     if not initbudget == None:
-        plt.plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Init. Est.')
+        plt.plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Initial')
     if not optbudget == None:
-        plt.plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Opt. Est.')
+        plt.plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Optimized')
     ax.legend(loc='best')
     if returnplot:
         return ax

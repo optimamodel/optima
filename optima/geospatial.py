@@ -250,8 +250,9 @@ def geogui():
     def plotgeo():
         ''' Actually plot geospatial analysis!!! '''
         global guiportfolio
+        if guiportfolio is None: warning('Please load a portfolio first')
         gaoptim = guiportfolio.gaoptims[-1]
-        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets())
+        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False)
         return None
         
     
@@ -342,7 +343,7 @@ def geogui():
     buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
-    buttons['plotgeo']   = QtGui.QPushButton('Plot last geospatial results', parent=geoguiwindow)
+    buttons['plotgeo']   = QtGui.QPushButton('Plot geospatial results', parent=geoguiwindow)
     buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
     buttons['saveport']  = QtGui.QPushButton('Save portfolio', parent=geoguiwindow)
     buttons['close']     = QtGui.QPushButton('Close', parent=geoguiwindow)
@@ -363,7 +364,7 @@ def geogui():
     ## Set button locations
     spacer = 0
     for b,key in enumerate(buttons.keys()):
-        if key=='rungeo': spacer = 200
+        if key=='rungeo': spacer = 170
         buttons[key].move(left, top+spacing*b+spacer)
     
     ## Define button functions

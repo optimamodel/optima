@@ -185,7 +185,7 @@ class Portfolio(object):
                 printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
                 
-    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, verbose=2):
+    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2):
         ''' Loop through stored projects and plot budget-outcome curves '''
         printv('Plotting BOCs...', 2, verbose)
         
@@ -200,11 +200,8 @@ class Portfolio(object):
             raise OptimaException(errormsg)
         
         # Loop for BOCs and then BOC derivatives.
-        for inderiv in [False,True]:
-            c = 0
-            for p in self.projects.values():
-                p.plotBOC(objectives=objectives, deriv=inderiv, initbudget=initbudgets[c], optbudget=optbudgets[c])
-                c += 1
+        for c,p in enumerate(self.projects.values()):
+            p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c])
             
             
     def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
