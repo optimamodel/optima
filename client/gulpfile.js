@@ -166,9 +166,9 @@ gulp.task('watch', ['sass'], function () {
 });
 
 gulp.task('default', ['js', 'copy'], function () {
-  try {
-    gulp.run('karma-ci'); // CK: Put in a try-catch block because sometimes fails
-  }
-  catch(err) {
-  }
+//  try {
+//    gulp.run('karma-ci'); // CK: Put in a try-catch block because sometimes fails
+//  }
+//  catch(err) {
+//  }
 });
