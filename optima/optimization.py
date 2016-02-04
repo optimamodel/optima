@@ -149,18 +149,15 @@ def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
 
 
 
-def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, budgetlims=None, optiminds=None, tvec=None, outputresults=False):
+def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, totalbudget=None, budgetlims=None, optiminds=None, tvec=None, outputresults=False):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
     # Validate input
-    if any([arg is None for arg in [budgetvec, progset, objectives, budgetlims, optiminds, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+    if any([arg is None for arg in [budgetvec, progset, objectives, totalbudget, budgetlims, optiminds, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires a budgetvec, progset, objectives, budgetlims, optiminds, and tvec at minimum')
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    normbudgetvec = constrainbudget(origbudget=budgetvec, total=objectives['budget'], limits=budgetlims)
+    normbudgetvec = constrainbudget(origbudget=budgetvec, total=totalbudget, limits=budgetlims)
     budget = vec2budget(progset, normbudgetvec, optiminds)
-    
-    print('sdfklsjdlfksjdflksjfklsdjl')
-    print(sum(budget[:]))
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
@@ -197,13 +194,8 @@ def constrainbudget(origbudget, total=None, limits=None, eps=1e-3):
         errormsg = 'Budget cannot be constrained since the total %f is outside the low-high limits [%f, %f]' % (total, sum(limits['dec']), sum(limits['inc']))
         raise OptimaException(errormsg)
     
-    print('HI!!!!')
-    print total
-    print normbudget
-    
     # Not strictly needed, but get close to correct answer in one go
     normbudget *= total/float(sum(normbudget)) # Rescale
-    
     
     nprogs = len(normbudget)
     proginds = arange(nprogs)
@@ -318,7 +310,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         budgetlower  = zeros(nprogs)
         budgethigher = zeros(nprogs) + totalbudget
         
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
+        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'totalbudget':totalbudget, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         elif method=='simplex': # WARNING, not fully implemented
@@ -327,6 +319,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
+    budgetvecnew = constrainbudget(origbudget=budgetvecnew, total=totalbudget, limits=budgetlims) # WARNING, not sure why this is needed, but it is
     orig = outcomecalc(budgetvec, outputresults=True, **args)
     new = outcomecalc(budgetvecnew, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?

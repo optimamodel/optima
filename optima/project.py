@@ -120,7 +120,7 @@ class Project(object):
         ''' If parameter set of that name doesn't exist, create it'''
         # question: what is that parset does exist? delete it first?
         if not self.data:
-            raise OptimaException("No data in project %s!" % self.uid)
+            raise OptimaException('No data in project "%s"!' % self.name)
         if name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
@@ -130,11 +130,8 @@ class Project(object):
 
     def loadeconomics(self, filename):
         ''' Load economic data and tranforms it to useful format'''
-
-        ## Load spreadsheet
-        self.data['econ'] = loadeconomicsspreadsheet(filename)
+        self.data['econ'] = loadeconomicsspreadsheet(filename) ## Load spreadsheet
         self.modified = today()
-
         return None
 
 
