@@ -14,3 +14,4 @@
 0.824 2016-Feb-03_16:04:50 f2f8f86 geospatial-bugfixes
 0.406 2016-Feb-03_17:09:17 9d685ff fix-manualfit
 0.412 2016-Feb-03_17:18:16 dac4e00 geospatial-bugfixes
+0.818 2016-Feb-03_22:51:52 e054e4d constraints

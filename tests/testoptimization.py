@@ -10,9 +10,8 @@ Version: 2016feb03
 
 ## Define tests to run here!!!
 tests = [
-#'minimizeoutcomes',
+'minimizeoutcomes',
 #'minimizemoney',
-'constraints',
 ]
 
 
@@ -56,12 +55,12 @@ if 'minimizeoutcomes' in tests:
     t = tic()
 
     print('Running minimize outcomes test...')
-    from optima import defaultobjectives
+    from optima import defaultobjectives, defaultconstraints
     
     P = defaults.defaultproject(which='generalized') 
     
-    objectives = defaultobjectives()
-    objectives['budget'] = 6e6 # Change default budget to optimize
+    objectives = defaultobjectives(P)
+    constraints = defaultconstraints(P)
     P.minoutcomes(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
     
     print('Original allocation: '),
@@ -84,19 +83,14 @@ if 'minimizemoney' in tests:
     t = tic()
 
     print('Running minimize money test...')
-    from optima import defaultobjectives
+    from optima import defaultobjectives, defaultconstraints
     
     P = defaults.defaultproject(which='generalized')
-
-    coverage = P.progsets[-1].getprogcoverage(budget=P.progsets[-1].getdefaultbudget(),
-                      t=2016,
-                      parset=P.parsets['default'])
-
-    outcomes = P.progsets[-1].getoutcomes(coverage=coverage,t=2016, parset=P.parsets['default'])
     
     objectives = defaultobjectives(which='money')
     objectives['deathfrac'] = 0.1
     objectives['incifrac'] = 0.5
+    constraints = defaultconstraints(P)
     P.minmoney(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, maxtime=10, debug=False)
     
     print('Original allocation: '),
@@ -110,32 +104,6 @@ if 'minimizemoney' in tests:
     done(t)
 
 
-
-
-
-
-## Minimize outcomes constraints test
-if 'constraints' in tests:
-    t = tic()
-
-    print('Running constraints test...')
-    from optima import defaultobjectives, defaultconstraints
-    
-    P = defaults.defaultproject(which='generalized') 
-    
-    objectives = defaultobjectives(P)
-    constraints = defaultconstraints(P)
-    P.minoutcomes(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=30)
-    
-    print('Original allocation: '),
-    print(P.results[-1].budget[0])
-    print('Optimal allocation: '),
-    print(P.optims[-1].getresults().budget[1]) # Showing that results are "stored" in the optimization -- same object as before
-    if doplot: 
-        from optima import pygui
-        pygui(P.results[-1], toplot=['budget', 'improvement', 'prev-tot', 'prev-per', 'numinci-tot'])
-    
-    done(t)
 
 
 
