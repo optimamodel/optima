@@ -16,7 +16,7 @@ To use the Optima model from Python directly with the browser-based user interfa
     0. Run Spyder (part of Anaconda)
     0. Under the “Tools” (Linux and Windows) or “python” (under Mac) menu, go to “PYTHONPATH Manager”
     0. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.
-0. To check that everything works, run Spyder, go to the `Optima/tests` folder, open `testworkflow.py`, and run (F5, or select "Run" from the "Run" menu). You should see a figure appear.
+0. To check that everything works, run Spyder, go to the `Optima/tests` folder, open `testsimple.py`, and run (F5, or select "Run" from the "Run" menu). You should see a figure appear.
 
 
 
