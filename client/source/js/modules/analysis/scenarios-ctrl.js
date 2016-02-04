@@ -1,6 +1,6 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector, $state) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse, parsetResponse, scenariosResponse, CONFIG, typeSelector, $state) {
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
         var openProject  = info.data;
@@ -11,6 +11,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         var responseData, availableScenarioParameters, availableScenarios;
         $scope.scenarios = scenariosResponse.data.scenarios;
+        $scope.progsets = progsetsResponse.data.progsets;
+        $scope.parsets = parsetResponse.data.parsets;
 
         /*$scope.runScenariosOptions = {
           dosave: false
@@ -279,6 +281,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         //initialize();
 
+        $scope.progset_name = function(progset_id) {
+          var progset = _.filter($scope.progsets, {id: progset_id});
+          if (progset.length > 0) {
+            return progset[0].name;
+          }
+          return '';
+        }
+
+
+        $scope.parset_name = function(parset_id) {
+          var parset = _.filter($scope.parsets, {id: parset_id});
+          if (parset.length > 0) {
+            return parset[0].name;
+          }
+          return '';
+        }
     });
 
 });

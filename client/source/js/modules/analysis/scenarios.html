@@ -27,8 +27,8 @@
                         <input type="checkbox" ng-model="row.active">
                     </td>
                     <td>{{ row.name }}</td>
-                    <td> {{ row.parsetname[0].name || ' '}}</td>
-                    <td> {{ row.pars[0].name || ' '}}</td>
+                    <td> {{ parset_name(row.parset_id) }}</td>
+                    <td> {{ progset_name(row.progset_id) }}</td>
                     <td> {{ row.scenario_type }}</td>
                     <td style="white-space: nowrap;">
                         <button type="button" class="btn" ng-click="openScenarioModal(row, 'edit', $event)">Edit</button>

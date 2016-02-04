@@ -45,6 +45,12 @@ define([
                   },
                   scenariosResponse: function($http, info) {
                     return $http.get('/api/project/'+info.data.id+'/scenarios');
+                  },
+                  progsetsResponse: function($http, info) {
+                    return $http.get('/api/project/'+info.data.id+'/progsets')
+                  },
+                  parsetResponse: function($http, info) {
+                    return $http.get('/api/project/'+info.data.id+'/parsets')
                   }
                 }
             })
