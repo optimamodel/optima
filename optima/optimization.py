@@ -159,6 +159,9 @@ def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objecti
     normbudgetvec = constrainbudget(origbudget=budgetvec, total=objectives['budget'], limits=budgetlims)
     budget = vec2budget(progset, normbudgetvec, optiminds)
     
+    print('sdfklsjdlfksjdflksjfklsdjl')
+    print(sum(budget[:]))
+    
     # Run model
     thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset)
