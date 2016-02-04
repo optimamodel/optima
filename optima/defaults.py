@@ -108,7 +108,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   
     OST = Program(short='OST',
                   targetpars=[{'param': 'numost', 'pop': 'tot'}],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   category='Prevention',
                   name='Opiate substitution therapy',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})
@@ -148,14 +148,14 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     
     ART = Program(short='ART',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}],# for pop in pops],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   category='Care and treatment',
                   name='Antiretroviral therapy',
                   criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
-                  targetpops=['tot'],
+                  targetpops=pops,
                   category='Care and treatment',
                   name='Prevention of mother-to-child transmission',
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
@@ -447,7 +447,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
 
 
         P.addprogset(name='default', progset=R)
-    
+
     
     
     ##########################################################################################################################
