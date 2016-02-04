@@ -1,17 +1,24 @@
-.c-parsce-modal{
-  &__header{
+.c-parsce-modal {
 
+  &__field-wrap {
+    margin-bottom: 10px;
   }
-  &__body{
 
+  &__buttons {
+    justify-content: flex-end;
   }
-  &__field-wrap{
 
+  &__button {
+    &--dismiss {
+      margin-right: 10px;
+    }
   }
-  &__label{
 
+  &__input {
+    margin-top: 5px;
+    &--small {
+      width: 55px;
+    }
   }
-  &__input{
 
-  }
 }

@@ -5,20 +5,87 @@
 
     <div class="c-parsce-modal__field-wrap">
       <label class="c-parsce-modal__label"> Name </label>
-      <input class="c-parsce-input txbox" type="text"/>
+      <input class="c-parsce-modal__input txbox" type="text"/>
     </div>
 
-    <br/>
     <div class="c-parsce-modal__field-wrap">
       <label class="c-parsce-modal__label"> Select a parameter set to use as baseline </label>
-      <select class="c-parsce-input txbox" type="text">
-        <option value=""> --Select a parameter-- </option>
-        <option value="par1"> Parameter 1 </option>
-        <option value="par2"> Parameter 2 </option>
-        <option value="par3"> Parameter 3 </option>
+      <select class="c-parsce-modal__input txbox" type="text">
+        <option value=""> -- Select a parameter --</option>
+        <option value="par1"> Parameter 1</option>
+        <option value="par2"> Parameter 2</option>
+        <option value="par3"> Parameter 3</option>
       </select>
     </div>
-    <br/>
+
+    <div class="o-form__wrap">
+      <div class="o-card c-parsce-modal__card">
+        <div class="c-parsce-modal__subform">
+
+          <!-- Parameters -->
+          <div class="c-parsce-modal__field-wrap">
+            <label class="c-parsce-modal__label"> Parameters </label>
+            <select class="c-parsce-modal__input txbox" type="text">
+              <option value=""> -- Select --</option>
+              <option value="par1"> Parameter 1</option>
+              <option value="par2"> Parameter 2</option>
+              <option value="par3"> Parameter 3</option>
+            </select>
+          </div>
+
+          <!-- For -->
+          <div class="c-parsce-modal__field-wrap">
+            <label class="c-parsce-modal__label"> For </label>
+            <select class="c-parsce-modal__input txbox" type="text">
+              <option value=""> --Select a parameter--</option>
+              <option value="par1"> Parameter 1</option>
+              <option value="par2"> Parameter 2</option>
+              <option value="par3"> Parameter 3</option>
+            </select>
+          </div>
+
+          <!-- Start year of scenario  -->
+          <div class="c-parsce-modal__field-wrap">
+            <label class="c-parsce-modal__label"> Start year of scenario </label>
+            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" type="text"/>
+          </div>
+
+          <!-- Final year of scenario  -->
+          <div class="c-parsce-modal__field-wrap">
+            <label class="c-parsce-modal__label"> Final year of scenario </label>
+            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" type="text"/>
+          </div>
+
+          <!-- Value at start of scenario  -->
+          <div class="c-parsce-modal__field-wrap">
+            <label class="c-parsce-modal__label"> Value at start of scenario </label>
+            <input class="c-parsce-modal__input txbox" type="text"/>
+          </div>
+
+          <!-- Value at end of scenario  -->
+          <div class="c-parsce-modal__field-wrap">
+            <label class="c-parsce-modal__label"> Value at end of scenario </label>
+            <input class="c-parsce-modal__input txbox" type="text"/>
+          </div>
+
+        </div>
+        <div class="o-card__delete">x</div>
+      </div>
+
+      <button class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-click="vm.addYear(effect)">
+        Add parameter
+      </button>
+
+    </div>
+
+    <div class="c-parsce-modal__buttons u-layout-horizontal">
+      <button class="btn __l __white c-parsce-modal__button c-parsce-modal__button--dismiss" ng-click="vm.addYear(effect)">
+        Dismiss
+      </button>
+      <button class="btn __l c-parsce-modal__button c-parsce-modal__button--save" ng-click="vm.addYear(effect)">
+        Save
+      </button>
+    </div>
 
   </form>
 
