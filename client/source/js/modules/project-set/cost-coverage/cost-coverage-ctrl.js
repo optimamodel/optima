@@ -1,7 +1,7 @@
 define(['./../module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
+  module.controller('ModelCostCoverageController', function ($scope, $modal, $http, $state, activeProject, modalService, projectApiService) {
 
     var vm = this;
 
@@ -49,7 +49,7 @@ define(['./../module', 'underscore'], function (module, _) {
         return [];
       }
       console.log('programs', currentPop[0].programs);
-      return _.map(currentPop[0].programs, function(program) {
+      return _.map(currentPop[0].programs, function (program) {
         return {
           name: program.short_name
         }
@@ -220,7 +220,7 @@ define(['./../module', 'underscore'], function (module, _) {
         currentParsetEffect = parsetEffects[0];
       }
       console.log('currentParsetEffect', currentParsetEffect);
-      _.each(vm.currentParameter.populations, function(pop) {
+      _.each(vm.currentParameter.populations, function (pop) {
         var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short, pop: pop.pop});
         if (paramPops.length === 0) {
           currentParsetEffect.parameters.push({
@@ -327,6 +327,16 @@ define(['./../module', 'underscore'], function (module, _) {
     $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
       vm.parsets = response.parsets;
     });
+
+    var openParameterScenariosModal = function () {
+      return $modal.open({
+        templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
+        controller: 'ParameterScenariosModalController',
+        resolve: {}
+      });
+    };
+
+    openParameterScenariosModal()
 
   });
 
