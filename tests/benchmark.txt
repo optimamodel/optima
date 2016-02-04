@@ -16,3 +16,4 @@
 0.412 2016-Feb-03_17:18:16 dac4e00 geospatial-bugfixes
 0.818 2016-Feb-03_22:51:52 e054e4d constraints
 0.880 2016-Feb-04_01:59:16 0d640d9 constraints
+0.417 2016-Feb-04_14:13:34 af33ae8 constraints
