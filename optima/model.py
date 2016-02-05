@@ -111,7 +111,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     
     # Proportion aware and treated (for 90/90/90)
     propdx = simpars['propdx']
-    if usecascade: propcare = simpars['propcare']
+    if usecascade: 
+        propcare = simpars['propcare']
+        propsupp = simpars['propsupp']
     proptx = simpars['proptx']
 
     # Population sizes
@@ -520,7 +522,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             if proptx[t]: # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
-                newtreattot =  proptx[t] * currcare - currtx 
+                newtreattot =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
             else:
                 newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
                 
@@ -550,6 +552,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
+            currentusupp = people[usvl,:,t] # how many with suppressed viral load
+            currentsupp  = people[svl,:,t]
+            if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+                currsupp  = currentsupp.sum(axis=0)
+                currusupp = currentusupp.sum(axis=0)
+                newsupptot = (propsupp[t]*currusupp - currsupp).sum()
             # 40% progress, 40% recover, 20% don't change cd4 count
             for cd4 in range(ncd4):
                 if cd4>0: 
@@ -570,7 +578,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
                 hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths       = dt * people[usvl[cd4],:,t] * background
-                virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] * reboundwithinint
+                if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+                    virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
+                else:
+                    virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] * reboundwithinint
                 fracalive         = 1. - (death[cd4]*deathtx + background)*dt
                 stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * fraccare  # People stopping ART but still in care
                 stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
