@@ -74,7 +74,7 @@ class Parsets(Resource):
             raise ParsetAlreadyExists(project_id, name)
         if not parset_id:
             # create new parset with default settings
-            project_instance.ensureparset(name)
+            project_instance.makeparset(name, overwrite=False)
             new_result = project_instance.runsim(name)
             project_entry.restore(project_instance)
             db.session.add(project_entry)

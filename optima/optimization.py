@@ -267,7 +267,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     lenparlist = len(parset.pars)
     
     # Process inputs
-    if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
+    if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
@@ -442,7 +442,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     nprogs = len(progset.programs)
     
     # Process inputs
-    if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
+    if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely

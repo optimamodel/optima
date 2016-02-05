@@ -1,7 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2budget #, sanitize, uuid, getdate, smoothinterp
-
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2budget, isnumber
 
 
 class Scen(object):
@@ -165,7 +164,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             except:
                 results = None
 
-            if isinstance(scen.t,(int,float)): scen.t = [scen.t]
+            if isnumber(scen.t): scen.t = [scen.t]
 
             if isinstance(scen, Budgetscen):
                 
@@ -178,7 +177,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                 # Ensure budget values are lists
                 for budgetkey, budgetentry in scen.budget.iteritems():
-                    if isinstance(budgetentry,(int,float)):
+                    if isnumber(budgetentry):
                         scen.budget[budgetkey] = [budgetentry]
                 
                 # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
@@ -199,7 +198,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                 # Ensure coverage level values are lists
                 for covkey, coventry in scen.coverage.iteritems():
-                    if isinstance(coventry,(int,float)):
+                    if isnumber(coventry):
                         scen.coverage[covkey] = [coventry]
 
                 # Figure out coverage

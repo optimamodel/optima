@@ -1,10 +1,10 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
-from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
+from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
 
 
 
@@ -80,6 +80,13 @@ def getchecked(check=None):
     ischecked = []
     for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
     return ischecked
+
+def clearselections(event=None):
+    global plotfig, check, checkboxes, results
+    for box in range(len(check.lines)):
+        for i in [0,1]: check.lines[box][i].set_visible(False)
+    updateplots()
+    return None
     
     
 def updateplots(event=None, tmpresults=None):
@@ -122,7 +129,7 @@ def pygui(tmpresults, toplot=None):
     
     Version: 1.2 (2016jan25)
     '''
-    global check, checkboxes, updatebutton, closebutton, panelfig, results
+    global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
@@ -142,15 +149,18 @@ def pygui(tmpresults, toplot=None):
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
-    updateaxes = axes([0.1, 0.05, 0.3, 0.05]) # Create update button location
-    closeaxes  = axes([0.6, 0.05, 0.3, 0.05]) # Create close button location
+    updateaxes   = axes([0.1, 0.05, 0.2, 0.03]) # Create update button location
+    clearaxes    = axes([0.4, 0.05, 0.2, 0.03]) # Create close button location
+    closeaxes    = axes([0.7, 0.05, 0.2, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     for label in check.labels: # Loop over each checkbox
         thispos = label.get_position() # Get their current location
         label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
-    updatebutton = Button(updateaxes, 'Update', color=fc) # Make button pretty and blue
-    closebutton = Button(closeaxes, 'Close', color=fc) # Make button pretty and blue
+    updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
+    clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
+    closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
+    clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
     updateplots(None) # Plot initially
 
@@ -455,24 +465,26 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     Version: 2016jan30
     '''
     if pops is None: pops = Ellipsis # This is a slice
-    elif isinstance(pops, (int, float)): pops = [pops]
+    elif isnumber(pops): pops = [pops]
+    if pops is not Ellipsis: plottitle = str(array(project.parsets[0].popkeys)[array(pops)])
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
+    
     if people is None:
         if ind is None: ind=-1
         people = project.results[ind].raw[0]['people'] # Try to get default people to plot
     
     plotstyles = odict([
-    ('susreg', ('|','|')), 
-    ('circ',   ('+','|')), 
-    ('undx',   ('.','o')), 
-    ('dx',     ('*','*')), 
-    ('care',   ('O','o')), 
-    ('usvl',   ('-','|')), 
-    ('svl',    ('x','|')), 
-    ('lost',   ('O','o')), 
-    ('off',    ('*','*'))])
+    ('susreg',   ('|','|')), 
+    ('progcirc', ('+','|')), 
+    ('undx',     ('.','o')), 
+    ('dx',       ('*','*')), 
+    ('care',     ('O','o')), 
+    ('usvl',     ('-','|')), 
+    ('svl',      ('x','|')), 
+    ('lost',     ('O','o')), 
+    ('off',      ('*','*'))])
     
     hatchstyles = []
     linestyles = []
@@ -497,6 +509,7 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     ax = subplot(111)
     xlabel('Year')
     ylabel('Number of people')
+    title(plottitle)
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,-1,-1):
         this = ppl[:,st]
@@ -636,10 +649,10 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
                     try:
                         this = plotdata[nplt,:]
                         ax.set_title(this[0])
-                        if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
-                        elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
-                        elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
-                        elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
+                        if   isnumber(this[1]):        ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==0:          ax.set_title(this[0]+' is empty')
+                        elif len(this[1])==1:          ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==len(tvec):  ax.plot(tvec, this[1])
                         else: pass # Population size, doesn't use control points
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
                     except Exception as E: print('??????: %s' % E.message)
