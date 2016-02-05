@@ -527,7 +527,7 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
 
 
 
-global plotparsbacktbut, plotparsnextbut, plotparslider
+global plotparsbackbut, plotparsnextbut, plotparslider
 def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
@@ -624,7 +624,6 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     
     def update(tmp=0):
         global position, plotparslider
-        print('hi', position)
         position = tmp
         position = max(0,position)
         position = min(nplots-nperscreen, position)
@@ -644,7 +643,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                         else: pass # Population size, doesn't use control points
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
                         plt.show()
-                    except: print('??????')
+                    except Exception as E: print('??????: %s' % E.message)
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
                     except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.message))
