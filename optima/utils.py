@@ -870,6 +870,49 @@ class odict(OrderedDict):
 
 
 
+
+def vec2odict(orig=None, newvec=None, inds=None):
+    ''' 
+    Function to convert a budget/coverage vector into a budget/coverage odict ...or anything, really
+    
+    Version: 2016feb04
+    '''
+    
+    # Validate input
+    if orig is None: raise Exception('vec2odict() requires an original odict to update')
+    if newvec is None: raise Exception('vec2odict() requires a vector as input')
+    lenorig = len(orig)
+    lennew = len(new)
+    if lennew!=lenorig and inds is None: raise Exception('vec2odict(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
+    if inds is not None and max(inds)>
+    if origbudget is None and progset is None: raise OptimaException('vec2budget() requires a program set or an original budget as input')
+
+    if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
+    if indices is None: indices = arange(len(budgetvec)) # If no indices supplied, assume it's the right length
+    
+    # Get budget structure and populate
+    if origbudget is None: budget = progset.getdefaultbudget() # Returns an odict with the correct structure
+    else: budget = origbudget
+    try:
+        for k in range(len(budgetvec)):
+            budget[indices[k]] = budgetvec[k] # Make this budget value a list so has len()
+    except:
+        errormsg = 'Could not convert budget vector into budget. Budget:\n%s\nBudgetvec:"%s"' % (budget, budgetvec)
+        raise OptimaException(errormsg)
+    
+    return budget
+
+
+
+
+
+
+
+
+
+
+
+
 ##############################################################################
 ## OPTIMA EXCEPTIONS CLASS
 ##############################################################################
