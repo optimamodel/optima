@@ -48,12 +48,10 @@ Number of injecting acts (injections/year)	actsinj	(0, 'maxacts')	pship	timepar	
 Condom use for regular acts (%)	condreg	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for casual acts (%)	condcas	(0, 1)	pship	timepar	meta	other	0	0	1	random
 Condom use for commercial acts (%)	condcom	(0, 1)	pship	timepar	meta	other	0	0	1	random
-People on ART with viral suppression (%)	successprop	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Immediate linkage to care (%)	immediatecare	(0, 1)	pop	timepar	meta	cascade	1	0	1	random
 Viral suppression when initiating ART (%)	treatvs	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 HIV-diagnosed people linked to care (%/year)	linktocare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 Viral load monitoring (number/year)	freqvlmon	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
-HIV-diagnosed people who are in care (%)	pdhivcare	(0, 1)	tot	timepar	meta	cascade	1	0	1	random
 Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
@@ -394,7 +392,8 @@ def makepars(data, label=None, verbose=2):
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
-            pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+            try: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
+            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]
