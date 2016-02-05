@@ -896,7 +896,7 @@ def updateobj(orig=None, newvec=None, inds=None):
     # The actual meat of the function
     new = dcp(orig)    
     for i,ind in enumerate(inds):
-        new[ind] = newvec[i] #
+        new[ind] = newvec[i]
     
     return new
 

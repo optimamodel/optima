@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb02
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
+from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, updateobj
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -239,7 +239,7 @@ class Programset(object):
         # Validate inputs
         if type(t) in [int, float]: t = [t]
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
-            budget = vec2budget(self, budget) # It seems to be a vector: convert to odict
+            budget = updateobj(self.getdefaultbudget(), budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget = budget.sort([p.short for p in self.programs.values()])
 
