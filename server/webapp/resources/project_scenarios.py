@@ -134,7 +134,7 @@ class Scenarios(Resource):
         if id is not None:
             scenario_entry = ScenariosDb.query.filter_by(id=id).first()
         if not scenario_entry:
-            scenario_entry = ScenariosDb(project_id, blob, **kwargs)
+            scenario_entry = ScenariosDb(project_id, blob=blob, **kwargs)
         else:
             for key, value in kwargs.iteritems():
                 setattr(scenario_entry, key, value)
