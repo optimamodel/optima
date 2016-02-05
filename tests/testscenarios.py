@@ -346,7 +346,8 @@ if 'maxbudget' in tests:
     P.runscenarios() 
      
     if doplot:
-        from optima import pygui
+        from optima import pygui, plotpars
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
 
 

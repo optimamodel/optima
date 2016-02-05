@@ -1,6 +1,6 @@
 ## Imports
 from numpy import append, array
-from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2budget, isnumber
+from optima import OptimaException, dcp, today, odict, printv, findinds, runmodel, Multiresultset, defaultrepr, getresults, vec2obj, isnumber
 
 
 class Scen(object):
@@ -174,7 +174,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
-                    scen.budget = vec2budget(scen.progset, scen.budget) # It seems to be a vector: convert to odict
+                    scen.budget = vec2obj(orig=tmpbudget, newvec=scen.budget) # It seems to be a vector: convert to odict
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
 
@@ -194,7 +194,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
-                    scen.coverage = vec2budget(scen.progset, scen.coverage) # It seems to be a vector: convert to odict
+                    scen.coverage = vec2obj(scen.progset.getdefaultbuget(), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!
                 if not isinstance(scen.coverage,dict): raise OptimaException('Currently only accepting coverage as dictionaries.')
                 if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
                 scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs

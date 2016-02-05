@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb02
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
+from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -239,7 +239,7 @@ class Programset(object):
         # Validate inputs
         if type(t) in [int, float]: t = [t]
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
-            budget = vec2budget(self, budget) # It seems to be a vector: convert to odict
+            budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget = budget.sort([p.short for p in self.programs.values()])
 
@@ -1034,28 +1034,3 @@ class Covout(CCOF):
         ccopars['t'] = None
         return ccopars
 
-########################################################
-# HELPER FUNCTIONS
-########################################################
-def vec2budget(progset=None, budgetvec=None, indices=None):
-    ''' 
-    Function to convert a budget/coverage vector into a budget/coverage odict 
-    
-    "Indices" is used to e.g. supply optimizable parameters only
-    '''
-    
-    # Validate input
-    if any([item is None for item in [progset, budgetvec]]): raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
-    if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
-    if indices is None: indices = arange(len(budgetvec)) # If no indices supplied, assume it's the right length
-    
-    # Get budget structure and populate
-    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
-    try:
-        for k in range(len(budgetvec)):
-            budget[indices[k]] = budgetvec[k] # Make this budget value a list so has len()
-    except:
-        errormsg = 'Could not convert budget vector into budget. Budget:\n%s\nBudgetvec:"%s"' % (budget, budgetvec)
-        raise OptimaException(errormsg)
-    
-    return budget

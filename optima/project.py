@@ -469,6 +469,7 @@ class Project(object):
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
         
+        
     def delBOC(self, objectives):
         ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
         while not self.getBOC(objectives = objectives) == None:
@@ -476,6 +477,7 @@ class Project(object):
             ind = self.getBOC(objectives = objectives).uid
             self.rmresult(str(ind))
         return None
+    
     
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''

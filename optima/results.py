@@ -365,7 +365,7 @@ class BOC(object):
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
         plt.xlabel('Budget')
         if not deriv: plt.ylabel('Outcome')
-        else: plt.ylabel('Marginal Outcome')
+        else: plt.ylabel('Marginal outcome')
         
         if returnplot: return ax
         else: plt.show()
