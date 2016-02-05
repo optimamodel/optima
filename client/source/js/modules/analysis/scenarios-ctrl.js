@@ -22,7 +22,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           dosave: false
         };*/
         // initialize all necessary data for this controller
-        var initialize = function() {
+        /*var initialize = function() {
           $scope.scenarios = [];
 
           
@@ -44,7 +44,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           });
 
           $scope.types = typeSelector.types;
-        };
+        };*/
 
         /**
          * Returns an graph based on the provided yData.
@@ -190,8 +190,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         $scope.runScenarios = function (saveScenario) {
-          //$scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
-          //$scope.runScenariosOptions.dosave = saveScenario === true;
           var activeScenarios = _.filter($scope.scenarios, function(scenario){ return scenario.active; });
           $http.get('/api/project/'+openProject.id+'/scenarios/results')
             .success(function(data) {
@@ -211,27 +209,51 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         // Helper function to open a population modal
         var openScenarioModal = function(scenario, parsets, progsets) {
-          return $modal.open({
-            templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
-            controller: 'ParameterScenariosModalController',
-            resolve: {
-              scenario: function () {
-                return scenario;
-              },
-              parsets: function() {
-                return parsets;
-              },
-              progsets: function() {
-                return progsets;
-              },
-              ykeys: function() {
-                return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
-              },
-              openProject: function(){
-                return openProject;
+          if(scenario.scenario_type === "Program"){
+            return $modal.open({
+              templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
+              controller: 'ProgramScenariosModalController',
+              resolve: {
+                scenario: function () {
+                  return scenario;
+                },
+                parsets: function() {
+                  return parsets;
+                },
+                progsets: function() {
+                  return progsets;
+                },
+                ykeys: function() {
+                  return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
+                },
+                openProject: function(){
+                  return openProject;
+                }
               }
-            }
-          });
+            });
+          }else{
+            return $modal.open({
+              templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
+              controller: 'ParameterScenariosModalController',
+              resolve: {
+                scenario: function () {
+                  return scenario;
+                },
+                parsets: function() {
+                  return parsets;
+                },
+                progsets: function() {
+                  return progsets;
+                },
+                ykeys: function() {
+                  return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
+                },
+                openProject: function(){
+                  return openProject;
+                }
+              }
+            });
+          }
         };
 
         $scope.openScenarioModal = function (row, action, $event) {
@@ -240,8 +262,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             if(action === 'add'){
               return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
                 function (newscenario) {
-                    newscenario.active = true;
-                    newscenario.pars = newscenario.pars || [];
                     $scope.scenarios.push(newscenario);
                 });
             }else if(action === 'edit'){
@@ -252,19 +272,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }else if(action === 'copy'){
               var newscenario = angular.copy(row);
               newscenario.name = row.name +' Copy'
+              newscenario.id = null;
               $scope.scenarios.push(newscenario);
             }else if(action === 'delete'){
               $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
             }
-            /*return openScenarioModal(scenario).result.then(
-                function (newscenario) {
-                    newscenario.active = true;
-                    newscenario.pars = newscenario.pars || [];
-                    $scope.scenarios.push(newscenario);
-                });*/
         };
 
-        $scope.createScenario = function(type, $event) {
+        /*$scope.createScenario = function(type, $event) {
           var scenario = {
             scenario_type: type
           };
@@ -281,7 +296,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                     scenario.active = true;
                     _(scenario).extend(newscenario);
                 });
-        };
+        };*/
 
         $scope.gotoViewCalibrate = function() {
           $state.go('model');;

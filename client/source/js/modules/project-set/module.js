@@ -9,7 +9,8 @@ define([
   '../validations/more-than-directive',
   '../validations/less-than-directive',
   '../validations/year-directive',
-  '../parameter-scenarios-modal/parameter-scenarios-modal'
+  '../parameter-scenarios-modal/parameter-scenarios-modal',
+  '../program-scenarios-modal/program-scenarios-modal'
 ], function (angular) {
   'use strict';
 
@@ -22,7 +23,8 @@ define([
     'app.validations.more-than',
     'app.validations.less-than',
     'app.validations.year',
-    'app.parameter-scenarios-modal'
+    'app.parameter-scenarios-modal',
+    'app.program-scenarios-modal'
   ])
     .config(function ($stateProvider) {
       $stateProvider

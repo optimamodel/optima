@@ -1,8 +1,8 @@
 define(['angular'], function (module) {
   'use strict';
 
-  return angular.module('app.parameter-scenarios-modal', [])
-    .controller('ParameterScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
+  return angular.module('app.program-scenarios-modal', [])
+    .controller('ProgramScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
     	$scope.row = scenario;
     	$scope.parsets = parsets;
         $scope.progsets = progsets;
@@ -44,6 +44,7 @@ define(['angular'], function (module) {
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
     			"pars": $scope.row.pars, 
+    			//"pars": $scope.params, 
     			"id": scenario.id || null, 
     			"progset_id": $scope.row.progset_id || null
     		};
