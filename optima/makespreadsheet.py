@@ -573,7 +573,8 @@ class OptimaSpreadsheet:
         'Number of people initiating ART each year',
         'PLHIV aware of their status (%)', 
         'Diagnosed PLHIV in care (%)',
-        'PLHIV in care on treatment (%)']:
+        'PLHIV in care on treatment (%)',
+        'People on ART with viral suppression (%)']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
       
