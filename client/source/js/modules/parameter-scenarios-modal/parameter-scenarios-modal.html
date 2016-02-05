@@ -64,19 +64,15 @@
         </div>
         <div class="o-card__delete" ng-click="removeParam(row, $index)">x</div>
       </div>
-
-      <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="manageScenarioForm.$invalid" ng-click="addParam(row)">
-        Add parameter
-      </button>
-
     </div>
 
+    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id" ng-click="addParam(row)">
+      Add parameter
+    </button>
+
     <div class="c-parsce-modal__buttons u-layout-horizontal">
-      <button class="btn __l __white c-parsce-modal__button c-parsce-modal__button--dismiss">
-        Dismiss
-      </button>
-      <button type="submit" ng-disabled="manageScenarioForm.$invalid" class="btn __l c-parsce-modal__button c-parsce-modal__button--save">
-        Save
+      <button type="submit" class="btn __l c-parsce-modal__button c-parsce-modal__button--save">
+        OK
       </button>
     </div>
 

@@ -63,6 +63,9 @@ define(['angular'], function (module) {
     	};
 
         $scope.addParam = function(row) {
+            if (!row.pars) {
+                row.pars = [];
+            }
             row.pars.push({});
         };
 
