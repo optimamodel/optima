@@ -447,6 +447,10 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
 
 
         P.addprogset(name='default', progset=R)
+        
+        
+        # Do a super-manual calibration
+        P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
 
     
     
