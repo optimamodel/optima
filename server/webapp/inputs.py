@@ -48,7 +48,7 @@ def scenario_par(orig_pars):
             'endval': int(i['endval']),
             'endyear': int(i['endyear']),
             'name': str(i['name']),
-            'for': list(i['for']),
+            'for': [i['for']],
             'startval': int(i['startval']),
             'startyear': int(i['startyear'])
         })

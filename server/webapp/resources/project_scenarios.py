@@ -130,9 +130,16 @@ class Scenarios(Resource):
 
     def _upsert_scenario(self, project_id, id, **kwargs):
         blob = kwargs.pop('pars')
+
+        if kwargs['scenario_type'] == "Parameter":
+            blob = {'pars': blob}
+        else:
+            blob = {}
+
         scenario_entry = None
         if id is not None:
             scenario_entry = ScenariosDb.query.filter_by(id=id).first()
+            scenario_entry.blob = blob
         if not scenario_entry:
             scenario_entry = ScenariosDb(project_id, blob=blob, **kwargs)
         else:
@@ -140,6 +147,8 @@ class Scenarios(Resource):
                 setattr(scenario_entry, key, value)
 
         db.session.add(scenario_entry)
+        db.session.flush()
+        db.session.commit()
 
     @swagger.operation(
         parameters=scenario_list_parser.swagger_parameters(),
