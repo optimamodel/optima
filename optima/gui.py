@@ -3,8 +3,8 @@ from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselec
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
 from matplotlib.widgets import CheckButtons, Button
-global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton  # For manualfit GUI
-if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, closebutton = [None]*16
+global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
+if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
 
 
 
@@ -80,6 +80,13 @@ def getchecked(check=None):
     ischecked = []
     for box in range(len(check.lines)): ischecked.append(check.lines[box][0].get_visible()) # Stupid way of figuring out if a box is ticked or not
     return ischecked
+
+def clearselections(event=None):
+    global plotfig, check, checkboxes, results
+    for box in range(len(check.lines)):
+        for i in [0,1]: check.lines[box][i].set_visible(False)
+    updateplots()
+    return None
     
     
 def updateplots(event=None, tmpresults=None):
@@ -122,7 +129,7 @@ def pygui(tmpresults, toplot=None):
     
     Version: 1.2 (2016jan25)
     '''
-    global check, checkboxes, updatebutton, closebutton, panelfig, results
+    global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     results = tmpresults # Copy results to global variable    
     
     ## Define options for selection
@@ -142,15 +149,18 @@ def pygui(tmpresults, toplot=None):
     except: fc = (0.16, 0.67, 0.94) # Otherwise, just specify it :)
     panelfig = figure(num='Optima control panel', figsize=(figwidth,figheight), facecolor=(0.95, 0.95, 0.95)) # Open control panel
     checkboxaxes = axes([0.1, 0.15, 0.8, 0.8]) # Create checkbox locations
-    updateaxes = axes([0.1, 0.05, 0.3, 0.05]) # Create update button location
-    closeaxes  = axes([0.6, 0.05, 0.3, 0.05]) # Create close button location
+    updateaxes   = axes([0.1, 0.05, 0.2, 0.03]) # Create update button location
+    clearaxes    = axes([0.4, 0.05, 0.2, 0.03]) # Create close button location
+    closeaxes    = axes([0.7, 0.05, 0.2, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
     for label in check.labels: # Loop over each checkbox
         thispos = label.get_position() # Get their current location
         label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
-    updatebutton = Button(updateaxes, 'Update', color=fc) # Make button pretty and blue
-    closebutton = Button(closeaxes, 'Close', color=fc) # Make button pretty and blue
+    updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
+    clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
+    closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
+    clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
     updateplots(None) # Plot initially
 
