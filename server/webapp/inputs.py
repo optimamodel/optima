@@ -36,6 +36,26 @@ def Json(orig):
     return orig
 
 
+def scenario_par(orig_pars):
+    if not isinstance(orig_pars, list):
+        raise ValueError("needs to be a list.")
+
+    pars = []
+
+    for i in orig_pars:
+
+        pars.append({
+            'endval': float(i['endval']),
+            'endyear': int(i['endyear']),
+            'name': str(i['name']),
+            'for': [i['for']],
+            'startval': float(i['startval']),
+            'startyear': int(i['startyear'])
+        })
+
+    return pars
+
+
 class SubRequest:
 
     def __init__(self, orig_dict):

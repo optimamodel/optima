@@ -110,9 +110,9 @@
     <button ng-click="deleteParameterSet()" type="button" class="btn" style="margin-left:2%">Delete parameter set</button>
   </div>
 
-  <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 70vh">  <!-- CK: maybe a more robust solution than 70vh -->
+  <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
     <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
-      <div class="option_list" style="height:70vh">
+      <div class="option_list" style="height:62vh">
         <div ng-repeat="selector in selectors" class="option">
           <span><input type="checkbox" ng-model="selector.checked"/></span>
           <span style="margin-left: 10px">{{selector.name}}</span>
@@ -129,7 +129,7 @@
       </div>
     </div>
     <div class="small_bordered_list" style="width: 18%;">
-      <div class="option_list" style="height:70vh">
+      <div class="option_list" style="height:62vh">
         <span style="width: 200px;display: inline-block;"><b>Automatic calibration</b></span>
         <div style="margin-top: 20px">
 
@@ -162,7 +162,7 @@
         </div>
         <div style="margin-top: 20px">
           <!--<span style="width: 100px;display: inline-block;"></span>-->
-          <button class="btn __m" ng-click="processGraphs()">Reset</button>
+          <!-- button class="btn __m" ng-click="processGraphs()">Reset</button Commented out at CK's request /-->
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
 
 from flask.ext.login import current_user, login_required
-from flask_restful import Resource, marshal_with
+from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 
 import optima as op
@@ -951,3 +951,27 @@ class Defaults(Resource):
             "categories": program_categories
         }
         return payload
+
+
+# It's a pship but it's used somewhat interchangeably with populations
+
+pship_fields = {
+    "type": fields.String,
+    "populations": Json
+}
+
+
+class Partnerships(Resource):
+    @swagger.operation(
+        summary="List partnerships for project"
+    )
+    @report_exception
+    @marshal_with(pship_fields, envelope="populations")
+    @login_required
+    def get(self, project_id):
+        project = load_project(project_id, raise_exception=True)
+        be_project = project.hydrate()
+        return [{
+            'type': key,
+            'populations': value
+        } for key, value in be_project.data['pships'].iteritems()]
