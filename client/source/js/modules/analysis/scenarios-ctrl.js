@@ -161,7 +161,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             controller: 'ParameterScenariosModalController',
             resolve: {
               scenario: function () {
-                return scenario;
+                return angular.copy(scenario);
               },
               parsets: function() {
                 return parsets;
@@ -192,7 +192,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }else if(action === 'edit'){
               return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
                 function (updatescenario) {
-                    console.log('Updated ', updatescenario);
+                  updatescenario.active = true;
+                  $scope.scenarios[$scope.scenarios.indexOf(row)] = updatescenario;
                 });
             }else if(action === 'copy'){
               var newscenario = angular.copy(row);
@@ -213,7 +214,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           var scenario = {
             scenario_type: type
           };
-          $scope.scenarios.push(scenario);
+          // $scope.scenarios.push(scenario);
           $scope.openScenarioModal(scenario, 'add', $event);
         }
         $scope.openEditScenarioModal = function ($event, scenario) {
