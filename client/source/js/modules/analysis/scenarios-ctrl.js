@@ -111,69 +111,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * Regenerate graphs based on the response and type settings in the UI.
          */
         var updateGraphs = function (response) {
-          if (!response) {
-            return graphs;
+          if (response) {
+            $scope.graphs = response;
           }
-          typeSelector.enableAnnualCostOptions($scope.types, response);
-
-          var graphs = [];
-
-          _($scope.types.population).each(function (type) {
-
-            var data = response[type.id];
-
-            // generate graphs showing the overall data for this type
-            if (type.total) {
-              var title = data.tot.title;
-              var graph = generateGraph(data.tot, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
-              graphs.push(graph);
-            }
-
-            // generate graphs for this type for each population
-            if (type.byPopulation) {
-              _(data.pops).each(function (population, populationIndex) {
-
-                var title = population.title;
-                var graph = generateGraph(population, response.tvec, title, population.legend, data.xlabel, population.ylabel);
-                graphs.push(graph);
-              });
-            }
-          });
-
-          // annual cost charts
-          _($scope.types.possibleKeys).each(function(type) {
-            var isActive = $scope.types.costs.costann[type];
-            if (isActive) {
-              var chartData = response.costann[type][$scope.types.activeAnnualCost];
-              if (chartData) {
-              graphs.push(generateFinancialGraph(chartData));
-              }
-            }
-          });
-
-
-          // cumulative cost charts
-          _($scope.types.possibleKeys).each(function(type) {
-            var isActive = $scope.types.costs.costcum[type];
-            if (isActive) {
-              var chartData = response.costcum[type];
-              if (chartData) {
-                graphs.push(generateFinancialGraph(chartData));
-              }
-            }
-          });
-
-          // commitments
-
-          var commitIsActive = $scope.types.costs.costann.checked;
-          if (commitChartData && commitIsActive) {
-            var commitChartData = response.commit[$scope.types.activeAnnualCost];
-            if (commitChartData) {
-              graphs.push(generateFinancialGraph(commitChartData));
-            }
-          }
-
-          $scope.graphs = graphs;
         };
 
         /**
@@ -196,7 +136,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $http.get('/api/project/'+openProject.id+'/scenarios/results')
             .success(function(data) {
               responseData = data;
-              updateGraphs(responseData);
+              $scope.graphs = data;
             });
         };
 
