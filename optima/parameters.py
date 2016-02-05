@@ -398,8 +398,7 @@ def makepars(data, label=None, verbose=2):
             pars['popsize'] = data2popsize(data=data, keys=keys, **rawpar)
         
         elif partype=='timepar': # Otherwise it's a regular time par, made from data
-            try: pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            pars[parname] = data2timepar(data=data, keys=keys, **rawpar) 
         
         elif partype=='constant': # The constants, e.g. transmfi
             best = data['const'][parname][0] # low = data['const'][parname][1] ,  high = data['const'][parname][2]

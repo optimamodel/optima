@@ -8,7 +8,8 @@ Version: 2016jan27
 ## Define tests to run here!!!
 tests = [
 #'standardscen',
-'maxbudget',
+'maxcoverage',
+#'maxbudget',
 #'90-90-90'
 #'VMMC'
 ]
@@ -281,6 +282,42 @@ if '90-90-90' in tests:
         pygui(P.results[-1], toplot='cascade')
 
     done(t)
+
+
+
+
+
+#################################################################################################################
+## Coverage
+#################################################################################################################
+
+if 'maxcoverage' in tests:
+    t = tic()
+
+    print('Running maximum coverage scenario test...')
+    from optima import Coveragescen, Parscen, defaults, dcp
+    
+    ## Set up default project
+    P = defaults.defaultproject('generalized')
+    
+    ## Define scenarios
+    defaultbudget = P.progsets['default'].getdefaultbudget()
+    maxcoverage = dcp(defaultbudget) # It's just an odict, though I know this looks awful
+    for key in maxcoverage: maxcoverage[key] += 1e14
+    scenlist = [
+        Parscen(name='Current conditions', parsetname='default', pars=[]),
+        Coveragescen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
+        ]
+    
+    # Run the scenarios
+    P.addscenlist(scenlist)
+    P.runscenarios() 
+     
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
+
+
 
 
 
