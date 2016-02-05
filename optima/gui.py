@@ -528,13 +528,13 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
 
 
 global plotparsbackbut, plotparsnextbut, plotparslider
-def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
+def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
     Version: 2016jan30
     '''
-    from optima import Par, makesimpars
+    from optima import Par, makesimpars, tic, toc
     from numpy import array, vstack
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button, Slider
@@ -588,18 +588,16 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     if any([len(pltd)!=nplots for pltd in allplotdata]): 
         printv('Warning, not all pars are the same length, only plotting first', 2, verbose)
         allplotdata = allplotdata[0]
-    nrows = 5
-    ncols = 4
-    nperscreen = nrows*ncols
+    nperscreen = rows*cols
 
     plotparsfig = plt.figure(facecolor=(0.9,0.9,0.9), figsize=figsize)
-    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.2, hspace=0.4)
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.3, hspace=0.4)
     plotparsaxs = []
     count = 0
-    for row in range(nrows):
-        for col in range(ncols):
+    for row in range(rows):
+        for col in range(cols):
             count += 1
-            plotparsaxs.append(plotparsfig.add_subplot(nrows, ncols, count))
+            plotparsaxs.append(plotparsfig.add_subplot(rows, cols, count))
     
     backframe = plotparsfig.add_axes([0.1, 0.03, 0.1, 0.03])
     sliderframe = plotparsfig.add_axes([0.3, 0.03, 0.4, 0.03])
@@ -627,8 +625,10 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         position = tmp
         position = max(0,position)
         position = min(nplots-nperscreen, position)
+        t = tic()
         for i,ax in enumerate(plotparsaxs):
             ax.cla()
+            for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(fontsize)
             ax.hold(True)
             nplt = i+position
             if nplt<nplots:
@@ -642,7 +642,6 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                         elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
                         else: pass # Population size, doesn't use control points
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
-                        plt.show()
                     except Exception as E: print('??????: %s' % E.message)
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
@@ -650,6 +649,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                     if pd==len(allplotdata)-1: # Do this for the last plot only
                         ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                         ax.set_xlim((tvec[0],tvec[-1]))
+        toc(t)
                 
     update()
     plotparsbackbut.on_clicked(updateb)

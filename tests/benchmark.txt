@@ -20,3 +20,4 @@
 0.417 2016-Feb-04_14:13:34 af33ae8 constraints
 0.410 2016-Feb-04_15:16:04 cd18666 temp-benchmarking
 0.448 2016-Feb-04_20:26:38 015f956 azfar-fixes2
+0.554 2016-Feb-05_00:39:01 b9af124 azfar-fixes2

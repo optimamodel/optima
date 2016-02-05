@@ -89,7 +89,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
 
     # Disease state indices
     susreg   = settings.susreg      # Susceptible, regular
-    circ     = settings.circ     # Susceptible, circumcised
+    progcirc = settings.progcirc     # Susceptible, programmatically circumcised
     sus      = settings.sus      # Susceptible, both circumcised and uncircumcised
     undx     = settings.undx     # Undiagnosed
     dx       = settings.dx       # Diagnosed
@@ -127,7 +127,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     numtx     = simpars['numtx']     # 1st line treatement (N) -- tx already used for index of people on treatment [npts]
     hivtest   = simpars['hivtest']   # HIV testing (P) [npop,npts]
     aidstest  = simpars['aidstest']  # HIV testing in AIDS stage (P) [npts]
-    propcirc  = simpars['propcirc']  # Prevalence of circumcision (P)
     numcirc   = simpars['numcirc']   # Number of programmatic circumcisions performed (N)
     numpmtct  = simpars['numpmtct']  # Number of people receiving PMTCT (N)
     
@@ -207,8 +206,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         # Set up basic calculations
         popinfected = allinfected[p]
         uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
-        uncircumcised = uninfected*(1-propcirc[p,0])
-        circumcised = uninfected*propcirc[p,0]
         
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
@@ -238,16 +235,16 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         treatment *= recovratios
         
         # Populated equilibrated array
-        initpeople[susreg, p] = uncircumcised
-        initpeople[circ, p] = circumcised
-        initpeople[undx, p] = undiagnosed
+        initpeople[susreg, p]   = uninfected
+        initpeople[progcirc, p] = 0.0 # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
+        initpeople[undx, p]     = undiagnosed
         if usecascade:
             initpeople[dx, p]   = diagnosed
             initpeople[usvl, p] = treatment * (1.-treatvs[0])
             initpeople[svl,  p] = treatment * treatvs[0]
         else:
-            initpeople[dx, p] = diagnosed
-            initpeople[tx, p] = treatment
+            initpeople[dx, p]   = diagnosed
+            initpeople[tx, p]   = treatment
     
         if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
@@ -376,11 +373,11 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
                 thisforceinfsusreg  = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]),   (dt*cond*acts*effhivprev[pop2]))
                 thisforceinfcirc    = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circconst), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinfsusreg)
-                forceinfvec[1,pop1] = 1 - (1-forceinfvec[1,pop1]) * (1-thisforceinfcirc)
+                forceinfvec[susreg,pop1]   = 1 - (1-forceinfvec[susreg,pop1])   * (1-thisforceinfsusreg)
+                forceinfvec[progcirc,pop1] = 1 - (1-forceinfvec[progcirc,pop1]) * (1-thisforceinfcirc)
             else: # Only have uncircs for females
                 thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[0,pop1] = 1 - (1-forceinfvec[0,pop1]) * (1-thisforceinf)
+                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
                 
             if not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
@@ -788,7 +785,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             for p in range(npops):
                 circppl[p] = maximum(0, minimum(circppl[p], safetymargin*people[susreg,p,t+1])) # Don't circumcise more people than are available
                 people[susreg,p,t+1] -= circppl[p]
-            people[circ,:,t+1]   += circppl # And add these people into the circumcised compartment
+            people[progcirc,:,t+1]   += circppl # And add these people into the circumcised compartment
             
             # Check population sizes are correct
             actualpeople = people[:,:,t+1].sum()
