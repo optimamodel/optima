@@ -174,6 +174,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 openProject: function(){
                   return openProject;
                 }
+              }
             });
           }else{
             return $modal.open({
@@ -181,7 +182,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               controller: 'ParameterScenariosModalController',
               resolve: {
                 scenario: function () {
-                  return scenario;
+                  return angular.copy(scenario);
                 },
                 parsets: function() {
                   return parsets;
