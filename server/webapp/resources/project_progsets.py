@@ -67,7 +67,7 @@ class Progsets(Resource):
         db.session.add(progset_entry)
         db.session.flush()
 
-        progset_entry.create_programs_from_list(args['programs'])
+        progset_entry.recreate_programs_from_list(args['programs'], progset_entry.id)
 
         db.session.commit()
 
@@ -114,9 +114,7 @@ class Progset(Resource):
         progset_entry = load_progset(project_id, progset_id)
         args = progset_parser.parse_args()
         progset_entry.name = args['name']
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-
-        progset_entry.create_programs_from_list(args.get('programs', []))
+        progset_entry.recreate_programs_from_list(args.get('programs', []), progset_id)
 
         db.session.commit()
 
@@ -237,7 +235,7 @@ class ProgsetParams(Resource):
                 'programs': [{
                     'name': program.name,
                     'short_name': program.short,
-                } for program in progs ]
+                } for program in progs]
             } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
             'coverage': parset_be.pars[0][name].coverage,
             'proginteract': parset_be.pars[0][name].proginteract
