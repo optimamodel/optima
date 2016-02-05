@@ -661,9 +661,9 @@ class ProgsetsDb(db.Model):
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
     def recreate_programs_from_list(self, programs, progset_id):
-        from optima.utils import saves
         prog_shorts = []
-        desired_shorts = set([program.get('short_ name', program.get('short', '')) for program in programs])
+        desired_shorts = set([program.get('short_name', program.get('short', '')) for program in programs])
+        print "desired_shorts", desired_shorts
         existing_programs = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
 
         existing_shorts = {}
@@ -679,12 +679,14 @@ class ProgsetsDb(db.Model):
             # Kind of a hack but sometimes we receive short ans sometimes short_name
             short = program.get('short_name', program.get('short', ''))
             if short in existing_shorts:
+                print "Updating program %s" % short
                 program_entry = existing_shorts[short]
                 for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
                     program_entry.__dict__[field] = program[field]
                 program_entry.active = program.get('active', False)
-                program_entry.blob = saves(program_entry)
+                db.session.add(program_entry)
             else:
+                print "Creating new program %s" % short
                 kwargs = {}
                 for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
                     kwargs[field] = program[field]
@@ -702,7 +704,6 @@ class ProgsetsDb(db.Model):
                     active=program.get('active', False),
                     **kwargs
                 )
-                program_entry.blob = saves(program_entry.hydrate())
                 db.session.add(program_entry)
 
     def recursive_delete(self, synchronize_session=False):
