@@ -445,7 +445,7 @@ def makepars(data, label=None, verbose=2):
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].y.keys():
-        pars['numcirc'].y[key] *= 0.0 # WARNING, forcily set to 0 for all populations, since program parameter only
+        pars['numcirc'].y[key] *= 0.0 # WARNING, forcilby set to 0 for all populations, since program parameter only
 
     # Metaparameters
     for key in popkeys: # Define values

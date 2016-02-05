@@ -3,7 +3,7 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
+def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False):
     """
     Runs Optima's epidemiological model.
     
@@ -11,7 +11,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
     
     if benchmark: starttime = tic()
-    
     
     ###############################################################################
     ## Setup
@@ -131,6 +130,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     propcirc  = simpars['propcirc']  # Prevalence of circumcision (P)
     numcirc   = simpars['numcirc']   # Number of programmatic circumcisions performed (N)
     numpmtct  = simpars['numpmtct']  # Number of people receiving PMTCT (N)
+    
+    if simpars['numcirc'].min()<0: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    else: print('hi2', simpars['numcirc'].min()<0)
 
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
@@ -763,7 +765,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
         ###############################################################################
         ## Update next time point and check for errors
         ###############################################################################
-        
+
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
@@ -784,9 +786,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             # Reconcile population sizes            
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
             people[susreg,:,t+1] += newpeople # Add new people
-            circppl = numcirc[:,t]
+            circppl = dcp(numcirc[:,t])
+            
             for p in range(npops):
-                circppl[p] = minimum(circppl[p], safetymargin*people[susreg,p,t+1]) # Don't circumcise more people than are available
+                circppl[p] = maximum(0, minimum(circppl[p], safetymargin*people[susreg,p,t+1])) # Don't circumcise more people than are available
                 people[susreg,p,t+1] -= circppl[p]
             people[circ,:,t+1]   += circppl # And add these people into the circumcised compartment
             
@@ -806,7 +809,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                             if die: raise OptimaException(errormsg)
                             else:
                                 printv(errormsg, 1, verbose=verbose)
-                                people[errstate,errpop,t+1] = 0 # Reset
+                                people[errstate,errpop,t+1] = 0.0 # Reset
                 
     # Append final people array to sim output
     raw['people'] = people
