@@ -75,5 +75,9 @@ define(['angular'], function (module) {
             });
         };
 
+        $scope.closeModal = function() {
+            $modalInstance.close();
+        };
+
     });
 });

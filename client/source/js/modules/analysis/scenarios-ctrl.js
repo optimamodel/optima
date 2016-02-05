@@ -264,6 +264,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 });*/
         };
 
+        $scope.createScenario = function(type, $event) {
+          var scenario = {
+            scenario_type: type
+          };
+          $scope.scenarios.push(scenario);
+          $scope.openScenarioModal(scenario, 'add', $event);
+        }
         $scope.openEditScenarioModal = function ($event, scenario) {
             if ($event) {
                 $event.preventDefault();
