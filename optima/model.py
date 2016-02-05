@@ -781,7 +781,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                     change[tx[cd4],:]  = dT[cd4]
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-            people[susreg,:,t+1] += newpeople - numcirc[pop,t] # Add new people, then subtract if from circumcision
+            people[susreg,:,t+1] += newpeople - numcirc[:,t] # Add new people, then subtract if from circumcision
             people[circ,:,t+1]   += numcirc[:,t] # And add these people into the circumcised compartment
             if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
