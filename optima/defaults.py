@@ -342,10 +342,14 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
         
-        # Fix up ART cost
+        # Fix up costs
         R.programs['ART'].costcovfn.addccopar({'saturation': (0.9,0.9),
                          't': 2016.0,
                          'unitcost': (1000,2000)}, overwrite=True)
+                         
+        R.programs['PMTCT'].costcovfn.addccopar({'saturation': (0.9,0.9),
+                         't': 2016.0,
+                         'unitcost': (5000,8000)}, overwrite=True)
 
         # Add different modalities of testing
         HTC_workplace = Program(short='HTC workplace',
