@@ -71,14 +71,14 @@ class OptimaTestCase(unittest.TestCase):
                         'param': 'condcas'
                     },
                 ],
-                'short': 'Condoms',
+                'short_name': 'Condoms',
                 'criteria': {'hivstatus': 'allstates', 'pregnant': False},
             }, {
                 'active': False,
                 'category': 'Care and treatment',
                 'name': 'Post-exposure prophylaxis',
                 'parameters': [],
-                "short": "PEP",
+                "short_name": "PEP",
                 'criteria': {'hivstatus': 'allstates', 'pregnant': False},
             },
         ],
