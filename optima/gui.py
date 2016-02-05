@@ -539,7 +539,7 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button, Slider
     
-    global position, plotparsbacktbut, plotparsnextbut, plotparslider
+    global position, plotparsbackbut, plotparsnextbut, plotparslider
     position = 0
     
     # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
