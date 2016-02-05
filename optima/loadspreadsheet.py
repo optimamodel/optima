@@ -6,14 +6,14 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.3 (2016feb03) by cliffk
+    Version: 1.3 (2016feb04) by cliffk
     """
     
     ###########################################################################
     ## Preliminaries
     ###########################################################################
     
-    from optima import OptimaException, odict, printv, today
+    from optima import OptimaException, odict, printv, today, isnumber
     from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)
@@ -37,7 +37,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         
         # Check that only numeric data have been entered
         for column,datum in enumerate(thesedata):
-            if not isinstance(datum, (int, float)):
+            if not isnumber(datum):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'
@@ -91,9 +91,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
+    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast', 'treatvs']
     sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'freqvlmon', 'restarttreat', 'pdhivcare', 'successprop']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'biofailure', 'freqvlmon', 'restarttreat']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     

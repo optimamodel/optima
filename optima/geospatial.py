@@ -221,7 +221,10 @@ def geogui():
         tmpport = None
         if filepath:
             try: tmpport = loadobj(filepath, verbose=0)
-            except: print('Could not load file "%s"' % filepath)
+            except Exception as E: 
+                warning('Could not load file "%s" because "%s"' % (filepath, E.message))
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                return None
             if tmpport is not None: 
                 if type(tmpport)==Portfolio:
                     guiportfolio = tmpport
@@ -245,8 +248,18 @@ def geogui():
         guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
         warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
-    
-    
+        
+        
+    def plotgeo():
+        ''' Actually plot geospatial analysis!!! '''
+        global guiportfolio
+        if guiportfolio is None: 
+            warning('Please load a portfolio first')
+            return None
+        gaoptim = guiportfolio.gaoptims[-1]
+        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False)
+        return None
+        
     
     def export():
         ''' Save the current results to Excel file '''
@@ -335,6 +348,7 @@ def geogui():
     buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
+    buttons['plotgeo']   = QtGui.QPushButton('Plot geospatial results', parent=geoguiwindow)
     buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
     buttons['saveport']  = QtGui.QPushButton('Save portfolio', parent=geoguiwindow)
     buttons['close']     = QtGui.QPushButton('Close', parent=geoguiwindow)
@@ -347,6 +361,7 @@ def geogui():
     actions['add']       = addproj
     actions['loadport']  = loadport
     actions['rungeo']    = rungeo
+    actions['plotgeo']   = plotgeo
     actions['export']    = export
     actions['saveport']  = saveport
     actions['close']     = closewindow
@@ -354,7 +369,7 @@ def geogui():
     ## Set button locations
     spacer = 0
     for b,key in enumerate(buttons.keys()):
-        if key=='rungeo': spacer = 200
+        if key=='rungeo': spacer = 170
         buttons[key].move(left, top+spacing*b+spacer)
     
     ## Define button functions

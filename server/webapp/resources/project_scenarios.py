@@ -9,7 +9,7 @@ from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 from flask import helpers
 
-from server.webapp.inputs import SubParser
+from server.webapp.inputs import SubParser, scenario_par, Json as JsonInput
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import (
     load_project, load_progset, load_program, load_scenario, RequestParser, report_exception, modify_program)
@@ -27,6 +27,27 @@ scenario_parser.add_arguments({
     'scenario_type': {'type': str, 'location': 'args', 'required': True},
     'active': {'type': bool, 'location': 'args', 'required': True}
 })
+
+scenario_list_scenario_parser = RequestParser()
+scenario_list_scenario_parser.add_arguments({
+    'id': {'required': False, 'location': 'json'},
+    'name': {'type': str, 'required': True, 'location': 'json'},
+    'parset_id': {'required': True, 'location': 'json'},
+    'scenario_type': {'type': str, 'required': True, 'location': 'json'},
+    'active': {'type': bool, 'required': True, 'location': 'json'},
+    'pars': {'type': scenario_par, 'required': True, 'location': 'json'}
+})
+
+scenario_list_parser = RequestParser()
+scenario_list_parser.add_arguments({
+    'scenarios': {
+        'type': SubParser(scenario_list_scenario_parser),
+        # 'type': JsonInput,
+        'action': 'append',
+        'required': True
+    },
+})
+
 
 def check_pars(blob):
     """
@@ -55,11 +76,24 @@ def check_pars(blob):
 
 # /api/project/<project-id>/scenarios
 
+
 class Scenarios(Resource):
     """
     Scenarios for a given project.
     """
     method_decorators = [report_exception, login_required]
+
+    def _scenarios_for_fe(self, scenarios):
+        rv = []
+        for scenario in scenarios:
+            pars = []
+            if scenario.scenario_type == 'Parameter':
+                for par in scenario.blob['pars']:
+                    par['for'] = par['for'][0]
+                    pars.append(par)
+                scenario.blob = {'pars': pars}
+            rv.append(scenario)
+        return rv
 
     @swagger.operation()
     @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
@@ -72,7 +106,7 @@ class Scenarios(Resource):
             raise ProjectDoesNotExist(id=project_id)
 
         reply = db.session.query(ScenariosDb).filter_by(project_id=project_entry.id).all()
-        return reply
+        return self._scenarios_for_fe(reply)
 
     @swagger.operation(
         parameters=scenario_parser.swagger_parameters(),
@@ -106,8 +140,53 @@ class Scenarios(Resource):
 
         return scenario_entry, 201
 
+    def _upsert_scenario(self, project_id, id, **kwargs):
+        blob = kwargs.pop('pars')
+
+        if kwargs['scenario_type'] == "Parameter":
+            blob = {'pars': blob}
+        else:
+            blob = {}
+
+        scenario_entry = None
+        if id is not None:
+            scenario_entry = ScenariosDb.query.filter_by(id=id).first()
+            scenario_entry.blob = blob
+        if not scenario_entry:
+            scenario_entry = ScenariosDb(project_id, blob=blob, **kwargs)
+        else:
+            for key, value in kwargs.iteritems():
+                setattr(scenario_entry, key, value)
+
+        db.session.add(scenario_entry)
+        db.session.flush()
+        db.session.commit()
+
+    @swagger.operation(
+        parameters=scenario_list_parser.swagger_parameters(),
+        responseClass=ScenariosDb.__name__
+    )
+    @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
+    def put(self, project_id):
+        args = scenario_list_parser.parse_args()
+
+        scenarios = args['scenarios']
+
+        db.session.query(ScenariosDb).filter_by(project_id=project_id).filter(
+            ~ScenariosDb.id.in_([scenario['id'] for scenario in scenarios if 'id' in scenario and scenario['id']])
+        ).delete(synchronize_session='fetch')
+        db.session.flush()
+
+        for scenario in scenarios:
+            self._upsert_scenario(project_id, **scenario)
+        db.session.commit()
+
+        return self._scenarios_for_fe(ScenariosDb.query.filter_by(project_id=project_id).all())
+
 
 # /api/project/<project-id>/scenarios/results
+
+
 class ScenarioResults(Resource):
 
     method_decorators = [report_exception, login_required]
