@@ -441,7 +441,7 @@ class GAOptim(object):
             self.resultpairs[p.uid]['init'] = p.optimize(which='outcomes', name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
             preibudget = initobjectives['budget']
             postibudget = self.resultpairs[p.uid]['init'].budget[-1]
-            assert abs(preibudget-sum(postibudget[:]))<tol
+#            assert abs(preibudget-sum(postibudget[:]))<tol
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pind] + budgeteps
@@ -449,7 +449,7 @@ class GAOptim(object):
             self.resultpairs[p.uid]['opt'] = p.optimize(which='outcomes', name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
             postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
-            assert abs(preobudget-sum(postobudget[:]))<tol
+#            assert abs(preobudget-sum(postobudget[:]))<tol
 
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
@@ -486,8 +486,8 @@ class GAOptim(object):
             gaoptalloc = self.resultpairs[x]['opt'].budget[-1]
             initoutcome = self.resultpairs[x]['init'].improvement[-1][0]
             gaoptoutcome = self.resultpairs[x]['opt'].improvement[-1][-1]
-            suminitalloc = sum([k[ind] for k in initalloc.values()])
-            sumgaoptalloc = sum([k[ind] for k in gaoptalloc.values()])
+            suminitalloc = sum(initalloc.values())
+            sumgaoptalloc = sum(gaoptalloc.values())
             
             overallbudgetinit += suminitalloc
             overallbudgetopt += sumgaoptalloc
