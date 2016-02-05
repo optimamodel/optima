@@ -5,7 +5,7 @@ Version: 2016feb04
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults, vec2budget # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber, scaleratio # Utilities
 from numpy import zeros, arange, isnan, maximum, array, inf
 
 # Define global parameters that shouldn't really matter
@@ -279,6 +279,15 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     fixedinds = findinds(1-array(progset.optimizable()))
     nprogs = len(optiminds) # Only count optimizable programs
     budgetvec = progset.getdefaultbudget()[:]
+    
+    # QUICK SCALE. SCALES FIXED COSTS AS WELL.
+    budgetvec = scaleratio(budgetvec, totalbudget)
+    print('Scaling budget: %f' % totalbudget)
+    print('Scaled optimizable budgets...')
+    print budgetvec[optiminds]
+    print('Scaled fixed budgets...')
+    print budgetvec[fixedinds]
+    print('Sum of scaled budgets: %f' % sum(budgetvec))
     
     # Error checking
     if isnan(budgetvec).any():
