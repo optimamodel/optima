@@ -439,7 +439,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -455,9 +455,13 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
     Version: 2016jan30
     '''
     if pops is None: pops = Ellipsis # This is a slice
+    elif isinstance(pops, (int, float)): pops = [pops]
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
+    if people is None:
+        if ind is None: ind=-1
+        people = project.results[ind].raw[0]['people'] # Try to get default people to plot
     
     plotstyles = odict([
     ('susreg', ('|','|')), 
@@ -533,6 +537,12 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     global position, plotparsbacktbut, plotparsnextbut, plotparslider
     position = 0
     
+    # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
+    tmp = parslist
+    try:  parslist = tmp.parsets[0].pars[0] # If it's a project
+    except:
+        try: parslist = tmp.pars[0] # If it's a parset
+        except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     
     

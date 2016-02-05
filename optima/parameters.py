@@ -151,7 +151,7 @@ def getvalidyears(years, validdata, defaultind=0):
             validyears = array(array(years)[validdata]) # Store each year
         elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
             validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
+    else: validyears = array([0.0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
     return validyears
 
 
@@ -254,7 +254,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
                 par.y[key] = sanitize(data[short][row])
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, defaultargs['verbose']) # Probably ok...
-                par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
+                par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
@@ -411,13 +411,13 @@ def makepars(data, label=None, verbose=2):
     
     # Births rates. This parameter is coupled with the birth matrix defined below
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
-        pars['birth'].y[key] = array([0])
-        pars['birth'].t[key] = array([0])
+        pars['birth'].y[key] = array([0.0])
+        pars['birth'].t[key] = array([0.0])
     pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['birth'].t = pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
-    normalised_birthtransit = [[0]*len(popkeys)]*len(popkeys)
+    normalised_birthtransit = [[0.0]*len(popkeys)]*len(popkeys)
     c = 0
     for pk,popkey in enumerate(popkeys):
         if data['pops']['female'][pk]:
@@ -436,14 +436,16 @@ def makepars(data, label=None, verbose=2):
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
-        pars['propcirc'].y[key] = array([0])
-        pars['propcirc'].t[key] = array([0])
-        pars['numcirc'].y[key]  = array([0])
-        pars['numcirc'].t[key]  = array([0])
+        pars['propcirc'].y[key] = array([0.0])
+        pars['propcirc'].t[key] = array([0.0])
+        pars['numcirc'].y[key]  = array([0.0])
+        pars['numcirc'].t[key]  = array([0.0])
     pars['propcirc'].y = pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
+    for key in pars['numcirc'].y.keys():
+        pars['numcirc'].y[key] *= 0.0 # WARNING, forcily set to 0 for all populations, since program parameter only
 
     # Metaparameters
     for key in popkeys: # Define values
@@ -520,6 +522,8 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
+                    if any(array(simpars[key]).flatten()<0.0):
+                        raise OptimaException('Negative parameters are not allowed!')
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
