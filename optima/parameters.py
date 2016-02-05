@@ -204,27 +204,32 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     
     # Handle populations that have only a single data point
     only1datapoint = list(set(keys)-set(atleast2datapoints))
+    thisyear = odict()
+    thispopsize = odict()
     for key in only1datapoint:
         largestpars = par.p[largestpop] # Get the parameters from the largest population
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
             raise OptimaException(errormsg)
-        thisyear = sanitizedt[key][0]
-        thispopsize = sanitizedy[key][0]
-        largestthatyear = popgrow(largestpars, thisyear-startyear)
-        par.p[key] = [largestpars[0]*thispopsize/largestthatyear, largestpars[0]]
+        thisyear[key] = sanitizedt[key][0]
+        thispopsize[key] = sanitizedy[key][0]
+        largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
+        par.p[key] = [largestpars[0]*thispopsize[key]/largestthatyear, largestpars[1]]
     
     if doplot:
-        from pylab import figure, subplot, plot, scatter, arange, show
-        nplots = len(atleast2datapoints)
+        from pylab import figure, subplot, plot, scatter, arange, show, title
+        nplots = len(par.keys())
         figure()
         tvec = arange(data['years'][0], data['years'][-1]+1)
         yvec = par.interp(tvec=tvec)
-        for k,key in enumerate(atleast2datapoints):
+        for k,key in enumerate(par.keys()):
             subplot(nplots,1,k+1)
-            scatter(tdata[key]+startyear, exp(ydata[key]))
+            if key in atleast2datapoints: scatter(tdata[key]+startyear, exp(ydata[key]))
+            elif key in only1datapoint: scatter(thisyear[key], thispopsize[key])
+            else: raise OptimaException('This population is nonexistent')
             plot(tvec, yvec[k])
+            title('Pop size: ' + key)
             print(par.p[key])
             show()
     
