@@ -12,8 +12,9 @@ tmpP = loadobj('../tests/mozam.prj')
 P = Project()
 P.data = tmpP.data
 P.makeparset()
-P.runsim(die=True)
+P.runsim(die=False)
 
 #plotpars(P)
-plotpeople(P, start=0, pops=11, skipempty=False, animate=True)
+for p in range(12):
+    plotpeople(P, start=0, pops=p, skipempty=True, animate=False)
 #pygui(P.results[-1])

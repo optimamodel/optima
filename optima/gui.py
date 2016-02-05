@@ -1,7 +1,7 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
 from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
-from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
+from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
 global panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton  # For manualfit GUI
 if 1:  panel, results, origpars, tmppars, parset, fulllabellist, fullkeylist, fullsubkeylist, fulltypelist, fullvallist, plotfig, panelfig, check, checkboxes, updatebutton, clearbutton, closebutton = [None]*17
@@ -466,9 +466,11 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     '''
     if pops is None: pops = Ellipsis # This is a slice
     elif isnumber(pops): pops = [pops]
+    if pops is not Ellipsis: plottitle = str(array(project.parsets[0].popkeys)[array(pops)])
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
+    
     if people is None:
         if ind is None: ind=-1
         people = project.results[ind].raw[0]['people'] # Try to get default people to plot
@@ -507,6 +509,7 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     ax = subplot(111)
     xlabel('Year')
     ylabel('Number of people')
+    title(plottitle)
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,-1,-1):
         this = ppl[:,st]
