@@ -28,6 +28,32 @@ copy_parser.add_arguments({
     'parset_id': {'type': uuid.UUID}
 })
 
+y_keys_fields = {
+    'keys': Json
+}
+
+
+class ParsetYkeys(Resource):
+
+    @swagger.operation(
+        summary='get parsets ykeys'
+    )
+    @marshal_with(y_keys_fields)
+    def get(self, project_id):
+        project_entry = load_project(project_id, raise_exception=True)
+
+        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
+        parsets = {str(item.id): item.hydrate() for item in reply}
+        y_keys = {
+           id: {par.short: [{
+                    'val': k,
+                    'label': ' - '.join(k) if isinstance(k, tuple) else k
+                } for k in par.y.keys()] for par in parset.pars[0].values()
+           if hasattr(par, 'y') and par.visible}
+           for id, parset in parsets.iteritems()
+        }
+        return {'keys': y_keys}
+
 
 class Parsets(Resource):
     """
@@ -43,7 +69,6 @@ class Parsets(Resource):
         """,
         responseClass=ParsetsDb.__name__
     )
-    @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
 
@@ -51,7 +76,7 @@ class Parsets(Resource):
         project_entry = load_project(project_id, raise_exception=True)
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        return [item.hydrate() for item in reply]  # TODO: project_id should be not null
+        return [item.hydrate() for item in reply]
 
     @swagger.operation(
         description='Create new parset with default settings or copy existing parset',
