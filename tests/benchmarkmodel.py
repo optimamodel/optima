@@ -65,6 +65,8 @@ if dobenchmark:
 ############################################################################################################################
 ## Profiling
 ############################################################################################################################
+try: import line_profiler # analysis:ignore
+except: doprofile = False # Don't profile if it can't be loaded
 if doprofile:
     from line_profiler import LineProfiler
     from optima import Project, model, makesimpars, applylimits # analysis:ignore -- called by eval() function

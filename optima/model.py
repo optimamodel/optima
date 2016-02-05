@@ -3,18 +3,12 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-from pylab import figure, plot, pause, transpose
-
 def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
     Runs Optima's epidemiological model.
     
-    Version: 2016feb02
+    Version: 1.1 (2016feb04)
     """
-    
-    figure()
-    plot(transpose(simpars['popsize']))
-    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     if benchmark: starttime = tic()
     
@@ -773,19 +767,19 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
-                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt * 0.1 
+                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt
                 peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
                 people[:, p1, t+1] -= peopleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleaving # ... then add to pop2
                 
             
-#            ## Risk-related transitions
-#            for p1,p2 in risktransitlist:
-#                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-#                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-#                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-#                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
-#                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
+            ## Risk-related transitions
+            for p1,p2 in risktransitlist:
+                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
+                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
+                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
+                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
             
             
             
