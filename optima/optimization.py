@@ -274,21 +274,17 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     
     # Handle budget and remove fixed costs
     totalbudget = objectives['budget']
-    progkeys = progset.programs.keys()
     optiminds = findinds(progset.optimizable())
     fixedinds = findinds(1-array(progset.optimizable()))
     nprogs = len(optiminds) # Only count optimizable programs
-    budgetvec = progset.getdefaultbudget()[:]
+    origbudgetdict = dcp(progset.getdefaultbudget())
+    budgetvec = dcp(origbudgetdict[:])
     origbudget = sum(budgetvec)
-    
-    # Error checking
-    if isnan(budgetvec).any():
-        errormsg = 'Program "%s" does not have any budget' % progkeys[findinds(isnan(budgetvec))]
-        raise OptimaException(errormsg)
+    ratio = totalbudget/origbudget
     
     # Trim out non-optimizable programs and calculate limits
     minlimsvec = constraints['min'][:] # Convert to vector
-    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds]*totalbudget/origbudget # Calculate the minimum allowed costs of fixed programs -- scaled to new spending amount
+    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds]*ratio # Calculate the minimum allowed costs of fixed programs -- scaled to new spending amount
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
     budgetvec = budgetvec[optiminds] # ...then remove them from the vector
     origbudgetvec = dcp(budgetvec) # Store original budget vector
@@ -301,8 +297,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     for p in range(nprogs):
         minfrac = constraints['min'][optiminds[p]]
         maxfrac = constraints['max'][optiminds[p]]
-        budgetlims['min'][p] = minfrac * origbudgetvec[p] # Note: 'constraints' includes non-optimizable programs, must be careful
-        if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p]
+        budgetlims['min'][p] = minfrac * origbudgetvec[p] * ratio # Note: 'constraints' includes non-optimizable programs, must be careful
+        if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p] * ratio
         else:                   budgetlims['max'][p] = inf
 
 
@@ -317,7 +313,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         budgetlower  = zeros(nprogs)
         budgethigher = zeros(nprogs) + totalbudget
         
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'totalbudget':totalbudget, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
+        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'totalbudget':totalbudget, 'origbudgetdict':origbudgetdict, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
         if method=='asd': 
             budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         elif method=='simplex': # WARNING, not fully implemented
