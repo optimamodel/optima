@@ -65,7 +65,7 @@ define(['angular'], function (module) {
         };
 
         $scope.closeModal = function() {
-            $modalInstance.close();
+            $modalInstance.close($scope.row);
         };
 
     });

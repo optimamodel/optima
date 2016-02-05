@@ -45,11 +45,11 @@ def scenario_par(orig_pars):
     for i in orig_pars:
 
         pars.append({
-            'endval': int(i['endval']),
+            'endval': float(i['endval']),
             'endyear': int(i['endyear']),
             'name': str(i['name']),
-            'for': list(i['for']),
-            'startval': int(i['startval']),
+            'for': [i['for']],
+            'startval': float(i['startval']),
             'startyear': int(i['startyear'])
         })
 
