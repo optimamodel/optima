@@ -12,7 +12,7 @@ tmpP = loadobj('../tests/mozam.prj')
 P = Project()
 P.data = tmpP.data
 P.makeparset()
-P.runsim(die=False)
+P.runsim(die=True)
 
 #plotpars(P)
 for p in range(12):

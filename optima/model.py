@@ -765,23 +765,21 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
                         people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
             
             
-#            ## Age-related transitions
-#            for p1,p2 in agetransitlist:
-#                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt   
-#                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
-#                people[:, p1, t+1] -= peopleaving # Take away from pop1...
-#                people[:, p2, t+1] += peopleaving # ... then add to pop2
-#                if not((people[:,:,t+1]>=0).all()): raise OptimaException('tmp1')
-#                
-#            
-            ## Risk-related transitions
-            for p1,p2 in risktransitlist:
-                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
-                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
-                if not((people[:,:,t+1]>=0).all()): raise OptimaException('tmp2')
+            ## Age-related transitions
+            for p1,p2 in agetransitlist:
+                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt * 0.1 
+                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
+                people[:, p1, t+1] -= peopleaving # Take away from pop1...
+                people[:, p2, t+1] += peopleaving # ... then add to pop2
+                
+            
+#            ## Risk-related transitions
+#            for p1,p2 in risktransitlist:
+#                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
+#                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+#                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
+#                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
+#                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
             
             
             
