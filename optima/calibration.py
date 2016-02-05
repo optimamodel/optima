@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds
+from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, isnumber
 from numpy import median, zeros, array, mean
 
 
@@ -94,7 +94,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
     if what is None: what = ['force'] # By default, automatically fit force-of-infection only
-    if isinstance(inds, (int, float)): inds = [inds] # # Turn into a list if necessary
+    if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     parset.pars = [] # Clear out in preparation for fitting
