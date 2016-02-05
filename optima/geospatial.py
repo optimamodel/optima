@@ -244,7 +244,7 @@ def geogui():
             guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
         BOCobjectives = dcp(guiobjectives)
-        guiportfolio.genBOCs(BOCobjectives, maxtime=3) # WARNING temp time
+        guiportfolio.genBOCs(BOCobjectives, maxtime=2) # WARNING temp time
         guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
         warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
