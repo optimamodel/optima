@@ -105,7 +105,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.state.eligibility.allstates = false;
         }
       } else {
-        $scope.state.program.criteria = {}
+        $scope.state.program.criteria = {
+          hivstatus: 'allstates',
+          pregnant: false
+        }
       }
     };
 
