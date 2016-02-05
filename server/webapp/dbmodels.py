@@ -704,6 +704,8 @@ class ProgsetsDb(db.Model):
                     active=program.get('active', False),
                     **kwargs
                 )
+                program_instance = program_entry.hydrate()
+                program_entry.restore(program_instance)
                 db.session.add(program_entry)
 
     def recursive_delete(self, synchronize_session=False):
