@@ -149,7 +149,12 @@ def sigfig(x, sigfigs=3):
         return string
     except:
         return str(x)
-    
+
+
+def isnumber(x):
+    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
+    from numbers import Number
+    return isinstance(x, Number)
 
     
 
