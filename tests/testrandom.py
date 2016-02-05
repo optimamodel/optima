@@ -5,7 +5,7 @@ import os
 from pylab import *; from optima import *
 
 
-#P = loadobj('../tests/misery.prj')
+P = loadobj('../tests/misery.prj')
 
 P = defaults.defaultproject('generalized')
 plotpars(P)

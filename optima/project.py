@@ -103,28 +103,28 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-        self.ensureparset(name)
+        self.makeparset(name=name, overwrite=overwrite)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True)
         return None
 
 
-    def ensureparset(self, name='default'):
-        ''' If parameter set of that name doesn't exist, create it'''
+    def makeparset(self, name='default', overwrite=True):
+        ''' If parameter set of that name doesn't exist, create it '''
         # question: what is that parset does exist? delete it first?
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
-        if name not in self.parsets:
+        if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
-            self.addparset(name=name, parset=parset) # Store parameters
+            self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
 
