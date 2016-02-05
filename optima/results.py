@@ -224,7 +224,8 @@ class Resultset(object):
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
 
         self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) 
-        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) 
+        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
+        if data is not None: self.main['numplhiv'].datatot = processdata(data['popsize'])
 
         
         if self.settings.usecascade:
