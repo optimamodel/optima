@@ -439,7 +439,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None, animate=True, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -455,9 +455,13 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
     Version: 2016jan30
     '''
     if pops is None: pops = Ellipsis # This is a slice
+    elif isinstance(pops, (int, float)): pops = [pops]
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
+    if people is None:
+        if ind is None: ind=-1
+        people = project.results[ind].raw[0]['people'] # Try to get default people to plot
     
     plotstyles = odict([
     ('susreg', ('|','|')), 
@@ -491,24 +495,29 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
+    xlabel('Year')
+    ylabel('Number of people')
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,-1,-1):
         this = ppl[:,st]
-        if sum(this): thiscolor = colors[st]
-        else: thiscolor = nocolor
-        printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 4, verbose)
-        fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
-        bottom += this
+        if sum(this): 
+            thiscolor = colors[st]
+            haspeople = True
+        else: 
+            thiscolor = nocolor
+            haspeople = False
+        if haspeople or not skipempty:
+            printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 4, verbose)
+            fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
+            bottom += this
         
-        # Legend stuff
-        xlabel('Year')
-        ylabel('Number of people')
-        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
-        handles, legendlabels = ax.get_legend_handles_labels()
-        legend(reversed(handles), reversed(legendlabels), **legendsettings)
-        if animate:
-            show()
-            pause(0.1)
+            # Legend stuff
+            ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+            handles, legendlabels = ax.get_legend_handles_labels()
+            legend(reversed(handles), reversed(legendlabels), **legendsettings)
+            if animate:
+                show()
+                pause(0.001)
     
     return None
     
@@ -518,21 +527,27 @@ def plotpeople(project=None, people=None, start=2, end=None, pops=None, animate=
 
 
 
-global plotparsbacktbut, plotparsnextbut, plotparslider
-def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
+global plotparsbackbut, plotparsnextbut, plotparslider
+def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
     Version: 2016jan30
     '''
-    from optima import Par, makesimpars
+    from optima import Par, makesimpars, tic, toc
     from numpy import array, vstack
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button, Slider
     
-    global position, plotparsbacktbut, plotparsnextbut, plotparslider
+    global position, plotparsbackbut, plotparsnextbut, plotparslider
     position = 0
     
+    # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
+    tmp = parslist
+    try:  parslist = tmp.parsets[0].pars[0] # If it's a project
+    except:
+        try: parslist = tmp.pars[0] # If it's a parset
+        except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
     
     
@@ -573,18 +588,16 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
     if any([len(pltd)!=nplots for pltd in allplotdata]): 
         printv('Warning, not all pars are the same length, only plotting first', 2, verbose)
         allplotdata = allplotdata[0]
-    nrows = 5
-    ncols = 4
-    nperscreen = nrows*ncols
+    nperscreen = rows*cols
 
     plotparsfig = plt.figure(facecolor=(0.9,0.9,0.9), figsize=figsize)
-    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.2, hspace=0.4)
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.3, hspace=0.4)
     plotparsaxs = []
     count = 0
-    for row in range(nrows):
-        for col in range(ncols):
+    for row in range(rows):
+        for col in range(cols):
             count += 1
-            plotparsaxs.append(plotparsfig.add_subplot(nrows, ncols, count))
+            plotparsaxs.append(plotparsfig.add_subplot(rows, cols, count))
     
     backframe = plotparsfig.add_axes([0.1, 0.03, 0.1, 0.03])
     sliderframe = plotparsfig.add_axes([0.3, 0.03, 0.4, 0.03])
@@ -599,7 +612,6 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         position = max(0,position)
         position = min(nplots-nperscreen, position)
         plotparslider.set_val(position)
-        update(position)
     
     def updaten(event=None): 
         global position
@@ -607,15 +619,16 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         position = max(0,position)
         position = min(nplots-nperscreen, position)
         plotparslider.set_val(position)
-        update(position)
     
     def update(tmp=0):
         global position, plotparslider
         position = tmp
         position = max(0,position)
         position = min(nplots-nperscreen, position)
+        t = tic()
         for i,ax in enumerate(plotparsaxs):
             ax.cla()
+            for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(fontsize)
             ax.hold(True)
             nplt = i+position
             if nplt<nplots:
@@ -628,13 +641,15 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                         elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
                         else: pass # Population size, doesn't use control points
-                    except: print('??????')
+                        printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
+                    except Exception as E: print('??????: %s' % E.message)
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
                     except Exception: pass # print('Problem with "%s": "%s"' % (this[0], E.message))
                     if pd==len(allplotdata)-1: # Do this for the last plot only
                         ax.set_ylim((0,1.1*ax.get_ylim()[1]))
                         ax.set_xlim((tvec[0],tvec[-1]))
+        toc(t)
                 
     update()
     plotparsbackbut.on_clicked(updateb)
