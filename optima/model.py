@@ -131,9 +131,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     numcirc   = simpars['numcirc']   # Number of programmatic circumcisions performed (N)
     numpmtct  = simpars['numpmtct']  # Number of people receiving PMTCT (N)
     
-    if simpars['numcirc'].min()<0: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    else: print('hi2', simpars['numcirc'].min()<0)
-
     # Uptake of OST
     numost = simpars['numost']                  # Number of people on OST (N)
     if any(injects):

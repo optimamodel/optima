@@ -439,7 +439,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None, animate=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None, animate=True, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -495,24 +495,29 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
+    xlabel('Year')
+    ylabel('Number of people')
     xlim((tvec[0], tvec[-1]))
     for st in range(nstates-1,-1,-1):
         this = ppl[:,st]
-        if sum(this): thiscolor = colors[st]
-        else: thiscolor = nocolor
-        printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 4, verbose)
-        fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
-        bottom += this
+        if sum(this): 
+            thiscolor = colors[st]
+            haspeople = True
+        else: 
+            thiscolor = nocolor
+            haspeople = False
+        if haspeople or not skipempty:
+            printv('State: %i/%i Hatch: %s Line: %s Color: %s' % (st, nstates, hatchstyles[st], linestyles[st], thiscolor), 4, verbose)
+            fill_between(tvec, bottom, this+bottom, facecolor=thiscolor, alpha=1, lw=0, hatch=hatchstyles[st])
+            bottom += this
         
-        # Legend stuff
-        xlabel('Year')
-        ylabel('Number of people')
-        ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
-        handles, legendlabels = ax.get_legend_handles_labels()
-        legend(reversed(handles), reversed(legendlabels), **legendsettings)
-        if animate:
-            show()
-            pause(0.1)
+            # Legend stuff
+            ax.plot((0, 0), (0, 0), color=thiscolor, linewidth=10, label=labels[st], marker=linestyles[st]) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
+            handles, legendlabels = ax.get_legend_handles_labels()
+            legend(reversed(handles), reversed(legendlabels), **legendsettings)
+            if animate:
+                show()
+                pause(0.001)
     
     return None
     
@@ -609,7 +614,6 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         position = max(0,position)
         position = min(nplots-nperscreen, position)
         plotparslider.set_val(position)
-        update(position)
     
     def updaten(event=None): 
         global position
@@ -617,10 +621,10 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
         position = max(0,position)
         position = min(nplots-nperscreen, position)
         plotparslider.set_val(position)
-        update(position)
     
     def update(tmp=0):
         global position, plotparslider
+        print('hi', position)
         position = tmp
         position = max(0,position)
         position = min(nplots-nperscreen, position)
@@ -638,6 +642,8 @@ def plotpars(parslist=None, verbose=2, figsize=(16,12), **kwargs):
                         elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
                         elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
                         else: pass # Population size, doesn't use control points
+                        printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
+                        plt.show()
                     except: print('??????')
                     try: 
                         if not(hasattr(this[3],'__len__') and len(this[3])==0): ax.scatter(this[2],this[3])
