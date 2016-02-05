@@ -474,15 +474,15 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
         people = project.results[ind].raw[0]['people'] # Try to get default people to plot
     
     plotstyles = odict([
-    ('susreg', ('|','|')), 
-    ('circ',   ('+','|')), 
-    ('undx',   ('.','o')), 
-    ('dx',     ('*','*')), 
-    ('care',   ('O','o')), 
-    ('usvl',   ('-','|')), 
-    ('svl',    ('x','|')), 
-    ('lost',   ('O','o')), 
-    ('off',    ('*','*'))])
+    ('susreg',   ('|','|')), 
+    ('progcirc', ('+','|')), 
+    ('undx',     ('.','o')), 
+    ('dx',       ('*','*')), 
+    ('care',     ('O','o')), 
+    ('usvl',     ('-','|')), 
+    ('svl',      ('x','|')), 
+    ('lost',     ('O','o')), 
+    ('off',      ('*','*'))])
     
     hatchstyles = []
     linestyles = []
