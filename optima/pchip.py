@@ -7,6 +7,7 @@ Script written by Chris Michalski 2009aug18 used as a basis.
 Version: 2016feb04
 """
 
+from utils import isnumber
 import matplotlib.pyplot as plt
 from numpy import linspace, array, diff
 from copy import deepcopy as dcp
@@ -158,7 +159,7 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
 #    print(pchip(x,y,optbudget,deriv))
     plt.plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
     xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
-    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=50, label='Budget-objective curve')
+    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=20, label='Budget-objective curve')
 #        print(x)
 #        print(pchip(x,y,x,deriv))
     if not initbudget == None:
