@@ -60,7 +60,17 @@ define(['angular'], function (module) {
     		//row["pars"].push(pRow);
 
     		console.log(row);
-    	}
+    	};
+
+        $scope.addParam = function(row) {
+            row.pars.push({});
+        };
+
+        $scope.removeParam = function(row, paramIndex) {
+            row.pars = _.reject(row.pars, function (param, index) {
+                return index === paramIndex
+            });
+        };
 
     });
 });
