@@ -1,8 +1,8 @@
 define(['angular'], function (module) {
   'use strict';
 
-  return angular.module('app.parameter-scenarios-modal', [])
-    .controller('ParameterScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
+  return angular.module('app.program-scenarios-modal', [])
+    .controller('ProgramScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
     	$scope.row = scenario;
     	$scope.parsets = parsets;
         $scope.progsets = progsets;
@@ -33,12 +33,18 @@ define(['angular'], function (module) {
     	};
 
     	$scope.manageScenario = function(){
+    		// As pars.for is expecting a array on BE
+    		angular.forEach($scope.row.pars, function(v){
+    			v.for = [v.for];
+    		});
+    		//
     		var row = {
     			"scenario_type": scenario.scenario_type, 
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
     			"pars": $scope.row.pars, 
+    			//"pars": $scope.params, 
     			"id": scenario.id || null, 
     			"progset_id": $scope.row.progset_id || null
     		};
@@ -60,7 +66,7 @@ define(['angular'], function (module) {
         };
 
         $scope.closeModal = function() {
-            $modalInstance.close($scope.row);
+            $modalInstance.close();
         };
 
     });

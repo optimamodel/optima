@@ -11,7 +11,7 @@
             <h1>Manage scenarios</h1>
 
             <table class="section table table-bordered">
-                <thead>
+                <thead ng-show="scenarios.length">
                 <tr>
                     <td><b>Active</b></td>
                     <td><b>Name</b></td>
@@ -41,7 +41,7 @@
                   <tr>
                     <td colspan="6" class="text-right">
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Program'}, 'add', $event)">Add a program scenario</button>
-                      <button type="button" class="btn" ng-click="createScenario('Parameter', $event)">Add a parameter scenario</button>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Parameter'}, 'add', $event)">Add a parameter scenario</button>
                     </td>
                   </tr>
                   <tr>

@@ -15,10 +15,10 @@ define(['./../module', 'underscore'], function (module, _) {
     }, {
       name: 'Define outcome functions',
       slug: 'outcome'
-    }, {
+    }/*, {
       name: 'View summary',
       slug: 'summary'
-    }];
+    }*/];
 
     /* VM functions */
     vm.addYear = addYear;
