@@ -7,7 +7,7 @@ Version: 2016feb02
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -149,7 +149,7 @@ def getvalidyears(years, validdata, defaultind=0):
             validyears = array(array(years)[validdata]) # Store each year
         elif len(validdata)==1: # They're different lengths and it has length 1: it's an assumption
             validyears = array([array(years)[defaultind]]) # Use the default index; usually either 0 (start) or -1 (end)
-    else: validyears = array([0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
+    else: validyears = array([0.0]) # No valid years, return 0 -- NOT an empty array, as you might expect!
     return validyears
 
 
@@ -164,7 +164,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -190,11 +190,13 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
     par.start = data['years'][0]
+    tdata = odict()
+    ydata = odict()
     for key in atleast2datapoints:
-        tdata = sanitizedt[key]-startyear
-        ydata = log(sanitizedy[key])
+        tdata[key] = sanitizedt[key]-startyear
+        ydata[key] = log(sanitizedy[key])
         try:
-            fitpars = polyfit(tdata, ydata, 1)
+            fitpars = polyfit(tdata[key], ydata[key], 1)
             par.p[key] = array([exp(fitpars[1]), fitpars[0]])
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
@@ -202,16 +204,35 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
     
     # Handle populations that have only a single data point
     only1datapoint = list(set(keys)-set(atleast2datapoints))
+    thisyear = odict()
+    thispopsize = odict()
     for key in only1datapoint:
         largestpars = par.p[largestpop] # Get the parameters from the largest population
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
             raise OptimaException(errormsg)
-        thisyear = sanitizedt[key][0]
-        thispopsize = sanitizedy[key][0]
-        largestthatyear = popgrow(largestpars, thisyear-startyear)
-        par.p[key] = [largestpars[0]*thispopsize/largestthatyear, largestpars[0]]
+        thisyear[key] = sanitizedt[key][0]
+        thispopsize[key] = sanitizedy[key][0]
+        largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
+        par.p[key] = [largestpars[0]*thispopsize[key]/largestthatyear, largestpars[1]]
+    par.p = par.p.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    
+    if doplot:
+        from pylab import figure, subplot, plot, scatter, arange, show, title
+        nplots = len(par.keys())
+        figure()
+        tvec = arange(data['years'][0], data['years'][-1]+1)
+        yvec = par.interp(tvec=tvec)
+        for k,key in enumerate(par.keys()):
+            subplot(nplots,1,k+1)
+            if key in atleast2datapoints: scatter(tdata[key]+startyear, exp(ydata[key]))
+            elif key in only1datapoint: scatter(thisyear[key], thispopsize[key])
+            else: raise OptimaException('This population is nonexistent')
+            plot(tvec, yvec[k])
+            title('Pop size: ' + key)
+            print(par.p[key])
+            show()
     
     return par
 
@@ -237,7 +258,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
                 par.y[key] = sanitize(data[short][row])
             else:
                 printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, defaultargs['verbose']) # Probably ok...
-                par.y[key] = array([0]) # Blank, assume zero -- WARNING, is this ok?
+                par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
             raise OptimaException(errormsg)
@@ -395,13 +416,13 @@ def makepars(data, label=None, verbose=2):
     
     # Births rates. This parameter is coupled with the birth matrix defined below
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
-        pars['birth'].y[key] = array([0])
-        pars['birth'].t[key] = array([0])
+        pars['birth'].y[key] = array([0.0])
+        pars['birth'].t[key] = array([0.0])
     pars['birth'].y = pars['birth'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['birth'].t = pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
-    normalised_birthtransit = [[0]*len(popkeys)]*len(popkeys)
+    normalised_birthtransit = [[0.0]*len(popkeys)]*len(popkeys)
     c = 0
     for pk,popkey in enumerate(popkeys):
         if data['pops']['female'][pk]:
@@ -420,14 +441,16 @@ def makepars(data, label=None, verbose=2):
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
-        pars['propcirc'].y[key] = array([0])
-        pars['propcirc'].t[key] = array([0])
-        pars['numcirc'].y[key]  = array([0])
-        pars['numcirc'].t[key]  = array([0])
+        pars['propcirc'].y[key] = array([0.0])
+        pars['propcirc'].t[key] = array([0.0])
+        pars['numcirc'].y[key]  = array([0.0])
+        pars['numcirc'].t[key]  = array([0.0])
     pars['propcirc'].y = pars['propcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['propcirc'].t = pars['propcirc'].t.sort(popkeys)
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
+    for key in pars['numcirc'].y.keys():
+        pars['numcirc'].y[key] *= 0.0 # WARNING, forcilby set to 0 for all populations, since program parameter only
 
     # Metaparameters
     for key in popkeys: # Define values
@@ -500,9 +523,12 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray)
             try: 
-                if not(onlyvisible) or pars[key].visible: # Optionally only show user-visible parameters
+                if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
+                    if any(array(simpars[key]).flatten()<0.0):
+                        raise OptimaException('Negative parameters are not allowed!')
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -542,7 +568,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
     # Apply limits, preserving original class
-    if isinstance(y, (int, float)):
+    if isnumber(y):
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
@@ -605,6 +631,10 @@ class Timepar(Par):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
     
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
     
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
         """ Take parameters and turn them into model parameters """
@@ -617,7 +647,7 @@ class Timepar(Par):
         if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
         
         # Set things up and do the interpolation
-        keys = self.y.keys()
+        keys = self.keys()
         npops = len(keys)
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
@@ -645,6 +675,10 @@ class Popsizepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.p.keys()
+    
 
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
@@ -656,7 +690,7 @@ class Popsizepar(Par):
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
         
         # Do interpolation
-        keys = self.p.keys()
+        keys = self.keys()
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
@@ -678,18 +712,26 @@ class Constant(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        if isnumber(self.y):
+            return None
+        else:
+            return self.y.keys()
+        return self.y.keys()
+    
     
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
         
-        if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
+        if self.keys() is None: # Just a simple constant
             yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
             if asarray: output = yinterp
             else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
-            keys = self.y.keys()
+            keys = self.keys()
             npops = len(keys)
             if asarray: output = zeros(npops)
             else: output = odict()
@@ -753,8 +795,8 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose),
         
         simparslist = []
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
-        if isinstance(inds, (int, float)): inds = [inds]
+        if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
+        if isnumber(inds): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
             simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)

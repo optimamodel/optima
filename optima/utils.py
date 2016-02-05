@@ -149,7 +149,12 @@ def sigfig(x, sigfigs=3):
         return string
     except:
         return str(x)
-    
+
+
+def isnumber(x):
+    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
+    from numbers import Number
+    return isinstance(x, Number)
 
     
 
@@ -249,12 +254,12 @@ def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
         from numpy import array, isnan
         try:
-            arraywithnans = array(arraywithnans) # Make sure it's an array
+            arraywithnans = array(arraywithnans,dtype=float) # Make sure it's an array of float type
             sanitized = arraywithnans[~isnan(arraywithnans)]
         except:
             raise Exception('Sanitization failed on array:\n %s' % arraywithnans)
         if len(sanitized)==0:
-            sanitized = 0
+            sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
 
         return sanitized
@@ -713,6 +718,7 @@ def setdate(obj):
 
 from collections import OrderedDict
 from numpy import array
+from numbers import Number
 
 class odict(OrderedDict):
     """
@@ -728,7 +734,7 @@ class odict(OrderedDict):
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
-        if isinstance(key, (int, float)): return key
+        if isinstance(key, Number): return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
@@ -740,7 +746,7 @@ class odict(OrderedDict):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, (int, float)): # Convert automatically from float...dangerous?
+        if isinstance(key, Number): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -773,7 +779,7 @@ class odict(OrderedDict):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str:
             OrderedDict.__setitem__(self, key, value)
-        elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
+        elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
@@ -829,7 +835,7 @@ class odict(OrderedDict):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if isinstance(oldkey, (int, float)): 
+        if isinstance(oldkey, Number): 
             index = oldkey
             keystr = self.keys()[index]
         elif type(oldkey) is str: 

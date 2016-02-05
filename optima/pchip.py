@@ -136,8 +136,8 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
     xnew = linspace(x[0],x[-1],200)
 
     # Process inputs
-    if isinstance(initbudget, (int, float)): initbudget = [initbudget] # Plotting expects this to be a list
-    if isinstance(optbudget, (int, float)): optbudget = [optbudget] # Plotting expects this to be a list
+    if isnumber(initbudget): initbudget = [initbudget] # Plotting expects this to be a list
+    if isnumber(optbudget): optbudget = [optbudget] # Plotting expects this to be a list
     
 #    try:
     xstart = x[0]
