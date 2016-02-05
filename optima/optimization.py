@@ -277,7 +277,6 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     optiminds = findinds(progset.optimizable())
     fixedinds = findinds(1-array(progset.optimizable()))
     nprogs = len(optiminds) # Only count optimizable programs
-
     budgetvec = progset.getdefaultbudget()[:]
     
     # QUICK SCALE. SCALES FIXED COSTS AS WELL.
@@ -293,16 +292,10 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     if isnan(budgetvec).any():
         errormsg = 'Program "%s" does not have any budget' % progkeys[findinds(isnan(budgetvec))]
         raise OptimaException(errormsg)
-#=======
-#    origbudgetdict = dcp(progset.getdefaultbudget())
-#    budgetvec = dcp(origbudgetdict[:])
-#    origbudget = sum(budgetvec)
-#    ratio = totalbudget/origbudget
-#>>>>>>> origin/pseudomaster
     
     # Trim out non-optimizable programs and calculate limits
     minlimsvec = constraints['min'][:] # Convert to vector
-    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds]*ratio # Calculate the minimum allowed costs of fixed programs -- scaled to new spending amount
+    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds]*totalbudget/origbudget # Calculate the minimum allowed costs of fixed programs -- scaled to new spending amount
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
     budgetvec = budgetvec[optiminds] # ...then remove them from the vector
     origbudgetvec = dcp(budgetvec) # Store original budget vector
@@ -315,8 +308,8 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     for p in range(nprogs):
         minfrac = constraints['min'][optiminds[p]]
         maxfrac = constraints['max'][optiminds[p]]
-        budgetlims['min'][p] = minfrac * origbudgetvec[p] * ratio # Note: 'constraints' includes non-optimizable programs, must be careful
-        if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p] * ratio
+        budgetlims['min'][p] = minfrac * origbudgetvec[p] # Note: 'constraints' includes non-optimizable programs, must be careful
+        if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p]
         else:                   budgetlims['max'][p] = inf
 
 
