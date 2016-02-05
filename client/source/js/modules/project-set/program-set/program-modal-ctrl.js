@@ -72,17 +72,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           });
           parameter.selectAll = parameter.parameterObj.pships && parameter.pops && parameter.parameterObj.pships.length === parameter.pops.length;
 	      } else if(parameter.pops && parameter.pops.length > 0 && parameter.pops[0]!="tot") {
-          var selectedPopulation = _.map(parameter.pops, function(pop) {
-            return _.find($scope.state.populations, function(populations) {
-              return pop === populations.short_name;
-            });
-          });
-          parameter.populations = angular.copy(selectedPopulation);
+          parameter.populations = angular.copy($scope.state.populations);
           _.forEach(parameter.populations, function(population) {
-            population.added = true;
-          });
-          parameter.populations = _.extend(angular.copy($scope.state.populations), parameter.populations);
-          parameter.selectAll = parameter.populations && $scope.state.populations && parameter.populations.length === $scope.state.populations.length;
+            if (_.find(parameter.pops, 
+                       function(pop) { return pop === population.short_name })) {
+              population.added = true;
+            } else {
+              population.added = false;
+            }
+          })
+          parameter.selectAll = parameter.populations && $scope.state.populations && parameter.populations.length === parameter.pops.length;
         }
       });
 
