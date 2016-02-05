@@ -306,7 +306,7 @@ if 'maxcoverage' in tests:
     for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e14])
     scenlist = [
         Parscen(name='Current conditions', parsetname='default', pars=[]),
-#        Coveragescen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
+        Coveragescen(name='Full coverage', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
         ]
     
     # Run the scenarios
