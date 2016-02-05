@@ -258,6 +258,7 @@ def geogui():
             return None
         gaoptim = guiportfolio.gaoptims[-1]
         guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False)
+                
         return None
         
     
