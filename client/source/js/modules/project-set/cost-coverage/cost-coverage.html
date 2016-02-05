@@ -104,7 +104,7 @@
                 <tr class="c-table__row" ng-repeat="program in year.programs track by $index" ng-init="year.programs= !year.programs ? vm.initYearPrograms(effect.pop) : year.programs">
                   <td></td>
                   <td class="c-table__column"> {{vm.selectedParameter.name}} under maximal attainable coverage of
- +                                               {{vm.getFullProgramName(program.name)}}
+                                                {{vm.getFullProgramName(program.name)}} operating in isolation
                   </td>
                   <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
                     <input class="txbox c-table__input c-table__input--half" ng-model="program.intercept_lower" more-than="-1" ng-required="true" type="number"/>
