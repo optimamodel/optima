@@ -5,7 +5,7 @@ Version: 2016feb02
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults, vec2budget # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr # Utilities
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber # Utilities
 from numpy import zeros, arange, isnan, maximum, array, inf
 
 # Define global parameters that shouldn't really matter
