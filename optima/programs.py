@@ -1027,7 +1027,7 @@ class Covout(CCOF):
 ########################################################
 # HELPER FUNCTIONS
 ########################################################
-def vec2budget(budgetvec=None, origbudget=None, progset=None, indices=None):
+def vec2odict(budgetvec=None, origbudget=None, progset=None, indices=None):
     ''' 
     Function to convert a budget/coverage vector into a budget/coverage odict 
     
