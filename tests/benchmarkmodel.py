@@ -100,3 +100,6 @@ if doprofile:
         print('Done.')
     
     profile()
+
+if 'elapsedstr' in locals():
+    print('And to summarize, model runtime was %s s.' % elapsedstr)
