@@ -871,9 +871,9 @@ class odict(OrderedDict):
 
 
 
-def updateobj(orig=None, newvec=None, inds=None):
+def vec2obj(orig=None, newvec=None, inds=None):
     ''' 
-    Function to convert a budget/coverage vector into a budget/coverage odict ...or anything, really
+    Function to convert an e.g. budget/coverage vector into an e.g. budget/coverage odict ...or anything, really
     
     WARNING: is all the error checking really necessary?
     
@@ -884,13 +884,13 @@ def updateobj(orig=None, newvec=None, inds=None):
     from copy import deepcopy as dcp
     
     # Validate input
-    if orig is None: raise Exception('vec2odict() requires an original object to update')
-    if newvec is None: raise Exception('vec2odict() requires a vector as input')
+    if orig is None: raise Exception('vec2obj() requires an original object to update')
+    if newvec is None: raise Exception('vec2obj() requires a vector as input')
     lenorig = len(orig)
     lennew = len(newvec)
-    if lennew!=lenorig and inds is None: raise Exception('vec2odict(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
+    if lennew!=lenorig and inds is None: raise Exception('vec2obj(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
     if inds is not None and max(inds)>=len(orig): 
-        raise Exception('vec2odict(): maximum index is greater than the length of the object (%i, %i)' % (max(inds), len(orig)))
+        raise Exception('vec2obj(): maximum index is greater than the length of the object (%i, %i)' % (max(inds), len(orig)))
     if inds is None: inds = range(lennew)
 
     # The actual meat of the function
