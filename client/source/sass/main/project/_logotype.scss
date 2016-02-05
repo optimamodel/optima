@@ -2,8 +2,8 @@
 // ========
 
 .logo {
-  @include image-size('project/logo/logo.png');
-  background-image: inline('project/logo/logo.png');
+  @include image-size('project/logo/optima-hiv-logo.png');
+  background-image: inline('project/logo/optima-hiv-logo.png');
   background-repeat: no-repeat;
   background-size: 100% auto;
   display: inline-block;

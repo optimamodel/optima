@@ -8,7 +8,8 @@ from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import SubParser, secure_filename_input, AllowedSafeFilenameStorage
+from server.webapp.inputs import (SubParser, secure_filename_input, AllowedSafeFilenameStorage,
+                                  Json as JsonInput)
 
 from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
                                  upload_dir_user, save_result)
@@ -184,7 +185,8 @@ calibration_fields = {
     "parset_id": Uuid,
     "parameters": Json,
     "graphs": Json,
-    "selectors": Json
+    "selectors": Json,
+    "result_id": Uuid,
 }
 
 calibration_parser = RequestParser()
@@ -198,6 +200,13 @@ calibration_update_parser.add_arguments({
     'parameters': {'required': True, 'type': dict, 'action': 'append'},
     'doSave': {'default': False, 'type': bool, 'location': 'args'},
     'autofit': {'default': False, 'type': bool, 'location': 'args'}
+})
+
+
+parset_save_with_autofit_parser = RequestParser()
+parset_save_with_autofit_parser.add_arguments({
+    'parameters': {'type': JsonInput, 'required': True, 'action': 'append'},
+    'result_id': {'type': uuid.UUID, 'required': True},
 })
 
 
@@ -276,7 +285,7 @@ class ParsetsCalibration(Resource):
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         result_entry = db.session.query(ResultsDb).filter_by(parset_id=parset_id, calculation_type=calculation_type)
         if result_entry:
-            result = result_entry[0].hydrate()
+            result = result_entry[-1].hydrate()
         else:
             simparslist = parset_instance.interp()
             result = project_instance.runsim(simpars=simparslist)
@@ -289,7 +298,8 @@ class ParsetsCalibration(Resource):
             "parset_id": parset_id,
             "parameters": parameters,
             "graphs": graphs,
-            "selectors": selectors
+            "selectors": selectors,
+            "result_id": result_entry[-1].id if result_entry else None
         }
 
     @report_exception
@@ -321,6 +331,7 @@ class ParsetsCalibration(Resource):
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
         result = project_instance.runsim(simpars=simparslist)
+        result_entry = None
 
         if doSave:  # save the updated results
             parset_entry.pars = op.saves(parset_instance.pars)
@@ -329,7 +340,7 @@ class ParsetsCalibration(Resource):
             result_entry = [item for item in project_entry.results if
                             item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
             if result_entry:
-                result_entry = result_entry[0]
+                result_entry = result_entry[-1]
                 result_entry.blob = op.saves(result)
             else:
                 result_entry = ResultsDb(
@@ -349,7 +360,48 @@ class ParsetsCalibration(Resource):
             "parset_id": parset_id,
             "parameters": args['parameters'],
             "graphs": graphs,
-            "selectors": selectors
+            "selectors": selectors,
+            "result_id": result_entry.id if result_entry is not None else None
+        }
+
+    @report_exception
+    @marshal_with(calibration_fields, envelope="calibration")
+    def post(self, project_id, parset_id):
+        current_app.logger.debug("POST /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
+        args = parset_save_with_autofit_parser.parse_args()
+        parameters = args['parameters']
+
+        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_entry is None or parset_entry.project_id != project_id:
+            raise ParsetDoesNotExist(id=parset_id)
+
+        # get manual parameters
+        parset_instance = parset_entry.hydrate()
+        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
+        for param in parameters:
+            mflists['keys'].append(param['key'])
+            mflists['subkeys'].append(param['subkey'])
+            mflists['types'].append(param['type'])
+            mflists['labels'].append(param['label'])
+            mflists['values'].append(param['value'])
+        parset_instance.update(mflists)
+
+        parset_entry.pars = op.saves(parset_instance.pars)
+        parset_entry.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.add(parset_entry)
+        ResultsDb.query.filter_by(parset_id=parset_id, project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        ResultsDb.query.filter_by(id=args['result_id']).first()
+        result_entry = ResultsDb.query.filter_by(id=args['result_id']).first()
+        result_entry.parset_id = parset_id
+        result_entry.project_id = project_id
+        result_entry.calculation_type = ResultsDb.CALIBRATION_TYPE
+        db.session.add(result_entry)
+        db.session.commit()
+
+        return {
+            "parset_id": parset_id,
+            "parameters": args['parameters'],
+            "result_id": result_entry.id
         }
 
 

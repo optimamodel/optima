@@ -122,7 +122,7 @@ class Programset(object):
             for newprogram in newprograms: 
                 if newprogram not in self.programs.values():
                     self.programs[newprogram.short] = newprogram
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]))
+                    printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]), 3, verbose)
                 else:
                     raise OptimaException('Program "%s" is already present in programset "%s".' % (newprogram.short, self.name))
         self.updateprogset()
@@ -855,8 +855,8 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if not ccopar.get(ccopartype): 
-                        printv('WARNING: no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 1, verbose)
+                    if not ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+                        printv('Warning, no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 3, verbose)
                         ccopar[ccopartype] = (0,0)
                     self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
@@ -1027,20 +1027,25 @@ class Covout(CCOF):
 ########################################################
 # HELPER FUNCTIONS
 ########################################################
-def vec2budget(progset=None, budgetvec=None):
-    ''' Function to convert a budget/coverage vector into a budget/coverage odict '''
+def vec2budget(progset=None, budgetvec=None, indices=None):
+    ''' 
+    Function to convert a budget/coverage vector into a budget/coverage odict 
+    
+    "Indices" is used to e.g. supply optimizable parameters only
+    '''
     
     # Validate input
     if any([item is None for item in [progset, budgetvec]]): raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
     if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
+    if indices is None: indices = arange(len(budgetvec)) # If no indices supplied, assume it's the right length
     
     # Get budget structure and populate
     budget = progset.getdefaultbudget() # Returns an odict with the correct structure
-    if len(budget)==len(budgetvec):
-        for k,key in enumerate(budget.keys()):
-            budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
-    else:
-        errormsg = 'Could not convert budget vector into budget: incompatible lengths (%i vs. %i)' % (len(budgetvec), len(budget))
+    try:
+        for k in range(len(budgetvec)):
+            budget[indices[k]] = budgetvec[k] # Make this budget value a list so has len()
+    except:
+        errormsg = 'Could not convert budget vector into budget. Budget:\n%s\nBudgetvec:"%s"' % (budget, budgetvec)
         raise OptimaException(errormsg)
     
     return budget
