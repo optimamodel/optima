@@ -149,7 +149,12 @@ def sigfig(x, sigfigs=3):
         return string
     except:
         return str(x)
-    
+
+
+def isnumber(x):
+    ''' Simply determine whether or not the input is a number, since it's too hard to remember this otherwise '''
+    from numbers import Number
+    return isinstance(x, Number)
 
     
 
@@ -249,12 +254,12 @@ def sanitize(arraywithnans):
         """ Sanitize input to remove NaNs. Warning, does not work on multidimensional data!! """
         from numpy import array, isnan
         try:
-            arraywithnans = array(arraywithnans) # Make sure it's an array
+            arraywithnans = array(arraywithnans,dtype=float) # Make sure it's an array of float type
             sanitized = arraywithnans[~isnan(arraywithnans)]
         except:
             raise Exception('Sanitization failed on array:\n %s' % arraywithnans)
         if len(sanitized)==0:
-            sanitized = 0
+            sanitized = 0.0
             print('                WARNING, no data entered for this parameter, assuming 0')
 
         return sanitized
@@ -373,7 +378,34 @@ def scaleratio(inarray,total):
     return outarray
 
 
+def vec2obj(orig=None, newvec=None, inds=None):
+    ''' 
+    Function to convert an e.g. budget/coverage vector into an e.g. budget/coverage odict ...or anything, really
+    
+    WARNING: is all the error checking really necessary?
+    
+    inds can be a list of indexes, or a list of keys, but newvec must be a list, array, or odict.
+    
+    Version: 2016feb04
+    '''
+    from copy import deepcopy as dcp
+    
+    # Validate input
+    if orig is None: raise Exception('vec2obj() requires an original object to update')
+    if newvec is None: raise Exception('vec2obj() requires a vector as input')
+    lenorig = len(orig)
+    lennew = len(newvec)
+    if lennew!=lenorig and inds is None: raise Exception('vec2obj(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
+    if inds is not None and max(inds)>=len(orig): 
+        raise Exception('vec2obj(): maximum index is greater than the length of the object (%i, %i)' % (max(inds), len(orig)))
+    if inds is None: inds = range(lennew)
 
+    # The actual meat of the function
+    new = dcp(orig)    
+    for i,ind in enumerate(inds):
+        new[ind] = newvec[i]
+    
+    return new
 
 
 
@@ -713,6 +745,7 @@ def setdate(obj):
 
 from collections import OrderedDict
 from numpy import array
+from numbers import Number
 
 class odict(OrderedDict):
     """
@@ -728,7 +761,7 @@ class odict(OrderedDict):
 
     def __slicekey(self, key, slice_end):
         shift = int(slice_end=='stop')
-        if isinstance(key, (int, float)): return key
+        if isinstance(key, Number): return key
         elif type(key) is str: return self.index(key)+shift # +1 since otherwise confusing with names (CK)
         elif key is None: return (len(self) if shift else 0)
         else: raise Exception('To use a slice, %s must be either int or str (%s)' % (slice_end, key))
@@ -740,7 +773,7 @@ class odict(OrderedDict):
 
     def __getitem__(self, key):
         ''' Allows getitem to support strings, integers, slices, lists, or arrays '''
-        if isinstance(key, (int, float)): # Convert automatically from float...dangerous?
+        if isinstance(key, Number): # Convert automatically from float...dangerous?
             return self.values()[int(key)]
         elif type(key)==slice: # Handle a slice -- complicated
             try:
@@ -773,7 +806,7 @@ class odict(OrderedDict):
         ''' Allows setitem to support strings, integers, slices, lists, or arrays '''
         if type(key)==str:
             OrderedDict.__setitem__(self, key, value)
-        elif isinstance(key, (int, float)): # Convert automatically from float...dangerous?
+        elif isinstance(key, Number): # Convert automatically from float...dangerous?
             thiskey = self.keys()[int(key)]
             OrderedDict.__setitem__(self, thiskey, value)
         elif type(key)==slice:
@@ -788,12 +821,13 @@ class odict(OrderedDict):
             if hasattr(value, '__len__'):
                 if len(value)==slicelen:
                     for valind,index in enumerator:
-                        self.__setitem__(index, value[valind])
+                        self.__setitem__(index, value[valind])  # e.g. odict[:] = arr[:]
                 else:
                     errormsg = 'Slice "%s" and values "%s" have different lengths! (%i, %i)' % (slicerange, value, slicelen, len(value))
                     raise Exception(errormsg)
             else: 
-                self.__setitem__(key, value)
+                for valind,index in enumerator:
+                    self.__setitem__(index, value) # e.g. odict[:] = 4
         elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 
@@ -829,7 +863,7 @@ class odict(OrderedDict):
     def rename(self, oldkey, newkey):
         ''' Change a key name -- WARNING, very inefficient! '''
         nkeys = len(self)
-        if isinstance(oldkey, (int, float)): 
+        if isinstance(oldkey, Number): 
             index = oldkey
             keystr = self.keys()[index]
         elif type(oldkey) is str: 
@@ -867,6 +901,20 @@ class odict(OrderedDict):
         out = odict()
         for key in allkeys: out[key] = self[key]
         return out
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

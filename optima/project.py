@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, minmoney, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
@@ -103,28 +103,28 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-        self.ensureparset(name)
+        self.makeparset(name=name, overwrite=overwrite)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True)
         return None
 
 
-    def ensureparset(self, name='default'):
-        ''' If parameter set of that name doesn't exist, create it'''
+    def makeparset(self, name='default', overwrite=True):
+        ''' If parameter set of that name doesn't exist, create it '''
         # question: what is that parset does exist? delete it first?
         if not self.data:
             raise OptimaException('No data in project "%s"!' % self.name)
-        if name not in self.parsets:
+        if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
-            self.addparset(name=name, parset=parset) # Store parameters
+            self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
 
@@ -166,7 +166,7 @@ class Project(object):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
-        if isinstance(checkexists, (int, float)): # It's a numerical index
+        if isnumber(checkexists): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
             except: raise OptimaException('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None:
@@ -268,7 +268,7 @@ class Project(object):
     def rmresult(self, name=-1):
         resultuids = self.results.keys() # Pull out UID keys
         resultnames = [res.name for res in self.results.values()] # Pull out names
-        if isinstance(name, (int, float)) and name<len(self.results):  # Remove by index rather than name
+        if isnumber(name) and name<len(self.results):  # Remove by index rather than name
             self.remove(what='result', name=self.results.keys()[name])
         elif name in resultuids: # It's a UID: remove directly 
             self.remove(what='result', name=name)
@@ -293,7 +293,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list -- WARNING, do we need this? What's it for? Why not use runmodel()? '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
@@ -310,7 +310,7 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind in range(len(simparslist)):
-            raw = model(simparslist[ind], self.settings) # ACTUALLY RUN THE MODEL
+            raw = model(simparslist[ind], self.settings, die=die) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
@@ -328,8 +328,8 @@ class Project(object):
         if name is None and orig is None: # Nothing supplied, just use defaults
             name = 'default'
             orig = 'default'
-        if isinstance(name, (int, float)): name = self.parsets.keys()[name] # Convert from index to name if required
-        if isinstance(orig, (int, float)): orig = self.parsets.keys()[orig]
+        if isnumber(name): name = self.parsets.keys()[name] # Convert from index to name if required
+        if isnumber(orig): orig = self.parsets.keys()[orig]
         if name is not None and orig is not None and name!=orig:
             self.copyparset(orig=orig, new=name, overwrite=True) # Store parameters, user seems to know what she's doing, trust her!
         if name is None and orig is not None: name = orig # Specify name if not supplied
@@ -362,7 +362,6 @@ class Project(object):
 
     def autofit(self, name=None, orig=None, what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
         ''' Function to perform automatic fitting '''
-        print ("autofit(%s, %s, %s)" % (name, orig, what))
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         print ("name=%s, orig=%s" % (name, orig))
         self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
@@ -470,6 +469,7 @@ class Project(object):
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
         
+        
     def delBOC(self, objectives):
         ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
         while not self.getBOC(objectives = objectives) == None:
@@ -477,6 +477,7 @@ class Project(object):
             ind = self.getBOC(objectives = objectives).uid
             self.rmresult(str(ind))
         return None
+    
     
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
