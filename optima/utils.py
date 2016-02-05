@@ -378,7 +378,34 @@ def scaleratio(inarray,total):
     return outarray
 
 
+def vec2obj(orig=None, newvec=None, inds=None):
+    ''' 
+    Function to convert an e.g. budget/coverage vector into an e.g. budget/coverage odict ...or anything, really
+    
+    WARNING: is all the error checking really necessary?
+    
+    inds can be a list of indexes, or a list of keys, but newvec must be a list, array, or odict.
+    
+    Version: 2016feb04
+    '''
+    from copy import deepcopy as dcp
+    
+    # Validate input
+    if orig is None: raise Exception('vec2obj() requires an original object to update')
+    if newvec is None: raise Exception('vec2obj() requires a vector as input')
+    lenorig = len(orig)
+    lennew = len(newvec)
+    if lennew!=lenorig and inds is None: raise Exception('vec2obj(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
+    if inds is not None and max(inds)>=len(orig): 
+        raise Exception('vec2obj(): maximum index is greater than the length of the object (%i, %i)' % (max(inds), len(orig)))
+    if inds is None: inds = range(lennew)
 
+    # The actual meat of the function
+    new = dcp(orig)    
+    for i,ind in enumerate(inds):
+        new[ind] = newvec[i]
+    
+    return new
 
 
 
@@ -878,34 +905,7 @@ class odict(OrderedDict):
 
 
 
-def vec2obj(orig=None, newvec=None, inds=None):
-    ''' 
-    Function to convert an e.g. budget/coverage vector into an e.g. budget/coverage odict ...or anything, really
-    
-    WARNING: is all the error checking really necessary?
-    
-    inds can be a list of indexes, or a list of keys, but newvec must be a list, array, or odict.
-    
-    Version: 2016feb04
-    '''
-    from copy import deepcopy as dcp
-    
-    # Validate input
-    if orig is None: raise Exception('vec2obj() requires an original object to update')
-    if newvec is None: raise Exception('vec2obj() requires a vector as input')
-    lenorig = len(orig)
-    lennew = len(newvec)
-    if lennew!=lenorig and inds is None: raise Exception('vec2obj(): if inds is not supplied, lengths must match (orig=%i, new=%i)' % (lenorig, lennew))
-    if inds is not None and max(inds)>=len(orig): 
-        raise Exception('vec2obj(): maximum index is greater than the length of the object (%i, %i)' % (max(inds), len(orig)))
-    if inds is None: inds = range(lennew)
 
-    # The actual meat of the function
-    new = dcp(orig)    
-    for i,ind in enumerate(inds):
-        new[ind] = newvec[i]
-    
-    return new
 
 
 
