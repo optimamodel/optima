@@ -166,7 +166,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, doplot=True, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -192,11 +192,13 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
     par.start = data['years'][0]
+    tdata = odict()
+    ydata = odict()
     for key in atleast2datapoints:
-        tdata = sanitizedt[key]-startyear
-        ydata = log(sanitizedy[key])
+        tdata[key] = sanitizedt[key]-startyear
+        ydata[key] = log(sanitizedy[key])
         try:
-            fitpars = polyfit(tdata, ydata, 1)
+            fitpars = polyfit(tdata[key], ydata[key], 1)
             par.p[key] = array([exp(fitpars[1]), fitpars[0]])
         except:
             errormsg = 'Fitting population size data for population "%s" failed' % key
@@ -214,6 +216,20 @@ def data2popsize(data=None, keys=None, blh=0, **defaultargs):
         thispopsize = sanitizedy[key][0]
         largestthatyear = popgrow(largestpars, thisyear-startyear)
         par.p[key] = [largestpars[0]*thispopsize/largestthatyear, largestpars[0]]
+    
+    if doplot:
+        from pylab import figure, subplot, plot, scatter, arange, show
+        nplots = len(atleast2datapoints)
+        figure()
+        tvec = arange(data['years'][0], data['years'][-1]+1)
+        yvec = par.interp(tvec=tvec)
+        for k,key in enumerate(atleast2datapoints):
+            subplot(nplots,1,k+1)
+            scatter(tdata[key]+startyear, exp(ydata[key]))
+            plot(tvec, yvec[k])
+            print(par.p[key])
+            show()
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     return par
 
