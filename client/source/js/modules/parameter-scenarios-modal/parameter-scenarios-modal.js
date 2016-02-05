@@ -33,11 +33,6 @@ define(['angular'], function (module) {
     	};
 
     	$scope.manageScenario = function(){
-    		// As pars.for is expecting a array on BE
-    		angular.forEach($scope.row.pars, function(v){
-    			v.for = [v.for];
-    		});
-    		//
     		var row = {
     			"scenario_type": scenario.scenario_type, 
     			"name": $scope.row.name, 
