@@ -1,6 +1,6 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse, parsetResponse, scenariosResponse, CONFIG, typeSelector, $state) {
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse, parsetResponse, scenariosResponse, CONFIG, typeSelector, $state, modalService) {
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
         var openProject  = info.data;
@@ -144,7 +144,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $http.put('/api/project/'+openProject.id+'/scenarios', {
             'scenarios': $scope.scenarios
           }).success(function(response) {
-            // ToDo: add some kind of flash message
+            modalService.inform(
+              function (){ },
+              'Okay',
+              'Scenario saved successfully.',
+              'Saved successfully'
+            );
             $scope.scenarios = response.scenarios;
           });
         };
