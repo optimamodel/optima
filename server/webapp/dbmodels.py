@@ -692,6 +692,8 @@ class ProgsetsDb(db.Model):
                     kwargs[field] = program[field]
 
                 kwargs['short'] = short
+                if not 'pregnant' in kwargs['criteria']:
+                    kwargs['criteria']['pregnant'] = False
 
                 if kwargs['short'] in prog_shorts:
                     raise DuplicateProgram(kwargs['short'])
@@ -704,6 +706,7 @@ class ProgsetsDb(db.Model):
                     active=program.get('active', False),
                     **kwargs
                 )
+
                 program_instance = program_entry.hydrate()
                 program_entry.restore(program_instance)
                 db.session.add(program_entry)
