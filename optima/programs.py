@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb02
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap
+from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber
 from numpy import ones, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
@@ -315,7 +315,7 @@ class Programset(object):
         outcomes = odict()
 
         # Validate inputs
-        if type(t) in [int,float]: t = [t]
+        if isnumber(t): t = [t]
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
@@ -434,7 +434,7 @@ class Programset(object):
         
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
-        if type(years) in [int,float]: years = [years]
+        if isnumber(years): years = [years]
         settings = None
         if parset is None:
             if results and results.parset: parset = results.parset
@@ -608,7 +608,7 @@ class Program(object):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
-        if type(t) in [float,int]: t = array([t])
+        if isnumber(t): t = array([t])
         elif type(t)==list: t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
@@ -690,8 +690,8 @@ class Program(object):
         '''Returns coverage for a time/spending vector'''
 
         # Validate inputs
-        if isinstance(x, (int,float)): x = [x]
-        if isinstance(t, (int,float)): t = [t]
+        if isnumber(x): x = [x]
+        if isnumber(t): t = [t]
         if isinstance(x, list): x = array(x)
         if isinstance(t, list): t = array(t)
 
@@ -732,7 +732,7 @@ class Program(object):
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
 
-        if type(t) in [int,float]: t = [t]
+        if isnumber(t): t = [t]
         colors = gridcolormap(len(t))
         plotdata = {}
         
@@ -875,7 +875,7 @@ class CCOF(object):
 
     def rmccopar(self, t, verbose=2):
         '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
-        if isinstance(t, (int,float)):
+        if isnumber(t):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
                 for ccopartype in self.ccopars.keys():
@@ -897,7 +897,7 @@ class CCOF(object):
 
         # Set up necessary variables
         ccopar = {}
-        if isinstance(t,(float,int)): t = [t]
+        if isnumber(t): t = [t]
         nyrs = len(t)
         ccopars_no_t = dcp(self.ccopars)
         del ccopars_no_t['t']
@@ -970,7 +970,7 @@ class Costcov(CCOF):
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isinstance(popsize,(float,int)): popsize = array([popsize])
+        if isnumber(popsize): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
@@ -986,7 +986,7 @@ class Costcov(CCOF):
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isinstance(popsize, (float, int)): popsize = array([popsize])
+        if isnumber(popsize): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)

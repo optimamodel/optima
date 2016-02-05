@@ -7,7 +7,7 @@ Version: 2016feb02
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -567,7 +567,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
     # Apply limits, preserving original class
-    if isinstance(y, (int, float)):
+    if isnumber(y):
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
@@ -713,7 +713,7 @@ class Constant(Par):
     
     def keys(self):
         ''' Return the valid keys for using with this parameter '''
-        if isinstance(self.y, (int, float)):
+        if isnumber(self.y):
             return None
         else:
             return self.y.keys()
@@ -794,8 +794,8 @@ class Parameterset(object):
         printv('Making model parameters...', 1, verbose),
         
         simparslist = []
-        if isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
-        if isinstance(inds, (int, float)): inds = [inds]
+        if isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array -- WARNING, not sure if this is necessary or should be handled lower down
+        if isnumber(inds): inds = [inds]
         if inds is None:inds = range(len(self.pars))
         for ind in inds:
             simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)

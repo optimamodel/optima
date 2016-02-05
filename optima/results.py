@@ -1,13 +1,14 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan29 by cliffk
+Version: 2016feb04 by cliffk
 """
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
 from numpy import array, nan, zeros, arange, shape
 import matplotlib.pyplot as plt
 from optima import pchip, plotpchip
+from numbers import Number
 
 
 
@@ -398,7 +399,7 @@ def getresults(project=None, pointer=None, die=True):
         return None 
     
     # Normal usage, e.g. getresults(P, 3) will retrieve the 3rd set of results
-    elif isinstance(pointer, (str, int, float)):
+    elif isinstance(pointer, (str, Number)):
         if project is not None:
             resultnames = [res.name for res in project.results.values()]
             resultuids = project.results.keys()

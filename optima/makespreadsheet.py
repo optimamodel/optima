@@ -8,7 +8,7 @@ Version: 2016jan18 by robyns
 import xlsxwriter
 from xlsxwriter.utility import re, xl_rowcol_to_cell
 from collections import OrderedDict
-from utils import printv
+from utils import printv, isnumber
 
 default_datastart = 2000
 default_dataend = 2020
@@ -17,7 +17,7 @@ def makespreadsheet(filename, pops, datastart=default_datastart, dataend=default
     """ Generate the Optima spreadsheet -- the hard work is done by makespreadsheet.py """
 
     # An integer argument is given: just create a pops dict using empty entries
-    if isinstance(pops, (int, float)):
+    if isnumber(pops):
         npops = pops
         pops = [] # Create real pops list
         for p in range(npops):

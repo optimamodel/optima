@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict
+from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim
 from matplotlib.widgets import CheckButtons, Button
@@ -465,7 +465,7 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     Version: 2016jan30
     '''
     if pops is None: pops = Ellipsis # This is a slice
-    elif isinstance(pops, (int, float)): pops = [pops]
+    elif isnumber(pops): pops = [pops]
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
@@ -646,10 +646,10 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
                     try:
                         this = plotdata[nplt,:]
                         ax.set_title(this[0])
-                        if   isinstance(this[1], (int, float)):   ax.plot(tvec, 0*tvec+this[1])
-                        elif len(this[1])==0:                     ax.set_title(this[0]+' is empty')
-                        elif len(this[1])==1:                     ax.plot(tvec, 0*tvec+this[1])
-                        elif len(this[1])==len(tvec):             ax.plot(tvec, this[1])
+                        if   isnumber(this[1]):        ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==0:          ax.set_title(this[0]+' is empty')
+                        elif len(this[1])==1:          ax.plot(tvec, 0*tvec+this[1])
+                        elif len(this[1])==len(tvec):  ax.plot(tvec, this[1])
                         else: pass # Population size, doesn't use control points
                         printv('Plot %i/%i...' % (i*len(allplotdata)+pd+1, len(plotparsaxs)*len(allplotdata)), 2, verbose)
                     except Exception as E: print('??????: %s' % E.message)
