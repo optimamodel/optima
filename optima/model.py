@@ -3,7 +3,7 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
+def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False):
     """
     Runs Optima's epidemiological model.
     

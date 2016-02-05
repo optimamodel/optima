@@ -127,16 +127,16 @@ def pygui(tmpresults, toplot=None):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 1.2 (2016jan25)
+    Version: 1.2 (2016feb04)
     '''
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    results = tmpresults # Copy results to global variable    
+    results = tmpresults # Copy results to global variable  
     
     ## Define options for selection
     plotselections = getplotselections(results)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
-    if toplot is None: isselected = plotselections['defaults']
+    if toplot is None or toplot=='default': isselected = plotselections['defaults']
     else:
         isselected = []
         for key in checkboxes:
