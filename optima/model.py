@@ -3,7 +3,7 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
+def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False):
     """
     Runs Optima's epidemiological model.
     
@@ -787,13 +787,17 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             
             
             ###############################################################################
-            ## Calculate births, age transitions and mother-to-child-transmission
+            ## Reconcile things
             ###############################################################################
             
             # Reconcile population sizes
             for p in range(npops):
-                newpeople = popsize[p,t+1]-people[:,p,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-                people[susreg,p,t+1] += newpeople # Add new people
+                thissusreg = people[susreg,p,t+1]
+                thisprogcirc = people[progcirc,p,t+1]
+                allsus = thissusreg+thisprogcirc
+                newpeople = popsize[p,t+1] - people[:,p,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+                people[susreg,p,t+1]   += newpeople*thissusreg/allsus # Add new people
+                people[progcirc,p,t+1] += newpeople*thisprogcirc/allsus # Add new people
             
             # Handle circumcision
             circppl = dcp(numcirc[:,t])

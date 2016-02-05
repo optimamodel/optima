@@ -794,12 +794,13 @@ class odict(OrderedDict):
             if hasattr(value, '__len__'):
                 if len(value)==slicelen:
                     for valind,index in enumerator:
-                        self.__setitem__(index, value[valind])
+                        self.__setitem__(index, value[valind])  # e.g. odict[:] = arr[:]
                 else:
                     errormsg = 'Slice "%s" and values "%s" have different lengths! (%i, %i)' % (slicerange, value, slicelen, len(value))
                     raise Exception(errormsg)
             else: 
-                self.__setitem__(key, value)
+                for valind,index in enumerator:
+                    self.__setitem__(index, value) # e.g. odict[:] = 4
         elif self.__is_odict_iterable(key) and hasattr(value, '__len__'): # Iterate over items
             if len(key)==len(value):
                 for valind,thiskey in enumerate(key): 

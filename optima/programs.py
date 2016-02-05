@@ -333,7 +333,7 @@ class Programset(object):
 
                 # If it's a coverage parameter, you are done
                 if thispartype in coveragepars:
-                    outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
+                    outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t)['intercept'])
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                         if thispop == 'tot':
                             popcoverage = coverage[thisprog.short]
@@ -423,6 +423,13 @@ class Programset(object):
                     
                     else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
         
+        # Validate
+        for outcome in outcomes.keys():
+            for key in outcomes[outcome].keys():
+                if len(outcomes[outcome][key])!=nyrs:
+                    raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
+
+        
         return outcomes
         
     def getpars(self, coverage, t=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
@@ -464,7 +471,7 @@ class Programset(object):
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-                if any(thisoutcome<lower) or any(thisoutcome>upper):
+                if any(array(thisoutcome<lower).flatten()) or any(array(thisoutcome>upper).flatten()):
                     errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
                     if die:
                         raise OptimaException(errormsg)
@@ -483,6 +490,9 @@ class Programset(object):
                 thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
                 thispar.t[pop] = append(thispar.t[pop], years)
                 thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
+                
+                if len(thispar.t[pop])!=len(thispar.y[pop]):
+                    raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t[pop]), len(thispar.y[pop])))
 
             pars[outcome] = thispar # WARNING, probably not needed
                 

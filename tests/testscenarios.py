@@ -100,11 +100,11 @@ if 'standardscen' in tests:
 
          Parscen(name='More casual acts',
               parsetname='default',
-              pars=[{'endval': 100.,
+              pars=[{'endval': 2.,
                 'endyear': 2015,
                 'name': 'actscas',
                 'for': caspships,
-                'startval': 100.,
+                'startval': 2.,
                 'startyear': 2005}]),
 
          Parscen(name='100% testing',
@@ -282,6 +282,42 @@ if '90-90-90' in tests:
         pygui(P.results[-1], toplot='cascade')
 
     done(t)
+
+
+
+
+
+#################################################################################################################
+## Coverage
+#################################################################################################################
+
+if 'maxcoverage' in tests:
+    t = tic()
+
+    print('Running maximum coverage scenario test...')
+    from optima import Coveragescen, Parscen, defaults, dcp
+    
+    ## Set up default project
+    P = defaults.defaultproject('generalized')
+    
+    ## Define scenarios
+    defaultbudget = P.progsets['default'].getdefaultbudget()
+    maxcoverage = dcp(defaultbudget) # It's just an odict, though I know this looks awful
+    for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e14])
+    scenlist = [
+        Parscen(name='Current conditions', parsetname='default', pars=[]),
+        Coveragescen(name='Full coverage', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
+        ]
+    
+    # Run the scenarios
+    P.addscenlist(scenlist)
+    P.runscenarios() 
+     
+    if doplot:
+        from optima import pygui
+        pygui(P.results[-1], toplot='default')
+
+
 
 
 

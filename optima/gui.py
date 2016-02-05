@@ -127,16 +127,16 @@ def pygui(tmpresults, toplot=None):
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
-    Version: 1.2 (2016jan25)
+    Version: 1.2 (2016feb04)
     '''
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    results = tmpresults # Copy results to global variable    
+    results = tmpresults # Copy results to global variable  
     
     ## Define options for selection
     plotselections = getplotselections(results)
     checkboxes = plotselections['keys']
     checkboxnames = plotselections['names']
-    if toplot is None: isselected = plotselections['defaults']
+    if toplot is None or toplot=='default': isselected = plotselections['defaults']
     else:
         isselected = []
         for key in checkboxes:
@@ -449,7 +449,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None, animate=True, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=None, pops=None, animate=True, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -461,8 +461,10 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
         P.runsim()
         people = P.results[-1].raw[0]['people']
         op.gui.plotpeople(P, people)
+        
+    NB: for a multiresult, simind must not be None!
     
-    Version: 2016jan30
+    Version: 2016feb04
     '''
     if pops is None: pops = Ellipsis # This is a slice
     elif isnumber(pops): pops = [pops]
@@ -473,7 +475,8 @@ def plotpeople(project=None, people=None, ind=None, start=2, end=None, pops=None
     
     if people is None:
         if ind is None: ind=-1
-        people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+        if simind is None: people = project.results[ind].raw[0]['people'] # Try to get default people to plot
+        else: people = project.results[ind].raw[simind][0]['people'] # It's a multiresult: need another  indcex
     
     plotstyles = odict([
     ('susreg',   ('|','|')), 

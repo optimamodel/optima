@@ -153,6 +153,9 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                             thispar.t[pop] = append(thispar.t[pop], scenpar['endyear'])
                             thispar.y[pop] = append(thispar.y[pop], scenpar['endval'])
                         
+                        if len(thispar.t[pop])!=len(thispar.y[pop]):
+                            raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t), len(thispar.y)))
+                        
                     thisparset.pars[pardictno][scenpar['name']] = thispar # WARNING, not sure if this is needed???
     
         elif isinstance(scen,Progscen):
@@ -165,7 +168,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 results = None
 
             if isnumber(scen.t): scen.t = [scen.t]
-
+            
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
@@ -188,7 +191,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
 
             elif isinstance(scen, Coveragescen):
-
+                
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
                     scen.coverage = vec2budget(scen.progset, scen.coverage) # It seems to be a vector: convert to odict
@@ -208,14 +211,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             scen.pars = thisparsdict
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
                 thisparset.pars[pardictno] = thisparsdict
-
+            
         else: 
             errormsg = 'Unrecognized program scenario type.'
             raise OptimaException(errormsg)
             
 
         scenparsets[scen.name] = thisparset
-
+        
     return scenparsets
 
 
