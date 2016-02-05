@@ -501,8 +501,9 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     # Loop over requested keys
     for key in keys: # Loop over all keys
         if issubclass(type(pars[key]), Par): # Check that it is actually a parameter -- it could be the popkeys odict, for example
+            simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray)
             try: 
-                if not(onlyvisible) or pars[key].visible: # Optionally only show user-visible parameters
+                if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
@@ -606,6 +607,10 @@ class Timepar(Par):
         self.y = y # Value data, e.g. [0.3, 0.7]
         self.m = m # Multiplicative metaparameter, e.g. 1
     
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.y.keys()
+    
     
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
         """ Take parameters and turn them into model parameters """
@@ -618,7 +623,7 @@ class Timepar(Par):
         if smoothness is None: smoothness = int(defaultsmoothness/dt) # 
         
         # Set things up and do the interpolation
-        keys = self.y.keys()
+        keys = self.keys()
         npops = len(keys)
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
@@ -646,6 +651,10 @@ class Popsizepar(Par):
         self.m = m # Multiplicative metaparameter, e.g. 1
         self.start = start # Year for which population growth start is calibrated to
     
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        return self.p.keys()
+    
 
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
@@ -657,7 +666,7 @@ class Popsizepar(Par):
         tvec, dt = gettvecdt(tvec=tvec, dt=dt) # Method for getting these as best possible
         
         # Do interpolation
-        keys = self.p.keys()
+        keys = self.keys()
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
@@ -679,18 +688,26 @@ class Constant(Par):
         Par.__init__(self, **defaultargs)
         self.y = y # y-value data, e.g. [0.3, 0.7]
     
+    def keys(self):
+        ''' Return the valid keys for using with this parameter '''
+        if isinstance(self.y, (int, float)):
+            return None
+        else:
+            return self.y.keys()
+        return self.y.keys()
+    
     
     def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
         
-        if isinstance(self.y, (int, float)) or len(self.y)==1: # Just a simple constant
+        if self.keys() is None: # Just a simple constant
             yinterp = applylimits(par=self, y=self.y, limits=self.limits, dt=dt)
             if asarray: output = yinterp
             else: output = odict([('tot',yinterp)])
         else: # No, it has keys, return as an array
-            keys = self.y.keys()
+            keys = self.keys()
             npops = len(keys)
             if asarray: output = zeros(npops)
             else: output = odict()
