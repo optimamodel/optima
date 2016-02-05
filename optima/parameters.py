@@ -166,7 +166,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, doplot=True, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -229,7 +229,6 @@ def data2popsize(data=None, keys=None, blh=0, doplot=True, **defaultargs):
             plot(tvec, yvec[k])
             print(par.p[key])
             show()
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     return par
 
