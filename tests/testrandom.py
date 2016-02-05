@@ -15,6 +15,6 @@ P.makeparset()
 P.runsim(die=True)
 
 #plotpars(P)
-for p in range(12):
-    plotpeople(P, start=0, pops=p, skipempty=True, animate=False)
+#for p in range(12):
+#    plotpeople(P, start=0, pops=p, skipempty=True, animate=False)
 #pygui(P.results[-1])

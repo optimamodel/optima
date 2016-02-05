@@ -3,12 +3,18 @@ from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
 from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
 
+from pylab import figure, plot, pause, transpose
+
 def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
     """
     Runs Optima's epidemiological model.
     
     Version: 2016feb02
     """
+    
+    figure()
+    plot(transpose(simpars['popsize']))
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     if benchmark: starttime = tic()
     
@@ -790,9 +796,10 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=True):
             ## Calculate births, age transitions and mother-to-child-transmission
             ###############################################################################
             
-            # Reconcile population sizes            
-            newpeople = popsize[:,t+1]-people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-            people[susreg,:,t+1] += newpeople # Add new people
+            # Reconcile population sizes
+            for p in range(npops):
+                newpeople = popsize[p,t+1]-people[:,p,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+                people[susreg,p,t+1] += newpeople # Add new people
             
             # Handle circumcision
             circppl = dcp(numcirc[:,t])
