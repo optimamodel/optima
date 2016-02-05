@@ -2,16 +2,31 @@ define(['angular'], function (module) {
   'use strict';
 
   return angular.module('app.parameter-scenarios-modal', [])
-    .controller('ParameterScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, openProject) {
+    .controller('ParameterScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
     	$scope.row = scenario;
-    	$scope.parsets = parsets.data.parsets;
+    	$scope.parsets = parsets;
+        $scope.progsets = progsets;
+        $scope.ykeys = ykeys.data.keys;
     	$scope.openProject = openProject.populations;
     	
     	$scope.params = [];
     	$scope.par = {};
     	$scope.forData = [];
     	
-    	console.log(scenario, parsets.data.parsets);
+        $scope.parsForSelectedParset = function(row) {
+            var parset = _.filter($scope.parsets, {id: row.parset_id});
+            if (parset.length > 0) {
+                return _.filter(parset[0].pars[0], {visible: 1});
+            }
+            return [];
+        };
+
+        $scope.popsForParam = function(param, row) {
+            if ($scope.ykeys.hasOwnProperty(row.parset_id) && $scope.ykeys[row.parset_id].hasOwnProperty(param)) {
+                return $scope.ykeys[row.parset_id][param];
+            }
+            return [];
+        };
 
     	$scope.manageParameters = function(){
     		$scope.par.name = $scope.par.name['name'];

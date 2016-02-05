@@ -10,7 +10,7 @@
 
     <div class="c-parsce-modal__field-wrap">
       <label class="c-parsce-modal__label"> Select a parameter set to use as baseline </label>
-      <select class="c-parsce-modal__input txbox" type="text" ng-model="row.progset_id" ng-options="param.name for param in parsets"
+      <select class="c-parsce-modal__input txbox" type="text" ng-model="row.parset_id" ng-options="parset.id as parset.name for parset in parsets"
        required>
        <option value=""> -- Select --</option>
       </select>
@@ -24,7 +24,7 @@
           <!-- Parameters -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Parameters </label>
-            <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.progset_id" required ng-options="param.name for param in parsets">
+            <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.name" required ng-options="param.short as param.name for param in parsForSelectedParset(row)">
               <option value=""> -- Select --</option>
             </select>
           </div>
@@ -32,7 +32,7 @@
           <!-- For -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> For </label>
-            <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.for" required ng-options="param.name for param in parsets">
+            <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.for" required ng-options="pop.val as pop.label for pop in popsForParam(rs.name, row)">
               <option value=""> -- Select --</option>
             </select>
           </div>
@@ -40,25 +40,25 @@
           <!-- Start year of scenario  -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Start year of scenario </label>
-            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" model="rs.startyear" type="number" required min="1"/>
+            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" ng-model="rs.startyear" type="number" required min="1"/>
           </div>
 
           <!-- Final year of scenario  -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Final year of scenario </label>
-            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" model="rs.endyear" type="number" required min="1"/>
+            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" ng-model="rs.endyear" type="number" required min="1"/>
           </div>
 
           <!-- Value at start of scenario  -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Value at start of scenario </label>
-            <input class="c-parsce-modal__input txbox" type="number"  model="rs.startval" required min="1"/>
+            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.startval" required min="1"/>
           </div>
 
           <!-- Value at end of scenario  -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Value at end of scenario </label>
-            <input class="c-parsce-modal__input txbox" type="number"  model="rs.endval" required min="1"/>
+            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.endval" required min="1"/>
           </div>
 
         </div>

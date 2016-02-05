@@ -65,11 +65,11 @@ from server.webapp.resources.user import (User, UserDetail, CurrentUser,
 from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectCopy, ProjectSpreadsheet, ProjectEcon,
                                              ProjectData, ProjectFromData, Portfolio,
-                                             Defaults)
+                                             Defaults, Partnerships)
 from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Programs, PopSize
 from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
-                                                     ParsetsAutomaticCalibration)
+                                                     ParsetsAutomaticCalibration, ParsetYkeys)
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
 from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
 
@@ -90,6 +90,7 @@ api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
+api.add_resource(Partnerships, '/api/project/<uuid:project_id>/partnerships')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
@@ -116,6 +117,7 @@ api.add_resource(Populations, '/api/project/populations')
 api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
+api.add_resource(ParsetYkeys, '/api/project/<uuid:project_id>/parsets/ykeys')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')

@@ -204,12 +204,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $http.put('/api/project/'+openProject.id+'/scenarios', {
             'scenarios': $scope.scenarios
           }).success(function(response) {
+            // ToDo: add some kind of flash message
             $scope.scenarios = response.scenarios;
           });
         };
 
         // Helper function to open a population modal
-        var openScenarioModal = function(scenario) {
+        var openScenarioModal = function(scenario, parsets, progsets) {
           return $modal.open({
             templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
             controller: 'ParameterScenariosModalController',
@@ -218,7 +219,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
                 return scenario;
               },
               parsets: function() {
-                return $http.get('/api/project/' + openProject.id + '/parsets');
+                return parsets;
+              },
+              progsets: function() {
+                return progsets;
+              },
+              ykeys: function() {
+                return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
               },
               openProject: function(){
                 return openProject;
@@ -231,14 +238,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             if ($event) { $event.preventDefault(); }
 
             if(action === 'add'){
-              return openScenarioModal(row).result.then(
+              return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
                 function (newscenario) {
                     newscenario.active = true;
                     newscenario.pars = newscenario.pars || [];
                     $scope.scenarios.push(newscenario);
                 });
             }else if(action === 'edit'){
-              return openScenarioModal(row).result.then(
+              return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
                 function (updatescenario) {
                     console.log('Updated ', updatescenario);
                 });
