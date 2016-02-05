@@ -75,7 +75,7 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, maxiters=100, inds=0, verbose=2):
+def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, inds=0, verbose=2):
     ''' 
     Function to automatically fit parameters.
     

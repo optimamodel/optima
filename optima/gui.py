@@ -469,6 +469,7 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
     if pops is None: pops = Ellipsis # This is a slice
     elif isnumber(pops): pops = [pops]
     if pops is not Ellipsis: plottitle = str(array(project.parsets[0].popkeys)[array(pops)])
+    else: plottitle = 'All populations'
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
@@ -565,8 +566,10 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
         try: parslist = tmp.pars[0] # If it's a parset
         except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
-    
-    
+    try:
+        for i in range(len(parslist)): parslist[i] = parslist[i].pars[0]
+    except: pass
+            
     allplotdata = []
     for pars in parslist:
         count = 0
