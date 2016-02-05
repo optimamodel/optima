@@ -16,8 +16,8 @@ Version: 2016feb04
 
 ## Define tests to run here!!!
 tests = [
-'forcerefresh',
-'makeprojects',
+#'forcerefresh',
+#'makeprojects',
 #'makeportfolio',
 #'generateBOCs',
 'rungui',
