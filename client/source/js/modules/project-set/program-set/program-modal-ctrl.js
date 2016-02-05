@@ -95,20 +95,19 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // Initialize eligibility criteria
-      if($scope.state.program.criteria) {
-        $scope.state.eligibility.pregnantFalse = !$scope.state.program.criteria.pregnant;
-        if($scope.state.program.criteria.hivstatus && $scope.state.program.criteria.hivstatus.length > 0
-          && $scope.state.program.criteria.hivstatus !== 'allstates') {
-          _.each($scope.state.program.criteria.hivstatus, function(state) {
-            $scope.state.eligibility[state] = true;
-          });
-          $scope.state.eligibility.allstates = false;
-        }
-      } else {
+      if(!$scope.state.program.criteria) {
         $scope.state.program.criteria = {
           hivstatus: 'allstates',
           pregnant: false
         }
+      }
+      $scope.state.eligibility.pregnantFalse = !$scope.state.program.criteria.pregnant;
+      if($scope.state.program.criteria.hivstatus && $scope.state.program.criteria.hivstatus.length > 0
+        && $scope.state.program.criteria.hivstatus !== 'allstates') {
+        _.each($scope.state.program.criteria.hivstatus, function(state) {
+          $scope.state.eligibility[state] = true;
+        });
+        $scope.state.eligibility.allstates = false;
       }
     };
 
