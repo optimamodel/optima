@@ -565,8 +565,10 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
         try: parslist = tmp.pars[0] # If it's a parset
         except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
-    
-    
+    try:
+        for item in parslist: item = item.pars[0]
+    except: pass
+            
     allplotdata = []
     for pars in parslist:
         count = 0
