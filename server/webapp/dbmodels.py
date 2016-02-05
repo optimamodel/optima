@@ -660,32 +660,56 @@ class ProgsetsDb(db.Model):
                 program = self._program_to_dict(program)
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
-    def create_programs_from_list(self, programs):
-        from optima.utils import saves
-
+    def recreate_programs_from_list(self, programs, progset_id):
         prog_shorts = []
-        for program in programs:
-            kwargs = {}
-            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
-                kwargs[field] = program[field]
+        desired_shorts = set([program.get('short_name', program.get('short', '')) for program in programs])
+        print "desired_shorts", desired_shorts
+        existing_programs = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
 
-            # Kind of a hack but sometimes we receive short ans sometimes short_name
-            if 'short_name' in program and program['short_name'] is not None:
-                kwargs['short'] = program['short_name']
-
-            if kwargs['short'] in prog_shorts:
-                raise DuplicateProgram(kwargs['short'])
+        existing_shorts = {}
+        for program in existing_programs:
+            if program.short not in desired_shorts:
+                db.session.delete(program)
             else:
-                prog_shorts.append(kwargs['short'])
+                existing_shorts[program.short]=program
+        db.session.flush()
 
-            program_entry = ProgramsDb(
-                self.project_id,
-                self.id,
-                active=program.get('active', False),
-                **kwargs
-            )
-            program_entry.blob = saves(program_entry.hydrate())
-            db.session.add(program_entry)
+
+        for program in programs:
+            # Kind of a hack but sometimes we receive short ans sometimes short_name
+            short = program.get('short_name', program.get('short', ''))
+            if short in existing_shorts:
+                print "Updating program %s" % short
+                program_entry = existing_shorts[short]
+                for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
+                    program_entry.__dict__[field] = program[field]
+                program_entry.active = program.get('active', False)
+                db.session.add(program_entry)
+            else:
+                print "Creating new program %s" % short
+                kwargs = {}
+                for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
+                    kwargs[field] = program[field]
+
+                kwargs['short'] = short
+                if not 'pregnant' in kwargs['criteria']:
+                    kwargs['criteria']['pregnant'] = False
+
+                if kwargs['short'] in prog_shorts:
+                    raise DuplicateProgram(kwargs['short'])
+                else:
+                    prog_shorts.append(kwargs['short'])
+
+                program_entry = ProgramsDb(
+                    self.project_id,
+                    self.id,
+                    active=program.get('active', False),
+                    **kwargs
+                )
+
+                program_instance = program_entry.hydrate()
+                program_entry.restore(program_instance)
+                db.session.add(program_entry)
 
     def recursive_delete(self, synchronize_session=False):
         db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete(synchronize_session)

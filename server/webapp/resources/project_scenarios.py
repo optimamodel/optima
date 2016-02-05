@@ -83,6 +83,18 @@ class Scenarios(Resource):
     """
     method_decorators = [report_exception, login_required]
 
+    def _scenarios_for_fe(self, scenarios):
+        rv = []
+        for scenario in scenarios:
+            pars = []
+            if scenario.scenario_type == 'Parameter':
+                for par in scenario.blob['pars']:
+                    par['for'] = par['for'][0]
+                    pars.append(par)
+                scenario.blob = {'pars': pars}
+            rv.append(scenario)
+        return rv
+
     @swagger.operation()
     @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
     def get(self, project_id):
@@ -94,7 +106,7 @@ class Scenarios(Resource):
             raise ProjectDoesNotExist(id=project_id)
 
         reply = db.session.query(ScenariosDb).filter_by(project_id=project_entry.id).all()
-        return reply
+        return self._scenarios_for_fe(reply)
 
     @swagger.operation(
         parameters=scenario_parser.swagger_parameters(),
@@ -169,7 +181,7 @@ class Scenarios(Resource):
             self._upsert_scenario(project_id, **scenario)
         db.session.commit()
 
-        return ScenariosDb.query.filter_by(project_id=project_id).all()
+        return self._scenarios_for_fe(ScenariosDb.query.filter_by(project_id=project_id).all())
 
 
 # /api/project/<project-id>/scenarios/results
