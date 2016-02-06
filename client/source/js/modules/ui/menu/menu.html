@@ -54,7 +54,7 @@
     </div>
     <div ng-if="showAnalysisMenu" class="menu-dropdown" style="width: 150px;">
       <div ng-click="goIfProjectActive('analysis.scenarios')">Scenario analyses</div>
-      <div ng-click="goIfProjectActive('analysis.optimization')">Optimization analyses</div>
+      <div ui-sref="analysis.optimization">Optimization analyses</div>
     </div>
   </div>
   <div ng-click="showAccountHelpMenu = !showAccountHelpMenu" ng-mouseleave="showAccountHelpMenu = false">

@@ -1,5 +1,5 @@
 <div class="c-parsce-modal">
-  <div class="modal-header c-parsce-modal__header"> CREATE A PARAMETER SCENARIO</div>
+  <div class="modal-header c-parsce-modal__header"> CREATE A PROGRAM SCENARIO</div>
 
   <form name="manageScenarioForm" class="modal-body c-parsce-modal__body" novalidate ng-submit="manageScenario()">
 
@@ -14,6 +14,19 @@
        required>
        <option value=""> -- Select --</option>
       </select>
+    </div>
+
+    <div class="c-parsce-modal__field-wrap">
+      <label class="c-parsce-modal__label"> Select a program set to use as baseline </label>
+      <select class="c-parsce-modal__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets"
+       required>
+       <option value=""> -- Select --</option>
+      </select>
+    </div>
+
+    <div class="c-parsce-modal__field-wrap">
+      <label class="c-parsce-modal__label"> <input name="type" type="radio" ng-modal="row.type"> Set budget </label>&nbsp;&nbsp;&nbsp;
+      <label class="c-parsce-modal__label"> <input name="type"type="radio" ng-modal="row.type"> Set coverage levels </label>
     </div>
 
     <!--  -->
@@ -52,13 +65,13 @@
           <!-- Value at start of scenario  -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Value at start of scenario </label>
-            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.startval" required/>
+            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.startval" required min="0"/>
           </div>
 
           <!-- Value at end of scenario  -->
           <div class="c-parsce-modal__field-wrap">
             <label class="c-parsce-modal__label"> Value at end of scenario </label>
-            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.endval" required/>
+            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.endval" required min="0"/>
           </div>
 
         </div>
@@ -66,7 +79,7 @@
       </div>
     </div>
 
-    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id" ng-click="addParam(row)">
+    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)">
       Add parameter
     </button>
 
