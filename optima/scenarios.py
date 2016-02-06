@@ -37,7 +37,7 @@ class Parscen(Scen):
 
 
 class Progscen(Scen):
-    ''' An object for storing a single parameter scenario '''
+    ''' The program scenario base class -- not to be used directly, instead use Budgetscen or Coveragescen '''
     def __init__(self, progsetname=None, **defaultargs):
         Scen.__init__(self, **defaultargs)
         self.progsetname = progsetname # Programset
