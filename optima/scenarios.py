@@ -44,14 +44,14 @@ class Progscen(Scen):
 
 
 class Budgetscen(Progscen):
-    ''' An object for storing a single parameter scenario '''
+    ''' Stores a single budget scenario. Initialised with a budget. Coverage added during makescenarios()'''
     def __init__(self, budget=None, **defaultargs):
         Progscen.__init__(self, **defaultargs)
         self.budget = budget
 
 
 class Coveragescen(Progscen):
-    ''' An object for storing a single parameter scenario '''
+    ''' Stores a single coverage scenario. Initialised with a coverage. Budget added during makescenarios()'''
     def __init__(self, coverage=None, **defaultargs):
         Progscen.__init__(self, **defaultargs)
         self.coverage = coverage
@@ -81,10 +81,14 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     for scenno, scen in enumerate(scenparsets):
         scenparset = scenparsets[scen]
         project.scens[scenno].scenparset = scenparset # Copy into scenarios objects
+
+        # Items specific to program (budget or coverage) scenarios
         budget = scenlist[scenno].budget if isinstance(scenlist[scenno], Progscen) else None
         coverage = scenlist[scenno].coverage if isinstance(scenlist[scenno], Progscen) else None
         budgetyears = scenlist[scenno].t if isinstance(scenlist[scenno], Progscen) else None
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
+
+        # Run model and add results
         result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=1)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
