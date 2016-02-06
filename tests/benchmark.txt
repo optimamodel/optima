@@ -27,3 +27,4 @@
 0.625 2016-Feb-06_17:25:13 a67619f optional-error-checking
 0.576 2016-Feb-06_17:32:48 9e602eb optional-error-checking
 0.378 2016-Feb-06_17:38:47 17fa1f9 optional-error-checking
+0.332 2016-Feb-06_18:56:10 4efbd59 speeding-up-model
