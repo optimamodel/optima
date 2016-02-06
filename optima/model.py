@@ -43,17 +43,28 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     
     # Initialize arrays
     raw               = odict()    # Sim output structure
+    raw_sexinci    = zeros((npops, npts)) # Incidence through sex
+    raw_injinci    = zeros((npops, npts)) # Incidence through injecting
+    raw_inci       = zeros((npops, npts)) # Total incidence
+    raw_births     = zeros((npops, npts)) # Number of births to each population
+    raw_mtct       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
+    raw_diag       = zeros((npops, npts)) # Number diagnosed per timestep
+    raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
+    raw_death      = zeros((npops, npts)) # Number of deaths per timestep
+    raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
     raw['tvec']       = tvec
     raw['popkeys']    = popkeys
-    raw['sexinci']    = zeros((npops, npts)) # Incidence through sex
-    raw['injinci']    = zeros((npops, npts)) # Incidence through injecting
-    raw['inci']       = zeros((npops, npts)) # Total incidence
-    raw['births']     = zeros((npops, npts)) # Number of births to each population
-    raw['mtct']       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
-    raw['diag']       = zeros((npops, npts)) # Number diagnosed per timestep
-    raw['newtreat']   = zeros((npops, npts)) # Number initiating ART1 per timestep
-    raw['death']      = zeros((npops, npts)) # Number of deaths per timestep
-    raw['otherdeath'] = zeros((npops, npts)) # Number of other deaths per timestep
+    raw['sexinci']    = raw_sexinci
+    raw['injinci']    = raw_injinci
+    raw['inci']       = raw_inci
+    raw['births']     = raw_births
+    raw['mtct']       = raw_mtct
+    raw['diag']       = raw_diag
+    raw['newtreat']   = raw_newtreat
+    raw['death']      = raw_death
+    raw['otherdeath'] = raw_otherdeath
+
+
     
     # Biological and failure parameters -- death etc
     prog       = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
@@ -442,7 +453,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw['inci'][:,t] = (newinfections.sum(axis=0) + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw_inci[:,t] = (newinfections.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         if propdx[t]:
@@ -469,9 +480,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
-            raw['diag'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            raw['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
-            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+            raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
+            raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
+            raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
         dU[0] = dU[0] + newinfections.sum(axis=0) # Now add newly infected people
         
 
@@ -509,8 +520,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) # some go immediately into care after testing
                 outflows = progout + hivdeaths + otherdeaths + newlinkcaredx[cd4] # NB, only newlinkcaredx flows out from here!
                 dD.append(inflows - outflows)
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
             
 
             ## In care
@@ -543,9 +554,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
                 dC.append(inflows - outflows - newtreat[cd4])
                 dD[cd4] += leavecareCD[cd4]
-                raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
             
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
@@ -576,8 +587,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 inflows  = progin  + recovin  + newtreat[cd4]*(1.-treatvs[t]) # NB, treatvs will take care of the last 90... 
                 outflows = progout + recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysupp[cd4]
                 dUSVL.append(inflows - outflows)
-                raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t] += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
             
 
             ## Suppressed Viral Load
@@ -601,8 +612,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
                 dSVL.append(inflows - outflows)
                 dUSVL[cd4] += failing[cd4]
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
             ## Lost to follow-up (and not in care)
@@ -620,8 +631,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 inflows  = progin + stopSVLlost[cd4] + stopUSlost[cd4]
                 outflows = progout + hivdeaths + otherdeaths + newlinkcarelost[cd4] # These people move back into care
                 dL.append(inflows - outflows) 
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
             ## Off ART but in care
@@ -647,8 +658,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 dL[cd4] += leavecareOL[cd4] 
                 dUSVL[cd4] += restarters[cd4]*(1.-treatvs[t])
                 dSVL[cd4]  += restarters[cd4]*treatvs[t]
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
 
@@ -684,8 +695,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
                 newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
                 dD.append(inflows - outflows - newtreat[cd4])
-                raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
             
             ## 1st-line treatment
             for cd4 in range(ncd4):
@@ -705,7 +716,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     if die: raise OptimaException(errormsg)
                     else: printv(errormsg, 1, verbose=verbose)
                     
-                raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
+                raw_death[:,t] += hivdeaths/dt # Save annual HIV deaths 
 
 
 
@@ -758,7 +769,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 #                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
 #                        popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
 #                        
-#                        raw['mtct'][p2, t] += popmtct[t]                       
+#                        raw_mtct[p2, t] += popmtct[t]                       
 #                        
 #                        people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
 #                        people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
