@@ -36,10 +36,10 @@
               <td>{{data.saturationpercent_lower * 100}} - {{data.saturationpercent_upper * 100}}</td>
               <td>{{
                 ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
-                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_lower/100)) : '') + '-' +
+                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_lower)) : '') + '-' +
 
                 ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_upper !== undefined) ?
-                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_upper/100)) : '')}}
+                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_upper)) : '')}}
               </td>
               <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
               <td><i class="fa fa-trash-o" ng-click="removeFromCPData(data)"></i></td>

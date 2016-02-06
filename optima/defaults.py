@@ -284,8 +284,12 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
         
     allprograms = [Condoms, SBCC, STI, VMMC, FSW_programs, MSM_programs, PWID_programs, OST, NSP, Cash_transfers, PrEP, PEP, HTC, ART, PMTCT, OVC, Other_care, MGMT, HR, ENV, SP, ME, INFR, Other]
 
-    if filterprograms:
-        finalprograms = [prog for prog in allprograms if prog.short in filterprograms]
+    if filterprograms: # WARNING, could be made simpler probably :)
+        finalprograms = []
+        for name in filterprograms:
+            for prog in allprograms:
+                if prog.short==name:
+                    finalprograms.append(prog)
     
     return finalprograms if filterprograms else allprograms
     
@@ -333,27 +337,36 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
 
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
+        
+        # Fix up costs
+        R.programs['ART'].costcovfn.addccopar({'saturation': (0.9,0.9),
+                         't': 2016.0,
+                         'unitcost': (1000,2000)}, overwrite=True)
+                         
+        R.programs['PMTCT'].costcovfn.addccopar({'saturation': (0.9,0.9),
+                         't': 2016.0,
+                         'unitcost': (5000,8000)}, overwrite=True)
 
         # Add different modalities of testing
-        HTC_workplace = Program(short='HTC workplace programs',
+        HTC_workplace = Program(short='HTC workplace',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in ['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients']],
                       targetpops=['M 15-49','F 15-49', 'M 50+', 'F 50+', 'Clients'],
                       category='Care and treatment',
                       name='HIV testing and counseling - workplace programs',
                       criteria = {'hivstatus': 'allstates', 'pregnant': False})
         
-        HTC_mobile = Program(short='HTC mobile clinics',
+        HTC_mobile = Program(short='HTC mobile',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
                       targetpops=adultlist,
                       category='Care and treatment',
                       name='HIV testing and counseling - mobile clinics',
                       criteria = {'hivstatus': 'allstates', 'pregnant': False})
         
-        HTC_medical = Program(short='HTC medical facilities',
+        HTC_medical = Program(short='HTC medical',
                       targetpars=[{'param': 'hivtest', 'pop': pop} for pop in adultlist],
                       targetpops=adultlist,
                       category='Care and treatment',
@@ -392,45 +405,45 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     
         R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 
                                               't': 2016.0,
-                                              'HTC mobile clinics': (0.85,0.9),
-                                              'HTC medical facilities': (0.65,0.75),
+                                              'HTC mobile': (0.85,0.9),
+                                              'HTC medical': (0.65,0.75),
                                               'FSW programs':(0.95,0.99)})
                                                 
         R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1),
                                               't': 2016.0,
-                                              'HTC mobile clinics': (0.85,0.9),
-                                              'HTC medical facilities': (0.65,0.75),
+                                              'HTC mobile': (0.85,0.9),
+                                              'HTC medical': (0.65,0.75),
                                               'MSM programs':(0.95,0.99)})
                                               
         R.covout['hivtest']['Clients'].addccopar({'intercept': (0.05,0.1),
                                                   't': 2016.0,
-                                                  'HTC workplace programs': (0.85,0.9),
-                                                  'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.65,0.75)})
+                                                  'HTC workplace': (0.85,0.9),
+                                                  'HTC mobile': (0.85,0.9),
+                                                  'HTC medical': (0.65,0.75)})
                                                   
         R.covout['hivtest']['M 15-49'].addccopar({'intercept': (0.35,0.4),
                                                   't': 2016.0,
-                                                  'HTC workplace programs': (0.85,0.9),
-                                                  'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.85,0.95)})
+                                                  'HTC workplace': (0.85,0.9),
+                                                  'HTC mobile': (0.85,0.9),
+                                                  'HTC medical': (0.85,0.95)})
 
         R.covout['hivtest']['F 15-49'].addccopar({'intercept': (0.35,0.4),
                                                   't': 2016.0, 
-                                                  'HTC workplace programs': (0.85,0.9),
-                                                  'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.85,0.95)})
+                                                  'HTC workplace': (0.85,0.9),
+                                                  'HTC mobile': (0.85,0.9),
+                                                  'HTC medical': (0.85,0.95)})
 
         R.covout['hivtest']['M 50+'].addccopar({'intercept': (0.15,0.2), 
                                                 't': 2016.0,
-                                                  'HTC workplace programs': (0.85,0.9),
-                                                  'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.65,0.75)})
+                                                  'HTC workplace': (0.85,0.9),
+                                                  'HTC mobile': (0.85,0.9),
+                                                  'HTC medical': (0.65,0.75)})
 
         R.covout['hivtest']['F 50+'].addccopar({'intercept': (0.15,0.2),
                                                 't': 2016.0,
-                                                  'HTC workplace programs': (0.85,0.9),
-                                                  'HTC mobile clinics': (0.85,0.9),
-                                                  'HTC medical facilities': (0.65,0.75)})
+                                                  'HTC workplace': (0.85,0.9),
+                                                  'HTC mobile': (0.85,0.9),
+                                                  'HTC medical': (0.65,0.75)})
 
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
@@ -443,6 +456,10 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
 
 
         P.addprogset(name='default', progset=R)
+        
+        
+        # Do a super-manual calibration
+        P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
 
     
     
@@ -455,7 +472,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
     
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST', 'Other'])
         
         # Modify target pars and pops
         R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})

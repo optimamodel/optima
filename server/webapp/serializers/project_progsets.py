@@ -13,7 +13,7 @@ costcov_parser = RequestParser()
 costcov_parser.add_arguments({
     'year': {'required': True, 'location': 'json'},
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'cov'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
 
 

@@ -19,8 +19,8 @@ from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_betw
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta'] # Default epidemiological plots
-defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
+defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta', 'popsize-sta'] # Default epidemiological plots
+defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
 
 
 def getplotselections(results):
@@ -484,7 +484,10 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
+            progdata = zeros(len(toplot[plt]))
+            for i,x in enumerate(toplot[plt][:]):
+                if hasattr(x, '__len__'): progdata[i] = x[y]
+                else:                     progdata[i] = x
             if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):

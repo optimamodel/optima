@@ -41,22 +41,28 @@ define([
                 controller: 'AnalysisScenariosController',
                 resolve: {
                   scenarioParametersResponse: function($http, info) {
-                    //return $http.get('/api/analysis/scenarios/parameters');
+                    //return $http.get('/api/analysis/scenarios/list');
                   },
                   scenariosResponse: function($http, info) {
-                    //return $http.get('/api/analysis/scenarios/list');
+                    return $http.get('/api/project/'+info.data.id+'/scenarios');
+                  },
+                  progsetsResponse: function($http, info) {
+                    return $http.get('/api/project/'+info.data.id+'/progsets')
+                  },
+                  parsetResponse: function($http, info) {
+                    return $http.get('/api/project/'+info.data.id+'/parsets')
                   }
                 }
             })
             .state('analysis.optimization', {
                 url: '/optimization',
                 templateUrl: 'js/modules/analysis/optimization.html' ,
-                controller: 'AnalysisOptimizationController',
-                resolve: {
-                  optimizations: function($http) {
-                    return $http.get('/api/analysis/optimization/list');
-                  }
-                }
+                // controller: 'AnalysisOptimizationController',
+               // resolve: {
+                  //optimizations: function($http) {
+                  //  return $http.get('/api/analysis/optimization/list');
+                  //}
+               // }
             });
     });
 

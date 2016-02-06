@@ -9,23 +9,23 @@ define([
   '../validations/more-than-directive',
   '../validations/less-than-directive',
   '../validations/year-directive',
-  '../create-program-scenario-modal/create-program-scenario-modal-ctrl',
-  '../parameter-scenarios-modal/parameter-scenarios-modal'
+  '../parameter-scenarios-modal/parameter-scenarios-modal',
+  '../program-scenarios-modal/program-scenarios-modal'
 ], function (angular) {
   'use strict';
 
   return angular.module('app.project-set', [
-      'app.export-all-charts',
-      'app.export-all-data',
-      'app.resources.model',
-      'app.ui.type-selector',
-      'ui.router',
-      'app.validations.more-than',
-      'app.validations.less-than',
-      'app.validations.year',
-      'app.program-scenario-modal',
-      'app.parameter-scenarios-modal'
-    ])
+    'app.export-all-charts',
+    'app.export-all-data',
+    'app.resources.model',
+    'app.ui.type-selector',
+    'ui.router',
+    'app.validations.more-than',
+    'app.validations.less-than',
+    'app.validations.year',
+    'app.parameter-scenarios-modal',
+    'app.program-scenarios-modal'
+  ])
     .config(function ($stateProvider) {
       $stateProvider
         .state('project-set', {

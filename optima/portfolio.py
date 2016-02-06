@@ -185,7 +185,7 @@ class Portfolio(object):
                 printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
                 
-    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, verbose=2):
+    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2):
         ''' Loop through stored projects and plot budget-outcome curves '''
         printv('Plotting BOCs...', 2, verbose)
         
@@ -200,11 +200,8 @@ class Portfolio(object):
             raise OptimaException(errormsg)
         
         # Loop for BOCs and then BOC derivatives.
-        for inderiv in [False,True]:
-            c = 0
-            for p in self.projects.values():
-                p.plotBOC(objectives=objectives, deriv=inderiv, initbudget=initbudgets[c], optbudget=optbudgets[c])
-                c += 1
+        for c,p in enumerate(self.projects.values()):
+            p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c])
             
             
     def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
@@ -441,18 +438,18 @@ class GAOptim(object):
             initobjectives = dcp(self.objectives)
             initobjectives['budget'] = initbudgets[pind] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['init'] = p.minoutcomes(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[p.uid]['init'] = p.optimize(which='outcomes', name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
             preibudget = initobjectives['budget']
             postibudget = self.resultpairs[p.uid]['init'].budget[-1]
-            assert abs(preibudget-sum(postibudget[:]))<tol
+#            assert abs(preibudget-sum(postibudget[:]))<tol
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pind] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['opt'] = p.minoutcomes(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[p.uid]['opt'] = p.optimize(which='outcomes', name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
             postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
-            assert abs(preobudget-sum(postobudget[:]))<tol
+#            assert abs(preobudget-sum(postobudget[:]))<tol
 
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
@@ -489,8 +486,8 @@ class GAOptim(object):
             gaoptalloc = self.resultpairs[x]['opt'].budget[-1]
             initoutcome = self.resultpairs[x]['init'].improvement[-1][0]
             gaoptoutcome = self.resultpairs[x]['opt'].improvement[-1][-1]
-            suminitalloc = sum([k[ind] for k in initalloc.values()])
-            sumgaoptalloc = sum([k[ind] for k in gaoptalloc.values()])
+            suminitalloc = sum(initalloc.values())
+            sumgaoptalloc = sum(gaoptalloc.values())
             
             overallbudgetinit += suminitalloc
             overallbudgetopt += sumgaoptalloc
@@ -529,7 +526,6 @@ class GAOptim(object):
                 
                  
         ## Actually create the output
-        keylabels = {'death':'Total deaths', 'inci':'Total new infections'}
         output = ''
         output += 'Geospatial analysis results: minimize oucomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
@@ -538,7 +534,7 @@ class GAOptim(object):
         output += '\n\tPortfolio budget:\t%0.0f\t%0.0f' % (overallbudgetinit, overallbudgetopt)
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
         for key in self.objectives['keys']:
-            output += '\n\t' + keylabels[key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
+            output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
         for prj in range(nprojects):
             output += '\n'
             output += '\n'
@@ -548,20 +544,188 @@ class GAOptim(object):
             output += '\n\tBudget:\t%0.0f\t%0.0f' % (sum(projbudgets[prj]['init'][:]), sum(projbudgets[prj]['opt'][:]))
             output += '\n\tOutcome:\t%0.0f\t%0.0f' % (projoutcomes[prj]['init'], projoutcomes[prj]['opt'])
             for key in self.objectives['keys']:
-                output += '\n\t' + key.title() + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
+                output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (projoutcomesplit[prj]['init']['num'+key], projoutcomesplit[prj]['opt']['num'+key])
             output += '\n'
             output += '\n\tAllocation:'
             for prg in projbudgets[prj]['init'].keys():
-                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projbudgets[prj]['init'][prg][ind], projbudgets[prj]['opt'][prg][ind])
+                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projbudgets[prj]['init'][prg], projbudgets[prj]['opt'][prg])
             output += '\n'
             output += '\n\tCoverage (%i):' % (self.objectives['start'])
             for prg in projbudgets[prj]['init'].keys():
-                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, projcov[prj]['init'][prg][ind], projcov[prj]['opt'][prg][ind])
+                initval = projcov[prj]['init'][prg]
+                optval = projcov[prj]['opt'][prg]
+                if initval is None: initval = 0
+                if optval is None: optval = 0
+                output += '\n\t%s\t%0.0f\t%0.0f' % (prg, initval, optval)
         
         print(output)
         
         return output
         
+    def getinitbudgets(self):
+        bl = []
+        for proj in self.resultpairs:
+            bl.append(sum(self.resultpairs[proj]['init'].budget[0].values()))
+        return bl
+        
+    def getoptbudgets(self):
+        bl = []
+        for proj in self.resultpairs:
+            bl.append(sum(self.resultpairs[proj]['opt'].budget[-1].values()))
+        return bl
+        
+    
+#%% 'EASY' STACK-PLOTTING CODE PULLED FROM v1.5 FOR CLIFF. DOES NOT WORK.   :)
+    
+
+#    def sortfixed(somelist):
+#        # Prog array help: [VMMC, FSW, MSM, HTC, ART, PMTCT, OVC, Other Care, MGMT, HR, ENV, SP, M&E, Other, SBCC, CT]
+#        sortingarray = [2, 4, 5, 7, 8, 6, 1, 9, 10, 11, 12, 13, 14, 15, 3, 0]
+#        return [y for x,y in sorted(zip(sortingarray,somelist), key = lambda x:x[0])]
+#    #    return [y for x,y in sorted(enumerate(somelist), key = lambda x: -len(progs[x[0]]['effects']))]
+        
+    
+    def superplot(self):
+        
+        from matplotlib.pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
+        from gridcolormap import gridcolormap
+        from matplotlib import gridspec
+        import numpy
+        
+        progs = p1.regionlist[0].metadata['programs']    
+        
+        figure(figsize=(22,15))
+        
+        nprograms = len(p1.gpalist[-1][0].region.data['origalloc'])
+#        colors = sortfixed(gridcolormap(nprograms))
+#        colors[0] = numpy.array([ 0.20833333,  0.20833333,  0.54166667])  #CT
+#        colors[1] = numpy.array([ 0.45833333,  0.875     ,  0.79166667])  #OVC
+#        colors[2] = numpy.array([0.125, 0.125, 0.125])  #VMMC
+#        colors[3] = numpy.array([ 0.79166667,  0.45833333,  0.875     ])+numpy.array([ 0.125,  0.125,  0.125     ])  #SBCC
+#        colors[4] = numpy.array([ 0.54166667,  0.20833333,  0.20833333])  #FSW
+#        colors[5] = numpy.array([ 0.875     ,  0.45833333,  0.125     ])  #MSM
+#        colors[6] = numpy.array([ 0.125     ,  0.875     ,  0.45833333])+numpy.array([ 0.0,  0.125,  0.0     ])  #PMTCT
+#        colors[7] = numpy.array([ 0.54166667,  0.875     ,  0.125     ])   #HTC
+#        colors[8] = numpy.array([ 0.20833333,  0.54166667,  0.20833333])  #ART
+#        for i in xrange(7): colors[-(i+1)] = numpy.array([0.25+0.5*i/6.0, 0.25+0.5*i/6.0, 0.25+0.5*i/6.0])
+    
+        
+        
+        gpl = sorted(p1.gpalist[-1], key=lambda sbo: sbo.name)
+        ind = [val for pair in ([x, 0.25+x] for x in xrange(len(gpl))) for val in pair]
+        width = [0.25, 0.55]*(len(gpl))       # the width of the bars: can also be len(x) sequence
+        
+        bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-1] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
+        for p in xrange(2,nprograms+1):
+            bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-p] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val*1e-6 for pair in zip([sum(sortfixed(sb.simlist[1].alloc)[1-p:]) for sb in gpl], [sum(sortfixed(sb.simlist[2].alloc)[1-p:]) for sb in gpl]) for val in pair])
+        
+        xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
+        xlim([0,32])
+        tick_params(axis='both', which='major', labelsize=15)
+        tick_params(axis='both', which='minor', labelsize=15)
+        ylabel('Budget Allocation (US$m)', fontsize=15)
+        
+    
+    
+        fig = figure(figsize=(22,15))    
+        
+        gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
+        
+        for x in xrange(len(gpl)):
+            sb = gpl[x]
+            r = sb.region
+    
+            ind = xrange(len(sb.simlist[1:]))
+            width = 0.8       # the width of the bars: can also be len(x) sequence
+            
+            if x < 10: subplot(gs[x])
+            else: subplot(gs[x+1])
+            bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+            for p in xrange(2,nprograms+1):
+                bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed([x*1e-6 for x in sim.alloc])[1-p:]) for sim in sb.simlist[1:]])
+            #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+            xlabel(r.getregionname(), fontsize=18)
+            if x in [0,10,21]: ylabel('Budget Allocation (US$m)', fontsize=18)
+            tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+        
+    #        ax = gca()
+    #        ax.ticklabel_format(style='sci', axis='y')
+    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
+            
+            tick_params(axis='both', which='major', labelsize=14)
+            tick_params(axis='both', which='minor', labelsize=14)
+        
+        fig.tight_layout()
+        
+        
+        
+    #    bar(ind, [val for pair in zip([sb.simlist[1].alloc[-1] for sb in gpl], [sb.simlist[2].alloc[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
+    #    for p in xrange(2,nprograms+1):
+    #        bar(ind, [val for pair in zip([sb.simlist[1].alloc[-p] for sb in gpl], [sb.simlist[2].alloc[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val for pair in zip([sum(sb.simlist[1].alloc[1-p:]) for sb in gpl], [sum(sb.simlist[2].alloc[1-p:]) for sb in gpl]) for val in pair])
+    #    
+    #    xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
+    #    xlim([0,32])
+    #    tick_params(axis='both', which='major', labelsize=15)
+    #    tick_params(axis='both', which='minor', labelsize=15)
+    #    ylabel('Budget Allocation ($)', fontsize=15)
+    #    
+    #
+    #
+    #    fig = figure(figsize=(22,15))    
+    #    
+    #    gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
+    #    
+    #    for x in xrange(len(gpl)):
+    #        sb = gpl[x]
+    #        r = sb.region
+    #
+    #        ind = xrange(len(sb.simlist[1:]))
+    #        width = 0.8       # the width of the bars: can also be len(x) sequence
+    #        
+    #        if x < 10: subplot(gs[x])
+    #        else: subplot(gs[x+1])
+    #        bar(ind, [sim.alloc[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+    #        for p in xrange(2,nprograms+1):
+    #            bar(ind, [sim.alloc[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sim.alloc[1-p:]) for sim in sb.simlist[1:]])
+    #        #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+    #        xlabel(r.getregionname(), fontsize=18)
+    #        if x in [0,10,21]: ylabel('Budget Allocation ($)', fontsize=18)
+    #        tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+    #    
+    #        ax = gca()
+    #        ax.ticklabel_format(style='sci', axis='y')
+    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
+    #        
+    #        tick_params(axis='both', which='major', labelsize=13)
+    #        tick_params(axis='both', which='minor', labelsize=13)
+    #    
+    #    fig.tight_layout()    
+        
+        
+        
+    #    for x in xrange(len(p1.gpalist[-1])):
+        for x in xrange(1):
+            sb = p1.gpalist[-1][x]
+            r = sb.region
+            
+            nprograms = len(r.data['origalloc'])
+    #        colors = sortfixed(gridcolormap(nprograms))
+            
+            figure(figsize=(len(sb.simlist[1:])*2+4,nprograms/2))
+            gs = gridspec.GridSpec(1, 2, width_ratios=[len(sb.simlist[1:]), 2]) 
+            ind = xrange(len(sb.simlist[1:]))
+            width = 0.8       # the width of the bars: can also be len(x) sequence
+            
+            subplot(gs[0])
+            bar(ind, [sortfixed(sim.alloc)[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+            for p in xrange(2,nprograms+1):
+                bar(ind, [sortfixed(sim.alloc)[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed(sim.alloc)[1-p:]) for sim in sb.simlist[1:]])
+            xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+            ylabel('Budget Allocation ($)')
+            
+            subplot(gs[1])
+            for prog in xrange(nprograms): plot(0, 0, linewidth=3, color=colors[prog])
+            legend(sortfixed(r.data['meta']['progs']['short']))
+            
+        show()
                 
-            
-            
