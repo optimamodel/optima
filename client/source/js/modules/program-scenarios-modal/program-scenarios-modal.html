@@ -6,47 +6,43 @@
     <!-- Name -->
     <div class="o-form__field-wrap">
       <label class="o-form__label"> Name </label>
-      <input class="o-form__input txbox" type="text"/>
+      <input class="o-form__input txbox" type="text" ng-model="row.name" required/>
     </div>
 
     <!--  Select a parameter set to use as baseline  -->
     <div class="c-prosce-modal__selects u-layout-horizontal">
       <div class="o-form__field-wrap c-prosce-modal__input-with-space">
         <label class="o-form__label"> Select a parameter set to use as baseline </label>
-        <select class="o-form__input txbox" type="text">
-          <option value=""> -- Select a parameter --</option>
-          <option value="par1"> Parameter 1</option>
-          <option value="par2"> Parameter 2</option>
-          <option value="par3"> Parameter 3</option>
+        <select class="o-form__input txbox" type="text" ng-model="row.parset_id" ng-options="parset.id as parset.name for parset in parsets"
+       required>
+         <option value=""> -- Select --</option>
         </select>
       </div>
 
       <!--  Select a program set to use as baseline  -->
       <div class="o-form__field-wrap c-prosce-modal__input-with-space">
         <label class="o-form__label"> Select a program set to use as baseline </label>
-        <select class="o-form__input txbox" type="text">
-          <option value=""> -- Select a parameter --</option>
-          <option value="par1"> Parameter 1</option>
-          <option value="par2"> Parameter 2</option>
-          <option value="par3"> Parameter 3</option>
+        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets"
+       required>
+         <option value=""> -- Select --</option>
         </select>
       </div>
     </div>
 
     <div class="c-prosce-modal__checkboxes u-layout-horizontal">
       <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
-        <input type="checkbox" name="checkbox" id="set-budget-checkbox" value="value" class="c-prosce-modal__checkbox-input">
+        <input type="radio" name="budget" value="budget" ng-modal="row.budget" class="c-prosce-modal__checkbox-input">
         <label for="set-budget-checkbox" class="c-prosce-modal__checkbox-label">Set budget</label>
       </div>
 
       <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
-        <input type="checkbox" name="checkbox" id="set-coverage-checkbox" value="value" class="c-prosce-modal__checkbox-input">
+        <input type="radio" name="budget" value="coverage" ng-modal="row.budget" class="c-prosce-modal__checkbox-input">
         <label for="set-coverage-checkbox" class="c-prosce-modal__checkbox-label">Set coverage goals</label>
       </div>
 
     </div>
 
-    <div class="o-card">
+    <div class="o-card _program-scenario-wrap" ng-repeat="rs in row.pars track by $index">
       <div class="c-input-table">
 
         <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
@@ -54,7 +50,6 @@
             Year
           </div>
           <input type="text" class="c-input-table__input txbox"/>
-          <button class="btn"> Add year</button>
         </div>
 
         <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
@@ -70,9 +65,11 @@
           </div>
           <input type="text" class="c-input-table__input txbox"/>
         </div>
-
+        <div class="o-card__delete" ng-click="removeParam(row, $index)">x</div>
       </div>
     </div>
+    
+    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)"> Add year</button>
 
     <div class="o-form__buttons u-layout-horizontal">
       <button class="btn __l __white o-form__button o-form__button--dismiss" ng-click="vm.addYear(effect)">

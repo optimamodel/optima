@@ -10,15 +10,29 @@
   }
 
   &__checkboxes {
-    margin: 15px 10px
+    margin: 0px 0px 15px 0px
   }
 
   .o-form__field-wrap {
-    margin: 15px 10px;
+    margin: 0px 0px 15px 0px
+  }
+
+  .c-parsce-modal__button{
+    vertical-align: top;
+  }
+
+  .u-layout-horizontal{
+    .o-form__field-wrap + .o-form__field-wrap{
+      margin-left: 15px;
+    }
   }
 
 }
-
+._program-scenario-wrap{
+  width: 30%;
+  display: inline-block;
+  margin-right: 10px;
+}
 .c-input-table {
   &__field {
     border: 1px solid #ECECEC;
