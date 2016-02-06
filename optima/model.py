@@ -1,16 +1,15 @@
 ## Imports
 from math import pow as mpow
 from numpy import zeros, exp, maximum, minimum, hstack, inf
-from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
+from optima import OptimaException, printv, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False):
+def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.1 (2016feb04)
+    Version: 1.2 (2016feb04)
     """
     
-    if benchmark: starttime = tic()
     
     ###############################################################################
     ## Setup
@@ -105,7 +104,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         allcare = settings.allcare # All people in care
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
-    if len(sus)!=2:
+    if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
         raise OptimaException(errormsg)
     
@@ -210,7 +209,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
-        if treatment > popinfected: # More people on treatment than ever infected, uh oh!
+        if debug and treatment>popinfected: # More people on treatment than ever infected, uh oh!
             errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
             if die: raise OptimaException(errormsg)
             else:
@@ -246,7 +245,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             initpeople[dx, p]   = diagnosed
             initpeople[tx, p]   = treatment
     
-        if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
+        if debug and not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
             if die: raise OptimaException(errormsg)
             else:
@@ -290,7 +289,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             
             # Error checking
             for key in ['acts', 'cond']:
-                if not(all(this[key]>=0)):
+                if debug and not(all(this[key]>=0)):
                     errormsg = 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
                     if die: raise OptimaException(errormsg)
                     else: 
@@ -321,7 +320,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): 
+            if debug and not(allpeople[pop,t]>0): 
                 errormsg = 'No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t])
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 1, verbose)
@@ -339,7 +338,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 efftx   = sum(dxfactor * cd4trans * txfactor[t] * people[tx,pop,t]) # ...and treated
                 effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t] # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
 
-            if not(effhivprev[pop]>=0): 
+            if debug and not(effhivprev[pop]>=0): 
                 errormsg = 'HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop])
                 if die: raise OptimaException(errormsg)
                 else:
@@ -379,7 +378,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
                 forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
                 
-            if not all(forceinfvec[:,pop1]>=0):
+            if debug and not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -396,7 +395,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
                 forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
             
-            if not all(forceinfvec[:,pop1]>=0):
+            if debug and not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
@@ -701,7 +700,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 hivdeaths   = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths = dt * people[tx[cd4],:,t] * background
                 dT.append(recovin - recovout + newtreat[cd4] - hivdeaths - otherdeaths)
-                if not((people[tx[cd4],:,t]+dT[cd4] >= 0).all()):
+                if debug and not((people[tx[cd4],:,t]+dT[cd4] >= 0).all()):
                     errormsg = 'WARNING, Non-positive people found for treatment!\npeople[%s, :, %i] = people[%s, :, %s] = %s' % (tx[cd4], t, settings.statelabels[tx[cd4]], tvec[t], people[tx[cd4],:,t]+dT[cd4])
                     if die: raise OptimaException(errormsg)
                     else: printv(errormsg, 1, verbose=verbose)
@@ -809,12 +808,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             # Check population sizes are correct
             actualpeople = people[:,:,t+1].sum()
             wantedpeople = popsize[:,t+1].sum()
-            if abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
+            if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
             
             # Check no negative people
-            if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
+            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
@@ -828,7 +827,6 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     raw['people'] = people
     
     printv('  ...done running model.', 2, verbose)
-    if benchmark: toc(starttime)
     return raw # Return raw results
 
 
