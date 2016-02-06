@@ -1,7 +1,7 @@
 <div class="c-prosce-modal">
   <div class="modal-header c-prosce-modal__header"> CREATE A PROGRAM SCENARIO</div>
 
-  <form name="addProgramScenarioForm" class="modal-body c-prosce-modal__body">
+  <form name="manageScenarioForm" class="modal-body c-parsce-modal__body" novalidate ng-submit="manageScenario()">
 
     <!-- Name -->
     <div class="o-form__field-wrap">
@@ -22,21 +22,20 @@
       <!--  Select a program set to use as baseline  -->
       <div class="o-form__field-wrap c-prosce-modal__input-with-space">
         <label class="o-form__label"> Select a program set to use as baseline </label>
-        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets[0].programs"
-       required>
+        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets[0].programs" required>
          <option value=""> -- Select --</option>
         </select>
       </div>
     </div>
-{{row.t}}
+
     <div class="c-prosce-modal__checkboxes u-layout-horizontal">
       <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
-        <input type="radio" name="t" value="budget" ng-modal="row.t" class="c-prosce-modal__checkbox-input">
+        <input name="t" type="radio" id="set-budget-checkbox" value="budget" ng-model="radio" class="c-prosce-modal__checkbox-input">
         <label for="set-budget-checkbox" class="c-prosce-modal__checkbox-label">Set budget</label>
       </div>
 
       <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
-        <input type="radio" name="t" value="coverage" ng-modal="row.t" class="c-prosce-modal__checkbox-input">
+        <input name="t" type="radio" id="set-coverage-checkbox" value="coverage" ng-model="radio" nclass="c-prosce-modal__checkbox-input">
         <label for="set-coverage-checkbox" class="c-prosce-modal__checkbox-label">Set coverage goals</label>
       </div>
 
@@ -49,22 +48,16 @@
           <div class="c-input-table__label">
             Year
           </div>
-          <input type="text" class="c-input-table__input txbox"/>
+          <input type="number" class="c-input-table__input txbox" ng-model="rs.year"/>
         </div>
 
-        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized">
           <div class="c-input-table__label">
-            Program 1 can have a bigger name
+            {{prog.short_name}}
           </div>
-          <input type="text" class="c-input-table__input txbox"/>
+          <input type="text" class="c-input-table__input txbox" ng-model="rs[prog.short_name]"/>
         </div>
 
-        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
-          <div class="c-input-table__label">
-            Program 2
-          </div>
-          <input type="text" class="c-input-table__input txbox"/>
-        </div>
         <div class="o-card__delete" ng-click="removeParam(row, $index)">x</div>
       </div>
     </div>
@@ -72,7 +65,7 @@
     <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)"> Add year</button>
 
     <div class="c-parsce-modal__buttons u-layout-horizontal">
-      <button type="submit" ng-disabled="addProgramScenarioForm.$invalid" class="btn __l o-form__button o-form__button--save">
+      <button type="submit" ng-disabled="manageScenarioForm.$invalid" class="btn __l o-form__button o-form__button--save">
         OK
       </button>
     </div>
