@@ -7,11 +7,11 @@ Version: 2016jan27
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
-#'maxcoverage',
+'standardscen',
+'maxcoverage',
 'maxbudget',
-#'90-90-90'
-#'VMMC'
+'90-90-90'
+'VMMC'
 ]
 
 ##############################################################################
@@ -58,101 +58,101 @@ if 'standardscen' in tests:
     
     ## Define scenarios
     scenlist = [
-        Parscen(name='Current conditions',
-                parsetname='default',
-                pars=[]),
-
-        Parscen(name='Get lots of people on treatment',
-             parsetname='default',
-             pars=[{'endval': 100000.,
-                'endyear': 2020,
-                'name': 'numtx',
-                'for': 'tot',
-                'startval': 3350.,
-                'startyear': 2015}]),
-
-        Parscen(name='Imagine that no-one gets circumcised',
-             parsetname='default',
-             pars=[{'endval': 0.,
-                'endyear': 2020,
-                'name': 'propcirc',
-                'for': malelist,
-                'startval': .97,
-                'startyear': 2015}]),
-
-        Parscen(name='Increase numpmtct',
-             parsetname='default',
-             pars=[{'endval': 0.9,
-                'endyear': 2020,
-                'name': 'numpmtct',
-                'for': ['tot'],
-                'startval': .44,
-                'startyear': 2015}]),
-
-        Parscen(name='Full casual condom use',
-             parsetname='default',
-             pars=[{'endval': 1.,
-                'endyear': 2015,
-                'name': 'condcas',
-                'for': caspships,
-                'startval': 1.,
-                'startyear': 2005}]),
-
-         Parscen(name='More casual acts',
-              parsetname='default',
-              pars=[{'endval': 2.,
-                'endyear': 2015,
-                'name': 'actscas',
-                'for': caspships,
-                'startval': 2.,
-                'startyear': 2005}]),
-
-         Parscen(name='100% testing',
-              parsetname='default',
-              pars=[{'endval': 1.,
-                'endyear': 2020,
-                'name': 'hivtest',
-                'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
-                'startval': .5,
-                'startyear': 2016}]),
-
-         Parscen(name='Increased STI prevalence in FSW',
-              parsetname='default',
-              pars=[{'endval': 0.8,
-                'endyear': 2015,
-                'name': 'stiprev',
-                'for': 0,
-                'startval': 0.8,
-                'startyear': 2005}]),
-
-         Parscen(name='Get 50K people on OST',
-              parsetname='default',
-              pars=[{'endval': 50000,
-                'endyear': 2015,
-                'name': 'numost',
-                'for': 0,
-                'startval': 1250,
-                'startyear': 2005}]),
-
-         Budgetscen(name='Keep current investment in condom program',
-              parsetname='default',
-              progsetname='default',
-              t=2016,
-              budget={'Condoms': 1e7,
-                           'FSW programs': 1e6,
-                           'HTC':2e7,
-                           'OST':1e6,
-                           'ART':1e6}),
-
-         Budgetscen(name='Double investment in condom program',
-              parsetname='default',
-              progsetname='default',
-              t=[2016,2020],
-              budget={'Condoms': array([1e7,2e7]),
-                           'FSW programs':array([1e6,1e6]),
-                           'HTC':array([2e7,2e7]),
-                           'OST':array([1e6,1e6]),
-                           'ART':array([1e6,1e6])}),
+#        Parscen(name='Current conditions',
+#                parsetname='default',
+#                pars=[]),
+#
+#        Parscen(name='Get lots of people on treatment',
+#             parsetname='default',
+#             pars=[{'endval': 100000.,
+#                'endyear': 2020,
+#                'name': 'numtx',
+#                'for': 'tot',
+#                'startval': 3350.,
+#                'startyear': 2015}]),
+#
+#        Parscen(name='Imagine that no-one gets circumcised',
+#             parsetname='default',
+#             pars=[{'endval': 0.,
+#                'endyear': 2020,
+#                'name': 'propcirc',
+#                'for': malelist,
+#                'startval': .97,
+#                'startyear': 2015}]),
+#
+#        Parscen(name='Increase numpmtct',
+#             parsetname='default',
+#             pars=[{'endval': 0.9,
+#                'endyear': 2020,
+#                'name': 'numpmtct',
+#                'for': ['tot'],
+#                'startval': .44,
+#                'startyear': 2015}]),
+#
+#        Parscen(name='Full casual condom use',
+#             parsetname='default',
+#             pars=[{'endval': 1.,
+#                'endyear': 2015,
+#                'name': 'condcas',
+#                'for': caspships,
+#                'startval': 1.,
+#                'startyear': 2005}]),
+#
+#         Parscen(name='More casual acts',
+#              parsetname='default',
+#              pars=[{'endval': 2.,
+#                'endyear': 2015,
+#                'name': 'actscas',
+#                'for': caspships,
+#                'startval': 2.,
+#                'startyear': 2005}]),
+#
+#         Parscen(name='100% testing',
+#              parsetname='default',
+#              pars=[{'endval': 1.,
+#                'endyear': 2020,
+#                'name': 'hivtest',
+#                'for': ['FSW', 'Clients', 'MSM', 'M 15+', 'F 15+'],
+#                'startval': .5,
+#                'startyear': 2016}]),
+#
+#         Parscen(name='Increased STI prevalence in FSW',
+#              parsetname='default',
+#              pars=[{'endval': 0.8,
+#                'endyear': 2015,
+#                'name': 'stiprev',
+#                'for': 0,
+#                'startval': 0.8,
+#                'startyear': 2005}]),
+#
+#         Parscen(name='Get 50K people on OST',
+#              parsetname='default',
+#              pars=[{'endval': 50000,
+#                'endyear': 2015,
+#                'name': 'numost',
+#                'for': 0,
+#                'startval': 1250,
+#                'startyear': 2005}]),
+#
+#         Budgetscen(name='Keep current investment in condom program',
+#              parsetname='default',
+#              progsetname='default',
+#              t=2016,
+#              budget={'Condoms': 1e7,
+#                           'FSW programs': 1e6,
+#                           'HTC':2e7,
+#                           'OST':1e6,
+#                           'ART':1e6}),
+#
+#         Budgetscen(name='Double investment in condom program',
+#              parsetname='default',
+#              progsetname='default',
+#              t=[2016,2020],
+#              budget={'Condoms': array([1e7,2e7]),
+#                           'FSW programs':array([1e6,1e6]),
+#                           'HTC':array([2e7,2e7]),
+#                           'OST':array([1e6,1e6]),
+#                           'ART':array([1e6,1e6])}),
 
          Coveragescen(name='A million people covered by the condom program',
               parsetname='default',
@@ -164,21 +164,21 @@ if 'standardscen' in tests:
                            'OST':array([1250.,1250.]),
                            'ART':array([3324.,3324.])}),
 
-         Budgetscen(name='Double investment in ART, HTC and OST',
-              parsetname='default',
-              progsetname='default',
-              t=[2016,2018,2020],
-              budget={'Condoms': array([1e7,1e7,1e7]),
-                           'FSW programs':array([1e6,1e6,1e6]),
-                           'HTC':array([2e7,3e7,4e7]),
-                           'OST':array([1e6,1.5e6,2e6]),
-                               'ART':array([1e6,1.5e6,2e6])})
+#         Budgetscen(name='Double investment in ART, HTC and OST',
+#              parsetname='default',
+#              progsetname='default',
+#              t=[2016,2018,2020],
+#              budget={'Condoms': array([1e7,1e7,1e7]),
+#                           'FSW programs':array([1e6,1e6,1e6]),
+#                           'HTC':array([2e7,3e7,4e7]),
+#                           'OST':array([1e6,1.5e6,2e6]),
+#                               'ART':array([1e6,1.5e6,2e6])})
         ]
     
     # Store these in the project
     P.addscenlist(scenlist)
-    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
-    P.scens[2].active = True # Turn off another scenario
+#    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
+#    P.scens[2].active = True # Turn off another scenario
     
 #    # Turn off budget scenarios
 #    for i,scen in P.scens.items():

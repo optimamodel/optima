@@ -193,11 +193,17 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             elif isinstance(scen, Coveragescen):
                 
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
+                tmpbudget = dcp(thisprogset.getdefaultbudget())
+                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
+
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
                     scen.coverage = vec2obj(scen.progset.getdefaultbuget(), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!
                 if not isinstance(scen.coverage,dict): raise OptimaException('Currently only accepting coverage as dictionaries.')
                 if not isinstance(scen.coverage,odict): scen.coverage = odict(scen.coverage)
-                scen.coverage = scen.coverage.sort([p.short for p in thisprogset.programs.values()]) # Re-order to preserve ordering of programs
+
+                # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
+                tmpcoverage.update(scen.coverage)
+                scen.coverage = tmpcoverage
 
                 # Ensure coverage level values are lists
                 for covkey, coventry in scen.coverage.iteritems():
