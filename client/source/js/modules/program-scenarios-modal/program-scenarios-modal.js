@@ -13,6 +13,11 @@ define(['angular'], function (module) {
     	$scope.par = {};
     	$scope.forData = [];
     	
+    	if(!angular.isDefined($scope.row.t)){
+    		$scope.row.t = 'budget';
+    	}
+    	console.log($scope.row);
+
         $scope.parsForSelectedParset = function(row) {
             var parset = _.filter($scope.parsets, {id: row.parset_id});
             if (parset.length > 0) {
