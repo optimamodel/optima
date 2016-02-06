@@ -359,47 +359,47 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         ###############################################################################
         
         # Reset force-of-infection vector for each population group, handling circs and uncircs separately
-        forceinfvec = zeros((len(sus), npops)) 
+        forceinfvec = zeros((len(sus), npops)) + 0.0001
         
-        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-        for this in sexactslist:
-            acts = this['acts'][t]
-            cond = this['cond'][t]
-            pop1 = this['pop1']
-            pop2 = this['pop2']
-            thistrans = this['trans']
-            
-            if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-                thisforceinfsusreg  = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]),   (dt*cond*acts*effhivprev[pop2]))
-                thisforceinfcirc    = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circconst), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[susreg,pop1]   = 1 - (1-forceinfvec[susreg,pop1])   * (1-thisforceinfsusreg)
-                forceinfvec[progcirc,pop1] = 1 - (1-forceinfvec[progcirc,pop1]) * (1-thisforceinfcirc)
-            else: # Only have uncircs for females
-                thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
-                
-            if debug and not all(forceinfvec[:,pop1]>=0):
-                errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
-                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                raise OptimaException(errormsg)
-            
-        # Injection-related infections -- force-of-infection in pop1 due to pop2
-        for this in injactslist:
-            effinj = this['acts'][t]
-            pop1 = this['pop1']
-            pop2 = this['pop2']
-            thisosteff = osteff[t]
-            
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2]))
-            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
-            
-            if debug and not all(forceinfvec[:,pop1]>=0):
-                errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
-                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-                raise OptimaException(errormsg)
+#        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
+#        for this in sexactslist:
+#            acts = this['acts'][t]
+#            cond = this['cond'][t]
+#            pop1 = this['pop1']
+#            pop2 = this['pop2']
+#            thistrans = this['trans']
+#            
+#            if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
+#                thisforceinfsusreg  = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]),   (dt*cond*acts*effhivprev[pop2]))
+#                thisforceinfcirc    = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circconst), (dt*cond*acts*effhivprev[pop2]))
+#                forceinfvec[susreg,pop1]   = 1 - (1-forceinfvec[susreg,pop1])   * (1-thisforceinfsusreg)
+#                forceinfvec[progcirc,pop1] = 1 - (1-forceinfvec[progcirc,pop1]) * (1-thisforceinfcirc)
+#            else: # Only have uncircs for females
+#                thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
+#                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
+#                
+#            if debug and not all(forceinfvec[:,pop1]>=0):
+#                errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
+#                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
+#                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+#                raise OptimaException(errormsg)
+#            
+#        # Injection-related infections -- force-of-infection in pop1 due to pop2
+#        for this in injactslist:
+#            effinj = this['acts'][t]
+#            pop1 = this['pop1']
+#            pop2 = this['pop2']
+#            thisosteff = osteff[t]
+#            
+#            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2]))
+#            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
+#                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
+#            
+#            if debug and not all(forceinfvec[:,pop1]>=0):
+#                errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
+#                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
+#                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+#                raise OptimaException(errormsg)
         
         
 
@@ -737,48 +737,48 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## Calculate births, age transitions and mother-to-child-transmission
             ###############################################################################
     
-            ## Births.... # WARNING, maybe some of this could be taken out of the time loop?
-            for p1 in range(npops):
-    
-                allbirthrates = birthtransit[p1, :] * birth[p1, t]
-                alleligbirths = sum(allbirthrates * dt * sum(people[alldx, p1, t])) # Births to diagnosed mothers eligible for PMTCT
-                
-                for p2 in range(npops):
-    
-                    thisbirthrate  = allbirthrates[p2]
-                    if thisbirthrate:
-                        popbirths      = (thisbirthrate * dt * people[:, p1, t].sum())
-                        mtctundx       = (thisbirthrate * dt * people[undx, p1, t].sum()) * effmtct # Births to undiagnosed mothers
-                        mtcttx         = (thisbirthrate * dt * people[alltx, p1, t].sum())  * pmtcteff # Births to mothers on treatment
-                        thiseligbirths = (thisbirthrate * dt * people[alldx, p1, t].sum()) # Births to diagnosed mothers eligible for PMTCT
-        
-                        receivepmtct = min(numpmtct[t]*dt*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                        
-                        mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-                        popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
-                        
-                        raw['mtct'][p2, t] += popmtct[t]                       
-                        
-                        people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
-                        people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
-            
-            
-            ## Age-related transitions
-            for p1,p2 in agetransitlist:
-                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt
-                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
-                people[:, p1, t+1] -= peopleaving # Take away from pop1...
-                people[:, p2, t+1] += peopleaving # ... then add to pop2
-                
-            
-            ## Risk-related transitions
-            for p1,p2 in risktransitlist:
-                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
-                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
+#            ## Births.... # WARNING, maybe some of this could be taken out of the time loop?
+#            for p1 in range(npops):
+#    
+#                allbirthrates = birthtransit[p1, :] * birth[p1, t]
+#                alleligbirths = sum(allbirthrates * dt * sum(people[alldx, p1, t])) # Births to diagnosed mothers eligible for PMTCT
+#                
+#                for p2 in range(npops):
+#    
+#                    thisbirthrate  = allbirthrates[p2]
+#                    if thisbirthrate:
+#                        popbirths      = (thisbirthrate * dt * people[:, p1, t].sum())
+#                        mtctundx       = (thisbirthrate * dt * people[undx, p1, t].sum()) * effmtct # Births to undiagnosed mothers
+#                        mtcttx         = (thisbirthrate * dt * people[alltx, p1, t].sum())  * pmtcteff # Births to mothers on treatment
+#                        thiseligbirths = (thisbirthrate * dt * people[alldx, p1, t].sum()) # Births to diagnosed mothers eligible for PMTCT
+#        
+#                        receivepmtct = min(numpmtct[t]*dt*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+#                        
+#                        mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+#                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+#                        popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+#                        
+#                        raw['mtct'][p2, t] += popmtct[t]                       
+#                        
+#                        people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
+#                        people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
+#            
+#            
+#            ## Age-related transitions
+#            for p1,p2 in agetransitlist:
+#                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt
+#                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
+#                people[:, p1, t+1] -= peopleaving # Take away from pop1...
+#                people[:, p2, t+1] += peopleaving # ... then add to pop2
+#                
+#            
+#            ## Risk-related transitions
+#            for p1,p2 in risktransitlist:
+#                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
+#                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+#                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
+#                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
+#                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
             
             
             
