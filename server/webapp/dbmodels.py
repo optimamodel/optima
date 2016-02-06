@@ -434,7 +434,8 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov')
+        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
+        'optimizable': fields.Raw,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -548,6 +549,10 @@ class ProgramsDb(db.Model):
         )
         program_entry.id = self.id
         return program_entry
+
+    def get_optimizable(self):
+        be_program = self.hydrate()
+        self.optimizable = be_program.optimizable()
 
     def restore(self, program_instance):
         import json
