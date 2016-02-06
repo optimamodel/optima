@@ -173,6 +173,7 @@ def _load_project_child(project_id, record_id, record_class, exception_class, ra
     cu = current_user
     current_app.logger.debug("getting {} {} for user {}".format(record_class.__name__, record_id, cu.id))
 
+    print "record_id", record_id, "record_class", record_class
     entry = db.session.query(record_class).get(record_id)
     if entry is None:
         if raise_exception:

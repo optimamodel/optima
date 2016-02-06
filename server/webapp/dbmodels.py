@@ -768,7 +768,7 @@ class ScenariosDb(db.Model):
 
         if self.scenario_type == "Program":
 
-            progset = utils.load_progset(self.project_id, self.progset_id)
+            progset = load_progset(self.project_id, self.progset_id)
 
             return op.Progscen(name=self.name,
                                parsetname=parset.name,

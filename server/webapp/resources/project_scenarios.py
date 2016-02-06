@@ -24,6 +24,7 @@ scenario_parser = RequestParser()
 scenario_parser.add_arguments({
     'name': {'type': str, 'location': 'args', 'required': True},
     'parset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
+    'progset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
     'scenario_type': {'type': str, 'location': 'args', 'required': True},
     'active': {'type': bool, 'location': 'args', 'required': True}
 })
@@ -33,6 +34,7 @@ scenario_list_scenario_parser.add_arguments({
     'id': {'required': False, 'location': 'json'},
     'name': {'type': str, 'required': True, 'location': 'json'},
     'parset_id': {'required': True, 'location': 'json'},
+    'progset_id': {'type': uuid.UUID, 'location': 'json', 'required': True},
     'scenario_type': {'type': str, 'required': True, 'location': 'json'},
     'active': {'type': bool, 'required': True, 'location': 'json'},
     'pars': {'type': scenario_par, 'required': True, 'location': 'json'}
