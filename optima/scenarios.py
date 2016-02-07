@@ -217,10 +217,11 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # Figure out coverage
                 scen.budget = thisprogset.getprogbudget(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
 
-            thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
-            scen.pars = thisparsdict
-            for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
-                thisparset.pars[pardictno] = thisparsdict
+                # TODO @Robyn have a look
+                thisparsdict = thisprogset.getpars(coverage=scen.coverage, t=scen.t, parset=thisparset, results=results)
+                scen.pars = thisparsdict
+                for pardictno in range(len(thisparset.pars)): # Loop over all parameter dictionaries
+                    thisparset.pars[pardictno] = thisparsdict
             
         else: 
             errormsg = 'Unrecognized program scenario type.'

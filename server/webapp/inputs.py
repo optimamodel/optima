@@ -55,6 +55,22 @@ def scenario_par(orig_pars):
 
     return pars
 
+def scenario_program(orig_programs): # result is either budget or coverage, depending on scenario type
+    if not isinstance(orig_programs, list) or not isinstance(orig_programs[0], dict):
+        raise ValueError("needs to be a list or dictionaries.")
+
+    programs = {}
+    for program_entry in orig_programs:
+        program_name = str(program_entry['program'])
+        values = program_entry['values']
+        if not isinstance(values, list):
+            values = [values]
+        programs[program_name]= []
+        for elem in values:
+            programs[program_name].append(float(elem))
+
+    return programs
+
 
 class SubRequest:
 
