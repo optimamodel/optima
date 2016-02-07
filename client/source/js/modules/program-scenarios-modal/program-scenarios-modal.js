@@ -9,46 +9,24 @@ define(['angular'], function (module) {
         $scope.ykeys = ykeys.data.keys;
     	$scope.openProject = openProject.populations;
     	
-    	$scope.params = [];
-    	$scope.par = {};
-    	$scope.forData = [];
-    	
-        $scope.parsForSelectedParset = function(row) {
-            var parset = _.filter($scope.parsets, {id: row.parset_id});
-            if (parset.length > 0) {
-                return _.filter(parset[0].pars[0], {visible: 1});
-            }
-            return [];
-        };
+    	$scope.progsetsOptimized = _.filter(progsets[0].programs, {optimizable: true});
 
-        $scope.popsForParam = function(param, row) {
-            if ($scope.ykeys.hasOwnProperty(row.parset_id) && $scope.ykeys[row.parset_id].hasOwnProperty(param)) {
-                return $scope.ykeys[row.parset_id][param];
-            }
-            return [];
-        };
-
-    	$scope.populateForData = function(data){
-    		$scope.forData = JSON.parse(data);
-    	};
+    	if(!angular.isDefined($scope.row[$scope.row.scenario_type])){
+    		$scope.row[$scope.row.scenario_type] = {};
+    	}
 
     	$scope.manageScenario = function(){
-    		// As pars.for is expecting a array on BE
-    		angular.forEach($scope.row.pars, function(v){
-    			v.for = [v.for];
-    		});
-    		//
     		var row = {
-    			"scenario_type": scenario.scenario_type,
+    			"scenario_type": $scope.row.scenario_type,
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
-    			"pars": $scope.row.pars, 
-    			//"pars": $scope.params, 
-    			"id": scenario.id || null, 
+    			//"t": [], 
+    			"id": $scope.row.id || null, 
     			"progset_id": $scope.row.progset_id || null
     		};
 
+			row[$scope.row.scenario_type] = $scope.row[$scope.row.scenario_type];
     		$modalInstance.close(row);
     	};
 
@@ -66,7 +44,7 @@ define(['angular'], function (module) {
         };
 
         $scope.closeModal = function() {
-            $modalInstance.close();
+            $modalInstance.close($scope.row);
         };
 
     });

@@ -1,90 +1,58 @@
-<div class="c-parsce-modal">
-  <div class="modal-header c-parsce-modal__header"> CREATE A PROGRAM SCENARIO</div>
+<div class="c-prosce-modal">
+  <div class="modal-header c-prosce-modal__header"> CREATE A PROGRAM SCENARIO</div>
 
   <form name="manageScenarioForm" class="modal-body c-parsce-modal__body" novalidate ng-submit="manageScenario()">
 
-    <div class="c-parsce-modal__field-wrap">
-      <label class="c-parsce-modal__label"> Name </label>
-      <input class="c-parsce-modal__input txbox" type="text" ng-model="row.name" required/>
+    <!-- Name -->
+    <div class="o-form__field-wrap">
+      <label class="o-form__label"> Name </label>
+      <input class="o-form__input txbox" type="text" ng-model="row.name" required/>
     </div>
 
-    <div class="c-parsce-modal__field-wrap">
-      <label class="c-parsce-modal__label"> Select a parameter set to use as baseline </label>
-      <select class="c-parsce-modal__input txbox" type="text" ng-model="row.parset_id" ng-options="parset.id as parset.name for parset in parsets"
+    <!--  Select a parameter set to use as baseline  -->
+    <div class="c-prosce-modal__selects u-layout-horizontal">
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <label class="o-form__label"> Select a parameter set to use as baseline </label>
+        <select class="o-form__input txbox" type="text" ng-model="row.parset_id" ng-options="parset.id as parset.name for parset in parsets"
        required>
-       <option value=""> -- Select --</option>
-      </select>
+         <option value=""> -- Select --</option>
+        </select>
+      </div>
+
+      <!--  Select a program set to use as baseline  -->
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <label class="o-form__label"> Select a program set to use as baseline </label>
+        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets[0].programs" required>
+         <option value=""> -- Select --</option>
+        </select>
+      </div>
     </div>
 
-    <div class="c-parsce-modal__field-wrap">
-      <label class="c-parsce-modal__label"> Select a program set to use as baseline </label>
-      <select class="c-parsce-modal__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets"
-       required>
-       <option value=""> -- Select --</option>
-      </select>
-    </div>
+    <div class="o-card _program-scenario-wrap" ng-repeat="rs in row[row.scenario_type] track by $index">
+      <div class="c-input-table">
 
-    <div class="c-parsce-modal__field-wrap">
-      <label class="c-parsce-modal__label"> <input name="type" type="radio" ng-modal="row.type"> Set budget </label>&nbsp;&nbsp;&nbsp;
-      <label class="c-parsce-modal__label"> <input name="type"type="radio" ng-modal="row.type"> Set coverage levels </label>
-    </div>
-
-    <!--  -->
-    <div class="o-form__wrap" ng-repeat="rs in row.pars track by $index">
-      <div class="o-card c-parsce-modal__card">
-        <div class="c-parsce-modal__subform">
-
-          <!-- Parameters -->
-          <div class="c-parsce-modal__field-wrap">
-            <label class="c-parsce-modal__label"> Parameters </label>
-            <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.name" required ng-options="param.short as param.name for param in parsForSelectedParset(row)">
-              <option value=""> -- Select --</option>
-            </select>
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
+          <div class="c-input-table__label">
+            Year
           </div>
-
-          <!-- For -->
-          <div class="c-parsce-modal__field-wrap">
-            <label class="c-parsce-modal__label"> For </label>
-            <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.for" required ng-options="pop.val as pop.label for pop in popsForParam(rs.name, row)">
-              <option value=""> -- Select --</option>
-            </select>
-          </div>
-
-          <!-- Start year of scenario  -->
-          <div class="c-parsce-modal__field-wrap">
-            <label class="c-parsce-modal__label"> Start year of scenario </label>
-            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" ng-model="rs.startyear" type="number" required min="0"/>
-          </div>
-
-          <!-- Final year of scenario  -->
-          <div class="c-parsce-modal__field-wrap">
-            <label class="c-parsce-modal__label"> Final year of scenario </label>
-            <input class="c-parsce-modal__input c-parsce-modal__input--small txbox" ng-model="rs.endyear" type="number" required min="0"/>
-          </div>
-
-          <!-- Value at start of scenario  -->
-          <div class="c-parsce-modal__field-wrap">
-            <label class="c-parsce-modal__label"> Value at start of scenario </label>
-            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.startval" required min="0"/>
-          </div>
-
-          <!-- Value at end of scenario  -->
-          <div class="c-parsce-modal__field-wrap">
-            <label class="c-parsce-modal__label"> Value at end of scenario </label>
-            <input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.endval" required min="0"/>
-          </div>
-
+          <input type="number" class="c-input-table__input txbox" ng-model="rs.year"/>
         </div>
+
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized">
+          <div class="c-input-table__label">
+            {{prog.short_name}}
+          </div>
+          <input type="text" class="c-input-table__input txbox" ng-model="rs[prog.short_name]"/>
+        </div>
+
         <div class="o-card__delete" ng-click="removeParam(row, $index)">x</div>
       </div>
     </div>
 
-    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)">
-      Add parameter
-    </button>
+    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)"> Add year</button>
 
     <div class="c-parsce-modal__buttons u-layout-horizontal">
-      <button type="submit" ng-disabled="manageScenarioForm.$invalid" class="btn __l c-parsce-modal__button c-parsce-modal__button--save">
+      <button type="submit" ng-disabled="manageScenarioForm.$invalid" class="btn __l o-form__button o-form__button--save">
         OK
       </button>
     </div>
