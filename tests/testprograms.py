@@ -360,8 +360,6 @@ if 'makeprograms' in tests:
 ## Project creation test
 if 'compareoutcomes' in tests:
     comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
-    
-    
     done(t)
 
 
