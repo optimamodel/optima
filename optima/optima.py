@@ -152,7 +152,7 @@ except: _failed()
 
 try: 
     import scenarios as _scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
-    from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
+    from scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
 try: 

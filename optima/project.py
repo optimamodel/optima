@@ -293,12 +293,16 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True):
-        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list -- WARNING, do we need this? What's it for? Why not use runmodel()? '''
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, verbose=None):
+        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
+        
+        WARNING, do we need this? What's it for? Why not use runmodel()?
+        '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
         if name is None and simpars is None: name = 'default' # Set default name
+        if verbose is None: verbose = self.settings.verbose
 
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
@@ -310,7 +314,11 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind in range(len(simparslist)):
-            raw = model(simparslist[ind], self.settings, die=die) # ACTUALLY RUN THE MODEL
+            try:
+                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            except:
+                printv('Running model failed; running again with debugging...', 1, self.settings.verbose)
+                raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
@@ -399,13 +407,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, which=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True):
+    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True):
         ''' Function to minimize outcomes or money '''
-        if which is None: raise OptimaException('optimize(): You must specify whether to minimize outcomes or money')
-        optim = Optim(project=self, name=name, which=which, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        if which=='outcomes': multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        elif which=='money':  multires =    minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
-        else: raise OptimaException('optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which)
+        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         if saveprocess:        
             self.addoptim(optim=optim)
             self.addresult(result=multires)
