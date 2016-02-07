@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016feb02
+Version: 2016feb06
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
@@ -46,6 +46,7 @@ class Settings():
         self.gt200 = 5 + spacing
         self.gt50  = 6 + spacing
         self.lt50  = 7 + spacing
+        self.aidsind = self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
 
         # Combined states
         self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
