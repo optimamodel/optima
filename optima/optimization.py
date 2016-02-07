@@ -57,17 +57,17 @@ class Optim(object):
             print('WARNING, no results associated with this parameter set')
             return None
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
-        if self.objectives['which']=='outcomes': multires = minoutcomes(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        elif self.objectives['which']=='money':  multires =    minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        else: raise OptimaException('optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % objectives['which'])
+    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
+        if self.objectives['which'] in ['outcome','outcomes']: multires = minoutcomes(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        elif self.objectives['which']=='money':                multires = minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        else: raise OptimaException('optimize(): "which" must be "outcome" or "money"; you entered "%s"' % self.objectives['which'])
         return multires
 
 
 
 
 
-def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
+def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     """
     Define default objectives for the optimization. Some objectives are shared
     between outcome and money minimizations, while others are different. However,
@@ -95,7 +95,7 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
     objectives['which'] = which
     objectives['keys'] = ['death', 'inci'] # Define valid keys
     objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
-    if which=='outcome':
+    if which in ['outcome', 'outcomes']:
         objectives['base'] = None # "Baseline year to compare outcomes to"
         objectives['start'] = 2017 # "Year to begin optimization"
         objectives['end'] = 2030 # "Year to project outcomes to"
@@ -119,7 +119,7 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
     return objectives
 
 
-def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
+def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     """
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
