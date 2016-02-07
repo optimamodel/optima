@@ -144,6 +144,12 @@ class Programset(object):
     def optimizableprograms(self):
         return odict((program.short, program) for program in self.programs.values() if program.optimizable())
 
+    def hasbudget(self):
+        return [True if prog.hasbudget() else False for prog in self.programs.values()]
+
+    def programswithbudget(self):
+        return odict((program.short, program) for program in self.programs.values() if program.hasbudget())
+
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
 
@@ -598,6 +604,8 @@ class Program(object):
     def optimizable(self):
         return True if self.targetpars else False
 
+    def hasbudget(self):
+        return True if self.costcovdata['cost'] else False
 
     def addtargetpar(self, targetpar, verbose=2):
         '''Add a model parameter to be targeted by this program'''
