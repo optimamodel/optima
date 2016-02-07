@@ -150,3 +150,11 @@
 .margin_top {
   margin-top: 5%;
 }
+
+.flex_container {
+  height: 50vh;
+  overflow: scroll;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
