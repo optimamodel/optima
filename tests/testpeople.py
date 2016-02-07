@@ -11,7 +11,7 @@ import os
 
 refresh = 0 # Creates defaultpeople.ppl rather than copares
 eps = 1e-3 # Don't expect a totally exact match
-filename = 'defaultpeople.ppl'
+filename = 'defaultpeople.npy'
 
 P = op.defaults.defaultproject('generalized')
 newpeople = P.results[0].raw[0]['people']

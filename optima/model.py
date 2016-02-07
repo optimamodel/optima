@@ -809,11 +809,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             people[progcirc,:,t+1] += newpeople*thisprogcirc/allsus # Add new people
             
             # Handle circumcision
-            circppl = dcp(numcirc[:,t])
-            for p in range(npops):
-                circppl[p] = maximum(0, minimum(circppl[p], safetymargin*people[susreg,p,t+1])) # Don't circumcise more people than are available
-                people[susreg,p,t+1] -= circppl[p]
-            people[progcirc,:,t+1]   += circppl # And add these people into the circumcised compartment
+            circppl = maximum(0, minimum(numcirc[:,t], safetymargin*people[susreg,:,t+1])) # Don't circumcise more people than are available
+            people[susreg,:,t+1]   -= circppl
+            people[progcirc,:,t+1] += circppl # And add these people into the circumcised compartment
             
             # Check population sizes are correct
             actualpeople = people[:,:,t+1].sum()
