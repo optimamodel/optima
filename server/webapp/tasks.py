@@ -141,3 +141,48 @@ def run_autofit(project_id, parset_name, maxtime=60):
     db_session.commit()
     close_db_session(db_session)
     app.logger.debug("stopped autofit")
+
+@celery.task()
+def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints):
+    app.logger.debug('started optimization: {} {} {} {} {} {}'.format(
+        project_id, optimization_name, parset_name, progset_name, objectives, constraints))
+    error_text = ""
+    status = 'completed'
+    db_session = init_db_session()
+    wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+    project_instance = op.loads(wp.project)
+    close_db_session(db_session)
+    try:
+        result = project_instance.optimize(
+            name = optimization_name,
+            parsetname = parset_name,
+            progsetname = progset_name,
+            objectives = objectives,
+            constraints = constraints
+            )
+        print "result", result
+    except Exception:
+        var = traceback.format_exc()
+        print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, optimization_name, 'optimization', var))
+        error_text = var
+        status='error'
+
+    db_session = init_db_session()
+    wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+    wp.project = op.saves(project_instance)
+    work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
+    work_log.status = status
+    work_log.error = error_text
+    work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+    if result:
+        result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
+        db_session.add(result_entry)
+        db_session.flush()
+        work_log.result_id = result_entry.id
+    db_session.add(work_log)
+    wp.is_working = False
+    wp.work_type = None
+    db_session.add(wp)
+    db_session.commit()
+    close_db_session(db_session)
+    app.logger.debug("stopped optimization")

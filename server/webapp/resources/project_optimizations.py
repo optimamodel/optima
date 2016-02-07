@@ -92,7 +92,6 @@ class Optimization(Resource):
 
         return reply
 
-
     @swagger.operation(responseClass=OptimizationsDb.__name__,
                        parameters=optimization_parser.swagger_parameters())
     @marshal_with(OptimizationsDb.resource_fields)
@@ -113,3 +112,34 @@ class Optimization(Resource):
         reply._ensure_current()
 
         return reply
+
+
+class OptimizationResults(Resource):
+
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(
+        summary='Launch auto calibration for the selected parset'
+    )
+    def post(self, project_id, optimization_id):
+        from server.webapp.tasks import run_optimization, start_or_report_calculation
+        from server.webapp.dbmodels import OptimizationsDb, ParsetsDb, ProgsetsDb
+
+        optimization_entry = OptimizationsDb.query.get(optimization_id)
+        optimization_name = optimization_entry.name
+        parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
+        parset_name = parset_entry.name
+        progset_entry = ProgsetsDb.query.get(optimization_entry.progset_id)
+        objectives = optimization_entry.objectives
+        constraints = optimization_entry.constraints
+
+        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, parset_id, 'optimization')
+
+        result = {'can_start': can_start, 'can_join': can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
+        if not can_start or not can_join:
+            result['status'] = 'running'
+            return result, 208
+        else:
+            run_optimization.delay(project_id, optimization_name, parset_name, progset_name, objectives, constraints)
+            result['status'] = 'started'
+            return result, 201
