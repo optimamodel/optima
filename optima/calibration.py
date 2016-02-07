@@ -264,7 +264,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
             autofitresults['allmismatches'].append(array(allmismatches).flatten()) #  Append mismatch
             
             autofitfig.clear()
-            nplots = count+2 # 1 is the mismatch
+            nplots = len(set([d[1]+d[2] for d in debugdata]))+2 # 1 is the mismatch
             rows = ceil(sqrt(nplots))
             cols = rows-1 if rows*(rows-1)>=nplots else rows
             
@@ -295,7 +295,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
             for key1,tmp1 in plotdata.items():
                 for key2,tmp2 in tmp1.items():
                     count += 1
-                    print('    key=%s row=%s count=%i' % (key1, key2, count))
                     subplot(rows, cols, count+2)
                     scatter(tmp2['x'], tmp2['datay'])
                     plot(tmp2['x'], tmp2['modely'])
@@ -305,9 +304,6 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
             
             show()
             pause(0.001)
-            
-            
-            
             
             
         

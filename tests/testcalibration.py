@@ -190,11 +190,13 @@ if 'debugautofit' in tests:
     t = tic()
 
     print('Running autofit debugging test...')
-    from optima import Project
+    from optima import Project, pygui
     P = Project(spreadsheet='generalized.xlsx')
     
     # Run automatic fitting
-    P.autofit(name='autofit', orig='default', fitwhat=['force'], fitto='prev', maxiters=1000, doplot=True, verbose=4)
+    P.autofit(name='autofit', orig='default', fitwhat=['force'], fitto='prev', maxiters=5, doplot=False, verbose=2)
+    
+    pygui([P.results['parset-default'], P.results['parset-autofit']])
     
     done(t)
 

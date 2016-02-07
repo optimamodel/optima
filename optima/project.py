@@ -374,7 +374,6 @@ class Project(object):
 
     def autofit(self, name=None, orig=None, fitwhat='force', fitto=None, maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
-        if verbose!=4: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
