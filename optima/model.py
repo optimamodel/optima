@@ -843,6 +843,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                                 people[errstate,errpop,t+1] = 0.0 # Reset
                 
     # Append final people array to sim output
+    if not (people>=0).all(): raise OptimaException('Non-positive people found!')
     raw['people'] = people
     
     printv('  ...done running model.', 2, verbose)
