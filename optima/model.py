@@ -42,28 +42,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     printv('Running model...', 1, verbose, newline=False)
     
     # Initialize arrays
-    raw               = odict()    # Sim output structure
-    raw_sexinci    = zeros((npops, npts)) # Incidence through sex
-    raw_injinci    = zeros((npops, npts)) # Incidence through injecting
     raw_inci       = zeros((npops, npts)) # Total incidence
-    raw_births     = zeros((npops, npts)) # Number of births to each population
     raw_mtct       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
     raw_diag       = zeros((npops, npts)) # Number diagnosed per timestep
     raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw_death      = zeros((npops, npts)) # Number of deaths per timestep
     raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
-    raw['tvec']       = tvec
-    raw['popkeys']    = popkeys
-    raw['sexinci']    = raw_sexinci
-    raw['injinci']    = raw_injinci
-    raw['inci']       = raw_inci
-    raw['births']     = raw_births
-    raw['mtct']       = raw_mtct
-    raw['diag']       = raw_diag
-    raw['newtreat']   = raw_newtreat
-    raw['death']      = raw_death
-    raw['otherdeath'] = raw_otherdeath
-
 
     
     # Biological and failure parameters -- death etc
@@ -783,7 +767,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
                 popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
                 
-                raw_mtct[p2, t] += popmtct[t]                       
+                raw_mtct[p2, t] += popmtct[t]
                 
                 people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
                 people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
@@ -847,7 +831,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 
     # Append final people array to sim output
     if not (people>=0).all(): raise OptimaException('Non-positive people found!')
-    raw['people'] = people
+    
+    raw               = odict()    # Sim output structure
+    raw['tvec']       = tvec
+    raw['popkeys']    = popkeys
+    raw['people']     = people
+    raw['inci']       = raw_inci
+    raw['mtct']       = raw_mtct
+    raw['diag']       = raw_diag
+    raw['newtreat']   = raw_newtreat
+    raw['death']      = raw_death
+    raw['otherdeath'] = raw_otherdeath
     
     printv('  ...done running model.', 2, verbose)
     return raw # Return raw results
