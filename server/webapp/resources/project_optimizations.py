@@ -130,10 +130,11 @@ class OptimizationResults(Resource):
         parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
         parset_name = parset_entry.name
         progset_entry = ProgsetsDb.query.get(optimization_entry.progset_id)
+        progset_name = progset_entry.name
         objectives = optimization_entry.objectives
         constraints = optimization_entry.constraints
 
-        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, parset_id, 'optimization')
+        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, optimization_entry.parset_id, 'optimization')
 
         result = {'can_start': can_start, 'can_join': can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
         if not can_start or not can_join:
