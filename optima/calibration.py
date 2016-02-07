@@ -75,11 +75,11 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, inds=0, verbose=2):
+def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
     ''' 
     Function to automatically fit parameters.
     
-    Version: 2016jan05 by cliffk
+    Version: 2016feb06 by cliffk
     '''
     
     printv('Performing automatic fitting...', 1, verbose)
@@ -181,7 +181,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
     
 
 
-    def errorcalc(parvec=None, pars=None, parlist=None, project=None, bestindex=0):
+    def errorcalc(parvec=None, pars=None, parlist=None, project=None, bestindex=0, doplot=False):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
@@ -209,6 +209,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         
         ## Loop over all results
         allmismatches = []
+        allmodel
         mismatch = 0
         for key in results.main: # The results! e.g. key='prev'
             this = results.main[key] 
@@ -230,6 +231,9 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
                             thismismatch = abs(modely - datay[i]) / mean(datay+eps)
                             allmismatches.append(thismismatch)
                             mismatch += thismismatch
+        
+        if doplot:
+            kd
         
         printv('Current mismatch: %s' % array(thismismatch).flatten(), 4, verbose=verbose)
         return mismatch
@@ -254,7 +258,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         
         # Perform fit
         parvec = convert(pars, parlist)
-        args = {'pars':pars, 'parlist':parlist, 'project':project}
+        args = {'pars':pars, 'parlist':parlist, 'project':project, 'doplot':doplot}
         parvecnew, fval, exitflag, output = asd(errorcalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
