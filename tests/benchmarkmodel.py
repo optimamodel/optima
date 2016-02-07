@@ -20,7 +20,7 @@ dobenchmark = True
 doprofile = True
 
 # If running profiling, choose which function to line profile. Choices are: model, runsim, makesimpars, interp
-functiontoprofile = 'model' 
+functiontoprofile = 'runsim' 
 
 
 ############################################################################################################################
