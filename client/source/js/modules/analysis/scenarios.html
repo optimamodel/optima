@@ -40,7 +40,8 @@
                 <tfoot>
                   <tr>
                     <td colspan="6" class="text-right">
-                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Program'}, 'add', $event)">Add a program scenario</button>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Budget'}, 'add', $event)">Add a budget scenario</button>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Coverage'}, 'add', $event)">Add a coverage scenario</button>
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'Parameter'}, 'add', $event)">Add a parameter scenario</button>
                     </td>
                   </tr>
@@ -57,12 +58,12 @@
         </div>
     </div>
 
-    <div class="grid section">
+    <div class="grid">
       <div class="12">
         <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
         <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
       </div>
-      <div>
+      <div class="flex_container">
         <div ng-repeat="chart in graphs" class="chart-container __small">
           <div mpld3-chart="chart" id="{{ chart.id }}"></div>
           <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>

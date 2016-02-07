@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -131,6 +131,7 @@ def pygui(tmpresults, toplot=None):
     '''
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     results = tmpresults # Copy results to global variable  
+    if type(results)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
     
     ## Define options for selection
     plotselections = getplotselections(results)
@@ -469,6 +470,7 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
     if pops is None: pops = Ellipsis # This is a slice
     elif isnumber(pops): pops = [pops]
     if pops is not Ellipsis: plottitle = str(array(project.parsets[0].popkeys)[array(pops)])
+    else: plottitle = 'All populations'
     legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.02, 1), 'fontsize':11, 'title':''}
     nocolor = (0.9,0.9,0.9)
     labels = project.settings.statelabels
@@ -565,8 +567,10 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
         try: parslist = tmp.pars[0] # If it's a parset
         except: pass
     if type(parslist)!=list: parslist = [parslist] # Convert to list
-    
-    
+    try:
+        for i in range(len(parslist)): parslist[i] = parslist[i].pars[0]
+    except: pass
+            
     allplotdata = []
     for pars in parslist:
         count = 0

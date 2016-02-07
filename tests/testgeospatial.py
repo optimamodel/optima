@@ -9,15 +9,15 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2016feb04
+Version: 2016feb05
 """
 
 
 
 ## Define tests to run here!!!
 tests = [
-'forcerefresh',
-'makeprojects',
+#'forcerefresh',
+#'makeprojects',
 #'makeportfolio',
 #'generateBOCs',
 'rungui',
