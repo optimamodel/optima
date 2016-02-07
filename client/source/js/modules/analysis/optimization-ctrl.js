@@ -20,16 +20,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.state = {
       activeProject: activeProject.data,
-      optimizations: [],
-      constraints: constraints,
-      objectives: {}
+      optimizations: []
     };
 
     $scope.addOptimization = function() {
       var add = function (name) {
         $scope.state.activeOptimization = {
           name: name,
-          optimization_type: 'money'
+          optimization_type: 'money',
+          constraints: constraints,
+          objectives: objectives
         };
         $scope.state.optimizations.push($scope.state.activeOptimization);
       };
@@ -42,20 +42,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
 
     $scope.saveOptimization = function() {
-      var constraints = _.map($scope.state.constraints, function(constraint) {
-        return {
-          key: constraint.key,
-          min: constraint.min,
-          max: constraint.max
-        }
-      });
       $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', {
          optimization_type: $scope.state.activeOptimization.optimization_type,
          parset_id: $scope.state.activeOptimization.parset.id,
          name: $scope.state.activeOptimization.name,
          progset_id: $scope.state.activeOptimization.programSet.id,
-         constraints: constraints,
-         objective: $scope.state.objectives
+         constraints: $scope.state.activeOptimization.constraints,
+         objective: $scope.state.activeOptimization.objectives
         }).
         success(function (response) {
           console.log('response', response);
@@ -164,4 +157,27 @@ var constraints = [{
   label: 'Programs for female sex workers and clients',
   min: 0,
   max: undefined
+}];
+
+// this is to be replaced by an api
+var objectives = [{
+  key: 'start',
+  label: 'Year to begin optimization',
+  value: 2017
+},{
+  key: 'end',
+  label: 'Year by which to achiever objectives',
+  value: 2013
+},{
+  key: 'budget',
+  label: 'Starting budget',
+  value: 63500000.0
+},{
+  key: 'deathweight',
+  label: 'Deaths to be averted',
+  value: 0
+},{
+  key: 'infiweight',
+  label: 'Infections to be averted',
+  value: 0
 }];
