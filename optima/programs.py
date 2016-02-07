@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb02
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
 from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
@@ -513,16 +513,29 @@ class Programset(object):
     
     
     
-    def compareoutcomes(self, parset=None, year=None, ind=0):
+    def compareoutcomes(self, parset=None, year=None, ind=0, doprint=False):
         ''' For every parameter affected by a program, return a list comparing the default parameter values with the budget ones '''
+        outcomes = self.getoutcomes(t=year, parset=parset)
+        comparison = list()
+        maxnamelen = 0
+        maxkeylen = 0
+        for key1 in outcomes.keys():
+            for key2 in outcomes[key1].keys():
+                name = parset.pars[ind][key1].name
+                maxnamelen = max(len(name),maxnamelen)
+                maxkeylen = max(len(str(key2)),maxkeylen)
+                parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
+                budgetvalue = outcomes[key1][key2]
+                comparison.append([name, key2, parvalue[0], budgetvalue[0]])
         
-        defaultpars = parset.pars[ind] # WARNING
-        thiscoverage = self.getprogcoverage(budget=budget, t=year, parset=parset) 
-        thisparsdict = self.getpars(coverage=thiscoverage, t=year, parset=parset)
-        
-        comparison = odict()
-        
+        if doprint:
+            for item in comparison:
+                strctrl = '%%%is | %%%is | Par: %%8s | Budget: %%8s' % (maxnamelen, maxkeylen)
+                print(strctrl % (item[0], item[1], sigfig(item[2]), sigfig(item[3])))
+                
         return comparison
+
+
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
