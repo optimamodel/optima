@@ -22,27 +22,27 @@
       <!--  Select a program set to use as baseline  -->
       <div class="o-form__field-wrap c-prosce-modal__input-with-space">
         <label class="o-form__label"> Select a program set to use as baseline </label>
-        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="prog.id as prog.name for prog in progsets[0].programs" required>
+        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="progset.id as progset.name for progset in progsets" required>
          <option value=""> -- Select --</option>
         </select>
       </div>
     </div>
 
-    <div class="o-card _program-scenario-wrap" ng-repeat="rs in row[row.scenario_type] track by $index">
+    <div class="o-card _program-scenario-wrap" ng-repeat="rs in temp track by $index">
       <div class="c-input-table">
 
         <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
           <div class="c-input-table__label">
             Year
           </div>
-          <input type="number" class="c-input-table__input txbox" ng-model="rs.year"/>
+          <input type="number" class="c-input-table__input txbox" ng-model="row.t[$index]"/>
         </div>
 
-        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized">
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized track by $index">
           <div class="c-input-table__label">
-            {{prog.short_name}}
+            {{row.budget[$index].short_name}}
           </div>
-          <input type="text" class="c-input-table__input txbox" ng-model="rs[prog.short_name]"/>
+          <input type="text" class="c-input-table__input txbox" ng-model="row.budget[$index].values[$parent.$index]"/>
         </div>
 
         <div class="o-card__delete" ng-click="removeParam(row, $index)">x</div>
