@@ -173,6 +173,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     effmtct   = simpars['mtctbreast']*simpars['breast'] + simpars['mtctnobreast']*(1-simpars['breast']) # Effective MTCT transmission
     pmtcteff  = (1 - simpars['effpmtct']) * effmtct # Effective MTCT transmission whilst on PMTCT
 
+    # Calculate these things outside of the time loop
+    prepsti = prepeff*stieff
+    prepsticirceff = prepsti*circeff
+    prepsticircconst = prepsti*circconst
+    
+
 
     # Force of infection metaparameter
     force = simpars['force']
@@ -276,7 +282,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # Sex
     for act in ['reg','cas','com']:
         for key in simpars['acts'+act]:
-            this = {}
+            this = odict()
             this['acts'] = simpars['acts'+act][key]
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
@@ -309,11 +315,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     
     # Injection
     for key in simpars['actsinj']:
-        this = {}
+        this = odict()
         this['acts'] = simpars['actsinj'][key]
         this['pop1'] = popkeys.index(key[0])
         this['pop2'] = popkeys.index(key[1])
         injactslist.append(this)
+    
+    # Convert from dicts to tuples to be faster
+    for i,this in enumerate(sexactslist): sexactslist[i] = tuple([this['pop1'],this['pop2'],this['acts'],this['cond'],this['trans']])
+    for i,this in enumerate(injactslist): injactslist[i] = tuple([this['pop1'],this['pop2'],this['acts']])
     
     
     
@@ -372,45 +382,37 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         # Reset force-of-infection vector for each population group, handling circs and uncircs separately
         forceinfvec = zeros((len(sus), npops)) + 0.0001
         
-#        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-#        for this in sexactslist:
-#            acts = this['acts'][t]
-#            cond = this['cond'][t]
-#            pop1 = this['pop1']
-#            pop2 = this['pop2']
-#            thistrans = this['trans']
-#            
-#            if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-#                thisforceinfsusreg  = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]),   (dt*cond*acts*effhivprev[pop2]))
-#                thisforceinfcirc    = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circconst), (dt*cond*acts*effhivprev[pop2]))
-#                forceinfvec[susreg,pop1]   = 1 - (1-forceinfvec[susreg,pop1])   * (1-thisforceinfsusreg)
-#                forceinfvec[progcirc,pop1] = 1 - (1-forceinfvec[progcirc,pop1]) * (1-thisforceinfcirc)
-#            else: # Only have uncircs for females
-#                thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-#                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
-#                
-#            if debug and not all(forceinfvec[:,pop1]>=0):
-#                errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-#                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
-#                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-#                raise OptimaException(errormsg)
-#            
-#        # Injection-related infections -- force-of-infection in pop1 due to pop2
-#        for this in injactslist:
-#            effinj = this['acts'][t]
-#            pop1 = this['pop1']
-#            pop2 = this['pop2']
-#            thisosteff = osteff[t]
-#            
-#            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2]))
-#            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-#                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
-#            
-#            if debug and not all(forceinfvec[:,pop1]>=0):
-#                errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-#                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
-#                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
-#                raise OptimaException(errormsg)
+        # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
+        for pop1,pop2,acts,cond,thistrans in sexactslist:
+            dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
+            thisforceinf = zeros(2)
+            
+            if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
+                thisforceinf[0]     = 1 - mpow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effhivprev[pop2]))
+                thisforceinf[1]     = 1 - mpow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effhivprev[pop2]))
+                forceinfvec[:,pop1] = 1 - (1-forceinfvec[:,pop1])   * (1-thisforceinf)
+            else: # Only have uncircs for females
+                thisforceinf = 1 - mpow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effhivprev[pop2]))
+                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
+                
+            if debug and not all(forceinfvec[:,pop1]>=0):
+                errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
+                for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
+                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                raise OptimaException(errormsg)
+            
+        # Injection-related infections -- force-of-infection in pop1 due to pop2
+        for pop1,pop2,effinj in injactslist:
+            
+            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effhivprev[pop2]))
+            for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
+                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
+            
+            if debug and not all(forceinfvec[:,pop1]>=0):
+                errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
+                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'osteff[t]', 'effhivprev[pop2]']:
+                    errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
+                raise OptimaException(errormsg)
         
         
 
