@@ -11,50 +11,22 @@ define(['angular'], function (module) {
     	
     	$scope.progsetsOptimized = _.filter(progsets[0].programs, {optimizable: true});
 
-    	$scope.budget = {};
-    	$scope.coverage = {};
-
-    	if(angular.isDefined($scope.row.budget)){
-    		$scope.radio = 'budget';
-    		$scope.row.coverage = {};
-    	}else if(angular.isDefined($scope.row.coverage)){
-    		$scope.radio = 'coverage';
-    		$scope.row.budget = {};
-    	}else{
-    		$scope.radio = 'budget';
-    		$scope.row.budget = {};
-    		$scope.row.coverage = {};
+    	if(!angular.isDefined($scope.row[$scope.row.scenario_type])){
+    		$scope.row[$scope.row.scenario_type] = {};
     	}
 
     	$scope.manageScenario = function(){
-    		angular.forEach($scope.progsetsOptimized, function(val){
-	    		$scope.budget[val.short_name] = [];
-	    		$scope.coverage[val.short_name] = [];
-	    	});
-    		
     		var row = {
-    			"scenario_type": scenario.scenario_type,
+    			"scenario_type": $scope.row.scenario_type,
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
-    			"pars": [], 
-    			"t": [], 
-    			"id": scenario.id || null, 
+    			//"t": [], 
+    			"id": $scope.row.id || null, 
     			"progset_id": $scope.row.progset_id || null
     		};
 
-    		row[$scope.radio] = $scope[$scope.radio];
-
-    		angular.forEach($scope.row.pars, function(val, key){
-    			row.t.push(val.year);
-				angular.forEach(val, function(v, k){
-					if(k !== 'year'){
-						row[$scope.radio][k].push(v);
-					}
-				});
-    		});
-
-    		//console.log(JSON.stringify(row));
+			row[$scope.row.scenario_type] = $scope.row[$scope.row.scenario_type];
     		$modalInstance.close(row);
     	};
 

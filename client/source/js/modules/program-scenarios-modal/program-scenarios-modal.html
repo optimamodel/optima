@@ -28,20 +28,7 @@
       </div>
     </div>
 
-    <div class="c-prosce-modal__checkboxes u-layout-horizontal">
-      <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
-        <input name="t" type="radio" id="set-budget-checkbox" value="budget" ng-model="radio" class="c-prosce-modal__checkbox-input">
-        <label for="set-budget-checkbox" class="c-prosce-modal__checkbox-label">Set budget</label>
-      </div>
-
-      <div class="c-prosce-modal__checkbox-wrap c-prosce-modal__input-with-space">
-        <input name="t" type="radio" id="set-coverage-checkbox" value="coverage" ng-model="radio" nclass="c-prosce-modal__checkbox-input">
-        <label for="set-coverage-checkbox" class="c-prosce-modal__checkbox-label">Set coverage goals</label>
-      </div>
-
-    </div>
-
-    <div class="o-card _program-scenario-wrap" ng-repeat="rs in row.pars track by $index">
+    <div class="o-card _program-scenario-wrap" ng-repeat="rs in row[row.scenario_type] track by $index">
       <div class="c-input-table">
 
         <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
