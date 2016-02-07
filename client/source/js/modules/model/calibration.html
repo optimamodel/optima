@@ -85,11 +85,11 @@
   });
 </script>
 
-<!--<div class="grid" style="margin: 0 -25px;">-->
-  <!--<h1>Calibrate model &#8594; Manual calibration</h1>-->
-<!--</div>-->
+<div class="rich" style="margin: -40px 0px;">
 
-<div class="rich" style="margin: 0 -25px;">
+  <div class="grid" style="margin: 0px 0px;">
+    <h1>Manual calibration</h1>
+  </div>
   <div class="3">
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
@@ -112,7 +112,7 @@
 
   <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
     <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
-      <div class="option_list" style="height: calc(100vh - 250px);">
+      <div class="option_list" style="height: calc(100vh - 280px);">
         <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
           <span style="width: 45%">{{parameter.label}}</span>
           <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
@@ -124,14 +124,14 @@
         <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
       </div>
     </div>
-    <div class="chart_wrapper" style="height:calc(100vh - 250px)">
+    <div class="chart_wrapper" style="height:calc(100vh - 280px)">
       <div ng-repeat="chart in calibrationChart" class="chart-container __small">
         <div mpld3-chart="chart" id="{{ chart.id }}"></div>
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
       </div>
     </div>
     <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
-      <div class="option_list" style="height:calc(100vh - 250px)">
+      <div class="option_list" style="height:calc(100vh - 280px)">
         <div ng-repeat="selector in selectors" class="option">
           <span><input type="checkbox" ng-model="selector.checked"/></span>
           <span style="margin-left: 10px">{{selector.name}}</span>
