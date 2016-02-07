@@ -24,14 +24,57 @@
   </div>
 
   <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
-    <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
+    <div class="small_bordered_list" style="width: 22%;">
       <div class="option_list" style="height:62vh">
-        <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
-          <span style="width: 45%">{{parameter.label}}</span>
-          <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 45%">
+            <input type="radio" name="objectives_which" ng-click="objectives.which='outcomes'"/>
+            Minimize outcome
+          </span>
+          <span style="width: 45%">
+            <input type="radio" name="objectives_which" ng-click="objectives.which='money'"/>
+            Minimize money
+          </span>
+        </div>
+        <div class="label">Objectives</div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Baseline year to compare outcomes to</span>
+          <span style="width: 25%">
+            <input class="txbox __inline __m" type="number" ng-model="objectives.base"/>
+          </span>
+        </div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Year to begin optimization</span>
+          <span style="width: 25%">
+            <input class="txbox __inline __m" type="number" ng-model="objectives.start"/>
+          </span>
+        </div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Year by which to achiever objectives</span>
+          <span style="width: 25%">
+            <input class="txbox __inline __m" type="number" ng-model="objectives.to"/>
+          </span>
+        </div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Starting budget</span>
+          <span style="width: 25%">
+            <input class="txbox __inline __m" type="number" ng-model="objectives.budget"/>
+          </span>
+        </div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Fraction of deaths to be averted</span>
+          <span style="width: 25%">
+            <input class="txbox __inline __m" type="number" ng-model="objectives.deathfrac"/>
+          </span>
+        </div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Fraction of new infections to be averted</span>
+          <span style="width: 25%">
+            <input class="txbox __inline __m" type="number" ng-model="objectives.incifrac"/>
+          </span>
         </div>
       </div>
-      <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
+      <div style="display: flex;justify-content: space-around; margin-top: 25px">
         <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/> <!-- WARNING, automatically saves! -->
         <input type="button" value="Save" class="updateGraph btn" ng-click="processGraphs(true)"/>
         <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->

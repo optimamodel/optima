@@ -73,8 +73,14 @@
   }
 
   .option {
-    padding: 10px 2px;
+    padding: 3px 2px;
     display: flex;
+  }
+
+  .label {
+    margin: 5px 8px;
+    font-size: 15px;
+    font-weight: 600;
   }
 }
 

@@ -7,9 +7,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    */
   module.controller('AnalysisOptimizationController', function ($scope, $http, modalService, activeProject) {
 
-    $scope.activeProject = activeProject.data;
-
-    if (!$scope.activeProject.has_data) {
+    if (!activeProject.data.has_data) {
       modalService.inform(
         function (){ },
         'Okay',
@@ -19,6 +17,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.missingData = true;
       return;
     }
+
+
+    $scope.state = {
+      activeProject: activeProject.data,
+      objectives: {}
+    };
+
+    $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations').
+      success(function (response) {
+        console.log('response', response);
+      });
 
 
   });
