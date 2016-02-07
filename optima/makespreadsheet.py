@@ -659,7 +659,7 @@ class OptimaSpreadsheet:
             'CD4(500) to CD4(350-500)',
             'CD4(350-500) to CD4(200-350)',
             'CD4(200-350) to CD4(50-200)',
-            'CD4(50-200) to CD4(<50)'
+            'CD4(50-200) to CD4(<50)',
             'People on unsuppressive ART who progress (%)'], 
             [4.14, 1.05, 0.33, 0.27, 0.67, 0.4], 
             [2.00, 0.86, 0.32, 0.25, 0.44, 0.3], 
