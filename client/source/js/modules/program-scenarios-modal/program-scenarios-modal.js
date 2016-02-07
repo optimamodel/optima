@@ -16,10 +16,10 @@ define(['angular'], function (module) {
       }
       $scope.temp = Array($scope.row.t.length);
 
-      if (!$scope.row.budget) {
-        $scope.row.budget = [];
+      if (!$scope.row[$scope.row.scenario_type]) {
+        $scope.row[$scope.row.scenario_type] = [];
         _.forEach($scope.progsetsOptimized, function (progset) {
-          $scope.row.budget.push(
+          $scope.row[$scope.row.scenario_type].push(
             {'program': progset.short_name, 'values': []}
           );
         });
@@ -32,10 +32,10 @@ define(['angular'], function (module) {
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
     			"t": $scope.row.t,
-          "budget": $scope.row.budget,
-    			"id": $scope.row.id || null, 
+    			"id": $scope.row.id || null,
     			"progset_id": $scope.row.progset_id || null
     		};
+        row[$scope.row.scenario_type] = $scope.row[$scope.row.scenario_type];
     		$modalInstance.close(row);
     	};
 
