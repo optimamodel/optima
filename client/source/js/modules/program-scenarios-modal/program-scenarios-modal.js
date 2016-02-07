@@ -39,7 +39,7 @@ define(['angular'], function (module) {
     		});
     		//
     		var row = {
-    			"scenario_type": scenario.scenario_type, 
+    			"scenario_type": scenario.scenario_type,
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
