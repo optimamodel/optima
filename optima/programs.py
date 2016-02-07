@@ -750,7 +750,7 @@ class Program(object):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
-        from pylab import figure, figtext, isinteractive, ioff, ion, close
+        from pylab import figure, figtext, isinteractive, ioff, ion, close, show
         from matplotlib.ticker import MaxNLocator
         import textwrap
         
@@ -844,7 +844,8 @@ class Program(object):
         
         # Tidy up
         if not doplot: close(cost_coverage_figure)
-        if wasinteractive: ion() 
+        if wasinteractive: ion()
+        if doplot: show()
 
         return cost_coverage_figure
 

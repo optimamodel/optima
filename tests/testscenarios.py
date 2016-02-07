@@ -20,7 +20,7 @@ tests = [
 
 from optima import tic, toc, blank, pd # analysis:ignore
 
-if 'doplot' not in locals(): doplot = True
+if 'doplot' not in locals(): doplot = False
 showstats = True
 
 def done(t=0):
