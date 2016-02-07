@@ -41,3 +41,4 @@
 0.887 2016-Feb-06_21:26:25 4a1a097 speeding-up-model
 0.419 2016-Feb-07_01:50:18 b37023d comparison-table
 0.434 2016-Feb-07_05:13:46 710709d autofit-debugging
+1.23 2016-Feb-07_12:46:56 f308af8 autofit-debugging
