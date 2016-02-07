@@ -81,7 +81,7 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     
     if type(progset)==Programset:
         defaultbudget = sum(progset.getdefaultbudget()[:])
-    if type(project)==Programset: # Not actually a project, but proceed anyway
+    elif type(project)==Programset: # Not actually a project, but proceed anyway
         defaultbudget = sum(project.getdefaultbudget()[:])
     elif project is not None:
         if progset is None: progset = 0
