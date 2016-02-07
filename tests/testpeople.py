@@ -9,10 +9,11 @@ import optima as op
 import os
 
 
-refresh = False # Creates defaultpeople.ppl rather than copares
-P = op.defaults.defaultproject('generalized')
+refresh = 0 # Creates defaultpeople.ppl rather than copares
+eps = 1e-3 # Don't expect a totally exact match
 filename = 'defaultpeople.ppl'
 
+P = op.defaults.defaultproject('generalized')
 newpeople = P.results[0].raw[0]['people']
 
 if refresh or not(os.path.exists(filename)):
@@ -22,12 +23,12 @@ else:
     oldpeople = op.loadobj(filename)
     diffpeople = newpeople-oldpeople
     
-    if (diffpeople!=0).any(): # If not every element is a real number >0, throw an error
+    if (diffpeople>eps).any(): # If not every element is a real number >0, throw an error
         for t in range(shape(diffpeople)[2]): # Loop over all heath states
             for errstate in range(shape(diffpeople)[0]): # Loop over all heath states
                 for errpop in range(shape(diffpeople)[1]): # Loop over all populations
                     if diffpeople[errstate,errpop,t]!=0:
-                        errormsg = 'WARNING, People do not match!\npeople[%i, %i, %i] = %f vs. %f' % (errstate, errpop, t, oldpeople[errstate,errpop,t], newpeople[errstate,errpop,t])
+                        errormsg = 'WARNING, people do not match!\npeople[%i, %i, %i] = %f vs. %f' % (errstate, errpop, t, oldpeople[errstate,errpop,t], newpeople[errstate,errpop,t])
                         raise Exception(errormsg)
     else:
-        print('People are the same, yay!')
+        print('People are the same, yay! (max diff: %s)' % diffpeople.max())

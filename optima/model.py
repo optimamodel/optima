@@ -801,13 +801,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ###############################################################################
             
             # Reconcile population sizes
-            for p in range(npops):
-                thissusreg = people[susreg,p,t+1]
-                thisprogcirc = people[progcirc,p,t+1]
-                allsus = thissusreg+thisprogcirc
-                newpeople = popsize[p,t+1] - people[:,p,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-                people[susreg,p,t+1]   += newpeople*thissusreg/allsus # Add new people
-                people[progcirc,p,t+1] += newpeople*thisprogcirc/allsus # Add new people
+            thissusreg = people[susreg,:,t+1]
+            thisprogcirc = people[progcirc,:,t+1]
+            allsus = thissusreg+thisprogcirc
+            newpeople = popsize[:,t+1] - people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+            people[susreg,:,t+1]   += newpeople*thissusreg/allsus # Add new people
+            people[progcirc,:,t+1] += newpeople*thisprogcirc/allsus # Add new people
             
             # Handle circumcision
             circppl = dcp(numcirc[:,t])
