@@ -315,7 +315,7 @@ class Programset(object):
         return popcoverage
 
 
-    def getoutcomes(self,coverage, t, parset=None, results=None, perturb=False,coveragepars=coveragepars):
+    def getoutcomes(self, coverage, t, parset=None, results=None, perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
 
         # Initialise output
@@ -326,6 +326,8 @@ class Programset(object):
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
+            if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
         nyrs = len(t)
