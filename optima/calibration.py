@@ -77,9 +77,13 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
 
 def autofit(project=None, name=None, fitwhat=None, fitto=None, method='mad', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
     ''' 
-    Function to automatically fit parameters.
+    Function to automatically fit parameters. Parameters:
+        fitwhat = which parameters to vary to improve the fit; these are defined in parameters.py under the 'auto' attribute; default is 'force' (FOI metaparameters only)
+        fitto = what kind of data to fit to; options are anything in results.main; default is 'prev' (prevalence) or everything
+        method = which method of calculating the objective/goodness-of-fit to use; default mean absolute deviation to place less weight on outliers
+    Others should be self-explanatory.
     
-    Version: 2016feb06 by cliffk
+    Version: 2016feb07 by cliffk
     '''
     if doplot: # Store global information for debugging
         global autofitfig, autofitresults
