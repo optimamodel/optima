@@ -813,7 +813,15 @@ class OptimizationsDb(db.Model):
 
     __tablename__ = 'optimizations'
 
-    resource_fields = {}
+    resource_fields = {
+        'id': Uuid,
+        'optimization_type': fields.String,
+        'name': fields.String,
+        'parset_id': Uuid,
+        'progset_id': Uuid,
+        'objectives': Json(),
+        'constraints': Json()
+    }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
