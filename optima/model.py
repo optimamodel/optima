@@ -380,20 +380,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         ###############################################################################
         
         # Reset force-of-infection vector for each population group, handling circs and uncircs separately
-        forceinfvec = zeros((len(sus), npops)) + 0.0001
+        forceinfvec = zeros((len(sus), npops))
+        thisforceinfsex = zeros(2)
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
         for pop1,pop2,acts,cond,thistrans in sexactslist:
             dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
-            thisforceinf = zeros(2)
             
             if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-                thisforceinf[0]     = 1 - mpow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effhivprev[pop2]))
-                thisforceinf[1]     = 1 - mpow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effhivprev[pop2]))
-                forceinfvec[:,pop1] = 1 - (1-forceinfvec[:,pop1])   * (1-thisforceinf)
+                thisforceinfsex[0]     = 1 - mpow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effhivprev[pop2]))
+                thisforceinfsex[1]     = 1 - mpow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effhivprev[pop2]))
+                forceinfvec[:,pop1] = 1 - (1-forceinfvec[:,pop1])   * (1-thisforceinfsex)
             else: # Only have uncircs for females
-                thisforceinf = 1 - mpow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effhivprev[pop2]))
-                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
+                thisforceinfsex[0] = 1 - mpow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effhivprev[pop2]))
+                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinfsex[0])
                 
             if debug and not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
@@ -404,9 +404,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         # Injection-related infections -- force-of-infection in pop1 due to pop2
         for pop1,pop2,effinj in injactslist:
             
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effhivprev[pop2]))
+            thisforceinfinj = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effhivprev[pop2]))
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
+                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinfinj)
             
             if debug and not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
