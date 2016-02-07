@@ -1,12 +1,14 @@
-<div class="grid">
-  <h1>Manage project &#8594; Upload new project</h1>
-</div>
+<!--<div class="grid">-->
+  <!--<h1>Manage project &#8594; Upload new project</h1>-->
+<!--</div>-->
 
 <div class="rich">
+
 
   <form id="createForm" name="UploadProjectForm" method="post" ng-submit="uploadProject()" novalidate="novalidate">
 
     <div class="section grid">
+      <h1>Upload new project</h1>
       <div class="4 8++">
         <label><b>Project name</b></label>
         <input class="txbox" type="text" name="ProjectName" placeholder="e.g. Example" ng-model="projectParams.name" required>
@@ -21,7 +23,7 @@
       </div>
     </div>
 
-    <div class="section">
+    <div class="section grid">
       <button class="btn __green" type="submit">Upload Project</button>
     </div>
 
