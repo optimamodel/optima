@@ -15,11 +15,12 @@ define(['angular'], function (module) {
         $scope.row.t = [];
       }
       $scope.temp = Array($scope.row.t.length);
+      $scope.type = $scope.row.scenario_type.toLowerCase();
 
-      if (!$scope.row[$scope.row.scenario_type]) {
-        $scope.row[$scope.row.scenario_type] = [];
+      if (!$scope.row[$scope.type]) {
+        $scope.row[$scope.type] = [];
         _.forEach($scope.progsetsOptimized, function (progset) {
-          $scope.row[$scope.row.scenario_type].push(
+          $scope.row[$scope.type].push(
             {'program': progset.short_name, 'values': []}
           );
         });
@@ -27,7 +28,7 @@ define(['angular'], function (module) {
 
       $scope.manageScenario = function(){
     		var row = {
-    			"scenario_type": $scope.row.scenario_type,
+    			"scenario_type": $scope.type,
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
@@ -35,7 +36,7 @@ define(['angular'], function (module) {
     			"id": $scope.row.id || null,
     			"progset_id": $scope.row.progset_id || null
     		};
-        row[$scope.row.scenario_type] = $scope.row[$scope.row.scenario_type];
+        row[$scope.type] = $scope.row[$scope.type];
     		$modalInstance.close(row);
     	};
 

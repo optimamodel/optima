@@ -40,7 +40,7 @@
 
         <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized track by $index">
           <div class="c-input-table__label">
-            {{row[row.scenario_type][$index].program}}
+            {{row[type][$index].program}}
           </div>
           <input type="text" class="c-input-table__input txbox" ng-model="row.budget[$index].values[$parent.$index]"/>
         </div>
