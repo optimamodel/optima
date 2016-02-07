@@ -50,15 +50,15 @@
               <input
                 type="radio"
                 name="objectives_which"
-                ng-click="state.activeOptimization.optimization_type='outcomes'"
-                ng-checked="state.activeOptimization.optimization_type==='outcomes'"/>
+                ng-click="setType('outcome')"
+                ng-checked="state.activeOptimization.optimization_type==='outcome'"/>
               Minimize outcome
             </span>
             <span style="width: 45%">
               <input
                 type="radio"
                 name="objectives_which"
-                ng-click="state.activeOptimization.optimization_type='money'"
+                ng-click="setType('money')"
                 ng-checked="state.activeOptimization.optimization_type==='money'"/>
               Minimize money
             </span>
@@ -69,7 +69,7 @@
           <div style="justify-content: space-around" class="option" ng-repeat="objective in state.activeOptimization.objectives">
             <span style="width: 70%">{{objective.label}}</span>
             <span style="width: 25%">
-              <input class="txbox __inline __m" type="number" ng-model="objectives.value"/>
+              <input class="txbox __inline __m" type="number" ng-model="objective.value"/>
             </span>
           </div>
         </div>

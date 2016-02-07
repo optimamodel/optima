@@ -23,13 +23,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       optimizations: []
     };
 
+    $scope.setType = function(optimizationType) {
+      $scope.state.activeOptimization.optimization_type = optimizationType;
+      $scope.state.activeOptimization.objectives = objectives[optimizationType];
+    };
+
     $scope.addOptimization = function() {
       var add = function (name) {
         $scope.state.activeOptimization = {
           name: name,
           optimization_type: 'money',
           constraints: constraints,
-          objectives: objectives
+          objectives: objectives.money
         };
         $scope.state.optimizations.push($scope.state.activeOptimization);
       };
@@ -160,24 +165,55 @@ var constraints = [{
 }];
 
 // this is to be replaced by an api
-var objectives = [{
-  key: 'start',
-  label: 'Year to begin optimization',
-  value: 2017
-},{
-  key: 'end',
-  label: 'Year by which to achiever objectives',
-  value: 2013
-},{
-  key: 'budget',
-  label: 'Starting budget',
-  value: 63500000.0
-},{
-  key: 'deathweight',
-  label: 'Deaths to be averted',
-  value: 0
-},{
-  key: 'infiweight',
-  label: 'Infections to be averted',
-  value: 0
-}];
+var objectives = {
+  outcome: [{
+    key: 'base',
+    label: 'Baseline year to compare outcomes to',
+    value: undefined
+  },{
+    key: 'start',
+    label: 'Year to begin optimization',
+    value: 2017
+  },{
+    key: 'end',
+    label: 'Year by which to achiever objectives',
+    value: 2013
+  },{
+    key: 'budget',
+    label: 'Starting budget',
+    value: 63500000.0
+  },{
+    key: 'deathweight',
+    label: 'Relative weight per death',
+    value: 0
+  },{
+    key: 'inciweight',
+    label: 'Relative weight per new infection',
+    value: 0
+  }],
+  money: [{
+    key: 'base',
+    label: 'Baseline year to compare outcomes to',
+    value: undefined
+  },{
+    key: 'start',
+    label: 'Year to begin optimization',
+    value: 2017
+  },{
+    key: 'end',
+    label: 'Year by which to achiever objectives',
+    value: 2013
+  },{
+    key: 'budget',
+    label: 'Starting budget',
+    value: 63500000.0
+  },{
+    key: 'deathfrac',
+    label: 'Fraction of deaths to be averted',
+    value: 0
+  },{
+    key: 'incifrac',
+    label: 'Fraction of infections to be averted',
+    value: 0
+  }]
+};
