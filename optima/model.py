@@ -853,7 +853,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, debug=False, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -866,6 +866,10 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
+    try:
+        raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
+    except: 
+        printv('Running model failed; running again with debugging...', 1, verbose)
+        raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, simpars=simpars, data=data, domake=True) # Create structure for storing results
     return results
