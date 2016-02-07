@@ -59,6 +59,7 @@ Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	casc
 PLHIV aware of their status (%)	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
 Diagnosed PLHIV in care (%)	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
 PLHIV in care on treatment (%)	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
+People on ART with viral suppression (%)	propsupp	(0, 1)	tot	timepar	no	no	0	0	1	None
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None

@@ -7,13 +7,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.2 (2016feb06)
+    Version: 1.3 (2016feb07)
     """
     
     
-    ###############################################################################
-    ## Setup
-    ###############################################################################
+    
+    ##################################################################################################################
+    ### Setup
+    ##################################################################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
@@ -193,11 +194,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     
     
     
-    ###########################################
-    # Set initial epidemic conditions 
-    ###########################################
+    #################################################################################################################
+    ### Set initial epidemic conditions 
+    #################################################################################################################
     
     # Set parameters
+    raise Exception('The values coded here are just for roughly estimating initial conditions!!!!')
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     fraccare = 0.5         # Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
@@ -260,12 +262,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
+    if usecascade:
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     
     
-    ###############################################################################
-    ## Compute the effective numbers of acts outside the time loop
-    ###############################################################################
+    ##################################################################################################################
+    ### Compute the effective numbers of acts outside the time loop
+    ##################################################################################################################
     sexactslist = []
     injactslist = []
     
@@ -336,9 +340,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 
                 
                 
-    ###############################################################################
-    ## Run the model -- numerically integrate over time
-    ###############################################################################
+    ##################################################################################################################
+    ### Run the model -- numerically integrate over time
+    ##################################################################################################################
 
     for t in range(npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
@@ -423,9 +427,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-        ###############################################################################
-        ## The ODEs
-        ###############################################################################
+        ##############################################################################################################
+        ### The ODEs
+        ##############################################################################################################
     
         ## Set up
     
@@ -742,9 +746,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-        ###############################################################################
-        ## Update next time point and check for errors
-        ###############################################################################
+        ##############################################################################################################
+        ### Update next time point and check for errors
+        ##############################################################################################################
 
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
