@@ -154,6 +154,8 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     project_instance = op.loads(wp.project)
     close_db_session(db_session)
     result = None
+    if not objectives['budget']:
+        objectives['budget'] = 1000000
     try:
         result = project_instance.optimize(
             name = optimization_name,
