@@ -28,6 +28,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state.activeOptimization.objectives = objectives[optimizationType];
     };
 
+    $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations').
+      success(function (response) {
+        console.log('response', response);
+      });
+
     $scope.addOptimization = function() {
       var add = function (name) {
         $scope.state.activeOptimization = {
@@ -41,20 +46,69 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       openOptimizationModal(add, 'Add optimization', $scope.state.optimizations, null, 'Add');
     };
 
-    $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations').
-      success(function (response) {
-        console.log('response', response);
-      });
+    // Open pop-up to re-name Optimization
+    $scope.renameOptimization = function () {
+      if (!$scope.state.activeOptimization) {
+        modalService.informError([{message: 'No optimization selected.'}]);
+      } else {
+        var rename = function (name) {
+          $scope.state.activeOptimization.name = name;
+        };
+        openOptimizationModal(rename, 'Rename optimization', $scope.state.optimizations, $scope.state.activeOptimization.name, 'Rename', true);
+      }
+    };
+
+    // Copy Optimization
+    $scope.copyOptimization = function() {
+      if (!$scope.state.activeOptimization) {
+        modalService.informError([{message: 'No optimization selected.'}]);
+      } else {
+        var rename = function (name) {
+          var copyOptimization = angular.copy($scope.state.activeOptimization);
+          copyOptimization.name = name;
+          $scope.state.activeOptimization = copyOptimization;
+          $scope.state.optimizations.push($scope.state.activeOptimization);
+        };
+        openOptimizationModal(rename, 'Copy optimization', $scope.optimizations, $scope.state.activeOptimization.name + ' copy', 'Copy');
+      }
+    };
+
+    // Delete optimization
+    $scope.deleteOptimization = function() {
+      if (!$scope.state.activeOptimization) {
+        modalService.informError([{message: 'No optimization selected.'}]);
+      } else {
+        var remove = function () {
+          $scope.state.optimizations = _.filter($scope.state.optimizations, function (optimization) {
+            return optimization.name !== $scope.state.activeOptimization.name;
+          });
+          if($scope.state.optimizations && $scope.state.optimizations.length > 0) {
+            $scope.state.activeOptimization = $scope.state.optimizations[0];
+          } else {
+            $scope.state.activeOptimization = undefined;
+          }
+        };
+        modalService.confirm(
+          function () {
+            remove()
+          }, function () {
+          }, 'Yes, remove this optimization', 'No',
+          'Are you sure you want to permanently remove optimization "' + $scope.state.activeOptimization.name + '"?',
+          'Delete optimization'
+        );
+      }
+    };
 
     $scope.saveOptimization = function() {
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', {
-         optimization_type: $scope.state.activeOptimization.optimization_type,
-         parset_id: $scope.state.activeOptimization.parset.id,
-         name: $scope.state.activeOptimization.name,
-         progset_id: $scope.state.activeOptimization.programSet.id,
-         constraints: $scope.state.activeOptimization.constraints,
-         objective: $scope.state.activeOptimization.objectives
-        }).
+      var optimizationData = {
+        optimization_type: $scope.state.activeOptimization.optimization_type,
+        parset_id: $scope.state.activeOptimization.parset.id,
+        name: $scope.state.activeOptimization.name,
+        progset_id: $scope.state.activeOptimization.programSet.id,
+        constraints: $scope.state.activeOptimization.constraints,
+        objective: $scope.state.activeOptimization.objectives
+      };
+      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', optimizationData).
         success(function (response) {
           console.log('response', response);
         });
@@ -105,6 +159,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   });
 });
+
+//todo: add validations, comment code
 
 // this is to be replaced by an api
 var constraints = [{

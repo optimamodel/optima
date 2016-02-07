@@ -132,7 +132,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.activeParset.name = name;
           });
         };
-        openParameterSetModal(rename, 'Copy parameter set', $scope.parsets, $scope.activeParset.name, 'Rename', true);
+        openParameterSetModal(rename, 'Rename parameter set', $scope.parsets, $scope.activeParset.name, 'Rename', true);
       }
     };
 
