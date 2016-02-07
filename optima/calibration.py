@@ -224,7 +224,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
         allmismatches = []
         count = 0
         mismatch = 0
-        if doplot: debugdata = odict()
+        if doplot: debugdata = []
         if fitto is None: fitto = results.main # If not specified, use everything
         for key in fitto: # The results! e.g. key='prev'
             try: this = results.main[key]
@@ -238,15 +238,12 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
                     datarows = tmpdata[bestindex] # Pull out data without uncertainty
                     modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- WARNING, should be another index!
                     nrows = len(datarows)
-                    if doplot: debugdata[key] = odict()
                     for row in range(nrows): # Loop over each available row
                         datarow = datarows[row]
                         if nrows==1: modelrow = modelrows # WARNING, kludgy, should have the same shape!
                         else: modelrow = modelrows[row]
                         datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
-                        if doplot and len(datax): 
-                            rowname = 'total' if nrows==1 else pars['popkeys'][row]
-                            debugdata[key][rowname] = odict([('name',key), ('row',row), ('x',[]), ('modely',[]), ('datay',[])])
+                        if doplot: rowname = 'total' if nrows==1 else pars['popkeys'][row]
                         for i,year in enumerate(datax): # Loop over each data point available
                             count += 1
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
@@ -256,10 +253,9 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
                             mismatch += thismismatch
                             
                             if doplot:
-                                printv('#%i. Key="%s" pop="%s" year=%f datay=%f modely=%f thismis=%f totmis=%f' % (count, key, rowname, year, datay[i], modely, thismismatch, mismatch), 4, verbose)
-                                debugdata[key][rowname]['x'].append(year)
-                                debugdata[key][rowname]['datay'].append(datay[i])
-                                debugdata[key][rowname]['modely'].append(modely)
+                                tmpdebugdata = (count, key, rowname, year, datay[i], modely, thismismatch, mismatch)
+                                printv('#%i. Key="%s" pop="%s" year=%f datay=%f modely=%f thismis=%f totmis=%f' % tmpdebugdata, 4, verbose)
+                                debugdata.append(tmpdebugdata)
                             
         
         if doplot:
@@ -268,9 +264,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
             autofitresults['allmismatches'].append(array(allmismatches).flatten()) #  Append mismatch
             
             autofitfig.clear()
-            nplots = sum([len(debugdata[key]) for key in debugdata.keys()])+2 # 1 is the mismatch
-            rowscols = ceil(sqrt(nplots))
-            rows = rowscols
+            nplots = count+2 # 1 is the mismatch
+            rows = ceil(sqrt(nplots))
             cols = rows-1 if rows*(rows-1)>=nplots else rows
             
             subplot(rows,cols,1)
@@ -286,8 +281,18 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
             ylabel('Mismatch')
             ylim((0,ylim()[1]))
             
+            # Process data for plotting
+            plotdata = odict()
+            for count,key,rowname,year,datay,modely,thismismatch,mismatch in debugdata:
+                if key not in plotdata: plotdata[key] = odict()
+                if rowname not in plotdata[key]: 
+                    plotdata[key][rowname] = odict([('x',[]), ('datay',[]), ('modely',[])])
+                plotdata[key][rowname]['x'].append(year)
+                plotdata[key][rowname]['datay'].append(datay)
+                plotdata[key][rowname]['modely'].append(modely)
+            
             count = 0
-            for key1,tmp1 in debugdata.items():
+            for key1,tmp1 in plotdata.items():
                 for key2,tmp2 in tmp1.items():
                     count += 1
                     print('    key=%s row=%s count=%i' % (key1, key2, count))
