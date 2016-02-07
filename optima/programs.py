@@ -244,7 +244,7 @@ class Programset(object):
         coverage = odict()
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
             budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
@@ -271,7 +271,7 @@ class Programset(object):
         budget = odict()
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if not isinstance(coverage,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(coverage,odict): budget = odict(budget)
         coverage = coverage.sort([p.short for p in self.programs.values()])
@@ -493,8 +493,8 @@ class Programset(object):
                 
                 # Remove years after the last good year
                 if last_t < max(thispar.t[pop]):
-                    thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
-                    thispar.y[pop] = thispar.y[pop][thispar.t[pop] <= last_t]
+                    thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
+                    thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
                 
                 # Append the last good year, and then the new years
                 thispar.t[pop] = append(thispar.t[pop], last_t)
