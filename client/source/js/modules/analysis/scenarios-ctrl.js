@@ -256,7 +256,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         //initialize();
 
         $scope.progset_name = function(progset_id) {
-          var progset = _.filter($scope.progsets, {id: progset_id});
+          var progset = _.filter($scope.progsets[0].programs, {id: progset_id});
           if (progset.length > 0) {
             return progset[0].name;
           }

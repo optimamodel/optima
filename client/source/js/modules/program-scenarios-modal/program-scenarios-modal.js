@@ -9,46 +9,52 @@ define(['angular'], function (module) {
         $scope.ykeys = ykeys.data.keys;
     	$scope.openProject = openProject.populations;
     	
-    	$scope.params = [];
-    	$scope.par = {};
-    	$scope.forData = [];
-    	
-        $scope.parsForSelectedParset = function(row) {
-            var parset = _.filter($scope.parsets, {id: row.parset_id});
-            if (parset.length > 0) {
-                return _.filter(parset[0].pars[0], {visible: 1});
-            }
-            return [];
-        };
+    	$scope.progsetsOptimized = _.filter(progsets[0].programs, {optimizable: true});
 
-        $scope.popsForParam = function(param, row) {
-            if ($scope.ykeys.hasOwnProperty(row.parset_id) && $scope.ykeys[row.parset_id].hasOwnProperty(param)) {
-                return $scope.ykeys[row.parset_id][param];
-            }
-            return [];
-        };
+    	$scope.budget = {};
+    	$scope.coverage = {};
 
-    	$scope.populateForData = function(data){
-    		$scope.forData = JSON.parse(data);
-    	};
+    	if(angular.isDefined($scope.row.budget)){
+    		$scope.radio = 'budget';
+    		$scope.row.coverage = {};
+    	}else if(angular.isDefined($scope.row.coverage)){
+    		$scope.radio = 'coverage';
+    		$scope.row.budget = {};
+    	}else{
+    		$scope.radio = 'budget';
+    		$scope.row.budget = {};
+    		$scope.row.coverage = {};
+    	}
 
     	$scope.manageScenario = function(){
-    		// As pars.for is expecting a array on BE
-    		angular.forEach($scope.row.pars, function(v){
-    			v.for = [v.for];
-    		});
-    		//
+    		angular.forEach($scope.progsetsOptimized, function(val){
+	    		$scope.budget[val.short_name] = [];
+	    		$scope.coverage[val.short_name] = [];
+	    	});
+    		
     		var row = {
     			"scenario_type": scenario.scenario_type,
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
-    			"pars": $scope.row.pars, 
-    			//"pars": $scope.params, 
+    			"pars": [], 
+    			"t": [], 
     			"id": scenario.id || null, 
     			"progset_id": $scope.row.progset_id || null
     		};
 
+    		row[$scope.radio] = $scope[$scope.radio];
+
+    		angular.forEach($scope.row.pars, function(val, key){
+    			row.t.push(val.year);
+				angular.forEach(val, function(v, k){
+					if(k !== 'year'){
+						row[$scope.radio][k].push(v);
+					}
+				});
+    		});
+
+    		//console.log(JSON.stringify(row));
     		$modalInstance.close(row);
     	};
 
@@ -66,7 +72,7 @@ define(['angular'], function (module) {
         };
 
         $scope.closeModal = function() {
-            $modalInstance.close();
+            $modalInstance.close($scope.row);
         };
 
     });
