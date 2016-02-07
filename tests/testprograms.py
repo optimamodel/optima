@@ -341,6 +341,7 @@ if 'makeprograms' in tests:
                                 parset=P.parsets['default'])
     
     R.getoutcomes(defaultcoverage, t=2015, parset=P.parsets['default'])
+    R.getoutcomes(t=2015, parset=P.parsets['default'])
             
 
     # 13. Get an odict of the ALL parameter values corresponding to a vector of program allocations

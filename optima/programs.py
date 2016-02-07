@@ -200,7 +200,7 @@ class Programset(object):
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if isinstance(t,ndarray): t = t.tolist()
 
         # Set up internal variables
@@ -315,7 +315,7 @@ class Programset(object):
         return popcoverage
 
 
-    def getoutcomes(self, coverage, t, parset=None, results=None, perturb=False,coveragepars=coveragepars):
+    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
 
         # Initialise output
@@ -326,6 +326,8 @@ class Programset(object):
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        if coverage is None:
+            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results)
         for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
             if isnumber(coventry): coverage[covkey] = [coventry]
 
