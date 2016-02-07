@@ -154,7 +154,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         // Helper function to open a population modal
         var openScenarioModal = function(scenario, parsets, progsets) {
-          if(scenario.scenario_type === "Program"){
+          if(scenario.scenario_type === "Budget" || scenario.scenario_type === 'Coverage'){
             return $modal.open({
               templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
               controller: 'ProgramScenariosModalController',
