@@ -5,17 +5,18 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan09 by cliffk
+Version: 2016feb06 by cliffk
 """
 
 ## Define tests to run here!!!
 tests = [
 #'attributes',
-'sensitivity',
+#'sensitivity',
 #'manualfit',
-'autofit',
+#'autofit',
 #'autofitmulti',
 #'longfit',
+'debugautofit',
 ]
 
 
@@ -184,7 +185,15 @@ if 'longfit' in tests:
 
 
 
+## Debug autofit test
+if 'debugautofit' in tests:
+    t = tic()
 
+    print('Running autofit debugging test...')
+    from optima import Project
+    P = Project(spreadsheet='generalized.xlsx')
+    
+    done(t)
 
 
 
