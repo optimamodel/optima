@@ -329,10 +329,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     ## Births precalculation
     birthslist = []
     for p1 in range(npops): # WARNING, should only loop over child populations
+        alleligbirthrate = zeros(npts)
+        for t in range(npts): # WARNING, could be made more efficient, it's just that the matrix multiplications get complicated -- npops x npts...
+            alleligbirthrate[t] = sum(birthtransit[p1, :] * birth[p1, t]) # Births to diagnosed mothers eligible for PMTCT
         for p2 in range(npops): # WARNING, should only loop over female populations
             birthrates = birthtransit[p1, p2] * birth[p1, :] # WARNING, vector multiplication!!!! Need to create array
             if birthrates.any():
-                birthslist.append(tuple([p1,p2,birthrates]))
+                birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
                 
                 
                 
@@ -766,15 +769,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ###############################################################################
             
             ## Calculate births
-            for p1,p2,birthrates in birthslist:
+            for p1,p2,birthrates,alleligbirthrate in birthslist:
                 thisbirthrate = birthrates[t]
+                peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
                 popbirths      = thisbirthrate * people[:, p1, t].sum()
                 mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct # Births to undiagnosed mothers
                 mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff # Births to mothers on treatment
-                alleligbirths =  thisbirthrate * people[alldx, p1, t].sum() # Births to diagnosed mothers eligible for PMTCT
-                thiseligbirths = thisbirthrate * people[alldx, p1, t].sum() # Births to diagnosed mothers eligible for PMTCT
+                thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
                 mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
