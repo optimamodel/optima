@@ -757,20 +757,21 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 thisbirthrate = birthrates[t]
                 peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
                 popbirths      = thisbirthrate * people[:, p1, t].sum()
-                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct # Births to undiagnosed mothers
-                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff # Births to mothers on treatment
+                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
+                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
                 thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
                 receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 
-                mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-                mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
-                raw_mtct[p2, t] += popmtct[t]
+                raw_mtct[p2, t] += popmtct
                 
-                people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
-                people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
+                people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
+                people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
 
             
             ## Age-related transitions
