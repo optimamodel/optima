@@ -120,24 +120,23 @@
         <div style="margin-top: 20px">
 
           <select ng-model="state.maxtime">
-            <option value="">Select max time</option>
+            <option value="">Select maximum time</option>
             <option value="10">10 seconds</option>
             <option value="30">30 seconds</option>
             <option value="60">1 minute</option>
             <option value="300">5 minutes</option>
             <option value="600">10 minutes</option>
+            <option value="1800">30 minutes</option>
           </select>
-          <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
-          <div style="font-style: italic;color: lightgreen;margin-top: 5px">
-            {{ statusMessage }}
-          </div>
         </div>
         <div>
           <div style="margin-top: 20px">
             <!--<span style="width: 100px;display: inline-block;"></span>-->
-
+            <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
           </div>
-
+          <div style="font-style: italic;color: lightgreen;margin-top: 5px">
+            {{ statusMessage }}
+          </div>
         </div>
         <div style="margin-top: 20px">
           <div>
