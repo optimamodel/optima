@@ -57,7 +57,12 @@ define([
             .state('analysis.optimization', {
                 url: '/optimization',
                 templateUrl: 'js/modules/analysis/optimization.html',
-                controller: 'AnalysisOptimizationController'
+                controller: 'AnalysisOptimizationController',
+                resolve: {
+                  activeProject: function (projectApiService) {
+                    return projectApiService.getActiveProject();
+                  }
+                }
             });
     });
 
