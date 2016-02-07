@@ -766,7 +766,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
                 mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
                 popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 
                 raw_mtct[p2, t] += popmtct
                 
