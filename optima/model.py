@@ -7,13 +7,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.2 (2016feb06)
+    Version: 1.3 (2016feb07)
     """
     
     
-    ###############################################################################
-    ## Setup
-    ###############################################################################
+    
+    ##################################################################################################################
+    ### Setup
+    ##################################################################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
     cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
@@ -64,12 +65,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         biofailure    = simpars['biofailure']  # biological treatment failure rate (P/T)
         freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
+        progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
+        recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
         # Behavioural transitions between stages [npop,npts]
         immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
         linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)
         stoprate      = simpars['stoprate']      # Percentage of people who receive ART in year who stop taking ART (%/year) (P/T)
         leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
-
+        
+        
     
     # Calculate other things outside the loop
     transinj = simpars['transinj']          # Injecting
@@ -106,7 +110,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     
     # Proportion aware and treated (for 90/90/90)
     propdx = simpars['propdx']
-    if usecascade: propcare = simpars['propcare']
+    if usecascade: 
+        propcare = simpars['propcare']
+        propsupp = simpars['propsupp']
     proptx = simpars['proptx']
 
     # Population sizes
@@ -188,11 +194,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     
     
     
-    ###########################################
-    # Set initial epidemic conditions 
-    ###########################################
+    #################################################################################################################
+    ### Set initial epidemic conditions 
+    #################################################################################################################
     
     # Set parameters
+    raise Exception('The values coded here are just for roughly estimating initial conditions!!!!')
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
     fraccare = 0.5         # Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
@@ -255,12 +262,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
+    if usecascade:
+        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     
     
-    ###############################################################################
-    ## Compute the effective numbers of acts outside the time loop
-    ###############################################################################
+    ##################################################################################################################
+    ### Compute the effective numbers of acts outside the time loop
+    ##################################################################################################################
     sexactslist = []
     injactslist = []
     
@@ -331,9 +340,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 
                 
                 
-    ###############################################################################
-    ## Run the model -- numerically integrate over time
-    ###############################################################################
+    ##################################################################################################################
+    ### Run the model -- numerically integrate over time
+    ##################################################################################################################
 
     for t in range(npts): # Loop over time
         printv('Timestep %i of %i' % (t+1, npts), 4, verbose)
@@ -418,9 +427,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-        ###############################################################################
-        ## The ODEs
-        ###############################################################################
+        ##############################################################################################################
+        ### The ODEs
+        ##############################################################################################################
     
         ## Set up
     
@@ -536,7 +545,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if proptx[t]: # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
-                newtreattot =  proptx[t] * currcare - currtx 
+                newtreattot =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
             else:
                 newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
                 
@@ -566,27 +575,36 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
+            currentusupp = people[usvl,:,t] # how many with suppressed viral load
+            currentsupp  = people[svl,:,t]
+            if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+                currsupp  = currentsupp.sum(axis=0)
+                currusupp = currentusupp.sum(axis=0)
+                newsupptot = (propsupp[t]*currusupp - currsupp).sum()
             # 40% progress, 40% recover, 20% don't change cd4 count
             for cd4 in range(ncd4):
                 if cd4>0: 
-                    progin = dt*prog[cd4-1]*people[usvl[cd4-1],:,t]*0.4
+                    progin = dt*prog[cd4-1]*people[usvl[cd4-1],:,t]*progusvl
                 else: 
                     progin = 0 # Cannot progress into acute stage
                 if cd4<ncd4-1: 
-                    progout = dt*prog[cd4]*people[usvl[cd4],:,t]*0.4
+                    progout = dt*prog[cd4]*people[usvl[cd4],:,t]*progusvl
                 else: 
                     progout = 0 # Cannot progress out of AIDS stage
                 if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
-                    recovin = dt*recov[cd4-1]*people[usvl[cd4+1],:,t]*0.4
+                    recovin = dt*recov[cd4-1]*people[usvl[cd4+1],:,t]*recovusvl
                 else: 
                     recovin = 0 # Cannot recover in to acute or AIDS stage
                 if cd4>1: # CD4>1 stops people from moving back into acute
-                    recovout = dt*recov[cd4-2]*people[usvl[cd4],:,t]*0.4
+                    recovout = dt*recov[cd4-2]*people[usvl[cd4],:,t]*recovusvl
                 else: 
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
                 hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths       = dt * people[usvl[cd4],:,t] * background
-                virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] * reboundwithinint
+                if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+                    virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
+                else:
+                    virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] * reboundwithinint
                 fracalive         = 1. - (death[cd4]*deathtx + background)*dt
                 stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * fraccare  # People stopping ART but still in care
                 stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
@@ -728,9 +746,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-        ###############################################################################
-        ## Update next time point and check for errors
-        ###############################################################################
+        ##############################################################################################################
+        ### Update next time point and check for errors
+        ##############################################################################################################
 
         # Ignore the last time point, we don't want to update further
         if t<npts-1:

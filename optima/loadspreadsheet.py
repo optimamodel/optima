@@ -6,7 +6,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.3 (2016feb04) by cliffk
+    Version: 1.4 (2016feb07) by cliffk
     """
     
     ###########################################################################
@@ -92,7 +92,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
     sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast', 'treatvs']
-    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx']
+    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx', 'propsupp']
     sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'biofailure', 'freqvlmon', 'restarttreat']
     sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
@@ -103,8 +103,8 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
-                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
-                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
+                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50', 'progusvl'],
+                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50', 'recovusvl'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
                            ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
