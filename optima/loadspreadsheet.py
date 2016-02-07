@@ -289,7 +289,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                 data['pships']['inj'].append((data['pops']['short'][row],data['pops']['short'][col]))
     
 
-    printv('...done loading data.', 2, verbose)
     return data
 
 

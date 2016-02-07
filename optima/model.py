@@ -7,7 +7,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.2 (2016feb04)
+    Version: 1.2 (2016feb06)
     """
     
     
@@ -39,7 +39,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
-    printv('Running model...', 1, verbose, newline=False)
+    printv('Running model...', 1, verbose)
     
     # Initialize arrays
     raw_inci       = zeros((npops, npts)) # Total incidence
@@ -843,7 +843,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     raw['death']      = raw_death
     raw['otherdeath'] = raw_otherdeath
     
-    printv('  ...done running model.', 2, verbose)
     return raw # Return raw results
 
 
