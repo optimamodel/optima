@@ -114,7 +114,7 @@ class ProjectTestCase(OptimaTestCase):
             progset = self.create_record_with(ProgsetsFactory, project_id=project_id)
             self.create_record_with(ProgramsFactory, project_id=project_id, progset_id=progset.id)
         project = ProjectDb.query.filter_by(id=str(project_id)).first()
-        self.assertEqual(len(project.progsets), progsets_count)
+        self.assertEqual(len(project.progsets), progsets_count+1) # CK: +1 since creates one by default
 
         response = self.client.post('/api/project/%s/copy' % project_id, data={
             'to': 'test_copy'
@@ -134,7 +134,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
 
         new_project = ProjectDb.query.filter_by(id=str(new_project_id)).first()
-        self.assertEquals(len(new_project.progsets), progsets_count)
+        self.assertEquals(len(new_project.progsets), progsets_count+1) # CK: +1 since creates one by default
 
     def _create_project_and_download(self, **kwargs):
         progsets_count = 3

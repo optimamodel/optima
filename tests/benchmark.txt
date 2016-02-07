@@ -45,3 +45,4 @@
 1.03 2016-Feb-07_12:47:29 b36d406 autofit-debugging
 0.835 2016-Feb-07_12:53:41 59506ef autofit-debugging
 0.818 2016-Feb-07_13:32:19 c1f05c5 autofit-debugging
+0.413 2016-Feb-07_15:06:58 0699c43 initialize-with-defaults
