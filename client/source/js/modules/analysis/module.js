@@ -56,13 +56,8 @@ define([
             })
             .state('analysis.optimization', {
                 url: '/optimization',
-                templateUrl: 'js/modules/analysis/optimization.html' ,
-                // controller: 'AnalysisOptimizationController',
-               // resolve: {
-                  //optimizations: function($http) {
-                  //  return $http.get('/api/analysis/optimization/list');
-                  //}
-               // }
+                templateUrl: 'js/modules/analysis/optimization.html',
+                controller: 'AnalysisOptimizationController'
             });
     });
 
