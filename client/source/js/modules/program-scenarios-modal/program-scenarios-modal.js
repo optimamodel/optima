@@ -11,13 +11,19 @@ define(['angular'], function (module) {
 
     	$scope.progsetsOptimized = _.filter(progsets[0].programs, {optimizable: true});
 
-      $scope.row.t = [];
-      $scope.row.budget = [];
-      _.forEach($scope.progsetsOptimized, function(progset) {
-        $scope.row.budget.push(
-          {'program':progset.short_name, 'values':[]}
-        );
-      });
+      if(!$scope.row.t) {
+        $scope.row.t = [];
+      }
+      $scope.temp = Array($scope.row.t.length);
+
+      if (!$scope.row.budget) {
+        $scope.row.budget = [];
+        _.forEach($scope.progsetsOptimized, function (progset) {
+          $scope.row.budget.push(
+            {'program': progset.short_name, 'values': []}
+          );
+        });
+      }
 
       $scope.manageScenario = function(){
     		var row = {
@@ -34,9 +40,6 @@ define(['angular'], function (module) {
     	};
 
         $scope.addParam = function(row) {
-          if (!$scope.temp) {
-            $scope.temp = [];
-            }
           $scope.temp.push({});
         };
 
