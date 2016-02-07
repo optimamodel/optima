@@ -174,11 +174,11 @@ class Project(object):
                 if overwrite==False:
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
-                    printv('Structure list "%s" already has item named "%s"' % (what, checkabsent), 2, self.settings.verbose)
+                    printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
-                raise OptimaException('Structure list "%s" has no item named "%s"' % (what, checkexists))
+                raise OptimaException('Structure list has no item named "%s"' % (checkexists))
         return None
 
 
@@ -196,7 +196,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
-        printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
+        printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -206,7 +206,7 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        printv('Item "%s" removed from structure list "%s"' % (name, what), 1, self.settings.verbose)
+        printv('Item "%s" removed from "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -221,7 +221,7 @@ class Project(object):
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
         if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
-        printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
+        printv('Item "%s" copied to "%s"' % (new, what), 2, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -232,7 +232,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
+        printv('Item "%s" renamed to "%s" in "%s"' % (orig, new, what), 2, self.settings.verbose)
         self.modified = today()
         return None
         
@@ -262,8 +262,12 @@ class Project(object):
     def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result, consistentnames=False) # Use UID for key but keep name
-    
+    def addresult(self, result=None): 
+        ''' Try adding result by name, but if no name, add by UID '''
+        if result.name is None: keyname = str(result.uid)
+        else: keyname = result.name
+        self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=True) # Use UID for key but keep name
+        return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
         resultuids = self.results.keys() # Pull out UID keys
@@ -325,8 +329,8 @@ class Project(object):
         resultname = 'parset-'+name if simpars is None else 'simpars'
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
-            self.addresult(result=results)
-            if simpars is None: self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
+            keyname = self.addresult(result=results)
+            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         return results
 
@@ -368,15 +372,14 @@ class Project(object):
         return None
 
 
-    def autofit(self, name=None, orig=None, what='force', maxtime=None, maxiters=1000, inds=None, verbose=2):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        print ("name=%s, orig=%s" % (name, orig))
-        self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
-        self.addresult(result=results)
-        self.parsets[name].resultsref = results.uid
+        keyname = self.addresult(result=results)
+        self.parsets[name].resultsref = keyname
         self.modified = today()
         return None
     
@@ -402,6 +405,7 @@ class Project(object):
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
+        results.name = 'runbudget'
         self.addresult(results)
         self.modified = today()
         return None
@@ -425,7 +429,7 @@ class Project(object):
         
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        projectBOC = BOC()
+        projectBOC = BOC(name='BOC')
         if objectives == None:
             printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()

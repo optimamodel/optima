@@ -89,7 +89,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=1)
+        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -97,7 +97,6 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
-    printv('...done running scenarios.', 2, verbose)
     return multires
 
 

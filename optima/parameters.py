@@ -483,7 +483,6 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    printv('...done converting data to parameters.', 2, verbose)
     
     return pars
 
@@ -802,7 +801,6 @@ class Parameterset(object):
             simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
-        printv('...done making model parameters.', 2, verbose)
         return simparslist
     
     
