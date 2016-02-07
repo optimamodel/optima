@@ -16,7 +16,7 @@ infmoney = 1e9 # Effectively infinite money
 class Optim(object):
     ''' An object for storing an optimization '''
     
-    def __init__(self, project=None, name='default', which='outcome', objectives=None, constraints=None, parsetname=None, progsetname=None):
+    def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
         if project is None:     raise OptimaException('To create an optimization, you must supply a project')
         if parsetname is None:  parsetname = 0 # If none supplied, assume defaults
         if progsetname is None: progsetname = 0
@@ -25,7 +25,6 @@ class Optim(object):
         self.project = project # Store pointer for the project, if available
         self.created = today() # Date created
         self.modified = today() # Date modified
-        self.which = which # Outcome or money minimization
         self.parsetname = parsetname # Parameter set name
         self.progsetname = progsetname # Program set name
         self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
@@ -57,11 +56,18 @@ class Optim(object):
         else:
             print('WARNING, no results associated with this parameter set')
             return None
+    
+    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
+        if self.objectives['which'] in ['outcome','outcomes']: multires = minoutcomes(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        elif self.objectives['which']=='money':                multires = minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        else: raise OptimaException('optimize(): "which" must be "outcome" or "money"; you entered "%s"' % self.objectives['which'])
+        return multires
 
 
 
 
-def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
+
+def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     """
     Define default objectives for the optimization. Some objectives are shared
     between outcome and money minimizations, while others are different. However,
@@ -86,15 +92,16 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
         printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
 
     objectives = odict() # Dictionary of all objectives
+    objectives['which'] = which
     objectives['keys'] = ['death', 'inci'] # Define valid keys
     objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
-    if which=='outcome':
+    if which in ['outcome', 'outcomes']:
         objectives['base'] = None # "Baseline year to compare outcomes to"
         objectives['start'] = 2017 # "Year to begin optimization"
         objectives['end'] = 2030 # "Year to project outcomes to"
         objectives['budget'] = defaultbudget # "Annual budget to optimize"
-        objectives['deathweight'] = 5 # "Death weighting"
-        objectives['inciweight'] = 1 # "Incidence weighting"
+        objectives['deathweight'] = 5 # "Relative weight per death"
+        objectives['inciweight'] = 1 # "Relative weight per new infection"
         objectives['deathfrac'] = None # Fraction of deaths to get to
         objectives['incifrac'] = None # Fraction of incidence to get to
     elif which=='money':
@@ -112,7 +119,7 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
     return objectives
 
 
-def defaultconstraints(project=None, progset=None, which='outcome', verbose=2):
+def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     """
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
@@ -245,7 +252,7 @@ def constrainbudget(origbudget, total=None, limits=None, tolerance=1e-3):
 
 
 
-def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
     ''' 
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     

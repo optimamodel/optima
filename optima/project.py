@@ -407,13 +407,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, which=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True):
+    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True):
         ''' Function to minimize outcomes or money '''
-        if which is None: raise OptimaException('optimize(): You must specify whether to minimize outcomes or money')
-        optim = Optim(project=self, name=name, which=which, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        if which=='outcomes': multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        elif which=='money':  multires =    minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
-        else: raise OptimaException('optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which)
+        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         if saveprocess:        
             self.addoptim(optim=optim)
             self.addresult(result=multires)
