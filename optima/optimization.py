@@ -142,10 +142,10 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
-    constraints = dict() # Dictionary of all constraints -- WARNING, change back to odict!
-    constraints['name'] = dict() # Full name
-    constraints['min'] = dict() # Minimum budgets
-    constraints['max'] = dict() # Maximum budgets
+    constraints = odict() # Dictionary of all constraints -- WARNING, change back to odict!
+    constraints['name'] = odict() # Full name
+    constraints['min'] = odict() # Minimum budgets
+    constraints['max'] = odict() # Maximum budgets
     for prog in progset.programs.values():
         constraints['name'][prog.short] = prog.name
         if prog.optimizable():
