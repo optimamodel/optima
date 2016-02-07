@@ -1,4 +1,4 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, minmoney, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
@@ -103,7 +103,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True, makedefaults=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -111,6 +111,7 @@ class Project(object):
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
         self.makeparset(name=name, overwrite=overwrite)
+        if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True)
         return None
@@ -126,6 +127,19 @@ class Project(object):
             parset.makepars(self.data) # Create parameters
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
+        return None
+
+
+    def makedefaults(self, name='default', overwrite=False):
+        ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
+        scenname = 'Current conditions'
+        if overwrite or name not in self.progsets:
+            progset = Programset(name=name)
+            self.addprogset(progset)
+        if overwrite or scenname not in self.scens:
+            scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
+            self.addscen(scen)
+        
         return None
 
     def loadeconomics(self, filename):
@@ -162,7 +176,7 @@ class Project(object):
         return structlist
 
 
-    def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=False):
+    def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=True):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
@@ -182,7 +196,7 @@ class Project(object):
         return None
 
 
-    def add(self, name=None, item=None, what=None, overwrite=False, consistentnames=True):
+    def add(self, name=None, item=None, what=None, overwrite=True, consistentnames=True):
         ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
         if name is None:
             try: name = item.name # Try getting name from the item
@@ -211,7 +225,7 @@ class Project(object):
         return None
 
 
-    def copy(self, what=None, orig='default', new='copy', overwrite=False):
+    def copy(self, what=None, orig='default', new='copy', overwrite=True):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
@@ -226,7 +240,7 @@ class Project(object):
         return None
 
 
-    def rename(self, what=None, orig='default', new='new', overwrite=False):
+    def rename(self, what=None, orig='default', new='new', overwrite=True):
         ''' Rename an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
@@ -241,10 +255,10 @@ class Project(object):
     ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
-    def addparset(self,   name=None, parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
-    def addprogset(self,  name=None, progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
-    def addscen(self,     name=None, scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
-    def addoptim(self,    name=None, optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
+    def addparset(self,   name=None, parset=None,   overwrite=True): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
+    def addprogset(self,  name=None, progset=None,  overwrite=True): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
+    def addscen(self,     name=None, scen=None,     overwrite=True): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
+    def addoptim(self,    name=None, optim=None,    overwrite=True): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
 
     def rmparset(self,   name): self.remove(what='parset',   name=name)
     def rmprogset(self,  name): self.remove(what='progset',  name=name)
@@ -252,15 +266,15 @@ class Project(object):
     def rmoptim(self,    name): self.remove(what='optim',    name=name)
 
 
-    def copyparset(self,   orig='default', new='new', overwrite=False): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyprogset(self,  orig='default', new='new', overwrite=False): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def copyscen(self,     orig='default', new='new', overwrite=False): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def copyoptim(self,    orig='default', new='new', overwrite=False): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def copyparset(self,   orig='default', new='new', overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self,  orig='default', new='new', overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,     orig='default', new='new', overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,    orig='default', new='new', overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def renameparset(self,   orig='default', new='new', overwrite=False): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def renameprogset(self,  orig='default', new='new', overwrite=False): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def renameparset(self,   orig='default', new='new', overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def renameprogset(self,  orig='default', new='new', overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
     def addresult(self, result=None): 
         ''' Try adding result by name, but if no name, add by UID '''
