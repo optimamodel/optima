@@ -399,7 +399,7 @@ def getresults(project=None, pointer=None, die=True):
         return None 
     
     # Normal usage, e.g. getresults(P, 3) will retrieve the 3rd set of results
-    elif isinstance(pointer, (str, Number)):
+    elif isinstance(pointer, (str, Number, type(uuid()))):
         if project is not None:
             resultnames = [res.name for res in project.results.values()]
             resultuids = [str(res.uid) for res in project.results.values()]

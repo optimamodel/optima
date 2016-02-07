@@ -194,10 +194,10 @@ if 'debugautofit' in tests:
     P = Project(spreadsheet='concentrated.xlsx')
     
     # Run automatic fitting
-    P.autofit(name='autofit', orig='default', fitwhat='force', fitto='prev', maxiters=50, doplot=True, verbose=2) # Set doplot=True and verbose=4 to see full debugging information
-    
-    plotresults(P.results['parset-default'])
-    plotresults(P.results['parset-autofit'])
+    P.autofit(name='autofit', orig='default', fitwhat='force', fitto='prev', maxiters=50, doplot=doplot, verbose=2) # Set doplot=True and verbose=4 to see full debugging information
+    if doplot:
+        plotresults(P.results['parset-default'])
+        plotresults(P.results['parset-autofit'])
     
     done(t)
 
