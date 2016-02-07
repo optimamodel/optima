@@ -186,7 +186,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
     
 
 
-    def errorcalc(parvec=None, pars=None, parlist=None, project=None, fitto=None, bestindex=0, doplot=False, verbose=2):
+    def errorcalc(parvec=None, pars=None, parlist=None, project=None, fitto='prev', bestindex=0, doplot=False, verbose=2):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
@@ -225,7 +225,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
         count = 0
         mismatch = 0
         if doplot: debugdata = []
-        if fitto is None: fitto = results.main # If not specified, use everything
+        if fitto is None or fitto=='all': fitto = results.main.keys() # If not specified, use everything
         for key in fitto: # The results! e.g. key='prev'
             try: this = results.main[key]
             except: 
