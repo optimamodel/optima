@@ -437,7 +437,7 @@ class Programset(object):
         # Validate
         for outcome in outcomes.keys():
             for key in outcomes[outcome].keys():
-                if len(outcomes[outcome][key])!=nyrs:
+                if outcomes[outcome][key] is not None and len(outcomes[outcome][key])!=nyrs:
                     raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
 
         return outcomes
@@ -483,25 +483,26 @@ class Programset(object):
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-                if any(array(thisoutcome<lower).flatten()) or any(array(thisoutcome>upper).flatten()):
-                    errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
-                    if die:
-                        raise OptimaException(errormsg)
-                    else:
-                        printv(errormsg, 1, verbose)
-                        thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
-                        thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
+                if thisoutcome is not None:
+                    if any(array(thisoutcome<lower).flatten()) or any(array(thisoutcome>upper).flatten()):
+                        errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
+                        if die:
+                            raise OptimaException(errormsg)
+                        else:
+                            printv(errormsg, 1, verbose)
+                            thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
+                            thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
                 
-                # Remove years after the last good year
-                if last_t < max(thispar.t[pop]):
-                    thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
-                    thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
-                
-                # Append the last good year, and then the new years
-                thispar.t[pop] = append(thispar.t[pop], last_t)
-                thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
-                thispar.t[pop] = append(thispar.t[pop], years)
-                thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
+                    # Remove years after the last good year
+                    if last_t < max(thispar.t[pop]):
+                        thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
+                        thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
+                    
+                    # Append the last good year, and then the new years
+                    thispar.t[pop] = append(thispar.t[pop], last_t)
+                    thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
+                    thispar.t[pop] = append(thispar.t[pop], years)
+                    thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
                 
                 if len(thispar.t[pop])!=len(thispar.y[pop]):
                     raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t[pop]), len(thispar.y[pop])))
@@ -519,14 +520,16 @@ class Programset(object):
         comparison = list()
         maxnamelen = 0
         maxkeylen = 0
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for key1 in outcomes.keys():
             for key2 in outcomes[key1].keys():
                 name = parset.pars[ind][key1].name
                 maxnamelen = max(len(name),maxnamelen)
                 maxkeylen = max(len(str(key2)),maxkeylen)
                 parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
-                budgetvalue = outcomes[key1][key2]
-                comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+                budgetvalue = outcomes[key1][key2] 
+                if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+                else: comparison.append([name, key2, parvalue[0], None])
         
         if doprint:
             for item in comparison:
