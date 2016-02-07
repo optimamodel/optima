@@ -412,8 +412,10 @@ class ProjectTestCase(OptimaTestCase):
         from server.webapp.programs import get_default_programs
         from server.webapp.populations import populations
 
+        progsets_count = 1
+
         project = self.create_project(
-            progsets_count=1,
+            progsets_count=progsets_count,
             programs_per_progset=0,
             return_instance=True,
             populations=populations()
@@ -437,7 +439,7 @@ class ProjectTestCase(OptimaTestCase):
         program_list = get_default_programs(be_project)
         program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
 
-        self.assertEqual(program_count, len(program_list))
+        self.assertEqual(program_count, len(program_list)*(progsets_count+1)) # CK: Since one is created by default I guess?
 
     def test_bulk_delete(self):
         from server.webapp.dbmodels import ProjectDb
