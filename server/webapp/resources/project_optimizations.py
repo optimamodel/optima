@@ -217,7 +217,7 @@ class OptimizationGraph(Resource):
         args = optimization_parser.parse_args()
         which = args.get('which')
 
-        # TODO actually filter for the proper optimization id
+        # TODO actually filter for the proper optimization id (Which would have to be saved for the given result)
         result_entry = db.session.query(ResultsDb).filter_by(project_id=project_id, calculation_type='optimization')
         if result_entry:
             result = result_entry[-1].hydrate()
@@ -229,7 +229,7 @@ class OptimizationGraph(Resource):
         graphs = self._result_to_jsons(result, which)
 
         return {
-            "optmization_id": optimization_id,
+            "optimization_id": optimization_id,
             "graphs": graphs,
             "selectors": selectors,
             "result_id": result_entry[-1].id if result_entry else None
