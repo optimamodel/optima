@@ -805,3 +805,21 @@ class ScenariosDb(db.Model):
             return op.Parscen(name=self.name,
                               parsetname=parset.name,
                               **self.blob)
+
+
+
+@swagger.model
+class OptimizationsDb(db.Model):
+
+    __tablename__ = 'optimizations'
+
+    resource_fields = {}
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.String)
+    optimization_type = db.Column(db.String)
+    progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    objectives = db.Column(JSON)
+    constraints = db.Column(JSON)
