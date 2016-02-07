@@ -97,7 +97,6 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
-    printv('...done running scenarios.', 2, verbose)
     return multires
 
 

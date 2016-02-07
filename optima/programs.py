@@ -440,8 +440,9 @@ class Programset(object):
                 if len(outcomes[outcome][key])!=nyrs:
                     raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
 
-        
         return outcomes
+        
+        
         
     def getpars(self, coverage, t=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
         ''' Make pars'''
@@ -509,6 +510,19 @@ class Programset(object):
                 
 
         return pars
+    
+    
+    
+    def compareoutcomes(self, parset=None, year=None, ind=0):
+        ''' For every parameter affected by a program, return a list comparing the default parameter values with the budget ones '''
+        
+        defaultpars = parset.pars[ind] # WARNING
+        thiscoverage = self.getprogcoverage(budget=budget, t=year, parset=parset) 
+        thisparsdict = self.getpars(coverage=thiscoverage, t=year, parset=parset)
+        
+        comparison = odict()
+        
+        return comparison
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
