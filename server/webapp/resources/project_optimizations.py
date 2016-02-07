@@ -126,6 +126,8 @@ class OptimizationResults(Resource):
         from server.webapp.dbmodels import OptimizationsDb, ParsetsDb, ProgsetsDb
 
         optimization_entry = OptimizationsDb.query.get(optimization_id)
+        optimization_entry._ensure_current()
+        
         optimization_name = optimization_entry.name
         parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
         parset_name = parset_entry.name
