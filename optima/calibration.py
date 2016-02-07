@@ -75,11 +75,15 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
 
 
 
-def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
+def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
     ''' 
-    Function to automatically fit parameters.
+    Function to automatically fit parameters. Parameters:
+        fitwhat = which parameters to vary to improve the fit; these are defined in parameters.py under the 'auto' attribute; default is 'force' (FOI metaparameters only)
+        fitto = what kind of data to fit to; options are anything in results.main; default is 'prev' (prevalence) or everything
+        method = which method of calculating the objective/goodness-of-fit to use; default weighted absolute percentage error to place less weight on outliers
+    Others should be self-explanatory.
     
-    Version: 2016feb06 by cliffk
+    Version: 2016feb07 by cliffk
     '''
     if doplot: # Store global information for debugging
         global autofitfig, autofitresults
@@ -186,7 +190,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
     
 
 
-    def errorcalc(parvec=None, pars=None, parlist=None, project=None, fitto='prev', bestindex=0, doplot=False, verbose=2):
+    def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='prev', method='wape', bestindex=0, doplot=False, verbose=2):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
@@ -205,7 +209,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
         
         # Validate input -- check everything in one go
         if any([arg is None for arg in [parvec, pars, parlist, project]]): 
-            raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
+            raise OptimaException('objectivecalc() requires parvec, pars, parlist, and project inputs')
         
         def extractdata(xdata, ydata):
             ''' Return the x and y data values for non-nan y data '''
@@ -248,7 +252,17 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
                             count += 1
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
                             modely = modelrow[modelx] # Finally, extract the model result!
-                            thismismatch = abs(modely - datay[i]) / mean(datay+eps)
+                            if   method=='wape': thismismatch = abs(modely - datay[i]) / mean(datay+eps)
+                            elif method=='mape': thismismatch = abs(modely - datay[i]) / (datay[i]+eps)
+                            elif method=='mad':  thismismatch = abs(modely - datay[i])
+                            elif method=='mse':  thismismatch = (modely - datay[i])**2
+                            else:
+                                errormsg = 'autofit(): "method" not known; you entered "%s", but must be one of:\n' % method
+                                errormsg += '"wape" = weighted absolute percentage error (default)\n'
+                                errormsg += '"mape" = mean absolute percentage error\n'
+                                errormsg += '"mad"  = mean absolute difference\n'
+                                errormsg += '"mse"  = mean squared error'
+                                raise OptimaException(errormsg)
                             allmismatches.append(thismismatch)
                             mismatch += thismismatch
                             
@@ -330,8 +344,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, max
         
         # Perform fit
         parvec = convert(pars, parlist)
-        args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'doplot':doplot, 'verbose':verbose}
-        parvecnew, fval, exitflag, output = asd(errorcalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'method':method, 'doplot':doplot, 'verbose':verbose}
+        parvecnew, fval, exitflag, output = asd(objectivecalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
         pars = convert(pars, parlist, parvecnew)        

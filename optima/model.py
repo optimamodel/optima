@@ -1,6 +1,6 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array
 from optima import OptimaException, printv, dcp, odict, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
@@ -51,11 +51,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
     
     # Biological and failure parameters -- death etc
-    prog       = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
-    recov      = simpars['recovgt500':'recovgt50']
-    death      = simpars['deathacute':'deathlt50']
-    cd4trans   = simpars['cd4transacute':'cd4translt50']
+    prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
+    recov      = array([simpars['recovgt500'], simpars['recovgt350'], simpars['recovgt200'], simpars['recovgt50']])
+    death      = array([simpars['deathacute'], simpars['deathgt500'], simpars['deathgt350'], simpars['deathgt200'], simpars['deathgt50'], simpars['deathlt50']])
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
+    cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
 
 
     # Defined for total (not by populations) and time dependent [npts]
@@ -90,6 +90,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     alldx    = settings.alldx    # All diagnosed
     alltx    = settings.alltx    # All on treatment
     allplhiv = settings.allplhiv # All PLHIV
+    aidsind  = settings.aidsind  # Index for when people have AIDS (used for assinging AIDS testing rate)
     if usecascade:
         care    = settings.care    # in care
         usvl    = settings.usvl    # On treatment - Unsuppressed Viral Load
@@ -473,6 +474,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[undx[cd4],:,t]
                 testingrate[cd4] = hivtest[:,t] # Population specific testing rates
+                if cd4>=aidsind:
+                    testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
