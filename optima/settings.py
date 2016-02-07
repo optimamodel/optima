@@ -128,10 +128,10 @@ def gettvecdt(tvec=None, dt=None, justdt=False):
     elif isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array
     elif shape(tvec): # Make sure it has a length -- if so, overwrite dt
         if len(tvec)>=2: dt = tvec[1]-tvec[0] # Even if dt supplied, recalculate it from the time vector
-        elif dt is None: dt = defaultdt # Or give up and use default
         else: dt = dt # Use input
     else:
         raise OptimaException('Could not understand tvec of type "%s"' % type(tvec))
+    if dt is None: dt = defaultdt # Or give up and use default
     return tvec, dt
     
     

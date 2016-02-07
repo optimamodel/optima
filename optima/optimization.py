@@ -86,6 +86,7 @@ def defaultobjectives(project=None, progset=None, which='outcome', verbose=2):
         printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
 
     objectives = odict() # Dictionary of all objectives
+    objectives['which'] = which
     objectives['keys'] = ['death', 'inci'] # Define valid keys
     objectives['keylabels'] = {'death':'Deaths', 'inci':'New infections'} # Define key labels
     if which=='outcome':
