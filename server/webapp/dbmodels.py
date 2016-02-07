@@ -831,3 +831,50 @@ class OptimizationsDb(db.Model):
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
     objectives = db.Column(JSON)
     constraints = db.Column(JSON)
+
+    def __init__(self, project_id, parset_id, progset_id, name, optimization_type,
+                 objectives={}, constraints={}):
+
+        self.project_id = project_id
+        self.name = name
+        self.optimization_type = optimization_type
+        self.progset_id = progset_id
+        self.parset_id = parset_id
+        self.objectives = objectives
+        self.constraints = constraints
+
+        self._ensure_current()
+
+    def _ensure_current(self):
+        """
+        Make sure the objectives and constraints are current.
+        """
+        from server.webapp.utils import load_parset, load_progset, load_project
+
+        if not self.constraints:
+            self.constraints = {}
+
+        if not self.objectives:
+            self.objectives = {}
+
+
+        project = load_project(self.project_id).hydrate()
+        progset = load_progset(self.project_id, self.progset_id).name
+        parset = load_parset(self.project_id, self.parset_id).name
+
+        constraints = op.defaultconstraints(project, progset=progset)
+
+        constraints['max'].update({
+            x:y for x,y in self.constraints.get('min', {}).items() if x in constraints})
+        constraints['min'].update({
+            x:y for x,y in self.constraints.get('max', {}).items() if x in constraints})
+
+        self.constraints = constraints
+
+        objectives = op.defaultobjectives(project, progset=progset,
+                                          which=self.optimization_type)
+
+        objectives.update({
+            x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
+
+        self.objectives = objectives
