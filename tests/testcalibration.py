@@ -193,6 +193,9 @@ if 'debugautofit' in tests:
     from optima import Project
     P = Project(spreadsheet='generalized.xlsx')
     
+    # Run automatic fitting
+    P.autofit(name='autofit', orig='default', what=['force'], maxiters=1000)
+    
     done(t)
 
 

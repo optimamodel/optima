@@ -4,7 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, isnumber
+from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, isnumber, odict
 from numpy import median, zeros, array, mean
 
 
@@ -81,6 +81,9 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
     
     Version: 2016feb06 by cliffk
     '''
+    if doplot: # Store global information for debugging
+        global autofitfig, autofitresults
+        autofitfig, autofitresults = [None]*2
     
     printv('Performing automatic fitting...', 1, verbose)
     
@@ -190,6 +193,12 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         WARNING, 'bestindex' is kludgy -- discard upper and lower limits for the data
         '''
         
+        if doplot: # Store global information for debugging -- WARNING, is this the best way of doing this?
+            global autofitfig, autofitresults
+            from pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show
+            if autofitfig is None: autofitfig = figure(figsize=(16,12), facecolor=(1,1,1))
+            if autofitresults is None: autofitresults = {'count':[0], 'mismatch':[0]}
+        
         # Validate input -- check everything in one go
         if any([arg is None for arg in [parvec, pars, parlist, project]]): 
             raise OptimaException('errorcalc() requires parvec, pars, parlist, and project inputs')
@@ -209,8 +218,8 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         
         ## Loop over all results
         allmismatches = []
-        allmodel
         mismatch = 0
+        if doplot: debugdata = odict()
         for key in results.main: # The results! e.g. key='prev'
             this = results.main[key] 
             for attr in ['tot', 'pops']: # Loop over either total or by population denominators
@@ -220,6 +229,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
                     datarows = tmpdata[bestindex] # Pull out data without uncertainty
                     modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- WARNING, should be another index!
                     nrows = len(datarows)
+                    if doplot: debugdata[key] = odict([('name',key), ('x',[]), ('modely',[]), ('datay',[])])
                     for row in range(nrows): # Loop over each available row
                         datarow = datarows[row]
                         if nrows==1: modelrow = modelrows # WARNING, kludgy, should have the same shape!
@@ -231,11 +241,40 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
                             thismismatch = abs(modely - datay[i]) / mean(datay+eps)
                             allmismatches.append(thismismatch)
                             mismatch += thismismatch
+                            
+                            if doplot:
+                                debugdata[key]['x'].append(year)
+                                debugdata[key]['datay'].append(datay[i])
+                                debugdata[key]['modely'].append(modely)
+                            
         
         if doplot:
-            kd
+            autofitresults['count'].append(autofitresults['count'][-1]+1) #  Append new count
+            autofitresults['mismatch'].append(mismatch) #  Append mismatch
+            
+            autofitfig.clear()
+            nplots = len(debugdata.keys())+1 # 1 is the mismatch
+            rowscols = ceil(sqrt(nplots))
+            
+            subplot(rowscols,rowscols,1)
+            scatter(autofitresults['count'], autofitresults['mismatch'])
+            xlabel('Count')
+            ylabel('Mismatch')
+            
+            for p,data in enumerate(debugdata.values()):
+                subplot(rowscols,rowscols,p+2)
+                scatter(data['x'], data['datay'])
+                plot(data['x'], data['modely'])
+                xlabel('Year')
+                ylabel(data['name'])
+            show()
+            
+            
+            
+            
+            
         
-        printv('Current mismatch: %s' % array(thismismatch).flatten(), 4, verbose=verbose)
+        printv('Current mismatch: %s' % array(mismatch), 4, verbose=verbose)
         return mismatch
 
 
