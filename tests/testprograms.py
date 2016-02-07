@@ -122,7 +122,6 @@ if 'makeprograms' in tests:
     HTC.addcostcovdatum({'t':2015,
                          'cost':1e7,
                          'coverage':4e5})
-
     MGT.addcostcovdatum({'t':2015,
                          'cost':1e7})
 
@@ -258,6 +257,7 @@ if 'makeprograms' in tests:
     coverage = coverage.sort([p.short for p in R.programs.values()])
 
     defaultbudget = R.getdefaultbudget()
+    defaultcoverage = R.getdefaultcoverage(t=2015, parset=P.parsets['default'])
             
     R.getprogcoverage(budget=budget,
                       t=[2015,2016,2020],

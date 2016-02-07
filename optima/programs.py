@@ -193,15 +193,15 @@ class Programset(object):
         else: return progs_by_targetpar
 
 
-    def getdefaultbudget(self, years=None, verbose=2):
+    def getdefaultbudget(self, t=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''
         
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if type(years) in [int, float]: years = [years]
-        if isinstance(years,ndarray): years = years.tolist()
+        if type(t) in [int, float]: t = [t]
+        if isinstance(t,ndarray): t = t.tolist()
 
         # Set up internal variables
         settings = self.getsettings()
@@ -222,13 +222,20 @@ class Programset(object):
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
-            if years is not None:
-                for yr in years:
+            if t is not None:
+                for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
 
-        return selectbudget if years is not None else lastbudget
+        return selectbudget if t is not None else lastbudget
 
+    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2):
+        ''' Extract the coverage levels corresponding to the default budget'''
+        defaultbudget = self.getdefaultbudget()
+        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results)
+        for progno in range(len(defaultcoverage)):
+            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
+        return defaultcoverage
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
