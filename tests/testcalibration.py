@@ -113,7 +113,7 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
@@ -140,7 +140,7 @@ if 'autofitmulti' in tests:
     P = Project(spreadsheet='generalized.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5) # Create MC initialization
     P.runsim('sensitivity', end=2015) # Generate results
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='sensitivity', fitwhat=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
     
     
     if doplot:
@@ -169,7 +169,7 @@ if 'longfit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], maxiters=1000, inds=None, verbose=2) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', fitwhat=['init','popsize','force','const'], maxiters=1000, inds=None, verbose=2) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
@@ -194,7 +194,7 @@ if 'debugautofit' in tests:
     P = Project(spreadsheet='generalized.xlsx')
     
     # Run automatic fitting
-    P.autofit(name='autofit', orig='default', what=['force'], maxiters=1000)
+    P.autofit(name='autofit', orig='default', fitwhat=['force'], fitto='prev', maxiters=1000, doplot=True, verbose=4)
     
     done(t)
 

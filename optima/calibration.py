@@ -75,7 +75,7 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
 
 
 
-def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
+def autofit(project=None, name=None, fitwhat=None, fitto=None, maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
     ''' 
     Function to automatically fit parameters.
     
@@ -96,7 +96,9 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
     parset.project = project # Try to link the parset back to the project -- WARNING, seems fragile
     origparlist = dcp(parset.pars)
     lenparlist = len(origparlist)
-    if what is None: what = ['force'] # By default, automatically fit force-of-infection only
+    if fitwhat is None: fitwhat = ['force'] # By default, automatically fit force-of-infection only
+    if type(fitwhat)==str: fitwhat = [fitwhat]
+    if type(fitto)==str: fitto = [fitto]
     if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
@@ -110,20 +112,20 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
     
     
     # Populate lists of what to fit
-    def makeparlist(pars, what):
+    def makeparlist(pars, fitwhat):
         ''' 
         This uses the "auto" attribute to decide whether or not to automatically calibrate it, and
         if so, it uses the "fittable" attribute to decide what to calibrate (e.g., just the metaparameter
         or all the values.
         
-        "what" options (see parameters.py, especially listparattributes()): 
+        "fitwhat" options (see parameters.py, especially listparattributes()): 
         ['init','popsize','test','treat','force','other','const']
         '''
         parlist = []
         for parname in pars: # Just use first one, since all the same
             par = pars[parname]
             if issubclass(type(par), Par): # Check if it's a parameter
-                if par.auto in what: # It's in the list of things to fit
+                if par.auto in fitwhat: # It's in the list of things to fit
                     if par.fittable=='meta':
                         parlist.append({'name':par.short, 'type':par.fittable, 'limits':par.limits, 'ind':None})
                     elif par.fittable=='pop':
@@ -184,7 +186,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
     
 
 
-    def errorcalc(parvec=None, pars=None, parlist=None, project=None, bestindex=0, doplot=False):
+    def errorcalc(parvec=None, pars=None, parlist=None, project=None, fitto=None, bestindex=0, doplot=False, verbose=2):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
@@ -195,9 +197,11 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         
         if doplot: # Store global information for debugging -- WARNING, is this the best way of doing this?
             global autofitfig, autofitresults
-            from pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show
-            if autofitfig is None: autofitfig = figure(figsize=(16,12), facecolor=(1,1,1))
-            if autofitresults is None: autofitresults = {'count':[0], 'mismatch':[0]}
+            from pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show, pause, ylim, bar, arange
+            if autofitfig is None: 
+                autofitfig = figure(figsize=(16,12), facecolor=(1,1,1))
+                autofitfig.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.3, hspace=0.4)
+            if autofitresults is None: autofitresults = {'count':[], 'mismatch':[], 'allmismatches':[]}
         
         # Validate input -- check everything in one go
         if any([arg is None for arg in [parvec, pars, parlist, project]]): 
@@ -218,10 +222,15 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         
         ## Loop over all results
         allmismatches = []
+        count = 0
         mismatch = 0
         if doplot: debugdata = odict()
-        for key in results.main: # The results! e.g. key='prev'
-            this = results.main[key] 
+        if fitto is None: fitto = results.main # If not specified, use everything
+        for key in fitto: # The results! e.g. key='prev'
+            try: this = results.main[key]
+            except: 
+                errormsg = 'autofit(): Key to fit "%s" not found; valid keys are:\n%s' % (key, results.main.keys())
+                raise OptimaException(errormsg)
             for attr in ['tot', 'pops']: # Loop over either total or by population denominators
                 tmpdata = getattr(this, 'data'+attr) # Get this data, e.g. results.main['prev'].datatot
                 if tmpdata is not None: # If it actually exists, proceed
@@ -229,13 +238,17 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
                     datarows = tmpdata[bestindex] # Pull out data without uncertainty
                     modelrows = tmpmodel[bestindex] # Pull out just the best result (likely only 1 index) -- WARNING, should be another index!
                     nrows = len(datarows)
-                    if doplot: debugdata[key] = odict([('name',key), ('x',[]), ('modely',[]), ('datay',[])])
+                    if doplot: debugdata[key] = odict()
                     for row in range(nrows): # Loop over each available row
                         datarow = datarows[row]
                         if nrows==1: modelrow = modelrows # WARNING, kludgy, should have the same shape!
                         else: modelrow = modelrows[row]
                         datax, datay = extractdata(results.datayears, datarow) # Pull out the not-NaN values
+                        if doplot and len(datax): 
+                            rowname = 'total' if nrows==1 else pars['popkeys'][row]
+                            debugdata[key][rowname] = odict([('name',key), ('row',row), ('x',[]), ('modely',[]), ('datay',[])])
                         for i,year in enumerate(datax): # Loop over each data point available
+                            count += 1
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
                             modely = modelrow[modelx] # Finally, extract the model result!
                             thismismatch = abs(modely - datay[i]) / mean(datay+eps)
@@ -243,31 +256,50 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
                             mismatch += thismismatch
                             
                             if doplot:
-                                debugdata[key]['x'].append(year)
-                                debugdata[key]['datay'].append(datay[i])
-                                debugdata[key]['modely'].append(modely)
+                                printv('#%i. Key="%s" pop="%s" year=%f datay=%f modely=%f thismis=%f totmis=%f' % (count, key, rowname, year, datay[i], modely, thismismatch, mismatch), 4, verbose)
+                                debugdata[key][rowname]['x'].append(year)
+                                debugdata[key][rowname]['datay'].append(datay[i])
+                                debugdata[key][rowname]['modely'].append(modely)
                             
         
         if doplot:
-            autofitresults['count'].append(autofitresults['count'][-1]+1) #  Append new count
+            autofitresults['count'].append(len(autofitresults['count'])) #  Append new count
             autofitresults['mismatch'].append(mismatch) #  Append mismatch
+            autofitresults['allmismatches'].append(array(allmismatches).flatten()) #  Append mismatch
             
             autofitfig.clear()
-            nplots = len(debugdata.keys())+1 # 1 is the mismatch
+            nplots = sum([len(debugdata[key]) for key in debugdata.keys()])+2 # 1 is the mismatch
             rowscols = ceil(sqrt(nplots))
+            rows = rowscols
+            cols = rows-1 if rows*(rows-1)>=nplots else rows
             
-            subplot(rowscols,rowscols,1)
+            subplot(rows,cols,1)
             scatter(autofitresults['count'], autofitresults['mismatch'])
             xlabel('Count')
             ylabel('Mismatch')
+            ylim((0,ylim()[1]))
             
-            for p,data in enumerate(debugdata.values()):
-                subplot(rowscols,rowscols,p+2)
-                scatter(data['x'], data['datay'])
-                plot(data['x'], data['modely'])
-                xlabel('Year')
-                ylabel(data['name'])
+            subplot(rows,cols,2)
+            allmis = autofitresults['allmismatches'][-1] # Shorten
+            bar(arange(len(allmis)), allmis)
+            xlabel('Data point')
+            ylabel('Mismatch')
+            ylim((0,ylim()[1]))
+            
+            count = 0
+            for key1,tmp1 in debugdata.items():
+                for key2,tmp2 in tmp1.items():
+                    count += 1
+                    print('    key=%s row=%s count=%i' % (key1, key2, count))
+                    subplot(rows, cols, count+2)
+                    scatter(tmp2['x'], tmp2['datay'])
+                    plot(tmp2['x'], tmp2['modely'])
+                    xlabel('Year')
+                    ylabel(key1+' - '+key2)
+                    ylim((0,ylim()[1]))
+            
             show()
+            pause(0.001)
             
             
             
@@ -284,7 +316,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
 
     
     # Create the list of parameters to be fitted and set the limits
-    parlist = makeparlist(pars, what)
+    parlist = makeparlist(pars, fitwhat)
     parlower  = array([item['limits'][0] for item in parlist])
     parhigher = array(project.settings.convertlimits([item['limits'][1] for item in parlist])) # Replace text labels with numeric values
     
@@ -297,7 +329,7 @@ def autofit(project=None, name=None, what=None, maxtime=None, maxiters=1000, ind
         
         # Perform fit
         parvec = convert(pars, parlist)
-        args = {'pars':pars, 'parlist':parlist, 'project':project, 'doplot':doplot}
+        args = {'pars':pars, 'parlist':parlist, 'project':project, 'fitto':fitto, 'doplot':doplot, 'verbose':verbose}
         parvecnew, fval, exitflag, output = asd(errorcalc, parvec, args=args, xmin=parlower, xmax=parhigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
         
         # Save
