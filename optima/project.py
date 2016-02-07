@@ -1,10 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, minmoney, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, loadeconomicsspreadsheet, runmodel, defaultobjectives, defaultconstraints # Import functions
 from optima import __version__ # Get current version
-
-from optima import defaultobjectives
-import matplotlib.pyplot as plt
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -139,7 +136,9 @@ class Project(object):
         if overwrite or scenname not in self.scens:
             scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
             self.addscen(scen)
-        
+        if overwrite or name not in self.optims:
+            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0), constraints=defaultconstraints(project=self, progset=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
+            self.addoptim(optim)
         return None
 
     def loadeconomics(self, filename):
@@ -472,7 +471,7 @@ class Project(object):
         for budget in budgetlist:
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-            results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+            results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
@@ -504,7 +503,7 @@ class Project(object):
     
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
-
+        from pylab import title, show
         if boc is None:
             try: boc = self.getBOC(objectives=objectives)
             except: raise OptimaException('Cannot plot a nonexistent BOC!')
@@ -514,8 +513,8 @@ class Project(object):
         else:
             print('Plotting BOC derivative for "%s"...' % self.name)
         ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
-        plt.title('Project: %s' % self.name)
+        title('Project: %s' % self.name)
         if returnplot: return ax
-        else: plt.show()
+        else: show()
         return None
     
