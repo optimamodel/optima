@@ -33,3 +33,4 @@
 0.377 2016-Feb-06_19:34:19 514d92a speeding-up-model
 0.379 2016-Feb-06_19:47:14 c27c046 speeding-up-model
 0.366 2016-Feb-06_19:55:46 dd142dd speeding-up-model
+0.390 2016-Feb-06_20:01:33 8c01834 speeding-up-model

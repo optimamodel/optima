@@ -186,9 +186,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
     # More parameters...should maybe be moved somewhere else?
     birth = simpars['birth']
-    agetransit = simpars['agetransit']
-    risktransit = simpars['risktransit']
-    birthtransit = simpars['birthtransit']
+    agetransit = simpars['agetransit']*dt # Multiply by dt here so don't have to later
+    risktransit = simpars['risktransit']*dt
+    birthtransit = simpars['birthtransit']*dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
@@ -326,11 +326,23 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     for i,this in enumerate(injactslist): injactslist[i] = tuple([this['pop1'],this['pop2'],this['acts']])
     
     
-    
-
-
-
-
+    ## Births precalculation
+    birthslist = []
+    for p1 in range(npops): # WARNING, should only loop over child populations
+        for p2 in range(npops): # WARNING, should only loop over female populations
+            birthrates = birthtransit[p1, p2] * birth[p1, :] # WARNING, vector multiplication!!!! Need to create array
+            if birthrates.any():
+                birthslist.append(tuple([p1,p2,birthrates]))
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
     ###############################################################################
     ## Run the model -- numerically integrate over time
     ###############################################################################
@@ -487,6 +499,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
         dU[0] = dU[0] + newinfections.sum(axis=0) # Now add newly infected people
         
+
+
 
         ############################################################################################################
         ## Here, split and decide whether or not to use the cascade for the rest of the ODEs to solve
@@ -746,52 +760,47 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             
             
+            
             ###############################################################################
             ## Calculate births, age transitions and mother-to-child-transmission
             ###############################################################################
-    
-#            ## Births.... # WARNING, maybe some of this could be taken out of the time loop?
-#            for p1 in range(npops):
-#    
-#                allbirthrates = birthtransit[p1, :] * birth[p1, t]
-#                alleligbirths = sum(allbirthrates * dt * sum(people[alldx, p1, t])) # Births to diagnosed mothers eligible for PMTCT
-#                
-#                for p2 in range(npops):
-#    
-#                    thisbirthrate  = allbirthrates[p2]
-#                    if thisbirthrate:
-#                        popbirths      = (thisbirthrate * dt * people[:, p1, t].sum())
-#                        mtctundx       = (thisbirthrate * dt * people[undx, p1, t].sum()) * effmtct # Births to undiagnosed mothers
-#                        mtcttx         = (thisbirthrate * dt * people[alltx, p1, t].sum())  * pmtcteff # Births to mothers on treatment
-#                        thiseligbirths = (thisbirthrate * dt * people[alldx, p1, t].sum()) # Births to diagnosed mothers eligible for PMTCT
-#        
-#                        receivepmtct = min(numpmtct[t]*dt*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-#                        
-#                        mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-#                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-#                        popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
-#                        
-#                        raw_mtct[p2, t] += popmtct[t]                       
-#                        
-#                        people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
-#                        people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
-#            
-#            
-#            ## Age-related transitions
-#            for p1,p2 in agetransitlist:
-#                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt
-#                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
-#                people[:, p1, t+1] -= peopleaving # Take away from pop1...
-#                people[:, p2, t+1] += peopleaving # ... then add to pop2
-#                
-#            
-#            ## Risk-related transitions
-#            for p1,p2 in risktransitlist:
-#                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-#                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
-#                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-#                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
-#                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
+            
+            ## Calculate births
+            for p1,p2,birthrates in birthslist:
+                thisbirthrate = birthrates[t]
+                popbirths      = thisbirthrate * people[:, p1, t].sum()
+                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct # Births to undiagnosed mothers
+                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff # Births to mothers on treatment
+                alleligbirths =  thisbirthrate * people[alldx, p1, t].sum() # Births to diagnosed mothers eligible for PMTCT
+                thiseligbirths = thisbirthrate * people[alldx, p1, t].sum() # Births to diagnosed mothers eligible for PMTCT
+            
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                
+                mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
+                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
+                
+                raw_mtct[p2, t] += popmtct[t]                       
+                
+                people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
+                people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
+
+            
+            ## Age-related transitions
+            for p1,p2 in agetransitlist:
+                peopleaving = people[:, p1, t] * agetransit[p1,p2]
+                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
+                people[:, p1, t+1] -= peopleaving # Take away from pop1...
+                people[:, p2, t+1] += peopleaving # ... then add to pop2
+                
+            
+            ## Risk-related transitions
+            for p1,p2 in risktransitlist:
+                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2]  # Number of other people who are moving pop1 -> pop2
+                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+                peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
+                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
+                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
             
             
             
