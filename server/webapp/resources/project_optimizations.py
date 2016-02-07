@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 import dateutil
 import uuid
-
+import json
 
 from flask import current_app, helpers, request, Response
 from werkzeug.exceptions import Unauthorized
@@ -74,3 +74,42 @@ class Optimizations(Resource):
         db.session.commit()
 
         return optimization_entry
+
+
+class Optimization(Resource):
+
+    method_decorators = [report_exception, login_required]
+
+    @swagger.operation(responseClass=OptimizationsDb.__name__)
+    @marshal_with(OptimizationsDb.resource_fields)
+    def get(self, project_id, optimization_id):
+
+        project_entry = load_project(project_id, raise_exception=True)
+
+        reply = db.session.query(OptimizationsDb).get(optimization_id)
+
+        reply._ensure_current()
+
+        return reply
+
+
+    @swagger.operation(responseClass=OptimizationsDb.__name__,
+                       parameters=optimization_parser.swagger_parameters())
+    @marshal_with(OptimizationsDb.resource_fields)
+    def put(self, project_id, optimization_id):
+
+        project_entry = load_project(project_id, raise_exception=True)
+
+        reply = db.session.query(OptimizationsDb).get(optimization_id)
+
+        try:
+            body = json.loads(request.data)
+        except ValueError:
+            body = {}
+
+        reply.objectives = body.get("objectives", {})
+        reply.constraints = body.get("constraints", {})
+
+        reply._ensure_current()
+
+        return reply

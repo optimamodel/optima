@@ -857,21 +857,23 @@ class OptimizationsDb(db.Model):
         if not self.objectives:
             self.objectives = {}
 
-
         project = load_project(self.project_id).hydrate()
-        progset = load_progset(self.project_id, self.progset_id).name
-        parset = load_parset(self.project_id, self.parset_id).name
+        progset = load_progset(self.project_id, self.progset_id).hydrate()
+        parset = load_parset(self.project_id, self.parset_id).hydrate()
 
-        constraints = op.defaultconstraints(project, progset=progset)
+        constraints = op.defaultconstraints(project=project, progset=progset)
 
+        # Update the min and the max according to what the user put, do not
+        # update the names, that should change from the programs.
         constraints['max'].update({
             x:y for x,y in self.constraints.get('min', {}).items() if x in constraints})
         constraints['min'].update({
             x:y for x,y in self.constraints.get('max', {}).items() if x in constraints})
 
+
         self.constraints = constraints
 
-        objectives = op.defaultobjectives(project, progset=progset,
+        objectives = op.defaultobjectives(project=project, progset=progset,
                                           which=self.optimization_type)
 
         objectives.update({

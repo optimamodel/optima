@@ -72,7 +72,7 @@ from server.webapp.resources.project_parsets import (Parsets, ParsetsData, Parse
                                                      ParsetsAutomaticCalibration, ParsetYkeys)
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
 from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
-from server.webapp.resources.project_optimizations import Optimizations
+from server.webapp.resources.project_optimizations import Optimizations, Optimization
 
 
 app.register_blueprint(model, url_prefix='/api/model')
@@ -96,6 +96,7 @@ api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
+api.add_resource(Optimization, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>')
 
 api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/results')
