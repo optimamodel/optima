@@ -212,6 +212,7 @@ class Programset(object):
         for program in self.programs:
             totalbudget[program] = dcp(emptyarray)
             selectbudget[program] = []
+            print "program", program, "costcov", self.programs[program].costcovdata
             if self.programs[program].costcovdata['t']:
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(tvec,yr)

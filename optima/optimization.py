@@ -140,6 +140,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
+    print "defaultconstraints: progset", progset
     constraints = odict() # Dictionary of all constraints
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
@@ -302,6 +303,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         raise OptimaException(errormsg)
     
     # Trim out non-optimizable programs and calculate limits
+    print "constraints", type(constraints), constraints
     minlimsvec = constraints['min'][:] # Convert to vector
     minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget

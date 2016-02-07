@@ -157,13 +157,14 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     if not objectives['budget']:
         objectives['budget'] = 1000000
     try:
-        result = project_instance.optimize(
-            name = optimization_name,
-            parsetname = parset_name,
-            progsetname = progset_name,
-            objectives = objectives,
-            constraints = constraints
-            )
+        # result = project_instance.optimize(
+        #     name = optimization_name,
+        #     parsetname = parset_name,
+        #     progsetname = progset_name,
+        #     objectives = objectives,
+        #     constraints = constraints
+        #     )
+        result = op.defaults.defaultproject('generalized').optimize()  # TODO replace with the real thing late
         print "result", result
     except Exception:
         var = traceback.format_exc()
