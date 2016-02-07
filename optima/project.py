@@ -293,12 +293,16 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True):
-        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list -- WARNING, do we need this? What's it for? Why not use runmodel()? '''
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, verbose=None):
+        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
+        
+        WARNING, do we need this? What's it for? Why not use runmodel()?
+        '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
         if name is None and simpars is None: name = 'default' # Set default name
+        if verbose is None: verbose = self.settings.verbose
 
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
@@ -310,7 +314,11 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind in range(len(simparslist)):
-            raw = model(simparslist[ind], self.settings, die=die) # ACTUALLY RUN THE MODEL
+            try:
+                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            except:
+                printv('Running model failed; running again with debugging...', 1, self.settings.verbose)
+                raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
