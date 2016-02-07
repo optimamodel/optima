@@ -64,12 +64,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         biofailure    = simpars['biofailure']  # biological treatment failure rate (P/T)
         freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
+        progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
+        recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
         # Behavioural transitions between stages [npop,npts]
         immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
         linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)
         stoprate      = simpars['stoprate']      # Percentage of people who receive ART in year who stop taking ART (%/year) (P/T)
         leavecare     = simpars['leavecare']     # Proportion of people in care then lost to follow-up per year (P/T)
-
+        
+        
     
     # Calculate other things outside the loop
     transinj = simpars['transinj']          # Injecting
@@ -577,19 +580,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             # 40% progress, 40% recover, 20% don't change cd4 count
             for cd4 in range(ncd4):
                 if cd4>0: 
-                    progin = dt*prog[cd4-1]*people[usvl[cd4-1],:,t]*0.4
+                    progin = dt*prog[cd4-1]*people[usvl[cd4-1],:,t]*progusvl
                 else: 
                     progin = 0 # Cannot progress into acute stage
                 if cd4<ncd4-1: 
-                    progout = dt*prog[cd4]*people[usvl[cd4],:,t]*0.4
+                    progout = dt*prog[cd4]*people[usvl[cd4],:,t]*progusvl
                 else: 
                     progout = 0 # Cannot progress out of AIDS stage
                 if (cd4>0 and cd4<ncd4-1): # CD4>0 stops people from moving back into acute
-                    recovin = dt*recov[cd4-1]*people[usvl[cd4+1],:,t]*0.4
+                    recovin = dt*recov[cd4-1]*people[usvl[cd4+1],:,t]*recovusvl
                 else: 
                     recovin = 0 # Cannot recover in to acute or AIDS stage
                 if cd4>1: # CD4>1 stops people from moving back into acute
-                    recovout = dt*recov[cd4-2]*people[usvl[cd4],:,t]*0.4
+                    recovout = dt*recov[cd4-2]*people[usvl[cd4],:,t]*recovusvl
                 else: 
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
                 hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
