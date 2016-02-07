@@ -144,6 +144,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
 
 @celery.task()
 def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints):
+    import traceback
     app.logger.debug('started optimization: {} {} {} {} {} {}'.format(
         project_id, optimization_name, parset_name, progset_name, objectives, constraints))
     error_text = ""
@@ -152,6 +153,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     project_instance = op.loads(wp.project)
     close_db_session(db_session)
+    result = None
     try:
         result = project_instance.optimize(
             name = optimization_name,
