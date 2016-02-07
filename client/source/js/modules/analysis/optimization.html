@@ -10,9 +10,8 @@
     <select id="optimization-selection"
             name="optimization-selection"
             class="updateGraph txbox"
-            ng-model="activeOptimization"
-            ng-change="getGraphs()"
-            ng-options="optimization.name for optimization in optimizations"
+            ng-model="state.activeOptimization"
+            ng-options="optimization.name for optimization in state.optimizations"
             style="width: 20%;">
     </select>
     <button ng-click="addOptimization()" type="button" class="btn" style="margin-left:2%">New optimization</button>
@@ -24,25 +23,43 @@
   </div>
 
   <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
-    <div class="small_bordered_list" style="width: 22%;">
+    <div class="small_bordered_list" style="width: 30%;">
       <div class="option_list" style="height:62vh">
+        <label>
+          Select a program set: <br>
+          <select class="txbox"
+                  ng-options="program as program.name for program in state.programSetList"
+                  ng-model="state.activeOptimization.programSet">
+            <option value="">-- Please select a program set --</option>
+          </select>
+        </label>
+        <label>
+          Select a parameter set: <br>
+          <select class="txbox"
+                  ng-options="parset as parset.name for parset in state.parsets"
+                  ng-model="state.activeOptimization.parset">
+            <option value="">-- Please select a parameter set --</option>
+          </select>
+        </label>
         <div style="justify-content: space-around" class="option">
           <span style="width: 45%">
-            <input type="radio" name="objectives_which" ng-click="objectives.which='outcomes'"/>
+            <input
+              type="radio"
+              name="objectives_which"
+              ng-click="state.activeOptimization.optimization_type='outcomes'"
+              ng-checked="state.activeOptimization.optimization_type==='outcomes'"/>
             Minimize outcome
           </span>
           <span style="width: 45%">
-            <input type="radio" name="objectives_which" ng-click="objectives.which='money'"/>
+            <input
+              type="radio"
+              name="objectives_which"
+              ng-click="state.activeOptimization.optimization_type='money'"
+              ng-checked="state.activeOptimization.optimization_type==='money'"/>
             Minimize money
           </span>
         </div>
         <div class="label">Objectives</div>
-        <div style="justify-content: space-around" class="option">
-          <span style="width: 70%">Baseline year to compare outcomes to</span>
-          <span style="width: 25%">
-            <input class="txbox __inline __m" type="number" ng-model="objectives.base"/>
-          </span>
-        </div>
         <div style="justify-content: space-around" class="option">
           <span style="width: 70%">Year to begin optimization</span>
           <span style="width: 25%">
@@ -52,7 +69,7 @@
         <div style="justify-content: space-around" class="option">
           <span style="width: 70%">Year by which to achiever objectives</span>
           <span style="width: 25%">
-            <input class="txbox __inline __m" type="number" ng-model="objectives.to"/>
+            <input class="txbox __inline __m" type="number" ng-model="objectives.end"/>
           </span>
         </div>
         <div style="justify-content: space-around" class="option">
@@ -62,21 +79,36 @@
           </span>
         </div>
         <div style="justify-content: space-around" class="option">
-          <span style="width: 70%">Fraction of deaths to be averted</span>
+          <span style="width: 70%">Deaths to be averted</span>
           <span style="width: 25%">
-            <input class="txbox __inline __m" type="number" ng-model="objectives.deathfrac"/>
+            <input class="txbox __inline __m" type="number" ng-model="objectives.deathWeight"/>
           </span>
         </div>
         <div style="justify-content: space-around" class="option">
-          <span style="width: 70%">Fraction of new infections to be averted</span>
+          <span style="width: 70%">Infections to be averted</span>
           <span style="width: 25%">
-            <input class="txbox __inline __m" type="number" ng-model="objectives.incifrac"/>
+            <input class="txbox __inline __m" type="number" ng-model="objectives.inciWeight"/>
+          </span>
+        </div>
+        <div class="label">Constraints</div>
+        <div style="justify-content: space-around" class="option">
+          <span style="width: 70%">Program Name</span>
+          <span style="width: 15%">Minimum</span>
+          <span style="width: 15%">Maximum</span>
+        </div>
+        <div style="justify-content: space-around" class="option" ng-repeat="constraint in state.constraints">
+          <span style="width: 70%">{{ constraint.label }}</span>
+          <span style="width: 15%">
+            <input class="txbox __inline __m" type="number" ng-model="constraint.min"/>
+          </span>
+          <span style="width: 15%">
+            <input class="txbox __inline __m" type="number" ng-model="constraint.max"/>
           </span>
         </div>
       </div>
       <div style="display: flex;justify-content: space-around; margin-top: 25px">
-        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/> <!-- WARNING, automatically saves! -->
-        <input type="button" value="Save" class="updateGraph btn" ng-click="processGraphs(true)"/>
+        <input type="button" value="Run" class="updateGraph btn" ng-click="processGraphs()"/> <!-- WARNING, automatically saves! -->
+        <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization()"/>
         <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
       </div>
     </div>

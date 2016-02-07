@@ -192,7 +192,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
-    // Opens modal to add / rename / cope parameter set
+    // Opens modal to add / rename / copy parameter set
     var openParameterSetModal = function (callback, title, parameterSetList, parameterSetName, operation, isRename) {
       var onModalKeyDown = function (event) {
         if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
