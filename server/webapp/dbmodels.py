@@ -849,7 +849,7 @@ class OptimizationsDb(db.Model):
         """
         Make sure the objectives and constraints are current.
         """
-        from server.webapp.utils import load_parset, load_progset, load_project
+        from server.webapp.utils import load_parset, load_progset, load_project, remove_nans
 
         if not self.constraints:
             self.constraints = {}
@@ -879,4 +879,4 @@ class OptimizationsDb(db.Model):
         objectives.update({
             x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
 
-        self.objectives = objectives
+        self.objectives = remove_nans(objectives)
