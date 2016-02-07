@@ -57,12 +57,12 @@
         </div>
     </div>
 
-    <div class="grid section">
+    <div class="grid">
       <div class="12">
         <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
         <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
       </div>
-      <div>
+      <div style="height: 50vh; overflow: scroll">
         <div ng-repeat="chart in graphs" class="chart-container __small">
           <div mpld3-chart="chart" id="{{ chart.id }}"></div>
           <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
