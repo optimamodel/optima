@@ -75,12 +75,12 @@ def sensitivity(project=None, orig=None, ncopies=5, what='force', span=0.5, ind=
 
 
 
-def autofit(project=None, name=None, fitwhat=None, fitto=None, method='mad', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
+def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', maxtime=None, maxiters=1000, inds=0, verbose=2, doplot=False):
     ''' 
     Function to automatically fit parameters. Parameters:
         fitwhat = which parameters to vary to improve the fit; these are defined in parameters.py under the 'auto' attribute; default is 'force' (FOI metaparameters only)
         fitto = what kind of data to fit to; options are anything in results.main; default is 'prev' (prevalence) or everything
-        method = which method of calculating the objective/goodness-of-fit to use; default mean absolute deviation to place less weight on outliers
+        method = which method of calculating the objective/goodness-of-fit to use; default weighted absolute percentage error to place less weight on outliers
     Others should be self-explanatory.
     
     Version: 2016feb07 by cliffk
@@ -190,7 +190,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='mad', max
     
 
 
-    def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='prev', method='mad', bestindex=0, doplot=False, verbose=2):
+    def objectivecalc(parvec=None, pars=None, parlist=None, project=None, fitto='prev', method='wape', bestindex=0, doplot=False, verbose=2):
         ''' 
         Calculate the mismatch between the model and the data -- may or may not be
         related to the likelihood. Either way, it's very uncertain what this function
@@ -252,14 +252,16 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='mad', max
                             count += 1
                             modelx = findinds(results.tvec, year) # Find the index of the corresponding time point
                             modely = modelrow[modelx] # Finally, extract the model result!
-                            if method=='mad': thismismatch = abs(modely - datay[i]) / mean(datay+eps)
-                            elif method=='mse': thismismatch = (modely - datay[i])**2
+                            if   method=='wape': thismismatch = abs(modely - datay[i]) / mean(datay+eps)
                             elif method=='mape': thismismatch = abs(modely - datay[i]) / (datay[i]+eps)
+                            elif method=='mad':  thismismatch = abs(modely - datay[i])
+                            elif method=='mse':  thismismatch = (modely - datay[i])**2
                             else:
-                                errormsg = 'autofit(): "method" incorrect; you entered "%s", but must be one of:\n' % method
-                                errormsg += '"mad"  = mean absolute deviation\n'
-                                errormsg += '"mse"  = mean squared error\n'
-                                errormsg += '"mape" = mean absolute percentage error'
+                                errormsg = 'autofit(): "method" not known; you entered "%s", but must be one of:\n' % method
+                                errormsg += '"wape" = weighted absolute percentage error (default)\n'
+                                errormsg += '"mape" = mean absolute percentage error\n'
+                                errormsg += '"mad"  = mean absolute difference\n'
+                                errormsg += '"mse"  = mean squared error'
                                 raise OptimaException(errormsg)
                             allmismatches.append(thismismatch)
                             mismatch += thismismatch

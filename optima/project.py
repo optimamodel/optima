@@ -372,7 +372,7 @@ class Project(object):
         return None
 
 
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='mad', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
