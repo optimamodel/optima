@@ -586,7 +586,11 @@ class Program(object):
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
             self.costcovdata['cost'].append(costcovdatum['cost'])
-            self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            if costcovdatum.get('coverage'):
+                self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            else:
+                self.costcovdata['coverage'].append(None)
+
             printv('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.short, self.costcovdata), 4, verbose)
         else:
             if overwrite:

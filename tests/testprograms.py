@@ -123,6 +123,9 @@ if 'makeprograms' in tests:
                          'cost':1e7,
                          'coverage':4e5})
 
+    MGT.addcostcovdatum({'t':2015,
+                         'cost':1e7})
+
     # 4. Overwrite historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
                          'cost':2e6,
