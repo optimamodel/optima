@@ -143,8 +143,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                         # Remove years after the last good year
                         if last_t < max(thispar.t[pop]):
-                            thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
-                            thispar.y[pop] = thispar.y[pop][thispar.t[pop] <= last_t]
+                            thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
+                            thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
                         
                         # Append the last good year, and then the new years
                         thispar.t[pop] = append(thispar.t[pop], last_t)
