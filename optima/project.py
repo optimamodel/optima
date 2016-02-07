@@ -174,11 +174,11 @@ class Project(object):
                 if overwrite==False:
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
-                    printv('Structure list "%s" already has item named "%s"' % (what, checkabsent), 2, self.settings.verbose)
+                    printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
-                raise OptimaException('Structure list "%s" has no item named "%s"' % (what, checkexists))
+                raise OptimaException('Structure list has no item named "%s"' % (checkexists))
         return None
 
 
