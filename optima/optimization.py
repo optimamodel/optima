@@ -347,36 +347,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     # Handle budget and remove fixed costs
     totalbudget = dcp(objectives['budget'])
     origbudget = dcp(progset.getdefaultbudget())
-    progkeys = progset.programs.keys()
     optiminds = findinds(progset.optimizable())
-    fixedinds = findinds(1-array(progset.optimizable()))
-    noptimprogs = len(optiminds) # Only count optimizable programs
-    
-    # Error checking
-    if isnan(budgetvec).any():
-        errormsg = 'Program "%s" does not have any budget' % progkeys[findinds(isnan(budgetvec))]
-        raise OptimaException(errormsg)
-    
-    # Trim out non-optimizable programs and calculate limits
-    minlimsvec = array([constraints['min'][key] for key in progkeys]) # Convert to vector
-    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
-    totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
-    budgetvec = budgetvec[optiminds] # ...then remove them from the vector
-    origbudgetvec = dcp(budgetvec) # Store original budget vector
-    budgetvec *= totalbudget/sum(budgetvec) # Rescale so the total matches the new total
-    
-    # Do limits
-    budgetlims = odict()
-    budgetlims['min'] = zeros(nprogs)
-    budgetlims['max'] = zeros(nprogs)
-    for p in range(nprogs):
-        minfrac = constraints['min'][progkeys[optiminds[p]]]
-        maxfrac = constraints['max'][progkeys[optiminds[p]]]
-        budgetlims['min'][p] = minfrac * origbudgetvec[p] # Note: 'constraints' includes non-optimizable programs, must be careful
-        if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p]
-        else:                   budgetlims['max'][p] = inf
-
-
     
     for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
@@ -384,17 +355,8 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         try: thisparset.pars = [thisparset.pars[ind]] # Turn into a list
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
-        # Calculate limits -- WARNING, kludgy, I guess?
-        budgetlower  = zeros(nprogs)
-        budgethigher = zeros(nprogs) + totalbudget
-        
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'totalbudget':totalbudget, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
-        if method=='asd': 
-            budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        elif method=='simplex': # WARNING, not fully implemented
-            from scipy.optimize import minimize
-            budgetvecnew = minimize(outcomecalc, budgetvec, args=args).x
-        else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
+        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'tvec': tvec}
+        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     budgetvecnew = constrainbudget(origbudget=budgetvecnew, total=totalbudget, limits=budgetlims) # WARNING, not sure why this is needed, but it is
@@ -404,7 +366,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=tmpresults, name='minoutcomes-%s-%s' % (parsetname, progsetname))
+    multires = Multiresultset(resultsetlist=tmpresults, name='%s-%s-%s' % (which, parsetname, progsetname))
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
         
