@@ -123,7 +123,7 @@ class OptimizationResults(Resource):
     @report_exception
     def post(self, project_id, optimization_id):
         from server.webapp.tasks import run_optimization, start_or_report_calculation
-        from server.webapp.dbmodels import OptimizationsDb, ParsetsDb, ProgsetsDb
+        from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
         optimization_entry = OptimizationsDb.query.get(optimization_id)
         optimization_entry._ensure_current()
@@ -147,15 +147,21 @@ class OptimizationResults(Resource):
             result['status'] = 'started'
             return result, 201
 
+    @swagger.operation(
+        summary='Retrieve optimization results for the given parset'
+    )
     @report_exception
-    def get(self, project_id, parset_id):
+    def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
-        from server.webapp.dbmodels import ParsetsDb
+        from server.webapp.dbmodels import OptimizationsDb
 
-        parset_entry = ParsetsDb.query.get(parset_id)
+        optimization_entry = OptimizationsDb.query.get(optimization_id)
+        optimization_entry._ensure_current()
+
+        parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
         project_id = parset_entry.project_id
 
-        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, parset_id, 'optimization')
+        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, str(parset_entry.id), 'optimization')
         return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
 
 
