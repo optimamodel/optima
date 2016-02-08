@@ -100,7 +100,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True, makedefaults=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True, makedefaults=False):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -140,6 +140,7 @@ class Project(object):
             optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0), constraints=defaultconstraints(project=self, progset=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
             self.addoptim(optim)
         return None
+
 
     def loadeconomics(self, filename):
         ''' Load economic data and tranforms it to useful format'''
