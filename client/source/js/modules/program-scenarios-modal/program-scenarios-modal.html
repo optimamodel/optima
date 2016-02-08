@@ -42,7 +42,7 @@
           <div class="c-input-table__label">
             {{row[type][$index].program}}
           </div>
-          <input type="text" class="c-input-table__input txbox" ng-model="row.budget[$index].values[$parent.$index]"/>
+          <input type="number" class="c-input-table__input txbox" ng-model="row.budget[$index].values[$parent.$index]"/>
         </div>
 
         <div class="o-card__delete" ng-click="removeParam(temp, $index)">x</div>
