@@ -687,7 +687,7 @@ class ProgsetsDb(db.Model):
                 print "Updating program %s" % short
                 program_entry = existing_shorts[short]
                 for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
-                    program_entry.__dict__[field] = program[field]
+                    setattr(program_entry, field, program[field])
                 program_entry.active = program.get('active', False)
                 db.session.add(program_entry)
             else:
