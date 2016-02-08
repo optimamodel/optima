@@ -107,6 +107,7 @@ class Scenarios(Resource):
         for scenario in scenarios:
             print "scenario", scenario.blob
             if 'pars' in scenario.blob:
+                pars = []
                 for par in scenario.blob['pars']:
                     par['for'] = par['for'][0]
                     pars.append(par)
