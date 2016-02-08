@@ -141,6 +141,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Loop over populations
                     for pop in pops:
+                        print "thispar", thispar
+                        print "thispar.t", thispar.t
 
                         # Remove years after the last good year
                         if last_t < max(thispar.t[pop]):
