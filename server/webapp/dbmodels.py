@@ -818,7 +818,7 @@ class ScenariosDb(db.Model):
                                progsetname=progset.name,
                                **self.blob)
 
-        elif self.scenario_type == "Parameter":
+        elif self.scenario_type == "parameter":
 
             return op.Parscen(name=self.name,
                               parsetname=parset.name,
