@@ -157,9 +157,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           console.log('graohs', response);
           $scope.optimizationCharts = response.optimization.graphs;
+          $scope.selectors = response.optimization.selectors;
           $scope.statusMessage = 'Charts updated.';
-          $scope.parameters = response.calibration.parameters;
-          $scope.result_id = response.calibration.result_id;
         });
     };
 
