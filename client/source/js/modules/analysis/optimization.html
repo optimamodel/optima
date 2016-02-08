@@ -92,16 +92,19 @@
           </span>
         </div>
       </div>
-      <div style="display: flex;justify-content: space-around; margin-top: 25px">
+      <div style="font-style: italic;color: lightgreen;margin-top: 25px;margin-left: 25px">
+        {{ statusMessage }}
+      </div>
+      <div style="font-style: italic;color: red;margin-top: 5px;margin-left: 25px">
+        {{ errorMessage }}
+      </div>
+      <div style="display: flex;justify-content: space-around; margin-top: 5px">
         <input type="button" value="Run" class="updateGraph btn" ng-click="runOptimizations()"/> <!-- WARNING, automatically saves! -->
         <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization()"/>
         <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
       </div>
-      <div style="font-style: italic;color: lightgreen;margin-top: 5px">
-        {{ statusMessage }}
-      </div>
     </div>
-    <div class="chart_wrapper">
+    <div class="chart_wrapper" style="height:calc(100vh - 280px)">
       <div ng-repeat="chart in optimizationCharts" class="chart-container __small">
         <div mpld3-chart="chart" id="{{ chart.id }}"></div>
         <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>

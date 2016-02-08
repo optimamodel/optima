@@ -127,7 +127,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if(response.status === 'started') {
             $scope.statusMessage = 'Optimization started.';
-            pollOptimizations();
+            $scope.errorMessage = '';
+              pollOptimizations();
           } else if(response.status === 'running') {
             $scope.statusMessage = 'Optimization already running.'
           }
@@ -138,13 +139,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var that = this;
       $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
         .success(function(response) {
-          console.log('11response', response);
           if(response.status === 'completed') {
             getOptimizationGraphs();
             $scope.statusMessage = 'Optimization successfully completed.';
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollOptimizations, 5000);
+          } else if(response.status === 'error'){
+            $scope.errorMessage = 'Optimization failed.';
+            $scope.statusMessage = '';
           }
         });
     };
@@ -152,8 +155,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var getOptimizationGraphs = function() {
       $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/graph')
         .success(function(response) {
-          console.log('graohs', response)
-          $scope.optimizationCharts = response.optimizations.graphs;
+          console.log('graohs', response);
+          $scope.optimizationCharts = response.optimization.graphs;
           $scope.statusMessage = 'Charts updated.';
           $scope.parameters = response.calibration.parameters;
           $scope.result_id = response.calibration.result_id;
