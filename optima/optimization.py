@@ -1,12 +1,12 @@
 """
 Functions for running optimizations.
     
-Version: 2016feb04
+Version: 2016feb07
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
 from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber # Utilities
-from numpy import zeros, arange, isnan, maximum, array, inf
+from numpy import zeros, arange, maximum, array, inf
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
@@ -63,7 +63,7 @@ class Optim(object):
     def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         multires = optimize(which=self.objectives['which'], project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        multires.name = 'optim-'+name
+        multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
         return multires
 
 
@@ -399,8 +399,8 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     
     # Run money minimization
     elif which=='money':
-        multires = minmoney()
-    
+        multires = minmoney(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, fundingchange=1.2)
+
     return multires
 
 
@@ -451,7 +451,7 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
 
     
     
-def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2):
+def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
@@ -484,19 +484,17 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     args['totalbudget'] = 1e9
     targetsmet = objectivecalc(budgetvec, **args)
     if not(targetsmet):
-        printv("Warning, infinite allocation can't meet targets", 1, verbose)
-        return None
-    else:
-        printv("Infinite allocation meets targets, as expected; proceeding...", 3, verbose)
+        multires = objectivecalc(budgetvec, outputresults=True, **args)
+        raise OptimaException("Infinite allocation can't meet targets:\n%s" % multires.outcomes) # WARNING, this shouldn't be an exception, something more subtle
+    else: printv("Infinite allocation meets targets, as expected; proceeding...", 3, verbose)
     
     # Next, try no money
     args['totalbudget'] = 1e-3
     targetsmet = objectivecalc(budgetvec, **args)
     if targetsmet:
-        printv("Warning, even zero allocation meets targets", 1, verbose)
-        return None
-    else:
-        printv("Zero allocation doesn't meet targets, as expected; proceeding...", 3, verbose)
+        multires = objectivecalc(budgetvec, outputresults=True, **args)
+        raise OptimaException("Even zero allocation meets targets")
+    else:printv("Zero allocation doesn't meet targets, as expected; proceeding...", 3, verbose)
     
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
     args['totalbudget'] = origtotalbudget
