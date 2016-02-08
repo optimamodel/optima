@@ -151,7 +151,7 @@ class Programset(object):
         return odict((program.short, program) for program in self.programs.values() if program.hasbudget())
 
     def hasallcovoutpars(self, detail=False):
-        ''' Checks whether all the **required** parameters are there for coverage-outcome rships'''
+        ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
         result = True
         details = []
         for thispartype in self.covout.keys():
@@ -166,10 +166,21 @@ class Programset(object):
                             details.append((thispartype,thispop))
         if detail: return details
         else: return result
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
-    
+    def hasallcostcovpars(self, detail=False):
+        ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
+        result = True
+        details = []
+        for prog in self.optimizableprograms().values():
+            if not prog.costcovfn.ccopars.get('unitcost'):
+                details.append(prog.name)
+                result = False
+        if detail: return details
+        else: return result
                 
+    def readytooptimize(self):
+        ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
+        return (self.hasallcostcovpars() and self.hasallcovoutpars())        
 
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]

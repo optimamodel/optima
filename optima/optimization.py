@@ -280,6 +280,13 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
+    if not progset.readytooptimize():
+        detail_costcov = progset.hasallcostcovpars(detail=True)
+        detail_covout = progset.hasallcovoutpars(detail=True)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Missing parameters are:\n%s' % ((detail_costcov+detail_covout))
+        raise OptimaException(errormsg)
+
     
     # Handle budget and remove fixed costs
     totalbudget = objectives['budget']
