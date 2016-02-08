@@ -51,7 +51,7 @@
                 type="radio"
                 name="objectives_which"
                 ng-click="setType('outcome')"
-                ng-checked="state.activeOptimization.optimization_type==='outcome'"/>
+                ng-checked="state.activeOptimization.which==='outcome'"/>
               Minimize outcome
             </span>
             <span style="width: 45%">
@@ -59,7 +59,7 @@
                 type="radio"
                 name="objectives_which"
                 ng-click="setType('money')"
-                ng-checked="state.activeOptimization.optimization_type==='money'"/>
+                ng-checked="state.activeOptimization.which==='money'"/>
               Minimize money
             </span>
           </div>
