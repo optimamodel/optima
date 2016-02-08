@@ -56,9 +56,11 @@ Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
+People lost to follow up who are still in care (%)	stoppropcare	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 PLHIV aware of their status (%)	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
 Diagnosed PLHIV in care (%)	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
 PLHIV in care on treatment (%)	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
+People on ART with viral suppression (%)	propsupp	(0, 1)	tot	timepar	no	no	0	0	1	None
 Male-female insertive transmissibility (per act)	transmfi	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-female receptive transmissibility (per act)	transmfr	(0, 1)	tot	constant	const	const	0	None	0	None
 Male-male insertive transmissibility (per act)	transmmi	(0, 1)	tot	constant	const	const	0	None	0	None
@@ -78,10 +80,12 @@ Progression rate for CD4>500 (%/year)	proggt500	(0, 'maxrate')	tot	constant	cons
 Progression rate for CD4>350 (%/year)	proggt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Progression rate for CD4>200 (%/year)	proggt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Progression rate for CD4>50 (%/year)	proggt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+People on unsuppressive ART who progress (%)	progusvl	(0, 1)	tot	constant	const	const	1	None	0	None
 Treatment recovery rate into CD4>500 (%/year)	recovgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Treatment recovery rate into CD4>350 (%/year)	recovgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Treatment recovery rate into CD4>200 (%/year)	recovgt200	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Treatment recovery rate into CD4>50 (%/year)	recovgt50	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
+People on unsuppressive ART who recover (%)	recovusvl	(0, 1)	tot	constant	const	const	1	None	0	None
 Death rate for acute HIV (%/year)	deathacute	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>500 (%/year)	deathgt500	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 Death rate for CD4>350 (%/year)	deathgt350	(0, 'maxrate')	tot	constant	const	const	0	None	0	None

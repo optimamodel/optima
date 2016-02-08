@@ -573,7 +573,8 @@ class OptimaSpreadsheet:
         'Number of people initiating ART each year',
         'PLHIV aware of their status (%)', 
         'Diagnosed PLHIV in care (%)',
-        'PLHIV in care on treatment (%)']:
+        'PLHIV in care on treatment (%)',
+        'People on ART with viral suppression (%)']:
             current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
 
       
@@ -658,19 +659,19 @@ class OptimaSpreadsheet:
             'CD4(500) to CD4(350-500)',
             'CD4(350-500) to CD4(200-350)',
             'CD4(200-350) to CD4(50-200)',
-            'CD4(50-200) to CD4(<50)'], 
-            [4.14, 1.05, 0.33, 0.27, 0.67], 
-            [2.00, 0.86, 0.32, 0.25, 0.44], 
-            [9.76, 1.61, 0.35, 0.29, 0.88],
+            'CD4(50-200) to CD4(<50)'],
+            [4.14, 1.05, 0.33, 0.27, 0.67, 0.4], 
+            [2.00, 0.86, 0.32, 0.25, 0.44, 0.3], 
+            [9.76, 1.61, 0.35, 0.29, 0.88, 0.5],
             OptimaFormats.PERCENTAGE),
         ('Treatment recovery rate (% per year)',
             ['CD4(350-500) to CD4(>500)',
             'CD4(200-350) to CD4(350-500)',
             'CD4(50-200) to CD4(200-350)',
             'CD4(<50) to CD4(50-200)'],
-            [0.45, 0.70, 0.47, 1.52], 
-            [0.14, 0.29, 0.33, 1.06], 
-            [0.93, 1.11, 0.72, 1.96], 
+            [0.45, 0.70, 0.47, 1.52, 0.4], 
+            [0.14, 0.29, 0.33, 1.06, 0.3], 
+            [0.93, 1.11, 0.72, 1.96, 0.5], 
             OptimaFormats.PERCENTAGE),
         ('Death rate (% mortality per year)',
             ['Acute infection',
@@ -710,7 +711,16 @@ class OptimaSpreadsheet:
             [0.146, 0.008, 0.020, 0.070, 0.265, 0.547, 0.053], 
             [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], 
             [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], 
-            OptimaFormats.NUMBER)]
+            OptimaFormats.NUMBER),
+        ('Cascade parameters',
+            ['People on unsuppressive ART who progress (%)',
+            'People on unsuppressive ART who recover (%)',
+            'People lost to follow up who are still in care (%)'],
+            [0.4, 0.4, 0.4],
+            [0.3, 0.3, 0.3],
+            [0.5, 0.5, 0.5],
+            OptimaFormats.PERCENTAGE)]
+
 
         for (name, row_names, best, low, high, format) in names_rows_data_format:
             current_row = self.emit_constants_block(name, current_row, row_names, best, low, high, format)
