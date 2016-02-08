@@ -61,20 +61,9 @@ class Optim(object):
             
     
     def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
-<<<<<<< HEAD
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         multires = optimize(which=self.objectives['which'], project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
-=======
-        if self.objectives['which'] in ['outcome','outcomes']: multires = minoutcomes(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        elif self.objectives['which']=='money':                multires = minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        else: raise OptimaException('optimize(): "which" must be "outcome" or "money"; you entered "%s"' % self.objectives['which'])
-        
-        if name:
-            multires.name = 'optim-'+name
-        else:
-            multires.name = 'optim-default'
->>>>>>> develop
         return multires
 
 
@@ -158,12 +147,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
-<<<<<<< HEAD
     constraints = odict() # Dictionary of all constraints -- WARNING, change back to odict!
-=======
-    print "defaultconstraints: progset", progset
-    constraints = odict() # Dictionary of all constraints
->>>>>>> develop
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
     constraints['max'] = odict() # Maximum budgets
@@ -444,7 +428,6 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
     
-<<<<<<< HEAD
     ## Constrain the budget
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
     
@@ -455,47 +438,6 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
     args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
     budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-=======
-    # Trim out non-optimizable programs and calculate limits
-    print "constraints", type(constraints), constraints
-    minlimsvec = constraints['min'][:] # Convert to vector
-    minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
-    totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget
-    budgetvec = budgetvec[optiminds] # ...then remove them from the vector
-    origbudgetvec = dcp(budgetvec) # Store original budget vector
-    budgetvec *= totalbudget/sum(budgetvec) # Rescale so the total matches the new total
-    
-    # Do limits
-    budgetlims = odict()
-    budgetlims['min'] = zeros(nprogs)
-    budgetlims['max'] = zeros(nprogs)
-    for p in range(nprogs):
-        minfrac = constraints['min'][optiminds[p]]
-        maxfrac = constraints['max'][optiminds[p]]
-        budgetlims['min'][p] = minfrac * origbudgetvec[p] # Note: 'constraints' includes non-optimizable programs, must be careful
-        if maxfrac is not None: budgetlims['max'][p] = maxfrac * origbudgetvec[p]
-        else:                   budgetlims['max'][p] = inf
-
-
-    
-    for ind in inds: # WARNING, kludgy -- inds not actually used!!!
-        # WARNING, kludge because some later functions expect parset instead of pars
-        thisparset = dcp(parset)
-        try: thisparset.pars = [thisparset.pars[ind]] # Turn into a list
-        except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
-        
-        # Calculate limits -- WARNING, kludgy, I guess?
-        budgetlower  = zeros(nprogs)
-        budgethigher = zeros(nprogs) + totalbudget
-        
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'totalbudget':totalbudget, 'budgetlims': budgetlims, 'optiminds':optiminds, 'tvec': tvec}
-        if method=='asd': 
-            budgetvecnew, fval, exitflag, output = asd(outcomecalc, budgetvec, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-        elif method=='simplex': # WARNING, not fully implemented
-            from scipy.optimize import minimize
-            budgetvecnew = minimize(outcomecalc, budgetvec, args=args).x
-        else: raise OptimaException('Optimization method "%s" not recognized: must be "asd" or "simplex"' % method)
->>>>>>> develop
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
