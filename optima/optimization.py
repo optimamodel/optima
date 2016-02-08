@@ -62,6 +62,7 @@ class Optim(object):
     
     def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
+        if name is None: name='default'
         multires = optimize(which=self.objectives['which'], project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
         return multires
