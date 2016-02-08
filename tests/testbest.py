@@ -4,7 +4,7 @@ Create a good test project
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople
 
 ## Options
 precalibrate = True # Whether or not to run autofitting
@@ -34,7 +34,9 @@ scenlist = [
 # Run the scenarios
 P.addscenlist(scenlist)
 P.runscenarios() 
+
+plotpeople(P, P.results[-1].raw[-1][0]['people'])
  
 # Output
-apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-pygui(P.results[-1], toplot='default')
+#apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+#pygui(P.results[-1], toplot='default')

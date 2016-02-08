@@ -151,7 +151,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   targetpops=pops,
                   category='Care and treatment',
                   name='Antiretroviral therapy',
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
