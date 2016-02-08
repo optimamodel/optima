@@ -136,14 +136,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var pollOptimizations = function() {
       var that = this;
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+      $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
         .success(function(response) {
           console.log('11response', response);
-          if(response.status === 'started') {
+          if(response.status === 'completed') {
             getOptimizationGraphs();
             $scope.statusMessage = 'Optimization successfully completed.';
             $timeout.cancel($scope.pollTimer);
-          } else if(response.status === 'running'){
+          } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollOptimizations, 5000);
           }
         });
