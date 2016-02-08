@@ -4,7 +4,16 @@
     <spreadsheet-upload-hint></spreadsheet-upload-hint>
   </div>
 
-  <div ng-if="!missingModelData">
+  <div ng-if="missingProgramSet">
+    <div class="section grid">
+        <div class="cols-12">
+            <h1>Manage scenarios</h1>
+            <p class="error-hint">Please create a program set to proceed. <a  ui-sref="project-set.manageProgramSet">Define/manage program set</a></p>
+        </div>
+    </div>
+  </div>
+
+  <div ng-if="!missingModelData && !missingProgramSet">
 
     <div class="section grid">
         <div class="cols-12">
