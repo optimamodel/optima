@@ -76,10 +76,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = (1-simpars['effdx']) # Include diagnosis efficacy
     if usecascade:
-        efftxunsupp = simpars['efftxunsupp'] * dxfactor # (~30%) reduction in transmission probability for usVL
-        efftxsupp  = simpars['efftxsupp']  * dxfactor # (~96%) reduction in transmission probability for sVL
+        efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # (~30%) reduction in transmission probability for usVL
+        efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # (~96%) reduction in transmission probability for sVL
     else:
-        txfactor = dxfactor * (simpars['efftxsupp']*treatvs + simpars['efftxunsupp']*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
+        txfactor = dxfactor * ((1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
     # Disease state indices
     susreg   = settings.susreg      # Susceptible, regular
@@ -280,7 +280,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     printv(errormsg, 1, verbose)
                     condkey = 0.0
                 
-            this['cond'] = 1 - condkey*effcondom
+            this['cond'] = 1.0 - condkey*effcondom
             this['pop1'] = popkeys.index(key[0])
             this['pop2'] = popkeys.index(key[1])
             if     male[this['pop1']] and   male[this['pop2']]: this['trans'] = (simpars['transmmi'] + simpars['transmmr'])/2.0 # Note: this looks horrible and stupid but it's correct! Ask Kedz
