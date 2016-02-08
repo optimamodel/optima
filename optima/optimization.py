@@ -22,15 +22,15 @@ class Optim(object):
         if project is None:     raise OptimaException('To create an optimization, you must supply a project')
         if parsetname is None:  parsetname = 0 # If none supplied, assume defaults
         if progsetname is None: progsetname = 0
-        self.name = name # Name of the parameter set, e.g. 'default'
-        self.uid = uuid() # ID
-        self.project = project # Store pointer for the project, if available
-        self.created = today() # Date created
-        self.modified = today() # Date modified
-        self.parsetname = parsetname # Parameter set name
-        self.progsetname = progsetname # Program set name
-        self.objectives = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
-        self.constraints = constraints # List of populations
+        self.name         = name # Name of the parameter set, e.g. 'default'
+        self.uid          = uuid() # ID
+        self.project      = project # Store pointer for the project, if available
+        self.created      = today() # Date created
+        self.modified     = today() # Date modified
+        self.parsetname   = parsetname # Parameter set name
+        self.progsetname  = progsetname # Program set name
+        self.objectives   = objectives # List of dicts holding Parameter objects -- only one if no uncertainty
+        self.constraints  = constraints # List of populations
         if objectives is None: self.objectives = defaultobjectives(progset=project.progsets[progsetname])
         if constraints is None: self.constraints = defaultconstraints(progset=project.progsets[progsetname])
         self.resultsref = None # Store pointer to results
@@ -368,51 +368,66 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     printv('Running %s optimization...' % which, 1, verbose)
     
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
-    parsetname = optim.parsetname
-    progsetname = optim.progsetname
-    objectives = optim.objectives
-    constraints = optim.constraints 
-    
-    parset  = project.parsets[parsetname] # Link to the original parameter set
-    progset = project.progsets[progsetname] # Link to the original parameter set
+    parset  = project.parsets[optim.parsetname] # Link to the original parameter set
+    progset = project.progsets[optim.progsetname] # Link to the original parameter set
     lenparlist = len(parset.pars)
     
     # Process inputs
     if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
-    tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
+    tvec = project.settings.maketvec(end=optim.objectives['end']) # WARNING, this could be done better most likely
     if not progset.readytooptimize():
         detail_costcov = progset.hasallcostcovpars(detail=True)
         detail_covout = progset.hasallcovoutpars(detail=True)
         errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % ((detail_costcov+detail_covout))
         raise OptimaException(errormsg)
-
     
-    # Handle budget and remove fixed costs
-    totalbudget = dcp(objectives['budget'])
+    # Run outcomes minimization
+    if which=='outcomes':
+        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
+    
+    # Run money minimization
+    elif which=='money':   
+    
+    return multires
+
+
+
+
+
+def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
+    ''' Split out minimize outcomes '''
+    
+    ## Handle budget and remove fixed costs
+    parset  = project.parsets[optim.parsetname] # Link to the original parameter set
+    progset = project.progsets[optim.progsetname] # Link to the original parameter set
+    totalbudget = dcp(optim.objectives['budget'])
     origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     
-    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, fulloutput=True)
+    ## Constrain the budget
+    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, fulloutput=True)
     
-#    for ind in inds: # WARNING, kludgy -- inds not actually used!!!
+    ## Actually run the optimization
+    # for ind in inds: # WARNING, kludgy -- should be a loop!
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
-    args = {'which':which, 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints':constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
+    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
     budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, fulloutput=True)
+    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, fulloutput=True)
     orig = objectivecalc(constrainedbudgetvec, outputresults=True, debug=False, **args)
     new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
     
-    multires = Multiresultset(resultsetlist=tmpresults, name='%s-%s-%s' % (which, parsetname, progsetname))
+    # Output
+    multires = Multiresultset(resultsetlist=tmpresults, name='outcomes-%s-%s' % (parset.name, progset.name))
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
         multires.budgetyears[key] = tmpresults[k].budgetyears
