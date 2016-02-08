@@ -5,7 +5,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    * Defines & validates objectives, parameters & constraints to run, display &
    * save optimization results.
    */
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $modal, modalService, activeProject) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $modal, modalService, activeProject, $timeout) {
 
     if (!activeProject.data.has_data) {
       modalService.inform(
@@ -118,6 +118,45 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
           // setActiveOptimization(response);
+        });
+    };
+
+    $scope.runOptimizations = function() {
+      var data = {};
+      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+        .success(function(response) {
+          if(response.status === 'started') {
+            $scope.statusMessage = 'Optimization started.';
+            pollOptimizations();
+          } else if(response.status === 'running') {
+            $scope.statusMessage = 'Optimization already running.'
+          }
+        })
+    };
+
+    var pollOptimizations = function() {
+      var that = this;
+      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+        .success(function(response) {
+          console.log('11response', response);
+          if(response.status === 'started') {
+            getOptimizationGraphs();
+            $scope.statusMessage = 'Optimization successfully completed.';
+            $timeout.cancel($scope.pollTimer);
+          } else if(response.status === 'running'){
+            $scope.pollTimer = $timeout(pollOptimizations, 5000);
+          }
+        });
+    };
+
+    var getOptimizationGraphs = function() {
+      $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/graph')
+        .success(function(response) {
+          console.log('graohs', response)
+          $scope.optimizationCharts = response.optimizations.graphs;
+          $scope.statusMessage = 'Charts updated.';
+          $scope.parameters = response.calibration.parameters;
+          $scope.result_id = response.calibration.result_id;
         });
     };
 
