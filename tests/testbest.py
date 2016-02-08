@@ -26,8 +26,8 @@ nobudget = dcp(defaultbudget)
 for key in nobudget: nobudget[key] *= 1e-6
 scenlist = [
     Parscen(name='Current conditions', parsetname='default', pars=[]),
-    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
-    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+#    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
+#    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
     Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
     ]
 
