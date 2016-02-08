@@ -33,7 +33,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       success(function (response) {
         $scope.state.optimizations = response.optimizations;
         if($scope.state.optimizations.length > 0) {
-          setActiveOptimization($scope.state.optimizations[0]);
+          $scope.setActiveOptimization($scope.state.optimizations[0]);
         }
       });
 
@@ -45,7 +45,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           constraints: constraints,
           objectives: objectiveDefaults.money
         };
-        setActiveOptimization(newOptimization);
+        $scope.setActiveOptimization(newOptimization);
         $scope.state.optimizations.push(newOptimization);
       };
       openOptimizationModal(add, 'Add optimization', $scope.state.optimizations, null, 'Add');
@@ -55,10 +55,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return _.keys(constraints.name);
     };
 
-    var setActiveOptimization = function(optimization) {
+    $scope.setActiveOptimization = function(optimization) {
       $scope.state.activeOptimization = optimization;
       $scope.state.constraintKeys = getConstraintKeys(optimization.constraints);
       $scope.state.objectives = objectives[optimization.which];
+      $scope.optimizationCharts = [];
+      $scope.selectors = [];
+      $scope.getOptimizationGraphs();
     };
 
     // Open pop-up to re-name Optimization
@@ -81,7 +84,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var rename = function (name) {
           var copyOptimization = angular.copy($scope.state.activeOptimization);
           copyOptimization.name = name;
-          setActiveOptimization(copyOptimization);
+          $scope.setActiveOptimization(copyOptimization);
           $scope.state.optimizations.push($scope.state.activeOptimization);
         };
         openOptimizationModal(rename, 'Copy optimization', $scope.optimizations, $scope.state.activeOptimization.name + ' copy', 'Copy');
@@ -122,17 +125,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.runOptimizations = function() {
-      var data = {};
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
-        .success(function(response) {
-          if(response.status === 'started') {
-            $scope.statusMessage = 'Optimization started.';
-            $scope.errorMessage = '';
+      if($scope.state.activeOptimization.id) {
+        $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+          .success(function (response) {
+            if (response.status === 'started') {
+              $scope.statusMessage = 'Optimization started.';
+              $scope.errorMessage = '';
               pollOptimizations();
-          } else if(response.status === 'running') {
-            $scope.statusMessage = 'Optimization already running.'
-          }
-        })
+            } else if (response.status === 'running') {
+              $scope.statusMessage = 'Optimization already running.'
+            }
+          });
+      }
     };
 
     var pollOptimizations = function() {
@@ -152,14 +156,25 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         });
     };
 
-    var getOptimizationGraphs = function() {
-      $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/graph')
-        .success(function(response) {
-          console.log('graohs', response);
-          $scope.optimizationCharts = response.optimization.graphs;
-          $scope.selectors = response.optimization.selectors;
-          $scope.statusMessage = 'Charts updated.';
-        });
+    $scope.getOptimizationGraphs = function() {
+      var data = {};
+      if($scope.state.activeOptimization.id) {
+        if ($scope.selectors) {
+          var selectors = _.filter($scope.selectors, function (selector) {
+            return selector.checked;
+          }).map(function (selector) {
+            return selector.key;
+          });
+          if (selectors && selectors.length > 0) {
+            data.which = selectors;
+          }
+        }
+        $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/graph', {params: data})
+          .success(function (response) {
+            $scope.optimizationCharts = response.optimization.graphs;
+            $scope.selectors = response.optimization.selectors;
+          });
+      }
     };
 
     // Fetch list of program-set for open-project from BE
