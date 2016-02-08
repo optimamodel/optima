@@ -347,6 +347,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             if targetfrac[key] is not None:
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met
+            else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
     
         # Output results
         if outputresults:
@@ -356,7 +357,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             results.targetsmet = targetsmet
             output = results
         else: 
-            summary = 'Baseline: %s | Final: %s | Target: %s' % (baseline.values(), final.values(), target.values())
+            summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
     
     return output
