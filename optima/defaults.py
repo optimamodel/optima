@@ -482,7 +482,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
         
         # Add program effects
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.3,0.35), 't': 2016.0, 'Condoms':(0.75,0.85), 'FSW programs':(0.75,0.85)})
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
         R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
         R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept':  (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
