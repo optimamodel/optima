@@ -670,6 +670,40 @@ class ProgsetsDb(db.Model):
                 program = self._program_to_dict(program)
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
+        effects = []
+        for targetpartype in progset.targetpartypes:
+            for thispop in progset.progs_by_targetpar(targetpartype).keys():
+                item = {
+                    'name': targetpartype,
+                    'pop': thispop,
+                    'years': [
+                        {
+                            'intercept_upper': progset.covout[targetpartype][thispop].ccopars['intercept'][i][1],
+                            'intercept_lower': progset.covout[targetpartype][thispop].ccopars['intercept'][i][0],
+                            'interact': progset.covout[targetpartype][thispop].ccopars['interact'][i] if 'interact' in progset.covout[targetpartype][thispop].ccopars.keys() else 'random',
+                            'programs': [
+                                {
+                                    'name': k,
+                                    'intercept_lower': v[i][0] if len(v) > i else None,
+                                    'intercept_upper': v[i][1] if len(v) > i else None,
+                                }
+                                for k, v in progset.covout[targetpartype][thispop].ccopars.iteritems()
+                                if k not in ['intercept', 't', 'interact']
+                            ],
+                            'year': progset.covout[targetpartype][thispop].ccopars['t'][i]
+                        } for i in range(len(progset.covout[targetpartype][thispop].ccopars['t']))
+                    ]
+                }
+                effects.append(item)
+        print(effects)
+        self.effects = [
+            {
+                'parset': str(self.project.parsets[0].id) if len(self.project.parsets) else None,
+                'parameters': effects
+            }
+        ]
+        db.session.commit()
+
     def recreate_programs_from_list(self, programs, progset_id):
         prog_shorts = []
         desired_shorts = set([program.get('short_name', program.get('short', '')) for program in programs])
