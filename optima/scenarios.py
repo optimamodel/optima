@@ -189,7 +189,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
                 tmpbudget.update(scen.budget)
                 scen.budget = tmpbudget
-
+                
                 # Figure out coverage
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
 
