@@ -33,23 +33,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       success(function (response) {
         $scope.state.optimizations = response.optimizations;
         if($scope.state.optimizations.length > 0) {
-          $scope.state.activeOptimization = $scope.state.optimizations[0];
-          $scope.state.objectives = objectives[$scope.state.activeOptimization.which];
+          setActiveOptimization($scope.state.optimizations[0]);
         }
       });
 
     $scope.addOptimization = function() {
       var add = function (name) {
-        $scope.state.activeOptimization = {
+        var newOptimization = {
           name: name,
           which: 'money',
           constraints: constraints,
           objectives: objectiveDefaults.money
         };
-        $scope.state.objectives = objectives.money;
-        $scope.state.optimizations.push($scope.state.activeOptimization);
+        setActiveOptimization(newOptimization);
+        $scope.state.optimizations.push(newOptimization);
       };
       openOptimizationModal(add, 'Add optimization', $scope.state.optimizations, null, 'Add');
+    };
+
+    var getConstraintKeys = function(constraints) {
+      return _.keys(constraints.name);
+    };
+
+    var setActiveOptimization = function(optimization) {
+      $scope.state.activeOptimization = optimization;
+      $scope.state.constraintKeys = getConstraintKeys(optimization.constraints);
+      $scope.state.objectives = objectives[optimization.which];
     };
 
     // Open pop-up to re-name Optimization
@@ -72,7 +81,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var rename = function (name) {
           var copyOptimization = angular.copy($scope.state.activeOptimization);
           copyOptimization.name = name;
-          $scope.state.activeOptimization = copyOptimization;
+          setActiveOptimization(copyOptimization);
           $scope.state.optimizations.push($scope.state.activeOptimization);
         };
         openOptimizationModal(rename, 'Copy optimization', $scope.optimizations, $scope.state.activeOptimization.name + ' copy', 'Copy');
@@ -108,7 +117,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.saveOptimization = function() {
       $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
-          console.log('response', response);
+          // setActiveOptimization(response);
         });
     };
 
@@ -161,62 +170,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 //todo: add validations, comment code
 
 // this is to be replaced by an api
-var constraints = [{
-  key: 'MSM programs',
-  label: 'Programs for men who have sex with men',
-  min: 0,
-  max: undefined
-},{
-  key: 'HTC mobile',
-  label: 'HIV testing and counseling - mobile clinics',
-  min: 0,
-  max: undefined
-},{
-  key: 'ART',
-  label: 'Antiretroviral therapy',
-  min: 1,
-  max: undefined
-},{
-  key: 'VMMC',
-  label: 'Voluntary medical male circumcision',
-  min: 0,
-  max: undefined
-},{
-  key: 'HTC workplace',
-  label: 'HIV testing and counseling - workplace programs',
-  min: 0,
-  max: undefined
-},{
-  key: 'Condoms',
-  label: 'Condom promotion and distribution',
-  min: 0,
-  max: undefined
-},{
-  key: 'PMTCT',
-  label: 'Prevention of mother-to-child transmission',
-  min: 0,
-  max: undefined
-},{
-  key: 'Other',
-  label: 'Other',
-  min: 1,
-  max: 1
-},{
-  key: 'MGMT',
-  label: 'Management',
-  min: 1,
-  max: 1
-},{
-  key: 'HTC medical',
-  label: 'HIV testing and counseling - medical facilities',
-  min: 0,
-  max: undefined
-},{
-  key: 'FSW programs',
-  label: 'Programs for female sex workers and clients',
-  min: 0,
-  max: undefined
-}];
+var constraints = {
+  'max': {'MSM programs': null, 'HTC mobile': null, 'ART': null, 'VMMC': null, 'HTC workplace': null, 'Condoms': null, 'PMTCT': null, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': null, 'FSW programs': null},
+  'name': {'MSM programs': 'Programs for men who have sex with men', 'HTC mobile': 'HIV testing and counseling - mobile clinics', 'ART': 'Antiretroviral therapy', 'VMMC': 'Voluntary medical male circumcision', 'HTC workplace': 'HIV testing and counseling - workplace programs', 'Condoms': 'Condom promotion and distribution', 'PMTCT': 'Prevention of mother-to-child transmission', 'Other': 'Other', 'MGMT': 'Management', 'HTC medical': 'HIV testing and counseling - medical facilities', 'FSW programs': 'Programs for female sex workers and clients'},
+  'min': {'MSM programs': 0.0, 'HTC mobile': 0.0, 'ART': 1.0, 'VMMC': 0.0, 'HTC workplace': 0.0, 'Condoms': 0.0, 'PMTCT': 0.0, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': 0.0, 'FSW programs': 0.0}
+};
 
 // this is to be replaced by an api
 var objectives = {

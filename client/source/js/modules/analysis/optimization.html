@@ -11,6 +11,7 @@
             name="optimization-selection"
             class="updateGraph txbox"
             ng-model="state.activeOptimization"
+            ng-change="setActiveOptimization(state.activeOptimization)"
             ng-options="optimization.name for optimization in state.optimizations"
             style="width: 20%;">
     </select>
@@ -81,13 +82,13 @@
             <span style="width: 20%">Maximum</span>
           </div>
         </div>
-        <div style="justify-content: space-around" class="option" ng-repeat="constraint in state.activeOptimization.constraints">
-          <span style="width: 60%">{{ constraint.label }}</span>
+        <div style="justify-content: space-around" class="option" ng-repeat="constraintLKey in state.constraintKeys">
+          <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintLKey] }}</span>
           <span style="width: 20%">
-            <input class="txbox __inline __m" type="number" ng-model="constraint.min"/>
+            <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintLKey]"/>
           </span>
           <span style="width: 20%">
-            <input class="txbox __inline __m" type="number" ng-model="constraint.max"/>
+            <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintLKey]"/>
           </span>
         </div>
       </div>
