@@ -66,10 +66,10 @@
         </div>
         <div ng-if="state.activeOptimization.objectives">
           <div class="label">Objectives</div>
-          <div style="justify-content: space-around" class="option" ng-repeat="objective in state.activeOptimization.objectives">
+          <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
             <span style="width: 70%">{{objective.label}}</span>
             <span style="width: 25%">
-              <input class="txbox __inline __m" type="number" ng-model="objective.value"/>
+              <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.objectives[objective.key]"/>
             </span>
           </div>
         </div>

@@ -23,14 +23,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       optimizations: []
     };
 
-    $scope.setType = function(optimizationType) {
-      $scope.state.activeOptimization.which = optimizationType;
-      $scope.state.activeOptimization.objectives = objectives[optimizationType];
+    $scope.setType = function(which) {
+      $scope.state.activeOptimization.which = which;
+      $scope.state.activeOptimization.objectives = objectiveDefaults[which];
+      $scope.state.objectives = objectives[which];
     };
 
     $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations').
       success(function (response) {
-        console.log('response', response);
+        $scope.state.optimizations = response.optimizations;
+        if($scope.state.optimizations.length > 0) {
+          $scope.state.activeOptimization = $scope.state.optimizations[0];
+          $scope.state.objectives = objectives[$scope.state.activeOptimization.which];
+        }
       });
 
     $scope.addOptimization = function() {
@@ -39,8 +44,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           name: name,
           which: 'money',
           constraints: constraints,
-          objectives: objectives.money
+          objectives: objectiveDefaults.money
         };
+        $scope.state.objectives = objectives.money;
         $scope.state.optimizations.push($scope.state.activeOptimization);
       };
       openOptimizationModal(add, 'Add optimization', $scope.state.optimizations, null, 'Add');
@@ -214,54 +220,39 @@ var constraints = [{
 
 // this is to be replaced by an api
 var objectives = {
-  outcome: [{
-    key: 'base',
-    label: 'Baseline year to compare outcomes to',
-    value: undefined
-  },{
-    key: 'start',
-    label: 'Year to begin optimization',
-    value: 2017
-  },{
-    key: 'end',
-    label: 'Year by which to achiever objectives',
-    value: 2013
-  },{
-    key: 'budget',
-    label: 'Starting budget',
-    value: 63500000.0
-  },{
-    key: 'deathweight',
-    label: 'Relative weight per death',
-    value: 0
-  },{
-    key: 'inciweight',
-    label: 'Relative weight per new infection',
-    value: 0
-  }],
-  money: [{
-    key: 'base',
-    label: 'Baseline year to compare outcomes to',
-    value: undefined
-  },{
-    key: 'start',
-    label: 'Year to begin optimization',
-    value: 2017
-  },{
-    key: 'end',
-    label: 'Year by which to achiever objectives',
-    value: 2013
-  },{
-    key: 'budget',
-    label: 'Starting budget',
-    value: 63500000.0
-  },{
-    key: 'deathfrac',
-    label: 'Fraction of deaths to be averted',
-    value: 0
-  },{
-    key: 'incifrac',
-    label: 'Fraction of infections to be averted',
-    value: 0
-  }]
+  outcome: [
+    { key: 'base', label: 'Baseline year to compare outcomes to' },
+    { key: 'start', label: 'Year to begin optimization' },
+    { key: 'end', label: 'Year by which to achiever objectives' },
+    { key: 'budget', label: 'Starting budget' },
+    { key: 'deathweight', label: 'Relative weight per death' },
+    { key: 'inciweight', label: 'Relative weight per new infection' }
+  ],
+  money: [
+    {key: 'base', label: 'Baseline year to compare outcomes to' },
+    { key: 'start', label: 'Year to begin optimization' },
+    { key: 'end', label: 'Year by which to achiever objectives' },
+    { key: 'budget', label: 'Starting budget' },
+    { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
+    { key: 'incifrac', label: 'Fraction of infections to be averted' }
+  ]
+};
+
+var objectiveDefaults = {
+  outcome: {
+    base: undefined,
+    start: 2017,
+    end: 2013,
+    budget: 63500000.0,
+    deathweight: 0,
+    inciweight: 0
+  },
+  money: {
+    base: undefined,
+    start: 2017,
+    end: 2013,
+    budget: 63500000.0,
+    deathfrac: 0,
+    incifrac: 0
+  }
 };
