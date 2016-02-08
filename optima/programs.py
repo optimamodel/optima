@@ -995,7 +995,7 @@ class CCOF(object):
         ccopar = {}
         if isnumber(t): t = [t]
         nyrs = len(t)
-        ccopars_no_t = {k:v for k,v in self.ccopars.iteritems() if v}
+        ccopars_no_t = dcp({k:v for k,v in self.ccopars.iteritems() if v})
         del ccopars_no_t['t']
         
         # Deal with bounds
