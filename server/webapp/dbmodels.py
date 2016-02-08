@@ -657,7 +657,12 @@ class ProgsetsDb(db.Model):
             else:
                 active = False
 
-            update_or_create_program(self.project.id, self.id, program_name, program, active)
+            p = update_or_create_program(self.project.id, self.id, program_name, program, active)
+            try:
+                p.restore(progset.programs[program['short']])
+            except Exception:  # Sorry, can't do better than that for now
+                pass
+
 
         # In case programs from prj are not in the defaults
         for program_name, program in progset.programs.iteritems():
