@@ -103,11 +103,12 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     # Constants -- array sizes are scalars x uncertainty
     sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
-                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50', 'progusvl'],
-                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50', 'recovusvl'],
+                           ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
+                           ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
-                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
+                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx'],
+                           ['progusvl','recovusvl','stoppropcare']]
     
     
     ###########################################################################
