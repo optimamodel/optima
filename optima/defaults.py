@@ -486,12 +486,12 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     
         R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
     
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.20,0.40), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60), 'MSM programs':(0.70,0.90)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.02,0.04), 't': 2016.0, 'HTC': (0.40,0.60)})
+        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.70,0.80)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         
