@@ -181,14 +181,14 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
                 if not isinstance(scen.budget,odict): scen.budget = odict(scen.budget)
 
+                # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
+                tmpbudget.update(scen.budget)
+                scen.budget = tmpbudget
+                
                 # Ensure budget values are lists
                 for budgetkey, budgetentry in scen.budget.iteritems():
                     if isnumber(budgetentry):
                         scen.budget[budgetkey] = [budgetentry]
-                
-                # Update, ensuring a consistent number of programs, using defaults where not provided -- WARNING, ugly
-                tmpbudget.update(scen.budget)
-                scen.budget = tmpbudget
                 
                 # Figure out coverage
                 scen.coverage = thisprogset.getprogcoverage(budget=scen.budget, t=scen.t, parset=thisparset, results=results)
