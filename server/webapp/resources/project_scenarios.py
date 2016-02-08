@@ -38,7 +38,7 @@ scenario_list_scenario_parser.add_arguments({
     'scenario_type': {'type': str, 'required': True, 'location': 'json'},
     'active': {'type': bool, 'required': True, 'location': 'json'},
     'pars': {'type': scenario_par, 'required': False, 'location': 'json'},  # only for Paramscen
-    'years': {'type': int, 'required': False, 'location': 'json', 'action': 'append'}, # only for Budgetscen /Coveragescen
+    'years': {'type': list, 'required': False, 'location': 'json'}, # only for Budgetscen /Coveragescen
     'budget': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Budgetscen
     'coverage': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Coveragescen
 })
@@ -143,12 +143,12 @@ class Scenarios(Resource):
         """
         args = scenario_parser.parse_args()
 
-        if args.get('scenario_type') not in ["Parameter", "Budget", "Coverage"]:
-            raise ValueError("Type needs to be 'Parameter', 'Budget' or 'Coverage'.")
+        if args.get('scenario_type') not in ["parameter", "budget", "coverage"]:
+            raise ValueError("Type needs to be 'parameter', 'budget' or 'coverage'.")
 
         blob = {}
         data = json.loads(request.data)
-        pars = check_pars(data, raise_exception = (args['scenario_type'] == "Parameter"))
+        pars = check_pars(data, raise_exception = (args['scenario_type'] == "parameter"))
         budget = check_program(data, 'budget')
         coverage = check_program(data, 'coverage')
         if pars:
@@ -171,6 +171,9 @@ class Scenarios(Resource):
         budget = kwargs.pop('budget', None)
         coverage = kwargs.pop('coverage', None)
         years = kwargs.pop('years', None)
+        print "years", years
+        if years:
+            years = [int(y) for y in years]
         print "years", years
 
         blob = {}

@@ -776,30 +776,28 @@ class ScenariosDb(db.Model):
         if self.progset_id:
             progset = load_progset(self.project_id, self.progset_id)
 
-        if self.scenario_type == "Budget":
+        if self.scenario_type == "budget":
 
             # TODO: remove this hack (dummy values)
             if not 'years' in self.blob:
                 self.blob['t'] = 2030
             else:
                 self.blob['t'] = self.blob['years']
-            if not 'budget' in self.blob:
-                self.blob['budget'] = {progset.programs[0].short:[1000000]}
+                del self.blob['years']
             print "blob", self.blob
             return op.Budgetscen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
                                **self.blob)
 
-        if self.scenario_type == "Coverage":
+        if self.scenario_type == "coverage":
 
             # TODO: remove this hack (dummy values)
             if not 'years' in self.blob:
                 self.blob['t'] = 2030
             else:
                 self.blob['t'] = self.blob['years']
-            if not 'coverage' in self.blob:
-                self.blob['coverage'] = {progset.programs[0].short:[1000000]}
+                del self.blob['years']
             return op.Coveragescen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,

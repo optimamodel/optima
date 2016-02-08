@@ -9,7 +9,7 @@ define(['angular'], function (module) {
         $scope.ykeys = ykeys.data.keys;
     	$scope.openProject = openProject.populations;
 
-    	$scope.progsetsOptimized = _.filter(progsets[0].programs, {optimizable: true});
+    	$scope.progsetsOptimized = _.filter(progsets[0].programs, {active: true});
 
       if(!$scope.row.t) {
         $scope.row.t = [];
@@ -32,7 +32,7 @@ define(['angular'], function (module) {
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
-    			"t": $scope.row.t,
+    			"years": $scope.row.t,
     			"id": $scope.row.id || null,
     			"progset_id": $scope.row.progset_id || null
     		};
