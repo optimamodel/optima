@@ -63,7 +63,7 @@ if 'checkexisting' in tests:
     print('Running check existing spreadsheets test...')
     
     ## Define the sheets to check and how many populations
-    tocheck = {'simple':2, 'generalized':7, 'concentrated':8}
+    tocheck = {'simple':2, 'generalized':7, 'concentrated':6}
     prefix = '_tmp' # THe prefix to add to these files for the purposes of checking
     checksheets = True # Whether or not to check that the numbers and names of the sheets match
     checkblocks = True # Whether or not to check that the names of each block match
