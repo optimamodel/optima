@@ -270,12 +270,12 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         raise OptimaException(errormsg)
     
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
+    constrainedbudgetvec = dcp(constrainedbudget[optiminds])
     if outputtype=='odict':
         return constrainedbudget
     elif outputtype=='vec':
         return constrainedbudgetvec
     elif outputtype=='full':
-        constrainedbudgetvec = dcp(constrainedbudget[optiminds])
         lowerlim = dcp(abslimits['min'][optiminds])
         upperlim = dcp(abslimits['min'][optiminds])
         return constrainedbudget, constrainedbudgetvec, lowerlim, upperlim
@@ -517,7 +517,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
 
     args['totalbudget'] = origtotalbudget # Calculate new total funding
     budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype=='vec')
+    budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
 
     # See if objectives are met
     targetsmet = objectivecalc(budgetvec2, **args)
@@ -542,7 +542,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     # Re-optimize based on this fairly close allocation
     ##########################################################################################################################
     budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype=='vec')
+    budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
     # Check that targets are still met
     targetsmet = objectivecalc(budgetvec4, **args)
