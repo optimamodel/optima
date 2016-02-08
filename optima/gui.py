@@ -444,6 +444,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     keepbutton.clicked.connect(keeppars)
     resetbutton.clicked.connect(resetpars)
     closebutton.clicked.connect(closewindows)
+    resetpars()
     panel.show()
 
 
