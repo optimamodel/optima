@@ -200,10 +200,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     #################################################################################################################
     
     # Set parameters
-    raise Exception('The values coded here are just for roughly estimating initial conditions!!!!')
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    
+    initpropcare = 0.8 # roughly estimating equilibrium proportion of diagnosed people in care
+    initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
+
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
     allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
@@ -246,9 +247,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         initpeople[progcirc, p] = 0.0 # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
         initpeople[undx, p]     = undiagnosed
         if usecascade:
-            initpeople[dx, p]   = diagnosed
-            initpeople[usvl, p] = treatment * (1.-treatvs[0])
-            initpeople[svl,  p] = treatment * treatvs[0]
+            initpeople[dx,   p] = diagnosed*(1.-propcare)
+            initpeople[care, p] = diagnosed*propcare
+            initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
+            initpeople[svl,  p] = treatment * treatvs[0]      * (1.-initproplost)
+            initpeople[off,  p] = treatment * initproplost * stoppropcare
+            initpeople[lost, p] = treatment * initproplost * (1.-stoppropcare)
         else:
             initpeople[dx, p]   = diagnosed
             initpeople[tx, p]   = treatment
