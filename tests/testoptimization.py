@@ -89,8 +89,8 @@ if 'minimizemoney' in tests:
     P = defaults.defaultproject(which='generalized')
     
     objectives = defaultobjectives(which='money')
-    objectives['deathfrac'] = 0.001
-    objectives['incifrac'] = 0.001
+    objectives['deathfrac'] = None
+    objectives['incifrac'] = 0.5
     constraints = defaultconstraints(P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints)
     

@@ -341,8 +341,9 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             baseline[key] = float(thisresult[baseind])
             final[key] = float(thisresult[finalind])
-            target[key] = float(baseline[key]*(1-targetfrac[key]))
-            if final[key] > target[key]: targetsmet = False # Targets are NOT met
+            if targetfrac[key] is not None:
+                target[key] = float(baseline[key]*(1-targetfrac[key]))
+                if final[key] > target[key]: targetsmet = False # Targets are NOT met
     
         # Output results
         if outputresults:
@@ -484,16 +485,16 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     args['totalbudget'] = 1e9
     targetsmet = objectivecalc(budgetvec, **args)
     if not(targetsmet):
-        multires = objectivecalc(budgetvec, outputresults=True, **args)
-        raise OptimaException("Infinite allocation can't meet targets:\n%s" % multires.outcomes) # WARNING, this shouldn't be an exception, something more subtle
+        results = objectivecalc(budgetvec, outputresults=True, **args)
+        raise OptimaException("Infinite allocation can't meet targets:\n%s" % results.outcomes) # WARNING, this shouldn't be an exception, something more subtle
     else: printv("Infinite allocation meets targets, as expected; proceeding...", 3, verbose)
     
     # Next, try no money
     args['totalbudget'] = 1e-3
     targetsmet = objectivecalc(budgetvec, **args)
     if targetsmet:
-        multires = objectivecalc(budgetvec, outputresults=True, **args)
-        raise OptimaException("Even zero allocation meets targets")
+        results = objectivecalc(budgetvec, outputresults=True, **args)
+        raise OptimaException("Even zero allocation meets targets:\n%s" % results.outcomes)
     else:printv("Zero allocation doesn't meet targets, as expected; proceeding...", 3, verbose)
     
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
@@ -501,7 +502,10 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     results = objectivecalc(budgetvec, outputresults=True, **args)
     absreductions = odict() # Absolute reductions requested, for setting weights
     for key in optim.objectives['keys']:
-        absreductions[key] = float(results.outcomes['baseline'][key]*optim.objectives[key+'frac']) # e.g. 1000 deaths * 40% reduction = 400 deaths
+        if optim.objectives[key+'frac'] is not None:
+            absreductions[key] = float(results.outcomes['baseline'][key]*optim.objectives[key+'frac']) # e.g. 1000 deaths * 40% reduction = 400 deaths
+        else:
+            absreductions[key] = 1e9 # A very very large number to effectively turn this off -- WARNING, not robust
     weights = dcp(absreductions) # Copy this, since will be modifying it -- not strictly necessary but could come in handy
     weights = 1.0/weights[:] # Relative weights are inversely proportional to absolute reductions -- e.g. asking for a reduction of 100 deaths and 400 new infections means 1 death = 4 new infections
     weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
@@ -514,6 +518,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     ##########################################################################################################################
 
     args['totalbudget'] = origtotalbudget # Calculate new total funding
+    args['which'] = 'outcome' # Switch back to outcome minimization
     budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
 
@@ -525,6 +530,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     while targetsmet:
         fundingfactor /= fundingchange
         args['totalbudget'] = origtotalbudget * fundingfactor
+        args['which'] = 'money'
         targetsmet = objectivecalc(budgetvec2, **args)
         printv('Current funding factor: %f' % fundingfactor, 3, verbose)
     
@@ -539,10 +545,12 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     ##########################################################################################################################
     # Re-optimize based on this fairly close allocation
     ##########################################################################################################################
+    args['which'] = 'outcome'
     budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
     # Check that targets are still met
+    args['which'] = 'money'
     targetsmet = objectivecalc(budgetvec4, **args)
     if targetsmet: budgetvec5 = dcp(budgetvec4) # Yes, keep them
     else: budgetvec5 = dcp(budgetvec2) # No, go back to previous version that we know worked
@@ -564,11 +572,11 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     args['totalbudget'] = origtotalbudget
     orig = objectivecalc(budgetvec, outputresults=True, **args)
     args['totalbudget'] = newtotalbudget * fundingfactor
-    new = moneycalc(constrainedbudgetvec, outputresults=True, **args)
+    new = objectivecalc(budgetvec, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
-    multires = Multiresultset(resultsetlist=tmpresults, name='minmoney-%s-%s' % (parsetname, progsetname))
+    multires = Multiresultset(resultsetlist=tmpresults, name='minmoney-%s-%s' % (optim.parsetname, optim.progsetname))
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     optim.resultsref = multires.uid # Store the reference for this result
     
