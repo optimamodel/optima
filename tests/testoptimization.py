@@ -59,8 +59,8 @@ if 'minimizeoutcomes' in tests:
     
     P = defaults.defaultproject(which='generalized') 
     
-    objectives = defaultobjectives(P)
-    constraints = defaultconstraints(P)
+    objectives = defaultobjectives(P.progsets[0]) # This or P
+    constraints = defaultconstraints(P) # This or P.progsets[0]
     P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10)
     
     print('Original allocation: '),
