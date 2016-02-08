@@ -126,7 +126,7 @@ class Programset(object):
                 else:
                     raise OptimaException('Program "%s" is already present in programset "%s".' % (newprogram.short, self.name))
         self.updateprogset()
-                   
+
     def rmprogram(self,program,verbose=2):
         ''' Remove a program. Expects type(program) in [Program,str]'''
         if not type(program) == str: program = program.short
@@ -149,6 +149,27 @@ class Programset(object):
 
     def programswithbudget(self):
         return odict((program.short, program) for program in self.programs.values() if program.hasbudget())
+
+    def hasallcovoutpars(self, detail=False):
+        ''' Checks whether all the **required** parameters are there for coverage-outcome rships'''
+        result = True
+        details = []
+        for thispartype in self.covout.keys():
+            for thispop in self.covout[thispartype].keys():
+                if not self.covout[thispartype][thispop].ccopars['intercept']:
+                    result = False
+                    details.append((thispartype,thispop))
+                if thispartype not in coveragepars:
+                    for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
+                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                            result = False
+                            details.append((thispartype,thispop))
+        if detail: return details
+        else: return result
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+
+    
+                
 
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
@@ -919,10 +940,10 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if not ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
-                        printv('Warning, no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 3, verbose)
-                        ccopar[ccopartype] = (0,0)
-                    self.ccopars[ccopartype].append(ccopar[ccopartype])
+                    if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+#                        printv('Warning, no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 3, verbose)
+#                        ccopar[ccopartype] = (0,0)
+                        self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
                 if overwrite:
@@ -963,7 +984,7 @@ class CCOF(object):
         ccopar = {}
         if isnumber(t): t = [t]
         nyrs = len(t)
-        ccopars_no_t = dcp(self.ccopars)
+        ccopars_no_t = dcp({k:v for k,v in self.ccopars.iteritems() if v})
         del ccopars_no_t['t']
         
         # Deal with bounds
