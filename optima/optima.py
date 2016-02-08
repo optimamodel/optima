@@ -157,7 +157,7 @@ except: _failed()
 
 try: 
     import optimization as _optimization
-    from optimization import Optim, minoutcomes, minmoney, defaultobjectives, defaultconstraints # Scenario functions
+    from optimization import Optim, defaultobjectives, defaultconstraints, optimize # Scenario functions
 except: _failed()
 
 try: 
