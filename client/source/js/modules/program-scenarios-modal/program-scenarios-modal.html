@@ -7,6 +7,7 @@
     <div class="o-form__field-wrap">
       <label class="o-form__label"> Name </label>
       <input class="o-form__input txbox" type="text" ng-model="row.name" required/>
+      <div class="error-hint" ng-show="scenarioExists()"> Scenario with this name already exists, please choose a different name. </div>
     </div>
 
     <!--  Select a parameter set to use as baseline  -->
@@ -51,7 +52,7 @@
     <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)"> Add year</button>
 
     <div class="c-parsce-modal__buttons u-layout-horizontal">
-      <button type="submit" ng-disabled="manageScenarioForm.$invalid" class="btn __s o-form__button o-form__button--save">
+      <button type="submit" ng-disabled="manageScenarioForm.$invalid || scenarioExists()" class="btn __s o-form__button o-form__button--save">
         OK
       </button>
     </div>
