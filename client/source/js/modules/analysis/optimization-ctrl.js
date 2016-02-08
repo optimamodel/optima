@@ -100,15 +100,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.saveOptimization = function() {
-      var optimizationData = {
-        optimization_type: $scope.state.activeOptimization.optimization_type,
-        parset_id: $scope.state.activeOptimization.parset.id,
-        name: $scope.state.activeOptimization.name,
-        progset_id: $scope.state.activeOptimization.programSet.id,
-        constraints: $scope.state.activeOptimization.constraints,
-        objective: $scope.state.activeOptimization.objectives
-      };
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', optimizationData).
+      console.log('$scope.state.activeOptimization', $scope.state.activeOptimization);
+      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
           console.log('response', response);
         });
