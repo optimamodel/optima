@@ -170,7 +170,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
 
 
 
-def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-3, overalltolerance=1.0):
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-3, overalltolerance=1.0, fulloutput=False):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     
     # Prepare this budget for later scaling and the like
@@ -259,7 +259,14 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         errormsg = 'constrainbudget(): final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
     
-    return constrainedbudget
+    # Optionally return the calculated upper and lower limits as well as the original budget and vector
+    if fulloutput: 
+        constrainedbudgetvec = dcp(constrainedbudget[optiminds])
+        lowerlim = dcp(abslimits['min'][optiminds])
+        upperlim = dcp(abslimits['min'][optiminds])
+        return constrainedbudget, constrainedbudgetvec, lowerlim, upperlim
+    else: 
+        return constrainedbudget
 
 
 
@@ -356,7 +363,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     
-    constrainedbudget, lower, upper
+    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, fulloutput=True)
     
     for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
@@ -365,12 +372,12 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
         args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'tvec': tvec}
-        budgetvecnew, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
-    budgetvecnew = constrainbudget(origbudget=budgetvecnew, total=totalbudget, limits=budgetlims) # WARNING, not sure why this is needed, but it is
-    orig = outcomecalc(budgetvec, outputresults=True, debug=False, **args)
-    new = outcomecalc(budgetvecnew, outputresults=True, debug=False, **args)
+    constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, fulloutput=True)
+    orig = objectivecalc(constrainedbudgetvec, outputresults=True, debug=False, **args)
+    new = objectivecalc(constrainedbudgetvecnew, outputresults=True, debug=False, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
@@ -378,7 +385,6 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     multires = Multiresultset(resultsetlist=tmpresults, name='%s-%s-%s' % (which, parsetname, progsetname))
     
     for k,key in enumerate(multires.keys): # WARNING, this is ugly
-        
         multires.budgetyears[key] = tmpresults[k].budgetyears
     
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
