@@ -589,6 +589,18 @@ class RequestParser(OrigReqParser):
             return arg.type.__name__
         return arg.type
 
+    def get_swagger_location(self, arg):
+
+        if isinstance(arg.location, tuple):
+            loc = arg.location[0]
+        else:
+            loc = arg.location.split(',')[0]
+
+        if loc == "args":
+            return "query"
+        return loc
+
+
     def swagger_parameters(self):
         return [
             {
@@ -596,7 +608,7 @@ class RequestParser(OrigReqParser):
                 'dataType': self.get_swagger_type(arg),
                 'required': arg.required,
                 'description': arg.help,
-                'paramType': 'form',
+                'paramType': self.get_swagger_location(arg),
             }
             for arg in self.args
         ]
