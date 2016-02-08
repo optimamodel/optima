@@ -39,8 +39,8 @@ scenario_list_scenario_parser.add_arguments({
     'active': {'type': bool, 'required': True, 'location': 'json'},
     'pars': {'type': scenario_par, 'required': False, 'location': 'json'},  # only for Paramscen
     'years': {'type': list, 'required': False, 'location': 'json'}, # only for Budgetscen /Coveragescen
-    'budget': {'type': dict, 'required': False, 'location': 'json'}, # only for Budgetscen
-    'coverage': {'type': dict, 'required': False, 'location': 'json'}, # only for Coveragescen
+    'budget': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Budgetscen
+    'coverage': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Coveragescen
 })
 
 scenario_list_parser = RequestParser()
@@ -112,6 +112,18 @@ class Scenarios(Resource):
                     par['for'] = par['for'][0]
                     pars.append(par)
                 scenario.blob['pars'] = pars
+
+            for key in ['budget', 'coverage']:
+                if key in scenario.blob:
+                    item_list = []
+                    for k, v in scenario.blob[key].iteritems():
+                        item = {
+                            'program': k,
+                            'values': v
+                        }
+                        item_list.append(item)
+                    scenario.blob[key] = item_list
+
             rv.append(scenario)
         print "rv", rv
         return rv
