@@ -89,7 +89,7 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
         progset = project.progsets[scenlist[scenno].progsetname] if isinstance(scenlist[scenno], Progscen) else None
 
         # Run model and add results
-        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=1)
+        result = runmodel(pars=scenparset.pars[0], parset=scenparset, progset=progset, project=project, budget=budget, coverage=coverage, budgetyears=budgetyears, verbose=0)
         result.name = scenlist[scenno].name # Give a name to these results so can be accessed for the plot legend
         allresults.append(result) 
         printv('Scenario: %i/%i' % (scenno+1, nscens), 2, verbose)
@@ -97,7 +97,6 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     multires = Multiresultset(resultsetlist=allresults, name='scenarios')
     for scen in scenlist: scen.resultsref = multires.uid # Copy results into each scenario that's been run
     
-    printv('...done running scenarios.', 2, verbose)
     return multires
 
 
@@ -116,9 +115,9 @@ def makescenarios(project=None, scenlist=None, verbose=2):
         thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
-
         if isinstance(scen,Parscen):
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
+                if scenlist[scenno].pars is None: scenlist[scenno].pars = [] # Turn into empty list instead of None
                 for scenpar in scenlist[scenno].pars: # Loop over all parameters being changed
                     thispar = thisparset.pars[pardictno][scenpar['name']]
                     if type(scenpar['for'])==tuple: # If it's a partnership...

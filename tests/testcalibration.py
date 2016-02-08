@@ -5,17 +5,18 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan09 by cliffk
+Version: 2016feb06 by cliffk
 """
 
 ## Define tests to run here!!!
 tests = [
 #'attributes',
-'sensitivity',
+#'sensitivity',
 #'manualfit',
-'autofit',
+#'autofit',
 #'autofitmulti',
 #'longfit',
+'debugautofit',
 ]
 
 
@@ -112,7 +113,7 @@ if 'autofit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.autofit(name='autofit', orig='default', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
@@ -139,7 +140,7 @@ if 'autofitmulti' in tests:
     P = Project(spreadsheet='generalized.xlsx')
     P.sensitivity(orig='default', name='sensitivity', n=5, span=0.5) # Create MC initialization
     P.runsim('sensitivity', end=2015) # Generate results
-    P.autofit(name='autofit', orig='sensitivity', what=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
+    P.autofit(name='autofit', orig='sensitivity', fitwhat=['force'], maxtime=None, maxiters=30, inds=None) # Run automatic fitting
     
     
     if doplot:
@@ -168,7 +169,7 @@ if 'longfit' in tests:
     from optima import Project
     
     P = Project(spreadsheet='generalized.xlsx')
-    P.autofit(name='autofit', orig='default', what=['init','popsize','force','const'], maxiters=1000, inds=None, verbose=2) # Run automatic fitting
+    P.autofit(name='autofit', orig='default', fitwhat=['init','popsize','force','const'], maxiters=1000, inds=None, verbose=2) # Run automatic fitting
     results1 = P.runsim('default', end=2015) # Generate results
     results2 = P.runsim('autofit', end=2015)
     
@@ -184,7 +185,21 @@ if 'longfit' in tests:
 
 
 
+## Debug autofit test
+if 'debugautofit' in tests:
+    t = tic()
 
+    print('Running autofit debugging test...')
+    from optima import Project, plotresults
+    P = Project(spreadsheet='concentrated.xlsx')
+    
+    # Run automatic fitting
+    P.autofit(name='autofit', orig='default', fitwhat='force', fitto='prev',  method='mse', maxiters=50, doplot=doplot, verbose=2) # Set doplot=True and verbose=4 to see full debugging information
+    if doplot:
+        plotresults(P.results['parset-default'])
+        plotresults(P.results['parset-autofit'])
+    
+    done(t)
 
 
 

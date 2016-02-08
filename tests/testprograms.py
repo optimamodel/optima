@@ -15,6 +15,7 @@ Version: 2016feb06
 ## Define tests to run here!!!
 tests = [
 'makeprograms',
+'compareoutcomes',
 ]
 
 
@@ -36,18 +37,18 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
+T = tic()
 
 ##############################################################################
 ## The tests
 ##############################################################################
 
-T = tic()
 
 
 
 
 
-## Project creation test
+## Programs creation test
 if 'makeprograms' in tests:
     t = tic()
 
@@ -350,8 +351,17 @@ if 'makeprograms' in tests:
     
     
 
-    
     done(t)
+    
+
+
+
+
+## Project creation test
+if 'compareoutcomes' in tests:
+    comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
+    done(t)
+
 
 
 
