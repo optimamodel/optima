@@ -2,7 +2,7 @@ define(['angular'], function (module) {
   'use strict';
 
   return angular.module('app.parameter-scenarios-modal', [])
-    .controller('ParameterScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
+    .controller('ParameterScenariosModalController', function ($scope, $modalInstance, modalService, scenarios, scenario, parsets, progsets, ykeys, openProject) {
     	$scope.row = scenario;
     	$scope.parsets = parsets;
         $scope.progsets = progsets;
@@ -62,6 +62,12 @@ define(['angular'], function (module) {
         $scope.closeModal = function() {
             $modalInstance.close($scope.row);
         };
+
+        $scope.scenarioExists = function(){
+          return _.some(scenarios, function (scenario) {
+            return $scope.row.name === scenario.name && $scope.row.id !== scenario.id;
+          });
+        }
 
     });
 });

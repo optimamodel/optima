@@ -13,38 +13,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.scenarios = scenariosResponse.data.scenarios;
         $scope.progsets = progsetsResponse.data.progsets;
         $scope.parsets = parsetResponse.data.parsets;
-
-        /*$scope.runScenariosOptions = {
-          dosave: false
-        };
-
-        $scope.saveScenariosOptions = {
-          dosave: false
-        };*/
-        // initialize all necessary data for this controller
-        /*var initialize = function() {
-          $scope.scenarios = [];
-
-          
-
-          // add All option in population list
-          //meta.data.pops.long.push("All");
-
-          // transform scenarioParameters to use attribute `names` instead of `keys`
-          // it is the same for the data we have to send to run scenarios
-          availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys, values: parameters.values};
-          });
-
-          availableScenarios = scenariosResponse.data.scenarios;
-
-          $scope.scenarios = _(availableScenarios).map(function(scenario) {
-            scenario.active = true;
-            return scenario;
-          });
-
-          $scope.types = typeSelector.types;
-        };*/
+        $scope.deletedScenarios = [];
 
         /**
          * Returns an graph based on the provided yData.
@@ -159,6 +128,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
               controller: 'ProgramScenariosModalController',
               resolve: {
+                scenarios: function () {
+                  return $scope.scenarios;
+                },
                 scenario: function () {
                   return angular.copy(scenario);
                 },
@@ -181,6 +153,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
               controller: 'ParameterScenariosModalController',
               resolve: {
+                scenarios: function () {
+                  return $scope.scenarios;
+                },
                 scenario: function () {
                   return angular.copy(scenario);
                 },
@@ -221,6 +196,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               newscenario.id = null;
               $scope.scenarios.push(newscenario);
             }else if(action === 'delete'){
+              $scope.deletedScenarios.push(row);
               $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
             }
         };
@@ -253,8 +229,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           updateGraphs(responseData);
         }, true);
 
-        //initialize();
-
         $scope.progset_name = function(progset_id, row) {
           var progset = _.filter($scope.progsets, {id: progset_id});
           if (progset.length > 0) {
@@ -262,7 +236,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           }
           return '';
         };
-
 
         $scope.parset_name = function(parset_id) {
           var parset = _.filter($scope.parsets, {id: parset_id});

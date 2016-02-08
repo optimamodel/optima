@@ -2,7 +2,7 @@ define(['angular'], function (module) {
 	'use strict';
 
 	return angular.module('app.program-scenarios-modal', [])
-	.controller('ProgramScenariosModalController', function ($scope, $modalInstance, modalService, scenario, parsets, progsets, ykeys, openProject) {
+	.controller('ProgramScenariosModalController', function ($scope, $modalInstance, modalService, scenarios, scenario, parsets, progsets, ykeys, openProject) {
 		$scope.row = scenario;
 		$scope.parsets = parsets;
 		$scope.progsets = progsets;
@@ -49,5 +49,11 @@ define(['angular'], function (module) {
 				return index === paramIndex
 			});
 		};
+
+		$scope.scenarioExists = function(){
+          return _.some(scenarios, function (scenario) {
+            return $scope.row.name === scenario.name && $scope.row.id !== scenario.id;
+          });
+        }
 	});
 });
