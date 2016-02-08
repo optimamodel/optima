@@ -34,12 +34,12 @@ define(['angular'], function (module) {
 
     	$scope.manageScenario = function(){
     		var row = {
-    			"scenario_type": scenario.scenario_type, 
+    			"scenario_type": $scope.row.scenario_type, 
     			"name": $scope.row.name, 
     			"parset_id": $scope.row.parset_id || null,
     			"active": true, 
     			"pars": $scope.row.pars, 
-    			"id": scenario.id || null, 
+    			"id": $scope.row.id || null, 
     			"progset_id": $scope.row.progset_id || null
     		};
 
