@@ -389,23 +389,6 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % ((detail_costcov+detail_covout))
         raise OptimaException(errormsg)
     
-    # Run outcomes minimization
-    if which=='outcomes':
-        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
-    
-    # Run money minimization
-    elif which=='money':
-        multires = minmoney()
-    
-    return multires
-
-
-
-
-
-def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
-    ''' Split out minimize outcomes '''
-    
     ## Handle budget and remove fixed costs
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
@@ -417,12 +400,35 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     ## Constrain the budget
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, fulloutput=True)
     
+    
+    asdargs = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
+    
+    # Run outcomes minimization
+    if which=='outcomes':
+#        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
+        multires = minoutcomes(asdargs)
+    
+    # Run money minimization
+    elif which=='money':
+        multires = minmoney()
+    
+    return multires
+
+
+
+
+#def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
+def minoutcomes(asdargs=None):
+    ''' Split out minimize outcomes '''
+    
+    parset = asdargs['parset']
+    
     ## Actually run the optimization
     # for ind in inds: # WARNING, kludgy -- should be a loop!
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
-    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
+    
     budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
@@ -449,35 +455,28 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
 
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=False):
+def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
-    "fundingchange" specifies the amount by which to increase/decrease the total budget to see if
-    objectives are met.
-    
-    "tolerance" specifies how close the funding amount needs to converge.
-    
-    Version: 2016feb03
+    Version: 2016feb07
     '''
     
-     # Being and check vital inputs    
-    printv('Running money optimization...', 1, verbose)
-    if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
+    args = {'which':'money', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
     
- 
+    
     
     ##########################################################################################################################
     ## Loop through different budget options
     ##########################################################################################################################
     
     # First, try infinite money
-    targetsmet = moneycalc(budgetvec1+infmoney, **args)
+    targetsmet = objectivecalc(budgetvec1+infmoney, **args)
     if not(targetsmet):
         budgetvecfinal = budgetvec1+infmoney
         printv("Warning, infinite allocation can't meet targets:", 1, verbose)
         if debug: results = moneycalc(budgetvecfinal, outputresults=True, debug=True, **args)
-        return none
+        return None
     else:
         printv("Infinite allocation meets targets, as expected; proceeding...", 1, verbose)
     
@@ -485,9 +484,9 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     targetsmet = moneycalc(budgetvec1/infmoney, **args)
     if targetsmet:
         budgetvecfinal = budgetvec1/infmoney
-        print("Warning, even zero allocation meets targets")
+        printv("Warning, even zero allocation meets targets", 1, verbose)
         if debug: results = moneycalc(budgetvecfinal, outputresults=True, debug=True, **args)
-        return none
+        return None
     else:
         printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
     
@@ -505,6 +504,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     
     ##########################################################################################################################
     ## Now run an optimization on the current budget
+    ##########################################################################################################################
+
     args['totalbudget'] = budgetvec1.sum() # Calculate new total funding
     budgethigher = zeros(nprogs) + totalbudget # Reset funding maximum
     budgetvec2, fval, exitflag, output = asd(outcomecalc, budgetvec1, args=args, xmin=budgetlower, xmax=budgethigher, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
@@ -528,6 +529,8 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
     
     ##########################################################################################################################
     # Re-optimize based on this fairly close allocation
+    ##########################################################################################################################
+
     budgetvec3 = budgetvec2*fundingfactor # Calculate new budget vector
     args['totalbudget'] = totalbudget = budgetvec3.sum() # Calculate new total funding
     budgethigher = zeros(nprogs) + totalbudget # Reset funding maximum
