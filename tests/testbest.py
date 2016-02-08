@@ -8,7 +8,7 @@ from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeop
 
 ## Options
 docalibrate = False # Whether or not to run autofitting
-runscenarios = False # Run scenarios
+runscenarios = True # Run scenarios
 optimize = False
 dosave = False
 filename = 'best.prj'
