@@ -4,12 +4,14 @@ Create a good test project
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, saveobj
 
 ## Options
 docalibrate = False # Whether or not to run autofitting
 runscenarios = False # Run scenarios
-optimize = True
+optimize = False
+dosave = False
+filename = 'best.prj'
 
 P = defaults.defaultproject('concentrated')
 P.parsets[0].pars[0]['efftxunsupp'].y = 0.92 # WARNING, temporary
@@ -48,5 +50,9 @@ if runscenarios:
 
 
 if optimize:
-    P.optimize(maxtime=30)
+    P.optimize(maxtime=20)
     pygui(P.results[-1])
+    
+
+if dosave:
+    saveobj(filename,P)
