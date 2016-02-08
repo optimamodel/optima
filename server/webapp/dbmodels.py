@@ -368,7 +368,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', name='work_status')
 
-    id = db.Column(UUID(True), primary_key=True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     work_type = db.Column(db.String(32), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     parset_id = db.Column(UUID(True))
