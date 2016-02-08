@@ -389,6 +389,24 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % ((detail_costcov+detail_covout))
         raise OptimaException(errormsg)
     
+    # Run outcomes minimization
+    if which=='outcomes':
+        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
+    
+    # Run money minimization
+    elif which=='money':
+        multires = minmoney()
+    
+    return multires
+
+
+
+
+
+
+def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
+    ''' Split out minimize outcomes '''
+    
     ## Handle budget and remove fixed costs
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
@@ -400,35 +418,12 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     ## Constrain the budget
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, fulloutput=True)
     
-    
-    asdargs = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
-    
-    # Run outcomes minimization
-    if which=='outcomes':
-#        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
-        multires = minoutcomes(asdargs)
-    
-    # Run money minimization
-    elif which=='money':
-        multires = minmoney()
-    
-    return multires
-
-
-
-
-#def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
-def minoutcomes(asdargs=None):
-    ''' Split out minimize outcomes '''
-    
-    parset = asdargs['parset']
-    
     ## Actually run the optimization
     # for ind in inds: # WARNING, kludgy -- should be a loop!
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
-    
+    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
     budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
