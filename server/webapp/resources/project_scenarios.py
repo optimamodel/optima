@@ -112,6 +112,18 @@ class Scenarios(Resource):
                     par['for'] = par['for'][0]
                     pars.append(par)
                 scenario.blob['pars'] = pars
+
+            for key in ['budget', 'coverage']:
+                if key in scenario.blob:
+                    item_list = []
+                    for k, v in scenario.blob[key].iteritems():
+                        item = {
+                            'program': k,
+                            'values': v
+                        }
+                        item_list.append(item)
+                    scenario.blob[key] = item_list
+
             rv.append(scenario)
         print "rv", rv
         return rv

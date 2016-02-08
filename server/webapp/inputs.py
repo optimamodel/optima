@@ -57,15 +57,7 @@ def scenario_par(orig_pars):
 
 def scenario_program(orig_programs):  # result is either budget or coverage, depending on scenario type
     if not isinstance(orig_programs, list):
-        if isinstance(orig_programs, dict):
-            orig_programs = [
-                {
-                    'program': key,
-                    'values': value,
-                } for key, value in orig_programs.iteritems()
-            ]
-        else:
-            raise ValueError("needs to be a list or dictionaries.")
+        raise ValueError("needs to be a list or dictionaries.")
 
     if len(orig_programs) == 0:
         return []
