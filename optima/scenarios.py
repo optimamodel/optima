@@ -116,9 +116,9 @@ def makescenarios(project=None, scenlist=None, verbose=2):
         thisparset.name = scen.name
         npops = len(thisparset.popkeys)
 
-
         if isinstance(scen,Parscen):
             for pardictno in range(len(thisparset.pars)): # Loop over all parameter sets
+                if scenlist[scenno].pars is None: scenlist[scenno].pars = [] # Turn into empty list instead of None
                 for scenpar in scenlist[scenno].pars: # Loop over all parameters being changed
                     thispar = thisparset.pars[pardictno][scenpar['name']]
                     if type(scenpar['for'])==tuple: # If it's a partnership...
