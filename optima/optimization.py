@@ -388,7 +388,8 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
     
     # Run money minimization
-    elif which=='money':   
+    elif which=='money':
+        multires = minmoney()
     
     return multires
 
@@ -413,7 +414,7 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     ## Actually run the optimization
     # for ind in inds: # WARNING, kludgy -- should be a loop!
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
-    try: thisparset.pars = [thisparset.pars[inds]] # Turn into a list -- WARNING
+    try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
     args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
     budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
@@ -470,7 +471,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         budgetvecfinal = budgetvec1+infmoney
         printv("Warning, infinite allocation can't meet targets:", 1, verbose)
         if debug: results = moneycalc(budgetvecfinal, outputresults=True, debug=True, **args)
-        break
+        return none
     else:
         printv("Infinite allocation meets targets, as expected; proceeding...", 1, verbose)
     
@@ -480,7 +481,7 @@ def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verb
         budgetvecfinal = budgetvec1/infmoney
         print("Warning, even zero allocation meets targets")
         if debug: results = moneycalc(budgetvecfinal, outputresults=True, debug=True, **args)
-        break
+        return none
     else:
         printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
     
