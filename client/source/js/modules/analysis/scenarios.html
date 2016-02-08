@@ -45,11 +45,11 @@
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'parameter'}, 'add', $event)">Add a parameter scenario</button>
                     </td>
                   </tr>
-                  <tr>
+                  <tr ng-show="scenarios.length || deletedScenarios.length">
                     <td colspan="3">
                       <button type="button" class="btn" ng-click="saveScenarios(true)">Save scenarios</button>
                     </td>
-                    <td colspan="3" class="text-right">
+                    <td colspan="3" class="text-right" ng-show="scenarios.length">
                       <button type="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
                     </td>
                   </tr>

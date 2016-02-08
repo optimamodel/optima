@@ -368,7 +368,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', name='work_status')
 
-    id = db.Column(UUID(True), primary_key=True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     work_type = db.Column(db.String(32), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     parset_id = db.Column(UUID(True))
@@ -687,7 +687,7 @@ class ProgsetsDb(db.Model):
                 print "Updating program %s" % short
                 program_entry = existing_shorts[short]
                 for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
-                    program_entry.__dict__[field] = program[field]
+                    setattr(program_entry, field, program[field])
                 program_entry.active = program.get('active', False)
                 db.session.add(program_entry)
             else:
