@@ -737,7 +737,10 @@ class ScenariosDb(db.Model):
         'active': fields.Boolean,
         'name': fields.String,
         'parset_id': Uuid,
-        'pars': Json(attribute='pars')
+        'pars': Json(attribute='pars'),
+        'budget': Json(attribute='budget'),
+        'coverage': Json(attribute='coverage'),
+        'years': Json(attribute='years')
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -764,6 +767,18 @@ class ScenariosDb(db.Model):
     def pars(self):
         print(self.blob)
         return self.blob.get('pars', [])
+
+    @property
+    def budget(self):
+        return self.blob.get('budget', [])
+
+    @property
+    def coverage(self):
+        return self.blob.get('coverage', [])
+
+    @property
+    def years(self):
+        return self.blob.get('years', [])
 
     def hydrate(self):
 

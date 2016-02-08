@@ -105,13 +105,14 @@ class Scenarios(Resource):
     def _scenarios_for_fe(self, scenarios):
         rv = []
         for scenario in scenarios:
-            pars = []
-            if scenario.scenario_type == 'Parameter':
+            print "scenario", scenario.blob
+            if 'pars' in scenario.blob:
                 for par in scenario.blob['pars']:
                     par['for'] = par['for'][0]
                     pars.append(par)
-                scenario.blob = {'pars': pars}
+                scenario.blob['pars'] = pars
             rv.append(scenario)
+        print "rv", rv
         return rv
 
     @swagger.operation()
