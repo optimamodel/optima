@@ -25,6 +25,7 @@ class Programset(object):
         self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
+        else: self.updateprogset()
         self.created = today()
         self.modified = today()
 
