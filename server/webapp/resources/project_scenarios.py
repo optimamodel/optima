@@ -39,8 +39,8 @@ scenario_list_scenario_parser.add_arguments({
     'active': {'type': bool, 'required': True, 'location': 'json'},
     'pars': {'type': scenario_par, 'required': False, 'location': 'json'},  # only for Paramscen
     'years': {'type': list, 'required': False, 'location': 'json'}, # only for Budgetscen /Coveragescen
-    'budget': {'type': dict, 'required': False, 'location': 'json'}, # only for Budgetscen
-    'coverage': {'type': dict, 'required': False, 'location': 'json'}, # only for Coveragescen
+    'budget': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Budgetscen
+    'coverage': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Coveragescen
 })
 
 scenario_list_parser = RequestParser()
