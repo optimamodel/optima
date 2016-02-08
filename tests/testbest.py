@@ -35,8 +35,8 @@ scenlist = [
 P.addscenlist(scenlist)
 P.runscenarios() 
 
-plotpeople(P, P.results[-1].raw[-1][0]['people'])
+#plotpeople(P, P.results[-1].raw[-1][0]['people'])
  
 # Output
-#apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-#pygui(P.results[-1], toplot='default')
+apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+pygui(P.results[-1], toplot='default')
