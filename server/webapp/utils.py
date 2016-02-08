@@ -541,6 +541,14 @@ def save_result(project_id, result, parset_name='default', calculation_type = Re
     return result_record
 
 
+def remove_nans(obj):
+    import json
+    # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+    json_string = json.dumps(obj).replace('NaN', 'null')
+    return json.loads(json_string)
+
+
+
 def init_login_manager(login_manager):
 
     @login_manager.user_loader

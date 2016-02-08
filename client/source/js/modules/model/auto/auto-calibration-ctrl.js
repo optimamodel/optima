@@ -244,7 +244,6 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var pollAutoCalibration = function() {
-      var that = this;
       $http.get('/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id +'/automatic_calibration')
         .success(function(response) {
           if(response.status === 'completed') {
