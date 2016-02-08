@@ -120,7 +120,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.saveOptimization = function() {
       $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
-          // setActiveOptimization(response);
+          $scope.state.activeOptimization.id = response.id;
         });
     };
 
