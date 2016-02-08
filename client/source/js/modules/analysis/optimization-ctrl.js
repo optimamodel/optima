@@ -24,7 +24,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.setType = function(optimizationType) {
-      $scope.state.activeOptimization.optimization_type = optimizationType;
+      $scope.state.activeOptimization.which = optimizationType;
       $scope.state.activeOptimization.objectives = objectives[optimizationType];
     };
 
@@ -37,7 +37,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var add = function (name) {
         $scope.state.activeOptimization = {
           name: name,
-          optimization_type: 'money',
+          which: 'money',
           constraints: constraints,
           objectives: objectives.money
         };
@@ -101,7 +101,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.saveOptimization = function() {
       var optimizationData = {
-        optimization_type: $scope.state.activeOptimization.optimization_type,
+        which: $scope.state.activeOptimization.which,
         parset_id: $scope.state.activeOptimization.parset.id,
         name: $scope.state.activeOptimization.name,
         progset_id: $scope.state.activeOptimization.programSet.id,
