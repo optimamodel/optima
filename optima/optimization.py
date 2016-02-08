@@ -62,7 +62,10 @@ class Optim(object):
         elif self.objectives['which']=='money':                multires = minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         else: raise OptimaException('optimize(): "which" must be "outcome" or "money"; you entered "%s"' % self.objectives['which'])
         
-        multires.name = 'optim-'+name
+        if name:
+            multires.name = 'optim-'+name
+        else:
+            multires.name = 'optim-default'
         return multires
 
 
