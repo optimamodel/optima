@@ -4,15 +4,17 @@ Functions for running optimizations.
 Version: 2016feb04
 """
 
-from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults, vec2obj # Main functions
-from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber, scaleratio # Utilities
+from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
+from optima import printv, dcp, odict, findinds, today, getdate, uuid, objrepr, isnumber # Utilities
 from numpy import zeros, arange, isnan, maximum, array, inf
 
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
 
 
-
+################################################################################################################################################
+### The container class
+################################################################################################################################################
 class Optim(object):
     ''' An object for storing an optimization '''
     
@@ -56,18 +58,21 @@ class Optim(object):
         else:
             print('WARNING, no results associated with this parameter set')
             return None
+            
     
     def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
-        if self.objectives['which'] in ['outcome','outcomes']: multires = minoutcomes(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        elif self.objectives['which']=='money':                multires = minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
-        else: raise OptimaException('optimize(): "which" must be "outcome" or "money"; you entered "%s"' % self.objectives['which'])
-        
+        ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
+        multires = optimize(which=self.objectives['which'], project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         multires.name = 'optim-'+name
         return multires
 
 
 
 
+
+################################################################################################################################################
+### Helper functions
+################################################################################################################################################
 
 def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     """
@@ -161,20 +166,122 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
 
 
 
-def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, totalbudget=None, budgetlims=None, optiminds=None, tvec=None, outputresults=False, debug=False):
+
+
+
+
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-3, overalltolerance=1.0):
+    """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
+    
+    # Prepare this budget for later scaling and the like
+    constrainedbudget = dcp(origbudget) 
+    
+    # Calculate the current total budget
+    currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict
+    scaleratio = totalbudget/float(currenttotal) # Calculate the ratio between the original budget and the supplied budget
+    
+    # Calculate a uniformly scaled budget
+    rescaledbudget = dcp(constrainedbudget * scaleratio) # This is the original budget scaled to the total budget
+    if sum(rescaledbudget[:])!=totalbudget: 
+        errormsg = 'constrainbudget(): rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
+        raise OptimaException(errormsg)
+    
+    # Calculate the minimum amount that can be spent on the fixed costs
+    rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
+    proginds = arange(len(origbudget)) # Array of all allowable indices
+    fixedinds = array([p for p in proginds if p not in optiminds]) # WARNING, weird way of getting the complement of optiminds
+    minfixed = 0.0
+    for ind in fixedinds:
+        rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
+        minfixed += rescaledminfixed[ind]
+    
+    # Calculate the total amount available for the optimizable programs
+    optimbudget = totalbudget - minfixed
+    optimscaleratio = optimbudget/float(sum(budgetvec)) # If totalbudget=sum(origbudget) and fixed cost lower limits are 1, then optimscaleratio=1
+    
+    # Scale the supplied budgetvec to meet this available amount
+    scaledbudgetvec = dcp(budgetvec*optimscaleratio)
+    if sum(scaledbudgetvec)!=optimbudget:
+        errormsg = 'constrainbudget(): rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
+        raise OptimaException(errormsg)
+    
+    # Calculate absolute limits from relative limits
+    abslimits = dcp(budgetlims)
+    for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
+        if optimscaleratio<1:
+            abslimits['min'][oind] *= scaledbudgetvec[oi] # If total budget is less, scale down the lower limit...
+            abslimits['max'][oind] *= budgetvec[oi] # ...but keep the upper limit in absolute terms
+        elif optimscaleratio>=1:
+            abslimits['min'][oind] *= budgetvec[oi] # If the total budget is more, keep the absolute original lower limit...
+            abslimits['max'][oind] *=scaledbudgetvec[oi] # ...but scale up the upper limit
+        
+    # Apply constraints on optimizable parameters
+    noptimprogs = len(optiminds) # Number of optimizable programs
+    limlow = zeros(noptimprogs, dtype=bool)
+    limhigh = zeros(noptimprogs, dtype=bool)
+    for oi,oind in enumerate(optiminds):
+        if scaledbudgetvec[oi] <= abslimits['min'][oind]:
+            scaledbudgetvec[oi] = abslimits['min'][oind]
+            limlow[oi] = True
+        if scaledbudgetvec[oi] >= abslimits['max'][oind]:
+            scaledbudgetvec[oi] = abslimits['max'][oind]
+            limhigh[oi] = True
+            
+    # Too high
+    while sum(scaledbudgetvec) > optimbudget+tolerance:
+        overshoot = sum(scaledbudgetvec) - optimbudget
+        toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot))
+        for oi,oinds in enumerate(optiminds):
+            if not(limlow[oi]):
+                proposed = scaledbudgetvec[oi] / float(toomuch)
+                if proposed <= abslimits['min'][oind]:
+                    proposed = abslimits['min'][oind]
+                    limlow[oi] = True
+                scaledbudgetvec[oi] = proposed
+        
+    # Too low
+    while sum(scaledbudgetvec) < optimbudget-tolerance:
+        undershoot = optimbudget - sum(scaledbudgetvec)
+        toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh]))
+        for oi,oinds in enumerate(optiminds):
+            if not(limhigh[oi]):
+                proposed = scaledbudgetvec[oi] * toolittle
+                if proposed >= abslimits['max'][oind]:
+                    proposed = abslimits['max'][oind]
+                    limhigh[oi] = True
+                scaledbudgetvec[oi] = proposed
+    
+    # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
+    constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
+    for oi,oind in enumerate(optiminds):
+        constrainedbudget[oind] = scaledbudgetvec[oi]
+    if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
+        errormsg = 'constrainbudget(): final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
+        raise OptimaException(errormsg)
+    
+    return constrainedbudget
+
+
+
+
+################################################################################################################################################
+### The main meat of the matter
+################################################################################################################################################
+
+def objectivecalc(which=None, budgetvec=None, parset=None, progset=None, objectives=None, totalbudget=None, budgetlims=None, optiminds=None, origbudget=None, tvec=None, outputresults=False, debug=False, verbose=2):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
+    
     # Validate input
-    if any([arg is None for arg in [budgetvec, progset, objectives, totalbudget, budgetlims, optiminds, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise OptimaException('outcomecalc() requires a budgetvec, progset, objectives, budgetlims, optiminds, and tvec at minimum')
+    if any([arg is None for arg in [which, budgetvec, parset, progset, objectives, totalbudget, budgetlims, optiminds, origbudget, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+        raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, budgetlims, optiminds, origbudget, tvec as inputs at minimum')
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    normbudgetvec = constrainbudget(origbudget=budgetvec, total=totalbudget, limits=budgetlims)
-    budget = vec2obj(progset.getdefaultbudget(), normbudgetvec, optiminds)
+    constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=budgetlims, optiminds=optiminds)
     
     # Run model
-    thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
+    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset) 
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset)
-    results = runmodel(pars=thisparsdict, parset=parset, progset=progset, project=project, tvec=tvec, verbose=0)
+    results = runmodel(pars=thisparsdict, parset=parset, progset=progset, tvec=tvec, verbose=0)
     
     # Figure out which indices to use
     initial = findinds(results.tvec, objectives['start'])
@@ -193,60 +300,13 @@ def outcomecalc(budgetvec=None, project=None, parset=None, progset=None, objecti
 
     if outputresults:
         results.outcome = outcome
-        results.budgetvec = budgetvec # WARNING, not sure this should be here
         results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
-        results.budget = vec2obj(progset.getdefaultbudget(), budgetvec, optiminds) # Convert to budget
+        results.budget = constrainedbudget # Convert to budget
         return results
     else: 
         return outcome
 
 
-def constrainbudget(origbudget, total=None, limits=None, tolerance=1e-3):
-    """ Take an unnormalized/unconstrained budget and normalize and constrain it """
-    normbudget = dcp(origbudget)
-    
-    if total < sum(limits['min']) or total > sum(limits['max']):
-        errormsg = 'Budget cannot be constrained since the total %f is outside the low-high limits [%f, %f]' % (total, sum(limits['min']), sum(limits['max']))
-        raise OptimaException(errormsg)
-    
-    # Not strictly needed, but get close to correct answer in one go
-    normbudget *= total/float(sum(normbudget)) # Rescale
-    
-    nprogs = len(normbudget)
-    proginds = arange(nprogs)
-    limlow = zeros(nprogs, dtype=bool)
-    limhigh = zeros(nprogs, dtype=bool)
-    for p in proginds:
-        if normbudget[p] <= limits['min'][p]:
-            normbudget[p] = limits['min'][p]
-            limlow[p] = True
-        if normbudget[p] >= limits['max'][p]:
-            normbudget[p] = limits['max'][p]
-            limhigh[p] = True
-    
-    # Too high
-    while sum(normbudget) > total+tolerance:
-        overshoot = sum(normbudget) - total
-        toomuch = sum(normbudget[~limlow]) / float((sum(normbudget[~limlow]) - overshoot))
-        for p in proginds[~limlow]:
-            proposed = normbudget[p] / float(toomuch)
-            if proposed <= limits['min'][p]:
-                proposed = limits['min'][p]
-                limlow[p] = True
-            normbudget[p] = proposed
-        
-    # Too low
-    while sum(normbudget) < total-tolerance:
-        undershoot = total - sum(normbudget)
-        toolittle = (sum(normbudget[~limhigh]) + undershoot) / float(sum(normbudget[~limhigh]))
-        for p in proginds[~limhigh]:
-            proposed = normbudget[p] * toolittle
-            if proposed >= limits['max'][p]:
-                proposed = limits['max'][p]
-                limhigh[p] = True
-            normbudget[p] = proposed
-    
-    return normbudget
 
 
 
@@ -254,16 +314,19 @@ def constrainbudget(origbudget, total=None, limits=None, tolerance=1e-3):
 
 
 
-def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
+def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
     ''' 
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
-    Version: 1.1 (2016feb03)
+    Version: 1.2 (2016feb03)
     '''
     
-    # Begin and check initial inputs
-    printv('Running outcomes optimization...', 1, verbose)
+    ## Input validation
+    if which not in ['outcome','outcomes','money']: 
+        errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
+        raise OptimaException(errormsg)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
+    printv('Running %s optimization...' % which, 1, verbose)
     
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
     parsetname = optim.parsetname
@@ -282,21 +345,12 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
     tvec = project.settings.maketvec(end=objectives['end']) # WARNING, this could be done better most likely
     
     # Handle budget and remove fixed costs
-    totalbudget = objectives['budget']
+    totalbudget = dcp(objectives['budget'])
+    origbudget = dcp(progset.getdefaultbudget())
     progkeys = progset.programs.keys()
     optiminds = findinds(progset.optimizable())
     fixedinds = findinds(1-array(progset.optimizable()))
-    nprogs = len(optiminds) # Only count optimizable programs
-    budgetvec = progset.getdefaultbudget()[:]
-    
-    # QUICK SCALE. SCALES FIXED COSTS AS WELL.
-    budgetvec = scaleratio(budgetvec, totalbudget)
-    print('Scaling budget: %f' % totalbudget)
-    print('Scaled optimizable budgets...')
-    print budgetvec[optiminds]
-    print('Scaled fixed budgets...')
-    print budgetvec[fixedinds]
-    print('Sum of scaled budgets: %f' % sum(budgetvec))
+    noptimprogs = len(optiminds) # Only count optimizable programs
     
     # Error checking
     if isnan(budgetvec).any():
