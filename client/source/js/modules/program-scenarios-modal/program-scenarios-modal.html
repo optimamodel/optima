@@ -27,7 +27,6 @@
         </select>
       </div>
     </div>
-
     <div class="o-card _program-scenario-wrap" ng-repeat="rs in temp track by $index">
       <div class="c-input-table">
 
@@ -35,7 +34,7 @@
           <div class="c-input-table__label">
             Year
           </div>
-          <input type="number" class="c-input-table__input txbox" ng-model="row.t[$index]"/>
+          <input type="number" class="c-input-table__input txbox" ng-model="row.years[$index]"/>
         </div>
 
         <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized track by $index">
@@ -45,7 +44,7 @@
           <input type="text" class="c-input-table__input txbox" ng-model="row.budget[$index].values[$parent.$index]"/>
         </div>
 
-        <div class="o-card__delete" ng-click="removeParam(row, $index)">x</div>
+        <div class="o-card__delete" ng-click="removeParam(temp, $index)">x</div>
       </div>
     </div>
 
