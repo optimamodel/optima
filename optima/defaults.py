@@ -473,14 +473,8 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
     
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST', 'Other'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
         
-        # Modify target pars and pops
-        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
-        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
-        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
-        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
-        R.updateprogset()
     
         # Add program effects
         R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
@@ -500,7 +494,6 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['hivtest']['PWID'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-        R.covout['numost']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
         
         # Store this program set in the project
         P.addprogset(R)
