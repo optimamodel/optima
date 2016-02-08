@@ -32,7 +32,7 @@ optimization_parser.add_arguments({
     'name': {'type': str, 'required': True},
     'parset_id': {'type': uuid.UUID, 'required': True},
     'progset_id': {'type': uuid.UUID, 'required': True},
-    'optimization_type': {'type': str, 'required': True},
+    'which': {'type': str, 'required': True},
 })
 
 
@@ -66,7 +66,6 @@ class Optimizations(Resource):
         project_entry = load_project(project_id, raise_exception=True)
 
         args = optimization_parser.parse_args()
-
         optimization_entry = OptimizationsDb(project_id=project_id, **args)
 
         db.session.add(optimization_entry)
@@ -121,11 +120,14 @@ class OptimizationResults(Resource):
     @swagger.operation(
         summary='Launch auto calibration for the selected parset'
     )
+    @report_exception
     def post(self, project_id, optimization_id):
         from server.webapp.tasks import run_optimization, start_or_report_calculation
-        from server.webapp.dbmodels import OptimizationsDb, ParsetsDb, ProgsetsDb
+        from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
         optimization_entry = OptimizationsDb.query.get(optimization_id)
+        optimization_entry._ensure_current()
+
         optimization_name = optimization_entry.name
         parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
         parset_name = parset_entry.name
@@ -144,3 +146,96 @@ class OptimizationResults(Resource):
             run_optimization.delay(project_id, optimization_name, parset_name, progset_name, objectives, constraints)
             result['status'] = 'started'
             return result, 201
+
+    @swagger.operation(
+        summary='Retrieve optimization results for the given parset'
+    )
+    @report_exception
+    def get(self, project_id, optimization_id):
+        from server.webapp.tasks import check_calculation_status
+        from server.webapp.dbmodels import OptimizationsDb
+
+        optimization_entry = OptimizationsDb.query.get(optimization_id)
+        optimization_entry._ensure_current()
+
+        parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
+        project_id = parset_entry.project_id
+
+        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, str(parset_entry.id), 'optimization')
+        return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
+
+
+optimization_which_parser = RequestParser()
+optimization_which_parser.add_argument('which', location='args', default=None, action='append')
+
+optimization_fields = {
+"optimization_id": Uuid,
+    "graphs": Json,
+    "selectors": Json,
+    "result_id": Uuid,
+}
+
+
+class OptimizationGraph(Resource):
+
+    method_decorators = [report_exception, login_required]
+
+    def _result_to_jsons(self, result, which):
+        import mpld3
+        import json
+        graphs = op.plotting.makeplots(result, figsize=(4, 3), toplot=[str(w) for w in which])  # TODO: store if that becomes an efficiency issue
+        jsons = []
+        for graph in graphs:
+            # Add necessary plugins here
+            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
+            jsons.append(json.loads(json_string))
+        return jsons
+
+    def _selectors_from_result(self, result, which):
+        graph_selectors = op.getplotselections(result)
+        keys = graph_selectors['keys']
+        names = graph_selectors['names']
+        if which is None:
+            checks = graph_selectors['defaults']
+        else:
+            checks = [key in which for key in keys]
+        selectors = [{'key': key, 'name': name, 'checked': checked}
+                     for (key, name, checked) in zip(keys, names, checks)]
+        return selectors
+
+    def _which_from_selectors(self, graph_selectors):
+        return [item['key'] for item in graph_selectors if item['checked']]
+
+    @swagger.operation(
+        description='Provides optimization graph for the given project',
+        notes="""
+        Returns the set of corresponding graphs.
+        """,
+        parameters=optimization_which_parser.swagger_parameters()
+    )
+    @report_exception
+    @marshal_with(optimization_fields, envelope="optimization")
+    def get(self, project_id, optimization_id):
+        current_app.logger.debug("/api/project/{}/optimizations/{}/graph".format(project_id, optimization_id))
+        args = optimization_which_parser.parse_args()
+        which = args.get('which')
+
+        # TODO actually filter for the proper optimization id (Which would have to be saved for the given result)
+        result_entry = db.session.query(ResultsDb).filter_by(project_id=project_id, calculation_type='optimization')
+        if result_entry:
+            result = result_entry[-1].hydrate()
+        else:
+            raise Exception("Optimization result for project {} does not exist".format(project_id))
+
+        selectors = self._selectors_from_result(result, which)
+        which = which or self._which_from_selectors(selectors)
+        graphs = self._result_to_jsons(result, which)
+
+        return {
+            "optimization_id": optimization_id,
+            "graphs": graphs,
+            "selectors": selectors,
+            "result_id": result_entry[-1].id if result_entry else None
+        }

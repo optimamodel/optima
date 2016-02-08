@@ -2,7 +2,7 @@ CREATE TABLE optimizations (
     id UUID DEFAULT uuid_generate_v1mc() NOT NULL,
     project_id UUID,
     name VARCHAR,
-    optimization_type VARCHAR,
+    which VARCHAR,
     progset_id UUID,
     parset_id UUID,
     objectives JSON,

@@ -5,7 +5,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    * Defines & validates objectives, parameters & constraints to run, display &
    * save optimization results.
    */
-  module.controller('AnalysisOptimizationController', function ($scope, $http, $modal, modalService, activeProject) {
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $modal, modalService, activeProject, $timeout) {
 
     if (!activeProject.data.has_data) {
       modalService.inform(
@@ -23,27 +23,45 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       optimizations: []
     };
 
-    $scope.setType = function(optimizationType) {
-      $scope.state.activeOptimization.optimization_type = optimizationType;
-      $scope.state.activeOptimization.objectives = objectives[optimizationType];
+    $scope.setType = function(which) {
+      $scope.state.activeOptimization.which = which;
+      $scope.state.activeOptimization.objectives = objectiveDefaults[which];
+      $scope.state.objectives = objectives[which];
     };
 
     $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations').
       success(function (response) {
-        console.log('response', response);
+        $scope.state.optimizations = response.optimizations;
+        if($scope.state.optimizations.length > 0) {
+          $scope.setActiveOptimization($scope.state.optimizations[0]);
+        }
       });
 
     $scope.addOptimization = function() {
       var add = function (name) {
-        $scope.state.activeOptimization = {
+        var newOptimization = {
           name: name,
-          optimization_type: 'money',
+          which: 'money',
           constraints: constraints,
-          objectives: objectives.money
+          objectives: objectiveDefaults.money
         };
-        $scope.state.optimizations.push($scope.state.activeOptimization);
+        $scope.setActiveOptimization(newOptimization);
+        $scope.state.optimizations.push(newOptimization);
       };
       openOptimizationModal(add, 'Add optimization', $scope.state.optimizations, null, 'Add');
+    };
+
+    var getConstraintKeys = function(constraints) {
+      return _.keys(constraints.name);
+    };
+
+    $scope.setActiveOptimization = function(optimization) {
+      $scope.state.activeOptimization = optimization;
+      $scope.state.constraintKeys = getConstraintKeys(optimization.constraints);
+      $scope.state.objectives = objectives[optimization.which];
+      $scope.optimizationCharts = [];
+      $scope.selectors = [];
+      $scope.getOptimizationGraphs();
     };
 
     // Open pop-up to re-name Optimization
@@ -66,7 +84,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var rename = function (name) {
           var copyOptimization = angular.copy($scope.state.activeOptimization);
           copyOptimization.name = name;
-          $scope.state.activeOptimization = copyOptimization;
+          $scope.setActiveOptimization(copyOptimization);
           $scope.state.optimizations.push($scope.state.activeOptimization);
         };
         openOptimizationModal(rename, 'Copy optimization', $scope.optimizations, $scope.state.activeOptimization.name + ' copy', 'Copy');
@@ -100,18 +118,63 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.saveOptimization = function() {
-      var optimizationData = {
-        optimization_type: $scope.state.activeOptimization.optimization_type,
-        parset_id: $scope.state.activeOptimization.parset.id,
-        name: $scope.state.activeOptimization.name,
-        progset_id: $scope.state.activeOptimization.programSet.id,
-        constraints: $scope.state.activeOptimization.constraints,
-        objective: $scope.state.activeOptimization.objectives
-      };
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', optimizationData).
+      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
-          console.log('response', response);
+          $scope.state.activeOptimization.id = response.id;
         });
+    };
+
+    $scope.runOptimizations = function() {
+      if($scope.state.activeOptimization.id) {
+        $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+          .success(function (response) {
+            if (response.status === 'started') {
+              $scope.statusMessage = 'Optimization started.';
+              $scope.errorMessage = '';
+              pollOptimizations();
+            } else if (response.status === 'running') {
+              $scope.statusMessage = 'Optimization already running.'
+            }
+          });
+      }
+    };
+
+    var pollOptimizations = function() {
+      var that = this;
+      $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+        .success(function(response) {
+          if(response.status === 'completed') {
+            getOptimizationGraphs();
+            $scope.statusMessage = 'Optimization successfully completed.';
+            $timeout.cancel($scope.pollTimer);
+          } else if(response.status === 'started'){
+            $scope.pollTimer = $timeout(pollOptimizations, 5000);
+          } else if(response.status === 'error'){
+            $scope.errorMessage = 'Optimization failed.';
+            $scope.statusMessage = '';
+          }
+        });
+    };
+
+    $scope.getOptimizationGraphs = function() {
+      var data = {};
+      if($scope.state.activeOptimization.id) {
+        if ($scope.selectors) {
+          var selectors = _.filter($scope.selectors, function (selector) {
+            return selector.checked;
+          }).map(function (selector) {
+            return selector.key;
+          });
+          if (selectors && selectors.length > 0) {
+            data.which = selectors;
+          }
+        }
+        $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/graph', {params: data})
+          .success(function (response) {
+            $scope.optimizationCharts = response.optimization.graphs;
+            $scope.selectors = response.optimization.selectors;
+          });
+      }
     };
 
     // Fetch list of program-set for open-project from BE
@@ -163,113 +226,47 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 //todo: add validations, comment code
 
 // this is to be replaced by an api
-var constraints = [{
-  key: 'MSM programs',
-  label: 'Programs for men who have sex with men',
-  min: 0,
-  max: undefined
-},{
-  key: 'HTC mobile',
-  label: 'HIV testing and counseling - mobile clinics',
-  min: 0,
-  max: undefined
-},{
-  key: 'ART',
-  label: 'Antiretroviral therapy',
-  min: 1,
-  max: undefined
-},{
-  key: 'VMMC',
-  label: 'Voluntary medical male circumcision',
-  min: 0,
-  max: undefined
-},{
-  key: 'HTC workplace',
-  label: 'HIV testing and counseling - workplace programs',
-  min: 0,
-  max: undefined
-},{
-  key: 'Condoms',
-  label: 'Condom promotion and distribution',
-  min: 0,
-  max: undefined
-},{
-  key: 'PMTCT',
-  label: 'Prevention of mother-to-child transmission',
-  min: 0,
-  max: undefined
-},{
-  key: 'Other',
-  label: 'Other',
-  min: 1,
-  max: 1
-},{
-  key: 'MGMT',
-  label: 'Management',
-  min: 1,
-  max: 1
-},{
-  key: 'HTC medical',
-  label: 'HIV testing and counseling - medical facilities',
-  min: 0,
-  max: undefined
-},{
-  key: 'FSW programs',
-  label: 'Programs for female sex workers and clients',
-  min: 0,
-  max: undefined
-}];
+var constraints = {
+  'max': {'MSM programs': null, 'HTC mobile': null, 'ART': null, 'VMMC': null, 'HTC workplace': null, 'Condoms': null, 'PMTCT': null, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': null, 'FSW programs': null},
+  'name': {'MSM programs': 'Programs for men who have sex with men', 'HTC mobile': 'HIV testing and counseling - mobile clinics', 'ART': 'Antiretroviral therapy', 'VMMC': 'Voluntary medical male circumcision', 'HTC workplace': 'HIV testing and counseling - workplace programs', 'Condoms': 'Condom promotion and distribution', 'PMTCT': 'Prevention of mother-to-child transmission', 'Other': 'Other', 'MGMT': 'Management', 'HTC medical': 'HIV testing and counseling - medical facilities', 'FSW programs': 'Programs for female sex workers and clients'},
+  'min': {'MSM programs': 0.0, 'HTC mobile': 0.0, 'ART': 1.0, 'VMMC': 0.0, 'HTC workplace': 0.0, 'Condoms': 0.0, 'PMTCT': 0.0, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': 0.0, 'FSW programs': 0.0}
+};
 
 // this is to be replaced by an api
 var objectives = {
-  outcome: [{
-    key: 'base',
-    label: 'Baseline year to compare outcomes to',
-    value: undefined
-  },{
-    key: 'start',
-    label: 'Year to begin optimization',
-    value: 2017
-  },{
-    key: 'end',
-    label: 'Year by which to achiever objectives',
-    value: 2013
-  },{
-    key: 'budget',
-    label: 'Starting budget',
-    value: 63500000.0
-  },{
-    key: 'deathweight',
-    label: 'Relative weight per death',
-    value: 0
-  },{
-    key: 'inciweight',
-    label: 'Relative weight per new infection',
-    value: 0
-  }],
-  money: [{
-    key: 'base',
-    label: 'Baseline year to compare outcomes to',
-    value: undefined
-  },{
-    key: 'start',
-    label: 'Year to begin optimization',
-    value: 2017
-  },{
-    key: 'end',
-    label: 'Year by which to achiever objectives',
-    value: 2013
-  },{
-    key: 'budget',
-    label: 'Starting budget',
-    value: 63500000.0
-  },{
-    key: 'deathfrac',
-    label: 'Fraction of deaths to be averted',
-    value: 0
-  },{
-    key: 'incifrac',
-    label: 'Fraction of infections to be averted',
-    value: 0
-  }]
+  outcome: [
+    { key: 'base', label: 'Baseline year to compare outcomes to' },
+    { key: 'start', label: 'Year to begin optimization' },
+    { key: 'end', label: 'Year by which to achiever objectives' },
+    { key: 'budget', label: 'Starting budget' },
+    { key: 'deathweight', label: 'Relative weight per death' },
+    { key: 'inciweight', label: 'Relative weight per new infection' }
+  ],
+  money: [
+    {key: 'base', label: 'Baseline year to compare outcomes to' },
+    { key: 'start', label: 'Year to begin optimization' },
+    { key: 'end', label: 'Year by which to achiever objectives' },
+    { key: 'budget', label: 'Starting budget' },
+    { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
+    { key: 'incifrac', label: 'Fraction of infections to be averted' }
+  ]
+};
+
+var objectiveDefaults = {
+  outcome: {
+    base: undefined,
+    start: 2017,
+    end: 2013,
+    budget: 63500000.0,
+    deathweight: 0,
+    inciweight: 0
+  },
+  money: {
+    base: undefined,
+    start: 2017,
+    end: 2013,
+    budget: 63500000.0,
+    deathfrac: 0,
+    incifrac: 0
+  }
 };
