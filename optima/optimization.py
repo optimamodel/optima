@@ -425,6 +425,7 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    xmin = zeros(len(budgetvec))
     
     ## Constrain the budget
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
@@ -435,7 +436,7 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
     args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
-    budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     constrainedbudgetnew, constrainedbudgetvecnew, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvecnew, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
@@ -473,6 +474,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    xmin = zeros(len(budgetvec))
     
     ## Constrain the budget
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
@@ -521,10 +523,11 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
 
     args['totalbudget'] = origtotalbudget # Calculate new total funding
     args['which'] = 'outcomes' # Switch back to outcome minimization
-    budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
 
     # See if objectives are met
+    args['which'] = 'money' # Switch back to money minimization
     targetsmet, summary = objectivecalc(budgetvec2, **args)
     fundingfactor = 1.0
     
@@ -532,7 +535,6 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     while targetsmet:
         fundingfactor /= fundingchange
         args['totalbudget'] = origtotalbudget * fundingfactor
-        args['which'] = 'money'
         targetsmet, summary = objectivecalc(budgetvec2, **args)
         printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
     
@@ -548,7 +550,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     # Re-optimize based on this fairly close allocation
     ##########################################################################################################################
     args['which'] = 'outcomes'
-    budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+    budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
     # Check that targets are still met
