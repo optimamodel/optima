@@ -4,7 +4,7 @@ Create a good test project
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, saveobj
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, saveobj # analysis:ignore
 
 ## Options
 docalibrate = 0 # Whether or not to run autofitting
