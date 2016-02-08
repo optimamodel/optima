@@ -435,7 +435,8 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov')
+        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
+        'optimizable': fields.Raw,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -549,6 +550,10 @@ class ProgramsDb(db.Model):
         )
         program_entry.id = self.id
         return program_entry
+
+    def get_optimizable(self):
+        be_program = self.hydrate()
+        self.optimizable = be_program.optimizable()
 
     def restore(self, program_instance):
         import json
@@ -732,7 +737,10 @@ class ScenariosDb(db.Model):
         'active': fields.Boolean,
         'name': fields.String,
         'parset_id': Uuid,
-        'pars': Json(attribute='pars')
+        'pars': Json(attribute='pars'),
+        'budget': Json(attribute='budget'),
+        'coverage': Json(attribute='coverage'),
+        'years': Json(attribute='years')
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -760,6 +768,18 @@ class ScenariosDb(db.Model):
         print(self.blob)
         return self.blob.get('pars', [])
 
+    @property
+    def budget(self):
+        return self.blob.get('budget', [])
+
+    @property
+    def coverage(self):
+        return self.blob.get('coverage', [])
+
+    @property
+    def years(self):
+        return self.blob.get('years', [])
+
     def hydrate(self):
 
         from server.webapp.utils import load_progset, load_parset
@@ -771,36 +791,34 @@ class ScenariosDb(db.Model):
         if self.progset_id:
             progset = load_progset(self.project_id, self.progset_id)
 
-        if self.scenario_type == "Budget":
+        if self.scenario_type == "budget":
 
             # TODO: remove this hack (dummy values)
             if not 'years' in self.blob:
                 self.blob['t'] = 2030
             else:
                 self.blob['t'] = self.blob['years']
-            if not 'budget' in self.blob:
-                self.blob['budget'] = {progset.programs[0].short:[1000000]}
+                del self.blob['years']
             print "blob", self.blob
             return op.Budgetscen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
                                **self.blob)
 
-        if self.scenario_type == "Coverage":
+        if self.scenario_type == "coverage":
 
             # TODO: remove this hack (dummy values)
             if not 'years' in self.blob:
                 self.blob['t'] = 2030
             else:
                 self.blob['t'] = self.blob['years']
-            if not 'coverage' in self.blob:
-                self.blob['coverage'] = {progset.programs[0].short:[1000000]}
+                del self.blob['years']
             return op.Coveragescen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
                                **self.blob)
 
-        elif self.scenario_type == "Parameter":
+        elif self.scenario_type == "parameter":
 
             return op.Parscen(name=self.name,
                               parsetname=parset.name,
