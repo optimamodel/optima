@@ -86,6 +86,10 @@ define(['./../module', 'underscore'], function (module, _) {
             console.warn('response is', response);
             vm.existingEffects = response;
           })
+
+          $http.get('/api/project/' + vm.openProject.id + '/parsets/limits').success(function (response) {
+            vm.allLimits = response;
+          })
         }
 
         vm.programs = _.sortBy(_.filter(vm.selectedProgramSet.programs, isProgramActive), sortByName);
@@ -95,6 +99,8 @@ define(['./../module', 'underscore'], function (module, _) {
     function setParamSet() {
       console.log('setting param set', vm.selectedParset);
       if (vm.selectedProgramSet && vm.selectedProgramSet.targetpartypes && vm.selectedParset) {
+
+        vm.currentParsetLimits = vm.allLimits.parsets[vm.selectedParset.id];
 
         $http.get('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/parameters/' + vm.selectedParset.id).success(function (response) {
           console.warn('response', response);
@@ -327,16 +333,6 @@ define(['./../module', 'underscore'], function (module, _) {
     $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
       vm.parsets = response.parsets;
     });
-
-    var openParameterScenariosModal = function () {
-      return $modal.open({
-        templateUrl: 'js/modules/create-program-scenario-modal/create-program-scenario-modal.html',
-        controller: 'CreateProgramScenarioModalController',
-        resolve: {}
-      });
-    }
-
-    openParameterScenariosModal()
 
   });
 
