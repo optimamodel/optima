@@ -209,7 +209,9 @@ class Programset(object):
         emptyarray = array([nan]*len(tvec))
         
         # Get cost data for each program in each year that it exists
+        print "programs", self.programs
         for program in self.programs:
+            print "program", program
             totalbudget[program] = dcp(emptyarray)
             selectbudget[program] = []
             if self.programs[program].costcovdata['t']:
@@ -242,6 +244,7 @@ class Programset(object):
 
         # Initialise output
         coverage = odict()
+        print "budget", budget
 
         # Validate inputs
         if isnumber(t): t = [t]

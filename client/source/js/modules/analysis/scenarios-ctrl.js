@@ -154,7 +154,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         // Helper function to open a population modal
         var openScenarioModal = function(scenario, parsets, progsets) {
-          if(scenario.scenario_type === "Budget" || scenario.scenario_type === 'Coverage'){
+          if(scenario.scenario_type === "budget" || scenario.scenario_type === 'coverage'){
             return $modal.open({
               templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
               controller: 'ProgramScenariosModalController',
@@ -245,7 +245,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         };*/
 
         $scope.gotoViewCalibrate = function() {
-          $state.go('model');;
+          $state.go('model');
         };
 
         // The graphs are shown/hidden after updating the graph type checkboxes.
@@ -255,13 +255,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         //initialize();
 
-        $scope.progset_name = function(progset_id) {
+        $scope.progset_name = function(progset_id, row) {
           var progset = _.filter($scope.progsets, {id: progset_id});
           if (progset.length > 0) {
             return progset[0].name;
           }
           return '';
-        }
+        };
 
 
         $scope.parset_name = function(parset_id) {
