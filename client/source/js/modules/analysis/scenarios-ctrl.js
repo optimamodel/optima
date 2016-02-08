@@ -17,7 +17,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         if (!$scope.progsets.length) {
           $scope.missingProgramSet = true;
-          return;
         }
         /**
          * Returns an graph based on the provided yData.

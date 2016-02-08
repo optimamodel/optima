@@ -4,17 +4,7 @@
     <spreadsheet-upload-hint></spreadsheet-upload-hint>
   </div>
 
-  <div ng-if="missingProgramSet">
-    <div class="section grid">
-        <div class="cols-12">
-            <h1>Manage scenarios</h1>
-            <p class="error-hint">Please create a program set to proceed. <a  ui-sref="project-set.manageProgramSet">Define/manage program set</a></p>
-        </div>
-    </div>
-  </div>
-
-  <div ng-if="!missingModelData && !missingProgramSet">
-
+  <div ng-if="!missingModelData">
     <div class="section grid">
         <div class="cols-12">
             <h1>Manage scenarios</h1>
@@ -49,21 +39,24 @@
                 <tfoot>
                   <tr>
                     <td colspan="6" class="text-right">
-                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'budget'}, 'add', $event)">Add a budget scenario</button>
-                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'coverage'}, 'add', $event)">Add a coverage scenario</button>
+                      <p class="error-hint" style="float: left; margin: 0px;" ng-show="missingProgramSet">Please create a program set to add budget and coverage scenario. <a  ui-sref="project-set.manageProgramSet">Define/manage program set</a></p>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'budget'}, 'add', $event)" ng-disabled="missingProgramSet">Add a budget scenario</button>
+                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'coverage'}, 'add', $event)" ng-disabled="missingProgramSet">Add a coverage scenario</button>
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'parameter'}, 'add', $event)">Add a parameter scenario</button>
                     </td>
                   </tr>
-                  <tr ng-show="scenarios.length || deletedScenarios.length">
+                  <tr>
                     <td colspan="3">
-                      <button type="button" class="btn" ng-click="saveScenarios(true)">Save scenarios</button>
+                      <button type="button" class="btn" ng-click="saveScenarios(true)" ng-disabled="!scenarios.length && !deletedScenarios.length">Save scenarios</button>
                     </td>
-                    <td colspan="3" class="text-right" ng-show="scenarios.length">
-                      <button type="button" class="btn" ng-click="runScenarios()">Run scenarios</button>
+                    <td colspan="3" class="text-right">
+                      <button type="button" class="btn" ng-click="runScenarios()" ng-disabled="!scenarios.length">Run scenarios</button>
                     </td>
                   </tr>
                 </tfoot>
             </table>
+
+
         </div>
     </div>
 
