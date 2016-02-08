@@ -186,7 +186,7 @@ if 'loadspreadsheet' in tests:
 
 
 ## Load economics spreadsheet test
-if 'loadeconomcs' in tests:
+if 'loadeconomics' in tests:
     t = tic()
     print('Running loadeconomics test...')
     from optima import Project
