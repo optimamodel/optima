@@ -460,7 +460,6 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         
         # Do a super-manual calibration
         P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
-        P.parsets[0].pars[0]['efftxunsupp'].y = 0.92 # WARNING, temporary
 
     
     

@@ -15,7 +15,6 @@ dosave = 0
 filename = 'best.prj'
 
 P = defaults.defaultproject('concentrated')
-P.parsets[0].pars[0]['efftxunsupp'].y = 0.92 # WARNING, temporary
 
 ## Calibration
 if docalibrate: 
