@@ -135,7 +135,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     Version: 2016feb03
     """
 
-    printv('Defining default objectives...', 3, verbose=verbose)
+    printv('Defining default constraints...', 3, verbose=verbose)
     
     if type(progset)==Programset: pass
     elif type(project)==Programset: progset = project
@@ -296,6 +296,10 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
+    if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
+    if which not in ['outcomes','money']: 
+        errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
+        raise OptimaException(errormsg)
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
@@ -311,7 +315,6 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
     if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
     
-    
     ## Here, we split depending on whether it's a outcomes or money minimization:    
     if which=='outcomes':
         # Calculate outcome
@@ -326,9 +329,9 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             results.outcome = outcome
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
-            return results
+            output = results
         else: 
-            return outcome
+            output = outcome
     
     elif which=='money':
         # Calculate outcome
@@ -351,9 +354,11 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
-            return results
+            output = results
         else: 
-            return targetsmet
+            output = targetsmet
+    
+    return output
 
 
 
@@ -487,7 +492,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     if not(targetsmet):
         results = objectivecalc(budgetvec, outputresults=True, **args)
         raise OptimaException("Infinite allocation can't meet targets:\n%s" % results.outcomes) # WARNING, this shouldn't be an exception, something more subtle
-    else: printv("Infinite allocation meets targets, as expected; proceeding...", 3, verbose)
+    else: printv("Infinite allocation meets targets, as expected; proceeding...", 2, verbose)
     
     # Next, try no money
     args['totalbudget'] = 1e-3
@@ -495,7 +500,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     if targetsmet:
         results = objectivecalc(budgetvec, outputresults=True, **args)
         raise OptimaException("Even zero allocation meets targets:\n%s" % results.outcomes)
-    else:printv("Zero allocation doesn't meet targets, as expected; proceeding...", 3, verbose)
+    else:printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
     
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
     args['totalbudget'] = origtotalbudget
@@ -518,7 +523,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     ##########################################################################################################################
 
     args['totalbudget'] = origtotalbudget # Calculate new total funding
-    args['which'] = 'outcome' # Switch back to outcome minimization
+    args['which'] = 'outcomes' # Switch back to outcome minimization
     budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
 
@@ -532,20 +537,20 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
         args['totalbudget'] = origtotalbudget * fundingfactor
         args['which'] = 'money'
         targetsmet = objectivecalc(budgetvec2, **args)
-        printv('Current funding factor: %f' % fundingfactor, 3, verbose)
+        printv('Current funding factor: %f' % fundingfactor, 2, verbose)
     
     # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
     while not(targetsmet):
         fundingfactor *= fundingchange
         args['totalbudget'] = origtotalbudget * fundingfactor
         targetsmet = objectivecalc(budgetvec2, **args)
-        printv('Current funding factor: %f' % fundingfactor, 3, verbose)
+        printv('Current funding factor: %f' % fundingfactor, 2, verbose)
     
     
     ##########################################################################################################################
     # Re-optimize based on this fairly close allocation
     ##########################################################################################################################
-    args['which'] = 'outcome'
+    args['which'] = 'outcomes'
     budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
     
@@ -563,7 +568,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
         fundingfactor = (upperlim+lowerlim)/2.0
         args['totalbudget'] = newtotalbudget * fundingfactor
         targetsmet = objectivecalc(budgetvec5, **args)
-        printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 3, verbose)
+        printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 2, verbose)
         if targetsmet: upperlim = fundingfactor
         else:          lowerlim = fundingfactor
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec5, totalbudget=newtotalbudget*upperlim, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
