@@ -24,7 +24,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.setType = function(optimizationType) {
-      $scope.state.activeOptimization.optimization_type = optimizationType;
+      $scope.state.activeOptimization.which = optimizationType;
       $scope.state.activeOptimization.objectives = objectives[optimizationType];
     };
 
@@ -37,7 +37,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var add = function (name) {
         $scope.state.activeOptimization = {
           name: name,
-          optimization_type: 'money',
+          which: 'money',
           constraints: constraints,
           objectives: objectives.money
         };
@@ -100,7 +100,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.saveOptimization = function() {
-      console.log('$scope.state.activeOptimization', $scope.state.activeOptimization);
       $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
           console.log('response', response);

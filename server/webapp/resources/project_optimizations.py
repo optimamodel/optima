@@ -32,7 +32,7 @@ optimization_parser.add_arguments({
     'name': {'type': str, 'required': True},
     'parset_id': {'type': uuid.UUID, 'required': True},
     'progset_id': {'type': uuid.UUID, 'required': True},
-    'optimization_type': {'type': str, 'required': True},
+    'which': {'type': str, 'required': True},
 })
 
 
@@ -66,7 +66,6 @@ class Optimizations(Resource):
         project_entry = load_project(project_id, raise_exception=True)
 
         args = optimization_parser.parse_args()
-
         optimization_entry = OptimizationsDb(project_id=project_id, **args)
 
         db.session.add(optimization_entry)
@@ -160,8 +159,8 @@ class OptimizationResults(Resource):
         return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
 
 
-optimization_parser = RequestParser()
-optimization_parser.add_argument('which', location='args', default=None, action='append')
+optimization_which_parser = RequestParser()
+optimization_which_parser.add_argument('which', location='args', default=None, action='append')
 
 optimization_fields = {
 "optimization_id": Uuid,
@@ -208,13 +207,13 @@ class OptimizationGraph(Resource):
         notes="""
         Returns the set of corresponding graphs.
         """,
-        parameters=optimization_parser.swagger_parameters()
+        parameters=optimization_which_parser.swagger_parameters()
     )
     @report_exception
     @marshal_with(optimization_fields, envelope="optimization")
     def get(self, project_id, optimization_id):
         current_app.logger.debug("/api/project/{}/optimizations/{}/graph".format(project_id, optimization_id))
-        args = optimization_parser.parse_args()
+        args = optimization_which_parser.parse_args()
         which = args.get('which')
 
         # TODO actually filter for the proper optimization id (Which would have to be saved for the given result)
