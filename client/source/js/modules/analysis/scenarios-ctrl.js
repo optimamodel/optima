@@ -4,17 +4,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
         var openProject  = info.data;
-        if (!openProject.has_data) {
-          $scope.missingModelData = true;
-          return;
-        }
-
         var responseData, availableScenarioParameters, availableScenarios;
         $scope.scenarios = scenariosResponse.data.scenarios;
         $scope.progsets = progsetsResponse.data.progsets;
         $scope.parsets = parsetResponse.data.parsets;
         $scope.deletedScenarios = [];
 
+        if (!openProject.has_data) {
+          $scope.missingModelData = true;
+          return;
+        }
+
+        if (!$scope.progsets.length) {
+          $scope.missingProgramSet = true;
+        }
         /**
          * Returns an graph based on the provided yData.
          *
