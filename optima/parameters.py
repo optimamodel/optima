@@ -483,7 +483,6 @@ def makepars(data, label=None, verbose=2):
                             pars[condname].y[(key1,key2)] = array(tmpcond[act])[i,j,:]
                             pars[condname].t[(key1,key2)] = array(tmpcondpts[act])
     
-    printv('...done converting data to parameters.', 2, verbose)
     
     return pars
 
@@ -508,6 +507,7 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
     if keys is None: keys = pars.keys() # Just get all keys
+    if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
     elif settings is not None: simpars['tvec'] = settings.maketvec()
     else: simpars['tvec'] = linspace(start, end, round((end-start)/dt)+1) # Store time vector with the model parameters -- use linspace rather than arange because Python can't handle floats properly
@@ -801,7 +801,6 @@ class Parameterset(object):
             simpars = makesimpars(pars=self.pars[ind], keys=keys, start=start, end=end, dt=dt, tvec=tvec, smoothness=smoothness, asarray=asarray, onlyvisible=onlyvisible, verbose=verbose, name=self.name, uid=self.uid)
             simparslist.append(simpars) # Wrap up
         
-        printv('...done making model parameters.', 2, verbose)
         return simparslist
     
     

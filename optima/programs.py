@@ -3,10 +3,10 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016feb02
+Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
 from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
@@ -193,15 +193,15 @@ class Programset(object):
         else: return progs_by_targetpar
 
 
-    def getdefaultbudget(self, years=None, verbose=2):
+    def getdefaultbudget(self, t=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''
         
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if type(years) in [int, float]: years = [years]
-        if isinstance(years,ndarray): years = years.tolist()
+        if isnumber(t): t = [t]
+        if isinstance(t,ndarray): t = t.tolist()
 
         # Set up internal variables
         settings = self.getsettings()
@@ -224,13 +224,20 @@ class Programset(object):
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
-            if years is not None:
-                for yr in years:
+            if t is not None:
+                for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
 
-        return selectbudget if years is not None else lastbudget
+        return selectbudget if t is not None else lastbudget
 
+    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2):
+        ''' Extract the coverage levels corresponding to the default budget'''
+        defaultbudget = self.getdefaultbudget()
+        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results)
+        for progno in range(len(defaultcoverage)):
+            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
+        return defaultcoverage
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
@@ -240,7 +247,7 @@ class Programset(object):
         print "budget", budget
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
             budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
@@ -267,7 +274,7 @@ class Programset(object):
         budget = odict()
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if not isinstance(coverage,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(coverage,odict): budget = odict(budget)
         coverage = coverage.sort([p.short for p in self.programs.values()])
@@ -311,7 +318,7 @@ class Programset(object):
         return popcoverage
 
 
-    def getoutcomes(self,coverage, t, parset=None, results=None, perturb=False,coveragepars=coveragepars):
+    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
 
         # Initialise output
@@ -322,6 +329,10 @@ class Programset(object):
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        if coverage is None:
+            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results)
+        for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
+            if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
         nyrs = len(t)
@@ -432,8 +443,9 @@ class Programset(object):
                 if len(outcomes[outcome][key])!=nyrs:
                     raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
 
-        
         return outcomes
+        
+        
         
     def getpars(self, coverage, t=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
         ''' Make pars'''
@@ -485,8 +497,8 @@ class Programset(object):
                 
                 # Remove years after the last good year
                 if last_t < max(thispar.t[pop]):
-                    thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
-                    thispar.y[pop] = thispar.y[pop][thispar.t[pop] <= last_t]
+                    thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
+                    thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
                 
                 # Append the last good year, and then the new years
                 thispar.t[pop] = append(thispar.t[pop], last_t)
@@ -501,6 +513,32 @@ class Programset(object):
                 
 
         return pars
+    
+    
+    
+    def compareoutcomes(self, parset=None, year=None, ind=0, doprint=False):
+        ''' For every parameter affected by a program, return a list comparing the default parameter values with the budget ones '''
+        outcomes = self.getoutcomes(t=year, parset=parset)
+        comparison = list()
+        maxnamelen = 0
+        maxkeylen = 0
+        for key1 in outcomes.keys():
+            for key2 in outcomes[key1].keys():
+                name = parset.pars[ind][key1].name
+                maxnamelen = max(len(name),maxnamelen)
+                maxkeylen = max(len(str(key2)),maxkeylen)
+                parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
+                budgetvalue = outcomes[key1][key2]
+                comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+        
+        if doprint:
+            for item in comparison:
+                strctrl = '%%%is | %%%is | Par: %%8s | Budget: %%8s' % (maxnamelen, maxkeylen)
+                print(strctrl % (item[0], item[1], sigfig(item[2]), sigfig(item[3])))
+                
+        return comparison
+
+
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
@@ -589,7 +627,11 @@ class Program(object):
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
             self.costcovdata['cost'].append(costcovdatum['cost'])
-            self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            if costcovdatum.get('coverage'):
+                self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            else:
+                self.costcovdata['coverage'].append(None)
+
             printv('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.short, self.costcovdata), 4, verbose)
         else:
             if overwrite:
@@ -738,7 +780,7 @@ class Program(object):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
-        from pylab import figure, figtext, isinteractive, ioff, ion, close
+        from pylab import figure, figtext, isinteractive, ioff, ion, close, show
         from matplotlib.ticker import MaxNLocator
         import textwrap
         
@@ -832,7 +874,8 @@ class Program(object):
         
         # Tidy up
         if not doplot: close(cost_coverage_figure)
-        if wasinteractive: ion() 
+        if wasinteractive: ion()
+        if doplot: show()
 
         return cost_coverage_figure
 

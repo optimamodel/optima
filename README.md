@@ -1,22 +1,26 @@
 1. Overview
 ========
 
-This README describes the steps involved in installing Optima. For detailed usage instructions, please see other documentation, provided to users on request. Users/developers may also want to look at the final section of this document.
+This README describes the steps involved in installing and running Optima. **Follow the instructions in the "Quick start guide" immediately below.** Unless you're a developer, you won't need to follow the rest of the instructions.
 
-To use the Optima model from Python directly with the browser-based user interface, follow the instructions in "Optima model setup". Otherwise, follow all instructions.
-
-1.1 Step-by-step standard installation instructions
+1.1 Quick start guide
 ------------
-0. Sign up for an account on GitHub (http://github.com) with a free plan.
-0. Download and install the GitHub app (http://desktop.github.com).
-0. Go to the Optima GitHub page and click on the small button next to "Download ZIP":  
-![](http://optimamodel.com/figs/optima-github-button.png)
 0. Download and install Anaconda, using default options (https://store.continuum.io/cshop/anaconda/). **Make sure you download Python 2.7, not 3.5.**
+0. Sign up for an account on GitHub (http://github.com) with a free plan.
+0. Download and install the GitHub app (http://desktop.github.com) on Windows or Mac, or `sudo apt-get install git` on Linux.
+0. Go to the Optima GitHub page and click on the small button next to "Download ZIP":  
+![](http://optimamodel.com/figs/optima-github-button.png)  
+(or use `git clone` if on Linux)
 0. Finally, set up the Python path:
     0. Run Spyder (part of Anaconda)
     0. Under the “Tools” (Linux and Windows) or “python” (under Mac) menu, go to “PYTHONPATH Manager”
     0. Select the Optima folder (e.g. `C:\Users\Alice\GitHub\Optima` on Windows) and click OK.
-0. To check that everything works, run Spyder (or, if you've just added the Optima path, open a new console in Spyder), go to the `Optima/tests` folder, open `testsimple.py`, and run (F5, or select "Run" from the "Run" menu). You should see a figure appear.
+0. To check that everything works:
+  0. Run Spyder (e.g. Anaconda -> Spyder from the Start Menu in Windows; Anaconda Launcher or `spyder` from the Terminal on Mac or Linux)
+  0. Open a new Python console (Console -> Python console)
+  0. In the Spyder editor (File -> Open), go to the `Optima/tests` folder and open `simple.py`
+  0. Run (F5, or select "Run" from the "Run" menu)
+  0. You should see a figure appear -- note that it might appear in the console (if you're using IPython) or in a separate window but minimized.
 
 
 

@@ -7,7 +7,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015nov23 by cliffk
+Version: 2016feb06
 """
 
 
@@ -15,6 +15,7 @@ Version: 2015nov23 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeprograms',
+'compareoutcomes',
 ]
 
 
@@ -36,18 +37,18 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
+T = tic()
 
 ##############################################################################
 ## The tests
 ##############################################################################
 
-T = tic()
 
 
 
 
 
-## Project creation test
+## Programs creation test
 if 'makeprograms' in tests:
     t = tic()
 
@@ -122,7 +123,15 @@ if 'makeprograms' in tests:
     HTC.addcostcovdatum({'t':2015,
                          'cost':1e7,
                          'coverage':4e5})
-
+    MGT.addcostcovdatum({'t':2015,
+                         'cost':1e6})
+    ART.addcostcovdatum({'t':2015,
+                         'cost':1e7})
+    PMTCT.addcostcovdatum({'t':2015,
+                         'cost':1e7})
+    VMMC.addcostcovdatum({'t':2015,
+                         'cost':1e7})     
+                         
     # 4. Overwrite historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
                          'cost':2e6,
@@ -255,7 +264,8 @@ if 'makeprograms' in tests:
     coverage = coverage.sort([p.short for p in R.programs.values()])
 
     defaultbudget = R.getdefaultbudget()
-            
+    defaultcoverage = R.getdefaultcoverage(t=2015, parset=P.parsets['default'])
+
     R.getprogcoverage(budget=budget,
                       t=[2015,2016,2020],
                       parset=P.parsets['default'])
@@ -330,6 +340,10 @@ if 'makeprograms' in tests:
     outcomes = R.getoutcomes(coverage=coverage,
                                 t=[2015,2016,2020],
                                 parset=P.parsets['default'])
+    
+    R.getoutcomes(defaultcoverage, t=2015, parset=P.parsets['default'])
+    R.getoutcomes(t=2015, parset=P.parsets['default'])
+            
 
     # 13. Get an odict of the ALL parameter values corresponding to a vector of program allocations
     P.addprogset(name='default', progset=R)
@@ -337,8 +351,17 @@ if 'makeprograms' in tests:
     
     
 
-    
     done(t)
+    
+
+
+
+
+## Project creation test
+if 'compareoutcomes' in tests:
+    comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
+    done(t)
+
 
 
 

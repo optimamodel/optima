@@ -1,16 +1,15 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf
-from optima import OptimaException, printv, tic, toc, dcp, odict, makesimpars, Resultset
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array
+from optima import OptimaException, printv, dcp, odict, makesimpars, Resultset
 
-def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False):
+def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.1 (2016feb04)
+    Version: 1.2 (2016feb06)
     """
     
-    if benchmark: starttime = tic()
     
     ###############################################################################
     ## Setup
@@ -40,28 +39,23 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
-    printv('Running model...', 1, verbose, newline=False)
+    printv('Running model...', 1, verbose)
     
     # Initialize arrays
-    raw               = odict()    # Sim output structure
-    raw['tvec']       = tvec
-    raw['popkeys']    = popkeys
-    raw['sexinci']    = zeros((npops, npts)) # Incidence through sex
-    raw['injinci']    = zeros((npops, npts)) # Incidence through injecting
-    raw['inci']       = zeros((npops, npts)) # Total incidence
-    raw['births']     = zeros((npops, npts)) # Number of births to each population
-    raw['mtct']       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
-    raw['diag']       = zeros((npops, npts)) # Number diagnosed per timestep
-    raw['newtreat']   = zeros((npops, npts)) # Number initiating ART1 per timestep
-    raw['death']      = zeros((npops, npts)) # Number of deaths per timestep
-    raw['otherdeath'] = zeros((npops, npts)) # Number of other deaths per timestep
+    raw_inci       = zeros((npops, npts)) # Total incidence
+    raw_mtct       = zeros((npops, npts)) # Number of mother-to-child transmissions to each population
+    raw_diag       = zeros((npops, npts)) # Number diagnosed per timestep
+    raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
+    raw_death      = zeros((npops, npts)) # Number of deaths per timestep
+    raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
+
     
     # Biological and failure parameters -- death etc
-    prog       = simpars['progacute':'proggt50'] # WARNING, this relies on simpars being an odict, and the parameters being read in in the correct order!
-    recov      = simpars['recovgt500':'recovgt50']
-    death      = simpars['deathacute':'deathlt50']
-    cd4trans   = simpars['cd4transacute':'cd4translt50']
+    prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
+    recov      = array([simpars['recovgt500'], simpars['recovgt350'], simpars['recovgt200'], simpars['recovgt50']])
+    death      = array([simpars['deathacute'], simpars['deathgt500'], simpars['deathgt350'], simpars['deathgt200'], simpars['deathgt50'], simpars['deathlt50']])
     deathtx    = simpars['deathtreat']   # Death rate whilst on treatment
+    cd4trans   = array([simpars['cd4transacute'], simpars['cd4transgt500'], simpars['cd4transgt350'], simpars['cd4transgt200'], simpars['cd4transgt50'], simpars['cd4translt50']])
 
 
     # Defined for total (not by populations) and time dependent [npts]
@@ -96,6 +90,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     alldx    = settings.alldx    # All diagnosed
     alltx    = settings.alltx    # All on treatment
     allplhiv = settings.allplhiv # All PLHIV
+    aidsind  = settings.aidsind  # Index for when people have AIDS (used for assinging AIDS testing rate)
     if usecascade:
         care    = settings.care    # in care
         usvl    = settings.usvl    # On treatment - Unsuppressed Viral Load
@@ -105,7 +100,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         allcare = settings.allcare # All people in care
     else:
         tx   = settings.tx  # Treatment -- equal to settings.svl, but this is clearer
-    if len(sus)!=2:
+    if debug and len(sus)!=2:
         errormsg = 'Definition of susceptibles has changed: expecting regular circumcised + VMMC, but actually length %i' % len(sus)
         raise OptimaException(errormsg)
     
@@ -163,6 +158,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     effmtct   = simpars['mtctbreast']*simpars['breast'] + simpars['mtctnobreast']*(1-simpars['breast']) # Effective MTCT transmission
     pmtcteff  = (1 - simpars['effpmtct']) * effmtct # Effective MTCT transmission whilst on PMTCT
 
+    # Calculate these things outside of the time loop
+    prepsti = prepeff*stieff
+    prepsticirceff = prepsti*circeff
+    prepsticircconst = prepsti*circconst
+    
+
 
     # Force of infection metaparameter
     force = simpars['force']
@@ -170,9 +171,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
 
     # More parameters...should maybe be moved somewhere else?
     birth = simpars['birth']
-    agetransit = simpars['agetransit']
-    risktransit = simpars['risktransit']
-    birthtransit = simpars['birthtransit']
+    agetransit = simpars['agetransit']*dt # Multiply by dt here so don't have to later
+    risktransit = simpars['risktransit']*dt
+    birthtransit = simpars['birthtransit']*dt
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
@@ -210,7 +211,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         # Treatment & treatment failure
         fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
         treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
-        if treatment > popinfected: # More people on treatment than ever infected, uh oh!
+        if debug and treatment>popinfected: # More people on treatment than ever infected, uh oh!
             errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
             if die: raise OptimaException(errormsg)
             else:
@@ -246,7 +247,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             initpeople[dx, p]   = diagnosed
             initpeople[tx, p]   = treatment
     
-        if not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
+        if debug and not((initpeople>=0).all()): # If not every element is a real number >0, throw an error
             errormsg = 'Non-positive people found during epidemic initialization! Here are the people:\n%s' % initpeople
             if die: raise OptimaException(errormsg)
             else:
@@ -266,7 +267,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     # Sex
     for act in ['reg','cas','com']:
         for key in simpars['acts'+act]:
-            this = {}
+            this = odict()
             this['acts'] = simpars['acts'+act][key]
             if simpars['cond'+act].get(key) is not None:
                 condkey = simpars['cond'+act][key]
@@ -290,7 +291,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             
             # Error checking
             for key in ['acts', 'cond']:
-                if not(all(this[key]>=0)):
+                if debug and not(all(this[key]>=0)):
                     errormsg = 'Invalid sexual behavior parameter "%s": values are:\n%s' % (key, this[key])
                     if die: raise OptimaException(errormsg)
                     else: 
@@ -299,18 +300,37 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
     
     # Injection
     for key in simpars['actsinj']:
-        this = {}
+        this = odict()
         this['acts'] = simpars['actsinj'][key]
         this['pop1'] = popkeys.index(key[0])
         this['pop2'] = popkeys.index(key[1])
         injactslist.append(this)
     
+    # Convert from dicts to tuples to be faster
+    for i,this in enumerate(sexactslist): sexactslist[i] = tuple([this['pop1'],this['pop2'],this['acts'],this['cond'],this['trans']])
+    for i,this in enumerate(injactslist): injactslist[i] = tuple([this['pop1'],this['pop2'],this['acts']])
     
     
-
-
-
-
+    ## Births precalculation
+    birthslist = []
+    for p1 in range(npops): # WARNING, should only loop over child populations
+        alleligbirthrate = zeros(npts)
+        for t in range(npts): # WARNING, could be made more efficient, it's just that the matrix multiplications get complicated -- npops x npts...
+            alleligbirthrate[t] = sum(birthtransit[p1, :] * birth[p1, t]) # Births to diagnosed mothers eligible for PMTCT
+        for p2 in range(npops): # WARNING, should only loop over female populations
+            birthrates = birthtransit[p1, p2] * birth[p1, :] # WARNING, vector multiplication!!!! Need to create array
+            if birthrates.any():
+                birthslist.append(tuple([p1,p2,birthrates,alleligbirthrate]))
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
     ###############################################################################
     ## Run the model -- numerically integrate over time
     ###############################################################################
@@ -321,7 +341,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         ## Calculate "effective" HIV prevalence -- taking diagnosis and treatment into account
         for pop in range(npops): # Loop over each population group
             allpeople[pop,t] = sum(people[:,pop,t]) # All people in this population group at this time point
-            if not(allpeople[pop,t]>0): 
+            if debug and not(allpeople[pop,t]>0): 
                 errormsg = 'No people in population %i at timestep %i (time %0.1f)' % (pop, t, tvec[t])
                 if die: raise OptimaException(errormsg)
                 else: printv(errormsg, 1, verbose)
@@ -339,7 +359,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 efftx   = sum(dxfactor * cd4trans * txfactor[t] * people[tx,pop,t]) # ...and treated
                 effhivprev[pop] = (effundx+effdx+efftx) / allpeople[pop,t] # Calculate HIV "prevalence", scaled for infectiousness based on CD4 count; assume that treatment failure infectiousness is same as corresponding CD4 count
 
-            if not(effhivprev[pop]>=0): 
+            if debug and not(effhivprev[pop]>=0): 
                 errormsg = 'HIV prevalence invalid in population %s! (=%f)' % (pop, effhivprev[pop])
                 if die: raise OptimaException(errormsg)
                 else:
@@ -360,45 +380,37 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         ###############################################################################
         
         # Reset force-of-infection vector for each population group, handling circs and uncircs separately
-        forceinfvec = zeros((len(sus), npops)) 
+        forceinfvec = zeros((len(sus), npops))
+        thisforceinfsex = zeros(2)
         
         # Loop over all acts (partnership pairs) -- force-of-infection in pop1 due to pop2
-        for this in sexactslist:
-            acts = this['acts'][t]
-            cond = this['cond'][t]
-            pop1 = this['pop1']
-            pop2 = this['pop2']
-            thistrans = this['trans']
+        for pop1,pop2,acts,cond,thistrans in sexactslist:
+            dtcondacts = dt*cond[t]*acts[t] # Make it so this only has to be calculated once
             
             if male[pop1]: # Separate FOI calcs for circs vs uncircs -- WARNING, could be shortened with a loop but maybe not simplified
-                thisforceinfsusreg  = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circeff[pop1,t]),   (dt*cond*acts*effhivprev[pop2]))
-                thisforceinfcirc    = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]*circconst), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[susreg,pop1]   = 1 - (1-forceinfvec[susreg,pop1])   * (1-thisforceinfsusreg)
-                forceinfvec[progcirc,pop1] = 1 - (1-forceinfvec[progcirc,pop1]) * (1-thisforceinfcirc)
+                thisforceinfsex[0]     = 1 - mpow((1-thistrans*prepsticirceff[pop1,t]),   (dtcondacts*effhivprev[pop2]))
+                thisforceinfsex[1]     = 1 - mpow((1-thistrans*prepsticircconst[pop1,t]), (dtcondacts*effhivprev[pop2]))
+                forceinfvec[:,pop1] = 1 - (1-forceinfvec[:,pop1])   * (1-thisforceinfsex)
             else: # Only have uncircs for females
-                thisforceinf = 1 - mpow((1-thistrans*prepeff[pop1,t]*stieff[pop1,t]), (dt*cond*acts*effhivprev[pop2]))
-                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinf)
+                thisforceinfsex[0] = 1 - mpow((1-thistrans*prepsti[pop1,t]), (dtcondacts*effhivprev[pop2]))
+                forceinfvec[susreg,pop1] = 1 - (1-forceinfvec[susreg,pop1]) * (1-thisforceinfsex[0])
                 
-            if not all(forceinfvec[:,pop1]>=0):
+            if debug and not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Sexual force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
                 for var in ['thistrans', 'circeff[pop1,t]', 'prepeff[pop1,t]', 'stieff[pop1,t]', 'cond', 'acts', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
             
         # Injection-related infections -- force-of-infection in pop1 due to pop2
-        for this in injactslist:
-            effinj = this['acts'][t]
-            pop1 = this['pop1']
-            pop2 = this['pop2']
-            thisosteff = osteff[t]
+        for pop1,pop2,effinj in injactslist:
             
-            thisforceinf = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj*thisosteff*effhivprev[pop2]))
+            thisforceinfinj = 1 - mpow((1-transinj), (dt*sharing[pop1,t]*effinj[t]*osteff[t]*effhivprev[pop2]))
             for index in sus: # Assign the same injecting FOI to circs and uncircs, as it doesn't matter
-                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinf)
+                forceinfvec[index,pop1] = 1 - (1-forceinfvec[index,pop1]) * (1-thisforceinfinj)
             
-            if not all(forceinfvec[:,pop1]>=0):
+            if debug and not all(forceinfvec[:,pop1]>=0):
                 errormsg = 'Injecting force-of-infection is invalid in population %s, time %0.1f, FOI:\n%s)' % (popkeys[pop1], tvec[t], forceinfvec)
-                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'thisosteff', 'effhivprev[pop2]']:
+                for var in ['transinj', 'sharing[pop1,t]', 'effinj', 'osteff[t]', 'effhivprev[pop2]']:
                     errormsg += '\n%20s = %f' % (var, eval(var)) # Print out extra debugging information
                 raise OptimaException(errormsg)
         
@@ -443,7 +455,7 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
         
         ## Susceptibles
         dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
-        raw['inci'][:,t] = (newinfections.sum(axis=0) + raw['mtct'][:,t])/float(dt)  # Store new infections AND new MTCT births
+        raw_inci[:,t] = (newinfections.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
         if propdx[t]:
@@ -460,6 +472,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             if cd4<ncd4-1: 
                 progout = dt*prog[cd4]*people[undx[cd4],:,t]
                 testingrate[cd4] = hivtest[:,t] # Population specific testing rates
+                if cd4>=aidsind:
+                    testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
@@ -470,11 +484,13 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
             dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
-            raw['diag'][:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
-            raw['death'][:,t] += hivdeaths/dt    # Save annual HIV deaths 
-            raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+            raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
+            raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
+            raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
         dU[0] = dU[0] + newinfections.sum(axis=0) # Now add newly infected people
         
+
+
 
         ############################################################################################################
         ## Here, split and decide whether or not to use the cascade for the rest of the ODEs to solve
@@ -510,8 +526,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 inflows = progin + newdiagnoses[cd4]*(1.-immediatecare[:,t]) # some go immediately into care after testing
                 outflows = progout + hivdeaths + otherdeaths + newlinkcaredx[cd4] # NB, only newlinkcaredx flows out from here!
                 dD.append(inflows - outflows)
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
             
 
             ## In care
@@ -544,9 +560,9 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
                 dC.append(inflows - outflows - newtreat[cd4])
                 dD[cd4] += leavecareCD[cd4]
-                raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
             
 
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
@@ -577,8 +593,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 inflows  = progin  + recovin  + newtreat[cd4]*(1.-treatvs[t]) # NB, treatvs will take care of the last 90... 
                 outflows = progout + recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysupp[cd4]
                 dUSVL.append(inflows - outflows)
-                raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t] += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
             
 
             ## Suppressed Viral Load
@@ -602,8 +618,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
                 dSVL.append(inflows - outflows)
                 dUSVL[cd4] += failing[cd4]
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
             ## Lost to follow-up (and not in care)
@@ -621,8 +637,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 inflows  = progin + stopSVLlost[cd4] + stopUSlost[cd4]
                 outflows = progout + hivdeaths + otherdeaths + newlinkcarelost[cd4] # These people move back into care
                 dL.append(inflows - outflows) 
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
             ## Off ART but in care
@@ -648,8 +664,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 dL[cd4] += leavecareOL[cd4] 
                 dUSVL[cd4] += restarters[cd4]*(1.-treatvs[t])
                 dSVL[cd4]  += restarters[cd4]*treatvs[t]
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
-                raw['otherdeath'][:,t] += otherdeaths/dt    # Save annual other deaths 
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
 
 
 
@@ -685,8 +701,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
                 newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
                 dD.append(inflows - outflows - newtreat[cd4])
-                raw['newtreat'][:,t] += newtreat[cd4]/dt # Save annual treatment initiation
-                raw['death'][:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
+                raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
             
             ## 1st-line treatment
             for cd4 in range(ncd4):
@@ -701,12 +717,12 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                 hivdeaths   = dt * people[tx[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths = dt * people[tx[cd4],:,t] * background
                 dT.append(recovin - recovout + newtreat[cd4] - hivdeaths - otherdeaths)
-                if not((people[tx[cd4],:,t]+dT[cd4] >= 0).all()):
+                if debug and not((people[tx[cd4],:,t]+dT[cd4] >= 0).all()):
                     errormsg = 'WARNING, Non-positive people found for treatment!\npeople[%s, :, %i] = people[%s, :, %s] = %s' % (tx[cd4], t, settings.statelabels[tx[cd4]], tvec[t], people[tx[cd4],:,t]+dT[cd4])
                     if die: raise OptimaException(errormsg)
                     else: printv(errormsg, 1, verbose=verbose)
                     
-                raw['death'][:,t] += hivdeaths/dt # Save annual HIV deaths 
+                raw_death[:,t] += hivdeaths/dt # Save annual HIV deaths 
 
 
 
@@ -734,40 +750,35 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             people[:,:,t+1] = people[:,:,t] + change # Update people array
             
             
+            
             ###############################################################################
             ## Calculate births, age transitions and mother-to-child-transmission
             ###############################################################################
-    
-            ## Births.... # WARNING, maybe some of this could be taken out of the time loop?
-            for p1 in range(npops):
-    
-                allbirthrates = birthtransit[p1, :] * birth[p1, t]
-                alleligbirths = sum(allbirthrates * dt * sum(people[alldx, p1, t])) # Births to diagnosed mothers eligible for PMTCT
-                
-                for p2 in range(npops):
-    
-                    thisbirthrate  = allbirthrates[p2]
-                    if thisbirthrate:
-                        popbirths      = (thisbirthrate * dt * people[:, p1, t].sum())
-                        mtctundx       = (thisbirthrate * dt * people[undx, p1, t].sum()) * effmtct # Births to undiagnosed mothers
-                        mtcttx         = (thisbirthrate * dt * people[alltx, p1, t].sum())  * pmtcteff # Births to mothers on treatment
-                        thiseligbirths = (thisbirthrate * dt * people[alldx, p1, t].sum()) # Births to diagnosed mothers eligible for PMTCT
-        
-                        receivepmtct = min(numpmtct[t]*dt*float(thiseligbirths)/float(alleligbirths), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
-                        
-                        mtctdx = (thiseligbirths - receivepmtct) * effmtct # MTCT from those diagnosed not receiving PMTCT
-                        mtctpmtct = receivepmtct * pmtcteff # MTCT from those receiving PMTCT
-                        popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components                        
-                        
-                        raw['mtct'][p2, t] += popmtct[t]                       
-                        
-                        people[undx[0], p2, t+1] += popmtct[t] # HIV+ babies assigned to undiagnosed compartment
-                        people[susreg, p2, t+1] += popbirths - popmtct[t]  # HIV- babies assigned to uncircumcised compartment
             
+            ## Calculate births
+            for p1,p2,birthrates,alleligbirthrate in birthslist:
+                thisbirthrate = birthrates[t]
+                peopledx = people[alldx, p1, t].sum() # Assign to a variable since used twice
+                popbirths      = thisbirthrate * people[:, p1, t].sum()
+                mtctundx       = thisbirthrate * people[undx, p1, t].sum() * effmtct[t] # Births to undiagnosed mothers
+                mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
+                thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
+            
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                
+                mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
+                mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
+                popmtct = mtctundx + mtctdx + mtcttx + mtctpmtct # Total MTCT, adding up all components         
+                
+                raw_mtct[p2, t] += popmtct
+                
+                people[undx[0], p2, t+1] += popmtct # HIV+ babies assigned to undiagnosed compartment
+                people[susreg, p2, t+1] += popbirths - popmtct  # HIV- babies assigned to uncircumcised compartment
+
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
-                peopleaving = people[:, p1, t] * agetransit[p1,p2] * dt
+                peopleaving = people[:, p1, t] * agetransit[p1,p2]
                 peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
                 people[:, p1, t+1] -= peopleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleaving # ... then add to pop2
@@ -775,8 +786,8 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             
             ## Risk-related transitions
             for p1,p2 in risktransitlist:
-                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2] * dt # Number of other people who are moving pop1 -> pop2
-                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * dt * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
+                peoplemoving1 = people[:, p1, t] * risktransit[p1,p2]  # Number of other people who are moving pop1 -> pop2
+                peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
                 peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
                 people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
                 people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
@@ -791,30 +802,27 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
             ###############################################################################
             
             # Reconcile population sizes
-            for p in range(npops):
-                thissusreg = people[susreg,p,t+1]
-                thisprogcirc = people[progcirc,p,t+1]
-                allsus = thissusreg+thisprogcirc
-                newpeople = popsize[p,t+1] - people[:,p,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-                people[susreg,p,t+1]   += newpeople*thissusreg/allsus # Add new people
-                people[progcirc,p,t+1] += newpeople*thisprogcirc/allsus # Add new people
+            thissusreg = people[susreg,:,t+1]
+            thisprogcirc = people[progcirc,:,t+1]
+            allsus = thissusreg+thisprogcirc
+            newpeople = popsize[:,t+1] - people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+            people[susreg,:,t+1]   += newpeople*thissusreg/allsus # Add new people
+            people[progcirc,:,t+1] += newpeople*thisprogcirc/allsus # Add new people
             
             # Handle circumcision
-            circppl = dcp(numcirc[:,t])
-            for p in range(npops):
-                circppl[p] = maximum(0, minimum(circppl[p], safetymargin*people[susreg,p,t+1])) # Don't circumcise more people than are available
-                people[susreg,p,t+1] -= circppl[p]
-            people[progcirc,:,t+1]   += circppl # And add these people into the circumcised compartment
+            circppl = maximum(0, minimum(numcirc[:,t], safetymargin*people[susreg,:,t+1])) # Don't circumcise more people than are available
+            people[susreg,:,t+1]   -= circppl
+            people[progcirc,:,t+1] += circppl # And add these people into the circumcised compartment
             
             # Check population sizes are correct
             actualpeople = people[:,:,t+1].sum()
             wantedpeople = popsize[:,t+1].sum()
-            if abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
+            if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
             
             # Check no negative people
-            if not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
+            if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
@@ -825,17 +833,26 @@ def model(simpars=None, settings=None, verbose=None, benchmark=False, die=False)
                                 people[errstate,errpop,t+1] = 0.0 # Reset
                 
     # Append final people array to sim output
-    raw['people'] = people
+    if not (people>=0).all(): raise OptimaException('Non-positive people found!')
     
-    printv('  ...done running model.', 2, verbose)
-    if benchmark: toc(starttime)
+    raw               = odict()    # Sim output structure
+    raw['tvec']       = tvec
+    raw['popkeys']    = popkeys
+    raw['people']     = people
+    raw['inci']       = raw_inci
+    raw['mtct']       = raw_mtct
+    raw['diag']       = raw_diag
+    raw['newtreat']   = raw_newtreat
+    raw['death']      = raw_death
+    raw['otherdeath'] = raw_otherdeath
+    
     return raw # Return raw results
 
 
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, debug=False, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -848,6 +865,10 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
-    raw = model(simpars=simpars, settings=settings, verbose=verbose) # THIS IS SPINAL OPTIMA
+    try:
+        raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
+    except: 
+        printv('Running model failed; running again with debugging...', 1, verbose)
+        raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests
     results = Resultset(project=project, raw=raw, parset=parset, progset=progset, budget=budget, coverage=coverage, budgetyears=budgetyears, simpars=simpars, data=data, domake=True) # Create structure for storing results
     return results

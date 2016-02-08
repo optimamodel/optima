@@ -1,7 +1,7 @@
 """
 A more standard version of testing if the spreadsheet works
 
-Version: 2016jan19 by cliffk
+Version: 2016feb06 by cliffk
 """
 
 
@@ -13,7 +13,7 @@ tests = [
 #'unittests',
 ]
 
-dosave = True
+dosave = False
 
 
 ##############################################################################

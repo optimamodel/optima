@@ -7,7 +7,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015dec05 by cliffk
+Version: 2016feb06 by cliffk
 """
 
 
@@ -69,8 +69,8 @@ if 'force' in tests:
     results2 = P.runsim('forcetest')
     
     if doplot:
-        from optima.plotpeople import plotpeople
-        plotpeople([results1, results2])
+        from optima import plotpeople
+        plotpeople(results2)
 
     done(t)
 
@@ -93,8 +93,8 @@ if 'treatment' in tests:
     results2 = P.runsim('treatment')
     
     if doplot:
-        from optima.plotpeople import plotpeople
-        plotpeople([results1, results2])
+        from optima import plotpeople
+        plotpeople(results2)
 
     done(t)
 
