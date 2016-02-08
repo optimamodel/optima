@@ -164,7 +164,7 @@ class Programset(object):
                         if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
                             result = False
                             details.append((thispartype,thispop))
-        if detail: return details
+        if detail: return list(set(details))
         else: return result
 
     def hasallcostcovpars(self, detail=False):
@@ -175,7 +175,7 @@ class Programset(object):
             if not prog.costcovfn.ccopars.get('unitcost'):
                 details.append(prog.name)
                 result = False
-        if detail: return details
+        if detail: return list(set(details))
         else: return result
                 
     def readytooptimize(self):
@@ -558,7 +558,6 @@ class Programset(object):
         comparison = list()
         maxnamelen = 0
         maxkeylen = 0
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for key1 in outcomes.keys():
             for key2 in outcomes[key1].keys():
                 name = parset.pars[ind][key1].name
