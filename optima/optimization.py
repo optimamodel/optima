@@ -181,8 +181,9 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     scaleratio = totalbudget/float(currenttotal) # Calculate the ratio between the original budget and the supplied budget
     
     # Calculate a uniformly scaled budget
-    rescaledbudget = dcp(constrainedbudget * scaleratio) # This is the original budget scaled to the total budget
-    if sum(rescaledbudget[:])!=totalbudget: 
+    rescaledbudget = dcp(constrainedbudget)
+    for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
+    if sum(rescaledbudget[:])!=totalbudget:
         errormsg = 'constrainbudget(): rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
         raise OptimaException(errormsg)
     
@@ -207,6 +208,9 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     
     # Calculate absolute limits from relative limits
     abslimits = dcp(budgetlims)
+    for pind in proginds:
+        if abslimits['min'][pind] is None: abslimits['min'][pind] = 0
+        if abslimits['max'][pind] is None: abslimits['max'][pind] = inf
     for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
         if optimscaleratio<1:
             abslimits['min'][oind] *= scaledbudgetvec[oi] # If total budget is less, scale down the lower limit...
@@ -275,15 +279,16 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 ### The main meat of the matter
 ################################################################################################################################################
 
-def objectivecalc(which=None, budgetvec=None, parset=None, progset=None, objectives=None, totalbudget=None, budgetlims=None, optiminds=None, origbudget=None, tvec=None, outputresults=False, debug=False, verbose=2):
+def objectivecalc(which=None, budgetvec=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, outputresults=False, debug=False, verbose=2):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
     
     # Validate input
-    if any([arg is None for arg in [which, budgetvec, parset, progset, objectives, totalbudget, budgetlims, optiminds, origbudget, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, budgetlims, optiminds, origbudget, tvec as inputs at minimum')
+    arglist = [which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec]
+    if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
+        raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
     
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=budgetlims, optiminds=optiminds)
+    constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds)
     
     # Run model
     thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset) 
@@ -371,7 +376,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         try: thisparset.pars = [thisparset.pars[ind]] # Turn into a list
         except: raise OptimaException('Could not load parameters %i from parset %s' % (ind, parset.name))
         
-        args = {'project':project, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints': constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'tvec': tvec}
+        args = {'budgetvec':budgetvec, 'parset':thisparset, 'progset':progset, 'objectives':objectives, 'constraints':constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'outputresults':False, 'debug':debug, 'verbose':verbose}
         budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
