@@ -170,7 +170,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
 
 
 
-def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-3, overalltolerance=1.0, fulloutput=False):
+def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, fulloutput=False):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
     
     # Prepare this budget for later scaling and the like
@@ -232,7 +232,11 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
             limhigh[oi] = True
             
     # Too high
+    count = 0
+    countmax = 1e6
     while sum(scaledbudgetvec) > optimbudget+tolerance:
+        count += 1
+        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed!' % count)
         overshoot = sum(scaledbudgetvec) - optimbudget
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot))
         for oi,oinds in enumerate(optiminds):
@@ -245,6 +249,8 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         
     # Too low
     while sum(scaledbudgetvec) < optimbudget-tolerance:
+        count += 1
+        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed!' % count)
         undershoot = optimbudget - sum(scaledbudgetvec)
         toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh]))
         for oi,oinds in enumerate(optiminds):
