@@ -9,6 +9,7 @@ from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeop
 ## Options
 precalibrate = True # Whether or not to run autofitting
 P = defaults.defaultproject('concentrated')
+P.parsets[0].pars[0]['efftxunsupp'].y = 0.92 # WARNING, temporary
 
 ## Calibration
 if precalibrate: 
@@ -26,8 +27,8 @@ nobudget = dcp(defaultbudget)
 for key in nobudget: nobudget[key] *= 1e-6
 scenlist = [
     Parscen(name='Current conditions', parsetname='default', pars=[]),
-#    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
-#    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
+    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
     Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
     ]
 
@@ -38,5 +39,5 @@ P.runscenarios()
 #plotpeople(P, P.results[-1].raw[-1][0]['people'])
  
 # Output
-apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+#apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
 pygui(P.results[-1], toplot='default')
