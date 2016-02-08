@@ -348,6 +348,9 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     totalbudget = dcp(objectives['budget'])
     origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
+    budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    
+    constrainedbudget, lower, upper
     
     for ind in inds: # WARNING, kludgy -- inds not actually used!!!
         # WARNING, kludge because some later functions expect parset instead of pars
