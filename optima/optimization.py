@@ -296,27 +296,53 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, verbose=0)
     
     # Figure out which indices to use
-    initial = findinds(results.tvec, objectives['start'])
-    final = findinds(results.tvec, objectives['end'])
-    indices = arange(initial, final)
+    initialind = findinds(results.tvec, objectives['start'])
+    finalind = findinds(results.tvec, objectives['end'])
+    if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
+    if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
     
-    # Calculate outcome
-    outcome = 0 # Preallocate objective value 
-    for key in objectives['keys']:
-        thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
-        thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
-        outcome += thisoutcome*thisweight*results.dt # Calculate objective
-
-    # Optionally start debugger
-    if debug: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-
-    if outputresults:
-        results.outcome = outcome
-        results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
-        results.budget = constrainedbudget # Convert to budget
-        return results
-    else: 
-        return outcome
+    
+    ## Here, we split depending on whether it's a outcomes or money minimization:    
+    if which=='outcomes':
+        # Calculate outcome
+        outcome = 0 # Preallocate objective value 
+        for key in objectives['keys']:
+            thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
+            thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            outcome += thisoutcome*thisweight*results.dt # Calculate objective
+    
+        # Output results
+        if outputresults:
+            results.outcome = outcome
+            results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+            results.budget = constrainedbudget # Convert to budget
+            return results
+        else: 
+            return outcome
+    
+    elif which=='money':
+        # Calculate outcome
+        targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
+        baseline = odict()
+        final = odict()
+        target = odict()
+        targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
+        for key in objectives['keys']:
+            thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
+            baseline[key] = float(thisresult[baseind])
+            final[key] = float(thisresult[finalind])
+            target[key] = float(baseline[key]*(1-targetfrac[key]))
+            if final[key] > target[key]: targetsmet = False # Targets are NOT met
+    
+        # Output results
+        if outputresults:
+            results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
+            results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
+            results.budget = constrainedbudget # Convert to budget
+            results.targetsmet = targetsmet
+            return results
+        else: 
+            return targetsmet
 
 
 
@@ -330,11 +356,12 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     ''' 
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
     
-    Version: 1.2 (2016feb03)
+    Version: 1.2 (2016feb07)
     '''
     
     ## Input validation
-    if which not in ['outcome','outcomes','money']: 
+    if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
+    if which not in ['outcomes','money']: 
         errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
@@ -395,66 +422,10 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     optim.resultsref = multires.uid # Store the reference for this result
     
     return multires
-    
+
     
     
 
-## WARNING, should be combined with outcomecal!!!
-def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objectives=None, totalbudget=None, budgetlims=None, optiminds=None, tvec=None, outputresults=False, verbose=2, debug=False):
-    ''' Function to evaluate whether or not targets have been met for a given budget vector (note, not time-varying) '''
-    # Validate input
-    if any([arg is None for arg in [budgetvec, progset, objectives, totalbudget, budgetlims, optiminds, tvec]]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
-        raise OptimaException('moneycalc() requires a budgetvec, progset, objectives, budgetlims, optiminds, and tvec at minimum')
-   
-   
-    # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
-    normbudgetvec = constrainbudget(origbudget=budgetvec, total=objectives['budget'], limits=budgetlims)
-    budget = vec2budget(progset, normbudgetvec, optiminds)
-    
-    # Run model
-    thiscoverage = progset.getprogcoverage(budget=budget, t=objectives['start'], parset=parset) 
-    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset)
-    results = runmodel(pars=thisparsdict, parset=parset, progset=progset, project=project, tvec=tvec, verbose=0)
-    
-    # Figure out which indices to use
-    baseind = findinds(results.tvec, objectives['base'])
-    startind = findinds(results.tvec, objectives['start'])
-    if baseind>=startind: 
-        baseind = startind-1 # Don't let users specify a baseline after optimization starts
-        printv('Warning, baseline year after optimization begins: resetting to last index before budget changes', 2, verbose)
-    finalind = findinds(results.tvec, objectives['end'])
-    
-    # Calculate outcome
-    targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
-    baseline = odict()
-    final = odict()
-    target = odict()
-    targetfrac = odict([(key,objectives[key+'frac']) for key in objectives['keys']]) # e.g. {'inci':objectives['incifrac']} = 0.4 = 40% reduction in incidence
-    for key in objectives['keys']:
-        thisresult = results.main['num'+key].tot[0] # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
-        baseline[key] = float(thisresult[baseind])
-        final[key] = float(thisresult[finalind])
-        target[key] = float(baseline[key]*(1-targetfrac[key]))
-        if final[key] > target[key]: targetsmet = False # Targets are NOT met
-
-    # Optionally debug, since these calculations often go wrong
-    if debug: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-    
-    # Output results
-    if outputresults:
-        results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
-        results.budgetvec = budgetvec # WARNING, not sure this should be here
-        results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
-        results.budget = vec2budget(progset, budgetvec) # Convert to budget
-        results.targetsmet = targetsmet
-        return results
-    else: 
-        return targetsmet
-
-
-
-
-    
     
     
 def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=False):
