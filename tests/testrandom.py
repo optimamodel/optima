@@ -1,14 +1,17 @@
 """
-Version:
+Create a good test project
+
+Version: 2016feb08
 """
 
+## Options
+precalibrate = True # Whether or not to run autofitting
 from optima import defaults, pygui
 P = defaults.defaultproject('concentrated')
 
 ## Calibration
-precalibrate = True
 if precalibrate: 
-    P.parsets[0].pars[0]['force'].y[:] = [ 1.4   ,  0.9125,  0.9   ,  0.8   ,  1.35  ,  0.625 ]
+    P.parsets[0].pars[0]['force'].y[:] = [ 1.4,  0.9125,  0.9,  0.8,  1.35,  0.625]
     P.runsim()
 else: P.autofit(name='default', maxiters=60)
 
