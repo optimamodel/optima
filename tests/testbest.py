@@ -12,29 +12,29 @@ P = defaults.defaultproject('concentrated')
 
 ## Calibration
 if precalibrate: 
-    P.parsets[0].pars[0]['force'].y[:] = [ 1.4,  0.9125,  0.9,  0.8,  1.35,  0.625]
+    P.parsets[0].pars[0]['force'].y[:] = [ 1.8  ,  1.1  ,  0.875,  0.775,  1.45 ,  0.6  ]
     P.runsim()
 else: P.autofit(name='default', maxiters=60)
 
 
-#pygui(P.parsets[-1].getresults())
+pygui(P.parsets[-1].getresults())
 
-defaultbudget = P.progsets['default'].getdefaultbudget()
-maxbudget = dcp(defaultbudget)
-for key in maxbudget: maxbudget[key] += 1e14
-nobudget = dcp(defaultbudget)
-for key in nobudget: nobudget[key] *= 1e-6
-scenlist = [
-    Parscen(name='Current conditions', parsetname='default', pars=[]),
-#    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
-    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
-#    Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
-    ]
-
-# Run the scenarios
-P.addscenlist(scenlist)
-P.runscenarios() 
- 
-# Output
-apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-pygui(P.results[-1], toplot='default')
+#defaultbudget = P.progsets['default'].getdefaultbudget()
+#maxbudget = dcp(defaultbudget)
+#for key in maxbudget: maxbudget[key] += 1e14
+#nobudget = dcp(defaultbudget)
+#for key in nobudget: nobudget[key] *= 1e-6
+#scenlist = [
+#    Parscen(name='Current conditions', parsetname='default', pars=[]),
+##    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
+#    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+##    Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+#    ]
+#
+## Run the scenarios
+#P.addscenlist(scenlist)
+#P.runscenarios() 
+# 
+## Output
+#apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+#pygui(P.results[-1], toplot='default')
