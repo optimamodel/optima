@@ -68,7 +68,6 @@ def runscenarios(project=None, verbose=2, defaultparset=0):
     # Make sure scenarios exist
     if project is None: raise OptimaException('First argument to runscenarios() must be a project')
     if len(project.scens)==0:  # Create scenario list if not existing
-        print "Create default scenario"
         defaultscens = defaultscenarios(project.parsets[defaultparset], verbose=verbose)
         project.addscenlist(defaultscens)
     scenlist = [scen for scen in project.scens.values() if scen.active==True]
@@ -140,8 +139,6 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Loop over populations
                     for pop in pops:
-                        print "thispar", thispar
-                        print "thispar.t", thispar.t
 
                         # Remove years after the last good year
                         if last_t < max(thispar.t[pop]):
@@ -178,9 +175,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
             if isinstance(scen, Budgetscen):
                 
                 # If the budget has been passed in as a vector, convert it to an odict & sort by program names
-                print "progset", thisprogset
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
-                print "tmpbudget", tmpbudget
                 if isinstance(scen.budget, list) or isinstance(scen.budget,type(array([]))):
                     scen.budget = vec2obj(orig=tmpbudget, newvec=scen.budget) # It seems to be a vector: convert to odict
                 if not isinstance(scen.budget,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
