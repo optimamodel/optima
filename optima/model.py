@@ -67,6 +67,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
         progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
         recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
+        stoppropcare  = simpars['stoppropcare']  # Proportion of people lost-to-follow-up who are actually still in care (transferred)
         # Behavioural transitions between stages [npop,npts]
         immediatecare = simpars['immediatecare'] # Linkage to care from diagnosis within 1 month (%) (P)
         linktocare    = simpars['linktocare']    # rate of linkage to care (P/T)
@@ -202,8 +203,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     raise Exception('The values coded here are just for roughly estimating initial conditions!!!!')
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    fraccare = 0.5         # Assumed fraction of those who have stopped ART (but are still alive) who are in care (as opposed to unreachable/lost)
-    reboundwithinint = 2.0 # Average number of rebounds between viral load tests
     
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
@@ -604,10 +603,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
                     virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
                 else:
-                    virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t] * reboundwithinint
-                fracalive         = 1. - (death[cd4]*deathtx + background)*dt
-                stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * fraccare  # People stopping ART but still in care
-                stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
+                    virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t]
+                propdead          = dt * (death[cd4]*deathtx + background)
+                stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
+                stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * (1.-stoppropcare-propdead)  # People stopping ART and lost to followup
                 inflows  = progin  + recovin  + newtreat[cd4]*(1.-treatvs[t]) # NB, treatvs will take care of the last 90... 
                 outflows = progout + recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysupp[cd4]
                 dUSVL.append(inflows - outflows)
@@ -629,9 +628,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
                 otherdeaths        = dt * currentsupp[cd4,:] * background
                 failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
-                fracalive          = 1. - (death[cd4] + background)*dt
-                stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * fracalive * fraccare  # People stopping ART but still in care
-                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * fracalive * (1.-fraccare)  # People stopping ART and lost to followup
+                propdead           = dt * (death[cd4] + background)
+                stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
+                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare-propdead) # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4] + newtreat[cd4]*treatvs[t]
                 outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
                 dSVL.append(inflows - outflows)
