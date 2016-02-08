@@ -833,7 +833,7 @@ class OptimizationsDb(db.Model):
 
     resource_fields = {
         'id': Uuid,
-        'optimization_type': fields.String,
+        'which': fields.String,
         'name': fields.String,
         'parset_id': Uuid,
         'progset_id': Uuid,
@@ -844,18 +844,18 @@ class OptimizationsDb(db.Model):
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.String)
-    optimization_type = db.Column(db.String)
+    which = db.Column(db.String)
     progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
     parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
     objectives = db.Column(JSON)
     constraints = db.Column(JSON)
 
-    def __init__(self, project_id, parset_id, progset_id, name, optimization_type,
+    def __init__(self, project_id, parset_id, progset_id, name, which,
                  objectives={}, constraints={}):
 
         self.project_id = project_id
         self.name = name
-        self.optimization_type = optimization_type
+        self.which = which
         self.progset_id = progset_id
         self.parset_id = parset_id
         self.objectives = objectives
@@ -892,7 +892,7 @@ class OptimizationsDb(db.Model):
         self.constraints = constraints
 
         objectives = op.defaultobjectives(project=project, progset=progset,
-                                          which=self.optimization_type)
+                                          which=self.which)
 
         objectives.update({
             x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})

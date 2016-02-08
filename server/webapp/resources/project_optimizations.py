@@ -32,7 +32,7 @@ optimization_parser.add_arguments({
     'name': {'type': str, 'required': True},
     'parset_id': {'type': uuid.UUID, 'required': True},
     'progset_id': {'type': uuid.UUID, 'required': True},
-    'optimization_type': {'type': str, 'required': True},
+    'which': {'type': str, 'required': True},
 })
 
 
@@ -67,7 +67,11 @@ class Optimizations(Resource):
 
         args = optimization_parser.parse_args()
 
-        optimization_entry = OptimizationsDb(project_id=project_id, **args)
+        try: optimization_entry = OptimizationsDb(project_id=project_id, **args)
+        except:
+            print('OH NOOOOO')
+            print(args)
+            help(OptimizationsDb.__init__)
 
         db.session.add(optimization_entry)
         db.session.flush()
