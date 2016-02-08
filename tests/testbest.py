@@ -4,7 +4,7 @@ Create a good test project
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Budgetscen, dcp, plotpars
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars
 
 ## Options
 precalibrate = True # Whether or not to run autofitting
@@ -22,8 +22,12 @@ else: P.autofit(name='default', maxiters=60)
 defaultbudget = P.progsets['default'].getdefaultbudget()
 maxbudget = dcp(defaultbudget)
 for key in maxbudget: maxbudget[key] += 1e14
+nobudget = dcp(defaultbudget)
+for key in nobudget: nobudget[key] *= 1e-6
 scenlist = [
-    Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+    Parscen(name='Current conditions', parsetname='default', pars=[]),
+    Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
+    Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
     Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
     ]
 
