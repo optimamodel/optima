@@ -201,25 +201,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
         };
 
-        /*$scope.createScenario = function(type, $event) {
-          var scenario = {
-            scenario_type: type
-          };
-          // $scope.scenarios.push(scenario);
-          $scope.openScenarioModal(scenario, 'add', $event);
-        }
-        $scope.openEditScenarioModal = function ($event, scenario) {
-            if ($event) {
-                $event.preventDefault();
-            }
-
-            return openScenarioModal(scenario).result.then(
-                function (newscenario) {
-                    scenario.active = true;
-                    _(scenario).extend(newscenario);
-                });
-        };*/
-
         $scope.gotoViewCalibrate = function() {
           $state.go('model');
         };
