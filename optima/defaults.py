@@ -15,7 +15,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     pops = project.data['pops']['short']
     malelist = [pops[i] for i in range(len(pops)) if project.data['pops']['male'][i]]
     pwidlist = [pops[i] for i in range(len(pops)) if project.data['pops']['injects'][i]]
-    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i]]
+    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i] and project.data['pops']['female'][i]]
 
     regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
     caspships = project.parsets['default'].pars[0]['condcas'].y.keys()
@@ -396,10 +396,10 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['condcas'][('M 15-49', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
         R.covout['condcas'][('F 50+', 'M 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('M 50+', 'FSW')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 50+', 'FSW')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('M 50+', 'F 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
         R.covout['condcas'][('F 50+', 'M 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
 
         R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
     
@@ -460,6 +460,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         
         # Do a super-manual calibration
         P.parsets[0].pars[0]['inhomo'].y[:] = 0.2
+        P.parsets[0].pars[0]['efftxunsupp'].y = 0.92 # WARNING, temporary
 
     
     
