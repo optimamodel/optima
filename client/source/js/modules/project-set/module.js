@@ -1,6 +1,7 @@
 define([
   'angular',
   'ui.router',
+  'toastr',
   '../project/project-api-service',
   '../resources/model',
   '../ui/type-selector/index',
@@ -24,7 +25,8 @@ define([
     'app.validations.less-than',
     'app.validations.year',
     'app.parameter-scenarios-modal',
-    'app.program-scenarios-modal'
+    'app.program-scenarios-modal',
+    'toastr'
   ])
     .config(function ($stateProvider) {
       $stateProvider
