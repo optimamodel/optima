@@ -322,6 +322,8 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     
     ## Get the list of parameters that can be fitted
     parset = dcp(project.parsets[name])
+    tmppars = parset.pars[0]
+    origpars = dcp(tmppars)
     
     mflists = parset.manualfitlists()
     fullkeylist    = mflists['keys']

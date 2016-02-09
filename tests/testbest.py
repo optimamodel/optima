@@ -4,17 +4,17 @@ Create a good test project
 Version: 2016feb08
 """
 
-from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, saveobj
+from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, saveobj # analysis:ignore
 
 ## Options
-docalibrate = False # Whether or not to run autofitting
-runscenarios = True # Run scenarios
-optimize = False
-dosave = False
+docalibrate = 0 # Whether or not to run autofitting
+manualfit = 1
+runscenarios = 0 # Run scenarios
+optimize = 0
+dosave = 0
 filename = 'best.prj'
 
 P = defaults.defaultproject('concentrated')
-P.parsets[0].pars[0]['efftxunsupp'].y = 0.92 # WARNING, temporary
 
 ## Calibration
 if docalibrate: 
@@ -23,7 +23,8 @@ if docalibrate:
 else: 
     P.parsets[0].pars[0]['force'].y[:] = [ 1.8  ,  1.1  ,  0.875,  0.775,  1.45 ,  0.6  ]
     P.runsim()
-    
+
+if manualfit: P.manualfit()
 
 
 
