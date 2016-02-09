@@ -679,7 +679,8 @@ class Programset(object):
                 currentmismatch = newmismatch
         
         # Wrap up
-        self.odict2cco(bestvals) # Copy best values
+        workingvals[:] = testarr * bestfactors
+        self.odict2cco(workingvals) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
         
