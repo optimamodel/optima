@@ -100,9 +100,8 @@ if 'makeprograms' in tests:
                   targetpars=[{'param': 'numcirc', 'pop': 'M 15+'},
                               {'param': 'numcirc', 'pop': 'MSM'},
                               {'param': 'numcirc', 'pop': 'Clients'},
-                              {'param': 'numcirc', 'pop': 'M 0-14'},
                               {'param': 'numcirc', 'pop': 'PWID'}],
-                  targetpops=['M 15+', 'MSM', 'Clients', 'M 0-14', 'PWID'],
+                  targetpops=['M 15+', 'MSM', 'Clients', 'PWID'],
                   category='Prevention',
                   name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
@@ -334,7 +333,6 @@ if 'makeprograms' in tests:
     R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
     R.covout['numcirc']['PWID'].addccopar({'intercept': (0,0), 't': 2016.0})
     R.covout['numcirc']['M 15+'].addccopar({'intercept': (0,0), 't': 2016.0})
-    R.covout['numcirc']['M 0-14'].addccopar({'intercept': (0,0), 't': 2016.0})
 
 #    R.covout['stoprate']['MSM'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
 #    R.covout['stoprate']['Clients'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
