@@ -3,9 +3,7 @@ Create a good test project
 
 Version: 2016feb08
 """
+
 import optima as op
-
-projname = 'exercise_complete.prj'
-
-P = op.loadobj(projname)
-op.saveobj(projname, P)
+filename = '/u/cliffk/unsw/optima/tests/Colombia 20160209 (2.0).xlsx'
+P = op.Project(spreadsheet=filename)

@@ -179,7 +179,7 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
 
-    largestpop = argmax([mean(sanitizedy[key]) for key in keys]) # Find largest population size
+    largestpopkey = keys[argmax([mean(sanitizedy[key]) for key in keys])] # Find largest population size
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -211,7 +211,7 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     thisyear = odict()
     thispopsize = odict()
     for key in only1datapoint:
-        largestpars = par.p[largestpop] # Get the parameters from the largest population
+        largestpars = par.p[largestpopkey] # Get the parameters from the largest population
         if len(sanitizedt[key]) != 1:
             errormsg = 'Error interpreting population size for population "%s"\n' % key
             errormsg += 'Please ensure at least one time point is entered'
