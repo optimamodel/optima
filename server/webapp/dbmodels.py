@@ -256,6 +256,8 @@ class ProjectDb(db.Model):
                 if not same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
                 update_or_create_parset(self.id, name, parset)
+        else:
+            raise Exception('project has no parset')
 
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
@@ -745,10 +747,10 @@ class ProgsetsDb(db.Model):
                     ]
                 }
                 effects.append(item)
-        print(effects)
+        parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
             {
-                'parset': str(self.project.parsets[0].id) if len(self.project.parsets) else None,
+                'parset': str(parset.id) if parset else None,
                 'parameters': effects
             }
         ]
