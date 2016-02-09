@@ -3,7 +3,7 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 2016feb02
+Version: 1.4 (2016feb08)
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
@@ -56,7 +56,6 @@ Rate of ART re-initiation (%/year)	restarttreat	(0, 'maxrate')	tot	timepar	meta	
 Rate of people on ART who stop (%/year)	stoprate	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 People in care lost to follow-up (%/year)	leavecare	(0, 'maxrate')	pop	timepar	meta	cascade	1	0	1	random
 Biological failure rate (%/year)	biofailure	(0, 'maxrate')	tot	timepar	meta	cascade	1	0	1	random
-People lost to follow up who are still in care (%)	stoppropcare	(0, 'maxrate')	tot	constant	const	const	0	None	0	None
 PLHIV aware of their status (%)	propdx	(0, 1)	tot	timepar	no	no	0	0	1	None
 Diagnosed PLHIV in care (%)	propcare	(0, 1)	tot	timepar	no	no	1	0	1	None
 PLHIV in care on treatment (%)	proptx	(0, 1)	tot	timepar	no	no	0	0	1	None
