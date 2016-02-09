@@ -476,6 +476,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    origbudgetvec = dcp(budgetvec)
     xmin = zeros(len(budgetvec))
     
     ## Constrain the budget
@@ -576,9 +577,9 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
         
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['totalbudget'] = origtotalbudget
-    orig = objectivecalc(budgetvec, outputresults=True, **args)
+    orig = objectivecalc(origbudgetvec, outputresults=True, **args)
     args['totalbudget'] = newtotalbudget * fundingfactor
-    new = objectivecalc(budgetvec, outputresults=True, **args)
+    new = objectivecalc(constrainedbudgetvec, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]

@@ -88,10 +88,10 @@ if 'minimizemoney' in tests:
     
     P = defaults.defaultproject('best')
     
-    objectives = defaultobjectives(which='money')
+    objectives = defaultobjectives(which='money', progset=P.progsets[0])
     objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths
     objectives['incifrac'] = 0.2
-    constraints = defaultconstraints(P)
+    constraints = defaultconstraints(P.progsets[0])
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10)
     
     print('Original allocation: '),
