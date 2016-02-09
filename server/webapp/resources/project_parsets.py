@@ -32,6 +32,10 @@ y_keys_fields = {
     'keys': Json
 }
 
+limits_fields = {
+    'parsets': Json
+}
+
 
 class ParsetYkeys(Resource):
 
@@ -53,6 +57,28 @@ class ParsetYkeys(Resource):
            for id, parset in parsets.iteritems()
         }
         return {'keys': y_keys}
+
+
+class ParsetLimits(Resource):
+    @swagger.operation(
+        summary='get parameters limits'
+    )
+    @marshal_with(limits_fields)
+    def get(self, project_id):
+        project_entry = load_project(project_id, raise_exception=True)
+        be_project = project_entry.hydrate()
+
+        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
+        parsets = {str(item.id): item.hydrate() for item in reply}
+        limits = {
+           id: {par.short: [
+                    be_project.settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
+                    for limit in par.limits
+                ] for par in parset.pars[0].values()
+           if hasattr(par, 'y') and par.visible}
+           for id, parset in parsets.iteritems()
+        }
+        return {'parsets': limits}
 
 
 class Parsets(Resource):
