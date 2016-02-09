@@ -186,14 +186,16 @@ class ProjectDb(db.Model):
                     progset_name = None
                     if optimization_record.parset_id:
                         parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
-                        if parset_name: parset_name = parset_name[0]
+                        if parset_name:
+                            parset_name = parset_name[0]
                     if optimization_record.progset_id:
                         progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
-                        if parset_name: parset_name = parset_name[0]
-                    optim = op.Optim(name=optimization_record.name, 
-                        objectives=optimization_record.objectives, 
+                        if parset_name:
+                            parset_name = parset_name[0]
+                    optim = op.Optim(name=optimization_record.name,
+                        objectives=optimization_record.objectives,
                         constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
-                    project_entry.addoptim()
+                    project_entry.addoptim(optim)
         return project_entry
 
     def as_file(self, loaddir, filename=None):

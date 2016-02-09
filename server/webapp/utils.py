@@ -522,13 +522,6 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
     if not scenario:
         raise Exception("scenario {} not present in project {}!".format(name, project_id))
 
-    if scenario.t:
-        blob['years'] = scenario.t
-    if scenario.budget:
-        blob['budget'] = scenario.budget
-    if scenario.pars:
-        blob['pars'] = scenario.pars
-
     if isinstance(scenario, op.Parscen):
         scenario_type = 'parameter'
     elif isinstance(scenario, op.Budgetscen):
@@ -536,16 +529,26 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = 'coverage'
 
+    if scenario.t:
+        blob['years'] = scenario.t
+    for key in ['budget', 'coverage', 'args']:
+        if hasattr(scenario, key) and getattr(scenario, key):
+            blob[key] = {
+                k: [item if type(item) != float else None for item in v]
+                if v is not None else None
+                for k, v in getattr(scenario, key).iteritems()
+            }
+
     parset_name = scenario.parsetname
     if parset_name:
         parset_record = ParsetsDb.query \
-        .filter_by(project_id=project_id, name=parset_name) \
-        .first()
+            .filter_by(project_id=project_id, name=parset_name) \
+            .first()
         if parset_record:
             parset_id = parset_record.id
 
-    progset_name = scenario.progsetname
-    if progset_name:
+    if hasattr(scenario, 'progsetname') and scenario.progsetname:
+        progset_name = scenario.progsetname
         progset_record = ProgsetsDb.query \
         .filter_by(project_id=project_id, name=progset_name) \
         .first()

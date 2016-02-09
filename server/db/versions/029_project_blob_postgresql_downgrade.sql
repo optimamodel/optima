@@ -1,1 +1,1 @@
-ALTER TABLE projects DROP COLUMN blob;
+ALTER TABLE projects DROP COLUMN IF EXISTS blob;
