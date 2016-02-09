@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Test script to see if Optima works.
 
@@ -15,12 +17,12 @@ Version: 2016feb03 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeproject',
-#'parametercheck',
+'parametercheck',
 #'resultsaddition',
 #'saveload',
-#'loadspreadsheet',
+'loadspreadsheet',
 #'loadeconomics',
-#'runsim'
+'runsim'
 ]
 
 ##############################################################################
@@ -186,7 +188,7 @@ if 'loadspreadsheet' in tests:
 
 
 ## Load economics spreadsheet test
-if 'loadeconomcs' in tests:
+if 'loadeconomics' in tests:
     t = tic()
     print('Running loadeconomics test...')
     from optima import Project
