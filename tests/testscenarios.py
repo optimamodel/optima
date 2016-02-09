@@ -1,15 +1,15 @@
 """
 Test scenarios
 
-Version: 2016jan27
+Version: 2016feb07
 """
 
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
 #'maxcoverage',
-'maxbudget',
+#'maxbudget',
 #'90-90-90'
 #'VMMC'
 ]
@@ -141,7 +141,6 @@ if 'standardscen' in tests:
               budget={'Condoms': 1e7,
                            'FSW programs': 1e6,
                            'HTC':2e7,
-                           'OST':1e6,
                            'ART':1e6}),
 
          Budgetscen(name='Double investment in condom program',
@@ -151,7 +150,6 @@ if 'standardscen' in tests:
               budget={'Condoms': array([1e7,2e7]),
                            'FSW programs':array([1e6,1e6]),
                            'HTC':array([2e7,2e7]),
-                           'OST':array([1e6,1e6]),
                            'ART':array([1e6,1e6])}),
 
          Coveragescen(name='A million people covered by the condom program',
@@ -161,7 +159,6 @@ if 'standardscen' in tests:
               coverage={'Condoms': array([285706.,1e6]),
                            'FSW programs':array([15352.,15352.]),
                            'HTC':array([1332862.,1332862.]),
-                           'OST':array([1250.,1250.]),
                            'ART':array([3324.,3324.])}),
 
          Budgetscen(name='Double investment in ART, HTC and OST',
@@ -171,14 +168,22 @@ if 'standardscen' in tests:
               budget={'Condoms': array([1e7,1e7,1e7]),
                            'FSW programs':array([1e6,1e6,1e6]),
                            'HTC':array([2e7,3e7,4e7]),
-                           'OST':array([1e6,1.5e6,2e6]),
-                               'ART':array([1e6,1.5e6,2e6])})
+                           'ART':array([1e6,1.5e6,2e6])}),
+
+         Budgetscen(name='Test some progs only',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={'Condoms': 1e7,
+                           'FSW programs':1e6,
+                           'ART':1e6})
+
         ]
     
     # Store these in the project
     P.addscenlist(scenlist)
-    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
-    P.scens[2].active = True # Turn off another scenario
+#    P.scens['A million people covered by the condom program'].active = True # Turn off a scenario
+#    P.scens[2].active = False # Turn off another scenario
     
 #    # Turn off budget scenarios
 #    for i,scen in P.scens.items():

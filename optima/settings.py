@@ -10,7 +10,7 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016feb02
+Version: 2016feb06
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
@@ -46,6 +46,7 @@ class Settings():
         self.gt200 = 5 + spacing
         self.gt50  = 6 + spacing
         self.lt50  = 7 + spacing
+        self.aidsind = self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
 
         # Combined states
         self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
@@ -80,7 +81,7 @@ class Settings():
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out -- see definitions in utils.py:printv()
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
-        self.eps = 1e-4 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
+        self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
@@ -128,10 +129,10 @@ def gettvecdt(tvec=None, dt=None, justdt=False):
     elif isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array
     elif shape(tvec): # Make sure it has a length -- if so, overwrite dt
         if len(tvec)>=2: dt = tvec[1]-tvec[0] # Even if dt supplied, recalculate it from the time vector
-        elif dt is None: dt = defaultdt # Or give up and use default
         else: dt = dt # Use input
     else:
         raise OptimaException('Could not understand tvec of type "%s"' % type(tvec))
+    if dt is None: dt = defaultdt # Or give up and use default
     return tvec, dt
     
     

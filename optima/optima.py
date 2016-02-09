@@ -127,7 +127,7 @@ except: _failed()
 
 try: 
     import parameters as _parameters # Load high-level module as well
-    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults, applylimits # Parameter and Parameterset classes
+    from parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits # Parameter and Parameterset classes
 except: _failed()
 
 try: 
@@ -152,12 +152,12 @@ except: _failed()
 
 try: 
     import scenarios as _scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
-    from scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
+    from scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 except: _failed()
 
 try: 
     import optimization as _optimization
-    from optimization import Optim, minoutcomes, minmoney, defaultobjectives, defaultconstraints # Scenario functions
+    from optimization import Optim, defaultobjectives, defaultconstraints, optimize # Scenario functions
 except: _failed()
 
 try: 

@@ -42,40 +42,40 @@ define ['angular-mocks', 'Source/modules/analysis/optimization-ctrl'], ->
           info: { has_data: true }
         }
 
-    describe 'yearsAreRequired()', ->
+    # describe 'yearsAreRequired()', ->
 
-      it 'should be false if funding is not defined', ->
-        expect(scope.yearsAreRequired()).toBeFalsy()
+    #   it 'should be false if funding is not defined', ->
+    #     expect(scope.yearsAreRequired()).toBeFalsy()
 
-      it 'should be true if funding is set to variable', ->
-        scope.params.objectives.funding = 'variable'
-        expect(scope.yearsAreRequired()).toBeTruthy()
+    #   it 'should be true if funding is set to variable', ->
+    #     scope.params.objectives.funding = 'variable'
+    #     expect(scope.yearsAreRequired()).toBeTruthy()
 
-      it 'should be true if only start or end is provided', ->
-        scope.params.objectives.funding = 'variable'
-        scope.params.objectives.year = { start: 2015 }
-        expect(scope.yearsAreRequired()).toBeTruthy()
-        scope.params.objectives.year = { end: 2015 }
-        expect(scope.yearsAreRequired()).toBeTruthy()
+    #   it 'should be true if only start or end is provided', ->
+    #     scope.params.objectives.funding = 'variable'
+    #     scope.params.objectives.year = { start: 2015 }
+    #     expect(scope.yearsAreRequired()).toBeTruthy()
+    #     scope.params.objectives.year = { end: 2015 }
+    #     expect(scope.yearsAreRequired()).toBeTruthy()
 
-    describe 'updateYearRange()', ->
+    # describe 'updateYearRange()', ->
 
-      beforeEach ->
-        scope.params.objectives.funding = 'variable';
+    #   beforeEach ->
+    #     scope.params.objectives.funding = 'variable';
 
-      it 'should reset outcome, yearLoop & yearCols', ->
-        scope.updateYearRange()
+    #   it 'should reset outcome, yearLoop & yearCols', ->
+    #     scope.updateYearRange()
 
-        expect(scope.params.objectives.outcome.variable).toEqual({})
-        expect(scope.yearLoop).toEqual([])
-        expect(scope.yearCols).toEqual([])
+    #     expect(scope.params.objectives.outcome.variable).toEqual({})
+    #     expect(scope.yearLoop).toEqual([])
+    #     expect(scope.yearCols).toEqual([])
 
-      it 'should parse the start & end date & create yearLoop & yearCols', ->
-        scope.params.objectives.year = { start: "2015", end: "2020" }
-        scope.updateYearRange()
+    #   it 'should parse the start & end date & create yearLoop & yearCols', ->
+    #     scope.params.objectives.year = { start: "2015", end: "2020" }
+    #     scope.updateYearRange()
 
-        expect(scope.params.objectives.outcome.variable).toEqual({})
-        expect(scope.yearLoop).toEqual([ { year : 2015 }, { year : 2016 },
-          { year : 2017 }, { year : 2018 }, { year : 2019 }, { year : 2020 } ])
-        expect(scope.yearCols).toEqual([ { start : 0, end : 5 },
-          { start : 5, end : 10 } ])
+    #     expect(scope.params.objectives.outcome.variable).toEqual({})
+    #     expect(scope.yearLoop).toEqual([ { year : 2015 }, { year : 2016 },
+    #       { year : 2017 }, { year : 2018 }, { year : 2019 }, { year : 2020 } ])
+    #     expect(scope.yearCols).toEqual([ { start : 0, end : 5 },
+    #       { start : 5, end : 10 } ])

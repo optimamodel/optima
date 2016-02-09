@@ -114,7 +114,7 @@ class ProjectTestCase(OptimaTestCase):
             progset = self.create_record_with(ProgsetsFactory, project_id=project_id)
             self.create_record_with(ProgramsFactory, project_id=project_id, progset_id=progset.id)
         project = ProjectDb.query.filter_by(id=str(project_id)).first()
-        self.assertEqual(len(project.progsets), progsets_count)
+        self.assertEqual(len(project.progsets), progsets_count) # CK: would be +1 if creates one by default
 
         response = self.client.post('/api/project/%s/copy' % project_id, data={
             'to': 'test_copy'
@@ -134,7 +134,7 @@ class ProjectTestCase(OptimaTestCase):
         self.assertEqual(old_info['dataEnd'], new_info['dataEnd'])
 
         new_project = ProjectDb.query.filter_by(id=str(new_project_id)).first()
-        self.assertEquals(len(new_project.progsets), progsets_count)
+        self.assertEquals(len(new_project.progsets), progsets_count) # CK: would be +1 if creates one by default
 
     def _create_project_and_download(self, **kwargs):
         progsets_count = 3
@@ -412,8 +412,10 @@ class ProjectTestCase(OptimaTestCase):
         from server.webapp.programs import get_default_programs
         from server.webapp.populations import populations
 
+        progsets_count = 1
+
         project = self.create_project(
-            progsets_count=1,
+            progsets_count=progsets_count,
             programs_per_progset=0,
             return_instance=True,
             populations=populations()
@@ -437,7 +439,7 @@ class ProjectTestCase(OptimaTestCase):
         program_list = get_default_programs(be_project)
         program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
 
-        self.assertEqual(program_count, len(program_list))
+        self.assertEqual(program_count, len(program_list)*progsets_count) # CK: This is more general I think
 
     def test_bulk_delete(self):
         from server.webapp.dbmodels import ProjectDb

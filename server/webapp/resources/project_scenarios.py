@@ -9,7 +9,7 @@ from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 from flask import helpers
 
-from server.webapp.inputs import SubParser, scenario_par, Json as JsonInput
+from server.webapp.inputs import SubParser, scenario_par, scenario_program, Json as JsonInput
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import (
     load_project, load_progset, load_program, load_scenario, RequestParser, report_exception, modify_program)
@@ -24,6 +24,7 @@ scenario_parser = RequestParser()
 scenario_parser.add_arguments({
     'name': {'type': str, 'location': 'args', 'required': True},
     'parset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
+    'progset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
     'scenario_type': {'type': str, 'location': 'args', 'required': True},
     'active': {'type': bool, 'location': 'args', 'required': True}
 })
@@ -33,9 +34,13 @@ scenario_list_scenario_parser.add_arguments({
     'id': {'required': False, 'location': 'json'},
     'name': {'type': str, 'required': True, 'location': 'json'},
     'parset_id': {'required': True, 'location': 'json'},
+    'progset_id': {'type': uuid.UUID, 'location': 'json', 'required': True},
     'scenario_type': {'type': str, 'required': True, 'location': 'json'},
     'active': {'type': bool, 'required': True, 'location': 'json'},
-    'pars': {'type': scenario_par, 'required': True, 'location': 'json'}
+    'pars': {'type': scenario_par, 'required': False, 'location': 'json'},  # only for Paramscen
+    'years': {'type': list, 'required': False, 'location': 'json'}, # only for Budgetscen /Coveragescen
+    'budget': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Budgetscen
+    'coverage': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Coveragescen
 })
 
 scenario_list_parser = RequestParser()
@@ -49,17 +54,20 @@ scenario_list_parser.add_arguments({
 })
 
 
-def check_pars(blob):
+def check_pars(blob, raise_exception = True):
     """
     Check the pars attribute for scenarios.
     """
+    pars = []
+
     if 'pars' not in blob.keys():
-        raise ValueError("JSON body requires 'pars' parameter")
+        if raise_exception:
+            raise ValueError("JSON body requires 'pars' parameter")
+        else:
+            return pars
 
     if not isinstance(blob['pars'], list):
         raise ValueError("'pars' needs to be a list.")
-
-    pars = []
 
     for i in blob['pars']:
 
@@ -74,6 +82,17 @@ def check_pars(blob):
 
     return pars
 
+
+def check_program(blob, key): # result is either budget or coverage, depending on scenario type
+    from server.webapp.inputs import scenario_program
+    programs = {}
+    if key not in blob.keys():
+        return programs
+
+    orig_programs = blob[key]
+    return scenario_program(orig_programs)
+
+
 # /api/project/<project-id>/scenarios
 
 
@@ -86,13 +105,27 @@ class Scenarios(Resource):
     def _scenarios_for_fe(self, scenarios):
         rv = []
         for scenario in scenarios:
-            pars = []
-            if scenario.scenario_type == 'Parameter':
+            print "scenario", scenario.blob
+            if 'pars' in scenario.blob:
+                pars = []
                 for par in scenario.blob['pars']:
                     par['for'] = par['for'][0]
                     pars.append(par)
-                scenario.blob = {'pars': pars}
+                scenario.blob['pars'] = pars
+
+            for key in ['budget', 'coverage']:
+                if key in scenario.blob:
+                    item_list = []
+                    for k, v in scenario.blob[key].iteritems():
+                        item = {
+                            'program': k,
+                            'values': v
+                        }
+                        item_list.append(item)
+                    scenario.blob[key] = item_list
+
             rv.append(scenario)
+        print "rv", rv
         return rv
 
     @swagger.operation()
@@ -124,13 +157,20 @@ class Scenarios(Resource):
         """
         args = scenario_parser.parse_args()
 
-        if args.get('scenario_type') not in ["Parameter", "Program"]:
-            raise ValueError("Type needs to be 'Parameter' or 'Program'.")
+        if args.get('scenario_type') not in ["parameter", "budget", "coverage"]:
+            raise ValueError("Type needs to be 'parameter', 'budget' or 'coverage'.")
 
-        if args['scenario_type'] == "Parameter":
-            blob = {'pars': check_pars(json.loads(request.data))}
-        else:
-            blob = {}
+        blob = {}
+        data = json.loads(request.data)
+        pars = check_pars(data, raise_exception = (args['scenario_type'] == "parameter"))
+        budget = check_program(data, 'budget')
+        coverage = check_program(data, 'coverage')
+        if pars:
+            blob['pars'] = pars
+        if budget:
+            blob['budget'] = budget
+        if coverage:
+            blob['coverage'] = coverage
 
         scenario_entry = ScenariosDb(project_id, blob=blob, **args)
 
@@ -141,12 +181,24 @@ class Scenarios(Resource):
         return scenario_entry, 201
 
     def _upsert_scenario(self, project_id, id, **kwargs):
-        blob = kwargs.pop('pars')
+        pars = kwargs.pop('pars', None)
+        budget = kwargs.pop('budget', None)
+        coverage = kwargs.pop('coverage', None)
+        years = kwargs.pop('years', None)
+        print "years", years
+        if years:
+            years = [int(y) for y in years]
+        print "years", years
 
-        if kwargs['scenario_type'] == "Parameter":
-            blob = {'pars': blob}
-        else:
-            blob = {}
+        blob = {}
+        if pars:
+            blob['pars'] = pars
+        if budget:
+            blob['budget'] = budget
+        if coverage:
+            blob['coverage'] = coverage
+        if years:
+            blob['years'] = years
 
         scenario_entry = None
         if id is not None:
@@ -244,10 +296,15 @@ class Scenario(Resource):
         """
         args = scenario_parser.parse_args()
 
-        if args['scenario_type'] == "Parameter":
-            blob = {'pars': check_pars(json.loads(request.data))}
-        else:
-            blob = {}
+        pars = check_pars(data, raise_exception = (args['scenario_type'] == "Parameter"))
+        budget = check_program(data, 'budget')
+        coverage = check_program(data, 'coverage')
+        if pars:
+            blob['pars'] = pars
+        if budget:
+            blob['budget'] = budget
+        if coverage:
+            blob['coverage'] = coverage
 
         scenario_entry = load_scenario(project_id, scenario_id)
 

@@ -4,48 +4,19 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
         var openProject  = info.data;
-        if (!openProject.has_data) {
-          $scope.missingModelData = true;
-          return;
-        }
-
         var responseData, availableScenarioParameters, availableScenarios;
         $scope.scenarios = scenariosResponse.data.scenarios;
         $scope.progsets = progsetsResponse.data.progsets;
         $scope.parsets = parsetResponse.data.parsets;
 
-        /*$scope.runScenariosOptions = {
-          dosave: false
-        };
+        if (!openProject.has_data) {
+          $scope.missingModelData = true;
+          return;
+        }
 
-        $scope.saveScenariosOptions = {
-          dosave: false
-        };*/
-        // initialize all necessary data for this controller
-        /*var initialize = function() {
-          $scope.scenarios = [];
-
-          
-
-          // add All option in population list
-          //meta.data.pops.long.push("All");
-
-          // transform scenarioParameters to use attribute `names` instead of `keys`
-          // it is the same for the data we have to send to run scenarios
-          availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys, values: parameters.values};
-          });
-
-          availableScenarios = scenariosResponse.data.scenarios;
-
-          $scope.scenarios = _(availableScenarios).map(function(scenario) {
-            scenario.active = true;
-            return scenario;
-          });
-
-          $scope.types = typeSelector.types;
-        };*/
-
+        if (!$scope.progsets.length) {
+          $scope.missingProgramSet = true;
+        }
         /**
          * Returns an graph based on the provided yData.
          *
@@ -129,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .value();
         };
 
-        $scope.runScenarios = function (saveScenario) {
+        $scope.runScenarios = function () {
           var activeScenarios = _.filter($scope.scenarios, function(scenario){ return scenario.active; });
           $http.get('/api/project/'+openProject.id+'/scenarios/results')
             .success(function(data) {
@@ -138,27 +109,32 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
         };
 
-        $scope.saveScenarios = function (saveScenario) {
+        $scope.saveScenarios = function (state) {
           $http.put('/api/project/'+openProject.id+'/scenarios', {
             'scenarios': $scope.scenarios
           }).success(function(response) {
-            modalService.inform(
-              function (){ },
-              'Okay',
-              'Scenario saved successfully.',
-              'Saved successfully'
-            );
+            if(!state){
+              modalService.inform(
+                function (){ },
+                'Okay',
+                'Scenario saved successfully.',
+                'Saved successfully'
+              );
+            }
             $scope.scenarios = response.scenarios;
           });
         };
 
         // Helper function to open a population modal
         var openScenarioModal = function(scenario, parsets, progsets) {
-          if(scenario.scenario_type === "Program"){
+          if(scenario.scenario_type === "budget" || scenario.scenario_type === 'coverage'){
             return $modal.open({
               templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
               controller: 'ProgramScenariosModalController',
               resolve: {
+                scenarios: function () {
+                  return $scope.scenarios;
+                },
                 scenario: function () {
                   return angular.copy(scenario);
                 },
@@ -181,6 +157,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
               controller: 'ParameterScenariosModalController',
               resolve: {
+                scenarios: function () {
+                  return $scope.scenarios;
+                },
                 scenario: function () {
                   return angular.copy(scenario);
                 },
@@ -221,31 +200,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               newscenario.id = null;
               $scope.scenarios.push(newscenario);
             }else if(action === 'delete'){
-              $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
+              modalService.confirm(
+                function () {
+                  $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
+                  if(row.id){ $scope.saveScenarios('delete'); }
+                }, function () {
+                }, 'Yes, remove this scenario', 'No',
+                'Are you sure you want to permanently remove scenario "' + row.name + '"?',
+                'Delete scenario'
+              );
             }
         };
 
-        /*$scope.createScenario = function(type, $event) {
-          var scenario = {
-            scenario_type: type
-          };
-          // $scope.scenarios.push(scenario);
-          $scope.openScenarioModal(scenario, 'add', $event);
-        }
-        $scope.openEditScenarioModal = function ($event, scenario) {
-            if ($event) {
-                $event.preventDefault();
-            }
-
-            return openScenarioModal(scenario).result.then(
-                function (newscenario) {
-                    scenario.active = true;
-                    _(scenario).extend(newscenario);
-                });
-        };*/
-
         $scope.gotoViewCalibrate = function() {
-          $state.go('model');;
+          $state.go('model');
         };
 
         // The graphs are shown/hidden after updating the graph type checkboxes.
@@ -253,16 +221,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           updateGraphs(responseData);
         }, true);
 
-        //initialize();
-
-        $scope.progset_name = function(progset_id) {
+        $scope.progset_name = function(progset_id, row) {
           var progset = _.filter($scope.progsets, {id: progset_id});
           if (progset.length > 0) {
             return progset[0].name;
           }
           return '';
-        }
-
+        };
 
         $scope.parset_name = function(parset_id) {
           var parset = _.filter($scope.parsets, {id: parset_id});

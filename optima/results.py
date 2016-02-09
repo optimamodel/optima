@@ -384,7 +384,7 @@ def getresults(project=None, pointer=None, die=True):
     results.
     
     Example:
-        results = P.parsets[0].results()
+        results = P.parsets[0].getresults()
         calls
         getresults(P, P.parsets[0].resultsref)
         which returns
@@ -392,47 +392,38 @@ def getresults(project=None, pointer=None, die=True):
     
     The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
     
-    Version: 2016jan25
+    Version: 1.2 (2016feb06)
     '''
     # Nothing supplied, don't try to guess
     if pointer is None: 
         return None 
     
     # Normal usage, e.g. getresults(P, 3) will retrieve the 3rd set of results
-    elif isinstance(pointer, (str, Number)):
+    elif isinstance(pointer, (str, Number, type(uuid()))):
         if project is not None:
             resultnames = [res.name for res in project.results.values()]
-            resultuids = project.results.keys()
+            resultuids = [str(res.uid) for res in project.results.values()]
         else: 
             if die: raise OptimaException('To get results using a key or index, getresults() must be given the project')
             else: return None
-        try: # Try using pointer as key -- works if UID
+        try: # Try using pointer as key -- works if name
             results = project.results[pointer]
             return results
         except: # If that doesn't match, keep going
-            if pointer in resultnames:
+            if pointer in resultnames: # Try again to extract it based on the name
                 results = project.results[resultnames.index(pointer)]
                 return results
-            else:
+            elif str(pointer) in resultuids: # Next, try extracting via the UID
+                results = project.results[resultuids.index(str(pointer))]
+                return results
+            else: # Give up
                 validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(resultnames))]
                 errormsg = 'Could not get result "%s": choices are:\n%s' % (pointer, '\n'.join(validchoices))
                 if die: raise OptimaException(errormsg)
                 else: return None
     
-    # If it's a UID, have to convert to string, then use as key
-    elif type(pointer)==type(uuid()): 
-        if project is not None: 
-            try: 
-                return project.results[str(pointer)]
-            except: 
-                if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
-                else: return None
-        else:
-            if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
-            else: return None
-    
     # The pointer is the results object
-    elif isinstance(pointer, (Resultset, Multiresultset)):
+    elif isinstance(pointer, (Resultset, Multiresultset, BOC)):
         return pointer # Return pointer directly if it's already a results set
     
     # It seems to be some kind of function, so try calling it -- might be useful for the database or something

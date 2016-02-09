@@ -797,7 +797,9 @@ class odict(OrderedDict):
                 output = OrderedDict.__getitem__(self,key)
                 return output
             except: # WARNING, should be KeyError, but this can't print newlines!!!
-                if len(self.keys()): errormsg = 'odict key "%s" not found; available keys are:\n%s' % (key, '\n'.join(self.keys()))
+                if len(self.keys()): 
+                    errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
+                        '\n'.join([str(key) for key in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
 
@@ -884,7 +886,7 @@ class odict(OrderedDict):
         if not sortby: allkeys = sorted(self.keys())
         else:
             if not isinstance(sortby, list): raise Exception('Please provide a list to determine the sort order.')
-            if all(isinstance(x,str) for x in sortby): # Going to sort by keys
+            if all(isinstance(x,basestring) for x in sortby): # Going to sort by keys
                 if not set(sortby)==set(self.keys()): 
                     errormsg = 'List of keys to sort by must be the same as list of keys in odict.\n You provided the following list of keys to sort by:\n'
                     errormsg += '\n'.join(sortby)

@@ -6,6 +6,7 @@
     <div class="c-parsce-modal__field-wrap">
       <label class="c-parsce-modal__label"> Name </label>
       <input class="c-parsce-modal__input txbox" type="text" ng-model="row.name" required/>
+      <div class="error-hint" ng-show="scenarioExists()"> Scenario with this name already exists, please choose a different name. </div>
     </div>
 
     <div class="c-parsce-modal__field-wrap">
@@ -71,7 +72,7 @@
     </button>
 
     <div class="c-parsce-modal__buttons u-layout-horizontal">
-      <button type="submit" ng-disabled="manageScenarioForm.$invalid" class="btn __l c-parsce-modal__button c-parsce-modal__button--save">
+      <button type="submit" ng-disabled="manageScenarioForm.$invalid || scenarioExists()" class="btn __s c-parsce-modal__button c-parsce-modal__button--save">
         OK
       </button>
     </div>

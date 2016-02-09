@@ -1,15 +1,11 @@
-<div class="grid" style="margin-left:0px">
-  <h1>Manage project &#8594; Open/Manage projects</h1>
-</div>
+<!--<div class="grid" style="margin-left:0px">-->
+  <!--<h1>Manage project &#8594; Open/Manage projects</h1>-->
+<!--</div>-->
 <div class="rich">
   <div class="section" ng-show="projects.length">
 
-    <div style="display: flex; margin-left: -2%;">
-      <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete Selected</button>
-      <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
-    </div>
 
-    <h1>Available projects:</h1>
+    <h1>Open/manage projects</h1>
 
     <input type="text"
            class="txbox"
@@ -85,9 +81,6 @@
           <button class="btn" ng-click="edit(project.name, project.id)">Edit project</button>
         </td>
         <td>
-          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete project</button>
-        </td>
-        <td>
           <button class="btn" ng-click="getData(project.name, project.id)">Download project</button>
         </td>
         <td>
@@ -96,9 +89,17 @@
         <td>
           <button class="btn" ng-click="workbook(project.name, project.id)">Download data entry spreadsheet</button>
         </td>
+        <td>
+          <button class="btn __red" ng-click="remove($event, project.name, project.id, $index)">Delete project</button>
+        </td>
       </tr>
       </tbody>
     </table>
+  </div>
+
+  <div style="display: flex; margin-left: -2%;">
+    <button ng-click="deleteSelected()" type="button" class="btn" style="margin-left:2%">Delete Selected</button>
+    <button ng-click="downloadSelected()" type="button" class="btn" style="margin-left:2%">Download Selected</button>
   </div>
 
   <div ng-hide="projects.length">
