@@ -417,7 +417,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
 
 
-def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
+def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
     ''' Split out minimize outcomes '''
     
     ## Handle budget and remove fixed costs
@@ -449,10 +449,10 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     tmpresults = [orig, new]
     
     # Output
-    multires = Multiresultset(resultsetlist=tmpresults, name='outcomes-%s-%s' % (parset.name, progset.name))
+    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
-    optim.resultsref = multires.uid # Store the reference for this result
+    optim.resultsref = multires.name # Store the reference for this result
     
     return multires
 
@@ -461,7 +461,7 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
 
     
     
-def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2):
+def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
@@ -476,6 +476,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
+    origbudgetvec = dcp(budgetvec)
     xmin = zeros(len(budgetvec))
     
     ## Constrain the budget
@@ -524,7 +525,7 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
     ##########################################################################################################################
 
     args['totalbudget'] = origtotalbudget # Calculate new total funding
-    args['which'] = 'outcomes' # Switch back to outcome minimization
+    args['which'] = 'outcomes' # Switch back to outcome minimization -- WARNING, there must be a better way of doing this
     budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
 
@@ -576,14 +577,14 @@ def minmoney(project=None, optim=None, inds=None, tvec=None, verbose=None, maxti
         
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['totalbudget'] = origtotalbudget
-    orig = objectivecalc(budgetvec, outputresults=True, **args)
+    orig = objectivecalc(origbudgetvec, outputresults=True, **args)
     args['totalbudget'] = newtotalbudget * fundingfactor
-    new = objectivecalc(budgetvec, outputresults=True, **args)
+    new = objectivecalc(constrainedbudgetvec, outputresults=True, **args)
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
-    multires = Multiresultset(resultsetlist=tmpresults, name='minmoney-%s-%s' % (optim.parsetname, optim.progsetname))
+    multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
-    optim.resultsref = multires.uid # Store the reference for this result
+    optim.resultsref = multires.name # Store the reference for this result
     
     return multires

@@ -144,7 +144,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
         .success(function(response) {
           if(response.status === 'completed') {
-            getOptimizationGraphs();
+            $scope.getOptimizationGraphs();
             $scope.statusMessage = 'Optimization successfully completed.';
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){

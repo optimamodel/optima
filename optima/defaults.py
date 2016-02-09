@@ -245,11 +245,11 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                                  
         HTC.costcovfn.addccopar({'saturation': (0.85,0.95),
                                  't': 2016.0,
-                                 'unitcost': (10,20)})
+                                 'unitcost': (5,10)})
                                  
-        ART.costcovfn.addccopar({'saturation': (0.9,0.9),
+        ART.costcovfn.addccopar({'saturation': (0.99,0.99),
                                  't': 2016.0,
-                                 'unitcost': (100,200)})
+                                 'unitcost': (400,800)})
                                  
         PMTCT.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
@@ -466,10 +466,13 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     ##########################################################################################################################
     ## Concentrated
     ##########################################################################################################################
-    elif which=='concentrated':
+    elif which in ['best','concentrated']:
         printv('Creating concentrated example...', 2, verbose)
         # Make project and store results from default sim
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
+        
+        # "Calibrate"
+        P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
     
         # Get a default progset 
         R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
@@ -490,17 +493,19 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     
         R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
     
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.20,0.30), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.05,0.10), 't': 2016.0, 'HTC': (0.40,0.60)})
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
         R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
-        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.70,0.80)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.70,0.80)})
+        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.20,0.12), 't': 2016.0, 'HTC': (0.80,0.90)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         
         # Store this program set in the project
         P.addprogset(R)
+        
+        
     
     
     
