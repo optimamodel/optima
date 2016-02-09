@@ -199,6 +199,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     ### Set initial epidemic conditions 
     #################################################################################################################
     
+    # NB, to debug, use: for h in range(len(settings.statelabels)): print(settings.statelabels[h], sum(initpeople[h,:]))
+    
     # Set parameters
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
@@ -247,8 +249,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         initpeople[progcirc, p] = 0.0 # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
         initpeople[undx, p]     = undiagnosed
         if usecascade:
-            initpeople[dx,   p] = diagnosed*(1.-propcare)
-            initpeople[care, p] = diagnosed*propcare
+            initpeople[dx,   p] = diagnosed*(1.-initpropcare)
+            initpeople[care, p] = diagnosed*initpropcare
             initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
             initpeople[svl,  p] = treatment * treatvs[0]      * (1.-initproplost)
             initpeople[off,  p] = treatment * initproplost * stoppropcare
