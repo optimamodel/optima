@@ -619,13 +619,13 @@ class Programset(object):
         if modifiablepars is None: raise Exception('Please supply modifiablepars')
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
-            self.covout['condcas'][('Clients', 'FSW')].ccopars[thisprogkey] = tuple(val) 
+            self.covout['condcas'][('Clients', 'FSW')].ccopars[thisprogkey] = [tuple(val)]
             if t: self.covout['condcas'][('Clients', 'FSW')].ccopars['t'] = t # WARNING, reassigned multiple times, but shouldn't matter...
         return None
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, method='mad', maxiters=1000, verbose=4):
+    def reconcile(self, parset=None, year=None, ind=0, method='mad', maxiters=100, stepsize=0.1, verbose=4):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         
         def objectivecalc(progset=None, parset=None, year=None, ind=None, method=None, eps=1e-3):
@@ -651,6 +651,7 @@ class Programset(object):
             return mismatch
         
         # Store original values in case we need to go back to them
+        origcovout = dcp(self.covout)
         origvals = dcp(self.cco2odict(t=year))
         bestvals = dcp(origvals)
         
@@ -663,7 +664,7 @@ class Programset(object):
             workingvals = dcp(bestvals)
             testarr = workingvals[:] # Turn into array format
             npars = shape(testarr)[0]
-            factor = 1.0+0.1*randn() # Effectively, bound between (0.5, 1.5)
+            factor = 1.0+stepsize*randn() # Effectively, bound between (0.5, 1.5)
             testind = floor(npars*rand())
             testarr[testind] *= factor
             workingvals[:] = testarr
