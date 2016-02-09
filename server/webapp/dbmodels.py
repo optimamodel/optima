@@ -149,54 +149,52 @@ class ProjectDb(db.Model):
         return self.project_data.updated if self.project_data else None
 
     def hydrate(self):
-        project_entry = None
         # the problem here: if a record gets created outside of project, we have a big problem.
         # (which is currently the case for progsets)
         # TODO: make it possible to uncomment the two lines of code below :)
 #        if self.blob and len(self.blob):
 #            project_entry = op.loads(self.blob)
-        if not isinstance(project_entry, op.Project):
-            project_entry = op.Project()
-            project_entry.uid = self.id
-            project_entry.name = self.name
-            project_entry.created = (
-                self.created or datetime.now(dateutil.tz.tzutc())
-            )
-            project_entry.modified = self.updated
-            if self.data:
-                project_entry.data = op.loads(self.data)
-            if self.settings:
-                project_entry.settings = op.loads(self.settings)
-            if self.parsets:
-                for parset_record in self.parsets:
-                    parset_entry = parset_record.hydrate()
-                    project_entry.addparset(parset_entry.name, parset_entry)
-            if self.progsets:
-                for progset_record in self.progsets:
-                    progset_entry = progset_record.hydrate()
-                    project_entry.addprogset(progset_entry.name, progset_entry)
-            if self.scenarios:
-                for scenario_record in self.scenarios:
-                    if scenario_record.active:
-                        scenario_entry = scenario_record.hydrate()
-                        project_entry.addscen(scenario_entry.name, scenario_entry)
-            if self.optimizations:
-                for optimization_record in self.optimizations:
-                    optimization_record._ensure_current(self)
-                    parset_name = None
-                    progset_name = None
-                    if optimization_record.parset_id:
-                        parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
-                        if parset_name:
-                            parset_name = parset_name[0]
-                    if optimization_record.progset_id:
-                        progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
-                        if parset_name:
-                            parset_name = parset_name[0]
-                    optim = op.Optim(project_entry, name=optimization_record.name,
-                        objectives=optimization_record.objectives,
-                        constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
-                    project_entry.addoptim(optim)
+        project_entry = op.Project()
+        project_entry.uid = self.id
+        project_entry.name = self.name
+        project_entry.created = (
+            self.created or datetime.now(dateutil.tz.tzutc())
+        )
+        project_entry.modified = self.updated
+        if self.data:
+            project_entry.data = op.loads(self.data)
+        if self.settings:
+            project_entry.settings = op.loads(self.settings)
+        if self.parsets:
+            for parset_record in self.parsets:
+                parset_entry = parset_record.hydrate()
+                project_entry.addparset(parset_entry.name, parset_entry)
+        if self.progsets:
+            for progset_record in self.progsets:
+                progset_entry = progset_record.hydrate()
+                project_entry.addprogset(progset_entry.name, progset_entry)
+        if self.scenarios:
+            for scenario_record in self.scenarios:
+                if scenario_record.active:
+                    scenario_entry = scenario_record.hydrate()
+                    project_entry.addscen(scenario_entry.name, scenario_entry)
+        if self.optimizations:
+            for optimization_record in self.optimizations:
+                optimization_record._ensure_current(self)
+                parset_name = None
+                progset_name = None
+                if optimization_record.parset_id:
+                    parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
+                    if parset_name:
+                        parset_name = parset_name[0]
+                if optimization_record.progset_id:
+                    progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
+                    if parset_name:
+                        parset_name = parset_name[0]
+                optim = op.Optim(project_entry, name=optimization_record.name,
+                    objectives=optimization_record.objectives,
+                    constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
+                project_entry.addoptim(optim)
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -256,8 +254,6 @@ class ProjectDb(db.Model):
                 if not same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
                 update_or_create_parset(self.id, name, parset)
-        else:
-            raise Exception('project has no parset')
 
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
