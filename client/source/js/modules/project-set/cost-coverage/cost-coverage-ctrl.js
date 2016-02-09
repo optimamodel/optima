@@ -221,7 +221,16 @@ define(['./../module', 'underscore'], function (module, _) {
       }
       console.log('currentParsetEffect', currentParsetEffect);
       _.each(vm.currentParameter.populations, function(pop) {
-        var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short, pop: pop.pop});
+        var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short});
+        paramPops = _.filter(paramPops, function(param) {
+          if (pop.pop instanceof Array) {
+            if (param.pop.length != pop.pop.length) {
+              return false;
+            }
+            return _.difference(param.pop, pop.pop).length === 0;
+          }
+          return pop.pop === param.pop;
+        });
         if (paramPops.length === 0) {
           currentParsetEffect.parameters.push({
             name: vm.selectedParameter.short,
