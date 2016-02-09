@@ -7,7 +7,8 @@ tests = [
 'loadzambia',
 'addeffects',
 'compareepi'
-#'compareoutcomes'
+'compareoutcomes',
+'savezambia',
 ]
 
 ##############################################################################
