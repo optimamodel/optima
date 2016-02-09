@@ -69,7 +69,7 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
 from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Programs, PopSize
 from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
-                                                     ParsetsAutomaticCalibration, ParsetYkeys)
+                                                     ParsetsAutomaticCalibration, ParsetYkeys, ParsetLimits)
 from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
 from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
 from server.webapp.resources.project_optimizations import Optimizations, Optimization, OptimizationResults, OptimizationGraph
@@ -126,6 +126,7 @@ api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetYkeys, '/api/project/<uuid:project_id>/parsets/ykeys')
+api.add_resource(ParsetLimits, '/api/project/<uuid:project_id>/parsets/limits')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
