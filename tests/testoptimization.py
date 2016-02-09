@@ -11,7 +11,7 @@ Version: 2016feb07
 ## Define tests to run here!!!
 tests = [
 'minimizeoutcomes',
-'minimizemoney',
+#'minimizemoney',
 ]
 
 
@@ -57,7 +57,7 @@ if 'minimizeoutcomes' in tests:
     print('Running minimize outcomes test...')
     from optima import defaultobjectives, defaultconstraints
     
-    P = defaults.defaultproject(which='generalized') 
+    P = defaults.defaultproject('best') 
     
     objectives = defaultobjectives(P.progsets[0]) # This or P
     objectives['budget'] *= 0.5
@@ -86,7 +86,7 @@ if 'minimizemoney' in tests:
     print('Running minimize money test...')
     from optima import defaultobjectives, defaultconstraints
     
-    P = defaults.defaultproject(which='generalized')
+    P = defaults.defaultproject('best')
     
     objectives = defaultobjectives(which='money')
     objectives['deathfrac'] = -0.5 # Yes, this means an increase in deaths
