@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 A more standard version of testing if the spreadsheet works
 

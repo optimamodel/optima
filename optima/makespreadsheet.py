@@ -178,7 +178,7 @@ class OptimaFormats:
     darkgray = '#413839'
     originalblue = '#18C1FF'
     hotpink = '#FFC0CB'
-    BG_COLOR = hotpink
+    BG_COLOR = originalblue
     BORDER_COLOR = 'white'
 
     PERCENTAGE = 'percentage'
@@ -562,7 +562,7 @@ class OptimaSpreadsheet:
 
     def generate_opt(self):
         current_row = 0
-
+        
         for name in [
         'Number of HIV tests per year', 
         'Number of HIV diagnoses per year', 
@@ -570,12 +570,15 @@ class OptimaSpreadsheet:
         'Modeled estimate of HIV prevalence', 
         'Modeled estimate of number of PLHIV', 
         'Number of HIV-related deaths', 
-        'Number of people initiating ART each year',
+        'Number of people initiating ART each year']:
+            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
+        
+        for name in [
         'PLHIV aware of their status (%)', 
         'Diagnosed PLHIV in care (%)',
         'PLHIV in care on treatment (%)',
         'People on ART with viral suppression (%)']:
-            current_row = self.emit_years_block(name, current_row, ['Total'], row_format = OptimaFormats.NUMBER, assumption = True)
+            current_row = self.emit_years_block(name, current_row, ['Average'], row_format = OptimaFormats.PERCENTAGE, assumption = True)
 
       
     
@@ -700,6 +703,14 @@ class OptimaSpreadsheet:
             [0.8, 0.47, 0.0, 1.35, 0.33, 0.82, 0.65, 0.3, 0.8],
             [0.98, 0.67, 0.68, 5.19, 0.68, 0.93, 0.8, 0.8, 0.95],
             OptimaFormats.PERCENTAGE),
+        ('Cascade parameters',
+            ['People on unsuppressive ART who progress (%)',
+            'People on unsuppressive ART who recover (%)',
+            'People lost to follow up who are still in care (%)'],
+            [0.4, 0.4, 0.4],
+            [0.3, 0.3, 0.3],
+            [0.5, 0.5, 0.5],
+            OptimaFormats.PERCENTAGE),
         ('Disutility weights',
             ['Untreated HIV, acute',
             'Untreated HIV, CD4(>500)',
@@ -712,14 +723,7 @@ class OptimaSpreadsheet:
             [0.096, 0.005, 0.013, 0.048, 0.114, 0.382, 0.034], 
             [0.205, 0.011, 0.029, 0.094, 0.474, 0.715, 0.079], 
             OptimaFormats.NUMBER),
-        ('Cascade parameters',
-            ['People on unsuppressive ART who progress (%)',
-            'People on unsuppressive ART who recover (%)',
-            'People lost to follow up who are still in care (%)'],
-            [0.4, 0.4, 0.4],
-            [0.3, 0.3, 0.3],
-            [0.5, 0.5, 0.5],
-            OptimaFormats.PERCENTAGE)]
+        ]
 
 
         for (name, row_names, best, low, high, format) in names_rows_data_format:
@@ -728,10 +732,10 @@ class OptimaSpreadsheet:
     def generate_instr(self):
         current_row = 0
         self.current_sheet.set_column('A:A',80)
-        self.current_sheet.merge_range('A1:A3', 'O P T I M A', self.formats.formats['info_header'])
+        self.current_sheet.merge_range('A1:A3', 'O P T I M A   2 . 0', self.formats.formats['info_header'])
         current_row = 3
         current_row = self.formats.write_info_line(self.current_sheet, current_row)
-        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
+        current_row = self.formats.write_info_block(self.current_sheet, current_row, row_height=65, text='Welcome to the Optima 2.0 data entry spreadsheet. This is where all data for the model will be entered. Please ask someone from the Optima development team if you need help, or use the default contact (info@optimamodel.com).')
         current_row = self.formats.write_info_block(self.current_sheet, current_row, text='For further details please visit: http://optimamodel.com/file/indicator-guide')
 
     def create(self, path):
