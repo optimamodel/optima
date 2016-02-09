@@ -10,8 +10,8 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-'minimizeoutcomes',
-#'minimizemoney',
+#'minimizeoutcomes',
+'minimizemoney',
 ]
 
 
@@ -89,7 +89,7 @@ if 'minimizemoney' in tests:
     P = defaults.defaultproject('best')
     
     objectives = defaultobjectives(which='money')
-    objectives['deathfrac'] = -0.5 # Yes, this means an increase in deaths
+    objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths
     objectives['incifrac'] = 0.2
     constraints = defaultconstraints(P)
     P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10)
