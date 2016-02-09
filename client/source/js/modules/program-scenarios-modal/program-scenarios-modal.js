@@ -48,6 +48,14 @@ define(['angular'], function (module) {
 			$scope.temp = _.reject(row, function (param, index) {
 				return index === paramIndex
 			});
+			if(angular.isDefined($scope.row.years[paramIndex])){
+				$scope.row.years.splice(paramIndex, 1);
+			}
+			if(angular.isDefined($scope.row[$scope.type]) && ($scope.row[$scope.type].length > 0)){
+				angular.forEach($scope.row[$scope.type], function(val, key){
+					val.values.splice(paramIndex, 1);
+				});
+			}
 		};
 
 		$scope.scenarioExists = function(){
