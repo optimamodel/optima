@@ -9,6 +9,7 @@ define([
   '../validations/more-than-directive',
   '../validations/less-than-directive',
   '../validations/year-directive',
+  '../validations/range-limit',
   '../parameter-scenarios-modal/parameter-scenarios-modal',
   '../program-scenarios-modal/program-scenarios-modal'
 ], function (angular) {
@@ -23,6 +24,7 @@ define([
     'app.validations.more-than',
     'app.validations.less-than',
     'app.validations.year',
+    'app.validations.range-limit',
     'app.parameter-scenarios-modal',
     'app.program-scenarios-modal'
   ])
