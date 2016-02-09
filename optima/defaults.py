@@ -466,10 +466,13 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     ##########################################################################################################################
     ## Concentrated
     ##########################################################################################################################
-    elif which=='concentrated':
+    elif which in ['best','concentrated']:
         printv('Creating concentrated example...', 2, verbose)
         # Make project and store results from default sim
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
+        
+        # "Calibrate"
+        P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
     
         # Get a default progset 
         R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
@@ -501,6 +504,8 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         
         # Store this program set in the project
         P.addprogset(R)
+        
+        
     
     
     
