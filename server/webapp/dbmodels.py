@@ -1,6 +1,7 @@
 from datetime import datetime
 import dateutil
 from collections import defaultdict
+from copy import deepcopy
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
@@ -181,7 +182,7 @@ class ProjectDb(db.Model):
                         project_entry.addscen(scenario_entry.name, scenario_entry)
             if self.optimizations:
                 for optimization_record in self.optimizations:
-                    optimization_record._ensure_current()
+                    optimization_record._ensure_current(self)
                     parset_name = None
                     progset_name = None
                     if optimization_record.parset_id:
@@ -192,7 +193,7 @@ class ProjectDb(db.Model):
                         progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
                         if parset_name:
                             parset_name = parset_name[0]
-                    optim = op.Optim(name=optimization_record.name,
+                    optim = op.Optim(project_entry, name=optimization_record.name,
                         objectives=optimization_record.objectives,
                         constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
                     project_entry.addoptim(optim)
@@ -879,38 +880,49 @@ class ScenariosDb(db.Model):
         if self.progset_id:
             progset = load_progset(self.project_id, self.progset_id)
 
+        blob = deepcopy(self.blob)
+
         if self.scenario_type == "budget":
 
+            blob.pop('coverage', None)
+            blob.pop('pars', None)
+
             # TODO: remove this hack (dummy values)
-            if not 'years' in self.blob:
-                self.blob['t'] = 2030
+            if 'years' not in blob:
+                blob['t'] = 2030
             else:
-                self.blob['t'] = self.blob['years']
-                del self.blob['years']
-            print "blob", self.blob
+                blob['t'] = blob['years']
+                del blob['years']
+            print "blob", blob
             return op.Budgetscen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
-                               **self.blob)
+                               **blob)
 
         if self.scenario_type == "coverage":
 
+            blob.pop('budget', None)
+            blob.pop('pars', None)
+
             # TODO: remove this hack (dummy values)
-            if not 'years' in self.blob:
-                self.blob['t'] = 2030
+            if 'years' not in blob:
+                blob['t'] = 2030
             else:
-                self.blob['t'] = self.blob['years']
-                del self.blob['years']
+                blob['t'] = blob['years']
+                del blob['years']
             return op.Coveragescen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
-                               **self.blob)
+                               **blob)
 
         elif self.scenario_type == "parameter":
 
+            blob.pop('coverage', None)
+            blob.pop('budget', None)
+
             return op.Parscen(name=self.name,
                               parsetname=parset.name,
-                              **self.blob)
+                              **blob)
 
 
 
@@ -951,7 +963,7 @@ class OptimizationsDb(db.Model):
 
         self._ensure_current()
 
-    def _ensure_current(self):
+    def _ensure_current(self, project=None):
         """
         Make sure the objectives and constraints are current.
         """
@@ -963,7 +975,8 @@ class OptimizationsDb(db.Model):
         if not self.objectives:
             self.objectives = {}
 
-        project = load_project(self.project_id).hydrate()
+        if project is None:
+            project = load_project(self.project_id).hydrate()
         progset = load_progset(self.project_id, self.progset_id).hydrate()
         parset = load_parset(self.project_id, self.parset_id).hydrate()
 

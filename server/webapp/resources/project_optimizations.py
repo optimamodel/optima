@@ -223,9 +223,9 @@ class OptimizationGraph(Resource):
         which = args.get('which')
 
         # TODO actually filter for the proper optimization id (Which would have to be saved for the given result)
-        result_entry = db.session.query(ResultsDb).filter_by(project_id=project_id, calculation_type='optimization')
+        result_entry = db.session.query(ResultsDb).filter_by(project_id=project_id, calculation_type='optimization').first()
         if result_entry:
-            result = result_entry[-1].hydrate()
+            result = result_entry.hydrate()
         else:
             raise Exception("Optimization result for project {} does not exist".format(project_id))
 
@@ -237,5 +237,5 @@ class OptimizationGraph(Resource):
             "optimization_id": optimization_id,
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_entry[-1].id if result_entry else None
+            "result_id": result_entry.id if result_entry else None
         }
