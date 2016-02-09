@@ -12,14 +12,14 @@ define(['angular', 'underscore'], function (angular, _) {
 
           var updateValidity = function (value, lowerLimit, upperLimit) {
 
-            value = parseInt(value)
-            lowerLimit = parseInt(lowerLimit)
-            upperLimit = parseInt(upperLimit)
+            value = parseFloat(value)
+            lowerLimit = parseFloat(lowerLimit)
+            upperLimit = parseFloat(upperLimit)
 
-            var smaller = (lowerLimit !== undefined ? value >= lowerLimit : true);
-            var bigger = (upperLimit !== undefined ? value <= upperLimit : true);
-            var equal = upperLimit !== undefined && lowerLimit !== undefined && upperLimit === lowerLimit;
-            var isValid = value !== undefined && smaller && bigger && !equal;
+            var smaller = (!isNaN(lowerLimit) ? value >= lowerLimit : true);
+            var bigger = (!isNaN(upperLimit) ? value <= upperLimit : true);
+            var equal = !isNaN(upperLimit) && !isNaN(lowerLimit) && upperLimit === lowerLimit;
+            var isValid = !isNaN(value) && smaller && bigger && !equal;
 
             ctrl.$setValidity('rangeLimit', isValid);
           };
