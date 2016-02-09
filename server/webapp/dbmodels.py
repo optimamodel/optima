@@ -580,6 +580,25 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
+        print('####################')
+        print({
+            'name': self.name,
+            'category': self.category,
+            'targetpops': self.targetpops,
+            'criteria': self.criteria,
+            'costcovdata': {
+                't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['coverage']
+                if self.costcov[i] is not None
+                else None for i in range(len(self.costcov))],
+            } if self.costcov is not None else None,
+            'ccopars': {
+                't': self.ccopars['t'],
+                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
+                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
+            } if self.ccopars else None
+        })
         program_entry = op.Program(
             self.short,
             targetpars=self.pars_to_program_pars(),
@@ -679,10 +698,10 @@ class ProgsetsDb(db.Model):
                         'interact': year['interact'],
                     }
                     for row in year["programs"]:
-                        effect[str(row['name'])] = (
+                        effect[row['name']] = (
                             row['intercept_lower'],
                             row['intercept_upper']
-                        )
+                        ) if row['intercept_lower'] is not None and row['intercept_upper'] is not None else None
                     print('??????????????????')
                     print(program_effect['name'])
                     print(program_effect['pop'])
