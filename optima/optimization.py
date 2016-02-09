@@ -427,7 +427,7 @@ def moneycalc(budgetvec=None, project=None, parset=None, progset=None, objective
     
     
     
-def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, fundingchange=1.2, tolerance=0.05, debug=False):
+def minmoney(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', fundingchange=1.2, tolerance=0.05, debug=False):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
     
