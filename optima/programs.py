@@ -625,7 +625,7 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, method='mad', maxiters=100, stepsize=0.1, verbose=4):
+    def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=100, stepsize=0.1, verbose=4):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         
         def objectivecalc(progset=None, parset=None, year=None, ind=None, method=None, eps=1e-3):
@@ -641,8 +641,7 @@ class Programset(object):
                 elif method=='mse':             thismismatch =    (budgetval - parval)**2
                 else:
                     errormsg = 'autofit(): "method" not known; you entered "%s", but must be one of:\n' % method
-                    errormsg += '"wape" = weighted absolute percentage error (default)\n'
-                    errormsg += '"mape" = mean absolute percentage error\n'
+                    errormsg += '"wape"/"mape" = weighted/mean absolute percentage error (default)\n'
                     errormsg += '"mad"  = mean absolute difference\n'
                     errormsg += '"mse"  = mean squared error'
                     raise OptimaException(errormsg)
@@ -651,7 +650,7 @@ class Programset(object):
             return mismatch
         
         # Store original values in case we need to go back to them
-        origcovout = dcp(self.covout)
+#        origcovout = dcp(self.covout)
         origvals = dcp(self.cco2odict(t=year))
         workingvals = dcp(origvals)
         testarr = origvals[:] # Turn into array format
@@ -673,7 +672,7 @@ class Programset(object):
             self.odict2cco(workingvals)
             newmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method)
             printv('%i: orig=%f best=%f current=%f' % (i, origmismatch, currentmismatch, newmismatch), 3, verbose)
-            printv(transpose(workingfactors), 4, verbose)
+            printv(workingfactors.flatten().tolist(), 4, verbose)
             if newmismatch<currentmismatch:
                 bestfactors = workingfactors
                 currentmismatch = newmismatch
