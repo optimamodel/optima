@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 Test script to see if Optima works.
 
