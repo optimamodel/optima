@@ -547,14 +547,14 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
         if parset_record:
             parset_id = parset_record.id
 
+    progset_id = None
     if hasattr(scenario, 'progsetname') and scenario.progsetname:
         progset_name = scenario.progsetname
         progset_record = ProgsetsDb.query \
-        .filter_by(project_id=project_id, name=progset_name) \
-        .first()
+            .filter_by(project_id=project_id, name=progset_name) \
+            .first()
         if progset_record:
             progset_id = progset_record.id
-
 
     scenario_record = ScenariosDb.query \
         .filter_by(project_id=project_id, name=name) \
@@ -562,12 +562,13 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
 
     if scenario_record is None:
         scenario_record = ScenariosDb(
-            project_id = project_id, 
-            parset_id = parset_id, 
-            name = name, 
-            scenario_type = scenario_type,
-            active=scenario.active, 
-            blob = blob
+            project_id=project_id,
+            parset_id=parset_id,
+            progset_id=progset_id,
+            name=name,
+            scenario_type=scenario_type,
+            active=scenario.active,
+            blob=blob
         )
         db.session.add(scenario_record)
         db.session.flush()
