@@ -5,7 +5,6 @@ Version: 2016feb08
 """
 
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, saveobj # analysis:ignore
-from pylab import array
 
 ## Options
 autocalib = 0 # Whether or not to run autofitting
@@ -35,17 +34,17 @@ if runscenarios:
     for key in nobudget: nobudget[key] *= 1e-6
     scenlist = [
         Parscen(name='Current conditions', parsetname='default', pars=[]),
-        Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
-#        Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
-        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+#        Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[2016], budget=nobudget),
+        Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+#        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
     P.addscenlist(scenlist)
     P.runscenarios() 
 #    plotpeople(P, P.results[-1].raw[-1][0]['people'])
-#    apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-#    pygui(P.results[-1], toplot='default')
+    apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
+    pygui(P.results[-1], toplot='default')
 
 
 

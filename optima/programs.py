@@ -575,6 +575,42 @@ class Programset(object):
                 print(strctrl % (item[0], item[1], sigfig(item[2]), sigfig(item[3])))
                 
         return comparison
+    
+    
+    
+    def reconcilewithpars(self, parset=None, year=None, ind=0):
+        ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
+        
+        def objectivecalc(progset=None, parset=None, year=None, ind=None, method='mape', eps=1e-3):
+            ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
+            comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
+            allmismatches = []
+            mismatch = 0
+            for budgetparpair in comparison:
+                parval = budgetparpair[2]
+                budgetval = budgetparpair[3]
+                if   method in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
+                elif method=='mad':             thismismatch = abs(budgetval - parval)
+                elif method=='mse':             thismismatch =    (budgetval - parval)**2
+                else:
+                    errormsg = 'autofit(): "method" not known; you entered "%s", but must be one of:\n' % method
+                    errormsg += '"wape" = weighted absolute percentage error (default)\n'
+                    errormsg += '"mape" = mean absolute percentage error\n'
+                    errormsg += '"mad"  = mean absolute difference\n'
+                    errormsg += '"mse"  = mean squared error'
+                    raise OptimaException(errormsg)
+                allmismatches.append(thismismatch)
+                mismatch += thismismatch
+            return mismatch
+        
+        ## Do the actual calibration thingo
+        def cco2vec(): raise Exception('Not implemented')
+        
+        def vec2cco(): raise Exception('Not implemented')
+        
+        raise Exception('Not implemented')
+        
+        return None
 
 
 
