@@ -108,6 +108,7 @@ Disutility of CD4>200 (%)	disutilgt200	(0, 1)	tot	constant	const	const	0	None	0	
 Disutility of CD4>50 (%)	disutilgt50	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility of CD4<50 (%)	disutillt50	(0, 1)	tot	constant	const	const	0	None	0	None
 Disutility on treatment (%)	disutiltx	(0, 1)	tot	constant	const	const	0	None	0	None
+People lost to follow up who are still in care (%)	stoppropcare	(0, 1)	tot	constant	const	const	1	None	0	None
 '''
 
 
