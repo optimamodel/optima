@@ -169,7 +169,7 @@ optimization_which_parser = RequestParser()
 optimization_which_parser.add_argument('which', location='args', default=None, action='append')
 
 optimization_fields = {
-"optimization_id": Uuid,
+    "optimization_id": Uuid,
     "graphs": Json,
     "selectors": Json,
     "result_id": Uuid,
