@@ -68,13 +68,19 @@
   .option_list {
     margin: 2px;
     padding: 5px;
-    border: 1px solid black;
+    border: 1px solid #ccc;
     overflow: auto;
   }
 
   .option {
-    padding: 10px 2px;
+    padding: 3px 2px;
     display: flex;
+  }
+
+  .label {
+    margin: 10px 0 2px;
+    font-size: 15px;
+    font-weight: 600;
   }
 }
 

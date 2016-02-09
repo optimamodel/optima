@@ -823,3 +823,78 @@ class ScenariosDb(db.Model):
             return op.Parscen(name=self.name,
                               parsetname=parset.name,
                               **self.blob)
+
+
+
+@swagger.model
+class OptimizationsDb(db.Model):
+
+    __tablename__ = 'optimizations'
+
+    resource_fields = {
+        'id': Uuid,
+        'which': fields.String,
+        'name': fields.String,
+        'parset_id': Uuid,
+        'progset_id': Uuid,
+        'objectives': Json(),
+        'constraints': Json()
+    }
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.String)
+    which = db.Column(db.String)
+    progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    objectives = db.Column(JSON)
+    constraints = db.Column(JSON)
+
+    def __init__(self, project_id, parset_id, progset_id, name, which,
+                 objectives={}, constraints={}):
+
+        self.project_id = project_id
+        self.name = name
+        self.which = which
+        self.progset_id = progset_id
+        self.parset_id = parset_id
+        self.objectives = objectives
+        self.constraints = constraints
+
+        self._ensure_current()
+
+    def _ensure_current(self):
+        """
+        Make sure the objectives and constraints are current.
+        """
+        from server.webapp.utils import load_parset, load_progset, load_project, remove_nans
+
+        if not self.constraints:
+            self.constraints = {}
+
+        if not self.objectives:
+            self.objectives = {}
+
+        project = load_project(self.project_id).hydrate()
+        progset = load_progset(self.project_id, self.progset_id).hydrate()
+        parset = load_parset(self.project_id, self.parset_id).hydrate()
+
+        constraints = op.defaultconstraints(project=project, progset=progset)
+
+        # Update the min and the max according to what the user put, do not
+        # update the names, that should change from the programs.
+        constraints['max'].update({
+            x:y for x,y in self.constraints.get('min', {}).items() if x in constraints})
+        constraints['min'].update({
+            x:y for x,y in self.constraints.get('max', {}).items() if x in constraints})
+
+
+        self.constraints = constraints
+
+        objectives = op.defaultobjectives(project=project, progset=progset,
+                                          which=self.which)
+
+        objectives.update({
+            x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
+
+        self.objectives = remove_nans(objectives)

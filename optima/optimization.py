@@ -62,7 +62,10 @@ class Optim(object):
         elif self.objectives['which']=='money':                multires = minmoney(project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
         else: raise OptimaException('optimize(): "which" must be "outcome" or "money"; you entered "%s"' % self.objectives['which'])
         
-        multires.name = 'optim-'+name
+        if name:
+            multires.name = 'optim-'+name
+        else:
+            multires.name = 'optim-default'
         return multires
 
 
@@ -83,7 +86,7 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     
     if type(progset)==Programset:
         defaultbudget = sum(progset.getdefaultbudget()[:])
-    if type(project)==Programset: # Not actually a project, but proceed anyway
+    elif type(project)==Programset: # Not actually a project, but proceed anyway
         defaultbudget = sum(project.getdefaultbudget()[:])
     elif project is not None:
         if progset is None: progset = 0
@@ -142,6 +145,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     else:
         raise OptimaException('To define constraints, you must supply a program set as an input')
 
+    print "defaultconstraints: progset", progset
     constraints = odict() # Dictionary of all constraints
     constraints['name'] = odict() # Full name
     constraints['min'] = odict() # Minimum budgets
@@ -304,6 +308,7 @@ def minoutcomes(project=None, optim=None, inds=0, maxiters=1000, maxtime=None, v
         raise OptimaException(errormsg)
     
     # Trim out non-optimizable programs and calculate limits
+    print "constraints", type(constraints), constraints
     minlimsvec = constraints['min'][:] # Convert to vector
     minfixedcosts = budgetvec[fixedinds]*minlimsvec[fixedinds] # Calculate the minimum allowed costs of fixed programs
     totalbudget -= minfixedcosts.sum() # Remove fixed costs from budget

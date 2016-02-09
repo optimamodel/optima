@@ -328,15 +328,15 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.parsets = response.parsets;
     });
 
-    var openParameterScenariosModal = function () {
-      return $modal.open({
-        templateUrl: 'js/modules/create-program-scenario-modal/create-program-scenario-modal.html',
-        controller: 'CreateProgramScenarioModalController',
-        resolve: {}
-      });
-    }
-
-    openParameterScenariosModal()
+    //var openParameterScenariosModal = function () {
+    //  return $modal.open({
+    //    templateUrl: 'js/modules/create-program-scenario-modal/create-program-scenario-modal.html',
+    //    controller: 'CreateProgramScenarioModalController',
+    //    resolve: {}
+    //  });
+    //}
+    //
+    //openParameterScenariosModal()
 
   });
 
