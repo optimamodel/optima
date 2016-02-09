@@ -602,7 +602,7 @@ class Programset(object):
     
     def cco2odict(self, t=None):
         ''' Parse the cost-coverage-outcome tree and pull out parameter values into an odict '''
-        if t is None: raise Exception('Please supply a year')
+        if t is None: raise OptimaException('Please supply a year')
         modifiablepars = odict()
         for targetpartype in self.covout.keys():
             for targetparpop in self.covout[targetpartype].keys():
@@ -616,7 +616,7 @@ class Programset(object):
 
     def odict2cco(self, modifiablepars=None, t=None):
         ''' Take an odict and use it to update the cost-coverage-outcome tree '''
-        if modifiablepars is None: raise Exception('Please supply modifiablepars')
+        if modifiablepars is None: raise OptimaException('Please supply modifiablepars')
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
             self.covout['condcas'][('Clients', 'FSW')].ccopars[thisprogkey] = [tuple(val)]
