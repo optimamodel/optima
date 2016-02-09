@@ -6,8 +6,8 @@ Load Zambia and create outcome functions
 tests = [
 'loadzambia',
 'addeffects',
-'compareepi'
-'compareoutcomes',
+#'compareepi'
+#'compareoutcomes',
 'savezambia',
 ]
 
@@ -56,6 +56,8 @@ if 'loadzambia' in tests:
 if 'addeffects' in tests:
     
     R = P.progsets[0]
+    R.programs[7].short = 'SBCC'
+    R.updateprogset()
     
     # Circumcision
     R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
@@ -77,20 +79,20 @@ if 'addeffects' in tests:
     R.covout['numpmtct']['tot'].addccopar({'intercept': (0.,0.), 't': 2016.0})
     
     # Casual condom use
-    R.covout['condcas'][('Females 50+', 'Males 50+')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Males 15-24', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Females 25-49', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Males 25-49', 'Females 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
+    R.covout['condcas'][('Females 50+', 'Males 50+')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Males 15-24', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Females 25-49', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Males 25-49', 'Females 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
     R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'MSM programs':(0.45,0.55)})
-    R.covout['condcas'][('Females 25-49', 'Males 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Females 50+', 'Males 25-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Females 15-24', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Males 25-49', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Males 50+', 'Females 25-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Females 15-24', 'Males 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Males 50+', 'Females 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
-    R.covout['condcas'][('Females 25-49', 'Males 25-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC & Condom':(0.45,0.55)})
+    R.covout['condcas'][('Females 25-49', 'Males 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Females 50+', 'Males 25-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Females 15-24', 'Clients')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Males 25-49', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Males 50+', 'Females 25-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Females 15-24', 'Males 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Males 50+', 'Females 15-24')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
+    R.covout['condcas'][('Females 25-49', 'Males 25-49')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'SBCC':(0.45,0.55)})
 
     # HIV testing
     R.covout['hivtest']['FSW'].addccopar({'intercept': (0.15,0.25), 
@@ -178,7 +180,7 @@ if 'savezambia' in tests:
 
 
     from optima import saveobj
-    newfilename = 'exercise_complete-1-costfns.prj'
+    newfilename = 'exercise_complete-3.prj'
 
     saveobj(newfilename, P)
 
