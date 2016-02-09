@@ -670,6 +670,26 @@ class ProgsetsDb(db.Model):
                 for program in self.programs if program.active
             ]
         )
+        for parset_effect in self.effects:
+            for program_effect in parset_effect['parameters']:
+                for year in program_effect['years']:
+                    effect = {
+                        'intercept': (year['intercept_lower'], year['intercept_upper']),
+                        't': year['year'],
+                        'interact': year['interact'],
+                    }
+                    for row in year["programs"]:
+                        effect[str(row['name'])] = (
+                            row['intercept_lower'],
+                            row['intercept_upper']
+                        )
+                    print('??????????????????')
+                    print(program_effect['name'])
+                    print(program_effect['pop'])
+                    print(effect)
+                    progset_entry.covout[program_effect['name']][tuple(program_effect['pop']) if isinstance(program_effect['pop'], list) else program_effect['pop']].addccopar(
+                        effect, overwrite=True
+                    )
 
         return progset_entry
 
