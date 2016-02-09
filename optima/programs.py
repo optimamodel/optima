@@ -604,11 +604,25 @@ class Programset(object):
             return mismatch
         
         ## Do the actual calibration thingo
-        def cco2vec(): raise Exception('Not implemented')
-        
-        def vec2cco(): raise Exception('Not implemented')
-        
-        raise Exception('Not implemented')
+        def cco2vec(t=None):
+            if t is None: raise Exception('Please supply a year')
+            modifiablepars = odict()
+            for targetpartype in self.covout.keys():
+                for targetparpop in self.covout[targetpartype].keys():
+                    modifiablepars[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='l')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='u')['intercept'][0]]
+                    for thisprog in self.progs_by_targetpar(targetpartype)[targetparpop]:
+                        modifiablepars[(targetpartype,targetparpop,thisprog.short)] = [self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='lower')[thisprog.short][0],self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='upper')[thisprog.short][0]]
+            return modifiablepars
+
+        def vec2cco(modifiablepars=None,t=None):
+            if t is None: raise Exception('Please supply a year')
+            if modifiablepars is None: raise Exception('Please supply modifiablepars')
+
+            raise Exception('Not finished yet')
+
+            ##WARNING this is not correct
+            for k,v in modifiablepars.iteritems():
+                self.covout[k[0]][k[1]].ccopars[k[2]] = [(v,v)]        
         
         return None
 
@@ -1123,12 +1137,6 @@ class Costcov(CCOF):
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
         if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-#            y = zeros(nyrs)
-#            for yr in range(nyrs):
-#                y[yr] = maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-#            return y
-            
-#            return max(-0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps),eps)
         else: raise OptimaException('coverage vector should be the same length as params.')
 
     def emptypars(self):
