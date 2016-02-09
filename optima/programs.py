@@ -734,7 +734,7 @@ class Program(object):
                     except OptimaException as E: 
                         print('Failed to extract results because "%s", rerunning the model...' % E.message)
                         results = runmodel(pars=parset.pars[ind], settings=settings)
-                        parset.resultsref = results.uid # So it doesn't have to be rerun
+                        parset.resultsref = results.name # So it doesn't have to be rerun
                 
                 cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
                 initpopsizes = zeros((npops,len(t))) 
@@ -753,7 +753,7 @@ class Program(object):
                     except OptimaException as E: 
                         print('Failed to extract results because "%s", rerunning the model...' % E.message)
                         results = runmodel(pars=parset.pars[ind], settings=settings)
-                        parset.resultsref = results.uid # So it doesn't have to be rerun
+                        parset.resultsref = results.name # So it doesn't have to be rerun
                 for yr in t:
                     initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 

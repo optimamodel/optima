@@ -452,7 +452,7 @@ def minoutcomes(project=None, optim=None, inds=None, tvec=None, verbose=None, ma
     multires = Multiresultset(resultsetlist=tmpresults, name='outcomes-%s-%s' % (parset.name, progset.name))
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
-    optim.resultsref = multires.uid # Store the reference for this result
+    optim.resultsref = multires.name # Store the reference for this result
     
     return multires
 
