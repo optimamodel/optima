@@ -628,8 +628,11 @@ class Programset(object):
     def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=100, stepsize=0.1, verbose=4):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         
-        def objectivecalc(progset=None, parset=None, year=None, ind=None, method=None, eps=1e-3):
+        def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, method=None, origmismatch=None, verbose=2, eps=1e-3):
             ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
+            pardict[:] = pararray * workingfactors
+            self.odict2cco(pardict)
+            
             comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
             allmismatches = []
             mismatch = 0
@@ -647,39 +650,27 @@ class Programset(object):
                     raise OptimaException(errormsg)
                 allmismatches.append(thismismatch)
                 mismatch += thismismatch
+            printv('orig=%f current=%f' % (origmismatch, mismatch), 4, verbose)
             return mismatch
         
-        # Store original values in case we need to go back to them
-#        origcovout = dcp(self.covout)
+        ## Store original values in case we need to go back to them
         origvals = dcp(self.cco2odict(t=year))
-        workingvals = dcp(origvals)
-        testarr = origvals[:] # Turn into array format
-        npars = shape(testarr)[0]
+        pardict = dcp(origvals)
+        pararray = origvals[:] # Turn into array format
+        npars = shape(pararray)[0]
         bestfactors    = ones((npars,1))
         workingfactors = ones((npars,1))
-        
-        ## Calculate initial mismatch, just, because.
-        origmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method)
-        currentmismatch = origmismatch
+        origmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method) # Calculate initial mismatch, just, because
         
         ## Just do a simple random walk
-        for i in range(maxiters):
-            workingfactors = dcp(bestfactors)
-            factor = 1.0+stepsize*randn() # Effectively, bound between (0.5, 1.5)
-            testind = floor(npars*rand())
-            workingfactors[testind] *= factor
-            workingvals[:] = testarr * workingfactors
-            self.odict2cco(workingvals)
-            newmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method)
-            printv('%i: orig=%f best=%f current=%f' % (i, origmismatch, currentmismatch, newmismatch), 3, verbose)
-            printv(workingfactors.flatten().tolist(), 4, verbose)
-            if newmismatch<currentmismatch:
-                bestfactors = workingfactors
-                currentmismatch = newmismatch
+        args = {'pararray':workingfactors, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':origmismatch, 'verbose':verbose}
+        from scipy.optimize import minimize # TEMP
+        optres = minimize(objectivecalc, workingfactors, args=args)
+        bestfactors = optres.x
         
         # Wrap up
-        workingvals[:] = testarr * bestfactors
-        self.odict2cco(workingvals) # Copy best values
+        pardict[:] = pararray * bestfactors
+        self.odict2cco(pardict) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
         
