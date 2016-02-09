@@ -14,8 +14,9 @@ Version: 2016feb06
 
 ## Define tests to run here!!!
 tests = [
-'makeprograms',
-'compareoutcomes',
+#'makeprograms',
+#'compareoutcomes',
+'reconcilepars',
 ]
 
 
@@ -379,6 +380,14 @@ if 'compareoutcomes' in tests:
     comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
     done(t)
 
+
+
+# Reconciliation test
+if 'reconcilepars' in tests:
+    import optima as op
+    P = op.defaults.defaultproject('best')
+    P.progsets[0].reconcile(parset=P.parsets[0], year=2016)
+    
 
 
 
