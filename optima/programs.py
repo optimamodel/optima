@@ -660,13 +660,22 @@ class Programset(object):
         npars = shape(pararray)[0]
         bestfactors    = ones((npars,1))
         workingfactors = ones((npars,1))
-        origmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method) # Calculate initial mismatch, just, because
+        origmismatch = -1 # Initialize, doesn't matter, immediately overwritten
         
         ## Just do a simple random walk
-        args = {'pararray':workingfactors, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':origmismatch, 'verbose':verbose}
-        from scipy.optimize import minimize # TEMP
-        optres = minimize(objectivecalc, workingfactors, args=args)
-        bestfactors = optres.x
+        args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':origmismatch, 'verbose':verbose}
+        origmismatch = objectivecalc(factors=bestfactors, **args) # Calculate initial mismatch, just, because
+        args['origmismatch'] = origmismatch
+        
+        optmethod='asd'
+        if optmethod=='simplex':
+            from scipy.optimize import minimize # TEMP
+            optres = minimize(objectivecalc, workingfactors, args=args)
+            bestfactors = optres.x
+        elif optmethod=='asd':
+            from optima import asd
+            parvecnew, fval, exitflag, output = asd(objectivecalc, workingfactors, args=args)
+        currentmismatch = objectivecalc(factors=bestfactors, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
         pardict[:] = pararray * bestfactors
