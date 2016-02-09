@@ -15,8 +15,10 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
+      $scope.state.chartData = [];
       fetchDefaultData();
       fetchEstimatedSize();
+      $scope.updateGraph();
     };
 
     $scope.addToCCData = function(ccDataForm) {

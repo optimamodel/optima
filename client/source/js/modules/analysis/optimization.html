@@ -1,3 +1,212 @@
-<div>
-  This feature has been temporarily disabled, please check back in a couple of days
+<script>
+  function format_xaxis() {
+    var axes = $('.mpld3-xaxis');
+    if (axes.length > 0 && !$(axes[0]).attr('data-pro')) {
+      $(axes).find('g.tick > text').each(function() {
+        $(this).text($(this).text().replace(',',''));
+      });
+      axes.attr('data-pro', true);
+    } else {
+      setTimeout(format_xaxis, 150);
+    }
+  }
+  function add_lines_to_legends() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro1')) {
+      svgGraphFigures.each(function() {
+        var paths = $(this).find('.mpld3-baseaxes > text');
+        if (paths) {
+          var legend_length = paths.length - 2;
+          var lines = $(this).find('.mpld3-axes > path');
+          var lines_to_copy = lines.slice(lines.length - legend_length, lines.length);
+          $(this).find('.mpld3-baseaxes').append(lines_to_copy);
+        }
+        $(this).attr('data-pro1', true);
+      });
+    } else {
+      setTimeout(add_lines_to_legends, 150);
+    }
+  }
+  function set_overflow_visible() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro2')) {
+      svgGraphFigures.each(function() {
+        $(this).css('overflow', 'visible');
+        $(this).attr('data-pro2', true);
+      });
+    } else {
+      setTimeout(set_overflow_visible, 150);
+    }
+  }
+  function fix_mouse_pointer() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro3')) {
+      svgGraphFigures.each(function () {
+        var that = this;
+        $(that).on('mouseover', function() {
+          $(that).find('.mpld3-coordinates').each(function () {
+            $(this).attr('y', parseInt($(that).attr('height')) + 7);
+          });
+          $(that).find('.mpld3-toolbar').each(function () {
+            $(this).remove();
+          });
+        });
+        $(this).attr('data-pro3', true);
+      });
+    } else {
+      setTimeout(fix_mouse_pointer, 150);
+    }
+  }
+  function remove_default_plugin() {
+    var svgGraphFigures = $('mpld3-toolbar');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro4')) {
+      svgGraphFigures.each(function () {
+        $(this).remove();
+        $(this).attr('data-pro4', true);
+      });
+    } else {
+      setTimeout(remove_default_plugin, 150);
+    }
+  }
+
+  function fix_graphs() {
+    format_xaxis();
+    add_lines_to_legends();
+    set_overflow_visible();
+    fix_mouse_pointer();
+    remove_default_plugin();
+  }
+
+  $(document).ready(function() {
+    fix_graphs();
+    $(document.body).on('click', '.updateGraph' ,function() {
+      fix_graphs();
+    });
+  });
+</script>
+<div class="rich" style="margin: -40px 0px;">
+  <div class="grid" style="margin: 0 -25px;">
+    <h1>Analyses &#8594; Optimization</h1>
+  </div>
+
+  <div class="rich" style="margin: 0 -25px;" ng-if="!missingData">
+    <div class="3">
+      <label for="optimization-selection">Select an optimization:</label>
+    </div>
+    <div style="display: flex;justify-content: flex-start;">
+      <select id="optimization-selection"
+              name="optimization-selection"
+              class="updateGraph txbox"
+              ng-model="state.activeOptimization"
+              ng-change="setActiveOptimization(state.activeOptimization)"
+              ng-options="optimization.name for optimization in state.optimizations"
+              style="width: 20%;">
+      </select>
+      <button ng-click="addOptimization()" type="button" class="btn" style="margin-left:2%">New optimization</button>
+      <button ng-click="copyOptimization()" type="button" class="btn" style="margin-left:2%">Copy optimization</button>
+      <button ng-click="renameOptimization()" type="button" class="btn" style="margin-left:2%">Rename optimization</button>
+      <button ng-click="downloadOptimization()" type="button" class="btn" style="margin-left:2%">Download optimization</button>
+      <button ng-click="uploadOptimization()" type="button" class="btn" style="margin-left:2%">Upload optimization</button>
+      <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
+    </div>
+
+    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
+      <div class="small_bordered_list" style="width: 30%;">
+        <div class="option_list" style="height:62vh">
+          <label>
+            <div class="label">Program set</div>
+            <select class="txbox"
+                    style="width: 60%;"
+                    ng-options="program.id as program.name for program in state.programSetList"
+                    ng-model="state.activeOptimization.progset_id">
+              <option value="">-- Please select a program set --</option>
+            </select>
+          </label>
+          <label>
+            <div class="label">Parameter set</div>
+            <select class="txbox"
+                    style="width: 60%;"
+                    ng-options="parset.id as parset.name for parset in state.parsets"
+                    ng-model="state.activeOptimization.parset_id">
+              <option value="">-- Please select a parameter set --</option>
+            </select>
+          </label>
+          <div>
+            <div class="label">Type</div>
+            <div>
+                <span style="width: 45%">
+                  <input
+                      type="radio"
+                      name="objectives_which"
+                      ng-click="setType('outcomes')"
+                      ng-checked="state.activeOptimization.which==='outcomes'"/>
+                  Minimize outcomes
+                </span>
+                <span style="width: 45%">
+                  <input
+                      type="radio"
+                      name="objectives_which"
+                      ng-click="setType('money')"
+                      ng-checked="state.activeOptimization.which==='money'"/>
+                  Minimize money
+                </span>
+            </div>
+          </div>
+          <div ng-if="state.activeOptimization.objectives">
+            <div class="label">Objectives</div>
+            <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
+              <span style="width: 70%">{{objective.label}}</span>
+                <span style="width: 25%">
+                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.objectives[objective.key]"/>
+                </span>
+            </div>
+          </div>
+          <div ng-if="state.activeOptimization.constraints">
+            <div class="label">Constraints</div>
+            <div style="justify-content: space-around; font-weight: bold" class="option">
+              <span style="width: 60%">Program Name</span>
+              <span style="width: 20%">Minimum</span>
+              <span style="width: 20%">Maximum</span>
+            </div>
+          </div>
+          <div style="justify-content: space-around" class="option" ng-repeat="constraintLKey in state.constraintKeys">
+            <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintLKey] }}</span>
+              <span style="width: 20%">
+                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintLKey]"/>
+              </span>
+              <span style="width: 20%">
+                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintLKey]"/>
+              </span>
+          </div>
+        </div>
+        <div style="font-style: italic;color: lightgreen;margin-top: 25px;margin-left: 35px">
+          {{ statusMessage }}
+        </div>
+        <div style="font-style: italic;color: red;margin-top: 5px;margin-left: 35px">
+          {{ errorMessage }}
+        </div>
+        <div style="display: flex;justify-content: space-around; margin-top: 5px">
+          <input type="button" value="Run"
+             class="updateGraph btn" ng-click="runOptimizations()"
+             ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/> <!-- WARNING, automatically saves! -->
+          <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization()"/>
+          <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
+        </div>
+      </div>
+      <div class="chart_wrapper" style="height:calc(100vh - 280px)">
+        <img src="http://thekerrlab.com/tmp/scr2016Feb08-4.png">
+      </div>
+      <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
+        <div class="option_list" style="height:62vh">
+          <div ng-repeat="selector in selectors" class="option">
+            <span><input type="checkbox" ng-model="selector.checked"/></span>
+            <span style="margin-left: 10px">{{selector.name}}</span>
+          </div>
+        </div>
+        <div style="display: flex;justify-content: center; margin-top: 25px">
+          <input type="button" value="Update" class="updateGraph btn" ng-click="getOptimizationGraphs()"/>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

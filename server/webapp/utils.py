@@ -487,6 +487,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
 
     program_record.blob = saves(program_record.hydrate())
     db.session.add(program_record)
+    return program_record
 
 
 def modify_program(project_id, progset_id, program_id, args, program_modifier):
@@ -541,6 +542,14 @@ def save_result(project_id, result, parset_name='default', calculation_type = Re
     return result_record
 
 
+def remove_nans(obj):
+    import json
+    # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+    json_string = json.dumps(obj).replace('NaN', 'null')
+    return json.loads(json_string)
+
+
+
 def init_login_manager(login_manager):
 
     @login_manager.user_loader
@@ -589,6 +598,18 @@ class RequestParser(OrigReqParser):
             return arg.type.__name__
         return arg.type
 
+    def get_swagger_location(self, arg):
+
+        if isinstance(arg.location, tuple):
+            loc = arg.location[0]
+        else:
+            loc = arg.location.split(',')[0]
+
+        if loc == "args":
+            return "query"
+        return loc
+
+
     def swagger_parameters(self):
         return [
             {
@@ -596,7 +617,7 @@ class RequestParser(OrigReqParser):
                 'dataType': self.get_swagger_type(arg),
                 'required': arg.required,
                 'description': arg.help,
-                'paramType': 'form',
+                'paramType': self.get_swagger_location(arg),
             }
             for arg in self.args
         ]

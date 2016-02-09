@@ -84,6 +84,11 @@ if 'makeprograms' in tests:
                   targetpops=pops,
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
+    Adherence = Program(short='Adherence',
+                  targetpars=[{'param': 'stoprate', 'pop': pop} for pop in ['F 15+', 'M 15+', 'FSW', 'Clients', 'MSM']],
+                  targetpops=['F 15+', 'M 15+', 'FSW', 'Clients', 'MSM'],
+                  criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+
     PMTCT = Program(short='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
                   targetpops=['tot'],
@@ -95,9 +100,8 @@ if 'makeprograms' in tests:
                   targetpars=[{'param': 'numcirc', 'pop': 'M 15+'},
                               {'param': 'numcirc', 'pop': 'MSM'},
                               {'param': 'numcirc', 'pop': 'Clients'},
-                              {'param': 'numcirc', 'pop': 'M 0-14'},
                               {'param': 'numcirc', 'pop': 'PWID'}],
-                  targetpops=['M 15+', 'MSM', 'Clients', 'M 0-14', 'PWID'],
+                  targetpops=['M 15+', 'MSM', 'Clients', 'PWID'],
                   category='Prevention',
                   name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
@@ -131,6 +135,8 @@ if 'makeprograms' in tests:
                          'cost':1e7})
     VMMC.addcostcovdatum({'t':2015,
                          'cost':1e7})     
+    Adherence.addcostcovdatum({'t':2015,
+                         'cost':2e6})
                          
     # 4. Overwrite historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
@@ -167,6 +173,10 @@ if 'makeprograms' in tests:
     VMMC.costcovfn.addccopar({'saturation': (.5,.6),
                              't': 2016.0,
                              'unitcost': (15,25)})
+                             
+    Adherence.costcovfn.addccopar({'saturation': (.2,.3),
+                                   't': 2016.0,
+                                   'unitcost': (300,500)})
                              
     # 7. Overwrite parameters for defining cost-coverage function.
     HTC.costcovfn.addccopar({'t': 2016.0,
@@ -218,7 +228,7 @@ if 'makeprograms' in tests:
 
     # Initialise with or without programs
     R = Programset()
-    R = Programset(programs=[HTC,SBCC,MGT,ART,PMTCT,VMMC])
+    R = Programset(programs=[HTC,SBCC,MGT,ART,PMTCT,VMMC,Adherence])
 
     # Testing methods of programset class
     # 1. Adding a program
@@ -251,6 +261,7 @@ if 'makeprograms' in tests:
                   'ART':array([1e7,1.2e7,1.5e7]),
                   'PMTCT':array([1e7,1.2e7,1.5e7]),
                   'VMMC':array([1e7,1.2e7,1.5e7]),
+                  'Adherence':array([1e6,1.2e6,1.5e6]),
                   'MGT':array([2e5,3e5,3e5])})
             
     coverage=odict({'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
@@ -258,6 +269,7 @@ if 'makeprograms' in tests:
               'ART':array([1e5,1.2e5,1.5e5]),
               'PMTCT':array([1e3,1.2e3,1.5e3]),
               'VMMC':array([1e5,1.2e5,1.5e5]),
+              'Adherence':array([1e6,1.2e6,1.5e6]),
               'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])})
               
     budget = budget.sort([p.short for p in R.programs.values()])
@@ -321,7 +333,12 @@ if 'makeprograms' in tests:
     R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
     R.covout['numcirc']['PWID'].addccopar({'intercept': (0,0), 't': 2016.0})
     R.covout['numcirc']['M 15+'].addccopar({'intercept': (0,0), 't': 2016.0})
-    R.covout['numcirc']['M 0-14'].addccopar({'intercept': (0,0), 't': 2016.0})
+
+#    R.covout['stoprate']['MSM'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['Clients'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['FSW'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['M 15+'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['F 15+'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
 
     # 9. Overwrite parameters for defining coverage-outcome function.
     R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.35,0.45),

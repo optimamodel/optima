@@ -10,20 +10,25 @@ define(['./scale-helpers', 'mpld3'], function (scaleHelpers, mpld3) {
   OptimaTickFormatter.prototype.constructor = OptimaTickFormatter;
   OptimaTickFormatter.prototype.draw = function(){
 
-    var xAxis = this.fig.axes[0].elements[0];
-    var xLimits = this.fig.axes[0].props.xlim;
-    var xFormat = scaleHelpers.evaluateTickFormat(xLimits[0], xLimits[1]);
-    xAxis.axis.tickFormat(function (value) {
-      return scaleHelpers.customTickFormat(value, xFormat);
-    });
+    if (this.fix.axes && len(this.fig.axes)>0 && this.fig.axes[0].elements && len(this.fig.axes[0].elements)>0) {
+      var xAxis = this.fig.axes[0].elements[0];
+      var xLimits = this.fig.axes[0].props.xlim;
+      if (xLimits && len(xLimits)>1) {
+        var xFormat = scaleHelpers.evaluateTickFormat(xLimits[0], xLimits[1]);
+        xAxis.axis.tickFormat(function (value) {
+          return scaleHelpers.customTickFormat(value, xFormat);
+        });
+      }
 
-    var yAxis = this.fig.axes[0].elements[1];
-    var yLimits = this.fig.axes[0].props.ylim;
-    var yFormat = scaleHelpers.evaluateTickFormat(yLimits[0], yLimits[1]);
-    yAxis.axis.tickFormat(function (value) {
-      return scaleHelpers.customTickFormat(value, yFormat);
-    });
-
+      var yAxis = this.fig.axes[0].elements[1];
+      var yLimits = this.fig.axes[0].props.ylim;
+      if (xLimits && len(xLimits)>1) {
+        var yFormat = scaleHelpers.evaluateTickFormat(yLimits[0], yLimits[1]);
+        yAxis.axis.tickFormat(function (value) {
+          return scaleHelpers.customTickFormat(value, yFormat);
+        });
+      }
+    }
     // Reset the figure to trigger a redraw. This is an unecessary overhead
     // but still better than patching mpld3 itself.
     this.fig.reset();
