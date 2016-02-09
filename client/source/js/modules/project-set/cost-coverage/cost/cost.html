@@ -38,7 +38,7 @@
       <div class="chart-container __medium">
         <div mpld3-chart="state.chartData" id="cost_cov_chart" ng-if="state.chartData"></div>
         <div class="c-caption" ng-if="state.displayCaption">{{state.displayCaption}}</div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ state.chartData.id }}"></chart-toolbar>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="{{ state.chartData.id }}"></chart-toolbar>
       </div>
       <div class="flex-column margin_left">
         <div class="flex-column">
