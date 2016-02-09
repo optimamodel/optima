@@ -653,7 +653,11 @@ class Programset(object):
         # Store original values in case we need to go back to them
         origcovout = dcp(self.covout)
         origvals = dcp(self.cco2odict(t=year))
-        bestvals = dcp(origvals)
+        workingvals = dcp(origvals)
+        testarr = origvals[:] # Turn into array format
+        npars = shape(testarr)[0]
+        bestfactors    = ones((npars,1))
+        workingfactors = ones((npars,1))
         
         ## Calculate initial mismatch, just, because.
         origmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method)
@@ -661,24 +665,22 @@ class Programset(object):
         
         ## Just do a simple random walk
         for i in range(maxiters):
-            workingvals = dcp(bestvals)
-            testarr = workingvals[:] # Turn into array format
-            npars = shape(testarr)[0]
+            workingfactors = dcp(bestfactors)
             factor = 1.0+stepsize*randn() # Effectively, bound between (0.5, 1.5)
             testind = floor(npars*rand())
-            testarr[testind] *= factor
-            workingvals[:] = testarr
+            workingfactors[testind] *= factor
+            workingvals[:] = testarr * workingfactors
             self.odict2cco(workingvals)
             newmismatch = objectivecalc(self, parset=parset, year=year, ind=ind, method=method)
-            printv('%i: orig=%f best=%f current=%f' % (i, origmismatch, currentmismatch, newmismatch), 4, verbose)
+            printv('%i: orig=%f best=%f current=%f' % (i, origmismatch, currentmismatch, newmismatch), 3, verbose)
+            printv(transpose(workingfactors), 4, verbose)
             if newmismatch<currentmismatch:
-                bestvals = workingvals
+                bestfactors = workingfactors
                 currentmismatch = newmismatch
         
         # Wrap up
         self.odict2cco(bestvals) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
-        print(origmismatch)
         return None
         
         
