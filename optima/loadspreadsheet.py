@@ -6,7 +6,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.4 (2016feb07) by cliffk
+    Version: 1.4 (2016feb07)
     """
     
     ###########################################################################

@@ -265,8 +265,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 initpeople[initpeople<0] = 0.0
             
     people[:,:,0] = initpeople # No it hasn't, so run equilibration
-    if usecascade:
-        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
     
     
     
