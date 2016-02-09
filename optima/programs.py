@@ -631,8 +631,7 @@ class Programset(object):
         def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, method=None, origmismatch=None, verbose=2, eps=1e-3):
             ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
             pardict[:] = pararray * workingfactors
-            self.odict2cco(pardict)
-            
+            progset.odict2cco(pardict)
             comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
             allmismatches = []
             mismatch = 0
