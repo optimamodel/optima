@@ -41,9 +41,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var add = function (name) {
         var newOptimization = {
           name: name,
-          which: 'money',
+          which: 'outcomes',
           constraints: constraints,
-          objectives: objectiveDefaults.money
+          objectives: objectiveDefaults.outcomes
         };
         $scope.setActiveOptimization(newOptimization);
         $scope.state.optimizations.push(newOptimization);
@@ -144,7 +144,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
         .success(function(response) {
           if(response.status === 'completed') {
-            getOptimizationGraphs();
+            $scope.getOptimizationGraphs();
             $scope.statusMessage = 'Optimization successfully completed.';
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
@@ -234,10 +234,9 @@ var constraints = {
 
 // this is to be replaced by an api
 var objectives = {
-  outcome: [
-    { key: 'base', label: 'Baseline year to compare outcomes to' },
+  outcomes: [
     { key: 'start', label: 'Year to begin optimization' },
-    { key: 'end', label: 'Year by which to achiever objectives' },
+    { key: 'end', label: 'Year by which to achieve objectives' },
     { key: 'budget', label: 'Starting budget' },
     { key: 'deathweight', label: 'Relative weight per death' },
     { key: 'inciweight', label: 'Relative weight per new infection' }
@@ -245,7 +244,7 @@ var objectives = {
   money: [
     {key: 'base', label: 'Baseline year to compare outcomes to' },
     { key: 'start', label: 'Year to begin optimization' },
-    { key: 'end', label: 'Year by which to achiever objectives' },
+    { key: 'end', label: 'Year by which to achieve objectives' },
     { key: 'budget', label: 'Starting budget' },
     { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
     { key: 'incifrac', label: 'Fraction of infections to be averted' }
@@ -253,18 +252,18 @@ var objectives = {
 };
 
 var objectiveDefaults = {
-  outcome: {
+  outcomes: {
     base: undefined,
     start: 2017,
-    end: 2013,
+    end: 2030,
     budget: 63500000.0,
     deathweight: 0,
     inciweight: 0
   },
   money: {
-    base: undefined,
+    base: 2015,
     start: 2017,
-    end: 2013,
+    end: 2030,
     budget: 63500000.0,
     deathfrac: 0,
     incifrac: 0

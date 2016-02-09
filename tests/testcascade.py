@@ -1,7 +1,7 @@
 """
 Test the cascade
 
-Version: 2016jan30 by cliffk
+Version: 2016feb08
 """
 
 
@@ -9,7 +9,6 @@ Version: 2016jan30 by cliffk
 ## Define tests to run here!!!
 tests = [
 'compare',
-'90-90-90'
 ]
 
 
@@ -63,8 +62,8 @@ if 'compare' in tests:
     toc(qq, label='model run with cascade')
     
     if doplot:
-        op.gui.plotpeople(P, P.results[-1].raw[0]['people'], animate=False, figsize=(16,10), num='No cascade')
-        op.gui.plotpeople(Q, Q.results[-1].raw[0]['people'], animate=False, figsize=(16,10), num='With cascade')
+        op.gui.plotpeople(P, P.results[-1].raw[0]['people'], animate=1, figsize=(16,10), num='No cascade')
+        op.gui.plotpeople(Q, Q.results[-1].raw[0]['people'], animate=1, figsize=(16,10), num='With cascade')
     
     done(t)
 

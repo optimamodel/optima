@@ -1,6 +1,7 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, loadeconomicsspreadsheet, runmodel, defaultobjectives, defaultconstraints # Import functions
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
+from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
 
 #######################################################################################################
@@ -429,6 +430,7 @@ class Project(object):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
         multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
             self.addresult(result=multires)

@@ -8,7 +8,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.scenarios = scenariosResponse.data.scenarios;
         $scope.progsets = progsetsResponse.data.progsets;
         $scope.parsets = parsetResponse.data.parsets;
-        $scope.deletedScenarios = [];
 
         if (!openProject.has_data) {
           $scope.missingModelData = true;
@@ -101,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .value();
         };
 
-        $scope.runScenarios = function (saveScenario) {
+        $scope.runScenarios = function () {
           var activeScenarios = _.filter($scope.scenarios, function(scenario){ return scenario.active; });
           $http.get('/api/project/'+openProject.id+'/scenarios/results')
             .success(function(data) {
@@ -110,16 +109,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
         };
 
-        $scope.saveScenarios = function (saveScenario) {
+        $scope.saveScenarios = function (state) {
           $http.put('/api/project/'+openProject.id+'/scenarios', {
             'scenarios': $scope.scenarios
           }).success(function(response) {
-            modalService.inform(
-              function (){ },
-              'Okay',
-              'Scenario saved successfully.',
-              'Saved successfully'
-            );
+            if(!state){
+              modalService.inform(
+                function (){ },
+                'Okay',
+                'Scenario saved successfully.',
+                'Saved successfully'
+              );
+            }
             $scope.scenarios = response.scenarios;
           });
         };
@@ -199,8 +200,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               newscenario.id = null;
               $scope.scenarios.push(newscenario);
             }else if(action === 'delete'){
-              $scope.deletedScenarios.push(row);
-              $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
+              modalService.confirm(
+                function () {
+                  $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
+                  if(row.id){ $scope.saveScenarios('delete'); }
+                }, function () {
+                }, 'Yes, remove this scenario', 'No',
+                'Are you sure you want to permanently remove scenario "' + row.name + '"?',
+                'Delete scenario'
+              );
             }
         };
 

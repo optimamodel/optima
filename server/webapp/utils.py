@@ -487,6 +487,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
 
     program_record.blob = saves(program_record.hydrate())
     db.session.add(program_record)
+    return program_record
 
 
 def modify_program(project_id, progset_id, program_id, args, program_modifier):
