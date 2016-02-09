@@ -1,20 +1,11 @@
 """
-Version:
+Create a good test project
+
+Version: 2016feb08
 """
-import os
-from pylab import *; from optima import *
+import optima as op
 
-sys.path.append(os.getcwd())
+projname = 'exercise_complete.prj'
 
-
-tmpP = loadobj('../tests/mozam.prj')
-
-P = Project()
-P.data = tmpP.data
-P.makeparset()
-P.runsim(die=True)
-
-#plotpars(P)
-for p in range(12):
-    plotpeople(P, start=0, pops=p, skipempty=True, animate=False)
-#pygui(P.results[-1])
+P = op.loadobj(projname)
+op.saveobj(projname, P)

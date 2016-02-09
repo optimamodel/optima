@@ -15,7 +15,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
     pops = project.data['pops']['short']
     malelist = [pops[i] for i in range(len(pops)) if project.data['pops']['male'][i]]
     pwidlist = [pops[i] for i in range(len(pops)) if project.data['pops']['injects'][i]]
-    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i]]
+    fswlist = [pops[i] for i in range(len(pops)) if project.data['pops']['sexworker'][i] and project.data['pops']['female'][i]]
 
     regpships = project.parsets['default'].pars[0]['condreg'].y.keys()
     caspships = project.parsets['default'].pars[0]['condcas'].y.keys()
@@ -151,7 +151,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                   targetpops=pops,
                   category='Care and treatment',
                   name='Antiretroviral therapy',
-                  criteria = {'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+                  criteria = {'hivstatus': 'allstates', 'pregnant': False})
     
     PMTCT = Program(short='PMTCT',
                   targetpars=[{'param': 'numtx', 'pop': 'tot'}, {'param': 'numpmtct', 'pop': 'tot'}],
@@ -245,11 +245,11 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
                                  
         HTC.costcovfn.addccopar({'saturation': (0.85,0.95),
                                  't': 2016.0,
-                                 'unitcost': (10,20)})
+                                 'unitcost': (5,10)})
                                  
-        ART.costcovfn.addccopar({'saturation': (0.9,0.9),
+        ART.costcovfn.addccopar({'saturation': (0.99,0.99),
                                  't': 2016.0,
-                                 'unitcost': (100,200)})
+                                 'unitcost': (400,800)})
                                  
         PMTCT.costcovfn.addccopar({'saturation': (0.9,0.9),
                                  't': 2016.0,
@@ -337,7 +337,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
+        R = defaultprogset(P, addpars=True, addcostcov=False, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
 
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
@@ -396,10 +396,10 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['condcas'][('M 15-49', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('F 15-49', 'M 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
         R.covout['condcas'][('F 50+', 'M 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('M 50+', 'FSW')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('M 50+', 'FSW')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.55,0.65)})
         R.covout['condcas'][('M 50+', 'F 15-49')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
         R.covout['condcas'][('F 50+', 'M 50+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
 
         R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
     
@@ -466,43 +466,46 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     ##########################################################################################################################
     ## Concentrated
     ##########################################################################################################################
-    elif which=='concentrated':
+    elif which in ['best','concentrated']:
         printv('Creating concentrated example...', 2, verbose)
         # Make project and store results from default sim
         P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
+        
+        # "Calibrate"
+        P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
     
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'OST', 'Other'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'HTC', 'ART', 'Other'])
         
-        # Modify target pars and pops
-        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'M 0-14'})
-        R.programs['HTC'].rmtargetpar({'param': 'hivtest', 'pop': 'F 0-14'})
-        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('M 0-14'))
-        R.programs['HTC'].targetpops.pop(R.programs['HTC'].targetpops.index('F 0-14'))
-        R.updateprogset()
-    
+        R.programs['Condoms'].costcovdata =      {'t':[2014],'cost':[1.3e7],'coverage':[3e5]}
+        R.programs['FSW programs'].costcovdata = {'t':[2014],'cost':[2.5e6],'coverage':[1e9]}
+        R.programs['HTC'].costcovdata =          {'t':[2014],'cost':[1e7],'coverage':[1.3e6]}
+        R.programs['ART'].costcovdata =          {'t':[2014],'cost':[2e7],'coverage':[2e4]}
+        R.programs['Other'].costcovdata =        {'t':[2014],'cost':[1.5e7],'coverage':[None]}
+        
         # Add program effects
-        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-        R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.5,0.55), 't': 2016.0, 'Condoms':(0.55,0.65), 'MSM programs':(0.75,0.85)})
-        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'Condoms':(0.45,0.55), 'FSW programs':(0.55,0.65)})
-        R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept': (0.2,0.3), 't': 2016.0, 'Condoms':(0.35,0.45)})
-        R.covout['condcas'][('F 15+', 'PWID')].addccopar({'intercept': (0.1,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('Clients', 'FSW')].addccopar({'intercept':  (0.2,0.25), 't': 2016.0, 'Condoms':(0.35,0.45), 'FSW programs':(0.75,0.85)})
+        R.covout['condcas'][('F 15+','Clients')].addccopar({'intercept': (0.25,0.3), 't': 2016.0, 'Condoms':(0.85,0.95)})
+        R.covout['condcas'][('M 15+', 'FSW')].addccopar({'intercept':    (0.3,0.35), 't': 2016.0, 'Condoms':(0.50,0.55), 'FSW programs':(0.59,0.65)})
+        R.covout['condcas'][('F 15+', 'M 15+')].addccopar({'intercept':  (0.30,0.35), 't': 2016.0, 'Condoms':(0.45,0.50)})
+        R.covout['condcas'][('F 15+', 'PWID')].addccopar({'intercept':   (0.15,0.2), 't': 2016.0, 'Condoms':(0.35,0.45)})
+        R.covout['condcas'][('MSM', 'MSM')].addccopar({'intercept': (0.1,0.15), 't': 2016.0, 'Condoms':(0.55,0.65)})
     
-        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.6,0.65), 't': 2016.0, 'FSW programs':(0.9,0.95)})
+        R.covout['condcom'][('Clients', 'FSW')].addccopar({'intercept': (0.3,0.35), 't': 2016.0, 'FSW programs':(0.9,0.95)})
     
-        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99), 'FSW programs':(0.95,0.99)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99), 'MSM programs':(0.95,0.99)})
-        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.35,0.45), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.15,0.2), 't': 2016.0, 'HTC': (0.95,0.99)})
-        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.05,0.1), 't': 2016.0, 'HTC': (0.95,0.99)})
+        R.covout['hivtest']['FSW'].addccopar({'intercept': (0.30,0.40), 't': 2016.0, 'HTC': (0.90,0.95), 'FSW programs':(0.90,0.95)})
+        R.covout['hivtest']['Clients'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.40,0.60)})
+        R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+        R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
+        R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.20,0.12), 't': 2016.0, 'HTC': (0.80,0.90)})
     
-        R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
-        R.covout['numost']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+        R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         
         # Store this program set in the project
         P.addprogset(R)
+        
+        
     
     
     
