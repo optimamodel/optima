@@ -586,7 +586,7 @@ def update_or_create_optimization(project_id, project, name):
 
     from datetime import datetime
     import dateutil
-    from server.webapp.dbmodels import OptimizationsDb
+    from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb
     from optima.utils import saves
 
     parset_id = None

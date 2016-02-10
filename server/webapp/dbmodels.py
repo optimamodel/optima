@@ -189,8 +189,8 @@ class ProjectDb(db.Model):
                         parset_name = parset_name[0]
                 if optimization_record.progset_id:
                     progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
-                    if parset_name:
-                        parset_name = parset_name[0]
+                    if progset_name:
+                        progset_name = progset_name[0]
                 optim = op.Optim(project_entry, name=optimization_record.name,
                     objectives=optimization_record.objectives,
                     constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
