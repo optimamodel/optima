@@ -490,7 +490,9 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
             for i,x in enumerate(toplot[plt][:]):
                 if hasattr(x, '__len__'): 
                     try: progdata[i] = x[y]
-                    except: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
+                    except: 
+                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
+                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
                 else:                     progdata[i] = x
             if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y

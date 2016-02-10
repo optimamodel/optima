@@ -26,6 +26,7 @@ class Programset(object):
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
         else: self.updateprogset()
+        self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
 
@@ -265,7 +266,9 @@ class Programset(object):
                 for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
-
+                    
+        # TEMP: store default budget as an attribute
+        self.defaultbudget = lastbudget
         return selectbudget if t is not None else lastbudget
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2):
@@ -749,49 +752,50 @@ class Program(object):
         popsizes = {}
         targetpopsize = {}
         
-        # Do everything possible to get settings
-        try: settings = parset.project.settings
-        except: 
-            try: settings = results.project.settings
-            except:
-                print('Warning, could not find settings for program "%s", using default' % self.name)
-                settings = Settings()
-        
-        npops = len(parset.pars[ind]['popkeys'])
+#        # Do everything possible to get settings
+#        try: settings = parset.project.settings
+#        except: 
+#            try: settings = results.project.settings
+#            except:
+#                print('Warning, could not find settings for program "%s", using default' % self.name)
+#                settings = Settings()
+#        
+#        npops = len(parset.pars[ind]['popkeys'])
 
         # If it's a program for everyone... 
-        if not self.criteria['pregnant']:
-            if self.criteria['hivstatus']=='allstates':
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-    
-            else: # If it's a program for HIV+ people, need to find the number of positives
-                if not results: 
-                    try: results = parset.getresults(die=True)
-                    except OptimaException as E: 
-                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings)
-                        parset.resultsref = results.name # So it doesn't have to be rerun
-                
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
-                initpopsizes = zeros((npops,len(t))) 
-                for yrno,yr in enumerate(t):
-                    initpopsizes[:,yrno] = results.raw[ind]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0)
-                
-        # ... or if it's a program for pregnant women.
-        else:
-            if self.criteria['hivstatus']=='allstates': # All pregnant women
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
-
-            else: # HIV+ pregnant women
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-                if not results: 
-                    try: results = parset.getresults(die=True)
-                    except OptimaException as E: 
-                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings)
-                        parset.resultsref = results.name # So it doesn't have to be rerun
-                for yr in t:
-                    initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
+        initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+#        if not self.criteria['pregnant']:
+#            if self.criteria['hivstatus']=='allstates':
+#                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+#    
+#            else: # If it's a program for HIV+ people, need to find the number of positives
+#                if not results: 
+#                    try: results = parset.getresults(die=True)
+#                    except OptimaException as E: 
+#                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+#                        results = runmodel(pars=parset.pars[ind], settings=settings)
+#                        parset.resultsref = results.name # So it doesn't have to be rerun
+#                
+#                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
+#                initpopsizes = zeros((npops,len(t))) 
+#                for yrno,yr in enumerate(t):
+#                    initpopsizes[:,yrno] = results.raw[ind]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0)
+#                
+#        # ... or if it's a program for pregnant women.
+#        else:
+#            if self.criteria['hivstatus']=='allstates': # All pregnant women
+#                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
+#
+#            else: # HIV+ pregnant women
+#                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+#                if not results: 
+#                    try: results = parset.getresults(die=True)
+#                    except OptimaException as E: 
+#                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+#                        results = runmodel(pars=parset.pars[ind], settings=settings)
+#                        parset.resultsref = results.name # So it doesn't have to be rerun
+#                for yr in t:
+#                    initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
         for popno, pop in enumerate(parset.pars[ind]['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
@@ -1071,9 +1075,17 @@ class CCOF(object):
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
+    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2):
+        if isnumber(x): x = [x]
+        if isnumber(t): t = [t]
         if (not toplot) and (not len(x)==len(t)): 
-            raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
+            try: 
+                x = [x[0]]
+                t = [t[0]]
+            except:
+                x = [0]
+                t = [2015]
+            printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
