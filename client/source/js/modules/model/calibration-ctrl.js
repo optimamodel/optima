@@ -152,7 +152,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               }
             });
         };
-        if ($scope.activeParset.name === "default") {
+        // This has been temporarily commented out: https://trello.com/c/omuvJSYD/853-reuploading-spreadsheets-fails-in-several-ways
+        // if ($scope.activeParset.name === "default") {
+        if ( false ) {
           modalService.informError([{message: 'Deleting the default parameter set is not permitted.'}]);
         } else {
           modalService.confirm(
