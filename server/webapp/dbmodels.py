@@ -459,7 +459,7 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
         self.updated = updated
 
 costcov_fields = {
-    'year': fields.String,
+    'year': fields.Integer,
     'spending': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
@@ -690,7 +690,7 @@ class ProgsetsDb(db.Model):
                 for year in program_effect['years']:
                     effect = {
                         'intercept': (year['intercept_lower'], year['intercept_upper']),
-                        't': year['year'],
+                        't': int(year['year']),
                         'interact': year['interact'],
                     }
                     for row in year["programs"]:
