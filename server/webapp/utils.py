@@ -512,6 +512,7 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
     from datetime import datetime
     import dateutil
     from server.webapp.dbmodels import ScenariosDb, ParsetsDb, ProgsetsDb
+    import json
 
     parset_id = None
     progset_id = None
@@ -531,13 +532,9 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
 
     if scenario.t:
         blob['years'] = scenario.t
-    for key in ['budget', 'coverage', 'args']:
+    for key in ['budget', 'coverage', 'pars']:
         if hasattr(scenario, key) and getattr(scenario, key):
-            blob[key] = {
-                k: [item if type(item) != float else None for item in v]
-                if v is not None else None
-                for k, v in getattr(scenario, key).iteritems()
-            }
+            blob[key] = json.loads(json.dumps(getattr(scenario, key)))
 
     parset_name = scenario.parsetname
     if parset_name:
