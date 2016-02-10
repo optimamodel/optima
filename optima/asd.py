@@ -141,8 +141,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
-        abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
-        relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
+        abserrorhistory[mod(count,StallIterLimit)] = max(0, fval-fvalnew) # Keep track of improvements in the error
+        relerrorhistory[mod(count,StallIterLimit)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
         if verbose>=3:
             print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
@@ -187,7 +187,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitflag = 2 
             if verbose>=2: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
             break
-        if (count > StallIterLimit) and (abs(mean(relerrorhistory)) < RelTolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
             exitflag = 2 
             if verbose>=2: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break

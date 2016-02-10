@@ -632,8 +632,9 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, stepsize=0.1, verbose=2):
+    def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, stepsize=0.1, verbose=2, **kwargs):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
+        printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
         ## Store original values in case we need to go back to them
         origvals = dcp(self.cco2odict(t=year))
@@ -653,7 +654,7 @@ class Programset(object):
             factors = optres.x
         elif optmethod=='asd':
             from optima import asd
-            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, MaxIter=maxiters)
+            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, MaxIter=maxiters, **kwargs)
         currentmismatch = costfuncobjectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up

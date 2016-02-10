@@ -7,7 +7,7 @@ Version: 2016feb08
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
 
 ## Options
-autocalib = 0 # Whether or not to run autofitting
+autocalib = 1 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 1
 runscenarios = 1 # Run scenarios
@@ -16,6 +16,7 @@ dosave = 0
 filename = 'best.prj'
 ind = -1 # Default index
 
+#P = defaults.defaultproject('best')
 P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_define_costoutcomefunctions.prj')
