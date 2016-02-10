@@ -434,8 +434,11 @@ class ProjectSpreadsheet(Resource):
         # See if there is matching project
         current_app.logger.debug("project for user %s name %s: %s" % (
             current_user.id, project_name, project_entry))
-        from optima.utils import saves  # , loads
+        # from optima.utils import saves  # , loads
         # from optima.parameters import Parameterset
+        ParsetsDb.query.filter_by(project_id=project_id).delete('fetch')
+        db.session.flush()
+        project_entry = load_project(project_id)
         project_instance = project_entry.hydrate()
         project_instance.loadspreadsheet(server_filename)
         project_instance.modified = datetime.now(dateutil.tz.tzutc())
