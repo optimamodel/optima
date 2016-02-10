@@ -16,7 +16,7 @@ from server.webapp.utils import (load_project, RequestParser, report_exception, 
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb, ScenariosDb,OptimizationsDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
@@ -190,13 +190,18 @@ class ParsetsDetail(Resource):
         if parset is None:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
-        # Is this how we should check for default parset?
-        if parset.name.lower() == 'default':  # TODO: it is lowercase
-            abort(403)
+        # # Is this how we should check for default parset?
+        # if parset.name.lower() == 'default':  # TODO: it is lowercase
+        #     abort(403)
 
         # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        db.session.query(ParsetsDb).filter_by(id=parset_id).delete()
+        db.session.query(ResultsDb).filter_by(project_id=project_id,
+            id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        db.session.query(ScenariosDb).filter_by(project_id=project_id,
+            parset_id=parset_id).delete()
+        db.session.query(OptimizationsDb).filter_by(project_id=project_id,
+            parset_id=parset_id).delete()
+        db.session.query(ParsetsDb).filter_by(project_id=project_id, id=parset_id).delete()
         db.session.commit()
 
         return '', 204
@@ -334,9 +339,10 @@ class ParsetsCalibration(Resource):
         # but for FE we prefer list of dicts
 
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        result_entry = db.session.query(ResultsDb).filter_by(parset_id=parset_id, calculation_type=calculation_type)
+        result_entry = db.session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
         if result_entry:
-            result = result_entry[-1].hydrate()
+            result = result_entry.hydrate()
         else:
             simparslist = parset_instance.interp()
             result = project_instance.runsim(simpars=simparslist)
@@ -350,7 +356,7 @@ class ParsetsCalibration(Resource):
             "parameters": parameters,
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_entry[-1].id if result_entry else None
+            "result_id": result_entry.id if result_entry else None
         }
 
     @report_exception
@@ -440,8 +446,8 @@ class ParsetsCalibration(Resource):
         parset_entry.pars = op.saves(parset_instance.pars)
         parset_entry.updated = datetime.now(dateutil.tz.tzutc())
         db.session.add(parset_entry)
-        ResultsDb.query.filter_by(parset_id=parset_id, project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        ResultsDb.query.filter_by(id=args['result_id']).first()
+        ResultsDb.query.filter_by(parset_id=parset_id, 
+            project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         result_entry = ResultsDb.query.filter_by(id=args['result_id']).first()
         result_entry.parset_id = parset_id
         result_entry.project_id = project_id

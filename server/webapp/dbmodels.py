@@ -791,6 +791,8 @@ class ProgsetsDb(db.Model):
                     ]
                 }
                 effects.append(item)
+        print('-*-*-*-*-*-*+++++++++++++++')
+        print(effects)
         parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
             {
@@ -927,6 +929,28 @@ class ScenariosDb(db.Model):
             progset = load_progset(self.project_id, self.progset_id)
 
         blob = deepcopy(self.blob)
+
+        key = self.scenario_type
+        if key == 'parameter':
+            blob['pars'] = [
+                {
+                    'name': item['name'],
+                    'startyear': item['startyear'],
+                    'endval': item['endval'],
+                    'endyear': item['endyear'],
+                    'startval': item['startval'],
+                    'for': [
+                        tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
+                        for for_item in item['for']
+                    ]
+                } for item in blob['pars'] if 'pars' in blob
+            ]
+        else:
+            print(blob)
+            blob[key] = {
+                str(k): v
+                for k, v in blob[key].iteritems() if key in blob
+            } 
 
         if self.scenario_type == "budget":
 
