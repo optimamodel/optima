@@ -371,7 +371,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 
-def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=300, verbose=2, stoppingfunc=None, method='asd', debug=False):
+def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
