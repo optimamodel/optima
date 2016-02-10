@@ -1,6 +1,7 @@
 from datetime import datetime
 import dateutil
 from collections import defaultdict
+from copy import deepcopy
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
@@ -105,6 +106,7 @@ class ProjectDb(db.Model):
     settings = db.Column(db.LargeBinary)
     data = db.Column(db.LargeBinary)
     has_econ = db.Column(db.Boolean)
+    blob = db.Column(db.LargeBinary)
     working_project = db.relationship('WorkingProjectDb', backref='related_project', uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='project', uselist=False)
     project_econ = db.relationship('ProjectEconDb', backref='project', uselist=False)
@@ -112,10 +114,11 @@ class ProjectDb(db.Model):
     results = db.relationship('ResultsDb', backref='project')
     progsets = db.relationship('ProgsetsDb', backref='project')
     scenarios = db.relationship('ScenariosDb', backref='project')
+    optimizations = db.relationship('OptimizationsDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
                  created=None, updated=None, settings=None, data=None, has_econ=False, parsets=None,
-                 results=None):
+                 results=None, scenarios=None, optimizations=None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
@@ -131,6 +134,9 @@ class ProjectDb(db.Model):
         self.has_econ = has_econ
         self.parsets = parsets or []
         self.results = results or []
+        self.scenarios = scenarios or []
+        self.optimizations = optimizations or []
+        self.blob = None
 
     def has_data(self):
         return self.data is not None and len(self.data)
@@ -143,6 +149,11 @@ class ProjectDb(db.Model):
         return self.project_data.updated if self.project_data else None
 
     def hydrate(self):
+        # the problem here: if a record gets created outside of project, we have a big problem.
+        # (which is currently the case for progsets)
+        # TODO: make it possible to uncomment the two lines of code below :)
+#        if self.blob and len(self.blob):
+#            project_entry = op.loads(self.blob)
         project_entry = op.Project()
         project_entry.uid = self.id
         project_entry.name = self.name
@@ -167,7 +178,27 @@ class ProjectDb(db.Model):
                 if scenario_record.active:
                     scenario_entry = scenario_record.hydrate()
                     project_entry.addscen(scenario_entry.name, scenario_entry)
-
+        if self.optimizations:
+            for optimization_record in self.optimizations:
+                optimization_record._ensure_current(self)
+                parset_name = None
+                progset_name = None
+                if optimization_record.parset_id:
+                    parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
+                    if parset_name:
+                        parset_name = parset_name[0]
+                if optimization_record.progset_id:
+                    progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
+                    if progset_name:
+                        progset_name = progset_name[0]
+                optim = op.Optim(project_entry, name=optimization_record.name,
+                    objectives=optimization_record.objectives,
+                    constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
+                project_entry.addoptim(optim)
+        if self.results:
+            for result_entry in self.results:
+                result = result_entry.hydrate()
+                project_entry.addresult(result)
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -193,6 +224,8 @@ class ProjectDb(db.Model):
         db.session.flush()
 
         # BE projects are not always TZ aware
+        project.uid = self.id
+        self.blob = op.saves(project)
         self.created = pytz.utc.localize(project.created) if project.created.tzinfo is None else project.created
         if project.modified:
             self.updated = pytz.utc.localize(project.modified) if project.modified.tzinfo is None else project.modified
@@ -241,10 +274,34 @@ class ProjectDb(db.Model):
                 progset_record = update_or_create_progset(self.id, name, progset)
                 progset_record.restore(progset, program_list)
 
+        if project.scens:
+            from server.webapp.utils import update_or_create_scenario
+            for name in project.scens:
+                update_or_create_scenario(self.id, project, name)
+
+        if project.optims:
+            from server.webapp.utils import update_or_create_optimization
+            for name in project.optims:
+                update_or_create_optimization(self.id, project, name)
+
+        if project.results:
+            # only save optimization ones for now...
+            from server.webapp.utils import save_result
+            for name in project.results:
+                if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
+                    result = project.results[name]
+                    print "simpars", result.simpars[0], type(result.simpars[0])
+                    result_entry = save_result(self.id, result, 
+                        project.parsets[0].name, # TODO : will break if more than one parset
+                        'optimization')
+                    db.session.add(result_entry)
+                    db.session.flush()
+
     def recursive_delete(self, synchronize_session=False):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
+        db.session.query(OptimizationsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ScenariosDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
@@ -411,7 +468,7 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
         self.updated = updated
 
 costcov_fields = {
-    'year': fields.String,
+    'year': fields.Integer,
     'spending': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
@@ -528,6 +585,25 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
+        print('####################')
+        print({
+            'name': self.name,
+            'category': self.category,
+            'targetpops': self.targetpops,
+            'criteria': self.criteria,
+            'costcovdata': {
+                't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['coverage']
+                if self.costcov[i] is not None
+                else None for i in range(len(self.costcov))],
+            } if self.costcov is not None else None,
+            'ccopars': {
+                't': self.ccopars['t'],
+                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
+                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
+            } if self.ccopars else None
+        })
         program_entry = op.Program(
             self.short,
             targetpars=self.pars_to_program_pars(),
@@ -618,6 +694,26 @@ class ProgsetsDb(db.Model):
                 for program in self.programs if program.active
             ]
         )
+        for parset_effect in self.effects:
+            for program_effect in parset_effect['parameters']:
+                for year in program_effect['years']:
+                    effect = {
+                        'intercept': (year['intercept_lower'], year['intercept_upper']),
+                        't': int(year['year']),
+                        'interact': year['interact'],
+                    }
+                    for row in year["programs"]:
+                        effect[row['name']] = (
+                            row['intercept_lower'],
+                            row['intercept_upper']
+                        ) if row['intercept_lower'] is not None and row['intercept_upper'] is not None else None
+                    print('??????????????????')
+                    print(program_effect['name'])
+                    print(program_effect['pop'])
+                    print(effect)
+                    progset_entry.covout[program_effect['name']][tuple(program_effect['pop']) if isinstance(program_effect['pop'], list) else program_effect['pop']].addccopar(
+                        effect, overwrite=True
+                    )
 
         return progset_entry
 
@@ -695,10 +791,12 @@ class ProgsetsDb(db.Model):
                     ]
                 }
                 effects.append(item)
+        print('-*-*-*-*-*-*+++++++++++++++')
         print(effects)
+        parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
             {
-                'parset': str(self.project.parsets[0].id) if len(self.project.parsets) else None,
+                'parset': str(parset.id) if parset else None,
                 'parameters': effects
             }
         ]
@@ -830,38 +928,49 @@ class ScenariosDb(db.Model):
         if self.progset_id:
             progset = load_progset(self.project_id, self.progset_id)
 
+        blob = deepcopy(self.blob)
+
         if self.scenario_type == "budget":
 
+            blob.pop('coverage', None)
+            blob.pop('pars', None)
+
             # TODO: remove this hack (dummy values)
-            if not 'years' in self.blob:
-                self.blob['t'] = 2030
+            if 'years' not in blob:
+                blob['t'] = 2030
             else:
-                self.blob['t'] = self.blob['years']
-                del self.blob['years']
-            print "blob", self.blob
+                blob['t'] = blob['years']
+                del blob['years']
+            print "blob", blob
             return op.Budgetscen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
-                               **self.blob)
+                               **blob)
 
         if self.scenario_type == "coverage":
 
+            blob.pop('budget', None)
+            blob.pop('pars', None)
+
             # TODO: remove this hack (dummy values)
-            if not 'years' in self.blob:
-                self.blob['t'] = 2030
+            if 'years' not in blob:
+                blob['t'] = 2030
             else:
-                self.blob['t'] = self.blob['years']
-                del self.blob['years']
+                blob['t'] = blob['years']
+                del blob['years']
             return op.Coveragescen(name=self.name,
                                parsetname=parset.name,
                                progsetname=progset.name,
-                               **self.blob)
+                               **blob)
 
         elif self.scenario_type == "parameter":
 
+            blob.pop('coverage', None)
+            blob.pop('budget', None)
+
             return op.Parscen(name=self.name,
                               parsetname=parset.name,
-                              **self.blob)
+                              **blob)
 
 
 
@@ -902,7 +1011,7 @@ class OptimizationsDb(db.Model):
 
         self._ensure_current()
 
-    def _ensure_current(self):
+    def _ensure_current(self, project=None):
         """
         Make sure the objectives and constraints are current.
         """
@@ -914,7 +1023,8 @@ class OptimizationsDb(db.Model):
         if not self.objectives:
             self.objectives = {}
 
-        project = load_project(self.project_id).hydrate()
+        if project is None:
+            project = load_project(self.project_id).hydrate()
         progset = load_progset(self.project_id, self.progset_id).hydrate()
         parset = load_parset(self.project_id, self.parset_id).hydrate()
 

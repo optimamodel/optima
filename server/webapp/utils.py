@@ -507,6 +507,131 @@ def modify_program(project_id, progset_id, program_id, args, program_modifier):
     return result
 
 
+def update_or_create_scenario(project_id, project, name):  # project might have a different ID than the one we want
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import ScenariosDb, ParsetsDb, ProgsetsDb
+    import json
+
+    parset_id = None
+    progset_id = None
+    blob = {}
+    scenario_type = None
+
+    scenario = project.scens[name]
+    if not scenario:
+        raise Exception("scenario {} not present in project {}!".format(name, project_id))
+
+    if isinstance(scenario, op.Parscen):
+        scenario_type = 'parameter'
+    elif isinstance(scenario, op.Budgetscen):
+        scenario_type = 'budget'
+    elif isinstance(scenario, op.Coveragescen):
+        scenario_type = 'coverage'
+
+    if scenario.t:
+        blob['years'] = scenario.t
+    for key in ['budget', 'coverage', 'pars']:
+        if hasattr(scenario, key) and getattr(scenario, key):
+            blob[key] = json.loads(json.dumps(getattr(scenario, key)))
+
+    parset_name = scenario.parsetname
+    if parset_name:
+        parset_record = ParsetsDb.query \
+            .filter_by(project_id=project_id, name=parset_name) \
+            .first()
+        if parset_record:
+            parset_id = parset_record.id
+
+    progset_id = None
+    if hasattr(scenario, 'progsetname') and scenario.progsetname:
+        progset_name = scenario.progsetname
+        progset_record = ProgsetsDb.query \
+            .filter_by(project_id=project_id, name=progset_name) \
+            .first()
+        if progset_record:
+            progset_id = progset_record.id
+
+    scenario_record = ScenariosDb.query \
+        .filter_by(project_id=project_id, name=name) \
+        .first()
+
+    if scenario_record is None:
+        scenario_record = ScenariosDb(
+            project_id=project_id,
+            parset_id=parset_id,
+            progset_id=progset_id,
+            name=name,
+            scenario_type=scenario_type,
+            active=scenario.active,
+            blob=blob
+        )
+        db.session.add(scenario_record)
+        db.session.flush()
+    else:
+        scenario_record.parset_id = parset_id
+        scenario_record.scenario_type = scenario_type
+        scenario_record.active=scenario.active
+        scenario_record.blob = blob
+        db.session.add(scenario_record)
+
+    return scenario_record
+
+
+def update_or_create_optimization(project_id, project, name):
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb
+    from optima.utils import saves
+
+    parset_id = None
+    progset_id = None
+
+    optim = project.optims[name]
+    if not optim:
+        raise Exception("optimization {} not present in project {}!".format(name, project_id))
+
+    parset_name = optim.parsetname
+    if parset_name:
+        parset_record = ParsetsDb.query \
+        .filter_by(project_id=project_id, name=parset_name) \
+        .first()
+        if parset_record:
+            parset_id = parset_record.id
+
+    progset_name = optim.progsetname
+    if progset_name:
+        progset_record = ProgsetsDb.query \
+        .filter_by(project_id=project_id, name=progset_name) \
+        .first()
+        if progset_record:
+            progset_id = progset_record.id
+
+    optimization_record = OptimizationsDb.query.filter_by(name=name, project_id=project_id).first()
+    if optimization_record is None:
+        optimization_record = OptimizationsDb(
+            project_id=project_id,
+            name=name,
+            which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome',
+            parset_id=parset_id,
+            progset_id=progset_id,
+            objectives=(optim.objectives or {}),
+            constraints=(optim.constraints or {})
+        )
+        db.session.add(optimization_record)
+        db.session.flush()
+    else:
+        optimization_record.which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome'
+        optimization_record.parset_id = parset_id
+        optimization_record.progset_id = progset_id
+        optimization_record.objectives = (optim.objectives or {})
+        optimization_record.constraints = (optim.constraints or {})
+        db.session.add(optimization_record)
+
+    return optimization_record
+
 def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE,
     db_session=None):
     if not db_session:

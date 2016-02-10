@@ -32,6 +32,10 @@ y_keys_fields = {
     'keys': Json
 }
 
+limits_fields = {
+    'parsets': Json
+}
+
 
 class ParsetYkeys(Resource):
 
@@ -53,6 +57,28 @@ class ParsetYkeys(Resource):
            for id, parset in parsets.iteritems()
         }
         return {'keys': y_keys}
+
+
+class ParsetLimits(Resource):
+    @swagger.operation(
+        summary='get parameters limits'
+    )
+    @marshal_with(limits_fields)
+    def get(self, project_id):
+        project_entry = load_project(project_id, raise_exception=True)
+        be_project = project_entry.hydrate()
+
+        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
+        parsets = {str(item.id): item.hydrate() for item in reply}
+        limits = {
+           id: {par.short: [
+                    be_project.settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
+                    for limit in par.limits
+                ] for par in parset.pars[0].values()
+           if hasattr(par, 'y') and par.visible}
+           for id, parset in parsets.iteritems()
+        }
+        return {'parsets': limits}
 
 
 class Parsets(Resource):
@@ -169,8 +195,9 @@ class ParsetsDetail(Resource):
             abort(403)
 
         # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        db.session.query(ParsetsDb).filter_by(id=parset_id).delete()
+        db.session.query(ResultsDb).filter_by(project_id=project_id, 
+            id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        db.session.query(ParsetsDb).filter_by(project_id=project_id, id=parset_id).delete()
         db.session.commit()
 
         return '', 204
@@ -308,9 +335,10 @@ class ParsetsCalibration(Resource):
         # but for FE we prefer list of dicts
 
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        result_entry = db.session.query(ResultsDb).filter_by(parset_id=parset_id, calculation_type=calculation_type)
+        result_entry = db.session.query(ResultsDb).filter_by(
+            project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
         if result_entry:
-            result = result_entry[-1].hydrate()
+            result = result_entry.hydrate()
         else:
             simparslist = parset_instance.interp()
             result = project_instance.runsim(simpars=simparslist)
@@ -324,7 +352,7 @@ class ParsetsCalibration(Resource):
             "parameters": parameters,
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_entry[-1].id if result_entry else None
+            "result_id": result_entry.id if result_entry else None
         }
 
     @report_exception
@@ -414,8 +442,8 @@ class ParsetsCalibration(Resource):
         parset_entry.pars = op.saves(parset_instance.pars)
         parset_entry.updated = datetime.now(dateutil.tz.tzutc())
         db.session.add(parset_entry)
-        ResultsDb.query.filter_by(parset_id=parset_id, project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        ResultsDb.query.filter_by(id=args['result_id']).first()
+        ResultsDb.query.filter_by(parset_id=parset_id, 
+            project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         result_entry = ResultsDb.query.filter_by(id=args['result_id']).first()
         result_entry.parset_id = parset_id
         result_entry.project_id = project_id

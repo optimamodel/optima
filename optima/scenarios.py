@@ -141,6 +141,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                     for pop in pops:
 
                         # Remove years after the last good year
+                        pop = tuple([str(p) for p in pop]) if isinstance(pop, (list, tuple)) else str(pop)
                         if last_t < max(thispar.t[pop]):
                             thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
                             thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
