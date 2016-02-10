@@ -627,7 +627,7 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=100, stepsize=0.1, verbose=2):
+    def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=200, stepsize=0.1, verbose=2):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         
         def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, method=None, origmismatch=None, verbose=2, eps=1e-3):
@@ -659,27 +659,26 @@ class Programset(object):
         pardict = dcp(origvals)
         pararray = origvals[:] # Turn into array format
         npars = shape(pararray)[0]
-        bestfactors    = ones((npars,1))
-        workingfactors = ones((npars,1))
+        factors = ones((npars,1))
         origmismatch = -1 # Initialize, doesn't matter, immediately overwritten
         
         ## Just do a simple random walk
         args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':origmismatch, 'verbose':verbose}
-        origmismatch = objectivecalc(factors=bestfactors, **args) # Calculate initial mismatch, just, because
+        origmismatch = objectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
         args['origmismatch'] = origmismatch
         
         optmethod='asd'
         if optmethod=='simplex':
             from scipy.optimize import minimize # TEMP
-            optres = minimize(objectivecalc, workingfactors, args=args)
-            bestfactors = optres.x
+            optres = minimize(objectivecalc, factors, args=args)
+            factors = optres.x
         elif optmethod=='asd':
             from optima import asd
-            parvecnew, fval, exitflag, output = asd(objectivecalc, workingfactors, args=args, MaxIter=maxiters)
-        currentmismatch = objectivecalc(factors=bestfactors, **args) # Calculate initial mismatch, just, because
+            parvecnew, fval, exitflag, output = asd(objectivecalc, factors, args=args, MaxIter=maxiters)
+        currentmismatch = objectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
-        pardict[:] = pararray * bestfactors
+        pardict[:] = pararray * reshape(parvecnew, (len(parvecnew),1))
         self.odict2cco(pardict) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None

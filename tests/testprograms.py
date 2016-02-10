@@ -386,7 +386,14 @@ if 'compareoutcomes' in tests:
 if 'reconcilepars' in tests:
     import optima as op
     P = op.defaults.defaultproject('best')
-    P.progsets[0].reconcile(parset=P.parsets[0], year=2016)
+    ps = P.parsets[0]
+    before = op.dcp(P.progsets[0])
+    P.progsets[0].reconcile(parset=ps, year=2016)
+    after = P.progsets[0]
+    print('\n\nBEFORE:')
+    before.compareoutcomes(parset=ps, year=2016, doprint=True)
+    print('\n\nAFTER:')
+    after.compareoutcomes(parset=ps, year=2016, doprint=True)
     
 
 
