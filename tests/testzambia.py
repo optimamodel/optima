@@ -5,8 +5,8 @@ Load Zambia and create outcome functions
 ## Define tests to run here!!!
 tests = [
 'loadzambia',
-'addeffects',
-#'compareepi'
+#'addeffects',
+'compareepi',
 #'compareoutcomes',
 'savezambia',
 ]
@@ -44,11 +44,9 @@ if 'loadzambia' in tests:
 
 
     from optima import loadobj
-    filename = 'exercise_complete-1.prj'
+    filename = 'Exe 3.prj'
     
     P = loadobj(filename)
-
-    P.runsim()
 
     done(t)
 
@@ -143,19 +141,28 @@ if 'addeffects' in tests:
 ## Compare epidemic projections under calibration vs cost fns
 if 'compareepi' in tests:
     
-    from optima import Parscen, Budgetscen
+    from optima import Budgetscen, dcp
+    R = P.progsets[0]
+#    R.programs[7].short = 'SBCC & Condom'
+#    R.updateprogset()
+    
+    defaultbudget = R.getdefaultbudget()
+    FSWscaleup_budget = dcp(defaultbudget)
+    FSWscaleup_budget['FSW programs'] = 100000.
 
     ## Define scenarios
     scenlist = [
-        Parscen(name='Current conditions',
-                parsetname='default',
-                pars=[]),
-
         Budgetscen(name='Current budget',
               parsetname='default',
               progsetname='Default Program Set',
               t=2016,
-              budget=R.getdefaultbudget())]
+              budget=defaultbudget),
+
+        Budgetscen(name='100k to FSW programs',
+              parsetname='default',
+              progsetname='Default Program Set',
+              t=2016,
+              budget=FSWscaleup_budget)]
 
     P.addscenlist(scenlist)
     P.runscenarios() 
@@ -180,7 +187,7 @@ if 'savezambia' in tests:
 
 
     from optima import saveobj
-    newfilename = 'exercise_complete-3.prj'
+    newfilename = 'Exe 4.prj'
 
     saveobj(newfilename, P)
 
