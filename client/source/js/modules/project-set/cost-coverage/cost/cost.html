@@ -90,7 +90,7 @@
                        type="number" min="state.newCPData.unitcost_lower || 0" ng-class="{'invalid': cpDataForm.ucupper.$invalid}"/>
               </td>
               <td>
-                <i class="fa fa-check" ng-click="addToCPData(cpDataForm);state.showAddCPData = false"></i>
+                <i class="fa fa-check" ng-click="addToCPData(cpDataForm);"></i>
                 <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCPData = {};state.showAddCPData = false"></i>
               </td>
             </tr>
@@ -128,7 +128,7 @@
                     <input ng-model="state.newCCData.coverage" class="txbox __inline __ls" type="number" min="0" name="coverage" ng-class="{'invalid': ccDataForm.coverage.$invalid}"/>
                   </div>
                   <div class="data data_nomargin spaced" style="display: flex;justify-content: center">
-                    <i class="fa fa-check" ng-click="addToCCData(ccDataForm);state.showAddCCData = false"></i>
+                    <i class="fa fa-check" ng-click="addToCCData(ccDataForm);"></i>
                     <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
                   </div>
                 </form>

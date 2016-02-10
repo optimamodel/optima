@@ -5,7 +5,7 @@ To use: comment out lines in the definition of 'tests' to not run those tests.
 NOTE: for best results, run in interactive mode, e.g.
 python -i tests.py
 
-Version: 2016jan27 by cliffk
+Version: 2016feb09 by cliffk
 """
 
 
@@ -13,8 +13,8 @@ Version: 2016jan27 by cliffk
 ## Define tests to run here!!!
 tests = [
 #'plot',
-#'browser',
-'gui',
+'browser',
+#'gui',
 ]
 
 
@@ -56,7 +56,7 @@ if 'plot' in tests and doplot:
     
     P = defaults.defaultproject('concentrated')
     P.runsim() # Not necessary, but just in case results haven't been saved with the project
-    plotresults(P.results[-1], figsize=(14,10))
+    plotresults(P.results[-1], toplot='cascade', figsize=(14,10))
 
     done(t)
 
@@ -72,7 +72,7 @@ if 'browser' in tests and doplot:
     
     P = defaults.defaultproject('concentrated')
     P.runsim() # Not necessary, but just in case results haven't been saved with the project
-    browser(P.results[-1])
+    browser(P.results[-1], toplot='cascade')
 
     done(t)
 

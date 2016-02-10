@@ -101,7 +101,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, dorun=True, makedefaults=False):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -277,11 +277,11 @@ class Project(object):
     def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
     def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def addresult(self, result=None): 
+    def addresult(self, result=None, overwrite=True): 
         ''' Try adding result by name, but if no name, add by UID '''
         if result.name is None: keyname = str(result.uid)
         else: keyname = result.name
-        self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=True) # Use UID for key but keep name
+        self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
         return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
@@ -312,7 +312,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, verbose=None):
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
         ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
         
         WARNING, do we need this? What's it for? Why not use runmodel()?
@@ -344,7 +344,7 @@ class Project(object):
         resultname = 'parset-'+name if simpars is None else 'simpars'
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
-            keyname = self.addresult(result=results)
+            keyname = self.addresult(result=results, overwrite=overwrite)
             if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         return results

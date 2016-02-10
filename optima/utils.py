@@ -718,7 +718,12 @@ def getdate(obj, which='modified', fmt='str'):
             elif which=='spreadsheet': dateobj = obj.spreadsheetdate
             else: raise Exception('Getting date for "which=%s" not understood; must be "created", "modified", or "spreadsheet"' % which)
         
-        if fmt=='str': return dateobj.strftime(dateformat) # Return string representation of time
+        if fmt=='str':
+            try:
+                return dateobj.strftime(dateformat).encode('ascii', 'ignore') # Return string representation of time
+            except UnicodeDecodeError:
+                dateformat = '%Y-%m-%d %H:%M:%S'
+                return dateobj.strftime(dateformat)
         elif fmt=='int': return mktime(dateobj.timetuple()) # So ugly!! But it works -- return integer representation of time
         else: raise Exception('"fmt=%s" not understood; must be "str" or "int"' % fmt)
     
@@ -799,7 +804,7 @@ class odict(OrderedDict):
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
                     errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(key) for key in self.keys()]))
+                        '\n'.join([str(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
 
