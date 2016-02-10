@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jan24
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -562,12 +562,12 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         
         ## Do the plotting
         subplot(nsims,1,plt+1)
-        for k,key in enumerate(cascadelist): # Loop backwards so correct ordering -- first one at the top, not bottom
+        for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
             else:          thisdata = results.main[key].tot[0] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
-            plot((0, 0), (0, 0), color=colors[k], linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
-                            
+            bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # Colors are in reverse order
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
@@ -580,7 +580,6 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
         # Configure plot specifics
-        
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else: ax.set_title('Cascade')
