@@ -49,7 +49,8 @@ scenario_list_parser.add_arguments({
         'type': SubParser(scenario_list_scenario_parser),
         # 'type': JsonInput,
         'action': 'append',
-        'required': True
+        'required': False,
+        'default': []
     },
 })
 
