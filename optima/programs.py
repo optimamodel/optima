@@ -642,6 +642,8 @@ class Programset(object):
         pararray = origvals[:] # Turn into array format
         npars = shape(pararray)[0]
         factors = ones((npars,1))
+        parlower  = array([parset.pars[0][key[0]].limits[0] for key in pardict.keys()]) # Get the lower allowed limits on the parameters
+        parhigher = array([parset.project.settings.convertlimits(parset.pars[0][key[0]].limits[1]) for key in pardict.keys()]) # Replace text labels with numeric values
         
         ## Just do a simple random walk
         args = odict([('pararray',pararray), ('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('origmismatch',-1), ('verbose',verbose)])
@@ -654,7 +656,7 @@ class Programset(object):
             factors = optres.x
         elif optmethod=='asd':
             from optima import asd
-            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, MaxIter=maxiters, **kwargs)
+            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, xmin=parlower, xmax=parhigher, MaxIter=maxiters, **kwargs)
         currentmismatch = costfuncobjectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up

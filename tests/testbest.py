@@ -1,5 +1,6 @@
 """
-Create a good test project
+Create a good test project -- WARNING, this should be combined with testworkflow,
+which is an outdated version of the same thing!
 
 Version: 2016feb08
 """
@@ -7,7 +8,7 @@ Version: 2016feb08
 from optima import defaults, pygui, Parscen, Budgetscen, dcp, plotpars, plotpeople, loadobj, saveobj # analysis:ignore
 
 ## Options
-autocalib = 1 # Whether or not to run autofitting
+autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 reconcile = 1
 runscenarios = 1 # Run scenarios
@@ -16,8 +17,8 @@ dosave = 0
 filename = 'best.prj'
 ind = -1 # Default index
 
-#P = defaults.defaultproject('best')
-P = defaults.defaultproject('generalized')
+P = defaults.defaultproject('best')
+#P = defaults.defaultproject('generalized')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
 #P = loadobj('/u/cliffk/unsw/optima/tests/exercise_define_costoutcomefunctions.prj')
 
@@ -30,7 +31,7 @@ if manualcalib:
     P.manualfit()
 
 if reconcile:
-    P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016, maxiters=300)
+    P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)
 
 
 ### Scenarios
@@ -42,9 +43,9 @@ if runscenarios:
     for key in nobudget: nobudget[key] *= 1e-6
     scenlist = [
         Parscen(name='Current conditions', parsetname=ind, pars=[]),
-#        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
+        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-#        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
