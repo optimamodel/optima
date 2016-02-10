@@ -291,7 +291,7 @@ class ProjectDb(db.Model):
                 if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
                     result = project.results[name]
                     print "simpars", result.simpars[0], type(result.simpars[0])
-                    result_entry = save_result(self.id, result, 
+                    result_entry = save_result(self.id, result,
                         project.parsets[0].name, # TODO : will break if more than one parset
                         'optimization')
                     db.session.add(result_entry)
@@ -953,7 +953,7 @@ class ScenariosDb(db.Model):
             blob[key] = {
                 str(k): v
                 for k, v in blob[key].iteritems() if key in blob
-            } 
+            }
 
         if self.scenario_type == "budget":
 
