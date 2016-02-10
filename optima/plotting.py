@@ -567,8 +567,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
             else:          thisdata = results.main[key].tot[0] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
             bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
-            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
-            
+            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # Colors are in reverse order
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
