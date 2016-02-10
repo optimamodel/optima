@@ -47,7 +47,7 @@ class Progsets(Resource):
 
         reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
         for progset in reply:
-            progset.get_targetpartypes()
+            progset.get_extra_data()
             for program in progset.programs:
                 program.get_optimizable()
 

@@ -660,6 +660,7 @@ class ProgsetsDb(db.Model):
         'updated': fields.DateTime,
         'programs': fields.Nested(ProgramsDb.resource_fields),
         'targetpartypes': fields.Raw,
+        'readytooptimize': fields.Boolean
     }
 
     __tablename__ = 'progsets'
@@ -732,10 +733,11 @@ class ProgsetsDb(db.Model):
             ]
         return program
 
-    def get_targetpartypes(self):
+    def get_extra_data(self):
         be_progset = self.hydrate()
         be_progset.gettargetpartypes()
         self.targetpartypes = be_progset.targetpartypes
+        self.readytooptimize = be_progset.readytooptimize()
 
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
