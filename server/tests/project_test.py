@@ -146,7 +146,7 @@ class ProjectTestCase(OptimaTestCase):
         example_excel_file_name = 'test.xlsx'
         file_path = helpers.safe_join(app.static_folder, example_excel_file_name)
         example_excel = open(file_path)
-        response = self.client.post('api/project/update', data=dict(file=example_excel))
+        response = self.client.post('api/project/{}/spreadsheet'.format(project.id), data=dict(file=example_excel))
         example_excel.close()
 
         response = self.client.get('/api/project/{}/data'.format(project.id))
@@ -360,7 +360,7 @@ class ProjectTestCase(OptimaTestCase):
         ]
 
         project = self.create_project(
-            progsets_count=1,
+            progsets_count=1, parset_count=1,
             programs_per_progset=programs_per_progset,
             return_instance=True,
             pars=pars

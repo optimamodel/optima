@@ -1,6 +1,6 @@
 """
 Functions for running optimizations.
-    
+
 Version: 2016feb07
 """
 
@@ -17,7 +17,7 @@ infmoney = 1e9 # Effectively infinite money
 ################################################################################################################################################
 class Optim(object):
     ''' An object for storing an optimization '''
-    
+
     def __init__(self, project=None, name='default', objectives=None, constraints=None, parsetname=None, progsetname=None):
         if project is None:     raise OptimaException('To create an optimization, you must supply a project')
         if parsetname is None:  parsetname = 0 # If none supplied, assume defaults
@@ -34,8 +34,8 @@ class Optim(object):
         if objectives is None: self.objectives = defaultobjectives(progset=project.progsets[progsetname])
         if constraints is None: self.constraints = defaultconstraints(progset=project.progsets[progsetname])
         self.resultsref = None # Store pointer to results
-        
-    
+
+
     def __repr__(self):
         ''' Print out useful information when called'''
         output = '============================================================\n'
@@ -48,8 +48,8 @@ class Optim(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
-    
-    
+
+
     def getresults(self):
         ''' A method for getting the results '''
         if self.resultsref is not None and self.project is not None:
@@ -58,8 +58,8 @@ class Optim(object):
         else:
             print('WARNING, no results associated with this parameter set')
             return None
-            
-    
+
+
     def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         if name is None: name='default'
@@ -81,12 +81,12 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     between outcome and money minimizations, while others are different. However,
     outcome minimization is performed as part of money minimization, so it's useful
     to keep all the keys for both. Still, ugly.
-    
+
     Version: 2016feb03
     """
 
     printv('Defining default objectives...', 3, verbose=verbose)
-    
+
     if type(progset)==Programset:
         defaultbudget = sum(progset.getdefaultbudget()[:])
     elif type(project)==Programset: # Not actually a project, but proceed anyway
@@ -121,9 +121,9 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
         objectives['inciweight'] = None # "Incidence weighting"
         objectives['deathfrac'] = 0.5 # Fraction of deaths to get to
         objectives['incifrac'] = 0.5 # Fraction of incidence to get to
-    else: 
+    else:
         raise OptimaException('"which" keyword argument must be either "outcome" or "money"')
-    
+
     return objectives
 
 
@@ -132,12 +132,12 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
     Define constraints for minimize outcomes optimization: at the moment, just
     total budget constraints defned as a fraction of current spending. Fixed costs
     are treated differently, and ART is hard-coded to not decrease.
-    
+
     Version: 2016feb03
     """
 
     printv('Defining default constraints...', 3, verbose=verbose)
-    
+
     if type(progset)==Programset: pass
     elif type(project)==Programset: progset = project
     elif project is not None:
@@ -162,7 +162,7 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
             constraints['max'][prog.short] = 1.0
     if 'ART' in constraints['min'].keys():
         constraints['min']['ART'] = 1.0 # By default, don't let ART funding decrease
-    
+
     return constraints
 
 
@@ -173,21 +173,21 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
 
 def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlims=None, optiminds=None, tolerance=1e-2, overalltolerance=1.0, outputtype=None):
     """ Take an unnormalized/unconstrained budgetvec and normalize and constrain it """
-    
+
     # Prepare this budget for later scaling and the like
-    constrainedbudget = dcp(origbudget) 
-    
+    constrainedbudget = dcp(origbudget)
+
     # Calculate the current total budget
     currenttotal = sum(constrainedbudget[:]) # WARNING, assumes it's an odict
     scaleratio = totalbudget/float(currenttotal) # Calculate the ratio between the original budget and the supplied budget
-    
+
     # Calculate a uniformly scaled budget
     rescaledbudget = dcp(constrainedbudget)
     for key in rescaledbudget.keys(): rescaledbudget[key] *= scaleratio # This is the original budget scaled to the total budget
     if abs(sum(rescaledbudget[:])-totalbudget)>overalltolerance:
         errormsg = 'constrainbudget(): rescaling budget failed (%f != %f)' % (sum(rescaledbudget[:]), totalbudget)
         raise OptimaException(errormsg)
-    
+
     # Calculate the minimum amount that can be spent on the fixed costs
     rescaledminfixed = dcp(rescaledbudget) # This is the rescaled budget, but with the minimum fixed costs -- should be <= totalbudget
     proginds = arange(len(origbudget)) # Array of all allowable indices
@@ -196,17 +196,17 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     for ind in fixedinds:
         rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
         minfixed += rescaledminfixed[ind]
-    
+
     # Calculate the total amount available for the optimizable programs
     optimbudget = totalbudget - minfixed
     optimscaleratio = optimbudget/float(sum(budgetvec)) # If totalbudget=sum(origbudget) and fixed cost lower limits are 1, then optimscaleratio=1
-    
+
     # Scale the supplied budgetvec to meet this available amount
     scaledbudgetvec = dcp(budgetvec*optimscaleratio)
     if abs(sum(scaledbudgetvec)-optimbudget)>overalltolerance:
         errormsg = 'constrainbudget(): rescaling budget failed (%f != %f)' % (sum(scaledbudgetvec), optimbudget)
         raise OptimaException(errormsg)
-    
+
     # Calculate absolute limits from relative limits
     abslimits = dcp(budgetlims)
     for pind in proginds:
@@ -219,7 +219,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         elif optimscaleratio>=1:
             abslimits['min'][oind] *= budgetvec[oi] # If the total budget is more, keep the absolute original lower limit...
             abslimits['max'][oind] *=scaledbudgetvec[oi] # ...but scale up the upper limit
-        
+
     # Apply constraints on optimizable parameters
     noptimprogs = len(optiminds) # Number of optimizable programs
     limlow = zeros(noptimprogs, dtype=bool)
@@ -231,7 +231,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if scaledbudgetvec[oi] >= abslimits['max'][oind]:
             scaledbudgetvec[oi] = abslimits['max'][oind]
             limhigh[oi] = True
-            
+
     # Too high
     count = 0
     countmax = 1e6
@@ -247,7 +247,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                     proposed = abslimits['min'][oind]
                     limlow[oi] = True
                 scaledbudgetvec[oi] = proposed
-        
+
     # Too low
     while sum(scaledbudgetvec) < optimbudget-tolerance:
         count += 1
@@ -261,7 +261,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
                     proposed = abslimits['max'][oind]
                     limhigh[oi] = True
                 scaledbudgetvec[oi] = proposed
-    
+
     # Reconstruct the budget odict using the rescaled budgetvec and the rescaled original amount
     constrainedbudget = dcp(rescaledminfixed) # This budget has the right fixed costs
     for oi,oind in enumerate(optiminds):
@@ -269,7 +269,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     if abs(sum(constrainedbudget[:])-totalbudget)>overalltolerance:
         errormsg = 'constrainbudget(): final budget amounts differ (%f != %f)' % (sum(constrainedbudget[:]), totalbudget)
         raise OptimaException(errormsg)
-    
+
     # Optionally return the calculated upper and lower limits as well as the original budget and vector
     constrainedbudgetvec = dcp(constrainedbudget[optiminds])
     if outputtype=='odict':
@@ -292,48 +292,48 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
 def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset=None, objectives=None, constraints=None, totalbudget=None, optiminds=None, origbudget=None, tvec=None, outputresults=False, debug=False, verbose=2):
     ''' Function to evaluate the objective for a given budget vector (note, not time-varying) '''
-    
+
     # Validate input
     arglist = [budgetvec, which, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec]
     if any([arg is None for arg in arglist]):  # WARNING, this kind of obscures which of these is None -- is that ok? Also a little too hard-coded...
         raise OptimaException('outcomecalc() requires which, budgetvec, parset, progset, objectives, totalbudget, constraints, optiminds, origbudget, tvec as inputs at minimum; argument %i is None' % arglist.index(None))
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
-    if which not in ['outcomes','money']: 
+    if which not in ['outcomes','money']:
         errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
-    
+
     # Normalize budgetvec and convert to budget -- WARNING, is there a better way of doing this?
     constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
-    
+
     # Run model
-    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset) 
+    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset)
     thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset)
     results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, verbose=0)
-    
+
     # Figure out which indices to use
     initialind = findinds(results.tvec, objectives['start'])
     finalind = findinds(results.tvec, objectives['end'])
     if which=='money': baseind = findinds(results.tvec, objectives['base']) # Only used for money minimization
     if which=='outcomes': indices = arange(initialind, finalind) # Only used for outcomes minimization
-    
-    ## Here, we split depending on whether it's a outcomes or money minimization:    
+
+    ## Here, we split depending on whether it's a outcomes or money minimization:
     if which=='outcomes':
         # Calculate outcome
-        outcome = 0 # Preallocate objective value 
+        outcome = 0 # Preallocate objective value
         for key in objectives['keys']:
             thisweight = objectives[key+'weight'] # e.g. objectives['inciweight']
             thisoutcome = results.main['num'+key].tot[0][indices].sum() # the instantaneous outcome e.g. objectives['numdeath'] -- 0 is since best
             outcome += thisoutcome*thisweight*results.dt # Calculate objective
-    
+
         # Output results
         if outputresults:
             results.outcome = outcome
             results.budgetyears = [objectives['start']] # WARNING, this is ugly, should be made less kludgy
             results.budget = constrainedbudget # Convert to budget
             output = results
-        else: 
+        else:
             output = outcome
-    
+
     elif which=='money':
         # Calculate outcome
         targetsmet = True # Assume success until proven otherwise (since operator is AND, not OR)
@@ -349,7 +349,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
                 target[key] = float(baseline[key]*(1-targetfrac[key]))
                 if final[key] > target[key]: targetsmet = False # Targets are NOT met
             else: target[key] = -1 # WARNING, must be a better way of showing no defined objective
-    
+
         # Output results
         if outputresults:
             results.outcomes = odict([('baseline',baseline), ('final',final), ('target',target), ('targetfrac',targetfrac)])
@@ -357,10 +357,10 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
             results.budget = constrainedbudget # Convert to budget
             results.targetsmet = targetsmet
             output = results
-        else: 
+        else:
             summary = 'Baseline: %0.0f %0.0f | Target: %0.0f %0.0f | Final: %0.0f %0.0f' % tuple(baseline.values()+target.values()+final.values())
             output = (targetsmet, summary)
-    
+
     return output
 
 
@@ -372,25 +372,25 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
-    ''' 
+    '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
-    
+
     Version: 1.2 (2016feb07)
     '''
-    
+
     ## Input validation
     if which=='outcome': which='outcomes' # I never remember which it's supposed to be, so let's fix it here
-    if which not in ['outcomes','money']: 
+    if which not in ['outcomes','money']:
         errormsg = 'optimize(): "which" must be "outcomes" or "money"; you entered "%s"' % which
         raise OptimaException(errormsg)
     if None in [project, optim]: raise OptimaException('minoutcomes() requires project and optim arguments at minimum')
     printv('Running %s optimization...' % which, 1, verbose)
-    
+
     # Shorten things stored in the optimization -- WARNING, not sure if this is consistent with other functions
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     lenparlist = len(parset.pars)
-    
+
     # Process inputs
     if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
@@ -401,11 +401,11 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
         detail_covout = progset.hasallcovoutpars(detail=True)
         errormsg = 'The program set that you provided does not have all the required cost-coverage and/or coverage outcome parameters! Parameters are missing from:\n%s' % ((detail_costcov+detail_covout))
         raise OptimaException(errormsg)
-    
+
     # Run outcomes minimization
     if which=='outcomes':
         multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
-    
+
     # Run money minimization
     elif which=='money':
         multires = minmoney(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, fundingchange=1.2)
@@ -419,7 +419,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
 def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
     ''' Split out minimize outcomes '''
-    
+
     ## Handle budget and remove fixed costs
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
@@ -428,10 +428,10 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
-    
+
     ## Constrain the budget
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-    
+
     ## Actually run the optimization
     # for ind in inds: # WARNING, kludgy -- should be a loop!
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
@@ -447,27 +447,27 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
     orig.name = 'Current allocation' # WARNING, is this really the best way of doing it?
     new.name = 'Optimal allocation'
     tmpresults = [orig, new]
-    
+
     # Output
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     multires.improvement = [output.fval] # Store full function evaluation information -- wrap in list for future multi-runs
     optim.resultsref = multires.name # Store the reference for this result
-    
+
     return multires
 
-    
-    
 
-    
-    
+
+
+
+
 def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
-    
+
     Version: 2016feb07
     '''
-    
+
     ## Handle budget and remove fixed costs
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
@@ -478,7 +478,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
     xmin = zeros(len(budgetvec))
-    
+
     ## Constrain the budget
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
@@ -486,24 +486,24 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
 
     # Define arguments for ASD
     args = {'which':'money', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
-    
-    
+
+
     ##########################################################################################################################
     ## Loop through different budget options
     ##########################################################################################################################
-    
+
     # First, try infinite money
     args['totalbudget'] = 1e9
     targetsmet, summary = objectivecalc(budgetvec, **args)
     if not(targetsmet): raise OptimaException("Infinite allocation can't meet targets:\n%s" % summary) # WARNING, this shouldn't be an exception, something more subtle
     else: printv("Infinite allocation meets targets, as expected; proceeding...", 2, verbose)
-    
+
     # Next, try no money
     args['totalbudget'] = 1e-3
     targetsmet, summary = objectivecalc(budgetvec, **args)
     if targetsmet: raise OptimaException("Even zero allocation meets targets:\n%s" % summary)
     else:printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
-    
+
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
     args['totalbudget'] = origtotalbudget
     results = objectivecalc(budgetvec, outputresults=True, **args)
@@ -518,8 +518,8 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     weights /= weights.min() # Normalize such that the lowest weight is 1; arbitrary, but could be useful
     for k,key in enumerate(optim.objectives['keys']):
        optim.objectives[key+'weight'] = maximum(weights[k],0) # Reset objective weights according to the reduction required -- don't let it go below 0, though
-    
-    
+
+
     ##########################################################################################################################
     ## Now run an optimization on the current budget
     ##########################################################################################################################
@@ -533,36 +533,36 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     args['which'] = 'money' # Switch back to money minimization
     targetsmet, summary = objectivecalc(budgetvec2, **args)
     fundingfactor = 1.0
-    
+
     # If targets are met, scale down until they're not -- this loop will be skipped entirely if targets not currently met
     while targetsmet:
         fundingfactor /= fundingchange
         args['totalbudget'] = origtotalbudget * fundingfactor
         targetsmet, summary = objectivecalc(budgetvec2, **args)
         printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
-    
+
     # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
     while not(targetsmet):
         fundingfactor *= fundingchange
         args['totalbudget'] = origtotalbudget * fundingfactor
         targetsmet, summary = objectivecalc(budgetvec2, **args)
         printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
-    
-    
+
+
     ##########################################################################################################################
     # Re-optimize based on this fairly close allocation
     ##########################################################################################################################
     args['which'] = 'outcomes'
     budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
     budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
-    
+
     # Check that targets are still met
     args['which'] = 'money'
     targetsmet, summary = objectivecalc(budgetvec4, **args)
     if targetsmet: budgetvec5 = dcp(budgetvec4) # Yes, keep them
     else: budgetvec5 = dcp(budgetvec2) # No, go back to previous version that we know worked
     newtotalbudget = sum(budgetvec5)
-            
+
     # And finally, home in on a solution
     upperlim = 1.0
     lowerlim = 1.0/fundingchange
@@ -574,7 +574,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
         if targetsmet: upperlim = fundingfactor
         else:          lowerlim = fundingfactor
     constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec5, totalbudget=newtotalbudget*upperlim, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
-        
+
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['totalbudget'] = origtotalbudget
     orig = objectivecalc(origbudgetvec, outputresults=True, **args)
@@ -586,5 +586,5 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     multires = Multiresultset(resultsetlist=tmpresults, name='optim-%s' % name)
     for k,key in enumerate(multires.keys): multires.budgetyears[key] = tmpresults[k].budgetyears # WARNING, this is ugly
     optim.resultsref = multires.name # Store the reference for this result
-    
+
     return multires

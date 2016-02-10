@@ -1,3 +1,25 @@
+<script>
+  function remove_default_plugin() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro3')) {
+      svgGraphFigures.each(function () {
+        var that = this;
+        $(that).find('.mpld3-toolbar').each(function () {
+          $(this).remove();
+        });
+      });
+    } else {
+      setTimeout(remove_default_plugin, 150);
+    }
+  }
+
+  $(document).ready(function() {
+    remove_default_plugin();
+    $(document.body).on('click', '.updateGraph' ,function() {
+      remove_default_plugin();
+    });
+  });
+</script>
 <!-- Cost functions tab -->
 <div class="c-tab" ng-controller="CostController">
   <div style="width: 40%">
@@ -16,6 +38,7 @@
       <div class="chart-container __medium">
         <div mpld3-chart="state.chartData" id="cost_cov_chart" ng-if="state.chartData"></div>
         <div class="c-caption" ng-if="state.displayCaption">{{state.displayCaption}}</div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="{{ state.chartData.id }}"></chart-toolbar>
       </div>
       <div class="flex-column margin_left">
         <div class="flex-column">
@@ -134,7 +157,7 @@
       </div>
     </div>
     <div class="u-center-horizontal margin-top-m">
-      <button type="button" class="btn __m" style="margin-left: 15px" ng-click="updateGraph()">Update</button>
+      <button type="button" class="btn __m updateGraph" style="margin-left: 15px" ng-click="updateGraph()">Update</button>
     </div>
   </div>
 </div>
