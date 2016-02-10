@@ -7,7 +7,7 @@ Version: 2016feb08
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj, defaultrepr
-from numpy import ones, prod, array, shape, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
+from numpy import ones, prod, array, shape, reshape, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -622,18 +622,19 @@ class Programset(object):
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
             self.covout[targetpartype][targetparpop].ccopars[thisprogkey] = [tuple(val)]
-            if t: self.covout[targetpartype][targetparpop].ccopars['t'] = t # WARNING, reassigned multiple times, but shouldn't matter...
+            if t: self.covout[targetpartype][targetparpop].ccopars['t'] = [t] # WARNING, reassigned multiple times, but shouldn't matter...
         return None
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=100, stepsize=0.1, verbose=4):
+    def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=100, stepsize=0.1, verbose=2):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         
         def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, method=None, origmismatch=None, verbose=2, eps=1e-3):
             ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
-            pardict[:] = pararray * workingfactors
-            progset.odict2cco(pardict)
+            factors = reshape(factors, (len(factors),1)) # Get it the right shape
+            pardict[:] = dcp(pararray * factors)
+            progset.odict2cco(dcp(pardict), t=year)
             comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
             allmismatches = []
             mismatch = 0
@@ -651,7 +652,6 @@ class Programset(object):
                     raise OptimaException(errormsg)
                 allmismatches.append(thismismatch)
                 mismatch += thismismatch
-            printv('orig=%f current=%f' % (origmismatch, mismatch), 4, verbose)
             return mismatch
         
         ## Store original values in case we need to go back to them
@@ -675,7 +675,7 @@ class Programset(object):
             bestfactors = optres.x
         elif optmethod=='asd':
             from optima import asd
-            parvecnew, fval, exitflag, output = asd(objectivecalc, workingfactors, args=args)
+            parvecnew, fval, exitflag, output = asd(objectivecalc, workingfactors, args=args, MaxIter=maxiters)
         currentmismatch = objectivecalc(factors=bestfactors, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
