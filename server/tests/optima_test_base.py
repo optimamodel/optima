@@ -115,6 +115,7 @@ class OptimaTestCase(unittest.TestCase):
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
         project = self.create_record_with(ProjectFactory, **kwargs)
+        assert(project.id is not None)
 
         for x in range(progsets_count):
             progset = self.create_record_with(ProgsetsFactory, project_id=project.id)
