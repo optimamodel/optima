@@ -3,10 +3,10 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.4 (2016feb08)
+Version: 1.5 (2016feb09)
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
@@ -453,7 +453,7 @@ def makepars(data, label=None, verbose=2):
     pars['numcirc'].y = pars['numcirc'].y.sort(popkeys) # Sort them so they have the same order as everything else
     pars['numcirc'].t = pars['numcirc'].t.sort(popkeys)
     for key in pars['numcirc'].y.keys():
-        pars['numcirc'].y[key] = 0.0 # WARNING, forcilby set to 0 for all populations, since program parameter only
+        pars['numcirc'].y[key] += nan # WARNING, forcilby set to 0 for all populations, since program parameter only
 
     # Metaparameters
     for key in popkeys: # Define values
@@ -557,6 +557,10 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     if par is not None:
         if limits is None: limits = par.limits
         parname = par.name
+    
+    # Whatever else happens, replace nan with 0.0
+    if isnumber(y) and isnan(y): y = 0.0
+    elif shape(y): y[isnan(y)] = 0.0
         
     # If no limits supplied, don't do anything
     if limits is None:
@@ -656,8 +660,8 @@ class Timepar(Par):
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
-            yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
+            ypop = applylimits(par=self, y=self.y[pop], limits=self.limits, dt=dt)
+            yinterp = self.m * smoothinterp(tvec, self.t[pop], ypop, smoothness=smoothness) # Use interpolation
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
         if npops==1 and self.by=='tot' and asarray: return output[0,:] # npops should always be 1 if by==tot, but just be doubly sure
