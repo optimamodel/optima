@@ -932,6 +932,7 @@ class ScenariosDb(db.Model):
 
         key = self.scenario_type
         if key == 'parameter':
+            if 'pars' not in blob: blob['pars'] = [] # CK: quick fix to handle missing key
             blob['pars'] = [
                 {
                     'name': item['name'],
