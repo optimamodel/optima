@@ -199,6 +199,11 @@ class ProjectDb(db.Model):
             for result_entry in self.results:
                 result = result_entry.hydrate()
                 project_entry.addresult(result)
+                if result_entry.parset_id:
+                    for parset in project_entry.parsets.values():
+                        if parset.uid == result_entry.parset_id:
+                            parset.resultsref = result.uid
+
         return project_entry
 
     def as_file(self, loaddir, filename=None):
