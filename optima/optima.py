@@ -70,6 +70,16 @@ def _failed(doraise=True):
         if doraise: raise sys.exc_info()[1], None, sys.exc_info()[2]
 
 
+notoptima = locals.keys()
+
+# Import the semi-private modules
+__all__ = ['_asd', '_calibration', '_economics', '_geospatial', 
+           '_loadspreadsheet', '_makespreadsheet', '_model', 
+           '_optimization', '_parameters', '_pchip', '_plotting', 
+           '_portfolio', '_project', '_programs', '_results', 
+           '_scenarios', '_settings']
+
+
 ## Load general modules
 try: from uuid import uuid4 as uuid
 except: _failed()

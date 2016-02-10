@@ -628,33 +628,12 @@ class Programset(object):
         return None
     
     
+
+    
+    
     
     def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, stepsize=0.1, verbose=2):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
-        
-        def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3):
-            ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
-            factors = reshape(factors, (len(factors),1)) # Get it the right shape
-            pardict[:] = dcp(pararray * factors)
-            progset.odict2cco(dcp(pardict), t=year)
-            comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
-            allmismatches = []
-            mismatch = 0
-            for budgetparpair in comparison:
-                parval = budgetparpair[2]
-                budgetval = budgetparpair[3]
-                if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
-                elif objective=='mad':             thismismatch = abs(budgetval - parval)
-                elif objective=='mse':             thismismatch =    (budgetval - parval)**2
-                else:
-                    errormsg = 'autofit(): "objective" not known; you entered "%s", but must be one of:\n' % objective
-                    errormsg += '"wape"/"mape" = weighted/mean absolute percentage error (default)\n'
-                    errormsg += '"mad"  = mean absolute difference\n'
-                    errormsg += '"mse"  = mean squared error'
-                    raise OptimaException(errormsg)
-                allmismatches.append(thismismatch)
-                mismatch += thismismatch
-            return mismatch
         
         ## Store original values in case we need to go back to them
         origvals = dcp(self.cco2odict(t=year))
@@ -664,26 +643,50 @@ class Programset(object):
         factors = ones((npars,1))
         
         ## Just do a simple random walk
-        args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'objective':objective, 'origmismatch':-1, 'verbose':verbose}
-        origmismatch = objectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
+        args = odict([('pararray',pararray), ('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('origmismatch',-1), ('verbose',verbose)])
+        origmismatch = costfuncobjectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
         args['origmismatch'] = origmismatch
         
         if optmethod=='simplex':
             from scipy.optimize import minimize # TEMP
-            optres = minimize(objectivecalc, factors, args=args)
+            optres = minimize(costfuncobjectivecalc, factors, args=tuple(args.values()), tol=0.1)
             factors = optres.x
         elif optmethod=='asd':
             from optima import asd
-            parvecnew, fval, exitflag, output = asd(objectivecalc, factors, args=args, MaxIter=maxiters)
-        currentmismatch = objectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
+            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, MaxIter=maxiters)
+        currentmismatch = costfuncobjectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
         pardict[:] = pararray * reshape(parvecnew, (len(parvecnew),1))
         self.odict2cco(pardict) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
-        
-        
+
+
+def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3):
+    ''' Calculate the mismatch between the budget-derived cost function parameter values and the model parameter values for a given year '''
+    factors = reshape(factors, (len(factors),1)) # Get it the right shape
+    pardict[:] = dcp(pararray * factors)
+    progset.odict2cco(dcp(pardict), t=year)
+    comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
+    allmismatches = []
+    mismatch = 0
+    for budgetparpair in comparison:
+        parval = budgetparpair[2]
+        budgetval = budgetparpair[3]
+        if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
+        elif objective=='mad':             thismismatch = abs(budgetval - parval)
+        elif objective=='mse':             thismismatch =    (budgetval - parval)**2
+        else:
+            errormsg = 'autofit(): "objective" not known; you entered "%s", but must be one of:\n' % objective
+            errormsg += '"wape"/"mape" = weighted/mean absolute percentage error (default)\n'
+            errormsg += '"mad"  = mean absolute difference\n'
+            errormsg += '"mse"  = mean squared error'
+            raise OptimaException(errormsg)
+        allmismatches.append(thismismatch)
+        mismatch += thismismatch
+        printv('orig mismatch: %s current mismatch: %s' % sigfig([origmismatch,mismatch],4), 4, verbose)
+    return mismatch
         
         
 

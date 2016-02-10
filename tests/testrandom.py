@@ -4,25 +4,39 @@ Do random tests.
 Version: 2016feb09
 """
 
-from pylab import ones, shape, array
+from line_profiler import LineProfiler
 
 import optima as op
 P = op.defaults.defaultproject('best')
-progset = P.progsets[0]
-parset = P.parsets[0]
-year = 2015
-#P.progsets[0].reconcile(parset=P.parsets[0], year=2016)
+ps = P.parsets[0]
+objectivecalc = op._programs.costfuncobjectivecalc
 
-modpars = progset.cco2odict(t=year)
-output1 = progset.compareoutcomes(parset=parset, year=year, doprint=True)
-pararray = modpars[:]
-factors = ones((shape(pararray)[0],1))
-factors += 0.5
-newmodpars = op.dcp(modpars)
-newmodpars[:] = pararray*factors
-progset.odict2cco(newmodpars)
-output2 = progset.compareoutcomes(parset=parset, year=year, doprint=True)
 
-outarr1 =  array(array(output1,dtype=object)[:,-1],dtype=float)
-outarr2 =  array(array(output2,dtype=object)[:,-1],dtype=float)
+def profile():
+    print('Profiling...')
 
+    def do_profile(follow=None):
+      def inner(func):
+          def profiled_func(*args, **kwargs):
+              try:
+                  profiler = LineProfiler()
+                  profiler.add_function(func)
+                  for f in follow:
+                      profiler.add_function(f)
+                  profiler.enable_by_count()
+                  return func(*args, **kwargs)
+              finally:
+                  profiler.print_stats()
+          return profiled_func
+      return inner
+    
+    
+    
+    @do_profile(follow=[objectivecalc]) # Add decorator to runmodel function
+    def runsimwrapper(): 
+        P.progsets[0].reconcile(parset=ps, year=2016, optmethod='asd', maxiters=10)
+    runsimwrapper()
+    
+    print('Done.')
+
+profile()

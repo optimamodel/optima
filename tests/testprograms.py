@@ -388,7 +388,7 @@ if 'reconcilepars' in tests:
     P = op.defaults.defaultproject('best')
     ps = P.parsets[0]
     before = op.dcp(P.progsets[0])
-    P.progsets[0].reconcile(parset=ps, year=2016)
+    P.progsets[0].reconcile(parset=ps, year=2016, optmethod='simplex')
     after = P.progsets[0]
     print('\n\nBEFORE:')
     before.compareoutcomes(parset=ps, year=2016, doprint=True)
