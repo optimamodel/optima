@@ -1079,8 +1079,12 @@ class CCOF(object):
         if isnumber(x): x = [x]
         if isnumber(t): t = [t]
         if (not toplot) and (not len(x)==len(t)): 
-            x = [x[0]]
-            t = [t[0]]
+            try: 
+                x = [x[0]]
+                t = [t[0]]
+            except:
+                x = [0]
+                t = [2015]
             printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
