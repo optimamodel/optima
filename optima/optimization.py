@@ -392,6 +392,8 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     lenparlist = len(parset.pars)
 
     # Process inputs
+    if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
+        optim.objectives['budget'] = sum(progset.getdefaultbudget()[:])
     if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
