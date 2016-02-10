@@ -943,14 +943,14 @@ class ScenariosDb(db.Model):
                         tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
                         for for_item in item['for']
                     ]
-                } for item in blob['pars']
+                } for item in blob['pars'] if 'pars' in blob
             ]
         else:
             print(blob)
             blob[key] = {
                 str(k): v
-                for k, v in blob[key].iteritems()
-            }
+                for k, v in blob[key].iteritems() if key in blob
+            } 
 
         if self.scenario_type == "budget":
 
