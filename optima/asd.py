@@ -159,7 +159,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             flag = '  No change'
         if verbose>=2: 
-            print(offset + 'Step %i (%0.1f s): %s (orig: %s | old:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
+            print(offset + 'Step %i (%0.1f s): %s (orig: %s | best:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
         
         # Optionally store output information
         if fulloutput: # Include additional output structure

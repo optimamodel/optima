@@ -629,10 +629,10 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, method='mape', maxiters=200, stepsize=0.1, verbose=2):
+    def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, stepsize=0.1, verbose=2):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         
-        def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, method=None, origmismatch=None, verbose=2, eps=1e-3):
+        def objectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3):
             ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
             factors = reshape(factors, (len(factors),1)) # Get it the right shape
             pardict[:] = dcp(pararray * factors)
@@ -643,11 +643,11 @@ class Programset(object):
             for budgetparpair in comparison:
                 parval = budgetparpair[2]
                 budgetval = budgetparpair[3]
-                if   method in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
-                elif method=='mad':             thismismatch = abs(budgetval - parval)
-                elif method=='mse':             thismismatch =    (budgetval - parval)**2
+                if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
+                elif objective=='mad':             thismismatch = abs(budgetval - parval)
+                elif objective=='mse':             thismismatch =    (budgetval - parval)**2
                 else:
-                    errormsg = 'autofit(): "method" not known; you entered "%s", but must be one of:\n' % method
+                    errormsg = 'autofit(): "objective" not known; you entered "%s", but must be one of:\n' % objective
                     errormsg += '"wape"/"mape" = weighted/mean absolute percentage error (default)\n'
                     errormsg += '"mad"  = mean absolute difference\n'
                     errormsg += '"mse"  = mean squared error'
@@ -664,11 +664,10 @@ class Programset(object):
         factors = ones((npars,1))
         
         ## Just do a simple random walk
-        args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':-1, 'verbose':verbose}
+        args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'objective':objective, 'origmismatch':-1, 'verbose':verbose}
         origmismatch = objectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
         args['origmismatch'] = origmismatch
         
-        optmethod='asd'
         if optmethod=='simplex':
             from scipy.optimize import minimize # TEMP
             optres = minimize(objectivecalc, factors, args=args)
