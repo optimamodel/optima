@@ -195,6 +195,10 @@ class ProjectDb(db.Model):
                     objectives=optimization_record.objectives,
                     constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
                 project_entry.addoptim(optim)
+        if self.results:
+            for result_entry in self.results:
+                result = result_entry.hydrate()
+                project_entry.addresult(result)
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -285,14 +289,19 @@ class ProjectDb(db.Model):
             from server.webapp.utils import save_result
             for name in project.results:
                 if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
-                    result_entry = save_result(project_id, result, project.results[name], 'optimization')
-                    db_session.add(result_entry)
-                    db_session.flush()
+                    result = project.results[name]
+                    print "simpars", result.simpars[0], type(result.simpars[0])
+                    result_entry = save_result(self.id, result, 
+                        project.parsets[0].name, # TODO : will break if more than one parset
+                        'optimization')
+                    db.session.add(result_entry)
+                    db.session.flush()
 
     def recursive_delete(self, synchronize_session=False):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
+        db.session.query(OptimizationsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ScenariosDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
