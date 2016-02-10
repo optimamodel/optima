@@ -13,7 +13,8 @@ import abc
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
 # ...though would be nice to have an easier way!
-coveragepars=['numtx','numpmtct','numost','numcirc'] 
+coveragepars = ['numtx','numpmtct','numost','numcirc'] 
+programparsonly = ['numcirc'] # WARNING, maybe another way of handling this? Don't expect program and parameter values for numcirc to match
 
 
 class Programset(object):
@@ -577,26 +578,27 @@ class Programset(object):
     ##################################################################################################################
     
     
-    def compareoutcomes(self, parset=None, year=None, ind=0, doprint=False):
+    def compareoutcomes(self, parset=None, year=None, ind=0, doprint=False, sigfigs=3):
         ''' For every parameter affected by a program, return a list comparing the default parameter values with the budget ones '''
         outcomes = self.getoutcomes(t=year, parset=parset)
         comparison = list()
         maxnamelen = 0
         maxkeylen = 0
         for key1 in outcomes.keys():
-            for key2 in outcomes[key1].keys():
-                name = parset.pars[ind][key1].name
-                maxnamelen = max(len(name),maxnamelen)
-                maxkeylen = max(len(str(key2)),maxkeylen)
-                parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
-                budgetvalue = outcomes[key1][key2] 
-                if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
-                else: comparison.append([name, key2, parvalue[0], None])
+            if key1 not in programparsonly:
+                for key2 in outcomes[key1].keys():
+                    name = parset.pars[ind][key1].name
+                    maxnamelen = max(len(name),maxnamelen)
+                    maxkeylen = max(len(str(key2)),maxkeylen)
+                    parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
+                    budgetvalue = outcomes[key1][key2] 
+                    if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+                    else: comparison.append([name, key2, parvalue[0], None])
         
         if doprint:
             for item in comparison:
                 strctrl = '%%%is | %%%is | Par: %%8s | Budget: %%8s' % (maxnamelen, maxkeylen)
-                print(strctrl % (item[0], item[1], sigfig(item[2]), sigfig(item[3])))
+                print(strctrl % ((item[0], item[1])+sigfig(item[2:4])))
                 
         return comparison
     
@@ -660,10 +662,9 @@ class Programset(object):
         pararray = origvals[:] # Turn into array format
         npars = shape(pararray)[0]
         factors = ones((npars,1))
-        origmismatch = -1 # Initialize, doesn't matter, immediately overwritten
         
         ## Just do a simple random walk
-        args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':origmismatch, 'verbose':verbose}
+        args = {'pararray':pararray, 'pardict':pardict, 'progset':self, 'parset':parset, 'year':year, 'ind':ind, 'method':method, 'origmismatch':-1, 'verbose':verbose}
         origmismatch = objectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
         args['origmismatch'] = origmismatch
         

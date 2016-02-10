@@ -226,7 +226,7 @@ def multisigfig(X, sigfigs=5):
         n=len(X)
         islist = True
     except:
-        x = [X]
+        X = [X]
         n = 1
         islist = False
     for i in range(n):

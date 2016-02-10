@@ -134,21 +134,43 @@ def printarr(arr, arrformat='%0.2f  '):
     
 
 
-def sigfig(x, sigfigs=3):
-    """ Return a string representation of variable x with sigfigs number of significant figures """
-    try:
-        if x==0: return '0'
-        from numpy import log10, floor
-        magnitude = floor(log10(abs(x)))
-        factor = 10**(sigfigs-magnitude-1)
-        x = round(x*factor)/float(factor)
-        digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
-        decimals = int(max(0,-magnitude+sigfigs-1))
-        strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
-        string = strformat % x
-        return string
+
+
+
+def sigfig(X, sigfigs=5):
+    """ Return a string representation of variable x with sigfigs number of significant figures -- copied from asd.py """
+    from numpy import log10, floor
+    output = []
+    try: 
+        n=len(X)
+        islist = True
     except:
-        return str(x)
+        X = [X]
+        n = 1
+        islist = False
+    for i in range(n):
+        x = X[i]
+        try:
+            if x==0:
+                output.append('0')
+            else:
+                magnitude = floor(log10(abs(x)))
+                factor = 10**(sigfigs-magnitude-1)
+                x = round(x*factor)/float(factor)
+                digits = int(abs(magnitude) + max(0, sigfigs - max(0,magnitude) - 1) + 1 + (x<0) + (abs(x)<1)) # one because, one for decimal, one for minus
+                decimals = int(max(0,-magnitude+sigfigs-1))
+                strformat = '%' + '%i.%i' % (digits, decimals)  + 'f'
+                string = strformat % x
+                output.append(string)
+        except:
+            output.append(str(x))
+    if islist:
+        return tuple(output)
+    else:
+        return output[0]
+
+
+
 
 
 def isnumber(x):
@@ -754,9 +776,7 @@ class odict(OrderedDict):
     An ordered dictionary, like the OrderedDict class, but supporting list methods like integer referencing,
     slicing, and appending.
     
-    WARNING: self.update() may not be functional
-    
-    Version: 2015nov21 by cliffk
+    Version: 2016feb09 by cliffk
     """
 
     def __slicekey(self, key, slice_end):
@@ -799,7 +819,7 @@ class odict(OrderedDict):
             except: # WARNING, should be KeyError, but this can't print newlines!!!
                 if len(self.keys()): 
                     errormsg = 'odict key "%s" not found; available keys are:\n%s' % (str(key), 
-                        '\n'.join([str(key) for key in self.keys()]))
+                        '\n'.join([str(k) for k in self.keys()]))
                 else: errormsg = 'Key "%s" not found since odict is empty'% key
                 raise Exception(errormsg)
 
