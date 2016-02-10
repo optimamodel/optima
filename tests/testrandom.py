@@ -9,7 +9,7 @@ from line_profiler import LineProfiler
 import optima as op
 P = op.defaults.defaultproject('best')
 ps = P.parsets[0]
-objectivecalc = op._programs.costfuncobjectivecalc
+tofollow = P.progsets[0].getoutcomes
 
 
 def profile():
@@ -32,7 +32,7 @@ def profile():
     
     
     
-    @do_profile(follow=[objectivecalc]) # Add decorator to runmodel function
+    @do_profile(follow=[tofollow]) # Add decorator to runmodel function
     def runsimwrapper(): 
         P.progsets[0].reconcile(parset=ps, year=2016, optmethod='asd', maxiters=10)
     runsimwrapper()
