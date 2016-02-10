@@ -32,6 +32,7 @@ define(['./../../module', 'underscore'], function (module, _) {
           .success(function () {
             $scope.state.ccData.push($scope.state.newCCData);
             $scope.state.newCCData = {};
+            $scope.state.showAddCCData = false;
           });
       }
     };
@@ -75,6 +76,7 @@ define(['./../../module', 'underscore'], function (module, _) {
           .success(function () {
             $scope.state.cpData.push($scope.state.newCPData);
             $scope.state.newCPData = {};
+            $scope.state.showAddCPData = false;
           });
       }
     };
