@@ -34,7 +34,7 @@ define(['angular'], function (module) {
 				"active": true, 
 				"years": $scope.row.years,
 				"id": $scope.row.id || null,
-				"progset_id": $scope.row.progset_id || null
+				"progset_id": $scope.row.progset_id.id || null
 			};
 			row[$scope.type] = $scope.row[$scope.type];
 			$modalInstance.close(row);
