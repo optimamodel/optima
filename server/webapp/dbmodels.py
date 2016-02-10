@@ -791,6 +791,8 @@ class ProgsetsDb(db.Model):
                     ]
                 }
                 effects.append(item)
+        print('-*-*-*-*-*-*+++++++++++++++')
+        print(effects)
         parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
             {
