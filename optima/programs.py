@@ -3,12 +3,11 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016feb06
+Version: 2016feb08
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj, defaultrepr
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
-from pylab import shape, rand, randn, floor
+from numpy import ones, prod, array, shape, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -619,8 +618,8 @@ class Programset(object):
         if modifiablepars is None: raise OptimaException('Please supply modifiablepars')
         for key,val in modifiablepars.items():
             targetpartype,targetparpop,thisprogkey = key # Split out tuple
-            self.covout['condcas'][('Clients', 'FSW')].ccopars[thisprogkey] = [tuple(val)]
-            if t: self.covout['condcas'][('Clients', 'FSW')].ccopars['t'] = t # WARNING, reassigned multiple times, but shouldn't matter...
+            self.covout[targetpartype][targetparpop].ccopars[thisprogkey] = [tuple(val)]
+            if t: self.covout[targetpartype][targetparpop].ccopars['t'] = t # WARNING, reassigned multiple times, but shouldn't matter...
         return None
     
     
