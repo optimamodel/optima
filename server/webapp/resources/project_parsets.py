@@ -16,7 +16,7 @@ from server.webapp.utils import (load_project, RequestParser, report_exception, 
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb, ScenariosDb,OptimizationsDb
 from server.webapp.fields import Json, Uuid
 
 import optima as op
@@ -190,13 +190,17 @@ class ParsetsDetail(Resource):
         if parset is None:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
-        # Is this how we should check for default parset?
-        if parset.name.lower() == 'default':  # TODO: it is lowercase
-            abort(403)
+        # # Is this how we should check for default parset?
+        # if parset.name.lower() == 'default':  # TODO: it is lowercase
+        #     abort(403)
 
         # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(project_id=project_id, 
+        db.session.query(ResultsDb).filter_by(project_id=project_id,
             id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        db.session.query(ScenariosDb).filter_by(project_id=project_id,
+            parset_id=parset_id).delete()
+        db.session.query(OptimizationsDb).filter_by(project_id=project_id,
+            parset_id=parset_id).delete()
         db.session.query(ParsetsDb).filter_by(project_id=project_id, id=parset_id).delete()
         db.session.commit()
 
