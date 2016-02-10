@@ -14,9 +14,9 @@ optimize = 0
 dosave = 0
 filename = 'best.prj'
 
-#P = defaults.defaultproject('best')
-P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
-P = loadobj('/u/cliffk/unsw/optima/tests/exercise_define_costoutcomefunctions.prj')
+P = defaults.defaultproject('best')
+#P = loadobj('/u/cliffk/unsw/optima/tests/exercise_scenario.prj')
+#P = loadobj('/u/cliffk/unsw/optima/tests/exercise_define_costoutcomefunctions.prj')
 
 ## Calibration
 if autocalib: 
@@ -46,7 +46,7 @@ if runscenarios:
     P.runscenarios() 
 #    plotpeople(P, P.results[-1].raw[-1][0]['people'])
     apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
-    pygui(P.results[-1], toplot=-1)
+    pygui(P.results[-1], toplot='default')
 
 
 
