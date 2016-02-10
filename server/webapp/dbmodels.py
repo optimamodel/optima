@@ -930,6 +930,28 @@ class ScenariosDb(db.Model):
 
         blob = deepcopy(self.blob)
 
+        key = self.scenario_type
+        if key == 'parameter':
+            blob['pars'] = [
+                {
+                    'name': item['name'],
+                    'startyear': item['startyear'],
+                    'endval': item['endval'],
+                    'endyear': item['endyear'],
+                    'startval': item['startval'],
+                    'for': [
+                        tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
+                        for for_item in item['for']
+                    ]
+                } for item in blob['pars']
+            ]
+        else:
+            print(blob)
+            blob[key] = {
+                str(k): v
+                for k, v in blob[key].iteritems()
+            }
+
         if self.scenario_type == "budget":
 
             blob.pop('coverage', None)
