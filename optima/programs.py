@@ -26,6 +26,7 @@ class Programset(object):
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
         else: self.updateprogset()
+        self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
 
@@ -265,7 +266,9 @@ class Programset(object):
                 for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
-
+                    
+        # TEMP: store default budget as an attribute
+        self.defaultbudget = lastbudget
         return selectbudget if t is not None else lastbudget
 
     def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2):

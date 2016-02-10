@@ -417,14 +417,14 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
 
 
-def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
+def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, origbudget=None):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
-    origbudget = dcp(progset.getdefaultbudget())
+    if origbudget is None: origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
@@ -473,7 +473,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
-    origbudget = dcp(progset.getdefaultbudget())
+    if origbudget is None: origbudget = dcp(progset.getdefaultbudget())
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
