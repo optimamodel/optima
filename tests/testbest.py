@@ -30,7 +30,7 @@ if manualcalib:
     P.manualfit()
 
 if reconcile:
-    P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016)
+    P.progsets[ind].reconcile(parset=P.parsets[ind], year=2016, maxiters=300)
 
 
 ### Scenarios
@@ -42,9 +42,9 @@ if runscenarios:
     for key in nobudget: nobudget[key] *= 1e-6
     scenlist = [
         Parscen(name='Current conditions', parsetname=ind, pars=[]),
-        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
+#        Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
         Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
-        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+#        Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
         ]
     
     # Run the scenarios
