@@ -372,7 +372,10 @@ class Programset(object):
 
         # Set up internal variables
         nyrs = len(t)
-        infbudget = odict((k,array([1e9]*len(coverage[k]))) if self.programs[k].optimizable() else (k,None) for k in coverage.keys())
+        try: infbudget = odict((k,array([1e9]*len(coverage[k]))) if self.programs[k].optimizable() else (k,None) for k in coverage.keys())
+        except:
+            errormsg = 'The following programs require coverage to be entered:\n%s' % '\n'.join(self.hasallcostcovpars(detail=True))
+            raise OptimaException(errormsg)
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
@@ -1094,7 +1097,11 @@ class CCOF(object):
         if isnumber(t): t = [t]
         nyrs = len(t)
         ccopars_no_t = dcp({k:v for k,v in self.ccopars.iteritems() if v})
-        del ccopars_no_t['t']
+        try: 
+            del ccopars_no_t['t']
+        except: 
+            errormsg = 'programs(): cost-coverage-outcome parameters not defined for "%s"' % self.ccopars
+            raise OptimaException(errormsg)
         
         # Deal with bounds
         if not bounds:
@@ -1116,7 +1123,7 @@ class CCOF(object):
             
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
-        allt = arange(1900,2100)
+        allt = arange(1900,2100) # This could probably be made, like, better
         j = 1
 
         # Calculate interpolated parameters
