@@ -932,19 +932,22 @@ class ScenariosDb(db.Model):
 
         key = self.scenario_type
         if key == 'parameter':
-            blob['pars'] = [
-                {
-                    'name': item['name'],
-                    'startyear': item['startyear'],
-                    'endval': item['endval'],
-                    'endyear': item['endyear'],
-                    'startval': item['startval'],
-                    'for': [
-                        tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
-                        for for_item in item['for']
-                    ]
-                } for item in blob['pars'] if 'pars' in blob
-            ]
+            if 'pars' in blob and blob['pars']:
+                blob['pars'] = [
+                    {
+                        'name': item['name'],
+                        'startyear': item['startyear'],
+                        'endval': item['endval'],
+                        'endyear': item['endyear'],
+                        'startval': item['startval'],
+                        'for': [
+                            tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
+                            for for_item in item['for']
+                        ]
+                    } for item in blob['pars'] if 'pars' in blob
+                ]
+            else:
+                blob['pars'] = []
         else:
             print(blob)
             blob[key] = {
