@@ -169,6 +169,9 @@ class ProjectDb(db.Model):
             for parset_record in self.parsets:
                 parset_entry = parset_record.hydrate()
                 project_entry.addparset(parset_entry.name, parset_entry)
+            for key, parset in project_entry.parsets.iteritems():
+                parset.project = project_entry
+                project_entry.parsets[key] = parset
         if self.progsets:
             for progset_record in self.progsets:
                 progset_entry = progset_record.hydrate()
