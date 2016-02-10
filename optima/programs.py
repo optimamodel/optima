@@ -1075,9 +1075,13 @@ class CCOF(object):
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
+    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2):
+        if isnumber(x): x = [x]
+        if isnumber(t): t = [t]
         if (not toplot) and (not len(x)==len(t)): 
-            raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
+            x = [x[0]]
+            t = [t[0]]
+            printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
