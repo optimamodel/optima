@@ -57,7 +57,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         x, fval, exitflag, output = asd(norm, [1, 2, 3])
     
     
-    Version: 2016jan05 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2016feb11 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
     from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero, isnan
@@ -89,7 +89,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     TolX = 1e-6*mean(x) if TolX == None else TolX  # Minimum change in parameters
     StallIterLimit = min(StallIterLimit, maxarraysize); # Don't by default let users create arrays larger than this -- slow and pointless
     MaxIter = min(MaxIter, maxarraysize);
-    if sum(isnan(x)): raise Exception('Cannot run ASD: at least one value in the vector of starting points is NaN:\n%s' % x)
+    if sum(isnan(x)): raise Exception('At least one value in the vector of starting points is NaN:\n%s' % x)
     
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
