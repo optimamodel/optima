@@ -1,7 +1,7 @@
 """
 Functions for running optimizations.
 
-Version: 2016feb07
+Version: 2016feb11
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions
@@ -11,10 +11,6 @@ from numpy import zeros, arange, maximum, array, inf
 # Define global parameters that shouldn't really matter
 infmoney = 1e9 # Effectively infinite money
 
-
-## TEMP define a default budget
-tmpdefaultbudget = odict({u'MSM programs': 1000.0, u'HTC': 11015092.0, u'VMMC': 3650750.0, u'Other care': 1000, u'PMTCT': 10663079.0, u'SBCC': 1504986.0, u'MGMT': 1000, u'ART': 69209158.0, u'FSW programs': 1000})
-tmpdefaultbudget = tmpdefaultbudget.sort([u'PMTCT', u'VMMC', u'SBCC', u'FSW programs', u'MSM programs', u'HTC', u'Other care', u'MGMT', u'ART'])
 
 ################################################################################################################################################
 ### The container class
@@ -93,15 +89,14 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
 
     if type(progset)==Programset:
         try: defaultbudget = sum(progset.getdefaultbudget()[:])
-        except: defaultbudget = sum(tmpdefaultbudget[:])
+        except: raise OptimaException('Unable to extract the default budget from program set "%s"' % progset.name)
     elif type(project)==Programset: # Not actually a project, but proceed anyway
         try: defaultbudget = sum(project.getdefaultbudget()[:])
-        except: defaultbudget = sum(tmpdefaultbudget[:])
+        except: raise OptimaException('Unable to extract the default budget from program set "%s"' % project.name)
     elif project is not None:
         if progset is None: progset = 0
         try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
-        except: defaultbudget = sum(tmpdefaultbudget[:])
-        printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
+        except: raise OptimaException('Unable to extract the default budget from this object:\n%s' % project)
     else:
         defaultbudget = 1e6 # If can't find programs
         printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
@@ -401,7 +396,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     # Process inputs
     if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
         try: optim.objectives['budget'] = sum(progset.getdefaultbudget()[:])
-        except: optim.objectives['budget'] = sum(tmpdefaultbudget[:])
+        except: raise OptimaException('optimize(): Unable to extract the default budget from program set "%s"' % progset.name)
     if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
@@ -435,7 +430,7 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     try: origbudget = dcp(progset.getdefaultbudget())
-    except: origbudget = dcp(tmpdefaultbudget)
+    except: raise OptimaException('minoutcomes(): Unable to extract the default budget from program set "%s"' % progset.name)
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
@@ -485,7 +480,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
     try: origbudget = dcp(progset.getdefaultbudget())
-    except: origbudget = dcp(tmpdefaultbudget)
+    except: raise OptimaException('optimize(): Unable to extract the default budget from:\n%s' % progset)
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
