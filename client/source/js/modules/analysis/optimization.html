@@ -121,6 +121,7 @@
                       style="width: 60%;"
                       ng-class="{'invalid': optimizationForm.progset.$invalid}"
                       ng-options="program.id as program.name for program in state.programSetList"
+                      ng-change="validateOptimizationForm(optimizationForm)"
                       ng-model="state.activeOptimization.progset_id">
                 <option value="">-- Please select a program set --</option>
               </select>
@@ -131,6 +132,7 @@
                       name="parset"
                       style="width: 60%;"
                       ng-class="{'invalid': optimizationForm.parset.$invalid}"
+                      ng-change="validateOptimizationForm(optimizationForm)"
                       ng-options="parset.id as parset.name for parset in state.parsets"
                       ng-model="state.activeOptimization.parset_id">
                 <option value="">-- Please select a parameter set --</option>
@@ -166,6 +168,7 @@
                       type="number"
                       ng-model="state.activeOptimization.objectives[objective.key]"
                       name="{{objective.key}}"
+                      ng-change="validateOptimizationForm(optimizationForm)"
                       ng-class="{'invalid': optimizationForm[objective.key].$invalid}"/>
                   </span>
               </div>
