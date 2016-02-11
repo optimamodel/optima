@@ -77,8 +77,12 @@
     display: flex;
   }
 
+  .section {
+    margin-bottom: 10px;
+  }
+
   .label {
-    margin: 10px 0 2px;
+    margin: 2px 0;
     font-size: 15px;
     font-weight: 600;
   }
