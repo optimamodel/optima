@@ -332,7 +332,12 @@
     } else {
       if (this.props.position === 'bottom') {
         // force format to >=4 digits rounded number
-        tick_labels = d3.format('04r');
+        tick_labels = function(d, i){
+          if(!d || isNaN(d)) {
+            return d;
+          }
+          return d3.format('r')(d, i);
+        }
       } else {
         tick_labels = null;
       }
