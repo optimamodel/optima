@@ -141,8 +141,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         xnew = deepcopy(x) # Initialize the new parameter set
         xnew[par] = newval # Update the new parameter set
         fvalnew = function(xnew, **args) # Calculate the objective function for the new parameter set
-        abserrorhistory[mod(count,StallIterLimit)] = fval - fvalnew # Keep track of improvements in the error
-        relerrorhistory[mod(count,StallIterLimit)] = fval/float(fvalnew)-1 # Keep track of improvements in the error  
+        abserrorhistory[mod(count,StallIterLimit)] = max(0, fval-fvalnew) # Keep track of improvements in the error
+        relerrorhistory[mod(count,StallIterLimit)] = max(0, fval/float(fvalnew)-1.0) # Keep track of improvements in the error  
         if verbose>=3:
             print(offset+'step=%i choice=%s, par=%s, pm=%s, origval=%s, newval=%s, inrange=%s' % (count, choice, par, pm, x[par], xnew[par], inrange))
 
@@ -158,8 +158,12 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             p[choice] = p[choice]/pdec # Decrease probability of picking this parameter again
             s1[choice] = s1[choice]/sdec # Decrease size of step for next time
             flag = '  No change'
+        else:
+            exitflag = -1
+            if verbose>=2: print('======== Objective function returned NaN, terminating ========')
+            break
         if verbose>=2: 
-            print(offset + 'Step %i (%0.1f s): %s (orig: %s | old:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
+            print(offset + 'Step %i (%0.1f s): %s (orig: %s | best:%s | new:%s | diff:%s | ratio:%0.5f)' % ((count, time()-start, flag)+multisigfig([fvalorig, fvalold, fvalnew, fvalnew-fvalold]) + (fvalnew/fvalold,)))
         
         # Optionally store output information
         if fulloutput: # Include additional output structure
@@ -183,7 +187,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitflag = 2 
             if verbose>=2: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
             break
-        if (count > StallIterLimit) and (abs(mean(relerrorhistory)) < RelTolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
             exitflag = 2 
             if verbose>=2: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break
@@ -226,7 +230,7 @@ def multisigfig(X, sigfigs=5):
         n=len(X)
         islist = True
     except:
-        x = [X]
+        X = [X]
         n = 1
         islist = False
     for i in range(n):
