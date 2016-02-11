@@ -121,6 +121,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
         success(function (response) {
           $scope.state.activeOptimization.id = response.id;
+          $scope.state.activeOptimization.constraints = response.constraints;
+          $scope.state.activeOptimization.objectives = response.objectives;
+          $scope.setActiveOptimization($scope.state.activeOptimization);
         });
     };
 

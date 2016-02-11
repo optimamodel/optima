@@ -169,13 +169,13 @@
               <span style="width: 20%">Maximum</span>
             </div>
           </div>
-          <div style="justify-content: space-around" class="option" ng-repeat="constraintLKey in state.constraintKeys">
-            <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintLKey] }}</span>
+          <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
+            <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
               <span style="width: 20%">
-                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintLKey]"/>
+                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
               </span>
               <span style="width: 20%">
-                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintLKey]"/>
+                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
               </span>
           </div>
         </div>
