@@ -118,13 +118,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     $scope.saveOptimization = function() {
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
-        success(function (response) {
-          $scope.state.activeOptimization.id = response.id;
-          $scope.state.activeOptimization.constraints = response.constraints;
-          $scope.state.activeOptimization.objectives = response.objectives;
-          $scope.setActiveOptimization($scope.state.activeOptimization);
-        });
+      if (!$scope.state.activeOptimization.id) {
+        $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
+          success(function (response) {
+            $scope.setActiveOptimization(response);
+          });
+      } else {
+        $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id , $scope.state.activeOptimization).
+          success(function (response) {
+          });
+      }
     };
 
     $scope.runOptimizations = function() {

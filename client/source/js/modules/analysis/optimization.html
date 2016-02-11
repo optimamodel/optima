@@ -110,88 +110,91 @@
       <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
     </div>
 
-    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
+    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">
       <div class="small_bordered_list" style="width: 30%;">
-        <div class="option_list" style="height:62vh">
-          <label>
-            <div class="label">Program set</div>
-            <select class="txbox"
-                    style="width: 60%;"
-                    ng-options="program.id as program.name for program in state.programSetList"
-                    ng-model="state.activeOptimization.progset_id">
-              <option value="">-- Please select a program set --</option>
-            </select>
-          </label>
-          <label>
-            <div class="label">Parameter set</div>
-            <select class="txbox"
-                    style="width: 60%;"
-                    ng-options="parset.id as parset.name for parset in state.parsets"
-                    ng-model="state.activeOptimization.parset_id">
-              <option value="">-- Please select a parameter set --</option>
-            </select>
-          </label>
-          <div>
-            <div class="label">Type</div>
+        <form name="optimizationForm">
+          <div class="option_list" style="height:62vh">
+            <label>
+              <div class="label">Program set</div>
+              <select class="txbox"
+                      style="width: 60%;"
+                      ng-options="program.id as program.name for program in state.programSetList"
+                      ng-model="state.activeOptimization.progset_id">
+                <option value="">-- Please select a program set --</option>
+              </select>
+            </label>
+            <label>
+              <div class="label">Parameter set</div>
+              <select class="txbox"
+                      style="width: 60%;"
+                      ng-options="parset.id as parset.name for parset in state.parsets"
+                      ng-model="state.activeOptimization.parset_id">
+                <option value="">-- Please select a parameter set --</option>
+              </select>
+            </label>
             <div>
-                <span style="width: 45%">
-                  <input
-                      type="radio"
-                      name="objectives_which"
-                      ng-click="setType('outcomes')"
-                      ng-checked="state.activeOptimization.which==='outcomes'"/>
-                  Minimize outcomes
+              <div class="label">Type</div>
+              <div>
+                  <span style="width: 45%">
+                    <input
+                        type="radio"
+                        name="objectives_which"
+                        ng-click="setType('outcomes')"
+                        ng-checked="state.activeOptimization.which==='outcomes'"/>
+                    Minimize outcomes
+                  </span>
+                  <span style="width: 45%">
+                    <input
+                        type="radio"
+                        name="objectives_which"
+                        ng-click="setType('money')"
+                        ng-checked="state.activeOptimization.which==='money'"/>
+                    Minimize money
+                  </span>
+              </div>
+            </div>
+            <div ng-if="state.activeOptimization.objectives">
+              <div class="label">Objectives</div>
+              <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
+                <span style="width: 70%">{{objective.label}}</span>
+                  <span style="width: 25%">
+                    <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.objectives[objective.key]"/>
+                  </span>
+              </div>
+            </div>
+            <div ng-if="state.activeOptimization.constraints">
+              <div class="label">Constraints</div>
+              <div style="justify-content: space-around; font-weight: bold" class="option">
+                <span style="width: 60%">Program Name</span>
+                <span style="width: 20%">Minimum</span>
+                <span style="width: 20%">Maximum</span>
+              </div>
+            </div>
+            <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
+              <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
+                <span style="width: 20%">
+                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
                 </span>
-                <span style="width: 45%">
-                  <input
-                      type="radio"
-                      name="objectives_which"
-                      ng-click="setType('money')"
-                      ng-checked="state.activeOptimization.which==='money'"/>
-                  Minimize money
+                <span style="width: 20%">
+                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
                 </span>
             </div>
           </div>
-          <div ng-if="state.activeOptimization.objectives">
-            <div class="label">Objectives</div>
-            <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
-              <span style="width: 70%">{{objective.label}}</span>
-                <span style="width: 25%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.objectives[objective.key]"/>
-                </span>
-            </div>
+          <div style="font-style: italic;color: lightgreen;margin-top: 25px;margin-left: 35px">
+            {{ statusMessage }}
           </div>
-          <div ng-if="state.activeOptimization.constraints">
-            <div class="label">Constraints</div>
-            <div style="justify-content: space-around; font-weight: bold" class="option">
-              <span style="width: 60%">Program Name</span>
-              <span style="width: 20%">Minimum</span>
-              <span style="width: 20%">Maximum</span>
-            </div>
+          <div style="font-style: italic;color: red;margin-top: 5px;margin-left: 35px">
+            {{ errorMessage }}
           </div>
-          <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
-            <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
-              <span style="width: 20%">
-                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
-              </span>
-              <span style="width: 20%">
-                <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
-              </span>
+          <div style="display: flex;justify-content: space-around; margin-top: 5px">
+            <input type="button" value="Run"
+               class="updateGraph btn" ng-click="runOptimizations()"
+               ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/> <!-- WARNING, automatically saves! -->
+            <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization()"
+               ng-disabled="!state.activeOptimization"/>
+            <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
           </div>
-        </div>
-        <div style="font-style: italic;color: lightgreen;margin-top: 25px;margin-left: 35px">
-          {{ statusMessage }}
-        </div>
-        <div style="font-style: italic;color: red;margin-top: 5px;margin-left: 35px">
-          {{ errorMessage }}
-        </div>
-        <div style="display: flex;justify-content: space-around; margin-top: 5px">
-          <input type="button" value="Run"
-             class="updateGraph btn" ng-click="runOptimizations()"
-             ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/> <!-- WARNING, automatically saves! -->
-          <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization()"/>
-          <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
-        </div>
+        </form>
       </div>
       <div class="chart_wrapper" style="height:calc(100vh - 280px)">
         <div class="3" style="margin: 10px;">
