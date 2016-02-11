@@ -117,7 +117,9 @@
             <label>
               <div class="label">Program set</div>
               <select class="txbox"
+                      name="progset"
                       style="width: 60%;"
+                      ng-class="{'invalid': optimizationForm.progset.$invalid}"
                       ng-options="program.id as program.name for program in state.programSetList"
                       ng-model="state.activeOptimization.progset_id">
                 <option value="">-- Please select a program set --</option>
@@ -126,7 +128,9 @@
             <label>
               <div class="label">Parameter set</div>
               <select class="txbox"
+                      name="parset"
                       style="width: 60%;"
+                      ng-class="{'invalid': optimizationForm.parset.$invalid}"
                       ng-options="parset.id as parset.name for parset in state.parsets"
                       ng-model="state.activeOptimization.parset_id">
                 <option value="">-- Please select a parameter set --</option>
@@ -158,7 +162,11 @@
               <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
                 <span style="width: 70%">{{objective.label}}</span>
                   <span style="width: 25%">
-                    <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.objectives[objective.key]"/>
+                    <input class="txbox __inline __m"
+                      type="number"
+                      ng-model="state.activeOptimization.objectives[objective.key]"
+                      name="{{objective.key}}"
+                      ng-class="{'invalid': optimizationForm[objective.key].$invalid}"/>
                   </span>
               </div>
             </div>
@@ -190,8 +198,8 @@
             <input type="button" value="Run"
                class="updateGraph btn" ng-click="runOptimizations()"
                ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/> <!-- WARNING, automatically saves! -->
-            <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization()"
-               ng-disabled="!state.activeOptimization"/>
+            <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization(optimizationForm)"
+               ng-disabled="optimizationForm.$invalid" ng-disabled="!state.activeOptimization"/>
             <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
           </div>
         </form>

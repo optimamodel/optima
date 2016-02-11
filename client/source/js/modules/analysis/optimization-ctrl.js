@@ -117,17 +117,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    $scope.saveOptimization = function() {
-      if (!$scope.state.activeOptimization.id) {
-        $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
-          success(function (response) {
-            $scope.setActiveOptimization(response);
-          });
-      } else {
-        $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id , $scope.state.activeOptimization).
-          success(function (response) {
-          });
+    $scope.saveOptimization = function(optimizationForm) {
+      validateOptimizationForm(optimizationForm);
+      if(!optimizationForm.$invalid) {
+        if (!$scope.state.activeOptimization.id) {
+          $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
+            success(function (response) {
+              $scope.setActiveOptimization(response);
+            });
+        } else {
+          $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id, $scope.state.activeOptimization).
+            success(function (response) {
+            });
+        }
       }
+    };
+
+    var validateOptimizationForm = function(optimizationForm) {
+      optimizationForm.progset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.progset_id));
+      optimizationForm.parset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.parset_id));
+      optimizationForm.start.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.start));
+      optimizationForm.end.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.end));
     };
 
     $scope.runOptimizations = function() {
