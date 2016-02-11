@@ -114,7 +114,7 @@
       <div class="small_bordered_list" style="width: 30%;">
         <form name="optimizationForm">
           <div class="option_list" style="height:62vh">
-            <label>
+            <div class="section">
               <div class="label">Program set</div>
               <select class="txbox"
                       name="progset"
@@ -124,8 +124,8 @@
                       ng-model="state.activeOptimization.progset_id">
                 <option value="">-- Please select a program set --</option>
               </select>
-            </label>
-            <label>
+            </div>
+            <div class="section">
               <div class="label">Parameter set</div>
               <select class="txbox"
                       name="parset"
@@ -135,8 +135,8 @@
                       ng-model="state.activeOptimization.parset_id">
                 <option value="">-- Please select a parameter set --</option>
               </select>
-            </label>
-            <div>
+            </div>
+            <div class="section">
               <div class="label">Type</div>
               <div>
                   <span style="width: 45%">
@@ -157,11 +157,11 @@
                   </span>
               </div>
             </div>
-            <div ng-if="state.activeOptimization.objectives">
+            <div ng-if="state.activeOptimization.objectives" class="section">
               <div class="label">Objectives</div>
               <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
                 <span style="width: 70%">{{objective.label}}</span>
-                  <span style="width: 25%">
+                  <span style="width: 30%">
                     <input class="txbox __inline __m"
                       type="number"
                       ng-model="state.activeOptimization.objectives[objective.key]"
@@ -170,7 +170,7 @@
                   </span>
               </div>
             </div>
-            <div ng-if="state.activeOptimization.constraints">
+            <div ng-if="state.activeOptimization.constraints" class="section">
               <div class="label">Constraints</div>
               <div style="justify-content: space-around; font-weight: bold" class="option">
                 <span style="width: 60%">Program Name</span>
@@ -199,19 +199,21 @@
                class="updateGraph btn" ng-click="runOptimizations()"
                ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/> <!-- WARNING, automatically saves! -->
             <input type="button" value="Save" class="updateGraph btn" ng-click="saveOptimization(optimizationForm)"
-               ng-disabled="optimizationForm.$invalid" ng-disabled="!state.activeOptimization"/>
+               ng-disabled="optimizationForm.$invalid || !state.activeOptimization"/>
             <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
           </div>
         </form>
       </div>
       <div class="chart_wrapper" style="height:calc(100vh - 280px)">
-        <div class="3" style="margin: 10px;">
+        <div class="3" style="margin: 10px;text-align: right;width: 100%;">
           <export-all-charts name="Optimization" ng-if="optimizationCharts.length > 0"></export-all-charts>
           <!--<export-all-data charts="calibrationChart" name="Optimization analyses" ng-if="calibrationChart.length > 0"></export-all-data>-->
         </div>
-        <div ng-repeat="chart in optimizationCharts" class="chart-container __small">
-          <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-          <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+        <div>
+          <div ng-repeat="chart in optimizationCharts" class="chart-container __small">
+            <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+            <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+          </div>
         </div>
       </div>
       <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
