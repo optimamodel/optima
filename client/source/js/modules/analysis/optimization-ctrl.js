@@ -168,10 +168,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollOptimizations, 5000);
-          } else if(response.status === 'error'){
-            $scope.errorMessage = 'Optimization failed.';
-            $scope.statusMessage = '';
           }
+        }).error(function() {
+          $scope.errorMessage = 'Optimization failed.';
+          $scope.statusMessage = '';
         });
     };
 
