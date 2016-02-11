@@ -32,6 +32,7 @@ define({
       'deps': ['ng-file-upload-html5-shim', 'jquery'],
       'exports': 'angular'
     },
+    'toastr': ['angular'],
     'angular-loading-bar': ['angular'],
     'd3-box': ['d3'],
     'angular-messages': ['angular'],
