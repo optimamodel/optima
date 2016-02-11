@@ -79,7 +79,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # Calculate other things outside the loop
     transinj = simpars['transinj']          # Injecting
     cd4trans /= cd4transnorm # Normalize CD4 transmission
-    dxfactor = (1-simpars['effdx']) # Include diagnosis efficacy
+    dxfactor = (1.0-simpars['effdx']) # Include diagnosis efficacy
     if usecascade:
         efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # (~30%) reduction in transmission probability for usVL
         efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # (~96%) reduction in transmission probability for sVL
