@@ -126,7 +126,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               $scope.setActiveOptimization(response);
             });
         } else {
-          $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id, $scope.state.activeOptimization).
+          $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id,
+            $scope.state.activeOptimization).
             success(function (response) {
             });
         }
@@ -161,7 +162,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if(response.status === 'completed') {
             $scope.getOptimizationGraphs();
-            $scope.statusMessage = 'Optimization successfully completed.';
+            $scope.statusMessage = 'Optimization successfully completed updating graphs.';
+            clearStatusMessage();
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollOptimizations, 5000);
@@ -170,6 +172,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.statusMessage = '';
           }
         });
+    };
+
+    var clearStatusMessage = function() {
+      $timeout(function() {
+        $scope.statusMessage = '';
+      }, 5000);
     };
 
     $scope.getOptimizationGraphs = function() {
