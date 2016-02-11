@@ -65,7 +65,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     from numpy.random import random, seed # Was pylab.rand
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
-    seed(seed)
+    seed(randseed)
     
     def consistentshape(userinput):
         """
