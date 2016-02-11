@@ -12,6 +12,10 @@ from numpy import zeros, arange, maximum, array, inf
 infmoney = 1e9 # Effectively infinite money
 
 
+## TEMP define a default budget
+tmpdefaultbudget = odict({u'MSM programs': 1000.0, u'HTC': 11015092.0, u'VMMC': 3650750.0, u'Other care': 1000, u'PMTCT': 10663079.0, u'SBCC': 1504986.0, u'MGMT': 1000, u'ART': 69209158.0, u'FSW programs': 1000})
+tmpdefaultbudget = tmpdefaultbudget.sort([u'PMTCT', u'VMMC', u'SBCC', u'FSW programs', u'MSM programs', u'HTC', u'Other care', u'MGMT', u'ART'])
+
 ################################################################################################################################################
 ### The container class
 ################################################################################################################################################
@@ -88,12 +92,15 @@ def defaultobjectives(project=None, progset=None, which='outcomes', verbose=2):
     printv('Defining default objectives...', 3, verbose=verbose)
 
     if type(progset)==Programset:
-        defaultbudget = sum(progset.getdefaultbudget()[:])
+        try: defaultbudget = sum(progset.getdefaultbudget()[:])
+        except: defaultbudget = sum(tmpdefaultbudget[:])
     elif type(project)==Programset: # Not actually a project, but proceed anyway
-        defaultbudget = sum(project.getdefaultbudget()[:])
+        try: defaultbudget = sum(project.getdefaultbudget()[:])
+        except: defaultbudget = sum(tmpdefaultbudget[:])
     elif project is not None:
         if progset is None: progset = 0
-        defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
+        try: defaultbudget = sum(project.progsets[progset].getdefaultbudget()[:])
+        except: defaultbudget = sum(tmpdefaultbudget[:])
         printv('defaultobjectives() did not get a progset input, so using default budget of %0.0f' % defaultbudget, 2, verbose)
     else:
         defaultbudget = 1e6 # If can't find programs
@@ -371,7 +378,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 
-def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
+def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
@@ -392,6 +399,9 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
     lenparlist = len(parset.pars)
 
     # Process inputs
+    if not optim.objectives['budget']: # Handle 0 or None -- WARNING, temp?
+        try: optim.objectives['budget'] = sum(progset.getdefaultbudget()[:])
+        except: optim.objectives['budget'] = sum(tmpdefaultbudget[:])
     if isnumber(inds): inds = [inds] # # Turn into a list if necessary
     if inds is None: inds = range(lenparlist)
     if max(inds)>lenparlist: raise OptimaException('Index %i exceeds length of parameter list (%i)' % (max(inds), lenparlist+1))
@@ -424,7 +434,8 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
-    origbudget = dcp(progset.getdefaultbudget())
+    try: origbudget = dcp(progset.getdefaultbudget())
+    except: origbudget = dcp(tmpdefaultbudget)
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))
@@ -473,7 +484,8 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     progset = project.progsets[optim.progsetname] # Link to the original parameter set
     totalbudget = dcp(optim.objectives['budget'])
     origtotalbudget = totalbudget
-    origbudget = dcp(progset.getdefaultbudget())
+    try: origbudget = dcp(progset.getdefaultbudget())
+    except: origbudget = dcp(tmpdefaultbudget)
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     origbudgetvec = dcp(budgetvec)
@@ -492,17 +504,23 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     ## Loop through different budget options
     ##########################################################################################################################
 
+    terminate = False
+
     # First, try infinite money
     args['totalbudget'] = 1e9
     targetsmet, summary = objectivecalc(budgetvec, **args)
-    if not(targetsmet): raise OptimaException("Infinite allocation can't meet targets:\n%s" % summary) # WARNING, this shouldn't be an exception, something more subtle
+    if not(targetsmet): 
+        terminate = True
+        printv("Infinite allocation can't meet targets:\n%s" % summary, 1, verbose) # WARNING, this shouldn't be an exception, something more subtle
     else: printv("Infinite allocation meets targets, as expected; proceeding...", 2, verbose)
 
     # Next, try no money
     args['totalbudget'] = 1e-3
     targetsmet, summary = objectivecalc(budgetvec, **args)
-    if targetsmet: raise OptimaException("Even zero allocation meets targets:\n%s" % summary)
-    else:printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
+    if targetsmet: 
+        terminate = True
+        printv("Even zero allocation meets targets:\n%s" % summary, 1, verbose)
+    else: printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
 
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
     args['totalbudget'] = origtotalbudget
@@ -519,61 +537,67 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     for k,key in enumerate(optim.objectives['keys']):
        optim.objectives[key+'weight'] = maximum(weights[k],0) # Reset objective weights according to the reduction required -- don't let it go below 0, though
 
+    # If infinite or zero money met objectives, don't bother proceeding
+    if terminate:
+        constrainedbudgetvec = budgetvec * args['totalbudget']
+        newtotalbudget = args['totalbudget']
+        fundingfactor = args['totalbudget']
 
-    ##########################################################################################################################
-    ## Now run an optimization on the current budget
-    ##########################################################################################################################
-
-    args['totalbudget'] = origtotalbudget # Calculate new total funding
-    args['which'] = 'outcomes' # Switch back to outcome minimization -- WARNING, there must be a better way of doing this
-    budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
-
-    # See if objectives are met
-    args['which'] = 'money' # Switch back to money minimization
-    targetsmet, summary = objectivecalc(budgetvec2, **args)
-    fundingfactor = 1.0
-
-    # If targets are met, scale down until they're not -- this loop will be skipped entirely if targets not currently met
-    while targetsmet:
-        fundingfactor /= fundingchange
-        args['totalbudget'] = origtotalbudget * fundingfactor
+    else:
+        ##########################################################################################################################
+        ## Now run an optimization on the current budget
+        ##########################################################################################################################
+    
+        args['totalbudget'] = origtotalbudget # Calculate new total funding
+        args['which'] = 'outcomes' # Switch back to outcome minimization -- WARNING, there must be a better way of doing this
+        budgetvec1, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvec2 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
+    
+        # See if objectives are met
+        args['which'] = 'money' # Switch back to money minimization
         targetsmet, summary = objectivecalc(budgetvec2, **args)
-        printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
-
-    # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
-    while not(targetsmet):
-        fundingfactor *= fundingchange
-        args['totalbudget'] = origtotalbudget * fundingfactor
-        targetsmet, summary = objectivecalc(budgetvec2, **args)
-        printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
-
-
-    ##########################################################################################################################
-    # Re-optimize based on this fairly close allocation
-    ##########################################################################################################################
-    args['which'] = 'outcomes'
-    budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
-    budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
-
-    # Check that targets are still met
-    args['which'] = 'money'
-    targetsmet, summary = objectivecalc(budgetvec4, **args)
-    if targetsmet: budgetvec5 = dcp(budgetvec4) # Yes, keep them
-    else: budgetvec5 = dcp(budgetvec2) # No, go back to previous version that we know worked
-    newtotalbudget = sum(budgetvec5)
-
-    # And finally, home in on a solution
-    upperlim = 1.0
-    lowerlim = 1.0/fundingchange
-    while (upperlim-lowerlim>tolerance): # Keep looping until they converge to within "tolerance" of the budget
-        fundingfactor = (upperlim+lowerlim)/2.0
-        args['totalbudget'] = newtotalbudget * fundingfactor
-        targetsmet, summary = objectivecalc(budgetvec5, **args)
-        printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 2, verbose)
-        if targetsmet: upperlim = fundingfactor
-        else:          lowerlim = fundingfactor
-    constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec5, totalbudget=newtotalbudget*upperlim, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
+        fundingfactor = 1.0
+    
+        # If targets are met, scale down until they're not -- this loop will be skipped entirely if targets not currently met
+        while targetsmet:
+            fundingfactor /= fundingchange
+            args['totalbudget'] = origtotalbudget * fundingfactor
+            targetsmet, summary = objectivecalc(budgetvec2, **args)
+            printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
+    
+        # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
+        while not(targetsmet):
+            fundingfactor *= fundingchange
+            args['totalbudget'] = origtotalbudget * fundingfactor
+            targetsmet, summary = objectivecalc(budgetvec2, **args)
+            printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
+    
+    
+        ##########################################################################################################################
+        # Re-optimize based on this fairly close allocation
+        ##########################################################################################################################
+        args['which'] = 'outcomes'
+        budgetvec3, fval, exitflag, output = asd(objectivecalc, budgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
+        budgetvec4 = constrainbudget(origbudget=origbudget, budgetvec=budgetvec1, totalbudget=args['totalbudget'], budgetlims=optim.constraints, optiminds=optiminds, outputtype='vec')
+    
+        # Check that targets are still met
+        args['which'] = 'money'
+        targetsmet, summary = objectivecalc(budgetvec4, **args)
+        if targetsmet: budgetvec5 = dcp(budgetvec4) # Yes, keep them
+        else: budgetvec5 = dcp(budgetvec2) # No, go back to previous version that we know worked
+        newtotalbudget = sum(budgetvec5)
+    
+        # And finally, home in on a solution
+        upperlim = 1.0
+        lowerlim = 1.0/fundingchange
+        while (upperlim-lowerlim>tolerance): # Keep looping until they converge to within "tolerance" of the budget
+            fundingfactor = (upperlim+lowerlim)/2.0
+            args['totalbudget'] = newtotalbudget * fundingfactor
+            targetsmet, summary = objectivecalc(budgetvec5, **args)
+            printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 2, verbose)
+            if targetsmet: upperlim = fundingfactor
+            else:          lowerlim = fundingfactor
+        constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec5, totalbudget=newtotalbudget*upperlim, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
     args['totalbudget'] = origtotalbudget

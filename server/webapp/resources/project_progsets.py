@@ -47,7 +47,7 @@ class Progsets(Resource):
 
         reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
         for progset in reply:
-            progset.get_targetpartypes()
+            progset.get_extra_data()
             for program in progset.programs:
                 program.get_optimizable()
 
@@ -74,7 +74,7 @@ class Progsets(Resource):
 
         db.session.commit()
 
-        progset_entry.get_targetpartypes()
+        progset_entry.get_extra_data()
 
         return progset_entry, 201
 
@@ -98,7 +98,7 @@ class Progset(Resource):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
 
-        progset_entry.get_targetpartypes()
+        progset_entry.get_extra_data()
 
         return progset_entry
 
@@ -121,7 +121,7 @@ class Progset(Resource):
 
         db.session.commit()
 
-        progset_entry.get_targetpartypes()
+        progset_entry.get_extra_data()
 
         return progset_entry
 
