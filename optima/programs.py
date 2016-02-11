@@ -260,7 +260,7 @@ class Programset(object):
                     lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
                 printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
-                lastbudget[program] = nan
+                lastbudget[program] = 0.0 # WARNING, not sure how robust this is
 
             # Extract cost data for particular years, if requested 
             if t is not None:
