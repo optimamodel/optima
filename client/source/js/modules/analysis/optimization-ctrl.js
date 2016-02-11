@@ -123,6 +123,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (!$scope.state.activeOptimization.id) {
           $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
             success(function (response) {
+              $scope.state.optimizations[$scope.state.optimizations.indexOf($scope.state.activeOptimization)] = response;
               $scope.setActiveOptimization(response);
             });
         } else {
