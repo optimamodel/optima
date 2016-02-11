@@ -218,6 +218,7 @@
       </div>
       <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
         <div class="option_list" style="height:62vh">
+          <div class="label">Select graphs</div>
           <div ng-repeat="selector in selectors" class="option">
             <span><input type="checkbox" ng-model="selector.checked"/></span>
             <span style="margin-left: 10px">{{selector.name}}</span>
