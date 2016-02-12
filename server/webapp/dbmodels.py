@@ -169,6 +169,9 @@ class ProjectDb(db.Model):
             for parset_record in self.parsets:
                 parset_entry = parset_record.hydrate()
                 project_entry.addparset(parset_entry.name, parset_entry)
+            for key, parset in project_entry.parsets.iteritems():
+                parset.project = project_entry
+                project_entry.parsets[key] = parset
         if self.progsets:
             for progset_record in self.progsets:
                 progset_entry = progset_record.hydrate()
@@ -199,6 +202,11 @@ class ProjectDb(db.Model):
             for result_entry in self.results:
                 result = result_entry.hydrate()
                 project_entry.addresult(result)
+                if result_entry.parset_id and result_entry.calculation_type == ResultsDb.CALIBRATION_TYPE:
+                    for parset in project_entry.parsets.values():
+                        if parset.uid == result_entry.parset_id:
+                            parset.resultsref = result.uid
+
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -291,7 +299,7 @@ class ProjectDb(db.Model):
                 if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
                     result = project.results[name]
                     print "simpars", result.simpars[0], type(result.simpars[0])
-                    result_entry = save_result(self.id, result, 
+                    result_entry = save_result(self.id, result,
                         project.parsets[0].name, # TODO : will break if more than one parset
                         'optimization')
                     db.session.add(result_entry)
@@ -660,6 +668,7 @@ class ProgsetsDb(db.Model):
         'updated': fields.DateTime,
         'programs': fields.Nested(ProgramsDb.resource_fields),
         'targetpartypes': fields.Raw,
+        'readytooptimize': fields.Boolean
     }
 
     __tablename__ = 'progsets'
@@ -732,10 +741,11 @@ class ProgsetsDb(db.Model):
             ]
         return program
 
-    def get_targetpartypes(self):
+    def get_extra_data(self):
         be_progset = self.hydrate()
         be_progset.gettargetpartypes()
         self.targetpartypes = be_progset.targetpartypes
+        self.readytooptimize = be_progset.readytooptimize()
 
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
@@ -932,25 +942,28 @@ class ScenariosDb(db.Model):
 
         key = self.scenario_type
         if key == 'parameter':
-            blob['pars'] = [
-                {
-                    'name': item['name'],
-                    'startyear': item['startyear'],
-                    'endval': item['endval'],
-                    'endyear': item['endyear'],
-                    'startval': item['startval'],
-                    'for': [
-                        tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
-                        for for_item in item['for']
-                    ]
-                } for item in blob['pars'] if 'pars' in blob
-            ]
+            if 'pars' in blob and blob['pars']:
+                blob['pars'] = [
+                    {
+                        'name': item['name'],
+                        'startyear': item['startyear'],
+                        'endval': item['endval'],
+                        'endyear': item['endyear'],
+                        'startval': item['startval'],
+                        'for': [
+                            tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
+                            for for_item in item['for']
+                        ]
+                    } for item in blob['pars'] if 'pars' in blob
+                ]
+            else:
+                blob['pars'] = []
         else:
             print(blob)
             blob[key] = {
                 str(k): v
                 for k, v in blob[key].iteritems() if key in blob
-            } 
+            }
 
         if self.scenario_type == "budget":
 

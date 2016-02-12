@@ -11,7 +11,7 @@ from server.webapp.utils import RequestParser
 
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
-    'year': {'required': True, 'location': 'json'},
+    'year': {'required': True, 'type':int, 'location': 'json'},
     'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
@@ -19,7 +19,7 @@ costcov_parser.add_arguments({
 
 costcov_graph_parser = RequestParser()
 costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': str, 'location': 'args'},
+    't': {'required': True, 'type': int, 'location': 'args'},
     'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
     'caption': {'type': str, 'location': 'args'},
     'xupperlim': {'type': long, 'location': 'args'},
@@ -115,7 +115,7 @@ program_effect_parser.add_arguments({
 
 param_year_effect_parser = RequestParser()
 param_year_effect_parser.add_arguments({
-    'year': {'required': False, 'location': 'json'},
+    'year': {'type': int, 'required': False, 'location': 'json'},
     'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
     'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
     'interact': {'location': 'json', 'required': False},

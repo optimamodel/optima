@@ -117,11 +117,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    $scope.saveOptimization = function() {
-      $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
-        success(function (response) {
-          $scope.state.activeOptimization.id = response.id;
-        });
+    $scope.saveOptimization = function(optimizationForm) {
+      $scope.validateOptimizationForm(optimizationForm);
+      if(!optimizationForm.$invalid) {
+        if (!$scope.state.activeOptimization.id) {
+          $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
+            success(function (response) {
+              $scope.state.optimizations[$scope.state.optimizations.indexOf($scope.state.activeOptimization)] = response;
+              $scope.setActiveOptimization(response);
+            });
+        } else {
+          $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id,
+            $scope.state.activeOptimization).
+            success(function (response) {
+            });
+        }
+      }
+    };
+
+    $scope.validateOptimizationForm = function(optimizationForm) {
+      optimizationForm.progset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.progset_id));
+      optimizationForm.parset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.parset_id));
+      optimizationForm.start.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.start));
+      optimizationForm.end.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.end));
     };
 
     $scope.runOptimizations = function() {
@@ -145,15 +163,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if(response.status === 'completed') {
             $scope.getOptimizationGraphs();
-            $scope.statusMessage = 'Optimization successfully completed.';
+            $scope.statusMessage = 'Optimization successfully completed updating graphs.';
+            clearStatusMessage();
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollOptimizations, 5000);
-          } else if(response.status === 'error'){
-            $scope.errorMessage = 'Optimization failed.';
-            $scope.statusMessage = '';
           }
+        }).error(function() {
+          $scope.errorMessage = 'Optimization failed.';
+          $scope.statusMessage = '';
         });
+    };
+
+    var clearStatusMessage = function() {
+      $timeout(function() {
+        $scope.statusMessage = '';
+      }, 5000);
     };
 
     $scope.getOptimizationGraphs = function() {
