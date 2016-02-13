@@ -19,4 +19,13 @@ then
   pip install -r ./requirements.txt
 fi
 
+if [ ! -f "./p-env/lib/python2.7/site-packages/optima.egg-link" ]; then
+    echo "Installing optima in virtualenv for the celery webapps..."
+    cd ..
+    python setup.py develop
+    cd server
+else
+    echo "Found optima installed"
+fi
+
 p-env/bin/celery -A server.webapp.tasks.celery worker -l info
