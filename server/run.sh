@@ -17,8 +17,16 @@ source ./p-env/bin/activate
 migrate upgrade postgresql://optima:optima@localhost:5432/optima db/
 
 TMP_DEPS=/tmp/temp_deps_${RANDOM}
+
+# create a sorted list of existing dependencies 
+# against requirements.txt and compare that
+# to a sorted version of requirements.txt
 pip freeze -l > ${TMP_DEPS}
-if ! cmp ./requirements.txt ${TMP_DEPS} > /dev/null 2>&1
+grep -f requirements.txt ${TMP_DEPS} > ${TMP_DEPS}.grep
+sort ${TMP_DEPS}.grep > ${TMP_DEPS}.sort
+sort ./requirements.txt > ${TMP_DEPS}.requirements.txt
+
+if ! cmp ${TMP_DEPS}.requirements.txt ${TMP_DEPS}.sort > /dev/null 2>&1
 then
   echo "Installing Python dependencies ..."
   cat ${TMP_DEPS}

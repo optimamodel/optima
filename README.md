@@ -296,7 +296,7 @@ Same as with `run.sh`, you can use `--system` as first argument to `test.sh` in 
 Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
 
-# Usage
+# 6. Usage
 
 If all steps he been completed, run `run.sh` in the server directory, and then go to `http://optima.dev` in your browser (preferably Chrome). You should see the Optima login screen.
 
