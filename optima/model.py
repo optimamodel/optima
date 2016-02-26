@@ -496,7 +496,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             otherdeaths = dt * people[undx[cd4],:,t] * background
             inflows = progin  # Add in new infections after loop
             outflows = progout + newdiagnoses[cd4] + hivdeaths + otherdeaths
-            dU.append(progin - outflows)
+            dU.append(inflows - outflows)
             raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
             raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
@@ -554,7 +554,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             else:
                 totnewtreat = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
                 
-            for cd4 in range(ncd4):
+            for cd4 in reversed(range(ncd4)):  # Going backwards so that lower CD4 counts move onto treatment first
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
                 else: 
@@ -577,7 +577,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     totnewtreat -= thisnewtreat # Adjust the number of available treatment spots
                     totnewtreat = max(totnewtreat,0.) # Prevent it going negative
 
-                dC.append(inflows - outflows - newtreat[cd4])
+                dC.insert(0, inflows - outflows - newtreat[cd4])
                 dD[cd4] += leavecareCD[cd4]
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
