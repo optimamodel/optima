@@ -495,7 +495,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
-            dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
+            inflows = progin  # Add in new infections after loop
+            outflows = progout + newdiagnoses[cd4] + hivdeaths + otherdeaths
+            dU.append(progin - outflows)
             raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
             raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
@@ -700,12 +702,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 currtx = people[alltx,:,t].sum(axis=0)
                 newtreattot =  proptx[t] * currdx - currtx 
             else:
-                newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
+                newtreattot = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
 
 
             ## Diagnosed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
-            for cd4 in range(ncd4):
+            availtreatplaces = newtreattot # Total available treatment places, to be filled according to need
+            for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
+#            for cd4 in range(ncd4):
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
                 else: 
@@ -714,16 +718,35 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     progout = dt*prog[cd4]*people[dx[cd4],:,t]
                 else: 
                     progout = 0 # Cannot progress out of AIDS stage
-                newtreat[cd4] = newtreattot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed
-                hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
-                otherdeaths = dt * people[dx[cd4],:,t] * background
+#                newtreat[cd4] = newtreattot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed
+                hivdeaths   = dt * currentdiagnosed[cd4,:] * death[cd4] 
+                otherdeaths = dt * currentdiagnosed[cd4,:] * background
+#                newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
+#                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
+
+                if availtreatplaces:
+                    totalnewtreat = min(availtreatplaces, sum(currentdiagnosed[cd4,:])) # Figure out how many can move onto treatment
+                    newtreatrate = sum(currentdiagnosed[cd4,:])/totalnewtreat # Figure out what proportion will move onto treatment
+                    newtreatrate = newtreatrate - death[cd4] - background # Adjust the rate at which people move onto treatment to account for deaths
+                    newtreat[cd4] = currentdiagnosed[cd4,:] * newtreatrate
+
+#                    totalnewtreat = min(availtreatplaces, sum(currentdiagnosed[cd4,:])) # Figure out how many can move onto treatment
+#                    newtreat[cd4] = totalnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
+##                newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) 
+##                newtreat[cd4] = minimum(availtreatplaces, currentdiagnosed[cd4,:]+inflows-outflows) # Move as many onto treatment as possible
+#                    availtreatplaces -= totalnewtreat # Adjust the number of available treatment spots
+#                    availtreatplaces = max(availtreatplaces,0.) # Prevent it going negative
+
                 inflows = progin + newdiagnoses[cd4]
-                outflows = progout + hivdeaths + otherdeaths
-                newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
-                dD.append(inflows - outflows - newtreat[cd4])
+                outflows = progout + hivdeaths + otherdeaths + newtreat[cd4]
+
+                dD.insert(0, inflows - outflows)
+
+#                if t==55: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                
             
             ## 1st-line treatment
             for cd4 in range(ncd4):
@@ -756,7 +779,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
-            change[sus,:] = dS # WARNING: could be confusing to take tranpose. Better use tranposed array the whole way through?
+            change[sus,:] = dS 
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
