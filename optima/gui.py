@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -130,8 +130,12 @@ def pygui(tmpresults, toplot=None):
     Version: 1.2 (2016feb04)
     '''
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    results = tmpresults # Copy results to global variable  
-    if type(results)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    elif type(results)!=Resultset:
+        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
+        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
+    else: results = tmpresults # Just use directly
+            
     
     ## Define options for selection
     plotselections = getplotselections(results)

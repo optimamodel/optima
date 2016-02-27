@@ -289,18 +289,6 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
                 colors = gridcolormap(nlinesperplot)
                 
-                # Plot uncertainty, but not for stacked plots
-                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-                    try: fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
-                    except: print('Plotting uncertainty failed and/or not yet implemented')
-                    
-                # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if not ismultisim and databest is not None:
-                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
-                    for y in range(len(results.datayears)):
-                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-
-
 
                 ################################################################################################################
                 # Plot model estimates with uncertainty -- different for each of the different possibilities
@@ -337,7 +325,26 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     for l in range(nlinesperplot):
                         plot(results.tvec, factor*best[l][i], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
+
+
+                ################################################################################################################
+                # Plot data points with uncertainty
+                ################################################################################################################
                 
+                # Plot uncertainty, but not for stacked plots
+                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                    try: fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
+                    except: print('Plotting uncertainty failed and/or not yet implemented')
+                    
+                # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
+                if not ismultisim and databest is not None:
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
+                    for y in range(len(results.datayears)):
+                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
+
+
+
+
                 
                 ################################################################################################################
                 # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
