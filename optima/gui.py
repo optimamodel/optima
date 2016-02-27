@@ -404,8 +404,8 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     ## Set up GUI
     leftmargin = 10
     rowheight = 25
-    colwidth = 500
-    ncols = 3
+    colwidth = 450
+    ncols = 4
     nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
