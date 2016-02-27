@@ -322,7 +322,7 @@ class Project(object):
         if dt is None: dt=self.settings.dt # Specify the timestep
         if name is None and simpars is None: name = 'default' # Set default name
         if verbose is None: verbose = self.settings.verbose
-
+        
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']

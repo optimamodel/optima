@@ -197,7 +197,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
-                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
+                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # WARNING, IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
 
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
                     scen.coverage = vec2obj(scen.progset.getdefaultbuget(), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!

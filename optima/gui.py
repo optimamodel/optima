@@ -376,7 +376,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
             else:
                 printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         
-        simparslist = parset.interp()
+        simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
         updateplots(tmpresults=results)
         
@@ -399,7 +399,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
         parset.pars[0] = tmppars
         populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
-        simparslist = parset.interp()
+        simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
         updateplots(tmpresults=results)
         return None
