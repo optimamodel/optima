@@ -242,6 +242,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
             if istotal or (isstacked and ismultisim): attrtype = 'tot' # Only plot total if it's a scenario and 'stacked' was requested
             else: attrtype = 'pops'
+            if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
+            else: datattrtype = 'pops'
             
             if ismultisim:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
@@ -255,11 +257,11 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 try: # If results were calculated with quantiles, these should exist
                     lower = getattr(results.main[datatype], attrtype)[1]
                     upper = getattr(results.main[datatype], attrtype)[2]
-                except: # No? Just use the best data
+                except: # No? Just use the best estimates
                     lower = best
                     upper = best
                 try: # Try loading actual data -- very likely to not exist
-                    tmp = getattr(results.main[datatype], 'data'+attrtype)
+                    tmp = getattr(results.main[datatype], 'data'+datattrtype)
                     databest = tmp[0]
                     datalow = tmp[1]
                     datahigh = tmp[2]
@@ -293,7 +295,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     except: print('Plotting uncertainty failed and/or not yet implemented')
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if not isstacked and not ismultisim and databest is not None:
+                if not ismultisim and databest is not None:
                     scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
