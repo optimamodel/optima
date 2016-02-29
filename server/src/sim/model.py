@@ -74,7 +74,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
     txfactor = M['const']['eff']['tx'] * dxfactor # And treatment efficacy
     
     ## Metaparameters to get nice diagnosis fits
-    dxtime  = fit2time(F['dx'],  S['tvec'] - G['datayears'].mean()) # Subtraction to normalize F['dx'][2]
+    dxtime  = fit2time(F['dx'],  S['tvec'])
     
     ## Shorten variables and remove dict calls to make things faster...
     
@@ -600,7 +600,7 @@ def fit2time(pars, tvec):
     B = pars[1]
     C = pars[2]
     D = pars[3]
-    timeseries = (B-A)/(1+exp(-(tvec-C)/D))+A;
+    timeseries = (B-A)/(1+exp(-(tvec-C)*D))+A;
     return timeseries
     
     
