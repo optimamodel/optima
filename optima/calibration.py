@@ -93,7 +93,8 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     
     # Validate input
     if project is None: raise OptimaException('autofit() requires a project in order to run')
-    if type(name)!=str: raise OptimaException('%s must be the name or index of a paramete set' % name)
+    if name is None: name = -1 # Calibrate last parameter set
+    elif type(name)!=str and not(isnumber(name)): raise OptimaException('%s must be the name or index of a parameter set' % name)
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set
@@ -229,7 +230,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         count = 0
         mismatch = 0
         if doplot: debugdata = []
-        if fitto is None or fitto=='all': fitto = results.main.keys() # If not specified, use everything
+        if fitto in [None, 'all', ['all']]: fitto = results.main.keys() # If not specified, use everything
         for key in fitto: # The results! e.g. key='prev'
             try: this = results.main[key]
             except: 

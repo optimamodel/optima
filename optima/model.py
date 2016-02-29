@@ -17,7 +17,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     ##################################################################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
-    cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
+    cd4transnorm = 1.2 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
     if simpars is None: raise OptimaException('model() requires simpars as an input')
