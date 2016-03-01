@@ -15,7 +15,7 @@ def geogui():
     
     Version: 2016jan23
     '''
-    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException
+    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults
     from PyQt4 import QtGui
     from pylab import figure, close
     from time import time
@@ -158,12 +158,15 @@ def geogui():
                 col = 0                
                 
                 row += 1
-                wspopsize.write(row, col, 'District Sum')
+                wspopsize.write(row, col, 'District Aggregate')
+                wsprev.write(row, col, 'District Aggregate')
                 for popname in project.data['pops']['short']:
                     col += 1
                     wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
+                    wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
                 col += 2
                 wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
+                wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
                 col = 0
                     
                 wsprev.set_column(0, maxcol, colwidth) # Make wider
@@ -202,34 +205,71 @@ def geogui():
     def makeproj():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
         
+        checkplots = True       # To check if calibrations are rescaled nicely.
+        
         ## 1. Load a project file -- WARNING, could be combined with the above!
         project = _loadproj()
         
         ## 2. Load a spreadsheet file
-        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+        spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+        print spreadsheetpath
         
         from xlrd import open_workbook  # For opening Excel workbooks.
         workbook = open_workbook(spreadsheetpath)
         wspopsize = workbook.sheet_by_name('Population sizes')
-        
-        districtlist = []
-        for rowindex in xrange(summarysheet.nrows):
-            if rowindex > 0:
-                districtlist.append(summarysheet.cell_value(rowindex, 0))
-        print districtlist
+        wsprev = workbook.sheet_by_name('Population prevalence')
         
         ## 3. Get a destination folder
-#        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
         
         ## 4. Read the spreadsheet
-        # ...
+        proglist = []
+        for colindex in xrange(wspopsize.ncols):
+            if colindex > 0 and wspopsize.cell_value(0, colindex) not in ['','Total']:
+                proglist.append(wspopsize.cell_value(0, colindex))
+        nprogs = len(proglist)
+        
+        districtlist = []
+        popratio = []
+        plhivratio = []
+        isdistricts = True
+        for rowindex in xrange(wspopsize.nrows):
+            if wspopsize.cell_value(rowindex, 0) == '---':
+                isdistricts = False
+            if isdistricts and rowindex > 0:
+                districtlist.append(wspopsize.cell_value(rowindex, 0))
+                plhivratio.append(wspopsize.cell_value(rowindex, nprogs+2)*wsprev.cell_value(rowindex, nprogs+2))
+                popratio.append(wspopsize.cell_value(rowindex, nprogs+2))
+        print('Districts...')
+        print districtlist
+        ndistricts = len(districtlist)
+        
+        plhivdenom = wspopsize.cell_value(ndistricts+3, nprogs+2)*wsprev.cell_value(ndistricts+3, nprogs+2)
+        plhivratio = [x/plhivdenom for x in plhivratio]
+        popdenom = wspopsize.cell_value(ndistricts+3, nprogs+2)
+        popratio = [x/popdenom for x in popratio]
+
+        print('Population ratio...')
+        print popratio
+        print('Prevalence ratio...')
+        print plhivratio
         
         ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
-        # ...
+        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
+        projlist = []        
+        for districtname in districtlist:
+            newproject = dcp(project)
+            newproject.name = districtname
+            
+            ### INSERT OTHER CHANGES            
+            
+            projlist.append(newproject)
         
         ## 6. Save each project file into the directory
-        # ...
-        
+        for subproject in projlist:
+            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+            saveobj(subproject.name+'.prj', subproject)
+            
         return None
 
 
