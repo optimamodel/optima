@@ -84,69 +84,72 @@ def geogui():
         ## 1. Load a project file
         project = _loadproj()
         
-        copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
-        try: copies = int(copies)
-        except: raise OptimaException('Input is not a recognised integer.')
-        colwidth = 20
+        if len(project.parsets) > 0 and len(project.progsets) > 0 :
+            copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
+            try: copies = int(copies)
+            except: raise OptimaException('Input is not a recognised integer.')
+            colwidth = 20
+                
+            ## 2. Get destination filename
+            spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
             
-        ## 2. Get destination filename
-        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
-        
-        from xlsxwriter import Workbook        
-        
-        ## 3. Extract data needed from project (population names, program names...)
-        if spreadsheetpath:
-            workbook = Workbook(spreadsheetpath)
-            wsprev = workbook.add_worksheet('Population prevalence')
-            wspopsize = workbook.add_worksheet('Population sizes')
-            wsalloc = workbook.add_worksheet('Program allocations')
+            from xlsxwriter import Workbook        
             
-            # Start with pop data.
-            maxcol = 0
-            row, col = 0, 0
-            for row in xrange(copies+1):
-                if row != 0:
-                    wsprev.write(row, col, '%s - District %i' % (project.name, row))
-                    wspopsize.write(row, col, '%s - District %i' % (project.name, row))
-                for popname in project.parsets[0].popkeys:
-                    col += 1
-                    if row == 0:
-                        wsprev.write(row, col, popname)
-                        wspopsize.write(row, col, popname)
-                    else:
-                        pass
-#                        wsprev.write(row, col, project.parsets[0].pars[0]['initprev'].y[popname])
-#                        wspopsize.write(row, col, project.parsets[0].pars[0]['popsize'].p[popname][0])
-                    maxcol = max(maxcol,col)
-                col = 0
+            ## 3. Extract data needed from project (population names, program names...)
+            if spreadsheetpath:
+                workbook = Workbook(spreadsheetpath)
+                wsprev = workbook.add_worksheet('Population prevalence')
+                wspopsize = workbook.add_worksheet('Population sizes')
+                wsalloc = workbook.add_worksheet('Program allocations')
                 
-            wsprev.set_column(0, maxcol, colwidth) # Make wider
-            wspopsize.set_column(0, maxcol, colwidth) # Make wider
-                
-            # Follow with program data.
-            maxcol = 0
-            row, col = 0, 0
-            for row in xrange(copies+1):
-                if row != 0:
-                    wsalloc.write(row, col, '%s - District %i' % (project.name, row))
-                for progkey in project.progsets[0].programs:
-                    col += 1
-                    if row == 0:
-                        wsalloc.write(row, col, progkey)
-                    else:
-                        pass
-#                        wsalloc.write(row, col, 0)
-                    maxcol = max(maxcol,col)
-                col = 0
-                
-            wsalloc.set_column(0, maxcol, colwidth) # Make wider
-        
-        # 4. Generate and save spreadsheet
-        try:
-            workbook.close()    
-            warning('Multi-project template saved to "%s".' % spreadsheetpath)
-        except:
-            warning('Error: Template not saved due to a workbook error!')
+                # Start with pop data.
+                maxcol = 0
+                row, col = 0, 0
+                for row in xrange(copies+1):
+                    if row != 0:
+                        wsprev.write(row, col, '%s - District %i' % (project.name, row))
+                        wspopsize.write(row, col, '%s - District %i' % (project.name, row))
+                    for popname in project.data['pops']['short']:
+                        col += 1
+                        if row == 0:
+                            wsprev.write(row, col, popname)
+                            wspopsize.write(row, col, popname)
+                        else:
+                            pass
+    #                        wsprev.write(row, col, project.parsets[0].pars[0]['initprev'].y[popname])
+    #                        wspopsize.write(row, col, project.parsets[0].pars[0]['popsize'].p[popname][0])
+                        maxcol = max(maxcol,col)
+                    col = 0
+                    
+                wsprev.set_column(0, maxcol, colwidth) # Make wider
+                wspopsize.set_column(0, maxcol, colwidth) # Make wider
+                    
+                # Follow with program data.
+                maxcol = 0
+                row, col = 0, 0
+                for row in xrange(copies+1):
+                    if row != 0:
+                        wsalloc.write(row, col, '%s - District %i' % (project.name, row))
+                    for progkey in project.progsets[0].programs:
+                        col += 1
+                        if row == 0:
+                            wsalloc.write(row, col, progkey)
+                        else:
+                            pass
+    #                        wsalloc.write(row, col, 0)
+                        maxcol = max(maxcol,col)
+                    col = 0
+                    
+                wsalloc.set_column(0, maxcol, colwidth) # Make wider
+            
+            # 4. Generate and save spreadsheet
+            try:
+                workbook.close()    
+                warning('Multi-project template saved to "%s".' % spreadsheetpath)
+            except:
+                warning('Error: Template not saved due to a workbook error!')
+        else:
+            warning('Error: Loaded project is missing a parameter set or a program set!')
 
         return None
         
