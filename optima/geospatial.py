@@ -85,30 +85,42 @@ def geogui():
         project = _loadproj()
         
         if len(project.parsets) > 0 and len(project.progsets) > 0 :
+            bestindex = 0
+            
             copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
             try: copies = int(copies)
-            except: raise OptimaException('Input is not a recognised integer.')
+            except: raise OptimaException('Input cannot be converted into an integer.')
+            
+            refyear, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'Select a reference year for which you have district data.')
+            refind = -1            
+            try: refyear = int(refyear)
+            except: raise OptimaException('Input cannot be converted into an integer.')
+            if not refyear in [int(x) for x in project.data['years']]:
+                raise OptimaException('Input not within range of years used by aggregate project.')
+            else:
+                refind = [int(x) for x in project.data['years']].index(refyear)
             colwidth = 20
                 
             ## 2. Get destination filename
             spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
             
-            from xlsxwriter import Workbook        
+            from xlsxwriter import Workbook
+            from xlsxwriter.utility import xl_rowcol_to_cell as rc
             
             ## 3. Extract data needed from project (population names, program names...)
             if spreadsheetpath:
                 workbook = Workbook(spreadsheetpath)
-                wsprev = workbook.add_worksheet('Population prevalence')
                 wspopsize = workbook.add_worksheet('Population sizes')
+                wsprev = workbook.add_worksheet('Population prevalence')
                 wsalloc = workbook.add_worksheet('Program allocations')
                 
-                # Start with pop data.
+                # Start with pop and prev data.
                 maxcol = 0
                 row, col = 0, 0
                 for row in xrange(copies+1):
                     if row != 0:
-                        wsprev.write(row, col, '%s - District %i' % (project.name, row))
                         wspopsize.write(row, col, '%s - District %i' % (project.name, row))
+                        wsprev.write(row, col, "='Population sizes'!%s" % rc(row,col))
                     for popname in project.data['pops']['short']:
                         col += 1
                         if row == 0:
@@ -116,10 +128,43 @@ def geogui():
                             wspopsize.write(row, col, popname)
                         else:
                             pass
-    #                        wsprev.write(row, col, project.parsets[0].pars[0]['initprev'].y[popname])
-    #                        wspopsize.write(row, col, project.parsets[0].pars[0]['popsize'].p[popname][0])
                         maxcol = max(maxcol,col)
+                    col += 1
+                    if row > 0:
+                        wsprev.write(row, col, "OR")
+                        wspopsize.write(row, col, "OR")
+                    col += 1
+                    if row == 0:
+                        wsprev.write(row, col, "Total")
+                        wspopsize.write(row, col, "Total")
+                    maxcol = max(maxcol,col)
                     col = 0
+                
+                # Just a check to make sure the sum and calibrated values match.
+                # Using the last parset stored in project! Assuming it is the best calibration.
+                row += 1              
+                wspopsize.write(row, col, '---')
+                wsprev.write(row, col, '---')
+                row += 1
+                wspopsize.write(row, col, 'Project Calibration')
+                wsprev.write(row, col, 'Project Calibration')
+                for popname in project.data['pops']['short']:
+                    col += 1
+                    wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].pops[bestindex][col-1][refind])
+                    wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].pops[bestindex][col-1][refind])
+                col += 2
+                wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].tot[bestindex][refind])
+                wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].tot[bestindex][refind])                
+                col = 0                
+                
+                row += 1
+                wspopsize.write(row, col, 'District Sum')
+                for popname in project.data['pops']['short']:
+                    col += 1
+                    wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
+                col += 2
+                wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
+                col = 0
                     
                 wsprev.set_column(0, maxcol, colwidth) # Make wider
                 wspopsize.set_column(0, maxcol, colwidth) # Make wider
@@ -129,7 +174,7 @@ def geogui():
                 row, col = 0, 0
                 for row in xrange(copies+1):
                     if row != 0:
-                        wsalloc.write(row, col, '%s - District %i' % (project.name, row))
+                        wsalloc.write(row, col, "='Population sizes'!%s" % rc(row,col))
                     for progkey in project.progsets[0].programs:
                         col += 1
                         if row == 0:
@@ -156,13 +201,22 @@ def geogui():
     
     def makeproj():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
-        warning("Sorry, this feature has not been implemented.")
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
-#        project = _loadproj()
+        project = _loadproj()
         
         ## 2. Load a spreadsheet file
-#        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+        spreadsheetpath = QtGui.QFileDialog.getOpenFileNames(caption='Choose geospatial spreadsheet', filter='*.xlsx')
+        
+        from xlrd import open_workbook  # For opening Excel workbooks.
+        workbook = open_workbook(spreadsheetpath)
+        wspopsize = workbook.sheet_by_name('Population sizes')
+        
+        districtlist = []
+        for rowindex in xrange(summarysheet.nrows):
+            if rowindex > 0:
+                districtlist.append(summarysheet.cell_value(rowindex, 0))
+        print districtlist
         
         ## 3. Get a destination folder
 #        destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
