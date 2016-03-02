@@ -84,8 +84,9 @@ def geogui():
         ## 1. Load a project file
         project = _loadproj()
         
+        bestindex = 0        
+        
         if len(project.parsets) > 0 and len(project.progsets) > 0 :
-            bestindex = 0
             
             copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
             try: copies = int(copies)
@@ -201,9 +202,12 @@ def geogui():
 
         return None
         
-    
+    # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
+    # ALSO GETRESULTS() SEEMS TO HAVE TROUBLE AFTER DELETING RESULTS AND RERUNNING RUNSIM()... REFERENCE ISSUES?
     def makeproj():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
+        
+        bestindex = 0   # This could be a problem down the road...
         
         checkplots = True       # To check if calibrations are rescaled nicely.
         
@@ -223,11 +227,11 @@ def geogui():
         destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
         
         ## 4. Read the spreadsheet
-        proglist = []
+        poplist = []
         for colindex in xrange(wspopsize.ncols):
             if colindex > 0 and wspopsize.cell_value(0, colindex) not in ['','Total']:
-                proglist.append(wspopsize.cell_value(0, colindex))
-        nprogs = len(proglist)
+                poplist.append(wspopsize.cell_value(0, colindex))
+        npops = len(poplist)
         
         districtlist = []
         popratio = []
@@ -238,36 +242,47 @@ def geogui():
                 isdistricts = False
             if isdistricts and rowindex > 0:
                 districtlist.append(wspopsize.cell_value(rowindex, 0))
-                plhivratio.append(wspopsize.cell_value(rowindex, nprogs+2)*wsprev.cell_value(rowindex, nprogs+2))
-                popratio.append(wspopsize.cell_value(rowindex, nprogs+2))
+                plhivratio.append(wspopsize.cell_value(rowindex, npops+2)*wsprev.cell_value(rowindex, npops+2))
+                popratio.append(wspopsize.cell_value(rowindex, npops+2))
         print('Districts...')
         print districtlist
         ndistricts = len(districtlist)
         
-        plhivdenom = wspopsize.cell_value(ndistricts+3, nprogs+2)*wsprev.cell_value(ndistricts+3, nprogs+2)
+        plhivdenom = wspopsize.cell_value(ndistricts+3, npops+2)*wsprev.cell_value(ndistricts+3, npops+2)
         plhivratio = [x/plhivdenom for x in plhivratio]
-        popdenom = wspopsize.cell_value(ndistricts+3, nprogs+2)
+        popdenom = wspopsize.cell_value(ndistricts+3, npops+2)
         popratio = [x/popdenom for x in popratio]
 
         print('Population ratio...')
-        print popratio
+        print popratio                      # Proportions of national population split between districts.
         print('Prevalence ratio...')
-        print plhivratio
+        print plhivratio                    # Proportions of PLHIV split between districts.
         
         ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
-        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
-        projlist = []        
+        project.results = odict()
+        projlist = []
+        c = 0
         for districtname in districtlist:
             newproject = dcp(project)
             newproject.name = districtname
             
-            ### INSERT OTHER CHANGES            
+            ### ------------------------- WHERE DATA AND PARSET MUST BE RESCALED (AND PROGSET EVENTUALLY)
+            newproject.data['popsize'] = [[[z*popratio[c] for z in y] for y in x] for x in newproject.data['popsize']]
+            for popgroup in poplist:
+                newproject.parsets[-1].pars[bestindex]['popsize'].p[popgroup][0] *= popratio[c]
+            ### -----------------------------------------------------------------------------------------
             
+            newproject.runsim(newproject.parsets[-1].name)
             projlist.append(newproject)
+            c += 1
+        project.runsim(project.parsets[-1].name)
         
         ## 6. Save each project file into the directory
+#        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
+        if checkplots: plotresults(project.results[-1], toplot=['popsize-tot', 'popsize-pops']) 
         for subproject in projlist:
-            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+#            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+            if checkplots: plotresults(subproject.results[-1], toplot=['popsize-tot', 'popsize-pops'])
             saveobj(subproject.name+'.prj', subproject)
             
         return None
