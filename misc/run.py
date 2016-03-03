@@ -1,7 +1,7 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath("server/"))
+sys.path.append(os.path.abspath("../server/"))
 
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
