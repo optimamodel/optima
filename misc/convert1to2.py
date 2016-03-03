@@ -23,12 +23,13 @@ Version: 2016mar03
 ### Read old spreadsheet
 ##################################################################################################################
 
-from optima import Project, printv, odict, defaults
+from optima import Project, printv, odict, defaults, saveobj
 from sys import argv
 from numpy import nan, zeros
 defaultfilename = 'example.json'
 oldext = '.json'
 newext = '.prj'
+dosave = True
 
 print('Loading data...')
 
@@ -190,9 +191,10 @@ print('Running simulation and calibration...')
 new.makeparset()
 
 # Copy over fitted aspects of the calibration
-new.parsets[0].pars[0]['initprev'].y = old['F'][0]['init']
-new.parsets[0].pars[0]['force'].y    = old['F'][0]['force']
-new.parsets[0].pars[0]['inhomo'].y   = old['F'][0]['inhomo']
+for p in range(npops):
+    new.parsets[0].pars[0]['initprev'].y[p] = old['F'][0]['init'][p]
+    new.parsets[0].pars[0]['force'].y[p]    = old['F'][0]['force'][p]
+    new.parsets[0].pars[0]['inhomo'].y[p]   = old['F'][0]['inhomo'][p]
 
 # Run simulation
 new.runsim()
@@ -205,7 +207,7 @@ new.runsim()
 print('Doing calibration...')
 new.manualfit()
 
-
+if dosave: saveobj(filename.strip(oldext)+newext, new)
 print('Done.')
 
 
