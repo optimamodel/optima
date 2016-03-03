@@ -191,10 +191,9 @@ print('Running simulation and calibration...')
 new.makeparset()
 
 # Copy over fitted aspects of the calibration
-for p in range(npops):
-    new.parsets[0].pars[0]['initprev'].y[p] = old['F'][0]['init'][p]
-    new.parsets[0].pars[0]['force'].y[p]    = old['F'][0]['force'][p]
-    new.parsets[0].pars[0]['inhomo'].y[p]   = old['F'][0]['inhomo'][p]
+new.parsets[0].pars[0]['initprev'].y[:] = old['F'][0]['init'][:]
+new.parsets[0].pars[0]['force'].y[:]    = old['F'][0]['force'][:]
+new.parsets[0].pars[0]['inhomo'].y[:]   = old['F'][0]['inhomo'][:]
 
 # Run simulation
 new.runsim()
