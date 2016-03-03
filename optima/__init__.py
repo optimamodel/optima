@@ -41,142 +41,149 @@ print(optimalicense)
 __version__ = 2.0
 
 
+#####################################################################################################################
+### Load helper functions/modules
+#####################################################################################################################
 
-## Load general modules
+## General modules
 from uuid import uuid4 as uuid
 from datetime import datetime; today = datetime.today
 from copy import deepcopy as dcp
 
-
+## Optimization algorithm
 from . import asd as _asd
 from .asd import asd
 
-
-
+## Interpolation
 from . import pchip as _pchip
 from .pchip import pchip, plotpchip
 
-
+## Color definitions
 from . import colortools # Load high-level module as well
 from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
-
+## Utilities
 from . import utils # Load high-level module as well
 from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
 
 
+#####################################################################################################################
+### Load Optima functions and classes
+#####################################################################################################################
 
-## Load Optima functions and classes
-
+## Project settings
 from . import settings as _settings # Inter-project definitions, e.g. health states
 from .settings import Settings, convertlimits, gettvecdt
 
-
+## Create a blank spreadsheet
 from . import makespreadsheet as _makespreadsheet
-from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
+from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
 
-
+## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
-from .loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
+from .loadspreadsheet import loadspreadsheet
 
-
+## Generate results -- odd location, I know!
 from . import results as _results
-from .results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
+from .results import Result, Resultset, Multiresultset, BOC, getresults
 
-
-from . import parameters as _parameters # Load high-level module as well
+## Define the model parameters
+from . import parameters as _parameters
 from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits # Parameter and Parameterset classes
 
-
+## Define and run the model
 from . import model as _model
-from .model import model, runmodel # The thing that actually runs the model
+from .model import model, runmodel
 
+## Define the programs and cost functions
+from . import programs as _programs 
+from .programs import Program, Programset 
 
-from . import programs as _programs # High-level module
-from .programs import Program, Programset # Define programs
-
-
+## Economics functions -- WARNING, not functional yet
 from . import economics as _economics
-from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
+from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts 
 
-
+## Automatic calibration and sensitivity
 from . import calibration as _calibration
-from .calibration import sensitivity, autofit # Calibration functions
+from .calibration import sensitivity, autofit 
 
+## Scenario analyses
+from . import scenarios as _scenarios 
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, getparvalues 
 
-from . import scenarios as _scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
-from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
-
-
+## Optimization analyses
 from . import optimization as _optimization
-from .optimization import Optim, defaultobjectives, defaultconstraints, optimize # Optimization functions
+from .optimization import Optim, defaultobjectives, defaultconstraints, optimize
+
+## Plotting functions
+from . import plotting as _plotting 
+from .plotting import getplotselections, makeplots
 
 
-from . import plotting as _plotting # Load high-level module as well
-from .plotting import getplotselections, makeplots # Create the plots
+#####################################################################################################################
+### Want to add more modules to Optima? Do that above this line (unless they're non-essential plotting functions)
+#####################################################################################################################
 
 
 
-## Want to add more modules to Optima? Do that here (unless they're non-essential plotting functions)
+#####################################################################################################################
+### Load optional plotting functions
+#####################################################################################################################
 
+_failed = [] # Create an empty list to stored failed imports
 
+## Load high level GUI module
+try: from . import gui
+except: _failed.append('gui')
 
-## Load optional plotting functions -- instead of failing, just redefine as an error message so still "available"
-
-
-try: from . import gui # All Python GUI functions
-except: gui = None # If fails, try individual functions as well
-
-
+## Load simple function for displaying results
 try: from .gui import plotresults
-except: 
-    def plotresults(*args, **kwargs): print('Note: plotresults() could not be imported, but everything else should work')
+except: _failed.append('plotresults')
 
+## Handle the Python plotting
+try: from .gui import pygui 
+except: _failed.append('pygui')
 
-try: from .gui import pygui # Handle the Python plotting
-except:
-    def pygui(*args, **kwargs): print('Note: pygui() could not be imported, but everything else should work')
+## Handle the browser-based plotting
+try: from .gui import browser 
+except: _failed.append('browser')
 
+# Do manual fitting
+try: from .gui import manualfit 
+except: _failed.append('manualfit')
 
-try: from .gui import browser # Handle the browser-based plotting
-except:
-    def browser(*args, **kwargs): print('Note: browser() could not be imported, but everything else should work')
+# Plot all people
+try: from .gui import plotpeople 
+except: _failed.append('plotpeople')
 
-
-try: from .gui import manualfit # Do manual fitting
-except:
-    def manualfit(*args, **kwargs): print('Note: manualfit() could not be imported, but everything else should work')
-
-
-try: from .gui import plotpeople # Plot all people
-except:
-    def plotpeople(*args, **kwargs): print('Note: plotpeople() could not be imported, but everything else should work')
-
-
-try: from .gui import plotpars # Plot all people
-except:
-    def plotpars(*args, **kwargs): print('Note: plotpars() could not be imported, but everything else should work')
+# Plot all parameters
+try: from .gui import plotpars 
+except: _failed.append('plotpars')
 
 
 
+#####################################################################################################################
+### Finally, load high-level modules that depend on everything else
+#####################################################################################################################
 
 ## Import the Project class that ties everything together
 import project as _project
-from .project import Project # Project class
+from .project import Project
 
-
-
+# Portfolio class (container of Projects)
 import portfolio as _portfolio
-from .portfolio import Portfolio # Portfolio class (container of Projects)
+from .portfolio import Portfolio 
 
 
 try:
     import geospatial as _geospatial
     from .geospatial import geogui # Import GUI tools for geospatial analysis
 except: 
-    def geogui(*args, **kwargs): print('Note: geogui() could not be imported, but everything else should work')
+    _failed.append('geospatial')
+
+if not len(_failed): del _failed # If it's empty, don't bother keeping it
 
 
 
 # Finally, load defaults
-import defaults
+from . import defaults
