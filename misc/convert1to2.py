@@ -14,7 +14,7 @@ TODO: copy programs
 TODO: copy scenario settings
 TODO: copy optimization settings
 
-Version: 2016mar02
+Version: 2016mar03
 """
 
 
@@ -25,6 +25,7 @@ Version: 2016mar02
 
 from optima import Project, printv, odict, defaults
 from sys import argv
+from numpy import nan, zeros
 defaultfilename = 'example.json'
 oldext = '.json'
 newext = '.prj'
@@ -91,12 +92,19 @@ new.data['pops']['male']      = old['data']['meta']['pops']['male']
 new.data['pops']['female']    = old['data']['meta']['pops']['female']
 new.data['pops']['injects']   = old['data']['meta']['pops']['injects']
 new.data['pops']['sexworker'] = old['data']['meta']['pops']['sexworker']
-new.data['npops'] = len(new.data['pops']['short']) # Number of population groups
-new.data['pops']['age']       = [[15,49] for _ in range(new.data['npops'])] # Assume 15-49 for all population groups
 
 
-missing = None
-toconvert = None
+## Convert the things that do not convert themselves
+npops = len(new.data['pops']['short']) # Number of population groups
+new.data['npops'] = npops
+new.data['pops']['age'] = [[15,49] for _ in range(npops)] # Assume 15-49 for all population groups
+nmalepops = sum(new.data['pops']['male'])
+nfemalepops = sum(new.data['pops']['female'])
+def missingtot(value=0): return [[value]] # If missing, replace with a value indicating an assumption
+def missingpop(value=0, npops=npops): return [[value] for _ in range(npops)] # If missing, replace with a value indicating an assumption
+
+
+## Now, handle everything else
 
 # Key variables
 new.data['popsize'] = old['data']['key']['popsize']
@@ -114,30 +122,30 @@ new.data['numtx']    = old['data']['txrx']['numfirstline']
 new.data['prep']     = old['data']['txrx']['prep']
 new.data['numpmtct'] = old['data']['txrx']['numpmtct']
 new.data['breast']   = old['data']['txrx']['breast']
-new.data['birth']    = toconvert
-new.data['treatvs']  = missing
+new.data['birth']    = [old['data']['txrx']['birth'][0] for _ in range(nfemalepops)] # Duplicate nfpops times
+new.data['treatvs']  = missingtot(0.8)
 
 # Optional
 new.data['optnumtest']   = old['data']['opt']['numtest']
 new.data['optnumdiag']   = old['data']['opt']['numdiag']
-new.data['optnuminfect'] = missing
+new.data['optnuminfect'] = missingtot(nan)
 new.data['optprev']      = old['data']['opt']['prev']
-new.data['optplhiv']     = missing
+new.data['optplhiv']     = missingtot(nan)
 new.data['optdeath']     = old['data']['opt']['death']
 new.data['optnewtreat']  = old['data']['opt']['newtreat']
+new.data['propdx']        = missingtot(nan)
+new.data['propcare']      = missingtot(nan)
+new.data['proptx']        = missingtot(nan) 
+new.data['propsupp']      = missingtot(nan)
 
-# Cascade
-new.data['propdx']        = missing
-new.data['propcare']      = missing 
-new.data['proptx']        = missing 
-new.data['propsupp']      = missing 
-new.data['immediatecare'] = missing 
-new.data['linktocare']    = missing 
-new.data['stoprate']      = missing 
-new.data['leavecare']     = missing 
-new.data['biofailure']    = missing 
-new.data['freqvlmon']     = missing 
-new.data['restarttreat']  = missing 
+# Cascade 
+new.data['immediatecare'] = missingpop(nan)
+new.data['linktocare']    = missingpop(nan)
+new.data['stoprate']      = missingpop(nan)
+new.data['leavecare']     = missingpop(nan)
+new.data['biofailure']    = missingtot(nan)
+new.data['freqvlmon']     = missingtot(nan)
+new.data['restarttreat']  = missingtot(nan)
 
 # Sex
 new.data['numactsreg'] = old['data']['sex']['numactsreg']
@@ -147,7 +155,7 @@ new.data['condomreg']  = old['data']['sex']['condomreg']
 new.data['condomcas']  = old['data']['sex']['condomcas']
 new.data['condomcom']  = old['data']['sex']['condomcom']
 new.data['propcirc']   = old['data']['sex']['circum']
-new.data['numcirc']    = missing
+new.data['numcirc']    = missingpop(nan, npops=nmalepops)
 
 # Injecting
 new.data['numactsinj'] = old['data']['inj']['numinject']
@@ -155,12 +163,17 @@ new.data['sharing']    = old['data']['inj']['sharing']
 new.data['numost']     = old['data']['inj']['numost']
 
 # Partnerships
-new.data['numcirc'] 
-'partreg', 'partcas', 'partcom', 'partinj', 'pships',
+new.data['pships'] = odict()
+for which in ['reg', 'cas', 'com', 'inj']:
+    new.data['part'+which] = old['data']['pships'][which]
+    new.data['pships'][which] = []
+    for row in range(new.data['npops']):
+        for col in range(new.data['npops']):
+            if new.data['part'+which][row][col]: new.data['pships'][which].append((new.data['pops']['short'][row],new.data['pops']['short'][col]))
 
 # Transitions
-new.data['birthtransit'] = missing
-new.data['agetransit']   = missing
+new.data['birthtransit'] = zeros((nfemalepops,npops)).tolist()
+new.data['agetransit']   = old['data']['transit']['asym']
 new.data['risktransit']  = old['data']['transit']['sym']
 
 # Constants
@@ -168,10 +181,21 @@ new.data['const'] = defaultproject.data['const']
 
 
 ##################################################################################################################
-### Convert calibration
+### Run simulation and copy calibration
 ##################################################################################################################
 
+print('Running simulation and calibration...')
 
+new.makeparset()
+new.runsim()
+
+
+##################################################################################################################
+### Plotting and calibration
+##################################################################################################################
+
+print('Doing calibration...')
+new.manualfit()
 
 
 print('Done.')
