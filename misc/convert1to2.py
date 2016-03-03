@@ -23,17 +23,17 @@ Version: 2016mar02
 ### Read old spreadsheet
 ##################################################################################################################
 
-print('Loading data...')
-
 from optima import Project, printv, odict, defaults
 from sys import argv
 defaultfilename = 'example.json'
 oldext = '.json'
 newext = '.prj'
 
+print('Loading data...')
 
 
-def loaddata(filename, verbose=2):
+
+def loaddata(filename, verbose=0):
     """
     Loads the file and imports json data from it -- copied from dataio.py in Optima 1.0
     """
@@ -78,7 +78,7 @@ old = loaddata(filename)
 print('Converting data...')
 
 ## Initialization
-defaultproject = defaults.defaultproject() # Used for filling in constants and some missing values
+defaultproject = defaults.defaultproject('simple', verbose=0) # Used for filling in constants and some missing values
 new = Project() # Create blank project
 new.data = odict() # Initialize data object
 new.data['years'] = old['data']['epiyears'] # Copy years
