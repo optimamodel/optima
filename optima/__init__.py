@@ -8,17 +8,6 @@ import optima as op
 or
 from .optima import *
 
-The __init__.py file imports all functions and classes defined in this file..
-
-Since other functions import optima.py and optima.py imports other functions, 
-weird race conditions can happen. Thus, it's designed to silently fail once
-it gets up to the latest module that it can successfully import. To make it
-fail loudly, do a find-and-replace for "pass #" with blank to re-enable the
-print statements.
-
-I'm sorry this file is so ugly. Believe me, it hurts me more than it hurts you.
-
-
 
 Now, the legal part:
 
@@ -49,7 +38,7 @@ print(optimalicense)
 
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
-__version__ = 2.0 
+__version__ = 2.0
 
 
 
