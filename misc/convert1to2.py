@@ -186,7 +186,15 @@ new.data['const'] = defaultproject.data['const']
 
 print('Running simulation and calibration...')
 
+# Create parameter set
 new.makeparset()
+
+# Copy over fitted aspects of the calibration
+new.parsets[0].pars[0]['initprev'].y = old['F'][0]['init']
+new.parsets[0].pars[0]['force'].y    = old['F'][0]['force']
+new.parsets[0].pars[0]['inhomo'].y   = old['F'][0]['inhomo']
+
+# Run simulation
 new.runsim()
 
 
