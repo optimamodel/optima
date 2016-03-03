@@ -5,943 +5,292 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
    * Defines & validates objectives, parameters & constraints to run, display &
    * save optimization results.
    */
-  module.controller('AnalysisOptimizationController', function ($scope, $http,
-    $interval, $injector, meta, cfpLoadingBar, CONFIG, modalService, typeSelector,
-    optimizations, optimizationHelpers, info) {
-
-    $scope.initialize = function () {
-      $scope.$on('$destroy', function () {
-        // Make sure that the interval is terminated when this controller is destroyed
-        stopTimer();
-      });
-
-      $scope.optimizationInProgress = false;
-
-      $scope.$watch('state.pieCharts', updateChartsForDataExport, true);
-      $scope.$watch('state.outcomeChart', updateChartsForDataExport, true);
-      $scope.$watch('state.radarCharts', updateChartsForDataExport, true);
-      $scope.$watch('state.optimisationGraphs', updateChartsForDataExport, true);
-      $scope.$watch('state.financialGraphs', updateChartsForDataExport, true);
-      $scope.$watch('state.stackedBarChart', updateChartsForDataExport, true);
-      $scope.$watch('state.multipleBudgetsChart', updateChartsForDataExport, true);
-      $scope.$watch('types.plotUncertainties', updateChartsForDataExport, true);
-      $scope.$watch('state.activeTab', $scope.checkExistingOptimization, true);
-
-      $scope.chartsForDataExport = [];
-      $scope.meta = meta.data;
-      $scope.types = typeSelector.types;
-      $scope.needData = $scope.meta.progs === undefined;
-
-      $scope.optimizationStatus = statusEnum.NOT_RUNNING;
-      $scope.optimizations = [];
-      $scope.isDirty = false;
-
-      // According to angular best-practices we should wrap every object/value
-      // inside a wrapper object. This is due the fact that directives like ng-if
-      // always create a child scope & the reference can get lost.
-      // see https://github.com/angular/angular.js/wiki/Understanding-Scopes
-      $scope.state = {
-        activeTab: 1,
-        activeOptimizationName: undefined,
-        isTestRun: false,
-        timelimit: 3600,
-        chartsForDataExport: [],
-        types: typeSelector.types,
-        moneyObjectives: [
-          { id: 'inci', title: 'Reduce the annual incidence of HIV' },
-          { id: 'incisex', title: 'Reduce the annual incidence of sexually transmitted HIV' },
-          { id: 'inciinj', title: 'Reduce the annual incidence of injecting-related HIV' },
-          { id: 'mtct', title: 'Reduce annual mother-to-child transmission of HIV' },
-          { id: 'mtctbreast', title: 'Reduce annual mother-to-child transmission of HIV among breastfeeding mothers' },
-          { id: 'mtctnonbreast', title: 'Reduce annual mother-to-child transmission of HIV among non-breastfeeding mothers' },
-          { id: 'deaths', title: 'Reduce annual AIDS-related deaths' },
-          { id: 'dalys', title: 'Reduce annual HIV-related DALYs' }
-        ],
-        objectivesToMinimize: [
-          {
-            name: "Cumulative new HIV infections",
-            slug: "inci",
-            title: "New infections weighting"
-          },
-          {
-            name: "Cumulative DALYs",
-            slug: "daly",
-            title: "DALYs weighting"
-          },
-          {
-            name: " Cumulative AIDS-related deaths",
-            slug: "death",
-            title: "Deaths weighting"
-          },
-          {
-            name: "Total HIV-related costs",
-            slug: "costann",
-            title: "Costs weighting"
-          }
-        ]
-      };
-
-      resetCharts();
-
-      // In case there is no model data the controller only needs to show the
-      // warning that the user should upload a spreadsheet with data.
-      if (!info.has_data) {
-        $scope.missingModelData = true;
-        return;
-      }
-
-      var errorMessages = [];
-
-      // scope for values
-      $scope.values = {};
-      $scope.values.constraints = {};
-      // need to define values for radiobutton which are not strings
-      $scope.values.constraints.txelig = [1,2,3];
-
-      // Set defaults
-      $scope.params = {};
-
-      // Objectives
-      $scope.params.objectives = {};
-      $scope.params.objectives.what = 'outcome';
-
-      // Outcome objectives defaults
-      $scope.params.objectives.outcome = {};
-      $scope.params.objectives.outcome.inci = false;
-      $scope.params.objectives.outcome.daly = false;
-      $scope.params.objectives.outcome.death = false;
-      $scope.params.objectives.outcome.costann = false;
-
-      // Default program weightings
-      $scope.params.objectives.money = {};
-      $scope.params.objectives.money.costs = [];
-      if($scope.meta.progs) {
-        $scope.programs = $scope.meta.progs.long;
-        $scope.programCodes = $scope.meta.progs.short;
-
-        for ( var i = 0; i < $scope.meta.progs.short.length; i++ ) {
-          $scope.params.objectives.money.costs[i] = 100;
-        }
-
-        // Constraints Defaults
-        $scope.params.constraints = {};
-        $scope.params.constraints.txelig = 1;
-        $scope.params.constraints.dontstopart = true;
-
-        $scope.params.constraints.yeardecrease = [];
-        $scope.params.constraints.yearincrease = [];
-        $scope.params.constraints.totaldecrease = [];
-        $scope.params.constraints.totalincrease = [];
-        $scope.params.constraints.coverage = [];
-
-        // Initialize program constraints models
-        for ( var j = 0; j < $scope.meta.progs.short.length; j++ ) {
-          $scope.params.constraints.yeardecrease[j] = {};
-          $scope.params.constraints.yeardecrease[j].use = false;
-          $scope.params.constraints.yeardecrease[j].by = 100;
-
-          $scope.params.constraints.yearincrease[j] = {};
-          $scope.params.constraints.yearincrease[j].use = false;
-          $scope.params.constraints.yearincrease[j].by = 100;
-
-          $scope.params.constraints.totaldecrease[j] = {};
-          $scope.params.constraints.totaldecrease[j].use = false;
-          $scope.params.constraints.totaldecrease[j].by = 100;
-
-          $scope.params.constraints.totalincrease[j] = {};
-          $scope.params.constraints.totalincrease[j].use = false;
-          $scope.params.constraints.totalincrease[j].by = 100;
-
-          $scope.params.constraints.coverage[j] = {};
-          $scope.params.constraints.coverage[j].use = false;
-          $scope.params.constraints.coverage[j].level = 0;
-          $scope.params.constraints.coverage[j].year = undefined;
-        }
-      }
-
-      // The graphs are shown/hidden after updating the graph type checkboxes.
-      $scope.$watch('types', drawGraphs, true);
-      $scope.yearLoop = [];
-      $scope.yearCols = [];
-
-      // apply existing optimization data, if present
-      if (optimizations && optimizations.data) {
-        $scope.initOptimizations(optimizations.data.optimizations, undefined, true);
-      }
-    };
-
-    var errorMessages = [];
-
-    var statusEnum = {
-      NOT_RUNNING: { text: "", isActive: false, checking: false },
-      RUNNING: { text: "Optimization is running", isActive: true, checking: false },
-      REQUESTED_TO_STOP : { text:"Optimization is requested to stop", isActive: true, checking: false },
-      STOPPING : { text:"Optimization is stopping", isActive: true, checking: false },
-      CHECKING: {text:"Checking for existing optimization", isActive: false, checking: true}
-    };
-
-    /**
-     * Empty charts
-     */
-    var resetCharts = function () {
-      $scope.state.optimisationGraphs = [];
-      $scope.state.financialGraphs = [];
-      $scope.state.radarCharts = [];
-      $scope.state.pieCharts = [];
-      $scope.state.stackedBarChart = undefined;
-      $scope.state.outcomeChart = undefined;
-    };
-
-    var optimizationTimer;
-
-    var graphOptions = {
-      height: 200,
-      width: 320,
-      margin: CONFIG.GRAPH_MARGINS,
-      xAxis: {
-        axisLabel: 'Year'
-      },
-      yAxis: {
-        axisLabel: ''
-      },
-      areasOpacity: 0.1
-    };
-
-    /*
-    * Returns an graph based on the provided yData.
-    *
-    * yData should be an array where each entry contains an array of all
-    * y-values from one line.
-    */
-    var generateGraph = function (yData, xData, title, legend, xLabel, yLabel) {
-
-      var graph = {
-        options: angular.copy(graphOptions),
-        data: {
-          lines: [],
-          scatter: [],
-          areas: []
-        }
-      };
-
-      graph.options.title = title;
-      graph.options.legend = legend;
-
-      graph.options.xAxis.axisLabel = xLabel;
-      graph.options.yAxis.axisLabel = yLabel;
-
-      // optimization chart data like prevalence have `best` & `data`
-      // financial chart data only has one property `data`
-      var linesData = yData.best || yData.data;
-      _(linesData).each(function(lineData) {
-        graph.data.lines.push(_.zip(xData, lineData));
-      });
-
-      // the optimization charts have an uncertainty area `low` & `high`
-      if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
-        _(yData.high).each(function(highLineData, index) {
-          graph.data.areas.push({
-            highLine: _.zip(xData, highLineData),
-            lowLine: _.zip(xData, yData.low[index])
-          });
-        });
-      }
-
-      return graph;
-    };
-
-    /**
-     * Returns a prepared chart object for a pie chart.
-     */
-    var generatePieChart = function(data, legend) {
-
-      var options = {
-        height: 350,
-        width: 350,
-        margin: {
-          top: 20,
-          right: 100,
-          bottom: 20,
-          left: 100
-        },
-        title: data.name
-      };
-
-      var graphData = _(data).map(function (value, index) {
-        return { value: value, label: legend[index] };
-      });
-
-      return {
-        'data': {slices: graphData},
-        'options': options
-      };
-    };
-
-    /**
-     * Returns all pie charts.
-     */
-    var preparePieCharts = function (data) {
-
-      var charts = [];
-
-      if (data[0] && data[0].piedata) {
-        charts.push(generatePieChart(data[0].piedata, data[0].legend));
-      }
-
-      if (data[1] && data[1].piedata) {
-        charts.push(generatePieChart(data[1].piedata, data[0].legend)); // not set for data[1]
-      }
-
-      return charts;
-    };
-
-    /**
-     * Returns a prepared chart object for a radar chart.
-     */
-    var generateRadarChart = function (data, legend) {
-      var graphData = [{axes: []}, {axes: []}, {axes: []}];
-
-      var options = {
-        legend: [],
-        title: data.name
-      };
-
-      graphData[0].axes = _(data.low).map( function (value, index) {
-        return { value: value, axis: legend[index] };
-      });
-      graphData[1].axes = _(data.best).map( function (value, index) {
-        return { value: value, axis: legend[index] };
-      });
-      graphData[2].axes = _(data.high).map( function (value, index) {
-        return { value: value, axis: legend[index] };
-      });
-
-      return {
-        'data': graphData,
-        'options': options,
-        'radarAxesName': 'Programs'
-      };
-    };
-
-    /**
-     * Returns all radar charts.
-     */
-    var prepareRadarCharts = function (data) {
-
-      var charts = [];
-
-      if (data[0] && data[0].radardata) {
-        charts.push(generateRadarChart(data[0].radardata, data[0].legend));
-      }
-
-      if (data[1] && data[1].radardata) {
-        charts.push(generateRadarChart(data[1].radardata, data[0].legend)); // not set for data[1]
-      }
-
-      return charts;
-    };
-
-    /**
-     * Returns a prepared chart object for a pie chart.
-     */
-    var generateStackedBarChart = function(yData, xData, legend, title) {
-      var options = {
-        height: 200,
-        width: 700,
-        margin: CONFIG.GRAPH_MARGINS,
-        xAxis: {
-          axisLabel: 'Year'
-        },
-        yAxis: {
-          axisLabel: ''
-        },
-        legend: legend,
-        title: title
-      };
-
-
-      var graphData = _(xData).map(function(xValue, index) {
-        var yValues = _(yData).map(function(yEntry) { return yEntry[index]; });
-        return [xValue, yValues];
-      });
-
-      return {
-        'data': {bars: graphData},
-        'options': options
-      };
-    };
-
-    /**
-     * Returns a stacked bar chart.
-     */
-    var prepareStackedBarChart = function (data) {
-      return generateStackedBarChart(data.stackdata, data.xdata, data.legend,
-        data.title);
-    };
-
-    /**
-     * Returns a prepared chart object for a pie chart.
-     */
-    var generateMultipleBudgetsChart = function (yData, xData, labels, legend,
-        title, leftTitle, rightTitle) {
-      var options = {
-        height: 200,
-        width: 700,
-        margin: CONFIG.GRAPH_MARGINS,
-        xAxis: {
-          axisLabel: ''
-        },
-        yAxis: {
-          axisLabel: 'Spent'
-        },
-        legend: legend,
-        title: title,
-        leftTitle: leftTitle,
-        rightTitle: rightTitle
-      };
-
-      var graphData = _(xData).map(function (xValue, index) {
-        return [labels[index], xValue, yData[index]];
-      });
-
-      return {
-        'data': {bars: graphData},
-        'options': options
-      };
-    };
-
-    /**
-     * Returns a stacked bar chart.
-     */
-    var prepareMultipleBudgetsChart = function (data, outcomeData) {
-      return generateMultipleBudgetsChart(data.bardata, outcomeData.bardata,
-        data.xlabels, data.legend, data.title, outcomeData.title, data.ylabel);
-      };
-
-    /**
-     * Regenerate graphs based on the results and type settings in the UI.
-     */
-    var prepareOptimisationGraphs = function (results) {
-      var graphs = [];
-
-      if (!results) {
-        return graphs;
-      }
-
-      _($scope.state.types.population).each(function (type) {
-        if (type === undefined) return;
-        var data = results[type.id];
-        if (data !== undefined) {
-
-          // generate graphs showing the overall data for this type
-          if (type.total) {
-            var graph = generateGraph(
-              data.tot, results.tvec,
-              data.tot.title, data.tot.legend,
-              data.xlabel, data.tot.ylabel
-            );
-            graphs.push(graph);
-          }
-
-          // generate graphs for this type for each population
-          if (type.byPopulation) {
-            _(data.pops).each( function (population) {
-              var graph = generateGraph(
-                population, results.tvec,
-                population.title, population.legend,
-                data.xlabel, population.ylabel
-              );
-              graphs.push(graph);
-            });
-          }
-        }
-      });
-
-      return graphs;
-    };
-
-    /**
-     * Returns a financial graph.
-     */
-    var generateFinancialGraph = function (data) {
-      var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
-      return graph;
-    };
-
-    var prepareFinancialGraphs = function (graphData) {
-      var graphs = [];
-
-      if (graphData === undefined) return graphs;
-
-      // annual cost charts
-      _($scope.state.types.possibleKeys).each(function(type) {
-        var isActive = $scope.state.types.costs.costann[type];
-        if (isActive) {
-          var chartData = graphData.costann[type][$scope.state.types.activeAnnualCost];
-          if (chartData) {
-            graphs.push(generateFinancialGraph(chartData));
-          }
-        }
-      });
-
-
-      // cumulative cost charts
-      _($scope.state.types.possibleKeys).each(function(type) {
-        var isActive = $scope.state.types.costs.costcum[type];
-        if (isActive) {
-          var chartData = graphData.costcum[type];
-          if (chartData) {
-            graphs.push(generateFinancialGraph(chartData));
-          }
-        }
-      });
-
-      // commitments
-      var commitIsActive = $scope.state.types.costs.commit.checked;
-      if (commitIsActive) {
-        var commitChartData = graphData.commit[$scope.state.types.activeAnnualCost];
-        if (commitChartData) {
-          graphs.push(generateFinancialGraph(commitChartData));
-        }
-      }
-
-      return graphs;
-    };
-
-    var prepareOutcomeChart = function (data) {
-      if (data === undefined) return undefined;
-
-      var chart = {
-        options: angular.copy(graphOptions),
-        data: {
-          lines: [],
-          scatter: []
-        }
-      };
-      chart.options.height = 320;
-      chart.options.margin.bottom = 165;
-
-      chart.options.title = data.title;
-      chart.options.xAxis.axisLabel = data.xlabel;
-      chart.options.yAxis.axisLabel = data.ylabel;
-      chart.data.lines.push(_.zip(data.xdata, data.ydata));
-      return chart;
-    };
-
-    $scope.optimizationByName = function (name) {
-      return _($scope.state.optimizations).find(function (item) {
-
-        return item.name == name;
-      });
-    };
-
-    // makes all graphs to recalculate and redraw
-    function drawGraphs () {
-      var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
-
-      if (!optimization || !optimization.result || !optimization.result.plot) return;
-
-      var data = optimization.result.plot[0];
-      resetCharts();
-      if (data.alloc instanceof Array) {
-        $scope.state.pieCharts = preparePieCharts(data.alloc);
-        $scope.state.radarCharts = prepareRadarCharts(data.alloc);
-        $scope.state.outcomeChart = prepareOutcomeChart(data.outcome);
-      } else {
-        if (data.alloc.bardata) {
-          $scope.state.multipleBudgetsChart = prepareMultipleBudgetsChart(data.alloc,
-            data.outcome);
-        } else if (data.alloc.stackdata) {
-          $scope.state.stackedBarChart = prepareStackedBarChart(data.alloc);
-          $scope.state.outcomeChart = prepareOutcomeChart(data.outcome);
-        }
-      }
-      $scope.state.optimisationGraphs = prepareOptimisationGraphs(data.multi);
-      $scope.state.financialGraphs = prepareFinancialGraphs(data.multi);
-    }
-
-    // makes all graphs to recalculate and redraw
-    function updateGraphs (data) {
-      /* new structure keeps everything together:
-       * data.plot[n].alloc => pie & radar
-       * data.plot[n].multi => old line-scatterplots
-       * data.plot[n].outcome => new line plot
-       * n - sequence number of saved optimization
-       */
-      if (data && data.plot && data.plot.length > 0) {
-        var optimization = $scope.optimizationByName($scope.state.activeOptimizationName);
-        optimization.result = data;
-        typeSelector.enableAnnualCostOptions($scope.state.types, data.plot[0].multi);
-        drawGraphs();
-      }
-    }
-
-    /**
-     * Returns true if at least one chart is available
-     */
-    $scope.someGraphAvailable = function () {
-      return !(_.isEmpty($scope.state.radarCharts)) ||
-        !(_.isEmpty($scope.state.optimisationGraphs)) ||
-        !(_.isEmpty($scope.state.financialGraphs)) ||
-        !(_.isEmpty($scope.state.pieCharts)) ||
-        $scope.state.stackedBarChart !== undefined ||
-        $scope.state.outcomeChart !== undefined;
-    };
-
-    /**
-     * If the string is undefined return empty, otherwise just return the string
-     * @param str
-     * @returns {string}
-     */
-    function strOrEmpty (str) {
-      return _(str).isUndefined() ? '' : str;
-    }
-
-    /**
-     * Join the word with a comma between them, except for the last word
-     *
-     * @param entries {array} - the entries to be combined
-     * @param property if it's defined it will pick that specific property from the object
-     * @param hasQuote should the sentence be quoted or not
-     * @param wordPrefix add something before each word
-     * @param wordPostfix add something after each word
-     * @returns {string}
-     */
-    function joinArrayAsSentence (entries, property, hasQuote, wordPrefix, wordPostfix) {
-      var quote = hasQuote ? '"' : '';
-      var prefix = strOrEmpty(wordPrefix);
-      var postfix = strOrEmpty(wordPostfix);
-      var processedEntries = _.compact(_(entries).map(function (entry) {
-        var text = (property ? entry[property] : entry);
-        return text ? ( prefix + strOrEmpty(text) + postfix ) : undefined;
-      }));
-      return quote + processedEntries.join(", ") + quote;
-    }
-
-    /**
-     * Returns the names of the objectives to minimize as a comma separated string.
-     */
-    $scope.selectedObjectivesToMinimizeString = function () {
-      var selectedObjectivesToMinimize = _($scope.state.objectivesToMinimize).filter(function (objective) {
-        return $scope.params.objectives.outcome[objective.slug] === true;
-      });
-
-      return joinArrayAsSentence(selectedObjectivesToMinimize, 'name', true);
-    };
-
-    /**
-     * Returns a description of the chosen budget level for the summary message.
-     */
-    $scope.budgetLevelSummary = function () {
-      if ($scope.params.objectives.funding === 'variable') {
-        var objectives = _.compact(_($scope.params.objectives.outcome.variable).toArray());
-        return ' budget level ' + joinArrayAsSentence(objectives, undefined, false, '$');
-      } else if ($scope.params.objectives.funding === 'constant') {
-        return ' fixed budget of $' + $scope.params.objectives.outcome.fixed + ' per year';
-      } else if ($scope.params.objectives.funding === 'range') {
-        var budgetLevel = ' budget range between $' + $scope.params.objectives.outcome.budgetrange.minval;
-        return budgetLevel + ' to $' + $scope.params.objectives.outcome.budgetrange.maxval;
-      }
-    };
-
-    $scope.setActiveTab = function (tabNum) {
-      $scope.state.activeTab = tabNum;
-    };
-
-    $scope.initTimer = function (status) {
-      if ( !angular.isDefined( optimizationTimer ) ) {
-        $scope.optimizationInProgress = true;
-        // Keep polling for updated values after every 5 seconds till we get an error.
-        // Error indicates that the model is not optimizing anymore.
-        optimizationTimer = $interval(checkWorkingOptimization, 30000, 0, false);
-        $scope.state.optimizationStatus = status;
-        $scope.errorText = '';
-        // start cfpLoadingBar loading
-        // calculate the number of ticks in timelimit
-        var val = ($scope.state.timelimit * 1000) / 250;
-        // callback function in start to be called in place of _inc()
-        cfpLoadingBar.start( function () {
-          if (cfpLoadingBar.status() >= 0.95) {
-            return;
-          }
-          var pct = cfpLoadingBar.status() + (0.95/val);
-          cfpLoadingBar.set(pct);
-        });
-      }
-    };
-
-    $scope.startOptimization = function () {
-      var params = optimizationHelpers.toRequestParameters($scope.params, $scope.state.activeOptimizationName, $scope.state.timelimit);
-      $http.post('/api/analysis/optimization/start', params, {ignoreLoadingBar: true})
-        .success(function (data, status, headers, config) {
-          if (data.join) {
-            $scope.initTimer(statusEnum.RUNNING);
-          } else {
-            console.log("Cannot poll for optimization now");
-          }
-        });
-    };
-
-    $scope.checkExistingOptimization = function (newTab, oldTab) {
-      if(newTab !== 3) {
-        stopTimer();
-      } else {
-        checkWorkingOptimization();
-      }
-    };
-
-    function checkWorkingOptimization () {
-      $http.get('/api/analysis/optimization/working', {ignoreLoadingBar: true})
-        .success( function (data, status, headers, config) {
-          if (data.status == 'Failed') {
-            if($scope.optimizationInProgress === true) {
-              var modalService = $injector.get('modalService');
-              var message = 'Something went wrong. Please try again or contact the support team.';
-              modalService.inform(angular.noop, 'Okay', message, 'Server Error', data.exception);
-            }
-            $scope.errorText = data.exception;
-            stopTimer();
-          } else {
-            if (data.status == 'Done') {
-              stopTimer();
-            } else {
-              if (data.status == 'Running') $scope.state.optimizationStatus = statusEnum.RUNNING;
-              if (data.status == 'Stopping') $scope.state.optimizationStatus = statusEnum.STOPPING;
-              $scope.initTimer($scope.state.optimizationStatus);
-            }
-            $scope.state.isDirty = data.dirty;
-            $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName, true);
-          }
-        })
-        .error( function (data, status, headers, config) {
-          if (data && data.exception) {
-            $scope.errorText = data.exception;
-          }
-          stopTimer();
-        });
-    }
-
-    $scope.stopOptimization = function () {
-      modalService.confirm(
-        function (){
-          $http.get('/api/analysis/optimization/stop')
-          .success( function (data) {
-            // Do not cancel timer yet, if the optimization is running
-            if ($scope.state.optimizationStatus) {
-              $scope.state.optimizationStatus = statusEnum.REQUESTED_TO_STOP;
-            }
-          });
-        },
-        function (){},
-        'Yes, Stop Optimization',
-        'No',
-        'Warning, optimization has not converged. Results cannot be used for analysis.',
-        'Warning!'
+  module.controller('AnalysisOptimizationController', function ($scope, $http, $modal, modalService, activeProject, $timeout) {
+
+    if (!activeProject.data.has_data) {
+      modalService.inform(
+        function (){ },
+        'Okay',
+        'Please upload spreadsheet to proceed.',
+        'Cannot proceed'
       );
-    };
-
-    function stopTimer () {
-      if ( angular.isDefined( optimizationTimer ) ) {
-        $interval.cancel(optimizationTimer);
-        optimizationTimer = undefined;
-        $scope.state.optimizationStatus = statusEnum.NOT_RUNNING;
-        $scope.optimizationInProgress = false;
-        cfpLoadingBar.complete();
-      }
+      $scope.missingData = true;
+      return;
     }
 
-    $scope.deleteOptimization = function (optimizationName) {
-      $http.post(encodeURI('/api/analysis/optimization/remove/' + optimizationName))
-        .success(function (data) {
-          $scope.initOptimizations(data.optimizations, undefined);
-        });
+    $scope.state = {
+      activeProject: activeProject.data,
+      optimizations: []
     };
 
-    $scope.saveOptimization = function () {
-      $http.post('/api/analysis/optimization/save')
-        .success(function (data) {
-          $scope.state.isDirty = false;
-          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
+    $scope.setType = function(which) {
+      $scope.state.activeOptimization.which = which;
+      $scope.state.activeOptimization.objectives = objectiveDefaults[which];
+      $scope.state.objectives = objectives[which];
+    };
+
+    $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations').
+      success(function (response) {
+        $scope.state.optimizations = response.optimizations;
+        if($scope.state.optimizations.length > 0) {
+          $scope.setActiveOptimization($scope.state.optimizations[0]);
+        }
       });
-    };
 
-
-    $scope.revertOptimization = function () {
-      $http.post('/api/analysis/optimization/revert')
-        .success(function (data) {
-          $scope.state.isDirty = false;
-          $scope.initOptimizations(data.optimizations, $scope.state.activeOptimizationName);
-      });
-    };
-
-    $scope.addOptimization = function () {
-      var create = function (name) {
-        var url = '/api/analysis/optimization/create';
-        var params = optimizationHelpers.toRequestParameters($scope.params, name);
-        $http.post(url, params).success( function (data) {
-          $scope.initOptimizations(data.optimizations, name);
-        });
+    $scope.addOptimization = function() {
+      var add = function (name) {
+        var newOptimization = {
+          name: name,
+          which: 'outcomes',
+          constraints: constraints,
+          objectives: objectiveDefaults.outcomes
+        };
+        $scope.setActiveOptimization(newOptimization);
+        $scope.state.optimizations.push(newOptimization);
       };
-
-      modalService.addOptimization(function (name) { create(name); }, $scope.state.optimizations);
+      openOptimizationModal(add, 'Add optimization', $scope.state.optimizations, null, 'Add');
     };
 
-    /**
-     * Returns true if the start & end year are required.
-     */
-    $scope.yearsAreRequired = function () {
-      if (!$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
-        return false;
-      }
-      if (!$scope.params.objectives.year ||
-          !$scope.params.objectives.year.start ||
-          !$scope.params.objectives.year.end){
-        return true;
-      }
-      return false;
+    var getConstraintKeys = function(constraints) {
+      return _.keys(constraints.name);
     };
 
-    /**
-     * Update the variables depending on the range in years.
-     */
-    $scope.updateYearRange = function () {
-
-      // only for variable funding the year range is relevant to produce the loop & col
-      if ( !$scope.params.objectives.funding || $scope.params.objectives.funding !== 'variable') {
-        return;
-      }
-
-      // reset data
-      $scope.params.objectives.outcome.variable = {};
-      $scope.yearLoop = [];
-      $scope.yearCols = [];
-
-      // parse years
-      if ($scope.params.objectives.year === undefined) {
-        return;
-      }
-      var start = parseInt($scope.params.objectives.year.start);
-      var end = parseInt($scope.params.objectives.year.end);
-      if ( isNaN(start) ||  isNaN(end) || end <= start) {
-        return;
-      }
-
-      // initialize data
-      var years = _.range(start, end + 1);
-      $scope.yearLoop = _(years).map( function (year) { return { year: year}; } );
-
-      var cols = 5;
-      var rows = Math.ceil($scope.yearLoop.length / cols);
-      $scope.yearCols = _(_.range(0, rows)).map( function (col, index) {
-        return {start: index*cols, end: (index*cols)+cols };
-      });
-
+    $scope.setActiveOptimization = function(optimization) {
+      $scope.state.activeOptimization = optimization;
+      $scope.state.constraintKeys = getConstraintKeys(optimization.constraints);
+      $scope.state.objectives = objectives[optimization.which];
+      $scope.optimizationCharts = [];
+      $scope.selectors = [];
+      $scope.getOptimizationGraphs();
     };
 
-    /**
-     * Collects all existing charts in the $scope.chartsForDataExport variable.
-     */
-    var updateChartsForDataExport = function () {
-      $scope.state.chartsForDataExport = [];
-
-      if ( $scope.state.pieCharts && !$scope.state.types.plotUncertainties ) {
-        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.pieCharts);
-      }
-
-      if ( $scope.state.radarCharts && $scope.state.types.plotUncertainties ) {
-        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.radarCharts);
-      }
-
-      if ( $scope.state.stackedBarChart ) {
-        $scope.state.chartsForDataExport.push($scope.state.stackedBarChart);
-      }
-
-      if ( $scope.state.outcomeChart ) {
-        $scope.state.chartsForDataExport.push($scope.state.outcomeChart);
-      }
-
-      if ( $scope.state.multipleBudgetsChart ) {
-        $scope.state.chartsForDataExport.push($scope.state.multipleBudgetsChart);
-      }
-
-      if ( $scope.state.optimisationGraphs ) {
-        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.optimisationGraphs);
-      }
-
-      if ( $scope.state.financialGraphs ) {
-        $scope.state.chartsForDataExport = $scope.state.chartsForDataExport.concat($scope.state.financialGraphs);
-      }
-
-    };
-
-    /**
-     * Changes active constrains and objectives to the values in provided optimization
-     * @param optimization {Object}
-     */
-    $scope.applyOptimization = function (name, overwriteParams) {
-      var optimization = $scope.optimizationByName(name);
-      if (overwriteParams) {
-        var objectives = optimizationHelpers.toScopeObjectives(optimization.objectives);
-        _.extend($scope.params.objectives, objectives);
-        _.extend($scope.params.constraints, optimization.constraints);
-        $scope.moneyObjectives = $scope.params.objectives.money.objectives;
-      }
-      if (optimization.result) {
-        updateGraphs(optimization.result);
+    // Open pop-up to re-name Optimization
+    $scope.renameOptimization = function () {
+      if (!$scope.state.activeOptimization) {
+        modalService.informError([{message: 'No optimization selected.'}]);
       } else {
-        resetCharts();
-        typeSelector.resetAnnualCostOptions($scope.state.types);
+        var rename = function (name) {
+          $scope.state.activeOptimization.name = name;
+        };
+        openOptimizationModal(rename, 'Rename optimization', $scope.state.optimizations, $scope.state.activeOptimization.name, 'Rename', true);
       }
     };
 
-    /*
-     * Apply default optimization on page load.
-     */
-    $scope.initOptimizations = function (optimizations, name, overwriteParams) {
-      if (!optimizations) return;
-
-      $scope.state.optimizations = angular.copy(optimizations);
-
-      var nameExists = name && _($scope.state.optimizations).some(function (item) {
-        return item.name == name;
-      });
-
-      if (nameExists) {
-        $scope.state.activeOptimizationName = name;
+    // Copy Optimization
+    $scope.copyOptimization = function() {
+      if (!$scope.state.activeOptimization) {
+        modalService.informError([{message: 'No optimization selected.'}]);
       } else {
-        $scope.state.activeOptimizationName = undefined;
-        var optimization = _($scope.state.optimizations).first();
-        if (optimization) {
-          $scope.state.activeOptimizationName = optimization.name;
+        var rename = function (name) {
+          var copyOptimization = angular.copy($scope.state.activeOptimization);
+          copyOptimization.name = name;
+          $scope.setActiveOptimization(copyOptimization);
+          $scope.state.optimizations.push($scope.state.activeOptimization);
+        };
+        openOptimizationModal(rename, 'Copy optimization', $scope.optimizations, $scope.state.activeOptimization.name + ' copy', 'Copy');
+      }
+    };
+
+    // Delete optimization
+    $scope.deleteOptimization = function() {
+      if (!$scope.state.activeOptimization) {
+        modalService.informError([{message: 'No optimization selected.'}]);
+      } else {
+        var remove = function () {
+          $scope.state.optimizations = _.filter($scope.state.optimizations, function (optimization) {
+            return optimization.name !== $scope.state.activeOptimization.name;
+          });
+          if($scope.state.optimizations && $scope.state.optimizations.length > 0) {
+            $scope.state.activeOptimization = $scope.state.optimizations[0];
+          } else {
+            $scope.state.activeOptimization = undefined;
+          }
+        };
+        modalService.confirm(
+          function () {
+            remove()
+          }, function () {
+          }, 'Yes, remove this optimization', 'No',
+          'Are you sure you want to permanently remove optimization "' + $scope.state.activeOptimization.name + '"?',
+          'Delete optimization'
+        );
+      }
+    };
+
+    $scope.saveOptimization = function(optimizationForm) {
+      $scope.validateOptimizationForm(optimizationForm);
+      if(!optimizationForm.$invalid) {
+        if (!$scope.state.activeOptimization.id) {
+          $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations', $scope.state.activeOptimization).
+            success(function (response) {
+              $scope.state.optimizations[$scope.state.optimizations.indexOf($scope.state.activeOptimization)] = response;
+              $scope.setActiveOptimization(response);
+            });
+        } else {
+          $http.put('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id,
+            $scope.state.activeOptimization).
+            success(function (response) {
+            });
         }
       }
-
-      $scope.applyOptimization($scope.state.activeOptimizationName, overwriteParams);
     };
 
-    $scope.updateTimelimit = function () {
-      if ($scope.state.isTestRun) {
-        $scope.state.timelimit = 60;
-      } else {
-        $scope.state.timelimit = 3600;
+    $scope.validateOptimizationForm = function(optimizationForm) {
+      optimizationForm.progset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.progset_id));
+      optimizationForm.parset.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.parset_id));
+      optimizationForm.start.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.start));
+      optimizationForm.end.$setValidity("required", !(!$scope.state.activeOptimization || !$scope.state.activeOptimization.objectives.end));
+    };
+
+    $scope.runOptimizations = function() {
+      if($scope.state.activeOptimization.id) {
+        $http.post('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+          .success(function (response) {
+            if (response.status === 'started') {
+              $scope.statusMessage = 'Optimization started.';
+              $scope.errorMessage = '';
+              pollOptimizations();
+            } else if (response.status === 'running') {
+              $scope.statusMessage = 'Optimization already running.'
+            }
+          });
       }
     };
 
-    /**
-     * Returns true if any the objectives to minimize is selected.
-     */
-    $scope.anyObjectiveToMinimizeIsSelected = function () {
-      var keys = _($scope.state.objectivesToMinimize).map(function(objective) {
-        return objective.slug;
-      });
-
-      var objectivesToMinimize = _($scope.params.objectives.outcome).filter(function(objective, key) {
-        return _(keys).contains(key);
-      });
-
-      return _.some(objectivesToMinimize);
+    var pollOptimizations = function() {
+      var that = this;
+      $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/results')
+        .success(function(response) {
+          if(response.status === 'completed') {
+            $scope.getOptimizationGraphs();
+            $scope.statusMessage = 'Optimization successfully completed updating graphs.';
+            clearStatusMessage();
+            $timeout.cancel($scope.pollTimer);
+          } else if(response.status === 'started'){
+            $scope.pollTimer = $timeout(pollOptimizations, 5000);
+          }
+        }).error(function() {
+          $scope.errorMessage = 'Optimization failed.';
+          $scope.statusMessage = '';
+        });
     };
 
-    $scope.initialize();
+    var clearStatusMessage = function() {
+      $timeout(function() {
+        $scope.statusMessage = '';
+      }, 5000);
+    };
+
+    $scope.getOptimizationGraphs = function() {
+      var data = {};
+      if($scope.state.activeOptimization.id) {
+        if ($scope.selectors) {
+          var selectors = _.filter($scope.selectors, function (selector) {
+            return selector.checked;
+          }).map(function (selector) {
+            return selector.key;
+          });
+          if (selectors && selectors.length > 0) {
+            data.which = selectors;
+          }
+        }
+        $http.get('/api/project/' + $scope.state.activeProject.id + '/optimizations/' + $scope.state.activeOptimization.id + '/graph', {params: data})
+          .success(function (response) {
+            $scope.optimizationCharts = response.optimization.graphs;
+            $scope.selectors = response.optimization.selectors;
+          });
+      }
+    };
+
+    // Fetch list of program-set for open-project from BE
+    $http.get('/api/project/' + $scope.state.activeProject.id + '/progsets').success(function (response) {
+      $scope.state.programSetList = response.progsets;
+    });
+
+    // Fetch list of parameter-set for open-project from BE
+    $http.get('/api/project/' + $scope.state.activeProject.id + '/parsets').success(function (response) {
+      $scope.state.parsets = response.parsets;
+    });
+
+    // Opens modal to add / rename / copy optimization
+    var openOptimizationModal = function (callback, title, optimizationList, optimizationName, operation, isRename) {
+      var onModalKeyDown = function (event) {
+        if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }
+      };
+      var modalInstance = $modal.open({
+        templateUrl: 'js/modules/analysis/optimization-modal.html',
+        controller: ['$scope', '$document', function ($scope, $document) {
+          $scope.title = title;
+          $scope.name = optimizationName;
+          $scope.operation = operation;
+          $scope.updateOptimization = function () {
+            $scope.newOptimizationName = $scope.name;
+            callback($scope.name);
+            modalInstance.close();
+          };
+          $scope.isUniqueName = function (optimizationForm) {
+            var exists = _(optimizationList).some(function(item) {
+                return item.name == $scope.name;
+              }) && $scope.name !== optimizationName && $scope.name !== $scope.newOptimizationName;
+            if(isRename) {
+              optimizationForm.optimizationName.$setValidity("optimizationUpdated", $scope.name !== optimizationName);
+            }
+            optimizationForm.optimizationName.$setValidity("optimizationExists", !exists);
+            return exists;
+          };
+          $document.on('keydown', onModalKeyDown); // observe
+          $scope.$on('$destroy', function (){ $document.off('keydown', onModalKeyDown); });  // unobserve
+        }]
+      });
+      return modalInstance;
+    };
+
   });
 });
+
+//todo: add validations, comment code
+
+// this is to be replaced by an api
+var constraints = {
+  'max': {'MSM programs': null, 'HTC mobile': null, 'ART': null, 'VMMC': null, 'HTC workplace': null, 'Condoms': null, 'PMTCT': null, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': null, 'FSW programs': null},
+  'name': {'MSM programs': 'Programs for men who have sex with men', 'HTC mobile': 'HIV testing and counseling - mobile clinics', 'ART': 'Antiretroviral therapy', 'VMMC': 'Voluntary medical male circumcision', 'HTC workplace': 'HIV testing and counseling - workplace programs', 'Condoms': 'Condom promotion and distribution', 'PMTCT': 'Prevention of mother-to-child transmission', 'Other': 'Other', 'MGMT': 'Management', 'HTC medical': 'HIV testing and counseling - medical facilities', 'FSW programs': 'Programs for female sex workers and clients'},
+  'min': {'MSM programs': 0.0, 'HTC mobile': 0.0, 'ART': 1.0, 'VMMC': 0.0, 'HTC workplace': 0.0, 'Condoms': 0.0, 'PMTCT': 0.0, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': 0.0, 'FSW programs': 0.0}
+};
+
+// this is to be replaced by an api
+var objectives = {
+  outcomes: [
+    { key: 'start', label: 'Year to begin optimization' },
+    { key: 'end', label: 'Year by which to achieve objectives' },
+    { key: 'budget', label: 'Starting budget' },
+    { key: 'deathweight', label: 'Relative weight per death' },
+    { key: 'inciweight', label: 'Relative weight per new infection' }
+  ],
+  money: [
+    {key: 'base', label: 'Baseline year to compare outcomes to' },
+    { key: 'start', label: 'Year to begin optimization' },
+    { key: 'end', label: 'Year by which to achieve objectives' },
+    { key: 'budget', label: 'Starting budget' },
+    { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
+    { key: 'incifrac', label: 'Fraction of infections to be averted' }
+  ]
+};
+
+var objectiveDefaults = {
+  outcomes: {
+    base: undefined,
+    start: 2017,
+    end: 2030,
+    budget: 63500000.0,
+    deathweight: 0,
+    inciweight: 0
+  },
+  money: {
+    base: 2015,
+    start: 2017,
+    end: 2030,
+    budget: 63500000.0,
+    deathfrac: 0,
+    incifrac: 0
+  }
+};

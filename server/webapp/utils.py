@@ -136,9 +136,11 @@ def project_exists(project_id, raise_exception=False):
     return count > 0
 
 
-def load_project(project_id, all_data=False, raise_exception=False):
+def load_project(project_id, all_data=False, raise_exception=False, db_session=None):
     from sqlalchemy.orm import undefer, defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
+    if not db_session:
+        db_session = db.session
     cu = current_user
     current_app.logger.debug("getting project {} for user {} (admin:{})".format(
         project_id,
@@ -151,9 +153,9 @@ def load_project(project_id, all_data=False, raise_exception=False):
         else:
             return None
     if cu.is_admin:
-        query = ProjectDb.query.filter_by(id=project_id)
+        query = db_session.query(ProjectDb).filter_by(id=project_id)
     else:
-        query = ProjectDb.query.filter_by(id=project_id, user_id=cu.id)
+        query = db_session.query(ProjectDb).filter_by(id=project_id, user_id=cu.id)
     if all_data:
         query = query.options(
             # undefer('model'),
@@ -171,6 +173,7 @@ def _load_project_child(project_id, record_id, record_class, exception_class, ra
     cu = current_user
     current_app.logger.debug("getting {} {} for user {}".format(record_class.__name__, record_id, cu.id))
 
+    print "record_id", record_id, "record_class", record_class
     entry = db.session.query(record_class).get(record_id)
     if entry is None:
         if raise_exception:
@@ -204,6 +207,27 @@ def load_parset(project_id, parset_id, raise_exception=True):
     return _load_project_child(project_id, parset_id, ParsetsDb, ParsetDoesNotExist, raise_exception)
 
 
+def load_parset(project_id, parset_id, raise_exception=True):
+    from server.webapp.dbmodels import ParsetsDb
+    from server.webapp.exceptions import ParsetDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting parset {} for user {}".format(parset_id, cu.id))
+
+    parset_entry = db.session.query(ParsetsDb).get(parset_id)
+    if parset_entry is None:
+        if raise_exception:
+            raise ParsetDoesNotExist(id=parset_id)
+        return None
+
+    if parset_entry.project_id != project_id:
+        if raise_exception:
+            raise ParsetDoesNotExist(id=parset_id)
+        return None
+
+    return parset_entry
+
+
 def load_program(project_id, progset_id, program_id, raise_exception=True):
     from server.webapp.dbmodels import ProgramsDb
     from server.webapp.exceptions import ProgramDoesNotExist
@@ -222,6 +246,29 @@ def load_program(project_id, progset_id, program_id, raise_exception=True):
         return None
 
     return program_entry
+
+
+def load_scenario(project_id, scenario_id, raise_exception=True):
+    from server.webapp.dbmodels import ScenariosDb
+    from server.webapp.exceptions import ScenarioDoesNotExist
+
+    cu = current_user
+    current_app.logger.debug("getting scenario {} for user {}".format(scenario_id, cu.id))
+
+    scenario_entry = db.session.query(ScenariosDb).get(scenario_id)
+
+    if scenario_entry is None:
+        if raise_exception:
+            raise ScenarioDoesNotExist(id=scenario_id)
+        return None
+
+    if scenario_entry.project_id != project_id:
+        if raise_exception:
+            raise ScenarioDoesNotExist(id=scenario_id)
+        return None
+
+    return scenario_entry
+
 
 
 def save_data_spreadsheet(name, folder=None):
@@ -440,6 +487,7 @@ def update_or_create_program(project_id, progset_id, name, program, active=False
 
     program_record.blob = saves(program_record.hydrate())
     db.session.add(program_record)
+    return program_record
 
 
 def modify_program(project_id, progset_id, program_id, args, program_modifier):
@@ -459,10 +507,138 @@ def modify_program(project_id, progset_id, program_id, args, program_modifier):
     return result
 
 
-def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE):
+def update_or_create_scenario(project_id, project, name):  # project might have a different ID than the one we want
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import ScenariosDb, ParsetsDb, ProgsetsDb
+    import json
+
+    parset_id = None
+    progset_id = None
+    blob = {}
+    scenario_type = None
+
+    scenario = project.scens[name]
+    if not scenario:
+        raise Exception("scenario {} not present in project {}!".format(name, project_id))
+
+    if isinstance(scenario, op.Parscen):
+        scenario_type = 'parameter'
+    elif isinstance(scenario, op.Budgetscen):
+        scenario_type = 'budget'
+    elif isinstance(scenario, op.Coveragescen):
+        scenario_type = 'coverage'
+
+    if scenario.t:
+        blob['years'] = scenario.t
+    for key in ['budget', 'coverage', 'pars']:
+        if hasattr(scenario, key) and getattr(scenario, key):
+            blob[key] = json.loads(json.dumps(getattr(scenario, key)))
+
+    parset_name = scenario.parsetname
+    if parset_name:
+        parset_record = ParsetsDb.query \
+            .filter_by(project_id=project_id, name=parset_name) \
+            .first()
+        if parset_record:
+            parset_id = parset_record.id
+
+    progset_id = None
+    if hasattr(scenario, 'progsetname') and scenario.progsetname:
+        progset_name = scenario.progsetname
+        progset_record = ProgsetsDb.query \
+            .filter_by(project_id=project_id, name=progset_name) \
+            .first()
+        if progset_record:
+            progset_id = progset_record.id
+
+    scenario_record = ScenariosDb.query \
+        .filter_by(project_id=project_id, name=name) \
+        .first()
+
+    if scenario_record is None:
+        scenario_record = ScenariosDb(
+            project_id=project_id,
+            parset_id=parset_id,
+            progset_id=progset_id,
+            name=name,
+            scenario_type=scenario_type,
+            active=scenario.active,
+            blob=blob
+        )
+        db.session.add(scenario_record)
+        db.session.flush()
+    else:
+        scenario_record.parset_id = parset_id
+        scenario_record.scenario_type = scenario_type
+        scenario_record.active=scenario.active
+        scenario_record.blob = blob
+        db.session.add(scenario_record)
+
+    return scenario_record
+
+
+def update_or_create_optimization(project_id, project, name):
+
+    from datetime import datetime
+    import dateutil
+    from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb
+    from optima.utils import saves
+
+    parset_id = None
+    progset_id = None
+
+    optim = project.optims[name]
+    if not optim:
+        raise Exception("optimization {} not present in project {}!".format(name, project_id))
+
+    parset_name = optim.parsetname
+    if parset_name:
+        parset_record = ParsetsDb.query \
+        .filter_by(project_id=project_id, name=parset_name) \
+        .first()
+        if parset_record:
+            parset_id = parset_record.id
+
+    progset_name = optim.progsetname
+    if progset_name:
+        progset_record = ProgsetsDb.query \
+        .filter_by(project_id=project_id, name=progset_name) \
+        .first()
+        if progset_record:
+            progset_id = progset_record.id
+
+    optimization_record = OptimizationsDb.query.filter_by(name=name, project_id=project_id).first()
+    if optimization_record is None:
+        optimization_record = OptimizationsDb(
+            project_id=project_id,
+            name=name,
+            which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome',
+            parset_id=parset_id,
+            progset_id=progset_id,
+            objectives=(optim.objectives or {}),
+            constraints=(optim.constraints or {})
+        )
+        db.session.add(optimization_record)
+        db.session.flush()
+    else:
+        optimization_record.which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome'
+        optimization_record.parset_id = parset_id
+        optimization_record.progset_id = progset_id
+        optimization_record.objectives = (optim.objectives or {})
+        optimization_record.constraints = (optim.constraints or {})
+        db.session.add(optimization_record)
+
+    return optimization_record
+
+def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE,
+    db_session=None):
+    if not db_session:
+        db_session=db.session
     # find relevant parset for the result
     print("save_result(%s, %s, %s" % (project_id, parset_name, calculation_type))
-    project_parsets = db.session.query(ParsetsDb).filter_by(project_id=project_id)
+    project_parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
     default_parset = [item for item in project_parsets if item.name == parset_name]
     if default_parset:
         default_parset = default_parset[0]
@@ -471,7 +647,7 @@ def save_result(project_id, result, parset_name='default', calculation_type = Re
     result_parset_id = default_parset.id
 
     # update results (after runsim is invoked)
-    project_results = db.session.query(ResultsDb).filter_by(project_id=project_id)
+    project_results = db_session.query(ResultsDb).filter_by(project_id=project_id)
 
     result_record = [item for item in project_results if
                      item.parset_id == result_parset_id and
@@ -489,6 +665,14 @@ def save_result(project_id, result, parset_name='default', calculation_type = Re
             blob=op.saves(result)
         )
     return result_record
+
+
+def remove_nans(obj):
+    import json
+    # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+    json_string = json.dumps(obj).replace('NaN', 'null')
+    return json.loads(json_string)
+
 
 
 def init_login_manager(login_manager):
@@ -539,6 +723,18 @@ class RequestParser(OrigReqParser):
             return arg.type.__name__
         return arg.type
 
+    def get_swagger_location(self, arg):
+
+        if isinstance(arg.location, tuple):
+            loc = arg.location[0]
+        else:
+            loc = arg.location.split(',')[0]
+
+        if loc == "args":
+            return "query"
+        return loc
+
+
     def swagger_parameters(self):
         return [
             {
@@ -546,7 +742,7 @@ class RequestParser(OrigReqParser):
                 'dataType': self.get_swagger_type(arg),
                 'required': arg.required,
                 'description': arg.help,
-                'paramType': 'form',
+                'paramType': self.get_swagger_location(arg),
             }
             for arg in self.args
         ]

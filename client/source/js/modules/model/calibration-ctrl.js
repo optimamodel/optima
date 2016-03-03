@@ -44,7 +44,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      $http.get('/api/parset/' + $scope.activeParset.id + '/calibration', {params: data})
+      $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
         .success(function (response) {
           setCalibrationData(response.calibration);
         });
@@ -66,7 +66,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           data.which = selectors;
         }
       }
-      var url = '/api/parset/' + $scope.activeParset.id + '/calibration';
+      var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
@@ -132,7 +132,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.activeParset.name = name;
           });
         };
-        openParameterSetModal(rename, 'Copy parameter set', $scope.parsets, $scope.activeParset.name, 'Rename', true);
+        openParameterSetModal(rename, 'Rename parameter set', $scope.parsets, $scope.activeParset.name, 'Rename', true);
       }
     };
 
@@ -152,7 +152,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               }
             });
         };
-        if ($scope.activeParset.name === "default") {
+        // This has been temporarily commented out: https://trello.com/c/omuvJSYD/853-reuploading-spreadsheets-fails-in-several-ways
+        // if ($scope.activeParset.name === "default") {
+        if ( false ) {
           modalService.informError([{message: 'Deleting the default parameter set is not permitted.'}]);
         } else {
           modalService.confirm(
@@ -184,7 +186,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .element('<input type=\'file\'>')
         .change(function(event){
           $upload.upload({
-            url: '/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id + '/data',
+            url: '/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id + '/data',
             file: event.target.files[0]
           }).success(function () {
             window.location.reload();
@@ -192,7 +194,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }).click();
     };
 
-    // Opens modal to add / rename / cope parameter set
+    // Opens modal to add / rename / copy parameter set
     var openParameterSetModal = function (callback, title, parameterSetList, parameterSetName, operation, isRename) {
       var onModalKeyDown = function (event) {
         if(event.keyCode == 27) { return modalInstance.dismiss('ESC'); }

@@ -71,14 +71,14 @@ class OptimaTestCase(unittest.TestCase):
                         'param': 'condcas'
                     },
                 ],
-                'short': 'Condoms',
+                'short_name': 'Condoms',
                 'criteria': {'hivstatus': 'allstates', 'pregnant': False},
             }, {
                 'active': False,
                 'category': 'Care and treatment',
                 'name': 'Post-exposure prophylaxis',
                 'parameters': [],
-                "short": "PEP",
+                "short_name": "PEP",
                 'criteria': {'hivstatus': 'allstates', 'pregnant': False},
             },
         ],
@@ -115,6 +115,7 @@ class OptimaTestCase(unittest.TestCase):
         if 'user_id' not in kwargs:
             kwargs['user_id'] = self.get_any_user_id()
         project = self.create_record_with(ProjectFactory, **kwargs)
+        assert(project.id is not None)
 
         for x in range(progsets_count):
             progset = self.create_record_with(ProgsetsFactory, project_id=project.id)

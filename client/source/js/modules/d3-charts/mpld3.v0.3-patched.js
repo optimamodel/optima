@@ -327,12 +327,17 @@
     return new mpld3_Grid(this.ax, gridprop);
   };
   mpld3_Axis.prototype.draw = function() {
-    if (this.props.tickvalues) {
+    if (this.props.tickvalues && this.props.tickformat) {
       tick_labels = d3.scale.threshold().domain(this.props.tickvalues.slice(1)).range(this.props.tickformat);
     } else {
       if (this.props.position === 'bottom') {
         // force format to >=4 digits rounded number
-        tick_labels = d3.format('04r');
+        tick_labels = function(d, i){
+          if(!d || isNaN(d)) {
+            return d;
+          }
+          return d3.format('r')(d, i);
+        }
       } else {
         tick_labels = null;
       }

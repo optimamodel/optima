@@ -15,7 +15,7 @@ def geogui():
     
     Version: 2016jan23
     '''
-    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp
+    from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException
     from PyQt4 import QtGui
     from pylab import figure, close
     from time import time
@@ -53,11 +53,11 @@ def geogui():
     
     def _loadproj():
         ''' Helper function to load a project, since used more than once '''
-        filepath = QtGui.QFileDialog.getOpenFileNames(caption='Choose project file', filter='*'+projext)
+        filepath = QtGui.QFileDialog.getOpenFileName(caption='Choose project file', filter='*'+projext)
         project = None
         if filepath:
             try: project = loadobj(filepath, verbose=0)
-            except: print('Could not load file "%s"' % filepath)
+            except Exception as E: print('Could not load file "%s": "%s"' % (filepath, E.message))
             if type(project)==Project: return project
             else: print('File "%s" is not an Optima project file' % filepath)
         return None
@@ -77,21 +77,76 @@ def geogui():
         QtGui.QMessageBox.warning(geoguiwindow, 'Message', message)
         
         
+    # WARNING: HARDCODING ZEROTH PROGSET AND PARSET THROUGHOUT.
     def makesheet():
-        ''' Create a geospatial spreadsheet template based on a project file '''
-        warning("Sorry, this feature has not been implemented.")
+        ''' Create a geospatial spreadsheet template based on a project file '''      
         
         ## 1. Load a project file
-#        project = _loadproj()
+        project = _loadproj()
+        
+        copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
+        try: copies = int(copies)
+        except: raise OptimaException('Input is not a recognised integer.')
+        colwidth = 20
             
         ## 2. Get destination filename
-#        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+        spreadsheetpath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial spreadsheet file', filter='*.xlsx')
+        
+        from xlsxwriter import Workbook        
         
         ## 3. Extract data needed from project (population names, program names...)
-        # ...
+        if spreadsheetpath:
+            workbook = Workbook(spreadsheetpath)
+            wsprev = workbook.add_worksheet('Population prevalence')
+            wspopsize = workbook.add_worksheet('Population sizes')
+            wsalloc = workbook.add_worksheet('Program allocations')
+            
+            # Start with pop data.
+            maxcol = 0
+            row, col = 0, 0
+            for row in xrange(copies+1):
+                if row != 0:
+                    wsprev.write(row, col, '%s - District %i' % (project.name, row))
+                    wspopsize.write(row, col, '%s - District %i' % (project.name, row))
+                for popname in project.parsets[0].popkeys:
+                    col += 1
+                    if row == 0:
+                        wsprev.write(row, col, popname)
+                        wspopsize.write(row, col, popname)
+                    else:
+                        pass
+#                        wsprev.write(row, col, project.parsets[0].pars[0]['initprev'].y[popname])
+#                        wspopsize.write(row, col, project.parsets[0].pars[0]['popsize'].p[popname][0])
+                    maxcol = max(maxcol,col)
+                col = 0
+                
+            wsprev.set_column(0, maxcol, colwidth) # Make wider
+            wspopsize.set_column(0, maxcol, colwidth) # Make wider
+                
+            # Follow with program data.
+            maxcol = 0
+            row, col = 0, 0
+            for row in xrange(copies+1):
+                if row != 0:
+                    wsalloc.write(row, col, '%s - District %i' % (project.name, row))
+                for progkey in project.progsets[0].programs:
+                    col += 1
+                    if row == 0:
+                        wsalloc.write(row, col, progkey)
+                    else:
+                        pass
+#                        wsalloc.write(row, col, 0)
+                    maxcol = max(maxcol,col)
+                col = 0
+                
+            wsalloc.set_column(0, maxcol, colwidth) # Make wider
         
-        ## 4. Generate and save spreadsheet
-        # ...
+        # 4. Generate and save spreadsheet
+        try:
+            workbook.close()    
+            warning('Multi-project template saved to "%s".' % spreadsheetpath)
+        except:
+            warning('Error: Template not saved due to a workbook error!')
 
         return None
         
@@ -166,7 +221,10 @@ def geogui():
         tmpport = None
         if filepath:
             try: tmpport = loadobj(filepath, verbose=0)
-            except: print('Could not load file "%s"' % filepath)
+            except Exception as E: 
+                warning('Could not load file "%s" because "%s"' % (filepath, E.message))
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                return None
             if tmpport is not None: 
                 if type(tmpport)==Portfolio:
                     guiportfolio = tmpport
@@ -186,12 +244,23 @@ def geogui():
             guiobjectives[key] = eval(str(objectiveinputs[key].text())) # Get user-entered values
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
         BOCobjectives = dcp(guiobjectives)
-        guiportfolio.genBOCs(BOCobjectives, maxtime=3) # WARNING temp time
+        guiportfolio.genBOCs(BOCobjectives, maxtime=2) # WARNING temp time
         guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3) # WARNING temp time
         warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
-    
-    
+        
+        
+    def plotgeo():
+        ''' Actually plot geospatial analysis!!! '''
+        global guiportfolio
+        if guiportfolio is None: 
+            warning('Please load a portfolio first')
+            return None
+        gaoptim = guiportfolio.gaoptims[-1]
+        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False)
+                
+        return None
+        
     
     def export():
         ''' Save the current results to Excel file '''
@@ -216,10 +285,12 @@ def geogui():
             worksheet = workbook.add_worksheet()
             
             # Define formatting
+            originalblue = '#18C1FF' # analysis:ignore
+            hotpink = '#FFC0CB' # analysis:ignore
             formats = dict()
             formats['plain'] = workbook.add_format({})
             formats['bold'] = workbook.add_format({'bold': True})
-            formats['number'] = workbook.add_format({'bg_color': '#18C1FF', 'num_format':0x04})
+            formats['number'] = workbook.add_format({'bg_color': hotpink, 'num_format':0x04})
             colwidth = 30
             
             # Convert from a string to a 2D array
@@ -240,6 +311,7 @@ def geogui():
                     for word in ['budget','outcome','allocation','initial','optimal','coverage']:
                         if tmptxt.find(word)>=0: thisformat = 'bold'
                     if col in [2,3] and thisformat=='plain': thisformat = 'number'
+                    if thisformat=='number':thistxt = float(thistxt)
                     worksheet.write(row, col, thistxt, formats[thisformat])
             
             worksheet.set_column(0, 3, colwidth) # Make wider
@@ -277,6 +349,7 @@ def geogui():
     buttons['add']       = QtGui.QPushButton('Add projects to portfolio', parent=geoguiwindow)
     buttons['loadport']  = QtGui.QPushButton('Load existing portfolio', parent=geoguiwindow)
     buttons['rungeo']    = QtGui.QPushButton('Run geospatial analysis', parent=geoguiwindow)
+    buttons['plotgeo']   = QtGui.QPushButton('Plot geospatial results', parent=geoguiwindow)
     buttons['export']    = QtGui.QPushButton('Export results', parent=geoguiwindow)
     buttons['saveport']  = QtGui.QPushButton('Save portfolio', parent=geoguiwindow)
     buttons['close']     = QtGui.QPushButton('Close', parent=geoguiwindow)
@@ -289,6 +362,7 @@ def geogui():
     actions['add']       = addproj
     actions['loadport']  = loadport
     actions['rungeo']    = rungeo
+    actions['plotgeo']   = plotgeo
     actions['export']    = export
     actions['saveport']  = saveport
     actions['close']     = closewindow
@@ -296,7 +370,7 @@ def geogui():
     ## Set button locations
     spacer = 0
     for b,key in enumerate(buttons.keys()):
-        if key=='rungeo': spacer = 200
+        if key=='rungeo': spacer = 170
         buttons[key].move(left, top+spacing*b+spacer)
     
     ## Define button functions

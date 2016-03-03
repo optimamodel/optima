@@ -68,14 +68,12 @@ from . import pchip as _pchip
 from .pchip import pchip, plotpchip
 
 
-
 from . import colortools # Load high-level module as well
 from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 
-
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc # odict class
+from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
 
 
 
@@ -85,55 +83,44 @@ from . import settings as _settings # Inter-project definitions, e.g. health sta
 from .settings import Settings, convertlimits, gettvecdt
 
 
-
 from . import makespreadsheet as _makespreadsheet
 from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend # For making a blank spreadsheet
-
 
 
 from . import loadspreadsheet as _loadspreadsheet
 from .loadspreadsheet import loadspreadsheet # For loading a filled out spreadsheet
 
 
-
 from . import results as _results
 from .results import Result, Resultset, Multiresultset, BOC, getresults  # Result and Results classes -- odd that it comes before parameters, but parameters need getresults()
 
 
-
 from . import parameters as _parameters # Load high-level module as well
-from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, getresults, applylimits # Parameter and Parameterset classes
-
+from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits # Parameter and Parameterset classes
 
 
 from . import model as _model
 from .model import model, runmodel # The thing that actually runs the model
 
 
-
 from . import programs as _programs # High-level module
-from .programs import Program, Programset, vec2budget # Define programs
-
+from .programs import Program, Programset # Define programs
 
 
 from . import economics as _economics
 from .economics import loadeconomics, loadeconomicsspreadsheet, makeecontimeseries, getartcosts # Misc economic modules
 
 
-
 from . import calibration as _calibration
 from .calibration import sensitivity, autofit # Calibration functions
 
 
-
 from . import scenarios as _scenarios # Load high-level module as well -- WARNING, somewhat like to be overwritten by user
-from .scenarios import Parscen, Budgetscen, Coveragescen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
-
+from .scenarios import Parscen, Budgetscen, Coveragescen, Progscen, runscenarios, makescenarios, defaultscenarios, getparvalues # Scenario functions
 
 
 from . import optimization as _optimization
-from .optimization import Optim, minoutcomes, minmoney, defaultobjectives # Scenario functions
-
+from .optimization import Optim, defaultobjectives, defaultconstraints, optimize # Optimization functions
 
 
 from . import plotting as _plotting # Load high-level module as well

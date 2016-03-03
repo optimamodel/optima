@@ -10,11 +10,11 @@ How verbose works:
   3 = additional detail
   4 = absolutely everything
 
-Version: 2016jan30
+Version: 2016feb06
 """
 
 from numpy import arange, array, concatenate as cat, linspace, shape
-from optima import OptimaException, defaultrepr, printv, dcp
+from optima import OptimaException, defaultrepr, printv, dcp, isnumber
 
 
 class Settings():
@@ -23,19 +23,19 @@ class Settings():
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
-        self.healthstates = ['uncirc', 'circ', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
+        self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
         self.ncd4 = len(self.hivstates)
         
         # Health states by diagnosis
-        self.uncirc = arange(0,1) # Uninfected, uncircumcised
-        self.circ   = arange(1,2) # Uninfected, circumcised
-        self.undx   = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
-        self.dx     = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
-        self.care   = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
-        self.usvl   = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
-        self.svl    = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
-        self.lost   = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
-        self.off    = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
+        self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised
+        self.progcirc = arange(1,2) # Uninfected, programatically circumcised
+        self.undx     = arange(0*self.ncd4+2, 1*self.ncd4+2) # Infected, undiagnosed
+        self.dx       = arange(1*self.ncd4+2, 2*self.ncd4+2) # Infected, diagnosed
+        self.care     = arange(2*self.ncd4+2, 3*self.ncd4+2) # Infected, in care 
+        self.usvl     = arange(3*self.ncd4+2, 4*self.ncd4+2) # Infected, on treatment, with unsuppressed viral load
+        self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
+        self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
+        self.off      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
 		
        	
         # Health states by CD4 count
@@ -46,9 +46,10 @@ class Settings():
         self.gt200 = 5 + spacing
         self.gt50  = 6 + spacing
         self.lt50  = 7 + spacing
+        self.aidsind = self.hivstates.index('gt50') # Find which state corresponds to AIDS...kind of ugly, I know
 
         # Combined states
-        self.sus       = cat([self.uncirc, self.circ]) # All uninfected
+        self.sus       = cat([self.susreg, self.progcirc]) # All uninfected
         self.alldx     = cat([self.dx, self.care, self.usvl, self.svl, self.lost, self.off]) # All people diagnosed
         self.allcare   = cat([         self.care, self.usvl, self.svl,            self.off]) # All people in care
         self.alltx     = cat([                    self.usvl, self.svl]) # All people on treatment
@@ -80,7 +81,7 @@ class Settings():
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
         self.verbose = 2 # Default verbosity for how much to print out -- see definitions in utils.py:printv()
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
-        self.eps = 1e-4 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
+        self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used
     
     
@@ -125,13 +126,13 @@ def gettvecdt(tvec=None, dt=None, justdt=False):
     if tvec is None: 
         if justdt: return defaultdt # If it's a constant, maybe don' need a time vector, and just return dt
         else: raise OptimaException('No time vector supplied, and unable to figure it out') # Usual case, crash
-    elif isinstance(tvec, (int, float)): tvec = array([tvec]) # Convert to 1-element array
+    elif isnumber(tvec): tvec = array([tvec]) # Convert to 1-element array
     elif shape(tvec): # Make sure it has a length -- if so, overwrite dt
         if len(tvec)>=2: dt = tvec[1]-tvec[0] # Even if dt supplied, recalculate it from the time vector
-        elif dt is None: dt = defaultdt # Or give up and use default
         else: dt = dt # Use input
     else:
         raise OptimaException('Could not understand tvec of type "%s"' % type(tvec))
+    if dt is None: dt = defaultdt # Or give up and use default
     return tvec, dt
     
     
@@ -173,7 +174,7 @@ def convertlimits(limits=None, tvec=None, dt=None, safetymargin=None, settings=N
     maxacts = 5000.0
     
     # It's a single number: just return it
-    if isinstance(limits, (int, float)): return limits
+    if isnumber(limits): return limits
     
     # Just return the limits themselves as a dict if no input argument
     if limits is None: 

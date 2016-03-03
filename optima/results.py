@@ -1,13 +1,14 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2015jan29 by cliffk
+Version: 2016feb04 by cliffk
 """
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
-from numpy import array, nan, zeros, arange
+from numpy import array, nan, zeros, arange, shape
 import matplotlib.pyplot as plt
 from optima import pchip, plotpchip
+from numbers import Number
 
 
 
@@ -84,26 +85,12 @@ class Resultset(object):
         self.main['numplhiv']   = Result('Number of PLHIV')
         self.main['numdiag']    = Result('Number of diagnosed PLHIV')
         self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        self.main['popsize']    = Result('Population size')
         if self.settings.usecascade:
             self.main['numincare']   = Result('Number of PLHIV in care')
             self.main['numsuppressed']   = Result('Number of virally suppressed PLHIV')
 
-        
-        # Other quantities
-#        self.main['dalys'] = Result('Number of DALYs')
-#        self.main['numnewtreat'] = Result('Number of people newly treated')
-#        self.main['numnewdiag'] = Result('Number of new diagnoses')
-#        self.other = odict() # For storing main results
-#        self.births = Result()
-#        self.mtct = Result()
-#        self.newtreat = Result()
-#        self.newcircum = Result()
-#        self.numcircum = Result()
-#        self.reqcircum = Result()
-#        self.sexinci = Result()
-        
         if domake: self.make()
-#    
     
     
     def __repr__(self):
@@ -115,6 +102,46 @@ class Resultset(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
+        
+    
+    def __add__(self, R2):
+        ''' Define how to add two Resultsets '''
+        if type(R2)!=Resultset: raise OptimaException('Can only add results sets with other results sets')
+        for attr in ['tvec','popkeys']:
+            if any(array(getattr(self,attr))!=array(getattr(R2,attr))):
+                raise OptimaException('Cannot add Resultsets that have dissimilar "%s"' % attr)
+        R1 = dcp(self) # Keep the properties of this first one
+        R1.name += ' + ' + R2.name
+        R1.uid = uuid()
+        R1.created = today()
+        keys = R1.main.keys()
+        main1 = dcp(R1.main)
+        main2 = dcp(R2.main)
+        popsize1 = main1['popsize']
+        popsize2 = main2['popsize']
+        R1.main = odict()
+        for key in keys:
+            res1 = main1[key]
+            res2 = main2[key]
+            R1.main[key] = Result(name=res1.name, isnumber=res1.isnumber)
+            
+            # It's a number, can just sum the arrays
+            if res1.isnumber:
+                for attr in ['pops', 'tot']:
+                    this = getattr(res1, attr) + getattr(res2, attr)
+                    setattr(R1.main[key], attr, this)
+            
+            # It's a percentage, average by population size
+            else: 
+                R1.main[key].tot  = 0*res1.tot  # Reset
+                R1.main[key].pops = 0*res1.pops # Reset
+                for t in range(shape(res1.tot)[-1]):
+                    R1.main[key].tot[:,t] = (res1.tot[:,t]*popsize1.tot[0,t] + res2.tot[:,t]*popsize2.tot[0,t]) / (popsize1.tot[0,t] + popsize2.tot[0,t])
+                    for p in range(len(R1.popkeys)):
+                        R1.main[key].pops[:,p,t] = (res1.pops[:,p,t]*popsize1.pops[0,p,t] + res2.pops[:,p,t]*popsize2.pops[0,p,t]) / (popsize1.pops[0,p,t] + popsize2.pops[0,p,t])
+        return R1
+            
+            
     
     
     
@@ -196,6 +223,11 @@ class Resultset(object):
         self.main['numtreat'].pops = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
         self.main['numtreat'].tot = quantile(allpeople[:,alltx,:,:][:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles) # Axis 1 is populations
         if data is not None: self.main['numtreat'].datatot = processdata(data['numtx'])
+
+        self.main['popsize'].pops = quantile(allpeople[:,:,:,indices].sum(axis=1), quantiles=quantiles) 
+        self.main['popsize'].tot = quantile(allpeople[:,:,:,indices].sum(axis=(1,2)), quantiles=quantiles)
+        if data is not None: self.main['popsize'].datapops = processdata(data['popsize'], uncertainty=True)
+
         
         if self.settings.usecascade:
             self.main['numincare'].pops = quantile(allpeople[:,allcare,:,:][:,:,:,indices].sum(axis=1), quantiles=quantiles) # WARNING, this is ugly, but allpeople[:,txinds,:,indices] produces an error
@@ -333,7 +365,7 @@ class BOC(object):
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
         plt.xlabel('Budget')
         if not deriv: plt.ylabel('Outcome')
-        else: plt.ylabel('Marginal Outcome')
+        else: plt.ylabel('Marginal outcome')
         
         if returnplot: return ax
         else: plt.show()
@@ -352,7 +384,7 @@ def getresults(project=None, pointer=None, die=True):
     results.
     
     Example:
-        results = P.parsets[0].results()
+        results = P.parsets[0].getresults()
         calls
         getresults(P, P.parsets[0].resultsref)
         which returns
@@ -360,47 +392,38 @@ def getresults(project=None, pointer=None, die=True):
     
     The "die" keyword lets you choose whether a failure to retrieve results returns None or raises an exception.    
     
-    Version: 2016jan25
+    Version: 1.2 (2016feb06)
     '''
     # Nothing supplied, don't try to guess
     if pointer is None: 
         return None 
     
     # Normal usage, e.g. getresults(P, 3) will retrieve the 3rd set of results
-    elif isinstance(pointer, (str, int, float)):
+    elif isinstance(pointer, (str, Number, type(uuid()))):
         if project is not None:
             resultnames = [res.name for res in project.results.values()]
-            resultuids = project.results.keys()
+            resultuids = [str(res.uid) for res in project.results.values()]
         else: 
             if die: raise OptimaException('To get results using a key or index, getresults() must be given the project')
             else: return None
-        try: # Try using pointer as key -- works if UID
+        try: # Try using pointer as key -- works if name
             results = project.results[pointer]
             return results
         except: # If that doesn't match, keep going
-            if pointer in resultnames:
+            if pointer in resultnames: # Try again to extract it based on the name
                 results = project.results[resultnames.index(pointer)]
                 return results
-            else:
+            elif str(pointer) in resultuids: # Next, try extracting via the UID
+                results = project.results[resultuids.index(str(pointer))]
+                return results
+            else: # Give up
                 validchoices = ['#%i: name="%s", uid=%s' % (i, resultnames[i], resultuids[i]) for i in range(len(resultnames))]
                 errormsg = 'Could not get result "%s": choices are:\n%s' % (pointer, '\n'.join(validchoices))
                 if die: raise OptimaException(errormsg)
                 else: return None
     
-    # If it's a UID, have to convert to string, then use as key
-    elif type(pointer)==type(uuid()): 
-        if project is not None: 
-            try: 
-                return project.results[str(pointer)]
-            except: 
-                if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
-                else: return None
-        else:
-            if die: raise OptimaException('To get results using a UID, getresults() must be given the project')
-            else: return None
-    
     # The pointer is the results object
-    elif isinstance(pointer, (Resultset, Multiresultset)):
+    elif isinstance(pointer, (Resultset, Multiresultset, BOC)):
         return pointer # Return pointer directly if it's already a results set
     
     # It seems to be some kind of function, so try calling it -- might be useful for the database or something

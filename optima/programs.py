@@ -3,17 +3,17 @@ This module defines the Program and Programset classes, which are
 used to define a single program/modality (e.g., FSW programs) and a
 set of programs, respectively.
 
-Version: 2016feb02
+Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap
-from numpy import ones, max, prod, array, arange, zeros, exp, linspace, append, log, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
 # ...though would be nice to have an easier way!
-coveragepars=['numtx','numpmtct','numost'] 
+coveragepars=['numtx','numpmtct','numost','numcirc'] 
 
 
 class Programset(object):
@@ -25,6 +25,8 @@ class Programset(object):
         self.default_interaction = default_interaction
         self.programs = odict()
         if programs is not None: self.addprograms(programs)
+        else: self.updateprogset()
+        self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
 
@@ -122,11 +124,11 @@ class Programset(object):
             for newprogram in newprograms: 
                 if newprogram not in self.programs.values():
                     self.programs[newprogram.short] = newprogram
-                    print('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]))
+                    printv('\nAdded program "%s" to programset "%s". \nPrograms in this programset are: %s' % (newprogram.short, self.name, [thisprog.short for thisprog in self.programs.values()]), 3, verbose)
                 else:
                     raise OptimaException('Program "%s" is already present in programset "%s".' % (newprogram.short, self.name))
         self.updateprogset()
-                   
+
     def rmprogram(self,program,verbose=2):
         ''' Remove a program. Expects type(program) in [Program,str]'''
         if not type(program) == str: program = program.short
@@ -143,6 +145,44 @@ class Programset(object):
 
     def optimizableprograms(self):
         return odict((program.short, program) for program in self.programs.values() if program.optimizable())
+
+    def hasbudget(self):
+        return [True if prog.hasbudget() else False for prog in self.programs.values()]
+
+    def programswithbudget(self):
+        return odict((program.short, program) for program in self.programs.values() if program.hasbudget())
+
+    def hasallcovoutpars(self, detail=False):
+        ''' Checks whether all the **required** coverage-outcome parameters are there for coverage-outcome rships'''
+        result = True
+        details = []
+        for thispartype in self.covout.keys():
+            for thispop in self.covout[thispartype].keys():
+                if not self.covout[thispartype][thispop].ccopars['intercept']:
+                    result = False
+                    details.append((thispartype,thispop))
+                if thispartype not in coveragepars:
+                    for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
+                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                            result = False
+                            details.append((thispartype,thispop))
+        if detail: return list(set(details))
+        else: return result
+
+    def hasallcostcovpars(self, detail=False):
+        ''' Checks whether all the **required** cost-coverage parameters are there for coverage-outcome rships'''
+        result = True
+        details = []
+        for prog in self.optimizableprograms().values():
+            if not prog.costcovfn.ccopars.get('unitcost'):
+                details.append(prog.name)
+                result = False
+        if detail: return list(set(details))
+        else: return result
+                
+    def readytooptimize(self):
+        ''' True if the progset is ready to optimize (i.e. has all required pars) and False otherwise''' 
+        return (self.hasallcostcovpars() and self.hasallcovoutpars())        
 
     def coveragepar(self, coveragepars=coveragepars):
         return [True if par in coveragepars else False for par in self.targetpartypes]
@@ -193,15 +233,15 @@ class Programset(object):
         else: return progs_by_targetpar
 
 
-    def getdefaultbudget(self, years=None, verbose=2):
+    def getdefaultbudget(self, t=None, verbose=2):
         ''' Extract the budget if cost data has been provided'''
         
         # Initialise outputs
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if type(years) in [int, float]: years = [years]
-        if isinstance(years,ndarray): years = years.tolist()
+        if isnumber(t): t = [t]
+        if isinstance(t,ndarray): t = t.tolist()
 
         # Set up internal variables
         settings = self.getsettings()
@@ -222,13 +262,22 @@ class Programset(object):
                 lastbudget[program] = nan
 
             # Extract cost data for particular years, if requested 
-            if years is not None:
-                for yr in years:
+            if t is not None:
+                for yr in t:
                     yrindex = findinds(tvec,yr)
                     selectbudget[program].append(totalbudget[program][yrindex][0])
+                    
+        # TEMP: store default budget as an attribute
+        self.defaultbudget = lastbudget
+        return selectbudget if t is not None else lastbudget
 
-        return selectbudget if years is not None else lastbudget
-
+    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2):
+        ''' Extract the coverage levels corresponding to the default budget'''
+        defaultbudget = self.getdefaultbudget()
+        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results)
+        for progno in range(len(defaultcoverage)):
+            defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
+        return defaultcoverage
 
     def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
@@ -237,9 +286,9 @@ class Programset(object):
         coverage = odict()
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if isinstance(budget, list) or isinstance(budget,type(array([]))):
-            budget = vec2budget(self, budget) # It seems to be a vector: convert to odict
+            budget = vec2obj(orig=self.getdefaultbudget(), newvec=budget) # It seems to be a vector: convert to odict
         if type(budget)==dict: budget = odict(budget) # Convert to odict
         budget = budget.sort([p.short for p in self.programs.values()])
 
@@ -264,7 +313,7 @@ class Programset(object):
         budget = odict()
 
         # Validate inputs
-        if type(t) in [int, float]: t = [t]
+        if isnumber(t): t = [t]
         if not isinstance(coverage,dict): raise OptimaException('Currently only accepting budgets as dictionaries.')
         if not isinstance(coverage,odict): budget = odict(budget)
         coverage = coverage.sort([p.short for p in self.programs.values()])
@@ -308,36 +357,41 @@ class Programset(object):
         return popcoverage
 
 
-    def getoutcomes(self,coverage, t, parset=None, results=None, perturb=False,coveragepars=coveragepars):
+    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, perturb=False,coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
 
         # Initialise output
         outcomes = odict()
 
         # Validate inputs
-        if type(t) in [int,float]: t = [t]
+        if isnumber(t): t = [t]
         if parset is None:
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+        if coverage is None:
+            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results)
+        for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
+            if isnumber(coventry): coverage[covkey] = [coventry]
 
         # Set up internal variables
         nyrs = len(t)
-        
-        budget = self.getprogbudget(coverage=coverage, t=t, parset=parset, results=results, proportion=False)
-        infbudget = odict((k,array([1e9]*len(budget[k]))) if self.programs[k].optimizable() else (k,None) for k in budget.keys())
+        infbudget = odict((k,array([1e9]*len(coverage[k]))) if self.programs[k].optimizable() else (k,None) for k in coverage.keys())
 
         # Loop over parameter types
         for thispartype in self.targetpartypes:
             outcomes[thispartype] = odict()
             
-            # Loop over populations releavent for this parameter type
-            for thispop in self.progs_by_targetpar(thispartype).keys():
+            # Loop over populations relevant for this parameter type
+            for popno, thispop in enumerate(self.progs_by_targetpar(thispartype).keys()):
 
                 # If it's a coverage parameter, you are done
-                if thispartype in coveragepars: # and thispop.lower() in ['total','tot','all']:
-                    outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
+                if thispartype in coveragepars:
+                    outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t)['intercept'])
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
-                        outcomes[thispartype][thispop] += coverage[thisprog.short]
+                        if thispop == 'tot':
+                            popcoverage = coverage[thisprog.short]
+                        else: popcoverage = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
+                        outcomes[thispartype][thispop] += popcoverage
 
                 # If it's an outcome parameter, need to get outcomes
                 else:
@@ -353,14 +407,13 @@ class Programset(object):
                             outcomes[thispartype][thispop] = None
                         else:
                             outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
-                            x = budget[thisprog.short]
                             fullx = infbudget[thisprog.short]
                             if thiscovpop:
-                                part1 = thisprog.getcoverage(x=x, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
+                                part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
                                 part2 = thisprog.getcoverage(x=fullx, t=t, parset=parset, results=results, proportion=False,total=False)[thiscovpop]
                                 thiscov[thisprog.short] = part1/part2
                             else:
-                                part1 = thisprog.getcoverage(x=x,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
+                                part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                                 part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
                                 thiscov[thisprog.short] = part1/part2
                             delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
@@ -416,14 +469,22 @@ class Programset(object):
                             # Iterate over overlap levels
                             for i in range(2,len(thiscov)): # Iterate over numbers of overlapping programs
                                 for j in range(0,len(thiscov)-1): # Iterate over the index of the first program in the sum
-                                    outcomes[thispartype][thispop] += overlap_calc([j],i)
-        
+                                    outcomes[thispartype][thispop] += overlap_calc([j],i)[0]
+
                             # All programs together
                             outcomes[thispartype][thispop] += prod(array(thiscov.values()),0)*[max([c[j] for c in delta.values()]) for j in range(nyrs)]
                     
                     else: raise OptimaException('Unknown reachability type "%s"',self.covout[thispartype][thispop].interaction)
         
+        # Validate
+        for outcome in outcomes.keys():
+            for key in outcomes[outcome].keys():
+                if outcomes[outcome][key] is not None and len(outcomes[outcome][key])!=nyrs:
+                    raise OptimaException('Parameter lengths must match (len(outcome)=%i, nyrs=%i)' % (len(outcomes[outcome][key]), nyrs))
+
         return outcomes
+        
+        
         
     def getpars(self, coverage, t=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
         ''' Make pars'''
@@ -434,7 +495,7 @@ class Programset(object):
         
         # Validate inputs
         if years is None: raise OptimaException('To get pars, one must supply years')
-        if type(years) in [int,float]: years = [years]
+        if isnumber(years): years = [years]
         settings = None
         if parset is None:
             if results and results.parset: parset = results.parset
@@ -464,30 +525,97 @@ class Programset(object):
                 thisoutcome = outcomes[outcome][pop] # Shorten
                 lower = float(thispar.limits[0]) # Lower limit, cast to float just to be sure (is probably int)
                 upper = settings.convertlimits(limits=thispar.limits[1]) # Upper limit -- have to convert from string to float based on settings for this project
-                if any(thisoutcome<lower) or any(thisoutcome>upper):
-                    errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
-                    if die:
-                        raise OptimaException(errormsg)
-                    else:
-                        printv(errormsg, 1, verbose)
-                        thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
-                        thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
+                if thisoutcome is not None:
+                    if any(array(thisoutcome<lower).flatten()) or any(array(thisoutcome>upper).flatten()):
+                        errormsg = 'Parameter value "%s" for population "%s" based on coverage is outside allowed limits: value=%s (%f, %f)' % (thispar.name, pop, thisoutcome, lower, upper)
+                        if die:
+                            raise OptimaException(errormsg)
+                        else:
+                            printv(errormsg, 1, verbose)
+                            thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
+                            thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
                 
-                # Remove years after the last good year
-                if last_t < max(thispar.t[pop]):
-                    thispar.t[pop] = thispar.t[pop][thispar.t[pop] <= last_t]
-                    thispar.y[pop] = thispar.y[pop][thispar.t[pop] <= last_t]
+                    # Remove years after the last good year
+                    if last_t < max(thispar.t[pop]):
+                        thispar.t[pop] = thispar.t[pop][findinds(thispar.t[pop] <= last_t)]
+                        thispar.y[pop] = thispar.y[pop][findinds(thispar.t[pop] <= last_t)]
+                    
+                    # Append the last good year, and then the new years
+                    thispar.t[pop] = append(thispar.t[pop], last_t)
+                    thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
+                    thispar.t[pop] = append(thispar.t[pop], years)
+                    thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
                 
-                # Append the last good year, and then the new years
-                thispar.t[pop] = append(thispar.t[pop], last_t)
-                thispar.y[pop] = append(thispar.y[pop], last_y[pop]) 
-                thispar.t[pop] = append(thispar.t[pop], years)
-                thispar.y[pop] = append(thispar.y[pop], thisoutcome) 
+                if len(thispar.t[pop])!=len(thispar.y[pop]):
+                    raise OptimaException('Parameter lengths must match (t=%i, y=%i)' % (len(thispar.t[pop]), len(thispar.y[pop])))
 
             pars[outcome] = thispar # WARNING, probably not needed
                 
 
         return pars
+    
+    
+    
+    def compareoutcomes(self, parset=None, year=None, ind=0, doprint=False):
+        ''' For every parameter affected by a program, return a list comparing the default parameter values with the budget ones '''
+        outcomes = self.getoutcomes(t=year, parset=parset)
+        comparison = list()
+        maxnamelen = 0
+        maxkeylen = 0
+        for key1 in outcomes.keys():
+            for key2 in outcomes[key1].keys():
+                name = parset.pars[ind][key1].name
+                maxnamelen = max(len(name),maxnamelen)
+                maxkeylen = max(len(str(key2)),maxkeylen)
+                parvalue = parset.pars[ind][key1].interp(tvec=year, asarray=False)[key2]
+                budgetvalue = outcomes[key1][key2] 
+                if budgetvalue is not None: comparison.append([name, key2, parvalue[0], budgetvalue[0]])
+                else: comparison.append([name, key2, parvalue[0], None])
+        
+        if doprint:
+            for item in comparison:
+                strctrl = '%%%is | %%%is | Par: %%8s | Budget: %%8s' % (maxnamelen, maxkeylen)
+                print(strctrl % (item[0], item[1], sigfig(item[2]), sigfig(item[3])))
+                
+        return comparison
+    
+    
+    
+    def reconcilewithpars(self, parset=None, year=None, ind=0):
+        ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
+        
+        def objectivecalc(progset=None, parset=None, year=None, ind=None, method='mape', eps=1e-3):
+            ''' Calculate the mismatch between the budget-derived parameter values and the model parameter values for a given year '''
+            comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
+            allmismatches = []
+            mismatch = 0
+            for budgetparpair in comparison:
+                parval = budgetparpair[2]
+                budgetval = budgetparpair[3]
+                if   method in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
+                elif method=='mad':             thismismatch = abs(budgetval - parval)
+                elif method=='mse':             thismismatch =    (budgetval - parval)**2
+                else:
+                    errormsg = 'autofit(): "method" not known; you entered "%s", but must be one of:\n' % method
+                    errormsg += '"wape" = weighted absolute percentage error (default)\n'
+                    errormsg += '"mape" = mean absolute percentage error\n'
+                    errormsg += '"mad"  = mean absolute difference\n'
+                    errormsg += '"mse"  = mean squared error'
+                    raise OptimaException(errormsg)
+                allmismatches.append(thismismatch)
+                mismatch += thismismatch
+            return mismatch
+        
+        ## Do the actual calibration thingo
+        def cco2vec(): raise Exception('Not implemented')
+        
+        def vec2cco(): raise Exception('Not implemented')
+        
+        raise Exception('Not implemented')
+        
+        return None
+
+
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
@@ -547,6 +675,8 @@ class Program(object):
     def optimizable(self):
         return True if self.targetpars else False
 
+    def hasbudget(self):
+        return True if self.costcovdata['cost'] else False
 
     def addtargetpar(self, targetpar, verbose=2):
         '''Add a model parameter to be targeted by this program'''
@@ -576,7 +706,11 @@ class Program(object):
         if costcovdatum['t'] not in self.costcovdata['t']:
             self.costcovdata['t'].append(costcovdatum['t'])
             self.costcovdata['cost'].append(costcovdatum['cost'])
-            self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            if costcovdatum.get('coverage'):
+                self.costcovdata['coverage'].append(costcovdatum['coverage'])
+            else:
+                self.costcovdata['coverage'].append(None)
+
             printv('\nAdded cc data "%s" to program: "%s". \nCC data for this program are: %s' % (costcovdatum, self.short, self.costcovdata), 4, verbose)
         else:
             if overwrite:
@@ -608,7 +742,7 @@ class Program(object):
         '''Returns target population size in a given year for a given spending amount.'''
 
         # Validate inputs
-        if type(t) in [float,int]: t = array([t])
+        if isnumber(t): t = array([t])
         elif type(t)==list: t = array(t)
         if parset is None:
             if results and results.parset: parset = results.parset
@@ -618,49 +752,50 @@ class Program(object):
         popsizes = {}
         targetpopsize = {}
         
-        # Do everything possible to get settings
-        try: settings = parset.project.settings
-        except: 
-            try: settings = results.project.settings
-            except:
-                print('Warning, could not find settings for program "%s", using default' % self.name)
-                settings = Settings()
-        
-        npops = len(parset.pars[ind]['popkeys'])
+#        # Do everything possible to get settings
+#        try: settings = parset.project.settings
+#        except: 
+#            try: settings = results.project.settings
+#            except:
+#                print('Warning, could not find settings for program "%s", using default' % self.name)
+#                settings = Settings()
+#        
+#        npops = len(parset.pars[ind]['popkeys'])
 
         # If it's a program for everyone... 
-        if not self.criteria['pregnant']:
-            if self.criteria['hivstatus']=='allstates':
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-    
-            else: # If it's a program for HIV+ people, need to find the number of positives
-                if not results: 
-                    try: results = parset.getresults(die=True)
-                    except OptimaException as E: 
-                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings)
-                        parset.resultsref = results.uid # So it doesn't have to be rerun
-                
-                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
-                initpopsizes = zeros((npops,len(t))) 
-                for yrno,yr in enumerate(t):
-                    initpopsizes[:,yrno] = results.raw[ind]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0)
-                
-        # ... or if it's a program for pregnant women.
-        else:
-            if self.criteria['hivstatus']=='allstates': # All pregnant women
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
-
-            else: # HIV+ pregnant women
-                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-                if not results: 
-                    try: results = parset.getresults(die=True)
-                    except OptimaException as E: 
-                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
-                        results = runmodel(pars=parset.pars[ind], settings=settings)
-                        parset.resultsref = results.uid # So it doesn't have to be rerun
-                for yr in t:
-                    initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
+        initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+#        if not self.criteria['pregnant']:
+#            if self.criteria['hivstatus']=='allstates':
+#                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+#    
+#            else: # If it's a program for HIV+ people, need to find the number of positives
+#                if not results: 
+#                    try: results = parset.getresults(die=True)
+#                    except OptimaException as E: 
+#                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+#                        results = runmodel(pars=parset.pars[ind], settings=settings)
+#                        parset.resultsref = results.name # So it doesn't have to be rerun
+#                
+#                cd4index = sort(cat([settings.__dict__[state] for state in self.criteria['hivstatus']])) # CK: this should be pre-computed and stored if it's useful
+#                initpopsizes = zeros((npops,len(t))) 
+#                for yrno,yr in enumerate(t):
+#                    initpopsizes[:,yrno] = results.raw[ind]['people'][cd4index,:,findinds(results.tvec,yr)].sum(axis=0)
+#                
+#        # ... or if it's a program for pregnant women.
+#        else:
+#            if self.criteria['hivstatus']=='allstates': # All pregnant women
+#                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)*parset.pars[0]['birth'].interp(tvec=t)
+#
+#            else: # HIV+ pregnant women
+#                initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
+#                if not results: 
+#                    try: results = parset.getresults(die=True)
+#                    except OptimaException as E: 
+#                        print('Failed to extract results because "%s", rerunning the model...' % E.message)
+#                        results = runmodel(pars=parset.pars[ind], settings=settings)
+#                        parset.resultsref = results.name # So it doesn't have to be rerun
+#                for yr in t:
+#                    initpopsizes = parset.pars[ind]['popsize'].interp(tvec=[yr])*parset.pars[ind]['birth'].interp(tvec=[yr])*transpose(results.main['prev'].pops[0,:,findinds(results.tvec,yr)])
 
         for popno, pop in enumerate(parset.pars[ind]['popkeys']):
             popsizes[pop] = initpopsizes[popno,:]
@@ -676,7 +811,7 @@ class Program(object):
 
     def gettargetcomposition(self, t, parset=None, results=None, total=True):
         '''Tells you the proportion of the total population targeted by a program that is comprised of members from each sub-population group.'''
-        targetcomposition = {}
+        targetcomposition = odict()
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
         totaltargeted = sum(poptargeted.values())
@@ -690,8 +825,8 @@ class Program(object):
         '''Returns coverage for a time/spending vector'''
 
         # Validate inputs
-        if isinstance(x, (int,float)): x = [x]
-        if isinstance(t, (int,float)): t = [t]
+        if isnumber(x): x = [x]
+        if isnumber(t): t = [t]
         if isinstance(x, list): x = array(x)
         if isinstance(t, list): t = array(t)
 
@@ -725,14 +860,14 @@ class Program(object):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
-        from pylab import figure, figtext, isinteractive, ioff, ion, close
+        from pylab import figure, figtext, isinteractive, ioff, ion, close, show
         from matplotlib.ticker import MaxNLocator
         import textwrap
         
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
 
-        if type(t) in [int,float]: t = [t]
+        if isnumber(t): t = [t]
         colors = gridcolormap(len(t))
         plotdata = {}
         
@@ -819,7 +954,8 @@ class Program(object):
         
         # Tidy up
         if not doplot: close(cost_coverage_figure)
-        if wasinteractive: ion() 
+        if wasinteractive: ion()
+        if doplot: show()
 
         return cost_coverage_figure
 
@@ -855,10 +991,10 @@ class CCOF(object):
         else:
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
-                    if not ccopar.get(ccopartype): 
-                        printv('WARNING: no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 1, verbose)
-                        ccopar[ccopartype] = (0,0)
-                    self.ccopars[ccopartype].append(ccopar[ccopartype])
+                    if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
+#                        printv('Warning, no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 3, verbose)
+#                        ccopar[ccopartype] = (0,0)
+                        self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
                 if overwrite:
@@ -875,7 +1011,7 @@ class CCOF(object):
 
     def rmccopar(self, t, verbose=2):
         '''Remove cost-coverage-outcome data point. The point to be removed can be specified by year (int or float).'''
-        if isinstance(t, (int,float)):
+        if isnumber(t):
             if int(t) in self.ccopars['t']:
                 ind = self.ccopars['t'].index(int(t))
                 for ccopartype in self.ccopars.keys():
@@ -897,9 +1033,9 @@ class CCOF(object):
 
         # Set up necessary variables
         ccopar = {}
-        if isinstance(t,(float,int)): t = [t]
+        if isnumber(t): t = [t]
         nyrs = len(t)
-        ccopars_no_t = dcp(self.ccopars)
+        ccopars_no_t = dcp({k:v for k,v in self.ccopars.iteritems() if v})
         del ccopars_no_t['t']
         
         # Deal with bounds
@@ -939,9 +1075,17 @@ class CCOF(object):
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None):
+    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2):
+        if isnumber(x): x = [x]
+        if isnumber(t): t = [t]
         if (not toplot) and (not len(x)==len(t)): 
-            raise OptimaException('x needs to be the same length as t, we assume one spending amount per time point.')
+            try: 
+                x = [x[0]]
+                t = [t[0]]
+            except:
+                x = [0]
+                t = [2015]
+            printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
@@ -965,18 +1109,20 @@ class CCOF(object):
 class Costcov(CCOF):
     '''Cost-coverage objects'''
 
-    def function(self, x, ccopar, popsize):
+    def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
-        if isinstance(popsize,(float,int)): popsize = array([popsize])
+        if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
+        if isnumber(popsize): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts: return (2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize
+        eps = array([eps]*npts)
+        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
         else:
             y = zeros((nyrs,npts))
             for yr in range(nyrs):
-                y[yr,:] = (2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr]
+                y[yr,:] = maximum((2*s[yr]/(1+exp(-2*x/(popsize[yr]*s[yr]*u[yr])))-s[yr])*popsize[yr],eps)
             return y
 
     def inversefunction(self, x, ccopar, popsize, eps=None):
@@ -984,10 +1130,17 @@ class Costcov(CCOF):
         u = array(ccopar['unitcost'])
         s = array(ccopar['saturation'])
         if eps is None: eps = Settings().eps # Warning, use project-nonspecific eps
-        if isinstance(popsize, (float, int)): popsize = array([popsize])
+        if isnumber(popsize): popsize = array([popsize])
 
         nyrs,npts = len(u),len(x)
-        if nyrs==npts: return -0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps)
+        eps = array([eps]*npts)
+        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+#            y = zeros(nyrs)
+#            for yr in range(nyrs):
+#                y[yr] = maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
+#            return y
+            
+#            return max(-0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps),eps)
         else: raise OptimaException('coverage vector should be the same length as params.')
 
     def emptypars(self):
@@ -1015,23 +1168,3 @@ class Covout(CCOF):
         ccopars['t'] = None
         return ccopars
 
-########################################################
-# HELPER FUNCTIONS
-########################################################
-def vec2budget(progset=None, budgetvec=None):
-    ''' Function to convert a budget/coverage vector into a budget/coverage odict '''
-    
-    # Validate input
-    if any([item is None for item in [progset, budgetvec]]): raise OptimaException('vec2budget() requires both a program set and a budget vector as input')
-    if type(progset)!=Programset: raise OptimaException('First input to vec2budget must be a program set')
-    
-    # Get budget structure and populate
-    budget = progset.getdefaultbudget() # Returns an odict with the correct structure
-    if len(budget)==len(budgetvec):
-        for k,key in enumerate(budget.keys()):
-            budget[key] = [budgetvec[k]] # Make this budget value a list so has len()
-    else:
-        errormsg = 'Could not convert budget vector into budget: incompatible lengths (%i vs. %i)' % (len(budgetvec), len(budget))
-        raise OptimaException(errormsg)
-    
-    return budget

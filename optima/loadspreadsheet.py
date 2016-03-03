@@ -6,14 +6,14 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     Note: to add a new sheet, add it to the definition of "sheets" below, but also
     make sure it's being handled appropriately in the main loop.
     
-    Version: 1.2 (2016jan27) by cliffk
+    Version: 1.4 (2016feb07)
     """
     
     ###########################################################################
     ## Preliminaries
     ###########################################################################
     
-    from optima import OptimaException, odict, printv, today
+    from optima import OptimaException, odict, printv, today, isnumber
     from numpy import nan, isnan, array, logical_or, nonzero, shape # For reading in empty values
     from xlrd import open_workbook # For opening Excel workbooks
     printv('Loading data from %s...' % filename, 1, verbose)
@@ -37,7 +37,7 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
         
         # Check that only numeric data have been entered
         for column,datum in enumerate(thesedata):
-            if not isinstance(datum, (int, float)):
+            if not isnumber(datum):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'
@@ -91,23 +91,26 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
     
     # Time data -- array sizes are time x population
     sheets['Other epidemiology']  = ['death', 'stiprev', 'tbprev']
-    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast']
-    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx']
-    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'treatvs', 'biofailure', 'vlmonfr', 'restarttreat', 'pdhivcare', 'successprop']
-    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'circum']
+    sheets['Testing & treatment'] = ['hivtest', 'aidstest', 'numtx', 'prep', 'numpmtct', 'birth', 'breast', 'treatvs']
+    sheets['Optional indicators'] = ['optnumtest', 'optnumdiag', 'optnuminfect', 'optprev', 'optplhiv', 'optdeath', 'optnewtreat', 'propdx', 'propcare', 'proptx', 'propsupp']
+    sheets['Cascade']             = ['immediatecare', 'linktocare', 'stoprate', 'leavecare', 'biofailure', 'freqvlmon', 'restarttreat']
+    sheets['Sexual behavior']     = ['numactsreg', 'numactscas', 'numactscom', 'condomreg', 'condomcas', 'condomcom', 'propcirc', 'numcirc']
     sheets['Injecting behavior']  = ['numactsinj', 'sharing', 'numost']
     
     # Matrix data -- array sizes are population x population
     sheets['Partnerships & transitions'] = ['partreg','partcas','partcom','partinj','birthtransit','agetransit','risktransit']
     
     # Constants -- array sizes are scalars x uncertainty
-    sheets['Constants'] = [['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
+    sheets['Constants'] = [
+                           ['transmfi', 'transmfr', 'transmmi', 'transmmr', 'transinj', 'mtctbreast', 'mtctnobreast'], 
                            ['cd4transacute', 'cd4transgt500', 'cd4transgt350', 'cd4transgt200', 'cd4transgt50', 'cd4translt50'],
                            ['progacute', 'proggt500', 'proggt350', 'proggt200', 'proggt50'],
                            ['recovgt500', 'recovgt350', 'recovgt200', 'recovgt50'],
                            ['deathacute', 'deathgt500', 'deathgt350', 'deathgt200', 'deathgt50', 'deathlt50', 'deathtreat', 'deathtb'],
                            ['effcondom', 'effcirc', 'effdx', 'effsti', 'effost', 'effpmtct', 'effprep','efftxunsupp', 'efftxsupp'],
-                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx']]
+                           ['progusvl','recovusvl','stoppropcare'],
+                           ['disutilacute', 'disutilgt500', 'disutilgt350', 'disutilgt200', 'disutilgt50', 'disutillt50','disutiltx'],
+                          ]
     
     
     ###########################################################################
@@ -216,9 +219,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
-                    validatedata(thesedata, sheetname, thispar, row, checkblank=False)
-                    if thispar=='hivprev':
-                       validatedata(thesedata, sheetname, thispar, row, checkupper=True, checkblank=False)
+                    if thispar=='hivprev': validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=True)  # Make sure at least the best estimate isn't blank
+                    else:                  validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'))
+                    
 
                     
                 
@@ -229,9 +232,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     if assumptiondata != '': # There's an assumption entered
                         thesedata = [assumptiondata] # Replace the (presumably blank) data if a non-blank assumption has been entered
                     data[thispar].append(thesedata) # Store data
-                    checkblank = False if sheetname=='Optional indicators' else True # Don't check optional indicators, check everything else
+                    checkblank = False if sheetname in ['Optional indicators', 'Cascade'] or thispar=='numcirc' else True # Don't check optional indicators, check everything else
                     validatedata(thesedata, sheetname, thispar, row, checkblank=checkblank)
-                    if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'circum',  'sharing']: # All probabilities
+                    if thispar in ['stiprev', 'tbprev', 'hivtest', 'aidstest', 'prep', 'condomreg', 'condomcas', 'condomcom', 'propcirc',  'sharing']: # All probabilities
                         validatedata(thesedata, sheetname, thispar, row, checkupper=True)                        
 
 
@@ -289,7 +292,6 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                 data['pships']['inj'].append((data['pops']['short'][row],data['pops']['short'][col]))
     
 
-    printv('...done loading data.', 2, verbose)
     return data
 
 

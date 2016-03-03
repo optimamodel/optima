@@ -11,7 +11,7 @@ plotting to this file.
 Version: 2016jan24
 '''
 
-from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig
+from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
@@ -19,8 +19,10 @@ from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_betw
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta'] # Default epidemiological plots
-defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available
+defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta', 'popsize-sta'] # Default epidemiological plots
+#defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
+defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
+
 
 
 def getplotselections(results):
@@ -240,6 +242,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             # Decide which attribute in results to pull -- doesn't map cleanly onto plot types
             if istotal or (isstacked and ismultisim): attrtype = 'tot' # Only plot total if it's a scenario and 'stacked' was requested
             else: attrtype = 'pops'
+            if istotal or isstacked: datattrtype = 'tot' # For pulling out total data
+            else: datattrtype = 'pops'
             
             if ismultisim:  # e.g. scenario, no uncertainty
                 best = list() # Initialize as empty list for storing results sets
@@ -253,11 +257,11 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 try: # If results were calculated with quantiles, these should exist
                     lower = getattr(results.main[datatype], attrtype)[1]
                     upper = getattr(results.main[datatype], attrtype)[2]
-                except: # No? Just use the best data
+                except: # No? Just use the best estimates
                     lower = best
                     upper = best
                 try: # Try loading actual data -- very likely to not exist
-                    tmp = getattr(results.main[datatype], 'data'+attrtype)
+                    tmp = getattr(results.main[datatype], 'data'+datattrtype)
                     databest = tmp[0]
                     datalow = tmp[1]
                     datahigh = tmp[2]
@@ -285,18 +289,6 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 else: nlinesperplot = 1 # In all other cases, there's a single line per plot
                 colors = gridcolormap(nlinesperplot)
                 
-                # Plot uncertainty, but not for stacked plots
-                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
-                    try: fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
-                    except: print('Plotting uncertainty failed and/or not yet implemented')
-                    
-                # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
-                if not isstacked and not ismultisim and databest is not None:
-                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
-                    for y in range(len(results.datayears)):
-                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-
-
 
                 ################################################################################################################
                 # Plot model estimates with uncertainty -- different for each of the different possibilities
@@ -333,7 +325,26 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     for l in range(nlinesperplot):
                         plot(results.tvec, factor*best[l][i], lw=lw, c=colors[l]) # Indices are different populations (i), then different e..g scenarios (l)
 
+
+
+                ################################################################################################################
+                # Plot data points with uncertainty
+                ################################################################################################################
                 
+                # Plot uncertainty, but not for stacked plots
+                if uncertainty and not isstacked: # It's not by population, except HIV prevalence, and uncertainty has been requested: plot bands
+                    try: fill_between(results.tvec, factor*lower[i], factor*upper[i], facecolor=colors[0], alpha=alpha, lw=0)
+                    except: print('Plotting uncertainty failed and/or not yet implemented')
+                    
+                # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
+                if not ismultisim and databest is not None:
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
+                    for y in range(len(results.datayears)):
+                        plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
+
+
+
+
                 
                 ################################################################################################################
                 # Configure axes -- from http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
@@ -484,7 +495,14 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ax[-1].hold(True)
         barwidth = .5/nbudgetyears
         for y in range(nbudgetyears):
-            progdata = array([x[y] for x in toplot[plt][:]]) # Otherwise, multiplication simply duplicates the array
+            progdata = zeros(len(toplot[plt]))
+            for i,x in enumerate(toplot[plt][:]):
+                if hasattr(x, '__len__'): 
+                    try: progdata[i] = x[y]
+                    except: 
+                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
+                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
+                else:                     progdata[i] = x
             if which=='coverage': progdata *= 100 
             xbardata = arange(nprogs)+.75+barwidth*y
             for p in range(nprogs):
@@ -557,12 +575,12 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         
         ## Do the plotting
         subplot(nsims,1,plt+1)
-        for k,key in enumerate(cascadelist): # Loop backwards so correct ordering -- first one at the top, not bottom
+        for k,key in enumerate(reversed(cascadelist)): # Loop backwards so correct ordering -- first one at the top, not bottom
             if ismultisim: thisdata = results.main[key].tot[plt] # If it's a multisim, need an extra index for the plot number
             else:          thisdata = results.main[key].tot[0] # Get the best estimate
             fill_between(results.tvec, bottom, thisdata, facecolor=colors[k], alpha=1, lw=0)
-            plot((0, 0), (0, 0), color=colors[k], linewidth=10) # This loop is JUST for the legends! since fill_between doesn't count as a plot object, stupidly... -- WARNING, copied from plotepi()
-                            
+            bottom = dcp(thisdata) # Set the bottom so it doesn't overwrite
+            plot((0, 0), (0, 0), color=colors[len(colors)-k-1], linewidth=10) # Colors are in reverse order
         
         ## Configure plot -- WARNING, copied from plotepi()
         ax = gca()
@@ -575,7 +593,6 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
         # Configure plot specifics
-        
         legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else: ax.set_title('Cascade')

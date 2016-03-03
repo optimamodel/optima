@@ -11,11 +11,14 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpData: [],
       estdSize: []
     };
+    $scope.Math = window.Math;
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
+      $scope.state.chartData = [];
       fetchDefaultData();
       fetchEstimatedSize();
+      $scope.updateGraph();
     };
 
     $scope.addToCCData = function(ccDataForm) {
@@ -29,6 +32,7 @@ define(['./../../module', 'underscore'], function (module, _) {
           .success(function () {
             $scope.state.ccData.push($scope.state.newCCData);
             $scope.state.newCCData = {};
+            $scope.state.showAddCCData = false;
           });
       }
     };
@@ -65,11 +69,14 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpDataForm.year.$setValidity("valid", isValidCPDataYear());
 
       if(!cpDataForm.$invalid) {
+        $scope.state.newCPData.saturationpercent_lower /= 100;
+        $scope.state.newCPData.saturationpercent_upper /= 100;
         $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
           $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
           .success(function () {
             $scope.state.cpData.push($scope.state.newCPData);
             $scope.state.newCPData = {};
+            $scope.state.showAddCPData = false;
           });
       }
     };
@@ -104,8 +111,19 @@ define(['./../../module', 'underscore'], function (module, _) {
       });
 
       if (years.length > 0) {
-        $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-          $scope.selectedProgram.id + '/costcoverage/graph?t=' + years.join(',') + '&parset_id=' + $scope.vm.selectedParset.id)
+        var url = '/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+          $scope.selectedProgram.id + '/costcoverage/graph?t=' + years.join(',') + '&parset_id=' + $scope.vm.selectedParset.id;
+        if ($scope.state.remarks) {
+          $scope.state.displayCaption = angular.copy($scope.state.remarks);
+          url += '&caption=' + encodeURIComponent($scope.state.remarks);
+        }
+        if ($scope.state.maxFunc) {
+          url += '&xupperlim=' + $scope.state.maxFunc;
+        }
+        if ($scope.state.dispCost) {
+          url += '&perperson=1'
+        }
+        $http.get(url)
           .success(function (response) {
             $scope.state.chartData = response;
           });
@@ -120,7 +138,7 @@ define(['./../../module', 'underscore'], function (module, _) {
             $scope.state.estdSize = {};
             response.popsizes.forEach(function(popSize){
               if(popSize.popsize) {
-                $scope.state.estdSize[popSize.year] = (Math.round(popSize.popsize * 100)) / 100;
+                $scope.state.estdSize[popSize.year] = Math.round(popSize.popsize);
               }
             });
           }

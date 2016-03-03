@@ -7,7 +7,7 @@ NOTE: for best results, run in interactive mode, e.g.
 
 python -i tests.py
 
-Version: 2015nov23 by cliffk
+Version: 2016feb06
 """
 
 
@@ -15,6 +15,7 @@ Version: 2015nov23 by cliffk
 ## Define tests to run here!!!
 tests = [
 'makeprograms',
+'compareoutcomes',
 ]
 
 
@@ -36,18 +37,18 @@ print('Running tests:')
 for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
+T = tic()
 
 ##############################################################################
 ## The tests
 ##############################################################################
 
-T = tic()
 
 
 
 
 
-## Project creation test
+## Programs creation test
 if 'makeprograms' in tests:
     t = tic()
 
@@ -55,6 +56,7 @@ if 'makeprograms' in tests:
     from optima import Project, Program, Programset, odict
     
     P = Project(spreadsheet='concentrated.xlsx')
+    pops = P.data['pops']['short']
 
     # First set up some programs. Programs need to be initialized with a name. Often they will also be initialized with targetpars and targetpops
     HTC = Program(short='HTC',
@@ -78,8 +80,13 @@ if 'makeprograms' in tests:
     MGT = Program(short='MGT')
 
     ART = Program(short='ART',
-                  targetpars=[{'param': 'numtx', 'pop': 'Total'}],
-                  targetpops=['Total'],
+                  targetpars=[{'param': 'numtx', 'pop': 'tot'}],
+                  targetpops=pops,
+                  criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
+
+    Adherence = Program(short='Adherence',
+                  targetpars=[{'param': 'stoprate', 'pop': pop} for pop in ['F 15+', 'M 15+', 'FSW', 'Clients', 'MSM']],
+                  targetpops=['F 15+', 'M 15+', 'FSW', 'Clients', 'MSM'],
                   criteria={'hivstatus': ['lt50', 'gt50', 'gt200', 'gt350'], 'pregnant': False})
 
     PMTCT = Program(short='PMTCT',
@@ -90,8 +97,11 @@ if 'makeprograms' in tests:
                   criteria = {'hivstatus': 'allstates', 'pregnant': True})
                   
     VMMC = Program(short='VMMC',
-                  targetpars=[{'param': 'circum', 'pop': 'M 15+'}],
-                  targetpops=['M 15+'],
+                  targetpars=[{'param': 'numcirc', 'pop': 'M 15+'},
+                              {'param': 'numcirc', 'pop': 'MSM'},
+                              {'param': 'numcirc', 'pop': 'Clients'},
+                              {'param': 'numcirc', 'pop': 'PWID'}],
+                  targetpops=['M 15+', 'MSM', 'Clients', 'PWID'],
                   category='Prevention',
                   name='Voluntary medical male circumcision',
                   criteria = {'hivstatus': 'allstates', 'pregnant': False})              
@@ -117,7 +127,17 @@ if 'makeprograms' in tests:
     HTC.addcostcovdatum({'t':2015,
                          'cost':1e7,
                          'coverage':4e5})
-
+    MGT.addcostcovdatum({'t':2015,
+                         'cost':1e6})
+    ART.addcostcovdatum({'t':2015,
+                         'cost':1e7})
+    PMTCT.addcostcovdatum({'t':2015,
+                         'cost':1e7})
+    VMMC.addcostcovdatum({'t':2015,
+                         'cost':1e7})     
+    Adherence.addcostcovdatum({'t':2015,
+                         'cost':2e6})
+                         
     # 4. Overwrite historical cost-coverage data point
     HTC.addcostcovdatum({'t':2013,
                          'cost':2e6,
@@ -153,6 +173,10 @@ if 'makeprograms' in tests:
     VMMC.costcovfn.addccopar({'saturation': (.5,.6),
                              't': 2016.0,
                              'unitcost': (15,25)})
+                             
+    Adherence.costcovfn.addccopar({'saturation': (.2,.3),
+                                   't': 2016.0,
+                                   'unitcost': (300,500)})
                              
     # 7. Overwrite parameters for defining cost-coverage function.
     HTC.costcovfn.addccopar({'t': 2016.0,
@@ -195,23 +219,23 @@ if 'makeprograms' in tests:
     plotoptions['perperson'] = False
 
     if doplot:
-        ART.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
-        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions)
-        PMTCT.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
-        VMMC.plotcoverage(t=[2014,2015],parset=P.parsets['default'])
+        ART.plotcoverage(t=[2014,2015],parset=P.parsets['default'],doplot=doplot)
+        HTC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],plotoptions=plotoptions,doplot=doplot)
+        PMTCT.plotcoverage(t=[2014,2015],parset=P.parsets['default'],doplot=doplot)
+        VMMC.plotcoverage(t=[2014,2015],parset=P.parsets['default'],doplot=doplot)
 
     print('Running make programs set test...')
 
     # Initialise with or without programs
     R = Programset()
-    R = Programset(programs=[HTC,SBCC,MGT])
+    R = Programset(programs=[HTC,SBCC,MGT,ART,PMTCT,VMMC,Adherence])
 
     # Testing methods of programset class
     # 1. Adding a program
-    R.addprograms(ART)
+#    R.addprograms(ART)
 
     # 2. Removing a program
-    R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
+#    R.rmprogram(ART) # Alternative syntax: R.rmprogram('ART')
     
     # 3. See which programs are optimizable
     R.optimizable() # True/False lists
@@ -234,17 +258,26 @@ if 'makeprograms' in tests:
     # 7. Get a dictionary of coverage levels corresponding to a dictionary of program allocations
     budget=odict({'SBCC':array([1e6,1.2e6,1.5e6]),
                   'HTC':array([1e7,1.2e7,1.5e7]),
+                  'ART':array([1e7,1.2e7,1.5e7]),
+                  'PMTCT':array([1e7,1.2e7,1.5e7]),
+                  'VMMC':array([1e7,1.2e7,1.5e7]),
+                  'Adherence':array([1e6,1.2e6,1.5e6]),
                   'MGT':array([2e5,3e5,3e5])})
             
     coverage=odict({'HTC': array([ 368122.94593941, 467584.47194668, 581136.7363055 ]),
               'MGT': None,
+              'ART':array([1e5,1.2e5,1.5e5]),
+              'PMTCT':array([1e3,1.2e3,1.5e3]),
+              'VMMC':array([1e5,1.2e5,1.5e5]),
+              'Adherence':array([1e6,1.2e6,1.5e6]),
               'SBCC': array([ 97615.90198599, 116119.80759447, 143846.76414342])})
               
     budget = budget.sort([p.short for p in R.programs.values()])
     coverage = coverage.sort([p.short for p in R.programs.values()])
 
     defaultbudget = R.getdefaultbudget()
-            
+    defaultcoverage = R.getdefaultcoverage(t=2015, parset=P.parsets['default'])
+
     R.getprogcoverage(budget=budget,
                       t=[2015,2016,2020],
                       parset=P.parsets['default'])
@@ -293,6 +326,20 @@ if 'makeprograms' in tests:
                                                     't': 2015.0,
                                                     'SBCC':(0.45,0.55)})
                                                     
+    R.covout['numtx']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+    R.covout['numpmtct']['tot'].addccopar({'intercept': (100.0,150.0), 't': 2016.0})
+
+    R.covout['numcirc']['MSM'].addccopar({'intercept': (0,0), 't': 2016.0})
+    R.covout['numcirc']['Clients'].addccopar({'intercept': (0,0), 't': 2016.0})
+    R.covout['numcirc']['PWID'].addccopar({'intercept': (0,0), 't': 2016.0})
+    R.covout['numcirc']['M 15+'].addccopar({'intercept': (0,0), 't': 2016.0})
+
+#    R.covout['stoprate']['MSM'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['Clients'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['FSW'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['M 15+'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+#    R.covout['stoprate']['F 15+'].addccopar({'intercept': (0,0), 'Adherence': (.5,.6), 't': 2016.0})
+
     # 9. Overwrite parameters for defining coverage-outcome function.
     R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.35,0.45),
                                                     't': 2015.0,
@@ -310,6 +357,10 @@ if 'makeprograms' in tests:
     outcomes = R.getoutcomes(coverage=coverage,
                                 t=[2015,2016,2020],
                                 parset=P.parsets['default'])
+    
+    R.getoutcomes(defaultcoverage, t=2015, parset=P.parsets['default'])
+    R.getoutcomes(t=2015, parset=P.parsets['default'])
+            
 
     # 13. Get an odict of the ALL parameter values corresponding to a vector of program allocations
     P.addprogset(name='default', progset=R)
@@ -317,8 +368,17 @@ if 'makeprograms' in tests:
     
     
 
-    
     done(t)
+    
+
+
+
+
+## Project creation test
+if 'compareoutcomes' in tests:
+    comparison = P.progsets[0].compareoutcomes(parset=P.parsets[0], year=2016, doprint=True)
+    done(t)
+
 
 
 

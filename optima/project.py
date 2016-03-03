@@ -1,10 +1,8 @@
-from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv # Import utilities
-from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios, minoutcomes, minmoney, loadeconomicsspreadsheet, runmodel # Import functions
+from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber # Import utilities
+from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
+from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
-
-from optima import defaultobjectives
-import matplotlib.pyplot as plt
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -103,37 +101,52 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
         self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
-        self.ensureparset(name)
+        self.makeparset(name=name, overwrite=overwrite)
+        if makedefaults: self.makedefaults(name)
+        self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
         if dorun: self.runsim(name, addresult=True)
         return None
 
 
-    def ensureparset(self, name='default'):
-        ''' If parameter set of that name doesn't exist, create it'''
+    def makeparset(self, name='default', overwrite=True):
+        ''' If parameter set of that name doesn't exist, create it '''
         # question: what is that parset does exist? delete it first?
         if not self.data:
-            raise OptimaException("No data in project %s!" % self.uid)
-        if name not in self.parsets:
+            raise OptimaException('No data in project "%s"!' % self.name)
+        if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
             parset.makepars(self.data) # Create parameters
-            self.addparset(name=name, parset=parset) # Store parameters
+            self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
 
+
+    def makedefaults(self, name='default', overwrite=False):
+        ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
+        scenname = 'Current conditions'
+        if overwrite or name not in self.progsets:
+            progset = Programset(name=name)
+            self.addprogset(progset)
+        if overwrite or scenname not in self.scens:
+            scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
+            self.addscen(scen)
+        if overwrite or name not in self.optims:
+            optim = Optim(project=self, name=name, objectives=defaultobjectives(project=self, progset=0), constraints=defaultconstraints(project=self, progset=0), parsetname=self.parsets.keys()[0], progsetname=self.progsets.keys()[0])
+            self.addoptim(optim)
+        return None
+
+
     def loadeconomics(self, filename):
         ''' Load economic data and tranforms it to useful format'''
-
-        ## Load spreadsheet
-        self.data['econ'] = loadeconomicsspreadsheet(filename)
+        self.data['econ'] = loadeconomicsspreadsheet(filename) ## Load spreadsheet
         self.modified = today()
-
         return None
 
 
@@ -164,11 +177,11 @@ class Project(object):
         return structlist
 
 
-    def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=False):
+    def checkname(self, what=None, checkexists=None, checkabsent=None, overwrite=True):
         ''' Check that a name exists if it needs to; check that a name doesn't exist if it's not supposed to '''
         if type(what)==odict: structlist=what # It's already a structlist
         else: structlist = self.getwhat(what=what)
-        if isinstance(checkexists, (int, float)): # It's a numerical index
+        if isnumber(checkexists): # It's a numerical index
             try: checkexists = structlist.keys()[checkexists] # Convert from 
             except: raise OptimaException('Index %i is out of bounds for structure list "%s" of length %i' % (checkexists, what, len(structlist)))
         if checkabsent is not None:
@@ -176,15 +189,15 @@ class Project(object):
                 if overwrite==False:
                     raise OptimaException('Structure list "%s" already has item named "%s"' % (what, checkabsent))
                 else:
-                    printv('Structure list "%s" already has item named "%s"' % (what, checkabsent), 2, self.settings.verbose)
+                    printv('Structure list already has item named "%s"' % (checkabsent), 2, self.settings.verbose)
                 
         if checkexists is not None:
             if not checkexists in structlist:
-                raise OptimaException('Structure list "%s" has no item named "%s"' % (what, checkexists))
+                raise OptimaException('Structure list has no item named "%s"' % (checkexists))
         return None
 
 
-    def add(self, name=None, item=None, what=None, overwrite=False, consistentnames=True):
+    def add(self, name=None, item=None, what=None, overwrite=True, consistentnames=True):
         ''' Add an entry to a structure list -- can be used as add('blah', obj), add(name='blah', item=obj), or add(item) '''
         if name is None:
             try: name = item.name # Try getting name from the item
@@ -198,7 +211,7 @@ class Project(object):
         self.checkname(structlist, checkabsent=name, overwrite=overwrite)
         structlist[name] = item
         if consistentnames: structlist[name].name = name # Make sure names are consistent -- should be the case for everything except results, where keys are UIDs
-        printv('Item "%s" added to structure list "%s"' % (name, what), 1, self.settings.verbose)
+        printv('Item "%s" added to "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -208,12 +221,12 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        printv('Item "%s" removed from structure list "%s"' % (name, what), 1, self.settings.verbose)
+        printv('Item "%s" removed from "%s"' % (name, what), 2, self.settings.verbose)
         self.modified = today()
         return None
 
 
-    def copy(self, what=None, orig='default', new='copy', overwrite=False):
+    def copy(self, what=None, orig='default', new='copy', overwrite=True):
         ''' Copy an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
@@ -223,18 +236,18 @@ class Project(object):
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
         if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
-        printv('Item "%s" copied to structure list "%s"' % (new, what), 1, self.settings.verbose)
+        printv('Item "%s" copied to "%s"' % (new, what), 2, self.settings.verbose)
         self.modified = today()
         return None
 
 
-    def rename(self, what=None, orig='default', new='new', overwrite=False):
+    def rename(self, what=None, orig='default', new='new', overwrite=True):
         ''' Rename an entry in a structure list '''
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        printv('Item "%s" renamed to "%s" in structure list "%s"' % (orig, new, what), 1, self.settings.verbose)
+        printv('Item "%s" renamed to "%s" in "%s"' % (orig, new, what), 2, self.settings.verbose)
         self.modified = today()
         return None
         
@@ -243,10 +256,10 @@ class Project(object):
     ## Convenience functions -- NOTE, do we need these...?
     #######################################################################################################
 
-    def addparset(self,   name=None, parset=None,   overwrite=False): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
-    def addprogset(self,  name=None, progset=None,  overwrite=False): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
-    def addscen(self,     name=None, scen=None,     overwrite=False): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
-    def addoptim(self,    name=None, optim=None,    overwrite=False): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
+    def addparset(self,   name=None, parset=None,   overwrite=True): self.add(what='parset',   name=name, item=parset,  overwrite=overwrite)
+    def addprogset(self,  name=None, progset=None,  overwrite=True): self.add(what='progset',  name=name, item=progset, overwrite=overwrite)
+    def addscen(self,     name=None, scen=None,     overwrite=True): self.add(what='scen',     name=name, item=scen,    overwrite=overwrite)
+    def addoptim(self,    name=None, optim=None,    overwrite=True): self.add(what='optim',    name=name, item=optim,   overwrite=overwrite)
 
     def rmparset(self,   name): self.remove(what='parset',   name=name)
     def rmprogset(self,  name): self.remove(what='progset',  name=name)
@@ -254,23 +267,27 @@ class Project(object):
     def rmoptim(self,    name): self.remove(what='optim',    name=name)
 
 
-    def copyparset(self,   orig='default', new='new', overwrite=False): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def copyprogset(self,  orig='default', new='new', overwrite=False): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def copyscen(self,     orig='default', new='new', overwrite=False): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def copyoptim(self,    orig='default', new='new', overwrite=False): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def copyparset(self,   orig='default', new='new', overwrite=True): self.copy(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def copyprogset(self,  orig='default', new='new', overwrite=True): self.copy(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def copyscen(self,     orig='default', new='new', overwrite=True): self.copy(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def copyoptim(self,    orig='default', new='new', overwrite=True): self.copy(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def renameparset(self,   orig='default', new='new', overwrite=False): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
-    def renameprogset(self,  orig='default', new='new', overwrite=False): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
-    def renamescen(self,     orig='default', new='new', overwrite=False): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
-    def renameoptim(self,    orig='default', new='new', overwrite=False): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
+    def renameparset(self,   orig='default', new='new', overwrite=True): self.rename(what='parset',   orig=orig, new=new, overwrite=overwrite)
+    def renameprogset(self,  orig='default', new='new', overwrite=True): self.rename(what='progset',  orig=orig, new=new, overwrite=overwrite)
+    def renamescen(self,     orig='default', new='new', overwrite=True): self.rename(what='scen',     orig=orig, new=new, overwrite=overwrite)
+    def renameoptim(self,    orig='default', new='new', overwrite=True): self.rename(what='optim',    orig=orig, new=new, overwrite=overwrite)
 
-    def addresult(self, result=None): self.add(what='result',  name=str(result.uid), item=result, consistentnames=False) # Use UID for key but keep name
-    
+    def addresult(self, result=None, overwrite=True): 
+        ''' Try adding result by name, but if no name, add by UID '''
+        if result.name is None: keyname = str(result.uid)
+        else: keyname = result.name
+        self.add(what='result',  name=keyname, item=result, consistentnames=False, overwrite=overwrite) # Use UID for key but keep name
+        return keyname # Can be useful to know what ended up being chosen
     
     def rmresult(self, name=-1):
         resultuids = self.results.keys() # Pull out UID keys
         resultnames = [res.name for res in self.results.values()] # Pull out names
-        if isinstance(name, (int, float)) and name<len(self.results):  # Remove by index rather than name
+        if isnumber(name) and name<len(self.results):  # Remove by index rather than name
             self.remove(what='result', name=self.results.keys()[name])
         elif name in resultuids: # It's a UID: remove directly 
             self.remove(what='result', name=name)
@@ -295,13 +312,17 @@ class Project(object):
     #######################################################################################################
 
 
-    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True):
-        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list -- WARNING, do we need this? What's it for? Why not use runmodel()? '''
+    def runsim(self, name=None, simpars=None, start=None, end=None, dt=None, addresult=True, die=True, debug=False, overwrite=True, verbose=None):
+        ''' This function runs a single simulation, or multiple simulations if pars/simpars is a list.
+        
+        WARNING, do we need this? What's it for? Why not use runmodel()?
+        '''
         if start is None: start=self.settings.start # Specify the start year
         if end is None: end=self.settings.end # Specify the end year
         if dt is None: dt=self.settings.dt # Specify the timestep
         if name is None and simpars is None: name = 'default' # Set default name
-
+        if verbose is None: verbose = self.settings.verbose
+        
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
             simparslist = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
@@ -312,15 +333,19 @@ class Project(object):
         # Run the model!
         rawlist = []
         for ind in range(len(simparslist)):
-            raw = model(simparslist[ind], self.settings) # ACTUALLY RUN THE MODEL
+            try:
+                raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+            except:
+                printv('Running model failed; running again with debugging...', 1, self.settings.verbose)
+                raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
         resultname = 'parset-'+name if simpars is None else 'simpars'
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
-            self.addresult(result=results)
-            if simpars is None: self.parsets[name].resultsref = results.uid # If linked to a parset, store the results
+            keyname = self.addresult(result=results, overwrite=overwrite)
+            if simpars is None: self.parsets[name].resultsref = keyname # If linked to a parset, store the results
 
         return results
 
@@ -330,8 +355,8 @@ class Project(object):
         if name is None and orig is None: # Nothing supplied, just use defaults
             name = 'default'
             orig = 'default'
-        if isinstance(name, (int, float)): name = self.parsets.keys()[name] # Convert from index to name if required
-        if isinstance(orig, (int, float)): orig = self.parsets.keys()[orig]
+        if isnumber(name): name = self.parsets.keys()[name] # Convert from index to name if required
+        if isnumber(orig): orig = self.parsets.keys()[orig]
         if name is not None and orig is not None and name!=orig:
             self.copyparset(orig=orig, new=name, overwrite=True) # Store parameters, user seems to know what she's doing, trust her!
         if name is None and orig is not None: name = orig # Specify name if not supplied
@@ -362,16 +387,14 @@ class Project(object):
         return None
 
 
-    def autofit(self, name=None, orig=None, what='force', maxtime=None, maxiters=100, inds=None, verbose=2):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
-        print ("autofit(%s, %s, %s)" % (name, orig, what))
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        print ("name=%s, orig=%s" % (name, orig))
-        self.parsets[name] = autofit(project=self, name=name, what=what, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose)
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
-        self.addresult(result=results)
-        self.parsets[name].resultsref = results.uid
+        keyname = self.addresult(result=results)
+        self.parsets[name].resultsref = keyname
         self.modified = today()
         return None
     
@@ -397,25 +420,17 @@ class Project(object):
         coverage = self.progsets[progsetname].getprogcoverage(budget=budget, t=budgetyears, parset=self.parsets[parsetname])
         progpars = self.progsets[progsetname].getpars(coverage=coverage,t=budgetyears, parset=self.parsets[parsetname])
         results = runmodel(pars=progpars, project=self, progset=self.progsets[progsetname], budget=budget, budgetyears=budgetyears) # WARNING, this should probably use runsim, but then would need to make simpars...
+        results.name = 'runbudget'
         self.addresult(results)
         self.modified = today()
         return None
 
     
-    def minoutcomes(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', saveprocess=True):
-        ''' Function to minimize outcomes '''
-        optim = Optim(project=self, name=name, which='outcome', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
-        if saveprocess:        
-            self.addoptim(optim=optim)
-            self.addresult(result=multires)
-            self.modified = today()
-        return multires
-        
-    def minmoney(self, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, debug=False, saveprocess=True):
-        ''' Function to minimize money '''
-        optim = Optim(project=self, name=name, which='money', objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = minmoney(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, debug=debug)
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True):
+        ''' Function to minimize outcomes or money '''
+        optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
+        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
             self.addresult(result=multires)
@@ -430,7 +445,7 @@ class Project(object):
         
     def genBOC(self, budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
         ''' Function to generate project-specific budget-outcome curve for geospatial analysis '''
-        projectBOC = BOC()
+        projectBOC = BOC(name='BOC')
         if objectives == None:
             printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
             objectives = defaultobjectives()
@@ -459,7 +474,7 @@ class Project(object):
         for budget in budgetlist:
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-            results = minoutcomes(project=self, optim=optim, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+            results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
@@ -479,6 +494,7 @@ class Project(object):
         print('No BOC with the required objectives can be found in project: %s' % self.name)
         return None
         
+        
     def delBOC(self, objectives):
         ''' Deletes BOC results with the required objectives (budget notwithstanding) '''
         while not self.getBOC(objectives = objectives) == None:
@@ -487,9 +503,10 @@ class Project(object):
             self.rmresult(str(ind))
         return None
     
+    
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
-
+        from pylab import title, show
         if boc is None:
             try: boc = self.getBOC(objectives=objectives)
             except: raise OptimaException('Cannot plot a nonexistent BOC!')
@@ -499,8 +516,8 @@ class Project(object):
         else:
             print('Plotting BOC derivative for "%s"...' % self.name)
         ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
-        plt.title('Project: %s' % self.name)
+        title('Project: %s' % self.name)
         if returnplot: return ax
-        else: plt.show()
+        else: show()
         return None
     

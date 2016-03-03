@@ -1,44 +1,22 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     'use strict';
-
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, scenariosResponse, CONFIG, typeSelector, $state) {
-
+    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse, parsetResponse, scenariosResponse, CONFIG, typeSelector, $state, modalService) {
         // In case there is no model data the controller only needs to show the
         // warning that the user should upload a spreadsheet with data.
-        if (!info.has_data) {
+        var openProject  = info.data;
+        var responseData, availableScenarioParameters, availableScenarios;
+        $scope.scenarios = scenariosResponse.data.scenarios;
+        $scope.progsets = progsetsResponse.data.progsets;
+        $scope.parsets = parsetResponse.data.parsets;
+
+        if (!openProject.has_data) {
           $scope.missingModelData = true;
           return;
         }
 
-        var responseData, availableScenarioParameters, availableScenarios;
-
-        // initialize all necessary data for this controller
-        var initialize = function() {
-          $scope.scenarios = [];
-
-          $scope.runScenariosOptions = {
-            dosave: false
-          };
-
-          // add All option in population list
-          meta.data.pops.long.push("All");
-
-          // transform scenarioParameters to use attribute `names` instead of `keys`
-          // it is the same for the data we have to send to run scenarios
-          availableScenarioParameters = _(scenarioParametersResponse.data.parameters).map(function(parameters) {
-            return { name: parameters.name, names: parameters.keys, values: parameters.values};
-          });
-
-          availableScenarios = scenariosResponse.data.scenarios;
-
-          $scope.scenarios = _(availableScenarios).map(function(scenario) {
-            scenario.active = true;
-            return scenario;
-          });
-
-          $scope.types = typeSelector.types;
-        };
-
+        if (!$scope.progsets.length) {
+          $scope.missingProgramSet = true;
+        }
         /**
          * Returns an graph based on the provided yData.
          *
@@ -104,69 +82,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
          * Regenerate graphs based on the response and type settings in the UI.
          */
         var updateGraphs = function (response) {
-          if (!response) {
-            return graphs;
+          if (response) {
+            $scope.graphs = response;
           }
-          typeSelector.enableAnnualCostOptions($scope.types, response);
-
-          var graphs = [];
-
-          _($scope.types.population).each(function (type) {
-
-            var data = response[type.id];
-
-            // generate graphs showing the overall data for this type
-            if (type.total) {
-              var title = data.tot.title;
-              var graph = generateGraph(data.tot, response.tvec, title, data.tot.legend, data.xlabel, data.tot.ylabel);
-              graphs.push(graph);
-            }
-
-            // generate graphs for this type for each population
-            if (type.byPopulation) {
-              _(data.pops).each(function (population, populationIndex) {
-
-                var title = population.title;
-                var graph = generateGraph(population, response.tvec, title, population.legend, data.xlabel, population.ylabel);
-                graphs.push(graph);
-              });
-            }
-          });
-
-          // annual cost charts
-          _($scope.types.possibleKeys).each(function(type) {
-            var isActive = $scope.types.costs.costann[type];
-            if (isActive) {
-              var chartData = response.costann[type][$scope.types.activeAnnualCost];
-              if (chartData) {
-              graphs.push(generateFinancialGraph(chartData));
-              }
-            }
-          });
-
-
-          // cumulative cost charts
-          _($scope.types.possibleKeys).each(function(type) {
-            var isActive = $scope.types.costs.costcum[type];
-            if (isActive) {
-              var chartData = response.costcum[type];
-              if (chartData) {
-                graphs.push(generateFinancialGraph(chartData));
-              }
-            }
-          });
-
-          // commitments
-
-          var commitIsActive = $scope.types.costs.costann.checked;
-          if (commitChartData && commitIsActive) {
-            var commitChartData = response.commit[$scope.types.activeAnnualCost];
-            if (commitChartData) {
-              graphs.push(generateFinancialGraph(commitChartData));
-            }
-          }
-
-          $scope.graphs = graphs;
         };
 
         /**
@@ -182,63 +100,120 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .value();
         };
 
-        $scope.runScenarios = function (saveScenario) {
-          $scope.runScenariosOptions.scenarios = toCleanArray($scope.scenarios);
-          $scope.runScenariosOptions.dosave = saveScenario === true;
-          $http.post('/api/analysis/scenarios/run', $scope.runScenariosOptions)
+        $scope.runScenarios = function () {
+          var activeScenarios = _.filter($scope.scenarios, function(scenario){ return scenario.active; });
+          $http.get('/api/project/'+openProject.id+'/scenarios/results')
             .success(function(data) {
               responseData = data;
-              updateGraphs(responseData);
+              $scope.graphs = data;
             });
         };
 
-        // Helper function to open a population modal
-        var openScenarioModal = function(scenario) {
-          return $modal.open({
-            templateUrl: 'js/modules/analysis/scenarios-modal.html',
-            controller: 'AnalysisScenariosModalController',
-            resolve: {
-              scenario: function () {
-                return scenario;
-              },
-              availableScenarioParameters: function() {
-                return availableScenarioParameters;
-              },
-              populationNames: function() {
-                return meta.data.pops.long;
-              }
+        $scope.saveScenarios = function (state) {
+          $http.put('/api/project/'+openProject.id+'/scenarios', {
+            'scenarios': $scope.scenarios
+          }).success(function(response) {
+            if(!state){
+              modalService.inform(
+                function (){ },
+                'Okay',
+                'Scenario saved successfully.',
+                'Saved successfully'
+              );
             }
+            $scope.scenarios = response.scenarios;
           });
         };
 
-        $scope.openAddScenarioModal = function ($event) {
-            if ($event) {
-                $event.preventDefault();
-            }
-
-            var scenario = {};
-            return openScenarioModal(scenario).result.then(
-                function (newscenario) {
-                    newscenario.active = true;
-                    newscenario.pars = newscenario.pars || [];
-                    $scope.scenarios.push(newscenario);
-                });
+        // Helper function to open a population modal
+        var openScenarioModal = function(scenario, parsets, progsets) {
+          if(scenario.scenario_type === "budget" || scenario.scenario_type === 'coverage'){
+            return $modal.open({
+              templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
+              controller: 'ProgramScenariosModalController',
+              resolve: {
+                scenarios: function () {
+                  return $scope.scenarios;
+                },
+                scenario: function () {
+                  return angular.copy(scenario);
+                },
+                parsets: function() {
+                  return parsets;
+                },
+                progsets: function() {
+                  return progsets;
+                },
+                ykeys: function() {
+                  return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
+                },
+                openProject: function(){
+                  return openProject;
+                }
+              }
+            });
+          }else{
+            return $modal.open({
+              templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
+              controller: 'ParameterScenariosModalController',
+              resolve: {
+                scenarios: function () {
+                  return $scope.scenarios;
+                },
+                scenario: function () {
+                  return angular.copy(scenario);
+                },
+                parsets: function() {
+                  return parsets;
+                },
+                progsets: function() {
+                  return progsets;
+                },
+                ykeys: function() {
+                  return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
+                },
+                openProject: function(){
+                  return openProject;
+                }
+              }
+            });
+          }
         };
 
-        $scope.openEditScenarioModal = function ($event, scenario) {
-            if ($event) {
-                $event.preventDefault();
-            }
+        $scope.openScenarioModal = function (row, action, $event) {
+            if ($event) { $event.preventDefault(); }
 
-            return openScenarioModal(scenario).result.then(
+            if(action === 'add'){
+              return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
                 function (newscenario) {
-                    scenario.active = true;
-                    _(scenario).extend(newscenario);
+                    $scope.scenarios.push(newscenario);
                 });
+            }else if(action === 'edit'){
+              return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
+                function (updatescenario) {
+                  updatescenario.active = true;
+                  $scope.scenarios[$scope.scenarios.indexOf(row)] = updatescenario;
+                });
+            }else if(action === 'copy'){
+              var newscenario = angular.copy(row);
+              newscenario.name = row.name +' Copy'
+              newscenario.id = null;
+              $scope.scenarios.push(newscenario);
+            }else if(action === 'delete'){
+              modalService.confirm(
+                function () {
+                  $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
+                  if(row.id){ $scope.saveScenarios('delete'); }
+                }, function () {
+                }, 'Yes, remove this scenario', 'No',
+                'Are you sure you want to permanently remove scenario "' + row.name + '"?',
+                'Delete scenario'
+              );
+            }
         };
 
         $scope.gotoViewCalibrate = function() {
-          $state.go('model');;
+          $state.go('model');
         };
 
         // The graphs are shown/hidden after updating the graph type checkboxes.
@@ -246,8 +221,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           updateGraphs(responseData);
         }, true);
 
-        initialize();
+        $scope.progset_name = function(progset_id, row) {
+          var progset = _.filter($scope.progsets, {id: progset_id});
+          if (progset.length > 0) {
+            return progset[0].name;
+          }
+          return '';
+        };
 
+        $scope.parset_name = function(parset_id) {
+          var parset = _.filter($scope.parsets, {id: parset_id});
+          if (parset.length > 0) {
+            return parset[0].name;
+          }
+          return '';
+        }
     });
 
 });

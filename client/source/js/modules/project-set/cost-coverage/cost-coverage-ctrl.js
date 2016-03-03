@@ -1,24 +1,24 @@
 define(['./../module', 'underscore'], function (module, _) {
   'use strict';
 
-  module.controller('ModelCostCoverageController', function ($scope, $http, $state, activeProject, modalService, projectApiService) {
+  module.controller('ModelCostCoverageController', function ($scope, toastr, $http, $state, activeProject, modalService, $modal, projectApiService) {
 
     var vm = this;
 
     vm.openProject = activeProject.data;
     console.log('vm.openProject', vm.openProject);
 
-    vm.activeTab = 'outcome'; //todo: revert to first
+    vm.activeTab = 'cost';
     vm.tabs = [{
       name: 'Define cost functions',
       slug: 'cost'
     }, {
       name: 'Define outcome functions',
       slug: 'outcome'
-    }, {
+    }/*, {
       name: 'View summary',
       slug: 'summary'
-    }];
+    }*/];
 
     /* VM functions */
     vm.addYear = addYear;
@@ -86,6 +86,10 @@ define(['./../module', 'underscore'], function (module, _) {
             console.warn('response is', response);
             vm.existingEffects = response;
           })
+
+          $http.get('/api/project/' + vm.openProject.id + '/parsets/limits').success(function (response) {
+            vm.allLimits = response;
+          })
         }
 
         vm.programs = _.sortBy(_.filter(vm.selectedProgramSet.programs, isProgramActive), sortByName);
@@ -95,6 +99,8 @@ define(['./../module', 'underscore'], function (module, _) {
     function setParamSet() {
       console.log('setting param set', vm.selectedParset);
       if (vm.selectedProgramSet && vm.selectedProgramSet.targetpartypes && vm.selectedParset) {
+
+        vm.currentParsetLimits = vm.allLimits.parsets[vm.selectedParset.id];
 
         $http.get('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/parameters/' + vm.selectedParset.id).success(function (response) {
           console.warn('response', response);
@@ -221,7 +227,16 @@ define(['./../module', 'underscore'], function (module, _) {
       }
       console.log('currentParsetEffect', currentParsetEffect);
       _.each(vm.currentParameter.populations, function(pop) {
-        var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short, pop: pop.pop});
+        var paramPops = _.filter(currentParsetEffect.parameters, {name: vm.selectedParameter.short});
+        paramPops = _.filter(paramPops, function(param) {
+          if (pop.pop instanceof Array) {
+            if (param.pop.length != pop.pop.length) {
+              return false;
+            }
+            return _.difference(param.pop, pop.pop).length === 0;
+          }
+          return pop.pop === param.pop;
+        });
         if (paramPops.length === 0) {
           currentParsetEffect.parameters.push({
             name: vm.selectedParameter.short,
@@ -230,6 +245,7 @@ define(['./../module', 'underscore'], function (module, _) {
           });
         }
       });
+
       console.log('currentParsetEffect', currentParsetEffect);
     }
 
@@ -252,11 +268,10 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function submit() {
-      // if (vm.TableForm.$invalid) {
-      //   console.error('form is invalid!');
-
-      //   return false;
-      // }
+      if (vm.TableForm.$invalid) {
+        console.error('form is invalid!');
+        return false;
+      }
 
       console.log('submitting', vm.existingEffects);
 
@@ -275,6 +290,7 @@ define(['./../module', 'underscore'], function (module, _) {
       $http.put('/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgramSet.id + '/effects', vm.existingEffects).success(function (result) {
         console.log('result is', result);
         vm.existingEffects = result;
+        toastr.success('The parameters were successfully saved!', 'Success');
       });
     }
 

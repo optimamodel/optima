@@ -98,14 +98,14 @@ define([
 
     .run(function ($rootScope, $state, UserManager, activeProject, modalService) {
 
-      if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') !== -1) {
-        modalService.inform(
-          function () {
-            window.location.href = 'https://www.google.com/chrome/browser/desktop/';
-          },
-          'Download Google Chrome',
-          'Internet Explorer is not supported. Please use Firefox or Chrome instead.', 'Your browser is not supported!');
-      }
+      // if (navigator.userAgent.indexOf('MSIE') !== -1 || navigator.appVersion.indexOf('Trident/') !== -1) {
+      //   modalService.inform(
+      //     function () {
+      //       window.location.href = 'https://www.google.com/chrome/browser/desktop/';
+      //     },
+      //     'Download Google Chrome',
+      //     'Internet Explorer is not supported. Please use Firefox or Chrome instead.', 'Your browser is not supported!');
+      // }
 
       if (window.user) {
         UserManager.set(window.user);

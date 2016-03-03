@@ -47,7 +47,10 @@ class Progsets(Resource):
 
         reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
         for progset in reply:
-            progset.get_targetpartypes()
+            progset.get_extra_data()
+            for program in progset.programs:
+                program.get_optimizable()
+
         return reply
 
     @swagger.operation(
@@ -67,11 +70,11 @@ class Progsets(Resource):
         db.session.add(progset_entry)
         db.session.flush()
 
-        progset_entry.create_programs_from_list(args['programs'])
+        progset_entry.recreate_programs_from_list(args['programs'], progset_entry.id)
 
         db.session.commit()
 
-        progset_entry.get_targetpartypes()
+        progset_entry.get_extra_data()
 
         return progset_entry, 201
 
@@ -95,7 +98,7 @@ class Progset(Resource):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset(project_id, progset_id)
 
-        progset_entry.get_targetpartypes()
+        progset_entry.get_extra_data()
 
         return progset_entry
 
@@ -114,13 +117,11 @@ class Progset(Resource):
         progset_entry = load_progset(project_id, progset_id)
         args = progset_parser.parse_args()
         progset_entry.name = args['name']
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-
-        progset_entry.create_programs_from_list(args.get('programs', []))
+        progset_entry.recreate_programs_from_list(args.get('programs', []), progset_id)
 
         db.session.commit()
 
-        progset_entry.get_targetpartypes()
+        progset_entry.get_extra_data()
 
         return progset_entry
 
@@ -237,7 +238,7 @@ class ProgsetParams(Resource):
                 'programs': [{
                     'name': program.name,
                     'short_name': program.short,
-                } for program in progs ]
+                } for program in progs]
             } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
             'coverage': parset_be.pars[0][name].coverage,
             'proginteract': parset_be.pars[0][name].proginteract
@@ -430,7 +431,7 @@ class CostCoverageGraph(Resource):
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null')
+        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null').replace('None', '')
         return json.loads(json_string)
 
 

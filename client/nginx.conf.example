@@ -1,16 +1,29 @@
-# development config ('build' subdomain goes to /build, otherwise to /source)
+###########################################
+## PLEASE CHANGE LINE BELOW ###############
+user {{YOUR_USER_NAME}} {{YOUR_GROUP}}; 
+
+events {
+    worker_connections  1024;
+}
+
+http {
+
+# Development configuration that will use the angular javascript files 
+# from the source directory. The compiled and compressed javascript files
+# will be sent to the /build subdomain. Comment this out for the 
+# production server
 map $subdomain $root_folder {
   default source;
   'build' build;
 }
 
-
-# production config ('debug' subdomain goes to /source, otherwise to /build)
+# Production configuration where the copiled javascript files will be 
+# accessible. The original angular javascript files will be found under the
+# debug submdomain. Comment this out on a local development version.
 #map $subdomain $root_folder {
 #  default build;
 #  'debug' source;
 #}
-
 
 # https://github.com/h5bp/server-configs-nginx
 server {
@@ -20,8 +33,9 @@ server {
   # When we export all graphs, we are posting more data.
   client_max_body_size 0;
 
-  # @FIXME update this path with yours
-  set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/client";
+  ###########################################
+  ## PLEASE CHANGE LINE BELOW ###############
+  set $host_path "{{ABSOLUTE_PATH_TO_PROJECT_SOURCE}}/client";  
 
   # Path for static files
   root $host_path/$root_folder;
@@ -86,7 +100,10 @@ server {
   # cache.appcache, your document html and data
   location ~* ^(?!/api/)[A-Za-z_]\w*\.(?:manifest|appcache|html?|xml|json)$ {
     expires -1;
-    access_log logs/static.log;
+
+    ###########################################
+    ## PLEASE CHANGE LINE BELOW ###############
+    access_log "{{ABSOLUTE_PATH_TO_LOG_FILE}}"; 
   }
 
   # Feed
@@ -325,4 +342,6 @@ server {
   # Further optimization can be achieved by raising keepalive_timeout, but that shouldn't be done unless you serve primarily HTTPS.
   # ssl_session_cache    shared:SSL:10m; # a 1mb cache can hold about 4000 sessions, so we can hold 40000 sessions
   # ssl_session_timeout  10m;
+}
+
 }

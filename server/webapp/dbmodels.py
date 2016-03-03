@@ -1,10 +1,12 @@
 from datetime import datetime
 import dateutil
 from collections import defaultdict
+from copy import deepcopy
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
 from server.webapp.fields import Json
+from server.webapp.exceptions import DuplicateProgram
 
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
@@ -104,16 +106,19 @@ class ProjectDb(db.Model):
     settings = db.Column(db.LargeBinary)
     data = db.Column(db.LargeBinary)
     has_econ = db.Column(db.Boolean)
+    blob = db.Column(db.LargeBinary)
     working_project = db.relationship('WorkingProjectDb', backref='related_project', uselist=False)
     project_data = db.relationship('ProjectDataDb', backref='project', uselist=False)
     project_econ = db.relationship('ProjectEconDb', backref='project', uselist=False)
     parsets = db.relationship('ParsetsDb', backref='project')
     results = db.relationship('ResultsDb', backref='project')
     progsets = db.relationship('ProgsetsDb', backref='project')
+    scenarios = db.relationship('ScenariosDb', backref='project')
+    optimizations = db.relationship('OptimizationsDb', backref='project')
 
     def __init__(self, name, user_id, datastart, dataend, populations, version,
                  created=None, updated=None, settings=None, data=None, has_econ=False, parsets=None,
-                 results=None):
+                 results=None, scenarios=None, optimizations=None):
         self.name = name
         self.user_id = user_id
         self.datastart = datastart
@@ -129,6 +134,9 @@ class ProjectDb(db.Model):
         self.has_econ = has_econ
         self.parsets = parsets or []
         self.results = results or []
+        self.scenarios = scenarios or []
+        self.optimizations = optimizations or []
+        self.blob = None
 
     def has_data(self):
         return self.data is not None and len(self.data)
@@ -141,6 +149,11 @@ class ProjectDb(db.Model):
         return self.project_data.updated if self.project_data else None
 
     def hydrate(self):
+        # the problem here: if a record gets created outside of project, we have a big problem.
+        # (which is currently the case for progsets)
+        # TODO: make it possible to uncomment the two lines of code below :)
+#        if self.blob and len(self.blob):
+#            project_entry = op.loads(self.blob)
         project_entry = op.Project()
         project_entry.uid = self.id
         project_entry.name = self.name
@@ -156,10 +169,44 @@ class ProjectDb(db.Model):
             for parset_record in self.parsets:
                 parset_entry = parset_record.hydrate()
                 project_entry.addparset(parset_entry.name, parset_entry)
+            for key, parset in project_entry.parsets.iteritems():
+                parset.project = project_entry
+                project_entry.parsets[key] = parset
         if self.progsets:
             for progset_record in self.progsets:
                 progset_entry = progset_record.hydrate()
                 project_entry.addprogset(progset_entry.name, progset_entry)
+        if self.scenarios:
+            for scenario_record in self.scenarios:
+                if scenario_record.active:
+                    scenario_entry = scenario_record.hydrate()
+                    project_entry.addscen(scenario_entry.name, scenario_entry)
+        if self.optimizations:
+            for optimization_record in self.optimizations:
+                optimization_record._ensure_current(self)
+                parset_name = None
+                progset_name = None
+                if optimization_record.parset_id:
+                    parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
+                    if parset_name:
+                        parset_name = parset_name[0]
+                if optimization_record.progset_id:
+                    progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
+                    if progset_name:
+                        progset_name = progset_name[0]
+                optim = op.Optim(project_entry, name=optimization_record.name,
+                    objectives=optimization_record.objectives,
+                    constraints=optimization_record.constraints, parsetname=parset_name, progsetname=progset_name)
+                project_entry.addoptim(optim)
+        if self.results:
+            for result_entry in self.results:
+                result = result_entry.hydrate()
+                project_entry.addresult(result)
+                if result_entry.parset_id and result_entry.calculation_type == ResultsDb.CALIBRATION_TYPE:
+                    for parset in project_entry.parsets.values():
+                        if parset.uid == result_entry.parset_id:
+                            parset.resultsref = result.uid
+
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -185,6 +232,8 @@ class ProjectDb(db.Model):
         db.session.flush()
 
         # BE projects are not always TZ aware
+        project.uid = self.id
+        self.blob = op.saves(project)
         self.created = pytz.utc.localize(project.created) if project.created.tzinfo is None else project.created
         if project.modified:
             self.updated = pytz.utc.localize(project.modified) if project.modified.tzinfo is None else project.modified
@@ -233,10 +282,35 @@ class ProjectDb(db.Model):
                 progset_record = update_or_create_progset(self.id, name, progset)
                 progset_record.restore(progset, program_list)
 
+        if project.scens:
+            from server.webapp.utils import update_or_create_scenario
+            for name in project.scens:
+                update_or_create_scenario(self.id, project, name)
+
+        if project.optims:
+            from server.webapp.utils import update_or_create_optimization
+            for name in project.optims:
+                update_or_create_optimization(self.id, project, name)
+
+        if project.results:
+            # only save optimization ones for now...
+            from server.webapp.utils import save_result
+            for name in project.results:
+                if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
+                    result = project.results[name]
+                    print "simpars", result.simpars[0], type(result.simpars[0])
+                    result_entry = save_result(self.id, result,
+                        project.parsets[0].name, # TODO : will break if more than one parset
+                        'optimization')
+                    db.session.add(result_entry)
+                    db.session.flush()
+
     def recursive_delete(self, synchronize_session=False):
 
         str_project_id = str(self.id)
         # delete all relevant entries explicitly
+        db.session.query(OptimizationsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ScenariosDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
         db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
@@ -359,7 +433,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     work_status = db.Enum('started', 'completed', 'cancelled', 'error', name='work_status')
 
-    id = db.Column(UUID(True), primary_key=True)
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     work_type = db.Column(db.String(32), default=None)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     parset_id = db.Column(UUID(True))
@@ -402,7 +476,7 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
         self.updated = updated
 
 costcov_fields = {
-    'year': fields.String,
+    'year': fields.Integer,
     'spending': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
@@ -426,7 +500,8 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov')
+        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
+        'optimizable': fields.Raw,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -518,6 +593,25 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
+        print('####################')
+        print({
+            'name': self.name,
+            'category': self.category,
+            'targetpops': self.targetpops,
+            'criteria': self.criteria,
+            'costcovdata': {
+                't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
+                'coverage': [self.costcov[i]['coverage']
+                if self.costcov[i] is not None
+                else None for i in range(len(self.costcov))],
+            } if self.costcov is not None else None,
+            'ccopars': {
+                't': self.ccopars['t'],
+                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
+                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
+            } if self.ccopars else None
+        })
         program_entry = op.Program(
             self.short,
             targetpars=self.pars_to_program_pars(),
@@ -540,6 +634,10 @@ class ProgramsDb(db.Model):
         )
         program_entry.id = self.id
         return program_entry
+
+    def get_optimizable(self):
+        be_program = self.hydrate()
+        self.optimizable = be_program.optimizable()
 
     def restore(self, program_instance):
         import json
@@ -570,6 +668,7 @@ class ProgsetsDb(db.Model):
         'updated': fields.DateTime,
         'programs': fields.Nested(ProgramsDb.resource_fields),
         'targetpartypes': fields.Raw,
+        'readytooptimize': fields.Boolean
     }
 
     __tablename__ = 'progsets'
@@ -604,6 +703,26 @@ class ProgsetsDb(db.Model):
                 for program in self.programs if program.active
             ]
         )
+        for parset_effect in self.effects:
+            for program_effect in parset_effect['parameters']:
+                for year in program_effect['years']:
+                    effect = {
+                        'intercept': (year['intercept_lower'], year['intercept_upper']),
+                        't': int(year['year']),
+                        'interact': year['interact'],
+                    }
+                    for row in year["programs"]:
+                        effect[row['name']] = (
+                            row['intercept_lower'],
+                            row['intercept_upper']
+                        ) if row['intercept_lower'] is not None and row['intercept_upper'] is not None else None
+                    print('??????????????????')
+                    print(program_effect['name'])
+                    print(program_effect['pop'])
+                    print(effect)
+                    progset_entry.covout[program_effect['name']][tuple(program_effect['pop']) if isinstance(program_effect['pop'], list) else program_effect['pop']].addccopar(
+                        effect, overwrite=True
+                    )
 
         return progset_entry
 
@@ -622,10 +741,11 @@ class ProgsetsDb(db.Model):
             ]
         return program
 
-    def get_targetpartypes(self):
+    def get_extra_data(self):
         be_progset = self.hydrate()
         be_progset.gettargetpartypes()
         self.targetpartypes = be_progset.targetpartypes
+        self.readytooptimize = be_progset.readytooptimize()
 
     def restore(self, progset, program_list):
         from server.webapp.utils import update_or_create_program
@@ -643,7 +763,12 @@ class ProgsetsDb(db.Model):
             else:
                 active = False
 
-            update_or_create_program(self.project.id, self.id, program_name, program, active)
+            p = update_or_create_program(self.project.id, self.id, program_name, program, active)
+            try:
+                p.restore(progset.programs[program['short']])
+            except Exception:  # Sorry, can't do better than that for now
+                pass
+
 
         # In case programs from prj are not in the defaults
         for program_name, program in progset.programs.iteritems():
@@ -651,21 +776,92 @@ class ProgsetsDb(db.Model):
                 program = self._program_to_dict(program)
                 update_or_create_program(self.project.id, self.id, program_name, program, True)
 
-    def create_programs_from_list(self, programs):
-        from optima.utils import saves
-        for program in programs:
-            kwargs = {}
-            for field in ['name', 'short', 'category', 'targetpops', 'pars', 'costcov']:
-                kwargs[field] = program[field]
+        effects = []
+        for targetpartype in progset.targetpartypes:
+            for thispop in progset.progs_by_targetpar(targetpartype).keys():
+                item = {
+                    'name': targetpartype,
+                    'pop': thispop,
+                    'years': [
+                        {
+                            'intercept_upper': progset.covout[targetpartype][thispop].ccopars['intercept'][i][1],
+                            'intercept_lower': progset.covout[targetpartype][thispop].ccopars['intercept'][i][0],
+                            'interact': progset.covout[targetpartype][thispop].ccopars['interact'][i] if 'interact' in progset.covout[targetpartype][thispop].ccopars.keys() else 'random',
+                            'programs': [
+                                {
+                                    'name': k,
+                                    'intercept_lower': v[i][0] if len(v) > i else None,
+                                    'intercept_upper': v[i][1] if len(v) > i else None,
+                                }
+                                for k, v in progset.covout[targetpartype][thispop].ccopars.iteritems()
+                                if k not in ['intercept', 't', 'interact']
+                            ],
+                            'year': progset.covout[targetpartype][thispop].ccopars['t'][i]
+                        } for i in range(len(progset.covout[targetpartype][thispop].ccopars['t']))
+                    ]
+                }
+                effects.append(item)
+        print('-*-*-*-*-*-*+++++++++++++++')
+        print(effects)
+        parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
+        self.effects = [
+            {
+                'parset': str(parset.id) if parset else None,
+                'parameters': effects
+            }
+        ]
+        db.session.commit()
 
-            program_entry = ProgramsDb(
-                self.project_id,
-                self.id,
-                active=program.get('active', False),
-                **kwargs
-            )
-            program_entry.blob = saves(program_entry.hydrate())
-            db.session.add(program_entry)
+    def recreate_programs_from_list(self, programs, progset_id):
+        prog_shorts = []
+        desired_shorts = set([program.get('short_name', program.get('short', '')) for program in programs])
+        print "desired_shorts", desired_shorts
+        existing_programs = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
+
+        existing_shorts = {}
+        for program in existing_programs:
+            if program.short not in desired_shorts:
+                db.session.delete(program)
+            else:
+                existing_shorts[program.short]=program
+        db.session.flush()
+
+
+        for program in programs:
+            # Kind of a hack but sometimes we receive short ans sometimes short_name
+            short = program.get('short_name', program.get('short', ''))
+            if short in existing_shorts:
+                print "Updating program %s" % short
+                program_entry = existing_shorts[short]
+                for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
+                    setattr(program_entry, field, program[field])
+                program_entry.active = program.get('active', False)
+                db.session.add(program_entry)
+            else:
+                print "Creating new program %s" % short
+                kwargs = {}
+                for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
+                    kwargs[field] = program[field]
+
+                kwargs['short'] = short
+                if not 'pregnant' in kwargs['criteria']:
+                    kwargs['criteria']['pregnant'] = False
+
+                if kwargs['short'] in prog_shorts:
+                    raise DuplicateProgram(kwargs['short'])
+                else:
+                    prog_shorts.append(kwargs['short'])
+
+                program_entry = ProgramsDb(
+                    self.project_id,
+                    self.id,
+                    active=program.get('active', False),
+                    **kwargs
+                )
+
+                program_instance = program_entry.hydrate()
+                program_entry.restore(program_instance)
+                db.session.add(program_entry)
 
     def recursive_delete(self, synchronize_session=False):
         db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete(synchronize_session)
@@ -674,3 +870,215 @@ class ProgsetsDb(db.Model):
 
     def as_file(self, loaddir, filename=None):
         return db_model_as_file(self, loaddir, filename, 'name', 'prg')
+
+
+@swagger.model
+class ScenariosDb(db.Model):
+
+    __tablename__ = 'scenarios'
+
+    resource_fields = {
+        'id': Uuid,
+        'progset_id': Uuid,
+        'scenario_type': fields.String,
+        'active': fields.Boolean,
+        'name': fields.String,
+        'parset_id': Uuid,
+        'pars': Json(attribute='pars'),
+        'budget': Json(attribute='budget'),
+        'coverage': Json(attribute='coverage'),
+        'years': Json(attribute='years')
+    }
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.String)
+    scenario_type = db.Column(db.String)
+    active = db.Column(db.Boolean)
+    progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    blob = db.Column(JSON)
+
+    def __init__(self, project_id, parset_id, name, scenario_type,
+                 active=False, progset_id=None, blob={}):
+
+        self.project_id = project_id
+        self.name = name
+        self.scenario_type = scenario_type
+        self.active = active
+        self.progset_id = progset_id
+        self.parset_id = parset_id
+        self.blob = blob
+
+    @property
+    def pars(self):
+        print(self.blob)
+        return self.blob.get('pars', [])
+
+    @property
+    def budget(self):
+        return self.blob.get('budget', [])
+
+    @property
+    def coverage(self):
+        return self.blob.get('coverage', [])
+
+    @property
+    def years(self):
+        return self.blob.get('years', [])
+
+    def hydrate(self):
+
+        from server.webapp.utils import load_progset, load_parset
+
+        parset = load_parset(self.project_id, self.parset_id)
+
+        progset = None
+
+        if self.progset_id:
+            progset = load_progset(self.project_id, self.progset_id)
+
+        blob = deepcopy(self.blob)
+
+        key = self.scenario_type
+        if key == 'parameter':
+            if 'pars' in blob and blob['pars']:
+                blob['pars'] = [
+                    {
+                        'name': item['name'],
+                        'startyear': item['startyear'],
+                        'endval': item['endval'],
+                        'endyear': item['endyear'],
+                        'startval': item['startval'],
+                        'for': [
+                            tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
+                            for for_item in item['for']
+                        ]
+                    } for item in blob['pars'] if 'pars' in blob
+                ]
+            else:
+                blob['pars'] = []
+        else:
+            print(blob)
+            blob[key] = {
+                str(k): v
+                for k, v in blob[key].iteritems() if key in blob
+            }
+
+        if self.scenario_type == "budget":
+
+            blob.pop('coverage', None)
+            blob.pop('pars', None)
+
+            # TODO: remove this hack (dummy values)
+            if 'years' not in blob:
+                blob['t'] = 2030
+            else:
+                blob['t'] = blob['years']
+                del blob['years']
+            print "blob", blob
+            return op.Budgetscen(name=self.name,
+                               parsetname=parset.name,
+                               progsetname=progset.name,
+                               **blob)
+
+        if self.scenario_type == "coverage":
+
+            blob.pop('budget', None)
+            blob.pop('pars', None)
+
+            # TODO: remove this hack (dummy values)
+            if 'years' not in blob:
+                blob['t'] = 2030
+            else:
+                blob['t'] = blob['years']
+                del blob['years']
+            return op.Coveragescen(name=self.name,
+                               parsetname=parset.name,
+                               progsetname=progset.name,
+                               **blob)
+
+        elif self.scenario_type == "parameter":
+
+            blob.pop('coverage', None)
+            blob.pop('budget', None)
+
+            return op.Parscen(name=self.name,
+                              parsetname=parset.name,
+                              **blob)
+
+
+
+@swagger.model
+class OptimizationsDb(db.Model):
+
+    __tablename__ = 'optimizations'
+
+    resource_fields = {
+        'id': Uuid,
+        'which': fields.String,
+        'name': fields.String,
+        'parset_id': Uuid,
+        'progset_id': Uuid,
+        'objectives': Json(),
+        'constraints': Json()
+    }
+
+    id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
+    project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
+    name = db.Column(db.String)
+    which = db.Column(db.String)
+    progset_id = db.Column(UUID(True), db.ForeignKey('progsets.id'))
+    parset_id = db.Column(UUID(True), db.ForeignKey('parsets.id'))
+    objectives = db.Column(JSON)
+    constraints = db.Column(JSON)
+
+    def __init__(self, project_id, parset_id, progset_id, name, which,
+                 objectives={}, constraints={}):
+
+        self.project_id = project_id
+        self.name = name
+        self.which = which
+        self.progset_id = progset_id
+        self.parset_id = parset_id
+        self.objectives = objectives
+        self.constraints = constraints
+
+        self._ensure_current()
+
+    def _ensure_current(self, project=None):
+        """
+        Make sure the objectives and constraints are current.
+        """
+        from server.webapp.utils import load_parset, load_progset, load_project, remove_nans
+
+        if not self.constraints:
+            self.constraints = {}
+
+        if not self.objectives:
+            self.objectives = {}
+
+        if project is None:
+            project = load_project(self.project_id).hydrate()
+        progset = load_progset(self.project_id, self.progset_id).hydrate()
+        parset = load_parset(self.project_id, self.parset_id).hydrate()
+
+        constraints = op.defaultconstraints(project=project, progset=progset)
+
+        # Update the min and the max according to what the user put, do not
+        # update the names, that should change from the programs.
+        constraints['max'].update({
+            x:y for x,y in self.constraints.get('min', {}).items() if x in constraints})
+        constraints['min'].update({
+            x:y for x,y in self.constraints.get('max', {}).items() if x in constraints})
+
+
+        self.constraints = constraints
+
+        objectives = op.defaultobjectives(project=project, progset=progset,
+                                          which=self.which)
+
+        objectives.update({
+            x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
+
+        self.objectives = remove_nans(objectives)

@@ -1,16 +1,17 @@
 """
 Test scenarios
 
-Version: 2016jan27
+Version: 2016feb07
 """
 
 
 ## Define tests to run here!!!
 tests = [
-#'standardscen',
+'standardscen',
+#'maxcoverage',
 #'maxbudget',
 #'90-90-90'
-'VMMC'
+#'VMMC'
 ]
 
 ##############################################################################
@@ -74,7 +75,7 @@ if 'standardscen' in tests:
              parsetname='default',
              pars=[{'endval': 0.,
                 'endyear': 2020,
-                'name': 'circum',
+                'name': 'propcirc',
                 'for': malelist,
                 'startval': .97,
                 'startyear': 2015}]),
@@ -99,11 +100,11 @@ if 'standardscen' in tests:
 
          Parscen(name='More casual acts',
               parsetname='default',
-              pars=[{'endval': 100.,
+              pars=[{'endval': 2.,
                 'endyear': 2015,
                 'name': 'actscas',
                 'for': caspships,
-                'startval': 100.,
+                'startval': 2.,
                 'startyear': 2005}]),
 
          Parscen(name='100% testing',
@@ -140,7 +141,6 @@ if 'standardscen' in tests:
               budget={'Condoms': 1e7,
                            'FSW programs': 1e6,
                            'HTC':2e7,
-                           'OST':1e6,
                            'ART':1e6}),
 
          Budgetscen(name='Double investment in condom program',
@@ -150,7 +150,6 @@ if 'standardscen' in tests:
               budget={'Condoms': array([1e7,2e7]),
                            'FSW programs':array([1e6,1e6]),
                            'HTC':array([2e7,2e7]),
-                           'OST':array([1e6,1e6]),
                            'ART':array([1e6,1e6])}),
 
          Coveragescen(name='A million people covered by the condom program',
@@ -160,7 +159,6 @@ if 'standardscen' in tests:
               coverage={'Condoms': array([285706.,1e6]),
                            'FSW programs':array([15352.,15352.]),
                            'HTC':array([1332862.,1332862.]),
-                           'OST':array([1250.,1250.]),
                            'ART':array([3324.,3324.])}),
 
          Budgetscen(name='Double investment in ART, HTC and OST',
@@ -170,14 +168,22 @@ if 'standardscen' in tests:
               budget={'Condoms': array([1e7,1e7,1e7]),
                            'FSW programs':array([1e6,1e6,1e6]),
                            'HTC':array([2e7,3e7,4e7]),
-                           'OST':array([1e6,1.5e6,2e6]),
-                               'ART':array([1e6,1.5e6,2e6])})
+                           'ART':array([1e6,1.5e6,2e6])}),
+
+         Budgetscen(name='Test some progs only',
+              parsetname='default',
+              progsetname='default',
+              t=2016,
+              budget={'Condoms': 1e7,
+                           'FSW programs':1e6,
+                           'ART':1e6})
+
         ]
     
     # Store these in the project
     P.addscenlist(scenlist)
-    P.scens['A million people covered by the condom program'].active = False # Turn off a scenario
-    P.scens[2].active = True # Turn off another scenario
+#    P.scens['A million people covered by the condom program'].active = True # Turn off a scenario
+#    P.scens[2].active = False # Turn off another scenario
     
 #    # Turn off budget scenarios
 #    for i,scen in P.scens.items():
@@ -285,21 +291,27 @@ if '90-90-90' in tests:
 
 
 
-## Set up project etc.
-if 'maxbudget' in tests:
+
+#################################################################################################################
+## Coverage
+#################################################################################################################
+
+if 'maxcoverage' in tests:
     t = tic()
 
-    print('Running maximum budget scenario test...')
-    from optima import Budgetscen, odict
-    from optima import defaults
+    print('Running maximum coverage scenario test...')
+    from optima import Coveragescen, Parscen, defaults, dcp
     
     ## Set up default project
     P = defaults.defaultproject('generalized')
     
     ## Define scenarios
+    defaultbudget = P.progsets['default'].getdefaultbudget()
+    maxcoverage = dcp(defaultbudget) # It's just an odict, though I know this looks awful
+    for key in maxcoverage: maxcoverage[key] = array([maxcoverage[key]+1e14])
     scenlist = [
-        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=P.progsets['default'].getdefaultbudget()),
-        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=odict([(key, 1e9) for key in P.progsets['default'].programs.keys()])),
+        Parscen(name='Current conditions', parsetname='default', pars=[]),
+        Coveragescen(name='Full coverage', parsetname='default', progsetname='default', t=[2016], coverage=maxcoverage),
         ]
     
     # Run the scenarios
@@ -308,6 +320,39 @@ if 'maxbudget' in tests:
      
     if doplot:
         from optima import pygui
+        pygui(P.results[-1], toplot='default')
+
+
+
+
+
+
+## Set up project etc.
+if 'maxbudget' in tests:
+    t = tic()
+
+    print('Running maximum budget scenario test...')
+    from optima import Budgetscen, defaults, dcp
+    
+    ## Set up default project
+    P = defaults.defaultproject('generalized')
+    
+    ## Define scenarios
+    defaultbudget = P.progsets['default'].getdefaultbudget()
+    maxbudget = dcp(defaultbudget)
+    for key in maxbudget: maxbudget[key] += 1e14
+    scenlist = [
+        Budgetscen(name='Current conditions', parsetname='default', progsetname='default', t=[2016], budget=defaultbudget),
+        Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[2016], budget=maxbudget),
+        ]
+    
+    # Run the scenarios
+    P.addscenlist(scenlist)
+    P.runscenarios() 
+     
+    if doplot:
+        from optima import pygui, plotpars
+        apd = plotpars([scen.scenparset.pars[0] for scen in P.scens.values()])
         pygui(P.results[-1], toplot='default')
 
 
@@ -335,7 +380,7 @@ if 'VMMC' in tests:
              parsetname='default',
              pars=[{'endval': 0.2,
                 'endyear': 2020,
-                'name': 'circum',
+                'name': 'propcirc',
                 'for': malelist,
                 'startval': .85,
                 'startyear': 2015.2}]),
@@ -350,17 +395,7 @@ if 'VMMC' in tests:
               parsetname='default',
               progsetname='default',
               t=2016,
-              budget={
-                      'Condoms': 1e7,
-                      'VMMC': 1e8,
-                      'FSW programs': 1e6,
-                      'MSM programs': 1e6,
-                      'ART':1e6,
-                      'PMTCT':1e6,
-                      'HTC workplace programs':2e7,
-                      'HTC mobile clinics':2e7,
-                      'HTC medical facilities':2e7
-                      }),
+              budget={'VMMC': 1e8}),
 
         ]
     

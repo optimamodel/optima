@@ -1,3 +1,4 @@
 define([
-  './calibration-ctrl'
+  './calibration-ctrl',
+  './auto/auto-calibration-ctrl'
 ], function () {});

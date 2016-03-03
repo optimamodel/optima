@@ -27,6 +27,16 @@ class UserAlreadyExists(BaseRESTException):
             self.description = 'User with e-mail "{}" already exists'.format(email)
 
 
+class DuplicateProgram(BaseRESTException):
+    code = 400
+    _message = 'Duplicate program short name'
+
+    def __init__(self, short_name=None):
+        super(DuplicateProgram, self).__init__()
+        if short_name is not None:
+            self.description = 'Duplicate program short name: {}'.format(short_name)
+
+
 class RecordDoesNotExist(BaseRESTException):
     code = 410
     _message = 'The resource you are looking for does not exist'
@@ -62,6 +72,8 @@ class ParsetAlreadyExists(BaseRESTException):
 class ProgsetDoesNotExist(RecordDoesNotExist):
     _model = 'progset'
 
+class ScenarioDoesNotExist(RecordDoesNotExist):
+    _model = 'scenario'
 
 class ProgramDoesNotExist(RecordDoesNotExist):
     _model = 'program'

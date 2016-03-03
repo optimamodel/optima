@@ -110,8 +110,14 @@ def interrupt(*args): # pylint: disable=W0613
     sentinel['exit'] = True
     sys.exit()
 
-for sig in (SIGABRT, SIGINT, SIGTERM):
-    signal(sig, interrupt)
+# If we're using Twisted as the runner, let it handle the signals.
+if "twisted" not in sys.modules:
+    for sig in (SIGABRT, SIGINT, SIGTERM):
+        signal(sig, interrupt)
+else:
+    from twisted.internet import reactor
+    reactor.addSystemEventTrigger("before", "shutdown", interrupt)
+
 
 
 class CalculatingThread(threading.Thread):

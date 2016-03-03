@@ -3,7 +3,7 @@
 Functions to read in the economic data and transform it into time series
 '''
 
-from optima import OptimaException, odict, printv, today, smoothinterp
+from optima import OptimaException, odict, printv, today, smoothinterp, isnumber
 from numpy import nan, isnan, array, logical_or, nonzero
 
 def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=2):
@@ -25,7 +25,7 @@ def loadeconomicsspreadsheet(filename='economics.xlsx', verbose=2):
         
         # Check that only numeric data have been entered
         for column,datum in enumerate(thesedata):
-            if not isinstance(datum, (int, float)):
+            if not isnumber(datum):
                 errormsg = 'Invalid entry in sheet "%s", parameter "%s":\n' % (sheetname, thispar) 
                 errormsg += 'row=%i, column=%s, value="%s"\n' % (row+1, column, datum)
                 errormsg += 'Be sure all entries are numeric'

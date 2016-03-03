@@ -1,0 +1,68 @@
+<div class="c-prosce-modal">
+  <div class="modal-header c-prosce-modal__header"> CREATE A PROGRAM SCENARIO</div>
+
+  <form name="manageScenarioForm" class="modal-body c-parsce-modal__body" novalidate ng-submit="manageScenario()">
+
+    <!-- Name -->
+    <div class="o-form__field-wrap">
+      <label class="o-form__label"> Name </label>
+      <input class="o-form__input txbox" type="text" ng-model="row.name" required/>
+      <div class="error-hint" ng-show="scenarioExists()"> Scenario with this name already exists, please choose a different name. </div>
+    </div>
+
+    <!--  Select a parameter set to use as baseline  -->
+    <div class="c-prosce-modal__selects u-layout-horizontal">
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <label class="o-form__label"> Select a parameter set to use as baseline </label>
+        <select class="o-form__input txbox" type="text" ng-model="row.parset_id" ng-options="parset.id as parset.name for parset in parsets"
+       required>
+         <option value=""> -- Select --</option>
+        </select>
+      </div>
+
+      <!--  Select a program set to use as baseline  -->
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <label class="o-form__label"> Select a program set to use as baseline </label>
+        <select class="o-form__input txbox" type="text" ng-model="row.progset_id" ng-options="progset as progset.name for progset in progsets" required>
+         <option value=""> -- Select --</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="c-prosce-modal__selects u-layout-horizontal" ng-show="row.progset_id && !row.progset_id.readytooptimize">
+      <div class="o-form__field-wrap c-prosce-modal__input-with-space">
+        <p class="error-hint">This program set is not ready to optimize, please pick another one</p>
+      </div>
+    </div>
+    <div class="o-card _program-scenario-wrap" ng-repeat="rs in temp track by $index">
+      <div class="c-input-table">
+
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v">
+          <div class="c-input-table__label">
+            Year
+          </div>
+          <input type="number" class="c-input-table__input txbox" ng-model="row.years[$index]" required/>
+        </div>
+
+        <div class="c-input-table__field u-layout-horizontal u-center-horizontal-v"  ng-repeat="prog in progsetsOptimized track by $index">
+          <div class="c-input-table__label">
+            {{row[type][$index].program}}
+          </div>
+          <input type="number" class="c-input-table__input txbox" ng-model="row[type][$index].values[$parent.$index]" required/>
+        </div>
+
+        <div class="o-card__delete" ng-click="removeParam(temp, $index)">x</div>
+      </div>
+    </div>
+
+    <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!row.parset_id || !row.progset_id" ng-click="addParam(row)"> Add year</button>
+
+    <div class="c-parsce-modal__buttons u-layout-horizontal">
+      <button type="submit" ng-disabled="manageScenarioForm.$invalid || scenarioExists() || !row.progset_id.readytooptimize" class="btn __s o-form__button o-form__button--save">
+        OK
+      </button>
+    </div>
+
+  </form>
+
+</div>

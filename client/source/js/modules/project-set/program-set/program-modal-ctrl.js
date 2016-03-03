@@ -21,22 +21,33 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           allstates: true
         },
         showAddData: false,
-        newAddData: {}
+        newAddData: {},
+        progPopReadOnly: false
       };
 
       /**
        * All populations for the project will be listed for the program for user to select from.
        * Logic below will:
-       * 1. set the populations which have already been selected for the program as active.
-       * 2. if all the populations have been selected for the program selectAll will be set to true.
+       * 1. If there is some parameter in the program which hae 'tot' population then all populations should be selected for the program.
+       * 2. set the populations which have already been selected for the program as active.
+       * 3. if all the populations have been selected for the program selectAll will be set to true.
        */
-      if(program.populations && program.populations.length > 0) {
-        _.forEach($scope.state.populations, function(population) {
-          population.active = (program.populations.length === 0) || (program.populations.indexOf(population.short_name) > -1);
-        });
-        $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
-          return !population.active;
-        })
+      var isTot = _.some($scope.state.program.parameters, function(parameter) {
+        return parameter.pops.indexOf('tot') >= 0;
+      });
+      if(isTot) {
+        $scope.state.progPopReadOnly = true;
+        $scope.state.selectAll = true;
+        $scope.selectAllPopulations();
+      } else {
+        if(program.populations && program.populations.length > 0) {
+          _.forEach($scope.state.populations, function(population) {
+            population.active = (program.populations.length === 0) || (program.populations.indexOf(population.short_name) > -1);
+          });
+          $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
+            return !population.active;
+          })
+        }
       }
 
       /**
@@ -61,17 +72,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           });
           parameter.selectAll = parameter.parameterObj.pships && parameter.pops && parameter.parameterObj.pships.length === parameter.pops.length;
 	      } else if(parameter.pops && parameter.pops.length > 0 && parameter.pops[0]!="tot") {
-          var selectedPopulation = _.map(parameter.pops, function(pop) {
-            return _.find($scope.state.populations, function(populations) {
-              return pop === populations.short_name;
-            });
-          });
-          parameter.populations = angular.copy(selectedPopulation);
+          parameter.populations = angular.copy($scope.state.populations);
           _.forEach(parameter.populations, function(population) {
-            population.added = true;
-          });
-          parameter.populations = _.extend(angular.copy($scope.state.populations), parameter.populations);
-          parameter.selectAll = parameter.populations && $scope.state.populations && parameter.populations.length === $scope.state.populations.length;
+            if (_.find(parameter.pops, 
+                       function(pop) { return pop === population.short_name })) {
+              population.added = true;
+            } else {
+              population.added = false;
+            }
+          })
+          parameter.selectAll = parameter.populations && $scope.state.populations && parameter.populations.length === parameter.pops.length;
         }
       });
 
@@ -84,17 +94,19 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
 
       // Initialize eligibility criteria
-      if($scope.state.program.criteria) {
-        $scope.state.eligibility.pregnantFalse = !$scope.state.program.criteria.pregnant;
-        if($scope.state.program.criteria.hivstatus && $scope.state.program.criteria.hivstatus.length > 0
-          && $scope.state.program.criteria.hivstatus !== 'allstates') {
-          _.each($scope.state.program.criteria.hivstatus, function(state) {
-            $scope.state.eligibility[state] = true;
-          });
-          $scope.state.eligibility.allstates = false;
+      if(!$scope.state.program.criteria) {
+        $scope.state.program.criteria = {
+          hivstatus: 'allstates',
+          pregnant: false
         }
-      } else {
-        $scope.state.program.criteria = {}
+      }
+      $scope.state.eligibility.pregnantFalse = !$scope.state.program.criteria.pregnant;
+      if($scope.state.program.criteria.hivstatus && $scope.state.program.criteria.hivstatus.length > 0
+        && $scope.state.program.criteria.hivstatus !== 'allstates') {
+        _.each($scope.state.program.criteria.hivstatus, function(state) {
+          $scope.state.eligibility[state] = true;
+        });
+        $scope.state.eligibility.allstates = false;
       }
     };
 
@@ -151,7 +163,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.addPopulations = function(parameter) {
       if(parameter.parameterObj.by === 'tot'){
         parameter.populations = [];
-        $scope.formInvalid = false;
       }else{
         if(!parameter.pships || parameter.pships.length === 0) {
           parameter.populations = $scope.state.populations;
@@ -177,13 +188,6 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       _.forEach(param.parameterObj.pships, function(pship) {
         pship.added = param.selectAll;
       });
-    };
-    $scope.formInvalid = false;
-    $scope.isPopulationSelected = function(parameter, parameterPops) {
-      $scope.formInvalid = !_.find(parameterPops, function(pop) {
-        return pop.added;
-      });
-      return $scope.formInvalid;
     };
     // Function to remove a parameter
     $scope.removeParameter = function ($index) {

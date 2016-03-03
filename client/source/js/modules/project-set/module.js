@@ -1,6 +1,7 @@
 define([
   'angular',
   'ui.router',
+  'toastr',
   '../project/project-api-service',
   '../resources/model',
   '../ui/type-selector/index',
@@ -8,7 +9,10 @@ define([
   '../common/export-all-data',
   '../validations/more-than-directive',
   '../validations/less-than-directive',
-  '../validations/year-directive'
+  '../validations/year-directive',
+  '../validations/range-limit',
+  '../parameter-scenarios-modal/parameter-scenarios-modal',
+  '../program-scenarios-modal/program-scenarios-modal'
 ], function (angular) {
   'use strict';
 
@@ -20,7 +24,11 @@ define([
     'ui.router',
     'app.validations.more-than',
     'app.validations.less-than',
-    'app.validations.year'
+    'app.validations.year',
+    'app.validations.range-limit',
+    'app.parameter-scenarios-modal',
+    'app.program-scenarios-modal',
+    'toastr'
   ])
     .config(function ($stateProvider) {
       $stateProvider

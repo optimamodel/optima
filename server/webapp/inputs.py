@@ -36,6 +36,50 @@ def Json(orig):
     return orig
 
 
+def scenario_par(orig_pars):
+    if not isinstance(orig_pars, list):
+        raise ValueError("needs to be a list.")
+
+    pars = []
+
+    for i in orig_pars:
+
+        pars.append({
+            'endval': float(i['endval']),
+            'endyear': int(i['endyear']),
+            'name': str(i['name']),
+            'for': [i['for']],
+            'startval': float(i['startval']),
+            'startyear': int(i['startyear'])
+        })
+
+    return pars
+
+def scenario_program(orig_programs):  # result is either budget or coverage, depending on scenario type
+    if not isinstance(orig_programs, list):
+        raise ValueError("needs to be a list or dictionaries.")
+
+    if len(orig_programs) == 0:
+        return []
+
+    if not isinstance(orig_programs[0], dict):
+        raise ValueError("needs to be a list or dictionaries.")
+
+    programs = {}
+    for program_entry in orig_programs:
+        program_name = str(program_entry['program'])
+        values = program_entry['values']
+        print('---------')
+        print(values)
+        if not isinstance(values, list):
+            values = [values]
+        programs[program_name] = []
+        for elem in values:
+            programs[program_name].append(float(elem))
+
+    return programs
+
+
 class SubRequest:
 
     def __init__(self, orig_dict):

@@ -1,3 +1,25 @@
+<script>
+  function remove_default_plugin() {
+    var svgGraphFigures = $('svg.mpld3-figure');
+    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro3')) {
+      svgGraphFigures.each(function () {
+        var that = this;
+        $(that).find('.mpld3-toolbar').each(function () {
+          $(this).remove();
+        });
+      });
+    } else {
+      setTimeout(remove_default_plugin, 150);
+    }
+  }
+
+  $(document).ready(function() {
+    remove_default_plugin();
+    $(document.body).on('click', '.updateGraph' ,function() {
+      remove_default_plugin();
+    });
+  });
+</script>
 <!-- Cost functions tab -->
 <div class="c-tab" ng-controller="CostController">
   <div style="width: 40%">
@@ -14,8 +36,9 @@
   <div ng-if="selectedProgram">
     <div style="display: flex; margin-top: 2%">
       <div class="chart-container __medium">
-        <div mpld3-chart="state.chartData" id="cost_cov_chart"></div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="cost_cov_chart"></chart-toolbar>
+        <div mpld3-chart="state.chartData" id="cost_cov_chart" ng-if="state.chartData"></div>
+        <div class="c-caption" ng-if="state.displayCaption">{{state.displayCaption}}</div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="{{ state.chartData.id }}"></chart-toolbar>
       </div>
       <div class="flex-column margin_left">
         <div class="flex-column">
@@ -33,11 +56,14 @@
             <tr ng-repeat="data in state.cpData">
               <td>{{data.year}}</td>
               <td>{{state.estdSize[data.year.toString()]}}</td>
-              <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
-              <td>({{((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
-                state.estdSize[data.year.toString()] * data.saturationpercent_lower : '') + '-' +
+              <td>{{data.saturationpercent_lower * 100}} - {{data.saturationpercent_upper * 100}}</td>
+              <td>{{
+                ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
+                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_lower)) : '') + '-' +
+
                 ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_upper !== undefined) ?
-                state.estdSize[data.year.toString()] * data.saturationpercent_upper: '')}})</td>
+                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_upper)) : '')}}
+              </td>
               <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
               <td><i class="fa fa-trash-o" ng-click="removeFromCPData(data)"></i></td>
             </tr>
@@ -51,10 +77,12 @@
                 <input name="spupper" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_upper"
                        type="number" min="{{state.newCPData.saturationpercent_lower || 0}}" ng-class="{'invalid': cpDataForm.spupper.$invalid}"/>
               </td>
-              <td>({{((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_lower !== undefined)
-                ? state.estdSize[state.newCPData.year] * state.newCPData.saturationpercent_lower : '') + '-' +
+              <td>{{
+                ((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_lower !== undefined)
+                ? Math.round(state.estdSize[state.newCPData.year] * (state.newCPData.saturationpercent_lower/100)) : '') + '-' +
+
                 ((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_upper !== undefined) ?
-                state.estdSize[state.newCPData.year] * state.newCPData.saturationpercent_upper : '')}})</td>
+                Math.round(state.estdSize[state.newCPData.year] * (state.newCPData.saturationpercent_upper/100)) : '')}}</td>
               <td>
                 <input name="uclower" class="txbox __inline __s" ng-model="state.newCPData.unitcost_lower"
                        type="number" min="0" ng-class="{'invalid': cpDataForm.uclower.$invalid}"/> -
@@ -62,7 +90,7 @@
                        type="number" min="state.newCPData.unitcost_lower || 0" ng-class="{'invalid': cpDataForm.ucupper.$invalid}"/>
               </td>
               <td>
-                <i class="fa fa-check" ng-click="addToCPData(cpDataForm)"></i>
+                <i class="fa fa-check" ng-click="addToCPData(cpDataForm);"></i>
                 <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCPData = {};state.showAddCPData = false"></i>
               </td>
             </tr>
@@ -100,7 +128,7 @@
                     <input ng-model="state.newCCData.coverage" class="txbox __inline __ls" type="number" min="0" name="coverage" ng-class="{'invalid': ccDataForm.coverage.$invalid}"/>
                   </div>
                   <div class="data data_nomargin spaced" style="display: flex;justify-content: center">
-                    <i class="fa fa-check" ng-click="addToCCData(ccDataForm)"></i>
+                    <i class="fa fa-check" ng-click="addToCCData(ccDataForm);"></i>
                     <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
                   </div>
                 </form>
@@ -129,7 +157,7 @@
       </div>
     </div>
     <div class="u-center-horizontal margin-top-m">
-      <button type="button" class="btn __m" style="margin-left: 15px" ng-click="updateGraph()">Update</button>
+      <button type="button" class="btn __m updateGraph" style="margin-left: 15px" ng-click="updateGraph()">Update</button>
     </div>
   </div>
 </div>
