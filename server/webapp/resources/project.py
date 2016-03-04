@@ -747,7 +747,6 @@ class ProjectFromData(Resource):
     @report_exception
     @marshal_with(project_upload_resource)
     def post(self):
-        from optima import __version__ as version # CK: shouldn't this just be op.__version__ like above?
         user_id = current_user.id
 
         args = project_upload_form_parser.parse_args()
@@ -768,7 +767,7 @@ class ProjectFromData(Resource):
             project_name, user_id, datastart,
             dataend,
             pops,
-            version=version)
+            version=op.__version__)
 
         # New project ID needs to be generated before calling restore
         db.session.add(project_entry)
