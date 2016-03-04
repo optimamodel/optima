@@ -124,7 +124,7 @@ new.data['prep']     = old['data']['txrx']['prep']
 new.data['numpmtct'] = old['data']['txrx']['numpmtct']
 new.data['breast']   = old['data']['txrx']['breast']
 new.data['birth']    = [old['data']['txrx']['birth'][0] for _ in range(nfemalepops)] # Duplicate nfpops times
-new.data['treatvs']  = missingtot(0.8)
+new.data['treatvs']  = missingtot(0.8) # WARNING, is this appropriate?
 
 # Optional
 new.data['optnumtest']   = old['data']['opt']['numtest']
