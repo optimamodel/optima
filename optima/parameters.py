@@ -178,8 +178,6 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     for row,key in enumerate(keys):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
-
-    largestpopkey = keys[argmax([mean(sanitizedy[key]) for key in keys])] # Find largest population size
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -190,6 +188,8 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
         errormsg = 'Not more than one data point entered for any population size\n'
         errormsg += 'To estimate growth trends, at least one population must have at least 2 data points'
         raise OptimaException(errormsg)
+        
+    largestpopkey = atleast2datapoints[argmax([mean(sanitizedy[key]) for key in atleast2datapoints])] # Find largest population size (for at least 2 data points)
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
