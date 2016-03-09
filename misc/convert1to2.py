@@ -23,10 +23,10 @@ Version: 2016mar03
 ### Read old spreadsheet
 ##################################################################################################################
 
-from optima import Project, printv, odict, defaults, saveobj
+from optima import Project, printv, odict, defaults, saveobj, dcp, plotresults
 from sys import argv
 from numpy import nan, zeros
-defaultfilename = 'example.json'
+defaultfilename = 'Sudan_20160216.json'#'example.json'
 oldext = '.json'
 newext = '.prj'
 dosave = True
@@ -182,7 +182,7 @@ new.data['const'] = defaultproject.data['const']
 
 
 ##################################################################################################################
-### Run simulation and copy calibration
+### Run simulation and copy calibration parameters
 ##################################################################################################################
 
 print('Running simulation and calibration...')
@@ -195,16 +195,34 @@ new.parsets[0].pars[0]['initprev'].y[:] = old['F'][0]['init'][:]
 new.parsets[0].pars[0]['force'].y[:]    = old['F'][0]['force'][:]
 new.parsets[0].pars[0]['inhomo'].y[:]   = old['F'][0]['inhomo'][:]
 
-# Run simulation
-new.runsim()
+## Run simulation
+#new.runsim()
 
+##################################################################################################################
+### Autocalibrate to match old calibration curves
+##################################################################################################################
+
+# First work out the indices for the calibration results that would map onto data years.
+
+tvec = old['M']['tvec']
+epiyears = old['data']['epiyears']
+invdt = int(round(1/(tvec[1]-tvec[0])))
+endind = int(round((epiyears[-1]-epiyears[0])*invdt)) + 1
+
+new.runsim()
+new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
+new.autofit(name='v1-autofit', orig='default', fitwhat=['init','force','inhomo'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+new.data['hivprev'] = old['data']['key']['hivprev']
+
+plotresults(new.parsets['v1-autofit'].getresults(), toplot=['prev-pops'])
+#alt.manualfit(orig='v1-autofit')
 
 ##################################################################################################################
 ### Plotting and calibration
 ##################################################################################################################
 
 print('Doing calibration...')
-new.manualfit()
+#new.manualfit()
 
 if dosave: saveobj(filename.strip(oldext)+newext, new)
 print('Done.')
