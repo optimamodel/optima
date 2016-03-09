@@ -322,7 +322,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     
     if which=='simple':
         printv('Creating simple epidemic project...', 2, verbose)
-        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', **kwargs)
+        P = Project(spreadsheet=spreadsheetpath+'simple.xlsx', verbose=verbose, **kwargs)
     
     
     
@@ -334,7 +334,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     ##########################################################################################################################
     elif which=='generalized':
         printv('Creating generalized epidemic project...', 2, verbose)
-        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', **kwargs)
+        P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
 
         # Get a default progset 
         R = defaultprogset(P, addpars=True, addcostcov=False, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
@@ -469,7 +469,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     elif which in ['best','concentrated']:
         printv('Creating concentrated example...', 2, verbose)
         # Make project and store results from default sim
-        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', **kwargs)
+        P = Project(spreadsheet=spreadsheetpath+'concentrated.xlsx', verbose=verbose, **kwargs)
         
         # "Calibrate"
         P.parsets[0].pars[0]['force'].y[:] = [ 2.09   ,  1.232  ,  0.9625 ,  0.88   ,  1.51525,  0.726  ]
