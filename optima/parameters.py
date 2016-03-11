@@ -576,7 +576,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     # Convert any text in limits to a numerical value
     limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
-    # Apply limits, preserving original class
+    # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
