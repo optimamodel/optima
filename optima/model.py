@@ -709,7 +709,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         else: 
             
             # WARNING, copied from above!!
+            print('hi')
+            print proptx[t]
             if not(isnan(proptx[t])):
+                print('hiiii')
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 totnewtreat =  proptx[t] * currdx - currtx 

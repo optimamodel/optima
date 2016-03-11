@@ -347,11 +347,12 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
     newy = interp(newx, origx, origy) # Use interpolation
-    validinds = ~isnan(newy) # Remove nans since these don't exactly smooth well
-    validy = newy[validinds]
-    validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
-    validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
-    newy[validinds] = validy # Copy back into full vector
+    validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
+    if len(validinds): # No point doing these steps if no non-nan values
+        validy = newy[validinds]
+        validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
+        validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
+        newy[validinds] = validy # Copy back into full vector
     
     # Apply growth if required
     if growth is not None:
