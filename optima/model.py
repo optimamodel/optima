@@ -1,6 +1,6 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan
 from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
@@ -476,7 +476,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         raw_inci[:,t] = (newinfections.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
-        if propdx[t]:
+        if not(isnan(propdx[t])):
             currplhiv = people[allplhiv,:,t].sum(axis=0)
             currdx = people[alldx,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
@@ -495,7 +495,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            if propdx[t]:
+            if not(isnan(propdx[t])):
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             else:
                 newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
@@ -519,7 +519,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         if usecascade:
 
             ## Diagnosed
-            if propcare[t]:
+            if not(isnan(propcare[t])):
                 curralldx = people[alldx,:,t].sum(axis=0)
                 currcare  = people[allcare,:,t].sum(axis=0)
                 curruncare = curralldx[:] - currcare[:]
@@ -538,7 +538,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     progout = 0 # Cannot progress out of AIDS stage
                 hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[dx[cd4],:,t] * background
-                if propcare[t]:
+                if not(isnan(propcare[t])):
                     newlinkcaredx[cd4]   = fractiontocare * people[dx[cd4],:,t] # diagnosed moving into care
                     newlinkcarelost[cd4] = fractiontocare * people[lost[cd4],:,t] # lost moving into care
                 else:
@@ -554,7 +554,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
-            if proptx[t]: # WARNING, newtreat should remove people not just from 'care' but also from 'off'
+            if not(isnan(proptx[t])): # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 totnewtreat =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
@@ -594,7 +594,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
             currentusupp = people[usvl,:,t] # how many with suppressed viral load
             currentsupp  = people[svl,:,t]
-            if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+            if not(isnan(propsupp[t])): # WARNING this will replace consequence of viral monitoring programs
                 currsupp  = currentsupp.sum(axis=0)
                 currusupp = currentusupp.sum(axis=0)
                 newsupptot = (propsupp[t]*currusupp - currsupp).sum()
@@ -618,7 +618,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
                 hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths       = dt * people[usvl[cd4],:,t] * background
-                if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+                if not(isnan(propsupp[t])): # WARNING this will replace consequence of viral monitoring programs
                     virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
                 else:
                     virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t]
@@ -709,7 +709,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         else: 
             
             # WARNING, copied from above!!
-            if proptx[t]:
+            if not(isnan(proptx[t])):
                 currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
                 totnewtreat =  proptx[t] * currdx - currtx 

@@ -300,7 +300,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, strictnans=False):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -329,8 +329,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if not(origx.shape==origy.shape): 
         errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
         raise Exception(errormsg)
-    origy = origy[~isnan(origy)] 
-    origx = origx[~isnan(origy)]
+    if strictnans:
+        origy = origy[~isnan(origy)] 
+        origx = origx[~isnan(origy)]
     
     # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
     if smoothness is None: smoothness = ceil(len(newx)/len(origx))
@@ -346,8 +347,11 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
     newy = interp(newx, origx, origy) # Use interpolation
-    newy = concatenate([newy[0]*ones(smoothness), newy, newy[-1]*ones(smoothness)])
-    newy = convolve(newy, kernel, 'valid') # Smooth it out a bit
+    validinds = ~isnan(newy) # Remove nans since these don't exactly smooth well
+    validy = newy[validinds]
+    validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
+    validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
+    newy[validinds] = validy # Copy back into full vector
     
     # Apply growth if required
     if growth is not None:
