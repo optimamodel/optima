@@ -11,7 +11,7 @@ if [ -d "source/vendor" ]; then
 fi
 
 # install npm and bower deps
-npm install
+npm install --skip-installed
 
 # add version file
 commit=$(git rev-parse --verify --short HEAD)
