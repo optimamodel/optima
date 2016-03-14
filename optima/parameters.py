@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.4 (2016feb08)
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, nan
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
@@ -460,6 +460,12 @@ def makepars(data, label=None, verbose=2):
         pars['force'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
     
+    # Overwrite parameters that shouldn't be being loaded from the data
+    for parname in ['propdx', 'proptx', 'propcare', 'propsupp']:
+        pars[parname].t['tot'] = [0.]
+        pars[parname].y['tot'] = [nan]
+        
+    
     
     # Balance partnerships parameters    
     tmpacts = odict()
@@ -570,7 +576,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     # Convert any text in limits to a numerical value
     limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
-    # Apply limits, preserving original class
+    # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
