@@ -220,12 +220,17 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if abslimits['min'][pind] is None: abslimits['min'][pind] = 0
         if abslimits['max'][pind] is None: abslimits['max'][pind] = inf
     for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
-        if scaleratio<1:
-            abslimits['min'][oind] *= rescaledbudget[oind] # If total budget is less, scale down the lower limit...
-            abslimits['max'][oind] *= origbudget[oind] # ...but keep the upper limit in absolute terms
-        elif scaleratio>=1:
-            abslimits['min'][oind] *= origbudget[oind] # If the total budget is more, keep the absolute original lower limit...
-            abslimits['max'][oind] *= rescaledbudget[oind] # ...but scale up the upper limit
+        # Fully-relative limits (i.e. scale according to total spend).
+        abslimits['min'][oind] *= rescaledbudget[oind]
+        abslimits['max'][oind] *= rescaledbudget[oind]
+
+#        # Semi-relative limits. Note: Has issues, but is left here for posterity.
+#        if scaleratio<1:
+#            abslimits['min'][oind] *= rescaledbudget[oind] # If total budget is less, scale down the lower limit...
+#            abslimits['max'][oind] *= origbudget[oind] # ...but keep the upper limit in absolute terms
+#        elif scaleratio>=1:
+#            abslimits['min'][oind] *= origbudget[oind] # If the total budget is more, keep the absolute original lower limit...
+#            abslimits['max'][oind] *= rescaledbudget[oind] # ...but scale up the upper limit
 
     # Apply constraints on optimizable parameters
     noptimprogs = len(optiminds) # Number of optimizable programs
