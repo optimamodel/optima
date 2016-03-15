@@ -25,6 +25,40 @@ defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default 
 
 
 
+def humanise_y_ticks(ax):
+    vals = list(ax.get_yticks())
+    max_val = max([abs(v) for v in vals])
+    if max_val < 1e3:
+        return map(str, vals)
+    if max_val >= 1e3 and max_val < 1e6:
+        labels = ["%.1fK" % (v/1e3) for v in vals]
+    elif max_val >= 1e6 and max_val < 1e9:
+        labels = ["%.1fM" % (v/1e6) for v in vals]
+    elif max_val >= 1e9:
+        labels = ["%.1fB" % (v/1e9) for v in vals]
+    is_fraction = False
+    for label in labels:
+        if label[-3:-1] != ".0":
+            is_fraction = True
+    if not is_fraction:
+        labels = [l[:-3] + l[-1] for l in labels]
+    ax.set_yticklabels(labels)
+
+
+def reformat_figure(figure):
+    figure.set_size_inches(7, 3.5)
+    for axes in figure.axes:
+        humanise_y_ticks(axes)
+        box = axes.get_position()
+        axes.set_position(
+            [box.x0, box.y0, box.width * 0.6, box.height])
+        # Put a legend to the right of the current axis
+        legend = axes.get_legend()
+        if legend is not None:
+            legend._loc = 2
+            legend.set_bbox_to_anchor((1, 1.02))
+
+
 def getplotselections(results):
     ''' 
     From the inputted results structure, figure out what the available kinds of plots are. List results-specific
@@ -362,7 +396,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
     
                 # Configure plot specifics
                 currentylims = ylim()
-                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
+                                  'frameon':False}
                 ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
                 if isperpop:  plottitle += ' -- ' + results.popkeys[i] # Add extra information to plot if by population
@@ -376,6 +411,8 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
                 
+                reformat_figure(epiplots[pk])
+
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
@@ -511,7 +548,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
                 if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
                 else: yearlabel=None
                 ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
-        if nbudgetyears>1: ax[-1].legend()
+        if nbudgetyears>1: ax[-1].legend(frameon=False)
         ax[-1].set_xticks(arange(nprogs)+1)
         if plt<nprogs: ax[-1].set_xticklabels('')
         if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
@@ -523,7 +560,9 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
-        
+
+    reformat_figure(fig)
+
     close(fig)
     
     return fig
@@ -593,7 +632,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         for item in ax.get_xticklabels() + ax.get_yticklabels(): item.set_fontsize(ticksize)
 
         # Configure plot specifics
-        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':''}
+        legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
+                          'frameon':False}
         if ismultisim: ax.set_title('Cascade -- %s' % titles[plt])
         else: ax.set_title('Cascade')
         ax.set_xlabel('Year')
@@ -601,6 +641,8 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
+    reformat_figure(fig)
+
     close(fig)
     
     return fig
