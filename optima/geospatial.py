@@ -113,7 +113,9 @@ def geogui():
                 workbook = Workbook(spreadsheetpath)
                 wspopsize = workbook.add_worksheet('Population sizes')
                 wsprev = workbook.add_worksheet('Population prevalence')
-                wsalloc = workbook.add_worksheet('Program allocations')
+#                wsalloc = workbook.add_worksheet('Program allocations')
+                
+                nprogs = len(project.data['pops']['short'])
                 
                 # Start with pop and prev data.
                 maxcol = 0
@@ -125,19 +127,20 @@ def geogui():
                     for popname in project.data['pops']['short']:
                         col += 1
                         if row == 0:
-                            wsprev.write(row, col, popname)
                             wspopsize.write(row, col, popname)
+                            wsprev.write(row, col, popname)
                         else:
-                            pass
+                            wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)))
+                            wsprev.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)))
                         maxcol = max(maxcol,col)
                     col += 1
                     if row > 0:
-                        wsprev.write(row, col, "OR")
                         wspopsize.write(row, col, "OR")
+                        wsprev.write(row, col, "OR")
                     col += 1
                     if row == 0:
-                        wsprev.write(row, col, "Total")
                         wspopsize.write(row, col, "Total")
+                        wsprev.write(row, col, "Total")
                     maxcol = max(maxcol,col)
                     col = 0
                 
@@ -147,8 +150,8 @@ def geogui():
                 wspopsize.write(row, col, '---')
                 wsprev.write(row, col, '---')
                 row += 1
-                wspopsize.write(row, col, 'Project Calibration')
-                wsprev.write(row, col, 'Project Calibration')
+                wspopsize.write(row, col, 'Project Cal. %i' % refyear)
+                wsprev.write(row, col, 'Project Cal. %i' % refyear)
                 for popname in project.data['pops']['short']:
                     col += 1
                     wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].pops[bestindex][col-1][refind])
@@ -173,23 +176,23 @@ def geogui():
                 wsprev.set_column(0, maxcol, colwidth) # Make wider
                 wspopsize.set_column(0, maxcol, colwidth) # Make wider
                     
-                # Follow with program data.
-                maxcol = 0
-                row, col = 0, 0
-                for row in xrange(copies+1):
-                    if row != 0:
-                        wsalloc.write(row, col, "='Population sizes'!%s" % rc(row,col))
-                    for progkey in project.progsets[0].programs:
-                        col += 1
-                        if row == 0:
-                            wsalloc.write(row, col, progkey)
-                        else:
-                            pass
-    #                        wsalloc.write(row, col, 0)
-                        maxcol = max(maxcol,col)
-                    col = 0
-                    
-                wsalloc.set_column(0, maxcol, colwidth) # Make wider
+#                # Follow with program data.
+#                maxcol = 0
+#                row, col = 0, 0
+#                for row in xrange(copies+1):
+#                    if row != 0:
+#                        wsalloc.write(row, col, "='Population sizes'!%s" % rc(row,col))
+#                    for progkey in project.progsets[0].programs:
+#                        col += 1
+#                        if row == 0:
+#                            wsalloc.write(row, col, progkey)
+#                        else:
+#                            pass
+#    #                        wsalloc.write(row, col, 0)
+#                        maxcol = max(maxcol,col)
+#                    col = 0
+#                    
+#                wsalloc.set_column(0, maxcol, colwidth) # Make wider
             
             # 4. Generate and save spreadsheet
             try:
@@ -235,6 +238,7 @@ def geogui():
         
         districtlist = []
         popratio = []
+        prevfactors = []
         plhivratio = []
         isdistricts = True
         for rowindex in xrange(wspopsize.nrows):
@@ -242,20 +246,25 @@ def geogui():
                 isdistricts = False
             if isdistricts and rowindex > 0:
                 districtlist.append(wspopsize.cell_value(rowindex, 0))
-                plhivratio.append(wspopsize.cell_value(rowindex, npops+2)*wsprev.cell_value(rowindex, npops+2))
                 popratio.append(wspopsize.cell_value(rowindex, npops+2))
+                prevfactors.append(wsprev.cell_value(rowindex, npops+2))
+                plhivratio.append(wspopsize.cell_value(rowindex, npops+2)*wsprev.cell_value(rowindex, npops+2))
         print('Districts...')
         print districtlist
         ndistricts = len(districtlist)
         
-        plhivdenom = wspopsize.cell_value(ndistricts+3, npops+2)*wsprev.cell_value(ndistricts+3, npops+2)
-        plhivratio = [x/plhivdenom for x in plhivratio]
         popdenom = wspopsize.cell_value(ndistricts+3, npops+2)
         popratio = [x/popdenom for x in popratio]
+        prevdenom = wsprev.cell_value(ndistricts+3, npops+2)
+        prevfactors = [x/prevdenom for x in prevfactors]
+        plhivdenom = wspopsize.cell_value(ndistricts+3, npops+2)*wsprev.cell_value(ndistricts+3, npops+2)
+        plhivratio = [x/plhivdenom for x in plhivratio]
 
         print('Population ratio...')
         print popratio                      # Proportions of national population split between districts.
-        print('Prevalence ratio...')
+        print('Prevalence multiples...')
+        print prevfactors                   # Factors by which to multiply prevalence in a district.        
+        print('PLHIV ratio...')
         print plhivratio                    # Proportions of PLHIV split between districts.
         
         ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
@@ -268,8 +277,19 @@ def geogui():
             
             ### ------------------------- WHERE DATA AND PARSET MUST BE RESCALED (AND PROGSET EVENTUALLY)
             newproject.data['popsize'] = [[[z*popratio[c] for z in y] for y in x] for x in newproject.data['popsize']]
+            newproject.data['hivprev'] = [[[z*prevfactors[c] for z in y] for y in x] for x in newproject.data['hivprev']]
+            newproject.data['numcirc'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numcirc']]
+            newproject.data['numtx'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numtx']]
+            newproject.data['numpmtct'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numpmtct']]
+            newproject.data['numost'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numost']]
+            
             for popgroup in poplist:
                 newproject.parsets[-1].pars[bestindex]['popsize'].p[popgroup][0] *= popratio[c]
+                newproject.parsets[-1].pars[bestindex]['initprev'].y[popgroup] *= prevfactors[c]
+                newproject.parsets[-1].pars[bestindex]['numcirc'].y[popgroup] *= plhivratio[c]
+            newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio[c]
+            newproject.parsets[-1].pars[bestindex]['numpmtct'].y['tot'] *= plhivratio[c]
+            newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio[c]
             ### -----------------------------------------------------------------------------------------
             
             newproject.runsim(newproject.parsets[-1].name)
@@ -279,10 +299,14 @@ def geogui():
         
         ## 6. Save each project file into the directory
 #        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
-        if checkplots: plotresults(project.results[-1], toplot=['popsize-tot', 'popsize-pops']) 
+        if checkplots: 
+#            plotresults(project.results[-1], toplot=['popsize-tot', 'popsize-pops'])
+            plotresults(project.results[-1], toplot=['prev-tot', 'prev-pops'])
         for subproject in projlist:
 #            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
-            if checkplots: plotresults(subproject.results[-1], toplot=['popsize-tot', 'popsize-pops'])
+            if checkplots:
+#                plotresults(subproject.results[-1], toplot=['popsize-tot', 'popsize-pops'])
+                plotresults(subproject.results[-1], toplot=['prev-tot', 'prev-pops'])
             saveobj(subproject.name+'.prj', subproject)
             
         return None
