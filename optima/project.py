@@ -43,7 +43,7 @@ class Project(object):
     ## Built-in methods -- initialization, and the thing to print if you call a project
     #######################################################################################################
 
-    def __init__(self, name='default', spreadsheet=None, dorun=True):
+    def __init__(self, name='default', spreadsheet=None, dorun=True, verbose=2):
         ''' Initialize the project '''
 
         ## Define the structure sets
@@ -55,7 +55,7 @@ class Project(object):
 
         ## Define other quantities
         self.name = name
-        self.settings = Settings() # Global settings
+        self.settings = Settings(verbose=verbose) # Global settings
         self.data = {} # Data from the spreadsheet
 
         ## Define metadata
@@ -105,7 +105,7 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
-        self.data = loadspreadsheet(filename) # Do the hard work of actually loading the spreadsheet
+        self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
         self.makeparset(name=name, overwrite=overwrite)
@@ -122,7 +122,7 @@ class Project(object):
             raise OptimaException('No data in project "%s"!' % self.name)
         if overwrite or name not in self.parsets:
             parset = Parameterset(name=name, project=self)
-            parset.makepars(self.data) # Create parameters
+            parset.makepars(self.data, verbose=self.settings.verbose) # Create parameters
             self.addparset(name=name, parset=parset, overwrite=overwrite) # Store parameters
             self.modified = today()
         return None
@@ -325,7 +325,7 @@ class Project(object):
         
         # Get the parameters sorted
         if simpars is None: # Optionally run with a precreated simpars instead
-            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt) # "self.parset[name]" is e.g. P.parset['default']
+            simparslist = self.parsets[name].interp(start=start, end=end, dt=dt, verbose=verbose) # "self.parset[name]" is e.g. P.parset['default']
         else:
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
@@ -336,7 +336,7 @@ class Project(object):
             try:
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             except:
-                printv('Running model failed; running again with debugging...', 1, self.settings.verbose)
+                printv('Running model failed; running again with debugging...', 1, verbose)
                 raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 

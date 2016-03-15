@@ -6,7 +6,7 @@ parameters, the Parameterset class.
 Version: 1.4 (2016feb08)
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, nan
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
@@ -178,8 +178,6 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     for row,key in enumerate(keys):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
-
-    largestpopkey = keys[argmax([mean(sanitizedy[key]) for key in keys])] # Find largest population size
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -190,6 +188,8 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
         errormsg = 'Not more than one data point entered for any population size\n'
         errormsg += 'To estimate growth trends, at least one population must have at least 2 data points'
         raise OptimaException(errormsg)
+        
+    largestpopkey = atleast2datapoints[argmax([mean(sanitizedy[key]) for key in atleast2datapoints])] # Find largest population size (for at least 2 data points)
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
@@ -244,7 +244,7 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
 
 
 
-def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
+def data2timepar(data=None, keys=None, defaultind=0, verbose=2, **defaultargs):
     """ Take an array of data and turn it into default parameters -- here, just take the means """
     # Check that at minimum, name and short were specified, since can't proceed otherwise
     try: 
@@ -261,7 +261,7 @@ def data2timepar(data=None, keys=None, defaultind=0, **defaultargs):
             if sum(validdata): 
                 par.y[key] = sanitize(data[short][row])
             else:
-                printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, defaultargs['verbose']) # Probably ok...
+                printv('data2timepar(): no data for parameter "%s", key "%s"' % (name, key), 3, verbose) # Probably ok...
                 par.y[key] = array([0.0]) # Blank, assume zero -- WARNING, is this ok?
         except:
             errormsg = 'Error converting time parameter "%s", key "%s"' % (name, key)
@@ -303,7 +303,7 @@ def balance(act=None, which=None, data=None, popkeys=None, limits=None, popsizep
     ctrlpts = linspace(minyear, maxyear, npts).round() # Force to be integer...WARNING, guess it doesn't have to be?
     
     # Interpolate over population acts data for each year
-    tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data, keys=popkeys, by='pop') # Temporary parameter for storing acts
+    tmppar = data2timepar(name='tmp', short=which+act, limits=(0,'maxacts'), data=data, keys=popkeys, by='pop', verbose=0) # Temporary parameter for storing acts
     tmpsim = tmppar.interp(tvec=ctrlpts)
     if which=='numacts': popsize = popsizepar.interp(tvec=ctrlpts)
     npts = len(ctrlpts)
@@ -460,6 +460,12 @@ def makepars(data, label=None, verbose=2):
         pars['force'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
     
+    # Overwrite parameters that shouldn't be being loaded from the data
+    for parname in ['propdx', 'proptx', 'propcare', 'propsupp']:
+        pars[parname].t['tot'] = [0.]
+        pars[parname].y['tot'] = [nan]
+        
+    
     
     # Balance partnerships parameters    
     tmpacts = odict()
@@ -570,7 +576,7 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     # Convert any text in limits to a numerical value
     limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
-    # Apply limits, preserving original class
+    # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
