@@ -78,10 +78,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = (1-simpars['effdx']) # Include diagnosis efficacy
     if usecascade:
-        efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # (~30%) reduction in transmission probability for usVL
-        efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # (~96%) reduction in transmission probability for sVL
+        efftxunsupp = (1-simpars['efftxunsupp']) # (~30%) reduction in transmission probability for usVL
+        efftxsupp  = (1-simpars['efftxsupp'])    # (~96%) reduction in transmission probability for sVL
     else:
-        txfactor = dxfactor * ((1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
+        txfactor = (1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
     # Disease state indices
     susreg   = settings.susreg      # Susceptible, regular
