@@ -246,10 +246,10 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Too high
     count = 0
-    countmax = 1e6
+    countmax = 1e4
     while sum(scaledbudgetvec) > optimbudget+tolerance:
         count += 1
-        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed!' % count)
+        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         overshoot = sum(scaledbudgetvec) - optimbudget
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot))
         for oi,oinds in enumerate(optiminds):
@@ -263,7 +263,7 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Too low
     while sum(scaledbudgetvec) < optimbudget-tolerance:
         count += 1
-        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed!' % count)
+        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         undershoot = optimbudget - sum(scaledbudgetvec)
         toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh]))
         for oi,oinds in enumerate(optiminds):
