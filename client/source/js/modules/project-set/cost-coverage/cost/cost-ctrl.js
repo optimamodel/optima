@@ -61,7 +61,6 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.addToCPData = function(cpDataForm) {
-      console.log($scope.cpDataForm)
       cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
       cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
       cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
