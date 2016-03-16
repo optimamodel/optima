@@ -131,7 +131,7 @@ def pygui(tmpresults, toplot=None):
     '''
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
-    elif type(results)!=Resultset:
+    elif type(tmpresults) not in [Resultset, Multiresultset]:
         try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
         except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
     else: results = tmpresults # Just use directly
