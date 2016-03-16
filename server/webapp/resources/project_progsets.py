@@ -405,12 +405,9 @@ class CostCoverageGraph(Resource):
         parset_id = args['parset_id']
 
         try:
-            t = [int(args['t'])]
+            t = [int(x) for x in args['t'].split(',')]
         except ValueError:
-            try:
-                t = [int(x) for x in args['t'].split(',')]
-            except ValueError:
-                raise ValueError("t must be a year or a comma-separated list of years.")
+            raise ValueError("t must be a year or a comma-separated list of years.")
 
         plotoptions = {}
         for x in ['caption', 'xupperlim', 'perperson']:
