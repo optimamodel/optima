@@ -206,7 +206,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # Set parameters
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    initpropcare = 0.8 # roughly estimating equilibrium proportion of diagnosed people in care
+    initpropcare = immediatecare[p,0] # roughly estimating equilibrium proportion of diagnosed people in care
     initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
 
     # Shorten key variables
@@ -643,10 +643,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     recovout = dt*recov[cd4-2]*people[svl[cd4],:,t]
                 else: 
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-                hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
+                hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]*deathtx
                 otherdeaths        = dt * currentsupp[cd4,:] * background
                 failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
-                propdead           = dt * (death[cd4] + background)
+                propdead           = dt * (death[cd4]*deathtx + background)
                 stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
                 stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare-propdead) # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4] + newtreat[cd4]*treatvs[t]
