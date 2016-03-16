@@ -3,7 +3,6 @@ define(['./../../module', 'underscore'], function (module, _) {
 
   module.controller('CostController', function ($scope, $http) {
 
-    var vc = $scope;
     $scope.state = {
       newCCData: {},
       newCPData: {},
@@ -62,6 +61,7 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.addToCPData = function(cpDataForm) {
+      console.log($scope.cpDataForm)
       cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
       cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
       cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));

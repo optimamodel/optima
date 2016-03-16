@@ -19,7 +19,7 @@ costcov_parser.add_arguments({
 
 costcov_graph_parser = RequestParser()
 costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': int, 'location': 'args'},
+    't': {'required': True, 'type': str, 'location': 'args'},
     'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
     'caption': {'type': str, 'location': 'args'},
     'xupperlim': {'type': long, 'location': 'args'},

@@ -426,6 +426,7 @@ class CostCoverageGraph(Resource):
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
         parset_instance = parset_entry.hydrate()
 
+
         plot = program_instance.plotcoverage(t=t, parset=parset_instance,
                                              plotoptions=plotoptions)
 
@@ -531,6 +532,7 @@ class CostCoverageParam(Resource):
         args = costcov_param_parser.parse_args()
         result = modify_program(project_id, progset_id, program_id, args, self.add_param_for_instance)
 
+
         return result, 201
 
     @swagger.operation(description="Edit existing cco parameter.",
@@ -544,8 +546,10 @@ class CostCoverageParam(Resource):
             't': year,
             'unitcost': (unitcost_lower,unitcost_upper)})
         """
+        print("Got here 0")
         args = costcov_param_parser.parse_args()
         result = modify_program(project_id, progset_id, program_id, args, self.update_param_for_instance)
+        print("Got here 1")
 
         return result
 
