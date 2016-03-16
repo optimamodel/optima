@@ -220,12 +220,17 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
         if abslimits['min'][pind] is None: abslimits['min'][pind] = 0
         if abslimits['max'][pind] is None: abslimits['max'][pind] = inf
     for oi,oind in enumerate(optiminds): # Don't worry about non-optimizable programs at this point -- oi = 0,1,2,3; oind = e.g. 0, 1, 4, 8
-        if optimscaleratio<1:
-            abslimits['min'][oind] *= scaledbudgetvec[oi] # If total budget is less, scale down the lower limit...
-            abslimits['max'][oind] *= budgetvec[oi] # ...but keep the upper limit in absolute terms
-        elif optimscaleratio>=1:
-            abslimits['min'][oind] *= budgetvec[oi] # If the total budget is more, keep the absolute original lower limit...
-            abslimits['max'][oind] *=scaledbudgetvec[oi] # ...but scale up the upper limit
+        # Fully-relative limits (i.e. scale according to total spend).
+        abslimits['min'][oind] *= rescaledbudget[oind]
+        abslimits['max'][oind] *= rescaledbudget[oind]
+
+#        # Semi-relative limits. Note: Has issues, but is left here for posterity.
+#        if scaleratio<1:
+#            abslimits['min'][oind] *= rescaledbudget[oind] # If total budget is less, scale down the lower limit...
+#            abslimits['max'][oind] *= origbudget[oind] # ...but keep the upper limit in absolute terms
+#        elif scaleratio>=1:
+#            abslimits['min'][oind] *= origbudget[oind] # If the total budget is more, keep the absolute original lower limit...
+#            abslimits['max'][oind] *= rescaledbudget[oind] # ...but scale up the upper limit
 
     # Apply constraints on optimizable parameters
     noptimprogs = len(optiminds) # Number of optimizable programs
@@ -241,13 +246,13 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
 
     # Too high
     count = 0
-    countmax = 1e6
+    countmax = 1e4
     while sum(scaledbudgetvec) > optimbudget+tolerance:
         count += 1
-        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed!' % count)
+        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         overshoot = sum(scaledbudgetvec) - optimbudget
         toomuch = sum(scaledbudgetvec[~limlow]) / float((sum(scaledbudgetvec[~limlow]) - overshoot))
-        for oi,oinds in enumerate(optiminds):
+        for oi,oind in enumerate(optiminds):
             if not(limlow[oi]):
                 proposed = scaledbudgetvec[oi] / float(toomuch)
                 if proposed <= abslimits['min'][oind]:
@@ -258,10 +263,10 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     # Too low
     while sum(scaledbudgetvec) < optimbudget-tolerance:
         count += 1
-        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed!' % count)
+        if count>countmax: raise OptimaException('Tried %i times to fix budget and failed! (wanted: %g; actual: %g' % (count, optimbudget, sum(scaledbudgetvec)))
         undershoot = optimbudget - sum(scaledbudgetvec)
         toolittle = (sum(scaledbudgetvec[~limhigh]) + undershoot) / float(sum(scaledbudgetvec[~limhigh]))
-        for oi,oinds in enumerate(optiminds):
+        for oi,oind in enumerate(optiminds):
             if not(limhigh[oi]):
                 proposed = scaledbudgetvec[oi] * toolittle
                 if proposed >= abslimits['max'][oind]:
