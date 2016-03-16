@@ -292,6 +292,18 @@ def geogui():
             newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio[c]
             ### -----------------------------------------------------------------------------------------
             
+            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
+            temp = dcp(newproject.data['hivprev'])
+            nyears = len(newproject.results[-1].main['prev'].datapops[0][0])
+            psetname = newproject.parsets[-1].name
+            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
+            newproject.data['hivprev'] = [[[z for z in y[0:nyears]] for y in x] for x in newproject.results[-1].main['prev'].pops]
+            newproject.autofit(name='autofit', orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+            
+            newproject.data['hivprev'] = temp
+            new.runsim('autofit')   # Re-simulate autofit curves, but for old data.            
+            
+            
             newproject.runsim(newproject.parsets[-1].name)
             projlist.append(newproject)
             c += 1
