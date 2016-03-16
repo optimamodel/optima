@@ -710,8 +710,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
             # WARNING, copied from above!!
             if not(isnan(proptx[t])):
-                currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[alltx,:,t].sum(axis=0)
+                currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+                currtx = people[alltx,:,t].sum()
                 totnewtreat =  proptx[t] * currdx - currtx 
             else:
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
