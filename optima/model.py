@@ -176,8 +176,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # More parameters...should maybe be moved somewhere else?
     birth = simpars['birth']
     agetransit = simpars['agetransit']*dt # Multiply by dt here so don't have to later
-    risktransit = simpars['risktransit']*dt
-    birthtransit = simpars['birthtransit']*dt
+    risktransit = simpars['risktransit']*dt # Multiply by dt here so don't have to later
+    birthtransit = simpars['birthtransit']*dt # Multiply by dt here so don't have to later
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
