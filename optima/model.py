@@ -62,6 +62,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         biofailure    = simpars['biofailure']  # biological treatment failure rate (P/T)
         freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
+        # constants
         progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
         recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
         stoppropcare  = simpars['stoppropcare']  # Proportion of people lost-to-follow-up who are actually still in care (transferred)
@@ -250,9 +251,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         initpeople[undx, p]     = undiagnosed
         if usecascade:
             initpropcare = immediatecare[p,0] # roughly estimating equilibrium proportion of diagnosed people in care
-            initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
-            initpeople[dx,   p] = diagnosed*(1.-initpropcare)
-            initpeople[care, p] = diagnosed*initpropcare
+            initproplost = 0.0
+            #durationtreat = 10. # estimated total number of years people stay on treatment
+            #initproplost = 0.5 * durationtreat * stoprate[p,0]      # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
+            initpeople[dx,   p] = diagnosed * (1.-initpropcare)
+            initpeople[care, p] = diagnosed * initpropcare
             initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
             initpeople[svl,  p] = treatment * treatvs[0]      * (1.-initproplost)
             initpeople[off,  p] = treatment * initproplost * stoppropcare
