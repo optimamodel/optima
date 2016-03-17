@@ -206,8 +206,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # Set parameters
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    initpropcare = immediatecare[p,0] # roughly estimating equilibrium proportion of diagnosed people in care
-    initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
 
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
@@ -251,6 +249,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         initpeople[progcirc, p] = 0.0 # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
         initpeople[undx, p]     = undiagnosed
         if usecascade:
+            initpropcare = immediatecare[p,0] # roughly estimating equilibrium proportion of diagnosed people in care
+            initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
             initpeople[dx,   p] = diagnosed*(1.-initpropcare)
             initpeople[care, p] = diagnosed*initpropcare
             initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
