@@ -25,30 +25,30 @@ defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default 
 
 
 
-def humanise_y_ticks(ax):
+def humanizeyticks(ax):
     vals = list(ax.get_yticks())
-    max_val = max([abs(v) for v in vals])
-    if max_val < 1e3:
+    maxval = max([abs(v) for v in vals])
+    if maxval < 1e3:
         return map(str, vals)
-    if max_val >= 1e3 and max_val < 1e6:
+    if maxval >= 1e3 and maxval < 1e6:
         labels = ["%.1fK" % (v/1e3) for v in vals]
-    elif max_val >= 1e6 and max_val < 1e9:
+    elif maxval >= 1e6 and maxval < 1e9:
         labels = ["%.1fM" % (v/1e6) for v in vals]
-    elif max_val >= 1e9:
+    elif maxval >= 1e9:
         labels = ["%.1fB" % (v/1e9) for v in vals]
-    is_fraction = False
+    isfraction = False
     for label in labels:
         if label[-3:-1] != ".0":
-            is_fraction = True
-    if not is_fraction:
+            isfraction = True
+    if not isfraction:
         labels = [l[:-3] + l[-1] for l in labels]
     ax.set_yticklabels(labels)
 
 
-def reformat_figure(figure):
+def reformatfigure(figure):
     figure.set_size_inches(7, 3.5)
     for axes in figure.axes:
-        humanise_y_ticks(axes)
+        humanizeyticks(axes)
         box = axes.get_position()
         axes.set_position(
             [box.x0, box.y0, box.width * 0.6, box.height])
@@ -411,7 +411,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 else:
                     ax.legend(labels, **legendsettings) # Multiple simulations
                 
-                reformat_figure(epiplots[pk])
+                reformatfigure(epiplots[pk])
 
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
@@ -561,7 +561,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
 
-    reformat_figure(fig)
+    reformatfigure(fig)
 
     close(fig)
     
@@ -641,7 +641,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-    reformat_figure(fig)
+    reformatfigure(fig)
 
     close(fig)
     
