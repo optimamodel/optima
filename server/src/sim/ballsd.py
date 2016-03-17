@@ -62,7 +62,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
     """
     
     from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero
-    from numpy.random import random # Was pylab.rand
+    from numpy.random import random, seed # Was pylab.rand
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time, sleep
     
@@ -114,6 +114,7 @@ def ballsd(function, x, options = None, stepsize = 0.1, sinc = 2, sdec = 2, pinc
         cumprobs = cumsum(p) # Calculate the cumulative distribution
         inrange = 0
         count2 = 0
+        seed()
         while not inrange:
             count2=count2+1
             choice = flatnonzero(cumprobs > random())[0] # Choose a parameter and upper/lower at random
