@@ -1,8 +1,11 @@
 from datetime import datetime
 import dateutil
 import uuid
+import json
 
 from flask import current_app, helpers, make_response, request
+
+from flask import jsonify
 
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort
@@ -18,6 +21,8 @@ from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb, ScenariosDb,OptimizationsDb
 from server.webapp.fields import Json, Uuid
+
+import math
 
 import optima as op
 
@@ -95,14 +100,26 @@ class Parsets(Resource):
         """,
         responseClass=ParsetsDb.__name__
     )
+
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
 
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
         project_entry = load_project(project_id, raise_exception=True)
-
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        return [item.hydrate() for item in reply]
+        result = [item.hydrate() for item in reply]
+
+        # AWFUL HACK - replace float.nana with None for JSON conversion
+        for r in result:
+            for pars in r.pars:
+                for k, v in pars.items():
+                    if not k.startswith('prop') or 'tot' not in v.y:
+                        continue
+                    for i, val in enumerate(v.y['tot']):
+                        if math.isnan(val):
+                            v.y['tot'][i] = None
+
+        return result
 
     @swagger.operation(
         description='Create new parset with default settings or copy existing parset',
