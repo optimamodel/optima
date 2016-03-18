@@ -391,7 +391,7 @@ class Project(object):
         ''' Function to perform automatic fitting '''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         if updateorig:  # Be careful using this option, especially if overwriting 'default'...
-            tempparset = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
+            tempparset = dcp(autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot))
             results = self.runsim(name=name, addresult=False)
             results.improvement = tempparset.improvement # Store in a more accessible place, since plotting functions use results
             keyname = self.addresult(result=results)
