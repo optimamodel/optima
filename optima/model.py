@@ -176,8 +176,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # More parameters...should maybe be moved somewhere else?
     birth = simpars['birth']
     agetransit = simpars['agetransit']*dt # Multiply by dt here so don't have to later
-    risktransit = simpars['risktransit']*dt
-    birthtransit = simpars['birthtransit']*dt
+    risktransit = simpars['risktransit']*dt # Multiply by dt here so don't have to later
+    birthtransit = simpars['birthtransit']*dt # Multiply by dt here so don't have to later
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
@@ -710,8 +710,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
             # WARNING, copied from above!!
             if not(isnan(proptx[t])):
-                currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[alltx,:,t].sum(axis=0)
+                currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+                currtx = people[alltx,:,t].sum()
                 totnewtreat =  proptx[t] * currdx - currtx 
             else:
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
