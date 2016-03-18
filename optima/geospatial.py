@@ -96,10 +96,10 @@ def geogui():
             refind = -1            
             try: refyear = int(refyear)
             except: raise OptimaException('Input cannot be converted into an integer.')
-            if not refyear in [int(x) for x in project.data['years']]:
-                raise OptimaException('Input not within range of years used by aggregate project.')
+            if not refyear in [int(x) for x in project.results[-1].tvec]:
+                raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
             else:
-                refind = [int(x) for x in project.data['years']].index(refyear)
+                refind = [int(x) for x in project.results[-1].tvec].index(refyear)
             colwidth = 20
                 
             ## 2. Get destination filename
@@ -253,11 +253,13 @@ def geogui():
         print districtlist
         ndistricts = len(districtlist)
         
-        popdenom = wspopsize.cell_value(ndistricts+3, npops+2)
+        # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
+        # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
+        popdenom = wspopsize.cell_value(ndistricts+2, npops+2)
         popratio = [x/popdenom for x in popratio]
-        prevdenom = wsprev.cell_value(ndistricts+3, npops+2)
+        prevdenom = wsprev.cell_value(ndistricts+2, npops+2)
         prevfactors = [x/prevdenom for x in prevfactors]
-        plhivdenom = wspopsize.cell_value(ndistricts+3, npops+2)*wsprev.cell_value(ndistricts+3, npops+2)
+        plhivdenom = wspopsize.cell_value(ndistricts+2, npops+2)*wsprev.cell_value(ndistricts+2, npops+2)
         plhivratio = [x/plhivdenom for x in plhivratio]
 
         print('Population ratio...')
@@ -292,16 +294,16 @@ def geogui():
             newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio[c]
             ### -----------------------------------------------------------------------------------------
             
-            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
-            temp = dcp(newproject.data['hivprev'])
-            nyears = len(newproject.results[-1].main['prev'].datapops[0][0])
-            psetname = newproject.parsets[-1].name
-            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-            newproject.data['hivprev'] = [[[z for z in y[0:nyears]] for y in x] for x in newproject.results[-1].main['prev'].pops]
-            newproject.autofit(name='autofit', orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
-            
-            newproject.data['hivprev'] = temp
-            new.runsim('autofit')   # Re-simulate autofit curves, but for old data.            
+#            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
+#            temp = dcp(newproject.data['hivprev'])
+#            nyears = len(newproject.data['years'])
+#            psetname = newproject.parsets[-1].name
+#            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
+#            newproject.data['hivprev'] = [[[z*prevfactors[c] for z in y[0:nyears]] for y in x] for x in project.results[-1].main['prev'].pops]
+#            newproject.autofit(name='autofit', orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+#            
+#            newproject.data['hivprev'] = temp
+#            new.runsim('autofit')   # Re-simulate autofit curves, but for old data.            
             
             
             newproject.runsim(newproject.parsets[-1].name)
