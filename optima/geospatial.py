@@ -270,7 +270,6 @@ def geogui():
         print plhivratio                    # Proportions of PLHIV split between districts.
         
         ## 5. Calibrate each project file according to the data entered for it in the spreadsheet
-        project.results = odict()
         projlist = []
         c = 0
         for districtname in districtlist:
@@ -295,18 +294,16 @@ def geogui():
             ### -----------------------------------------------------------------------------------------
             
 #            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
-#            temp = dcp(newproject.data['hivprev'])
-#            nyears = len(newproject.data['years'])
-#            psetname = newproject.parsets[-1].name
-#            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-#            newproject.data['hivprev'] = [[[z*prevfactors[c] for z in y[0:nyears]] for y in x] for x in project.results[-1].main['prev'].pops]
-#            newproject.autofit(name='autofit', orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
-#            
-#            newproject.data['hivprev'] = temp
-#            new.runsim('autofit')   # Re-simulate autofit curves, but for old data.            
+            tempprev = dcp(newproject.data['hivprev'])
+            datayears = len(newproject.data['years'])
+            psetname = newproject.parsets[-1].name
+            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
+            newproject.data['hivprev'] = [[[z*prevfactors[c] for z in y[0:datayears]] for y in x] for x in project.results[-1].main['prev'].pops]
+            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None, updateorig=True) # Run automatic fitting and update calibration
             
+            newproject.data['hivprev'] = tempprev          
             
-            newproject.runsim(newproject.parsets[-1].name)
+            newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
             projlist.append(newproject)
             c += 1
         project.runsim(project.parsets[-1].name)
@@ -314,12 +311,12 @@ def geogui():
         ## 6. Save each project file into the directory
 #        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
         if checkplots: 
-#            plotresults(project.results[-1], toplot=['popsize-tot', 'popsize-pops'])
+            plotresults(project.results[-1], toplot=['popsize-tot', 'popsize-pops'])
             plotresults(project.results[-1], toplot=['prev-tot', 'prev-pops'])
         for subproject in projlist:
 #            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
             if checkplots:
-#                plotresults(subproject.results[-1], toplot=['popsize-tot', 'popsize-pops'])
+                plotresults(subproject.results[-1], toplot=['popsize-tot', 'popsize-pops'])
                 plotresults(subproject.results[-1], toplot=['prev-tot', 'prev-pops'])
             saveobj(subproject.name+'.prj', subproject)
             
