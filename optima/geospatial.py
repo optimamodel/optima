@@ -86,7 +86,7 @@ def geogui():
         
         bestindex = 0        
         
-        if len(project.parsets) > 0 and len(project.progsets) > 0 :
+        if len(project.parsets) > 0:
             
             copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
             try: copies = int(copies)
@@ -113,7 +113,6 @@ def geogui():
                 workbook = Workbook(spreadsheetpath)
                 wspopsize = workbook.add_worksheet('Population sizes')
                 wsprev = workbook.add_worksheet('Population prevalence')
-#                wsalloc = workbook.add_worksheet('Program allocations')
                 
                 nprogs = len(project.data['pops']['short'])
                 
@@ -139,8 +138,15 @@ def geogui():
                         wsprev.write(row, col, "OR")
                     col += 1
                     if row == 0:
-                        wspopsize.write(row, col, "Total")
-                        wsprev.write(row, col, "Total")
+                        wspopsize.write(row, col, "Total (Intended)")
+                        wsprev.write(row, col, "Total (Intended)")
+                    col += 1
+                    if row == 0:
+                        wspopsize.write(row, col, "Total (Actual)")
+                        wsprev.write(row, col, "Total (Actual)")
+                    else:
+                        wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
+                        wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))
                     maxcol = max(maxcol,col)
                     col = 0
                 
@@ -158,7 +164,10 @@ def geogui():
                     wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].pops[bestindex][col-1][refind])
                 col += 2
                 wspopsize.write(row, col, project.parsets[-1].getresults().main['popsize'].tot[bestindex][refind])
-                wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].tot[bestindex][refind])                
+                wsprev.write(row, col, project.parsets[-1].getresults().main['prev'].tot[bestindex][refind])
+                col += 1
+                wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
+                wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
                 col = 0                
                 
                 row += 1
@@ -171,28 +180,36 @@ def geogui():
                 col += 2
                 wspopsize.write(row, col, '=SUM(%s:%s)' % (rc(1,col),rc(copies,col)))
                 wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(1,col),rc(copies,col),rc(1,col),rc(copies,col),rc(row,col)))
+                col += 1
+                wspopsize.write(row, col, "=SUM(%s:%s)" % (rc(row,1),rc(row,nprogs)))
+                wsprev.write(row, col, "=SUMPRODUCT('Population sizes'!%s:%s,%s:%s)/'Population sizes'!%s" % (rc(row,1),rc(row,nprogs),rc(row,1),rc(row,nprogs),rc(row,col)))  
                 col = 0
                     
                 wsprev.set_column(0, maxcol, colwidth) # Make wider
                 wspopsize.set_column(0, maxcol, colwidth) # Make wider
+                
+                if len(project.progsets) > 0:
+                    wsalloc = workbook.add_worksheet('Program allocations')
                     
-#                # Follow with program data.
-#                maxcol = 0
-#                row, col = 0, 0
-#                for row in xrange(copies+1):
-#                    if row != 0:
-#                        wsalloc.write(row, col, "='Population sizes'!%s" % rc(row,col))
-#                    for progkey in project.progsets[0].programs:
-#                        col += 1
-#                        if row == 0:
-#                            wsalloc.write(row, col, progkey)
-#                        else:
-#                            pass
-#    #                        wsalloc.write(row, col, 0)
-#                        maxcol = max(maxcol,col)
-#                    col = 0
-#                    
-#                wsalloc.set_column(0, maxcol, colwidth) # Make wider
+                    # Follow with program data.
+                    maxcol = 0
+                    row, col = 0, 0
+                    for row in xrange(copies+1):
+                        if row != 0:
+                            wsalloc.write(row, col, "='Population sizes'!%s" % rc(row,col))
+                        for progkey in project.progsets[0].programs:
+                            col += 1
+                            if row == 0:
+                                wsalloc.write(row, col, progkey)
+                            else:
+                                pass
+        #                        wsalloc.write(row, col, 0)
+                            maxcol = max(maxcol,col)
+                        col = 0
+                        
+                    wsalloc.set_column(0, maxcol, colwidth) # Make wider
+                else:
+                    warning('Warning: Loaded project is missing a program set.')
             
             # 4. Generate and save spreadsheet
             try:
@@ -201,12 +218,11 @@ def geogui():
             except:
                 warning('Error: Template not saved due to a workbook error!')
         else:
-            warning('Error: Loaded project is missing a parameter set or a program set!')
+            warning('Error: Loaded project is missing a parameter set!')
 
         return None
         
     # ONLY WORKS WITH VALUES IN THE TOTAL COLUMNS SO FAR!
-    # ALSO GETRESULTS() SEEMS TO HAVE TROUBLE AFTER DELETING RESULTS AND RERUNNING RUNSIM()... REFERENCE ISSUES?
     def makeproj():
         ''' Create a series of project files based on a seed file and a geospatial spreadsheet '''
         
@@ -246,20 +262,20 @@ def geogui():
                 isdistricts = False
             if isdistricts and rowindex > 0:
                 districtlist.append(wspopsize.cell_value(rowindex, 0))
-                popratio.append(wspopsize.cell_value(rowindex, npops+2))
-                prevfactors.append(wsprev.cell_value(rowindex, npops+2))
-                plhivratio.append(wspopsize.cell_value(rowindex, npops+2)*wsprev.cell_value(rowindex, npops+2))
+                popratio.append(wspopsize.cell_value(rowindex, npops+3))
+                prevfactors.append(wsprev.cell_value(rowindex, npops+3))
+                plhivratio.append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
         print('Districts...')
         print districtlist
         ndistricts = len(districtlist)
         
         # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
         # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
-        popdenom = wspopsize.cell_value(ndistricts+2, npops+2)
+        popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
         popratio = [x/popdenom for x in popratio]
-        prevdenom = wsprev.cell_value(ndistricts+2, npops+2)
+        prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
         prevfactors = [x/prevdenom for x in prevfactors]
-        plhivdenom = wspopsize.cell_value(ndistricts+2, npops+2)*wsprev.cell_value(ndistricts+2, npops+2)
+        plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
         plhivratio = [x/plhivdenom for x in plhivratio]
 
         print('Population ratio...')
