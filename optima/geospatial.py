@@ -248,38 +248,78 @@ def geogui():
         ## 4. Read the spreadsheet
         poplist = []
         for colindex in xrange(wspopsize.ncols):
-            if colindex > 0 and wspopsize.cell_value(0, colindex) not in ['','Total']:
+            if colindex > 0 and wspopsize.cell_value(0, colindex) not in ['','Total (Intended)','Total (Actual)']:
                 poplist.append(wspopsize.cell_value(0, colindex))
         npops = len(poplist)
         
         districtlist = []
-        popratio = []
-        prevfactors = []
-        plhivratio = []
+        popratio = odict()
+        prevfactors = odict()
+        plhivratio = odict()
         isdistricts = True
         for rowindex in xrange(wspopsize.nrows):
             if wspopsize.cell_value(rowindex, 0) == '---':
                 isdistricts = False
             if isdistricts and rowindex > 0:
                 districtlist.append(wspopsize.cell_value(rowindex, 0))
-                popratio.append(wspopsize.cell_value(rowindex, npops+3))
-                prevfactors.append(wsprev.cell_value(rowindex, npops+3))
-                plhivratio.append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
+                
+                # 'Actual' total ratios.
+                if rowindex == 1:
+                    popratio['tot'] = []
+                    prevfactors['tot'] = []
+                    plhivratio['tot'] = []
+                popratio['tot'].append(wspopsize.cell_value(rowindex, npops+3))
+                prevfactors['tot'].append(wsprev.cell_value(rowindex, npops+3))
+                plhivratio['tot'].append(wspopsize.cell_value(rowindex, npops+3)*wsprev.cell_value(rowindex, npops+3))
+                
+                # Population group ratios.
+                for popid in xrange(npops):
+                    popname = poplist[popid]
+                    colindex = popid + 1
+                    if rowindex == 1:
+                        popratio[popname] = []
+                        prevfactors[popname] = []
+                        plhivratio[popname] = []
+                    popratio[popname].append(wspopsize.cell_value(rowindex, colindex))
+                    prevfactors[popname].append(wsprev.cell_value(rowindex, colindex))
+                    plhivratio[popname].append(wspopsize.cell_value(rowindex, colindex)*wsprev.cell_value(rowindex, colindex))
         print('Districts...')
         print districtlist
         ndistricts = len(districtlist)
         
+        # Workout the reference year for the spreadsheet for later 'datapoint inclusion'.
+        import re
+        refind = -1
+        try:
+            refyear = int(re.sub("[^0-9]", "", wspopsize.cell_value(ndistricts+2, 0)))         
+            if refyear in [int(x) for x in project.data['years']]:
+                refind = [int(x) for x in project.data['years']].index(refyear)
+                print('Reference year %i found in data year range with index %i.' % (refyear,refind))
+            else:
+                print('Reference year %i not found in data year range %i-%i.' % (refyear,int(project.data['years'][0]),int(project.data['years'][-1])))
+        except:
+            OptimaException('Warning: Cannot determine calibration reference year for this spreadsheet.')
+        
         # Important note. Calibration value will be used as the denominator! So ratios can sum to be different from 1.
         # This allows for 'incomplete' subdivisions, e.g. a country into 2 of 3 states.
         popdenom = wspopsize.cell_value(ndistricts+2, npops+3)
-        popratio = [x/popdenom for x in popratio]
+        popratio['tot'] = [x/popdenom for x in popratio['tot']]
         prevdenom = wsprev.cell_value(ndistricts+2, npops+3)
-        prevfactors = [x/prevdenom for x in prevfactors]
+        prevfactors['tot'] = [x/prevdenom for x in prevfactors['tot']]
         plhivdenom = wspopsize.cell_value(ndistricts+2, npops+3)*wsprev.cell_value(ndistricts+2, npops+3)
-        plhivratio = [x/plhivdenom for x in plhivratio]
+        plhivratio['tot'] = [x/plhivdenom for x in plhivratio['tot']]        
+        for popid in xrange(npops):
+            colindex = popid + 1
+            popname = poplist[popid]
+            popdenom = wspopsize.cell_value(ndistricts+2, colindex)
+            popratio[popname] = [x/popdenom for x in popratio[popname]]
+            prevdenom = wsprev.cell_value(ndistricts+2, colindex)
+            prevfactors[popname] = [x/prevdenom for x in prevfactors[popname]]
+            plhivdenom = wspopsize.cell_value(ndistricts+2, colindex)*wsprev.cell_value(ndistricts+2, colindex)
+            plhivratio[popname] = [x/plhivdenom for x in plhivratio[popname]]
 
         print('Population ratio...')
-        print popratio                      # Proportions of national population split between districts.
+        print popratio                     # Proportions of national population split between districts.
         print('Prevalence multiples...')
         print prevfactors                   # Factors by which to multiply prevalence in a district.        
         print('PLHIV ratio...')
@@ -293,31 +333,46 @@ def geogui():
             newproject.name = districtname
             
             ### ------------------------- WHERE DATA AND PARSET MUST BE RESCALED (AND PROGSET EVENTUALLY)
-            newproject.data['popsize'] = [[[z*popratio[c] for z in y] for y in x] for x in newproject.data['popsize']]
-            newproject.data['hivprev'] = [[[z*prevfactors[c] for z in y] for y in x] for x in newproject.data['hivprev']]
-            newproject.data['numcirc'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numcirc']]
-            newproject.data['numtx'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numtx']]
-            newproject.data['numpmtct'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numpmtct']]
-            newproject.data['numost'] = [[y*plhivratio[c] for y in x] for x in newproject.data['numost']]
+            # NOTE: Scaling assumptions for popsize & prev are POPGROUP-dependent, while everything else is TOT-dependent!                
+            for popid in xrange(npops):
+                popname = poplist[popid]
+                for x in newproject.data['popsize']:
+                    x[popid] = [z*popratio[popname][c] for z in x[popid]]
+                for x in newproject.data['hivprev']:
+                    x[popid] = [z*prevfactors[popname][c] for z in x[popid]]
+            newproject.data['numcirc'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numcirc']]
+            newproject.data['numtx'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numtx']]
+            newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
+            newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
             
-            for popgroup in poplist:
-                newproject.parsets[-1].pars[bestindex]['popsize'].p[popgroup][0] *= popratio[c]
-                newproject.parsets[-1].pars[bestindex]['initprev'].y[popgroup] *= prevfactors[c]
-                newproject.parsets[-1].pars[bestindex]['numcirc'].y[popgroup] *= plhivratio[c]
-            newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio[c]
-            newproject.parsets[-1].pars[bestindex]['numpmtct'].y['tot'] *= plhivratio[c]
-            newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio[c]
+            for popid in xrange(npops):
+                popname = poplist[popid]
+                newproject.parsets[-1].pars[bestindex]['popsize'].p[popname][0] *= popratio[popname][c]
+                newproject.parsets[-1].pars[bestindex]['initprev'].y[popname] *= prevfactors[popname][c]
+                newproject.parsets[-1].pars[bestindex]['numcirc'].y[popname] *= plhivratio['tot'][c]
+            newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio['tot'][c]
+            newproject.parsets[-1].pars[bestindex]['numpmtct'].y['tot'] *= plhivratio['tot'][c]
+            newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio['tot'][c]
             ### -----------------------------------------------------------------------------------------
+
+            # Don't forget to place a data point corresponding to pop/prev from spreadsheets!
+            # Will aid autofits. But only if the refyear was found in data year range!            
+            if not refind == -1:
+                for popid in xrange(npops):
+                    newproject.data['popsize'][bestindex][popid][refind] = wspopsize.cell_value(c+1, popid+1)
+                    newproject.data['hivprev'][bestindex][popid][refind] = wsprev.cell_value(c+1, popid+1)
+            else:
+                print('Absolute values in spreadsheet were for non-data-period reference year %i. Thus not used for autofit.' % refyear)
             
-#            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
+            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
             tempprev = dcp(newproject.data['hivprev'])
             datayears = len(newproject.data['years'])
             psetname = newproject.parsets[-1].name
             # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-            newproject.data['hivprev'] = [[[z*prevfactors[c] for z in y[0:datayears]] for y in x] for x in project.results[-1].main['prev'].pops]
+            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.results[-1].main['prev'].pops]
             newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None, updateorig=True) # Run automatic fitting and update calibration
             
-            newproject.data['hivprev'] = tempprev          
+            newproject.data['hivprev'] = tempprev    
             
             newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
             projlist.append(newproject)
