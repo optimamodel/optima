@@ -250,7 +250,7 @@ def geogui():
         
         bestindex = 0   # This could be a problem down the road...
         
-        checkplots = True       # To check if calibrations are rescaled nicely.
+        checkplots = False       # To check if calibrations are rescaled nicely.
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
         project = _loadproj()
@@ -400,16 +400,16 @@ def geogui():
 #            else:
 #                print('Absolute values in spreadsheet were for non-data-period reference year %i. Thus not used for autofit.' % refyear)
             
-            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
-            tempprev = dcp(newproject.data['hivprev'])
-            datayears = len(newproject.data['years'])
-            psetname = newproject.parsets[-1].name
-            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
-            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
-            
-            newproject.data['hivprev'] = tempprev    
-            
+#            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
+#            tempprev = dcp(newproject.data['hivprev'])
+#            datayears = len(newproject.data['years'])
+#            psetname = newproject.parsets[-1].name
+#            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
+#            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
+#            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
+#            
+#            newproject.data['hivprev'] = tempprev    
+#            
             newproject.runsim(newproject.parsets[-1].name) # Re-simulate autofit curves, but for old data.
             projlist.append(newproject)
             c += 1
