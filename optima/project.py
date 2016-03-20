@@ -387,22 +387,14 @@ class Project(object):
         return None
 
 
-    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False, updateorig=False):
+    def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
-        if updateorig:  # Be careful using this option, especially if overwriting 'default'...
-            tempparset = dcp(autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot))
-            results = self.runsim(name=name, addresult=False)
-            results.improvement = tempparset.improvement # Store in a more accessible place, since plotting functions use results
-            keyname = self.addresult(result=results)
-            tempparset.resultsref = keyname
-            self.parsets[orig] = tempparset
-        else:
-            self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
-            results = self.runsim(name=name, addresult=False)
-            results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
-            keyname = self.addresult(result=results)
-            self.parsets[name].resultsref = keyname
+        self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
+        results = self.runsim(name=name, addresult=False)
+        results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
+        keyname = self.addresult(result=results)
+        self.parsets[name].resultsref = keyname
         self.modified = today()
         return None
     

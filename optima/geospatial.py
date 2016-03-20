@@ -379,8 +379,8 @@ def geogui():
             
             # Scale programs.
             if len(project.progsets) > 0:
-                for progid in project.progsets[-1].programs:
-                    program = project.progsets[-1].programs[progid]
+                for progid in newproject.progsets[-1].programs:
+                    program = newproject.progsets[-1].programs[progid]
                     program.costcovdata['cost'] = [x*plhivratio['tot'][c] for x in program.costcovdata['cost']]
                     if not program.costcovdata['coverage'] == [None]:
                         program.costcovdata['coverage'] = [x*plhivratio['tot'][c] for x in program.costcovdata['coverage']]
@@ -402,7 +402,7 @@ def geogui():
             psetname = newproject.parsets[-1].name
             # WARNING: Converting results to data assumes that results is already in yearly-dt form.
             newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
-            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None, updateorig=True) # Run automatic fitting and update calibration
+            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
             
             newproject.data['hivprev'] = tempprev    
             
