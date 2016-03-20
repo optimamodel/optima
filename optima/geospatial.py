@@ -87,6 +87,8 @@ def geogui():
         bestindex = 0        
         
         if len(project.parsets) > 0:
+            try: project.parsets[-1].getresults()
+            except: project.runsim(name=project.parsets[-1].name)
             
             copies, ok = QtGui.QInputDialog.getText(geoguiwindow, 'GA Spreadsheet Parameter', 'How many variants of the chosen project do you want?')
             try: copies = int(copies)
@@ -252,6 +254,8 @@ def geogui():
         
         ## 1. Load a project file -- WARNING, could be combined with the above!
         project = _loadproj()
+        try: project.parsets[-1].getresults()
+        except: project.runsim(name=project.parsets[-1].name)
         
         ## 2. Load a spreadsheet file
         spreadsheetpath = QtGui.QFileDialog.getOpenFileName(caption='Choose geospatial spreadsheet', filter='*.xlsx')
