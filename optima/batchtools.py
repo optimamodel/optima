@@ -1,0 +1,44 @@
+"""
+BATCHTOOLS
+
+Functions for doing things in batch...yeah, should make better.
+
+Version: 2016mar20
+"""
+
+from multiprocessing import Process, Queue
+from numpy import empty
+
+
+
+def batchtest(nprocs=4, nrepeats=3e7):
+    ''' A simple example of how to run a parallel computation -- use this as a template for making more complex functions'''
+    from pylab import rand
+    
+    def testfunc(obj, ind, outputqueue):
+        print('Running slow test function...')
+        for i in range(int(nrepeats)): i += 1
+        output = obj+ind
+        outputqueue.put(output)
+        print('...done.')
+        return None
+    
+    outputqueue = Queue()
+    outputlist = empty(nprocs, dtype=object)
+    processes = []
+    for i in range(nprocs):
+        obj = rand()
+        prc = Process(target=testfunc, args=(obj, i, outputqueue))
+        prc.start()
+        processes.append(prc)
+    for i in range(nprocs):
+        outputlist[i] = outputqueue.get()
+    
+    return outputlist
+
+
+
+#def batchautofit(folder='./', name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=10, inds=None, verbose=2, **kwargs):
+#    newproject.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, **kwargs) # Run automatic fitting and update calibration
+
+
