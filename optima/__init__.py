@@ -177,6 +177,8 @@ from .portfolio import Portfolio
 
 try:
     import geospatial as _geospatial
+    from . import batchtools
+    from .batchtools import batchautofit
     from .geospatial import geogui # Import GUI tools for geospatial analysis
 except: 
     _failed.append('geospatial')
