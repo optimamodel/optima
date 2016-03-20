@@ -379,21 +379,22 @@ def geogui():
             
             # Scale programs.
             if len(project.progsets) > 0:
-                for program in project.progsets[-1].programs:
+                for progid in project.progsets[-1].programs:
+                    program = project.progsets[-1].programs[progid]
                     program.costcovdata['cost'] = [x*plhivratio['tot'][c] for x in program.costcovdata['cost']]
                     if not program.costcovdata['coverage'] == [None]:
                         program.costcovdata['coverage'] = [x*plhivratio['tot'][c] for x in program.costcovdata['coverage']]
                 
             ### -----------------------------------------------------------------------------------------
 
-            # Don't forget to place a data point corresponding to pop/prev from spreadsheets!
-            # Will aid autofits. But only if the refyear was found in data year range!            
-            if not refind == -1:
-                for popid in xrange(npops):
-                    newproject.data['popsize'][bestindex][popid][refind] = wspopsize.cell_value(c+1, popid+1)
-                    newproject.data['hivprev'][bestindex][popid][refind] = wsprev.cell_value(c+1, popid+1)
-            else:
-                print('Absolute values in spreadsheet were for non-data-period reference year %i. Thus not used for autofit.' % refyear)
+#            # Don't forget to place a data point corresponding to pop/prev from spreadsheets!
+#            # NOTE: Currently doesn't work because some parts of the the data structure may have 1 element for assumptions only!           
+#            if not refind == -1:
+#                for popid in xrange(npops):
+#                    newproject.data['popsize'][bestindex][popid][refind] = wspopsize.cell_value(c+1, popid+1)
+#                    newproject.data['hivprev'][bestindex][popid][refind] = wsprev.cell_value(c+1, popid+1)
+#            else:
+#                print('Absolute values in spreadsheet were for non-data-period reference year %i. Thus not used for autofit.' % refyear)
             
             # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
             tempprev = dcp(newproject.data['hivprev'])
