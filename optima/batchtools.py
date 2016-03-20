@@ -8,6 +8,8 @@ Version: 2016mar20
 
 from multiprocessing import Process, Queue
 from numpy import empty
+from glob import glob
+from optima import loadobj, saveobj
 
 
 
@@ -38,7 +40,30 @@ def batchtest(nprocs=4, nrepeats=3e7):
 
 
 
-#def batchautofit(folder='./', name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=10, inds=None, verbose=2, **kwargs):
-#    newproject.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, **kwargs) # Run automatic fitting and update calibration
+def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=10, inds=None, verbose=2):
+    ''' Perform batch autofitting '''
+    
+    filelist = glob(folder+'/*.prj')
+    nfiles = len(filelist)
 
+    def batchfunc(project, outputqueue):
+        print('Running autofitting...')
+        project.autofit(name=name, orig=name, fitwhat=fitwhat, fitto=fitto, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose) # Run automatic fitting and update calibration
+        outputqueue.put(project)
+        print('...done.')
+        return None
+    
+    outputqueue = Queue()
+    outputlist = empty(nfiles, dtype=object)
+    processes = []
+    for i in range(nfiles):
+        project = loadobj(filelist[i])
+        prc = Process(target=batchfunc, args=(project, outputqueue))
+        prc.start()
+        processes.append(prc)
+    for i in range(nfiles):
+        outputlist[i] = outputqueue.get()
+        saveobj(filelist[i], outputlist[i])
+    
+    return outputlist
 
