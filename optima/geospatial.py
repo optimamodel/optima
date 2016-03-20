@@ -96,10 +96,10 @@ def geogui():
             refind = -1            
             try: refyear = int(refyear)
             except: raise OptimaException('Input cannot be converted into an integer.')
-            if not refyear in [int(x) for x in project.results[-1].tvec]:
+            if not refyear in [int(x) for x in project.parsets[-1].getresults().tvec]:
                 raise OptimaException("Input not within range of years used by aggregate project's last stored calibration.")
             else:
-                refind = [int(x) for x in project.results[-1].tvec].index(refyear)
+                refind = [int(x) for x in project.parsets[-1].getresults().tvec].index(refyear)
             colwidth = 20
                 
             ## 2. Get destination filename
@@ -130,7 +130,27 @@ def geogui():
                             wsprev.write(row, col, popname)
                         else:
                             wspopsize.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)))
-                            wsprev.write(row, col, "=%s*%s/%s" % (rc(copies+2,col),rc(row,nprogs+2),rc(copies+2,nprogs+2)))
+
+                            # Prevalence scaling by function r/(r-1+1/x).
+                            # If n is intended district prevalence and d is calibrated national prevalence, then...
+                            # 'Unbound' (scaleup) ratio r is n(1-d)/(d(1-n)).
+                            # Variable x is calibrated national prevalence specific to pop group.
+                            natpopcell = rc(copies+2,col)
+                            disttotcell = rc(row,nprogs+2)
+                            nattotcell = rc(copies+2,nprogs+2)
+                            wsprev.write(row, col, "=(%s*(1-%s)/(%s*(1-%s)))/(%s*(1-%s)/(%s*(1-%s))-1+1/%s)" % (disttotcell,nattotcell,nattotcell,disttotcell,disttotcell,nattotcell,nattotcell,disttotcell,natpopcell))
+
+#                            # Prevalence scaling by function r/(r-1+1/x).
+#                            # Variable r is ratio of intended district prevalence to calibrated national prevalence (scaleup factor).
+#                            # Variable x is calibrated national prevalence specific to pop group.
+#                            natpopcell = rc(copies+2,col)
+#                            disttotcell = rc(row,nprogs+2)
+#                            nattotcell = rc(copies+2,nprogs+2)
+#                            wsprev.write(row, col, "=(%s/%s)/(%s/%s-1+1/%s)" % (disttotcell,nattotcell,disttotcell,nattotcell,natpopcell))
+                            
+#                            # Linear scaling.
+#                            wsprev.write(row, col, "=%s*%s/%s" % (natpopcell,disttotcell,nattotcell))
+                            
                         maxcol = max(maxcol,col)
                     col += 1
                     if row > 0:
@@ -334,6 +354,8 @@ def geogui():
             
             ### ------------------------- WHERE DATA AND PARSET MUST BE RESCALED (AND PROGSET EVENTUALLY)
             # NOTE: Scaling assumptions for popsize & prev are POPGROUP-dependent, while everything else is TOT-dependent!                
+            
+            # Scale data.            
             for popid in xrange(npops):
                 popname = poplist[popid]
                 for x in newproject.data['popsize']:
@@ -345,6 +367,7 @@ def geogui():
             newproject.data['numpmtct'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numpmtct']]
             newproject.data['numost'] = [[y*plhivratio['tot'][c] for y in x] for x in newproject.data['numost']]
             
+            # Scale calibration.
             for popid in xrange(npops):
                 popname = poplist[popid]
                 newproject.parsets[-1].pars[bestindex]['popsize'].p[popname][0] *= popratio[popname][c]
@@ -353,6 +376,14 @@ def geogui():
             newproject.parsets[-1].pars[bestindex]['numtx'].y['tot'] *= plhivratio['tot'][c]
             newproject.parsets[-1].pars[bestindex]['numpmtct'].y['tot'] *= plhivratio['tot'][c]
             newproject.parsets[-1].pars[bestindex]['numost'].y['tot'] *= plhivratio['tot'][c]
+            
+            # Scale programs.
+            if len(project.progsets) > 0:
+                for program in project.progsets[-1].programs:
+                    program.costcovdata['cost'] = [x*plhivratio['tot'][c] for x in program.costcovdata['cost']]
+                    if not program.costcovdata['coverage'] == [None]:
+                        program.costcovdata['coverage'] = [x*plhivratio['tot'][c] for x in program.costcovdata['coverage']]
+                
             ### -----------------------------------------------------------------------------------------
 
             # Don't forget to place a data point corresponding to pop/prev from spreadsheets!
@@ -369,7 +400,7 @@ def geogui():
             datayears = len(newproject.data['years'])
             psetname = newproject.parsets[-1].name
             # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.results[-1].main['prev'].pops]
+            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
             newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=1000, inds=None, updateorig=True) # Run automatic fitting and update calibration
             
             newproject.data['hivprev'] = tempprev    
@@ -382,13 +413,13 @@ def geogui():
         ## 6. Save each project file into the directory
 #        if checkplots: plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops']) 
         if checkplots: 
-            plotresults(project.results[-1], toplot=['popsize-tot', 'popsize-pops'])
-            plotresults(project.results[-1], toplot=['prev-tot', 'prev-pops'])
+            plotresults(project.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+            plotresults(project.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
         for subproject in projlist:
 #            if checkplots: plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
             if checkplots:
-                plotresults(subproject.results[-1], toplot=['popsize-tot', 'popsize-pops'])
-                plotresults(subproject.results[-1], toplot=['prev-tot', 'prev-pops'])
+                plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
+                plotresults(subproject.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
             saveobj(subproject.name+'.prj', subproject)
             
         return None
