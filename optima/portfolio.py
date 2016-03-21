@@ -76,8 +76,9 @@ class Portfolio(object):
         printv('Adding project to portfolio...', 2, verbose)
         if type(projects)==Project: projects = [projects]
         if type(projects)==list:
-            for project in projects: 
-                self.projects[project.name] = project        
+            for project in projects:
+                print str(project.uid) # TEMPPPP
+                self.projects[str(project.uid)] = project        
                 printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
     def getdefaultbudgets(self, progsetnames=None, verbose=2):
@@ -287,7 +288,7 @@ class Portfolio(object):
         objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
         
         gaoptim = GAOptim(objectives = objectives)
-        self.gaoptims[gaoptim.uid] = gaoptim
+        self.gaoptims[str(gaoptim.uid)] = gaoptim
         
         if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
@@ -428,7 +429,7 @@ class GAOptim(object):
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
         for pind,p in enumerate(projects.values()):
-            self.resultpairs[p.uid] = odict()
+            self.resultpairs[str(p.uid)] = odict()
 
             # Crash if any project doesn't have progsets
             if not p.progsets or not p.parsets: 
@@ -438,17 +439,17 @@ class GAOptim(object):
             initobjectives = dcp(self.objectives)
             initobjectives['budget'] = initbudgets[pind] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[str(p.uid)]['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
             preibudget = initobjectives['budget']
-            postibudget = self.resultpairs[p.uid]['init'].budget[-1]
+            postibudget = self.resultpairs[str(p.uid)]['init'].budget[-1]
 #            assert abs(preibudget-sum(postibudget[:]))<tol
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pind] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[str(p.uid)]['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
-            postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
+            postobudget = self.resultpairs[str(p.uid)]['opt'].budget[-1]
 #            assert abs(preobudget-sum(postobudget[:]))<tol
 
     def printresults(self, verbose=2):
