@@ -40,7 +40,7 @@ def batchtest(nprocs=4, nrepeats=3e7):
 
 
 
-def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=60, maxiters=None, inds=None, verbose=2):
+def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=60, inds=None, verbose=2):
     ''' Perform batch autofitting '''
     
     filelist = glob(folder+'/*.prj')
