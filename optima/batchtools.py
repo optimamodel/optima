@@ -58,12 +58,13 @@ def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None
     processes = []
     for i in range(nfiles):
         project = loadobj(filelist[i])
+        project.tmpfilename = filelist[i]
         prc = Process(target=batchfunc, args=(project, outputqueue))
         prc.start()
         processes.append(prc)
     for i in range(nfiles):
         outputlist[i] = outputqueue.get()
-        saveobj(filelist[i], outputlist[i])
+        saveobj(outputlist[i].tmpfilename, outputlist[i])
     
     return outputlist
 
