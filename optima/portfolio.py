@@ -77,7 +77,7 @@ class Portfolio(object):
         if type(projects)==Project: projects = [projects]
         if type(projects)==list:
             for project in projects: 
-                self.projects[project.uid] = project        
+                self.projects[project.name] = project        
                 printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
     def getdefaultbudgets(self, progsetnames=None, verbose=2):
