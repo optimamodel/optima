@@ -67,3 +67,31 @@ def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None
     
     return outputlist
 
+
+
+def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+    ''' Perform batch BOC calculation '''
+    
+    filelist = glob(folder+'/*.prj')
+    nfiles = len(filelist)
+
+    def batchfunc(project, outputqueue):
+        print('Running BOC generation...')
+        project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname, progsetname=parsetname, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        outputqueue.put(project)
+        print('...done.')
+        return None
+    
+    outputqueue = Queue()
+    outputlist = empty(nfiles, dtype=object)
+    processes = []
+    for i in range(nfiles):
+        project = loadobj(filelist[i])
+        prc = Process(target=batchfunc, args=(project, outputqueue))
+        prc.start()
+        processes.append(prc)
+    for i in range(nfiles):
+        outputlist[i] = outputqueue.get()
+        saveobj(filelist[i], outputlist[i])
+    
+    return outputlist

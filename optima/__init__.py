@@ -183,6 +183,7 @@ try:
     import geospatial as _geospatial
     from . import batchtools
     from .batchtools import batchautofit
+    from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
 except: 
     _failed.append('geospatial')
