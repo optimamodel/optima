@@ -185,8 +185,8 @@ class Portfolio(object):
             else:
                 printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
-                
-    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2):
+    # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
+    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax = None, extray = None):
         ''' Loop through stored projects and plot budget-outcome curves '''
         printv('Plotting BOCs...', 2, verbose)
         
@@ -202,8 +202,10 @@ class Portfolio(object):
         
         # Loop for BOCs and then BOC derivatives.
         for c,p in enumerate(self.projects.values()):
-            p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c])
-            
+            ax = p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot = True)
+            if extrax != None:            
+                for k in xrange(len(extrax[c])):
+                    ax.plot(extrax[c][k], extray[c][k], 'bo')
             
     def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''

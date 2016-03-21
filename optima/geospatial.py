@@ -499,7 +499,7 @@ def geogui():
         guiobjectives['budget'] *= budgetfactor # Convert back to internal representation
         BOCobjectives = dcp(guiobjectives)
         guiportfolio.genBOCs(BOCobjectives, maxtime=2) # WARNING temp time
-        guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=30) # WARNING temp time
+        guiportfolio.fullGA(guiobjectives, doplotBOCs=False, budgetratio = guiportfolio.getdefaultbudgets(), maxtime=3600) # WARNING temp time
         warning('Geospatial analysis finished running; total time: %0.0f s' % (time() - starttime))
         return None
         
@@ -511,7 +511,17 @@ def geogui():
             warning('Please load a portfolio first')
             return None
         gaoptim = guiportfolio.gaoptims[-1]
-        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False)
+        
+        extrax = []; extray = [];
+        for cid in xrange(len(gaoptim.resultpairs)):
+            extrax.append([]); extray.append([]);
+            rp = gaoptim.resultpairs[cid]
+            extrax[cid].append(rp['init'].budget['Current allocation'][:].sum())
+            extrax[cid].append(rp['opt'].budget['Optimal allocation'][:].sum())
+            extray[cid].append(rp['init'].improvement[-1][0])
+            extray[cid].append(rp['opt'].improvement[-1][-1])
+        
+        guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False, extrax=extrax, extray=extray)
                 
         return None
         
