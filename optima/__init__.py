@@ -40,6 +40,10 @@ print(optimalicense)
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0
 
+# Create an empty list to stored failed imports
+_failed = [] 
+
+
 
 #####################################################################################################################
 ### Load helper functions/modules
@@ -131,8 +135,6 @@ from .plotting import getplotselections, makeplots
 #####################################################################################################################
 ### Load optional plotting functions
 #####################################################################################################################
-
-_failed = [] # Create an empty list to stored failed imports
 
 ## Load high level GUI module
 try: from . import gui
