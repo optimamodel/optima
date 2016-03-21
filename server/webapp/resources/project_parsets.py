@@ -109,16 +109,6 @@ class Parsets(Resource):
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         result = [item.hydrate() for item in reply]
 
-        # AWFUL HACK - replace float.nana with None for JSON conversion
-        for r in result:
-            for pars in r.pars:
-                for k, v in pars.items():
-                    if not k.startswith('prop') or 'tot' not in v.y:
-                        continue
-                    for i, val in enumerate(v.y['tot']):
-                        if math.isnan(val):
-                            v.y['tot'][i] = None
-
         return result
 
     @swagger.operation(

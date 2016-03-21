@@ -593,7 +593,7 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
-        print('####################')
+        print('#### Hydrate Program from database')
         print({
             'name': self.name,
             'category': self.category,
@@ -803,7 +803,7 @@ class ProgsetsDb(db.Model):
                     ]
                 }
                 effects.append(item)
-        print('-*-*-*-*-*-*+++++++++++++++')
+        print('##### Restore effects')
         print(effects)
         parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
