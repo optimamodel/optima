@@ -453,6 +453,8 @@ class GAOptim(object):
             postobudget = self.resultpairs[str(p.uid)]['opt'].budget[-1]
 #            assert abs(preobudget-sum(postobudget[:]))<tol
 
+    # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
+    # Be very wary of the indices being used...
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
         printv('Printing results...', 2, verbose)
@@ -522,7 +524,7 @@ class GAOptim(object):
             
             for key in self.objectives['keys']:
                 projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot[0][indices].sum()
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[0][indices].sum()
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[-1][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 
