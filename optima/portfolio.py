@@ -77,7 +77,7 @@ class Portfolio(object):
         if type(projects)==Project: projects = [projects]
         if type(projects)==list:
             for project in projects:
-                print str(project.uid) # TEMPPPP
+                project.uid = uuid() # TEMPPPP WARNING overwrite UUID
                 self.projects[str(project.uid)] = project        
                 printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
@@ -429,6 +429,7 @@ class GAOptim(object):
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
         for pind,p in enumerate(projects.values()):
+            printv('Running %i of %i...' % (pind, len(projects)), 2, verbose)
             self.resultpairs[str(p.uid)] = odict()
 
             # Crash if any project doesn't have progsets
