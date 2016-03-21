@@ -402,10 +402,10 @@ def geogui():
             
 #            # Autocalibrate FOI of district calibration to match linearly-rescaled national calibration curves.
 #            tempprev = dcp(newproject.data['hivprev'])
-#            datayears = len(newproject.data['years'])
+            datayears = len(newproject.data['years'])
 #            psetname = newproject.parsets[-1].name
-#            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
-#            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
+            # WARNING: Converting results to data assumes that results is already in yearly-dt form.
+            newproject.data['hivprev'] = [[[z*prevfactors[poplist[yind]][c] for z in y[0:datayears]] for yind, y in enumerate(x)] for x in project.parsets[-1].getresults().main['prev'].pops]
 #            newproject.autofit(name=psetname, orig=psetname, fitwhat=['force'], maxtime=None, maxiters=10, inds=None) # Run automatic fitting and update calibration
 #            
 #            newproject.data['hivprev'] = tempprev    
