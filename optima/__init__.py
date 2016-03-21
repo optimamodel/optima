@@ -76,8 +76,10 @@ from . import settings as _settings # Inter-project definitions, e.g. health sta
 from .settings import Settings, convertlimits, gettvecdt
 
 ## Create a blank spreadsheet
-from . import makespreadsheet as _makespreadsheet
-from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+try:
+    from . import makespreadsheet as _makespreadsheet
+    from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
