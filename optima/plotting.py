@@ -46,7 +46,6 @@ def humanizeyticks(ax):
 
 
 def reformatfigure(figure):
-    figure.set_size_inches(7, 3.5)
     for axes in figure.axes:
         humanizeyticks(axes)
         box = axes.get_position()
