@@ -10,11 +10,15 @@ fi
 
 source ./p-env/bin/activate
 
-TMP_DEPS=/tmp/temp_deps_${RANDOM}
+# delete to avoid some module import problems
+if [ -f "../optima/optima.pyc" ]; then
+  rm ../optima/optima.pyc
+fi
 
 # create a sorted list of existing dependencies 
 # against requirements.txt and compare that
 # to a sorted version of requirements.txt
+TMP_DEPS=/tmp/temp_deps_${RANDOM}
 pip freeze -l | grep -f requirements.txt | sort > ${TMP_DEPS}
 sort ./requirements.txt > ${TMP_DEPS}.requirements.txt
 if ! cmp ${TMP_DEPS}.requirements.txt ${TMP_DEPS} > /dev/null 2>&1

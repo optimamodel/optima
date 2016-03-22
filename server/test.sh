@@ -13,14 +13,20 @@ fi
 
 source ./p-env/bin/activate
 
-# install optima as a package
-cd ..
-python setup.py develop
-cd server
+if [ ! -f "./p-env/lib/python2.7/site-packages/optima.egg-link" ]; then
+    echo "Installing optima in virtualenv for the server..."
+    cd ..
+    python setup.py develop
+    cd server
+fi
 
+# create a sorted list of existing dependencies
+# against requirements.txt and compare that
+# to a sorted version of requirements.txt
 TMP_DEPS=/tmp/temp_deps_${RANDOM}
-pip freeze -l > ${TMP_DEPS}
-if ! cmp ./requirements.txt ${TMP_DEPS} > /dev/null 2>&1
+pip freeze -l | grep -f requirements.txt | sort > ${TMP_DEPS}
+sort ./requirements.txt > ${TMP_DEPS}.requirements.txt
+if ! cmp ${TMP_DEPS}.requirements.txt ${TMP_DEPS} > /dev/null 2>&1
 then
   echo "Installing Python dependencies ..."
   cat ${TMP_DEPS}
