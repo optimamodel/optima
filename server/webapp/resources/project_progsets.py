@@ -405,12 +405,9 @@ class CostCoverageGraph(Resource):
         parset_id = args['parset_id']
 
         try:
-            t = [int(args['t'])]
+            t = [int(x) for x in args['t'].split(',')]
         except ValueError:
-            try:
-                t = [int(x) for x in args['t'].split(',')]
-            except ValueError:
-                raise ValueError("t must be a year or a comma-separated list of years.")
+            raise ValueError("t must be a year or a comma-separated list of years.")
 
         plotoptions = {}
         for x in ['caption', 'xupperlim', 'perperson']:
@@ -425,6 +422,7 @@ class CostCoverageGraph(Resource):
         if parset_entry is None:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
         parset_instance = parset_entry.hydrate()
+
 
         plot = program_instance.plotcoverage(t=t, parset=parset_instance,
                                              plotoptions=plotoptions)
@@ -530,6 +528,7 @@ class CostCoverageParam(Resource):
         """
         args = costcov_param_parser.parse_args()
         result = modify_program(project_id, progset_id, program_id, args, self.add_param_for_instance)
+
 
         return result, 201
 
