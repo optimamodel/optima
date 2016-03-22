@@ -3,7 +3,6 @@ import flask.json
 import optima as op
 import numpy as np
 from collections import OrderedDict
-import math
 
 
 def normalize_dict(elem):
@@ -20,7 +19,7 @@ def normalize_dict(elem):
             result[norm_k] = norm_v
         return result
     elif isinstance(elem, float):
-        if math.isnan(elem):
+        if np.isnan(elem):
             return None
     return elem
 
@@ -46,7 +45,7 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
             return float(obj)
 
         if isinstance(obj, np.ndarray):
-            return [nan_to_null(p) for p in list(obj)]
+            return [normalize_dict(p) for p in list(obj)]
 
         if isinstance(obj, np.bool_):
             return bool(obj)
