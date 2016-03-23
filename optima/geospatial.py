@@ -385,9 +385,9 @@ def geogui():
             if len(project.progsets) > 0:
                 for progid in newproject.progsets[-1].programs:
                     program = newproject.progsets[-1].programs[progid]
-                    program.costcovdata['cost'] = [x*plhivratio['tot'][c] for x in program.costcovdata['cost']]
+                    program.costcovdata['cost'] = [x*popratio['tot'][c] for x in program.costcovdata['cost']]
                     if not program.costcovdata['coverage'] == [None]:
-                        program.costcovdata['coverage'] = [x*plhivratio['tot'][c] for x in program.costcovdata['coverage']]
+                        program.costcovdata['coverage'] = [x*popratio['tot'][c] for x in program.costcovdata['coverage']]
                 
             ### -----------------------------------------------------------------------------------------
 
