@@ -64,10 +64,10 @@ class Optim(object):
             return None
 
 
-    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False):
+    def optimize(self, name=None, parsetname=None, progsetname=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None):
         ''' And a little wrapper for optimize() -- WARNING, probably silly to have this at all '''
         if name is None: name='default'
-        multires = optimize(which=self.objectives['which'], project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug)
+        multires = optimize(which=self.objectives['which'], project=self.project, optim=self, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget)
         multires.name = 'optim-'+name # Multires might be None if couldn't meet targets
         return multires
 
@@ -383,7 +383,7 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
 
 
 
-def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False):
+def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtime=180, verbose=2, stoppingfunc=None, method='asd', debug=False, overwritebudget=None):
     '''
     The standard Optima optimization function: minimize outcomes for a fixed total budget.
 
@@ -419,7 +419,7 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
     # Run outcomes minimization
     if which=='outcomes':
-        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters)
+        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget)
 
     # Run money minimization
     elif which=='money':
@@ -432,15 +432,18 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
 
 
-def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None):
+def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, overwritebudget=None):
     ''' Split out minimize outcomes '''
 
     ## Handle budget and remove fixed costs
     parset  = project.parsets[optim.parsetname] # Link to the original parameter set
-    progset = project.progsets[optim.progsetname] # Link to the original parameter set
+    progset = project.progsets[optim.progsetname] # Link to the original program set
     totalbudget = dcp(optim.objectives['budget'])
-    try: origbudget = dcp(progset.getdefaultbudget())
-    except: origbudget = dcp(tmpdefaultbudget)
+    if overwritebudget != None:
+        origbudget = dcp(overwritebudget)
+    else:
+        try: origbudget = dcp(progset.getdefaultbudget())
+        except: origbudget = dcp(tmpdefaultbudget)
     optiminds = findinds(progset.optimizable())
     budgetvec = origbudget[:][optiminds] # Get the original budget vector
     xmin = zeros(len(budgetvec))

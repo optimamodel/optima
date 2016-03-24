@@ -94,7 +94,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
     # Validate input
     if project is None: raise OptimaException('autofit() requires a project in order to run')
     if name is None: name = -1 # Calibrate last parameter set
-    elif type(name)!=str and not(isnumber(name)): raise OptimaException('%s must be the name or index of a parameter set' % name)
+    elif type(name) not in (str,unicode) and not(isnumber(name)): raise OptimaException('%s must be the name or index of a parameter set' % name)
     
     # Initialization
     parset = project.parsets[name] # Shorten the original parameter set

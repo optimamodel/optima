@@ -40,6 +40,10 @@ print(optimalicense)
 ## Specify the version, for the purposes of figuring out which version was used to create a project
 __version__ = 2.0
 
+# Create an empty list to stored failed imports
+_failed = [] 
+
+
 
 #####################################################################################################################
 ### Load helper functions/modules
@@ -64,7 +68,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
 
 
 #####################################################################################################################
@@ -76,8 +80,10 @@ from . import settings as _settings # Inter-project definitions, e.g. health sta
 from .settings import Settings, convertlimits, gettvecdt
 
 ## Create a blank spreadsheet
-from . import makespreadsheet as _makespreadsheet
-from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+try:
+    from . import makespreadsheet as _makespreadsheet
+    from .makespreadsheet import makespreadsheet, makeeconspreadsheet, default_datastart, default_dataend
+except: _failed.append('makespreadsheet')
 
 ## Load a completed a spreadsheet
 from . import loadspreadsheet as _loadspreadsheet
@@ -130,8 +136,6 @@ from .plotting import getplotselections, makeplots
 ### Load optional plotting functions
 #####################################################################################################################
 
-_failed = [] # Create an empty list to stored failed imports
-
 ## Load high level GUI module
 try: from . import gui
 except: _failed.append('gui')
@@ -177,6 +181,9 @@ from .portfolio import Portfolio
 
 try:
     import geospatial as _geospatial
+    from . import batchtools
+    from .batchtools import batchautofit
+    from .batchtools import batchBOC
     from .geospatial import geogui # Import GUI tools for geospatial analysis
 except: 
     _failed.append('geospatial')
