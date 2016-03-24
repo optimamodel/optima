@@ -23,7 +23,7 @@ Version: 2016mar23
 ### Read old spreadsheet
 ##################################################################################################################
 
-from optima import Project, printv, odict, defaults, saveobj, dcp, plotresults
+from optima import Project, printv, odict, defaults, saveobj, dcp, plotresults, OptimaException
 from sys import argv
 from numpy import nan, zeros
 filepath = '/Users/robynstuart/Google Drive/Optima/Optima applications/Sudan/Project files/'
@@ -175,9 +175,21 @@ for which in ['reg', 'cas', 'com', 'inj']:
         for col in range(new.data['npops']):
             if new.data['part'+which][row][col]: new.data['pships'][which].append((new.data['pops']['short'][row],new.data['pops']['short'][col]))
 
-# Transitions
+# Transitions (splits negative-valued births from aging matrix as well)
 new.data['birthtransit'] = zeros((nfemalepops,npops)).tolist()
-new.data['agetransit']   = old['data']['transit']['asym']
+oldagematrix = dcp(old['data']['transit']['asym'])
+femalepops = new.data['pops']['female']
+femid = 0
+for x in xrange(len(oldagematrix)):
+    for y in xrange(len(oldagematrix[0])):
+        if oldagematrix[x][y] < 0:
+            if femalepops[x]:
+                new.data['birthtransit'][femid][y] = -oldagematrix[x][y]
+                oldagematrix[x][y] = 0    
+            else:
+                OptimaException('Error: A non-female is giving birth in the input data!')
+    if femalepops[x]: femid += 1
+new.data['agetransit']   = oldagematrix
 new.data['risktransit']  = old['data']['transit']['sym']
 
 # Constants
