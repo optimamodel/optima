@@ -27,7 +27,8 @@ from optima import Project, printv, odict, defaults, saveobj, dcp, plotresults
 from sys import argv
 from numpy import nan, zeros
 filepath = '/Users/robynstuart/Google Drive/Optima/Optima applications/Sudan/Project files/'
-defaultfilename = filepath+'Sudan_20160303'#'example.json'
+filepath = './'
+defaultfilename = filepath+'Cote_dIvoire_20160323.json'#'example.json'
 #defaultfilename = 'Sudan_20160216.json'#'example.json'
 oldext = '.json'
 newext = '.prj'
