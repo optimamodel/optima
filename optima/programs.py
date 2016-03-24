@@ -1000,11 +1000,9 @@ class CCOF(object):
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
                     oldccopar = {}
-                    try:
-                        for ccopartype in self.ccopars.keys():
-                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+                    for ccopartype in self.ccopars.keys():
+                        oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
+                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
                     printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
                 else:
                     errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']

@@ -200,37 +200,37 @@ new.parsets[0].pars[0]['inhomo'].y[:]   = old['F'][0]['inhomo'][:]
 ## Run simulation
 #new.runsim()
 
-###################################################################################################################
-#### Autocalibrate to match old calibration curves
-###################################################################################################################
-#
-## First work out the indices for the calibration results that would map onto data years.
-#
-#tvec = old['M']['tvec']
-#epiyears = old['data']['epiyears']
-#invdt = int(round(1/(tvec[1]-tvec[0])))
-#endind = int(round((epiyears[-1]-epiyears[0])*invdt)) + 1
-#
-#new.runsim()
-#new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
-#new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
-#
-#new.data['hivprev'] = old['data']['key']['hivprev']
-#new.runsim('v1-autofit')   # Re-simulate autofit curves, but for old data.
-##alt.manualfit(orig='v1-autofit')
-#
-###################################################################################################################
-#### Plotting
-###################################################################################################################
-#
-##print('Doing calibration...')
-##new.manualfit()
-#
-#plotresults(new.parsets['v1-autofit'].getresults(), toplot=['prev-pops'])
-#
-#if dosave: saveobj(filename.strip(oldext)+newext, new)
-#print('Done.')
-#
+##################################################################################################################
+### Autocalibrate to match old calibration curves
+##################################################################################################################
+
+# First work out the indices for the calibration results that would map onto data years.
+
+tvec = old['M']['tvec']
+epiyears = old['data']['epiyears']
+invdt = int(round(1/(tvec[1]-tvec[0])))
+endind = int(round((epiyears[-1]-epiyears[0])*invdt)) + 1
+
+new.runsim()
+new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
+new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+
+new.data['hivprev'] = old['data']['key']['hivprev']
+new.runsim('v1-autofit')   # Re-simulate autofit curves, but for old data.
+#alt.manualfit(orig='v1-autofit')
+
+##################################################################################################################
+### Plotting
+##################################################################################################################
+
+#print('Doing calibration...')
+#new.manualfit()
+
+plotresults(new.parsets['v1-autofit'].getresults(), toplot=['prev-pops'])
+
+if dosave: saveobj(filename.strip(oldext)+newext, new)
+print('Done.')
+
 
 
 ##################################################################################################################
