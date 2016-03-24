@@ -455,7 +455,7 @@ def model(G, tmpM, tmpF, opt, initstate=None, verbose=2, safetymargin=0.8, bench
             currplhiv = people[plhivind,:,t].sum(axis=0)
             currdx = people[dxind,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
-            fractiontodx = maximum(0, propaware[:,t] * currplhiv[:] - currdx[:] / (currundx[:] + eps)) # Don't allow to go negative
+            fractiontodx = maximum(0, (propaware[:,t] * currplhiv[:] - currdx[:]) / (currundx[:] + eps)) # Don't allow to go negative
         for cd4 in xrange(ncd4):
             if cd4>0: 
                 progin = dt*prog[cd4-1]*people[undx[cd4-1],:,t]
