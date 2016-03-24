@@ -76,8 +76,9 @@ class Portfolio(object):
         printv('Adding project to portfolio...', 2, verbose)
         if type(projects)==Project: projects = [projects]
         if type(projects)==list:
-            for project in projects: 
-                self.projects[project.uid] = project        
+            for project in projects:
+                project.uid = uuid() # TEMPPPP WARNING overwrite UUID
+                self.projects[str(project.uid)] = project        
                 printv('\nAdded project "%s" to portfolio "%s".' % (project.name, self.name), 2, verbose)
         
     def getdefaultbudgets(self, progsetnames=None, verbose=2):
@@ -184,8 +185,8 @@ class Portfolio(object):
             else:
                 printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
-                
-    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2):
+    # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
+    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax = None, extray = None):
         ''' Loop through stored projects and plot budget-outcome curves '''
         printv('Plotting BOCs...', 2, verbose)
         
@@ -201,8 +202,10 @@ class Portfolio(object):
         
         # Loop for BOCs and then BOC derivatives.
         for c,p in enumerate(self.projects.values()):
-            p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c])
-            
+            ax = p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot = True)
+            if extrax != None:            
+                for k in xrange(len(extrax[c])):
+                    ax.plot(extrax[c][k], extray[c][k], 'bo')
             
     def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
@@ -287,7 +290,7 @@ class Portfolio(object):
         objectives = dcp(objectives)    # NOTE: Yuck. Somebody will need to check all of Optima for necessary dcps.
         
         gaoptim = GAOptim(objectives = objectives)
-        self.gaoptims[gaoptim.uid] = gaoptim
+        self.gaoptims[str(gaoptim.uid)] = gaoptim
         
         if budgetratio == None: budgetratio = self.getdefaultbudgets()
         initbudgets = scaleratio(budgetratio,objectives['budget'])
@@ -428,7 +431,8 @@ class GAOptim(object):
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
         for pind,p in enumerate(projects.values()):
-            self.resultpairs[p.uid] = odict()
+            printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
+            self.resultpairs[str(p.uid)] = odict()
 
             # Crash if any project doesn't have progsets
             if not p.progsets or not p.parsets: 
@@ -438,19 +442,21 @@ class GAOptim(object):
             initobjectives = dcp(self.objectives)
             initobjectives['budget'] = initbudgets[pind] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['init'] = p.optimize(which='outcomes', name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[str(p.uid)]['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
             preibudget = initobjectives['budget']
-            postibudget = self.resultpairs[p.uid]['init'].budget[-1]
+            postibudget = self.resultpairs[str(p.uid)]['init'].budget[-1]
 #            assert abs(preibudget-sum(postibudget[:]))<tol
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pind] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[p.uid]['opt'] = p.optimize(which='outcomes', name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+            self.resultpairs[str(p.uid)]['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
             preobudget = optobjectives['budget']
-            postobudget = self.resultpairs[p.uid]['opt'].budget[-1]
+            postobudget = self.resultpairs[str(p.uid)]['opt'].budget[-1]
 #            assert abs(preobudget-sum(postobudget[:]))<tol
 
+    # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
+    # Be very wary of the indices being used...
     def printresults(self, verbose=2):
         ''' Just displays results related to the GA run '''
         printv('Printing results...', 2, verbose)
@@ -520,7 +526,7 @@ class GAOptim(object):
             
             for key in self.objectives['keys']:
                 projoutcomesplit[prj]['init']['num'+key] = self.resultpairs[x]['init'].main['num'+key].tot[0][indices].sum()
-                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[0][indices].sum()
+                projoutcomesplit[prj]['opt']['num'+key] = self.resultpairs[x]['opt'].main['num'+key].tot[-1][indices].sum()
                 overalloutcomesplit['num'+key]['init'] += projoutcomesplit[prj]['init']['num'+key]
                 overalloutcomesplit['num'+key]['opt'] += projoutcomesplit[prj]['opt']['num'+key]
                 
