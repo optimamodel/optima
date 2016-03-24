@@ -256,7 +256,7 @@ class Programset(object):
                 for yrno, yr in enumerate(self.programs[program].costcovdata['t']):
                     yrindex = findinds(tvec,yr)
                     totalbudget[program][yrindex] = self.programs[program].costcovdata['cost'][yrno]
-                    lastbudget[program] = sanitize(totalbudget[program])[-1]
+                lastbudget[program] = sanitize(totalbudget[program])[-1]
             else: 
                 printv('\nWARNING: no cost data defined for program "%s"...' % program, 1, verbose)
                 lastbudget[program] = nan
@@ -1000,9 +1000,11 @@ class CCOF(object):
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
                     oldccopar = {}
-                    for ccopartype in self.ccopars.keys():
-                        oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    try:
+                        for ccopartype in self.ccopars.keys():
+                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
+                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                     printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
                 else:
                     errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']

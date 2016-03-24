@@ -14,7 +14,7 @@ TODO: copy programs
 TODO: copy scenario settings
 TODO: copy optimization settings
 
-Version: 2016mar03
+Version: 2016mar23
 """
 
 
@@ -26,7 +26,9 @@ Version: 2016mar03
 from optima import Project, printv, odict, defaults, saveobj, dcp, plotresults
 from sys import argv
 from numpy import nan, zeros
-defaultfilename = 'Sudan_20160216.json'#'example.json'
+filepath = '/Users/robynstuart/Google Drive/Optima/Optima applications/Sudan/Project files/'
+defaultfilename = filepath+'Sudan_20160303'#'example.json'
+#defaultfilename = 'Sudan_20160216.json'#'example.json'
 oldext = '.json'
 newext = '.prj'
 dosave = True
@@ -198,36 +200,125 @@ new.parsets[0].pars[0]['inhomo'].y[:]   = old['F'][0]['inhomo'][:]
 ## Run simulation
 #new.runsim()
 
+###################################################################################################################
+#### Autocalibrate to match old calibration curves
+###################################################################################################################
+#
+## First work out the indices for the calibration results that would map onto data years.
+#
+#tvec = old['M']['tvec']
+#epiyears = old['data']['epiyears']
+#invdt = int(round(1/(tvec[1]-tvec[0])))
+#endind = int(round((epiyears[-1]-epiyears[0])*invdt)) + 1
+#
+#new.runsim()
+#new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
+#new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+#
+#new.data['hivprev'] = old['data']['key']['hivprev']
+#new.runsim('v1-autofit')   # Re-simulate autofit curves, but for old data.
+##alt.manualfit(orig='v1-autofit')
+#
+###################################################################################################################
+#### Plotting
+###################################################################################################################
+#
+##print('Doing calibration...')
+##new.manualfit()
+#
+#plotresults(new.parsets['v1-autofit'].getresults(), toplot=['prev-pops'])
+#
+#if dosave: saveobj(filename.strip(oldext)+newext, new)
+#print('Done.')
+#
+
+
 ##################################################################################################################
-### Autocalibrate to match old calibration curves
+### Convert programs
 ##################################################################################################################
+from optima import Program, Programset
+#from numpy import isnan
+print('Converting programs...')
 
-# First work out the indices for the calibration results that would map onto data years.
+# Extract some useful variables
+ps = new.parsets[0].pars[0]
+nyears = len(old['data']['epiyears'])
 
-tvec = old['M']['tvec']
-epiyears = old['data']['epiyears']
-invdt = int(round(1/(tvec[1]-tvec[0])))
-endind = int(round((epiyears[-1]-epiyears[0])*invdt)) + 1
+# Initialise storage variables
+newprogs = []
+targeteffects=[]
 
-new.runsim()
-new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
-new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+# Create programs
+for progno, prog in enumerate(old['programs']):
+    
+    targetpars=[]
+    targetpops=[]
 
-new.data['hivprev'] = old['data']['key']['hivprev']
-new.runsim('v1-autofit')   # Re-simulate autofit curves, but for old data.
-#alt.manualfit(orig='v1-autofit')
+    # Create program effects
+    #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    for effect in prog['effects']:
+        if effect['param'][:6]=='condom': effect['param'] = 'cond'+effect['param'][6:]
+        if effect['param']=='numfirstline': effect['param'] = 'numtx'
+        
+        # Extract effects
+        if isinstance(effect['coparams'],list):
+            ccopar = {'t':2016., 'intercept':(effect['coparams'][0],effect['coparams'][1]), prog['name']: (effect['coparams'][2],effect['coparams'][3])}
+        else:            
+            ccopar = {'t':2016., 'intercept':(0.,0.), prog['name']: []}
 
-##################################################################################################################
-### Plotting
-##################################################################################################################
+        # Convert partnership parameters 
+        if ps[effect['param']].by=='pship':
+            targetpships = list(set([pship for pship in ps[effect['param']].y.keys() if effect['popname'] in pship]))
+            for targetpship in targetpships:
+                targetpars.append({'param':effect['param'], 'pop':targetpship})
+                targeteffects.append({'param':effect['param'], 'pop':targetpship, 'ccopar': ccopar})
 
-#print('Doing calibration...')
-#new.manualfit()
+        # Convert non-partnership parameters 
+        else:
+            targetpars.append({'param':effect['param'], 'pop':effect['popname']})
+            targeteffects.append({'param':effect['param'], 'pop':effect['popname'], 'ccopar': ccopar})
+    
+    # Create program
+    newprog = Program(short=prog['name'],
+                      targetpars=targetpars,
+                      targetpops=list(set([effect['popname'] for effect in prog['effects']]))
+                      )
 
-plotresults(new.parsets['v1-autofit'].getresults(), toplot=['prev-pops'])
+    # Add historical cost and coverage data
+    for yearind in range(nyears):
+        
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+        if len(old['data']['costcov']['realcost'][progno])==1: # It's an assumption, apply to every year
+            newcost = old['data']['costcov']['realcost'][progno][0]
+        else:
+            newcost = old['data']['costcov']['realcost'][progno][yearind]
+        if len(old['data']['costcov']['cov'][progno])==1: # It's an assumption, apply to every year
+            newcov = old['data']['costcov']['cov'][progno][0]
+        else:
+            newcov = old['data']['costcov']['cov'][progno][yearind]
+        newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
+                                 'cost': newcost,
+                                 'coverage': newcov})
 
-if dosave: saveobj(filename.strip(oldext)+newext, new)
-print('Done.')
+    # Create cost functions
+    unitcost = 9999. # TODO
+    newprog.costcovfn.addccopar({'t': 2016.0, 
+                                 'saturation':(prog['ccparams']['saturation'], prog['ccparams']['saturation']),
+                                 'unitcost':(unitcost, unitcost)}) 
 
 
+    # Append to list
+    newprogs.append(newprog)
 
+# Create program set
+R = Programset(programs=newprogs)
+
+# Save old program effects to program set
+for targeteffect in targeteffects:
+     R.covout[targeteffect['param']][targeteffect['pop']].addccopar(targeteffect['ccopar'], overwrite=True)
+
+# Add program set to project
+new.addprogset(name='default', progset = R)
+
+# Compare outcoes under budget and calibration
+#comparison = new.progsets[0].compareoutcomes(parset=new.parsets[0], year=2016, doprint=True)
