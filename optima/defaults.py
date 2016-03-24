@@ -3,10 +3,10 @@ Defines the default parameters for each program.
 
 Version: 2016jan28
 """
+import os
+import optima as op
 from optima import OptimaException, Project, Program, Programset, printv
 
-
-spreadsheetpath = '../tests/' # WARNING, will this work on all systems? If not can just move XLSX files into the Optima directory I suppose...
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
@@ -311,9 +311,15 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016feb02
+    Version: 2016mar24
     '''
     
+    
+    # Figure out the path 
+    optimapath = op.__file__
+    parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
+    testdir = parentdir + ['tests'+os.sep]
+    spreadsheetpath = os.sep.join(testdir)
     
     
     ##########################################################################################################################

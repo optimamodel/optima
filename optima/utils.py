@@ -678,6 +678,24 @@ def loadobj(filename, verbose=True):
     return obj
 
 
+def cleanresults(filelist=None):
+    ''' Remove results from one file or many files '''
+    from glob import glob
+    if filelist is None: 
+        filelist = glob('*.prj')
+        ans = raw_input('About to remove results from the following files:\n%s\n\nAre you sure? y/[n]\n' % filelist)
+        if ans!='y': 
+            print('\nResults removal aborted.')
+            return None
+    if isinstance(filelist, (str, unicode)): filelist = [filelist]
+    for filename in filelist:
+        P = loadobj(filename)
+        P.cleanresults()
+        saveobj(filename, P)
+    print('\nDone.')
+    return None
+
+
 def saves(obj):
     ''' Save an object to a string in gzip-compatible way'''
     try: import cPickle as pickle # For Python 2 compatibility
