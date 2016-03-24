@@ -829,8 +829,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 peoplemoving1 = people[:, p1, t] * risktransit[p1,p2]  # Number of other people who are moving pop1 -> pop2
                 peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
                 peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
-                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
+                # Symmetric flow in totality, but the state distribution will ideally change.                
+                people[:, p1, t+1] += peoplemoving2 - peoplemoving1
+                people[:, p2, t+1] += peoplemoving1 - peoplemoving2
             
             
             
