@@ -251,9 +251,9 @@ class Resultset(object):
         return None # make()
         
         
-    def export(self, filestem=None, sep=',', ind=0, sigfigs=3):
+    def export(self, filestem=None, sep=',', ind=0, sigfigs=3, verbose=2):
         ''' Method for exporting results to a CSV file '''
-        if filestem is None: 
+        if filestem is None:  # Doesn't include extension, hence filestem
             if self.name is not None: filestem = self.name
             else: filestem = str(self.uid)
         filename = filestem + '.csv'
@@ -262,25 +262,27 @@ class Resultset(object):
         headers = ['Year']+keys
         output = sep.join(headers)+'\n'
         for t in range(npts):
-            output += '%i'+sep % self.tvec[t]
+            output += ('%i'+sep) % self.tvec[t]
             for key in keys:
-                if self.main[key].isnumber: output += '%i'+sep % self.main[key].tot[ind][t]
-                else:                       output += '%s'+sep % sigfig(self.main[key].tot[ind][t], sigfigs=sigfigs)
-            output += '\n\n\n'
+                if self.main[key].isnumber: output += ('%i'+sep) % self.main[key].tot[ind][t]
+                else:                       output += ('%s'+sep) % sigfig(self.main[key].tot[ind][t], sigfigs=sigfigs)
+            output += '\n'
+       
         
         if len(self.budget): # WARNING, does not support multiple years
-            output += 'Budget\n'
-            output += sep.join(self.budget.keys()) + '\n'
-            output += sep.join(self.budget.values()) + '\n'
             output += '\n\n\n'
+            output += 'Budget\n'
+            output += sep.join(self.budget[ind].keys()) + '\n'
+            output += sep.join([str(val) for val in self.budget[ind].values()]) + '\n'
         
         if len(self.coverage): # WARNING, does not support multiple years
-            output += 'Coverage\n'
-            output += sep.join(self.coverage.keys()) + '\n'
-            output += sep.join(self.coverage.values()) + '\n'
             output += '\n\n\n'
+            output += 'Coverage\n'
+            output += sep.join(self.coverage[ind].keys()) + '\n'
+            output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n'
             
         with open(filename, 'w') as f: f.write(output)
+        printv('Results exported to "%s"' % filename, 2, verbose)
         return None
                     
             
@@ -290,7 +292,7 @@ class Resultset(object):
 
 
 
-class Multiresultset(object):
+class Multiresultset(Resultset):
     ''' Structure for holding multiple kinds of results, e.g. from an optimization, or scenarios '''
     def __init__(self, resultsetlist=None, name=None):
         # Basic info
@@ -365,12 +367,12 @@ class Multiresultset(object):
     
     def export(self, filestem=None):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
-        if filestem is None: 
+        if filestem is None: # Filestem rather than filename since doesn't include extension
             if self.name is not None: filestem = self.name
             else: filestem = str(self.uid)
         for k,key in enumerate(self.keys):
-            thisfilename = filestem+'-'+key+'.csv'
-            Resultset.export(self, filename=thisfilename, ind=k)
+            thisfilestem = filestem+'-'+key
+            Resultset.export(self, filestem=thisfilestem, ind=k)
         return None
 
 
