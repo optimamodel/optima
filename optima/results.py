@@ -4,7 +4,7 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016feb04 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig
 from numpy import array, nan, zeros, arange, shape
 import matplotlib.pyplot as plt
 from optima import pchip, plotpchip
@@ -250,6 +250,41 @@ class Resultset(object):
         
         return None # make()
         
+        
+    def export(self, filestem=None, sep=',', ind=0, sigfigs=3):
+        ''' Method for exporting results to a CSV file '''
+        if filestem is None: 
+            if self.name is not None: filestem = self.name
+            else: filestem = str(self.uid)
+        filename = filestem + '.csv'
+        npts = len(self.tvec)
+        keys = self.main.keys()
+        headers = ['Year']+keys
+        output = sep.join(headers)+'\n'
+        for t in range(npts):
+            output += '%i'+sep % self.tvec[t]
+            for key in keys:
+                if self.main[key].isnumber: output += '%i'+sep % self.main[key].tot[ind][t]
+                else:                       output += '%s'+sep % sigfig(self.main[key].tot[ind][t], sigfigs=sigfigs)
+            output += '\n\n\n'
+        
+        if len(self.budget): # WARNING, does not support multiple years
+            output += 'Budget\n'
+            output += sep.join(self.budget.keys()) + '\n'
+            output += sep.join(self.budget.values()) + '\n'
+            output += '\n\n\n'
+        
+        if len(self.coverage): # WARNING, does not support multiple years
+            output += 'Coverage\n'
+            output += sep.join(self.coverage.keys()) + '\n'
+            output += sep.join(self.coverage.values()) + '\n'
+            output += '\n\n\n'
+            
+        with open(filename, 'w') as f: f.write(output)
+        return None
+                    
+            
+        
 
 
 
@@ -326,6 +361,17 @@ class Multiresultset(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
+    
+    
+    def export(self, filestem=None):
+        ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
+        if filestem is None: 
+            if self.name is not None: filestem = self.name
+            else: filestem = str(self.uid)
+        for k,key in enumerate(self.keys):
+            thisfilename = filestem+'-'+key+'.csv'
+            Resultset.export(self, filename=thisfilename, ind=k)
+        return None
 
 
 

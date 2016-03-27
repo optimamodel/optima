@@ -1,5 +1,5 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
@@ -560,14 +560,19 @@ class Spreadsheet(object):
         if filename is not None: self.load(filename)
         return None
     
+    def __repr__(self):
+        output = defaultrepr(self)
+        return output
+    
     def load(self, filename=None):
         if filename is not None:
             self.filename = filename
             with open(filename, mode='rb') as f: self.data = f.read()
     
-    def save(self, filename=None):
+    def save(self, filename=None, verbose=2):
         if filename is None:
             if self.filename is not None: filename = self.filename
         if filename is not None:
             with open(filename, mode='wb') as f: f.write(self.data)
+        printv('Spreadsheet "%s" saved.' % filename, 2, verbose)
     
