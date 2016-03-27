@@ -63,6 +63,7 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
+        self.spreadsheet = None # Binary version of the spreadsheet file
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
 
@@ -105,6 +106,7 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
+        self.spreadsheet = Spreadsheet(filename) # Load spreadsheet binary file into project -- WARNING, only partly implemented since not sure how to read from
         self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
@@ -546,4 +548,26 @@ class Project(object):
         if returnplot: return ax
         else: show()
         return None
+
+
+
+class Spreadsheet(object):
+    ''' A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded '''
+    
+    def __init__(self, filename=None):
+        self.data = None
+        self.filename = None
+        if filename is not None: self.load(filename)
+        return None
+    
+    def load(self, filename=None):
+        if filename is not None:
+            self.filename = filename
+            with open(filename, mode='rb') as f: self.data = f.read()
+    
+    def save(self, filename=None):
+        if filename is None:
+            if self.filename is not None: filename = self.filename
+        if filename is not None:
+            with open(filename, mode='wb') as f: f.write(self.data)
     
