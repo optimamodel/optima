@@ -600,6 +600,33 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
 
 
 
+def comparepars(pars1=None, pars2=None, ind=0):
+    ''' 
+    Function to compare two sets of pars. Example usage:
+    compareparsets(P.parsets[0], P.parsets[1])
+    '''
+    if type(pars1)==Parameterset: pars1 = pars1.pars[ind] # If parset is supplied instead of pars, use that instead
+    if type(pars2)==Parameterset: pars2 = pars2.pars[ind]
+    keys = pars1.keys()
+    nkeys = 0
+    count = 0
+    for key in keys:
+        if hasattr(pars1[key],'y'):
+            nkeys += 1
+            if str(pars1[key].y) != str(pars2[key].y): # Convert to string representation for testing equality
+                count += 1
+                msg = 'Parameter "%s" differs:\n' % key
+                msg += '%s\n' % pars1[key].y
+                msg += 'vs\n'
+                msg += '%s\n' % pars2[key].y
+                msg += '\n\n'
+                print(msg)
+    if count==0: print('All %i parameters match' % nkeys)
+    else:        print('%i of %i parameters did not match' % (count, nkeys))
+    return None
+
+
+
 
 
 #################################################################################################################################
