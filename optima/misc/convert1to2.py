@@ -232,7 +232,6 @@ def convert1to2(infile=None, outfile=None):
     for progno, prog in enumerate(old['programs']):
         
         targetpars=[]
-        targetpops=[]
 
         # Create program effects
         #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
