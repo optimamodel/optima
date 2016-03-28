@@ -17,6 +17,8 @@ TODO: copy optimization settings
 Version: 2016mar24
 """
 
+oldext = '.json'
+newext = '.prj'
 
 
 ##################################################################################################################
@@ -66,12 +68,10 @@ def fromjson(x):
 ### Convert data
 ##################################################################################################################
 
-def convert1to2(infile=None, outfile=None, dosave=True, maxtime=None):
+def convert1to2(infile=None, outfile=None, autofit=True, dosave=True, maxtime=None):
     if infile is None: return # Stupid, I know...
 
     old = loaddata(infile)
-    oldext = '.json'
-    newext = '.prj'
 
     print('Converting data...')
 
@@ -333,11 +333,11 @@ def convert1to2(infile=None, outfile=None, dosave=True, maxtime=None):
 
     new.runsim()
     new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
-    new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=maxtime, maxiters=1000, inds=None) # Run automatic fitting
+    new.copyparset(orig='default', new='v1-autofit')
+    if autofit: new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=maxtime, maxiters=1000, inds=None) # Run automatic fitting
 
     new.data['hivprev'] = old['data']['key']['hivprev']
     new.runsim('v1-autofit')   # Re-simulate autofit curves, but for old data.
-    #alt.manualfit(orig='v1-autofit')
 
 
 
