@@ -68,10 +68,16 @@ def fromjson(x):
 ### Convert data
 ##################################################################################################################
 
-def convert1to2(infile=None, outfile=None, autofit=True, dosave=True, maxtime=None):
-    if infile is None: return # Stupid, I know...
-
-    old = loaddata(infile)
+def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, maxtime=None):
+    if old is None and infile is None: return # Stupid, I know...
+    
+    # It's a string, assume it's a filename
+    if isinstance(old, (str, unicode)) and infile is None: 
+        infile = old
+        old = None # It's not actually a project
+    
+    # Actually load the project
+    if old is None: old = loaddata(infile)
 
     print('Converting data...')
 

@@ -3,6 +3,7 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, 
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
+import os
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -66,6 +67,7 @@ class Project(object):
         self.spreadsheet = None # Binary version of the spreadsheet file
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
+        self.filename = None # File path, only present if self.save() is used
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -316,7 +318,9 @@ class Project(object):
     
     def save(self, filename=None, saveresults=False):
         ''' Save the current project, by default using its name, and without results '''
+        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
+        self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
             saveobj(filename, self)
         else:
