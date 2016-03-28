@@ -217,7 +217,7 @@ def convert1to2(infile=None, outfile=None):
     ### Convert programs
     ##################################################################################################################
     from optima import Program, Programset
-    #from numpy import isnan
+    from numpy import log
     print('Converting programs...')
 
     # Extract some useful variables
@@ -264,6 +264,9 @@ def convert1to2(infile=None, outfile=None):
                           targetpops=list(set([effect['popname'] for effect in prog['effects']]))
                           )
 
+        # Get target population size
+        targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0])
+
         # Add historical cost and coverage data
         for yearind in range(nyears):
             
@@ -281,9 +284,15 @@ def convert1to2(infile=None, outfile=None):
                                      'coverage': newcov})
 
         # Create cost functions
-        unitcost = 9999. # TODO
+        sat = prog['ccparams']['saturation']
+        cov_u = prog['ccparams']['coverageupper']
+        cov_l = prog['ccparams']['coveragelower']
+        cov = (cov_u+cov_l)/2
+        fund = prog['ccparams']['funding']
+        unitcost = -2*fund/(sat*targetpopsize*log((2*sat)/(sat+cov)-1))
+
         newprog.costcovfn.addccopar({'t': 2016.0, 
-                                     'saturation':(prog['ccparams']['saturation'], prog['ccparams']['saturation']),
+                                     'saturation':(sat, sat),
                                      'unitcost':(unitcost, unitcost)}) 
 
 
