@@ -1000,9 +1000,16 @@ class CCOF(object):
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
                     oldccopar = odict()
-                    for ccopartype in self.ccopars.keys():
-                        oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                        self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    try: # WARNING ROBYN THIS IS STUPID PLEASE DON'T LET ME DO THIS
+                        for ccopartype in self.ccopars.keys():
+                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
+                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
+                    except: # OMG SO STUPID
+                        for ccopartype in ccopar.keys():
+                            while len(self.ccopars[ccopartype])<ind+1: # OMG SO STUPID
+                                self.ccopars[ccopartype].append(None) # Make just long enough...OMG SO DANGEROUS
+                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
+                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
                     printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
                 else:
                     errormsg = 'You have already entered CCO parameters for the year %s. If you want to overwrite it, set overwrite=True when calling addccopar().' % ccopar['t']

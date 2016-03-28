@@ -309,10 +309,12 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     # Save old program effects to program set
     failures = 0
     for targeteffect in targeteffects:
-         try: R.covout[targeteffect['param']][targeteffect['pop']].addccopar(targeteffect['ccopar'], overwrite=True)
-         except:
-             failures += 1
-             print('Failure %i: conversion failed for \n%s\nvs\n%s' % (failures, R.covout[targeteffect['param']][targeteffect['pop']].ccopars, targeteffect['ccopar']))
+#         try: 
+         R.covout[targeteffect['param']][targeteffect['pop']].addccopar(targeteffect['ccopar'], overwrite=True)
+#         except:
+#             
+#             failures += 1
+#             print('Failure %i: conversion failed for \n%s\nvs\n%s' % (failures, R.covout[targeteffect['param']][targeteffect['pop']].ccopars, targeteffect['ccopar']))
 
     # Add program set to project
     new.addprogset(name='default', progset = R)
