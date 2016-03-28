@@ -293,7 +293,7 @@ def convert1to2(infile=None, outfile=None):
 
         newprog.costcovfn.addccopar({'t': 2016.0, 
                                      'saturation':(sat, sat),
-                                     'unitcost':(unitcost, unitcost)}) 
+                                     'unitcost':(unitcost[0], unitcost[0])}) 
 
 
         # Append to list
