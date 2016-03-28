@@ -392,6 +392,15 @@ class Project(object):
         return None
 
 
+    def pars(self):
+        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
+        return self.parsets[-1].pars[0]
+    
+    
+    def progs(self):
+        ''' Shortcut for getting the latest active set of programs '''
+        return self.progsets[0].programs
+
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
