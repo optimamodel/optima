@@ -26,11 +26,6 @@ Version: 2016mar24
 from optima import Project, printv, odict, defaults, saveobj, dcp, OptimaException
 from sys import argv
 from numpy import nan, zeros
-oldext = '.json'
-newext = '.prj'
-dosave = True
-
-
 
 
 def loaddata(filename, verbose=0):
@@ -71,10 +66,12 @@ def fromjson(x):
 ### Convert data
 ##################################################################################################################
 
-def convert1to2(infile=None, outfile=None):
+def convert1to2(infile=None, outfile=None, dosave=True, maxtime=None):
     if infile is None: return # Stupid, I know...
 
     old = loaddata(infile)
+    oldext = '.json'
+    newext = '.prj'
 
     print('Converting data...')
 
@@ -289,10 +286,12 @@ def convert1to2(infile=None, outfile=None):
         cov = (cov_u+cov_l)/2
         fund = prog['ccparams']['funding']
         unitcost = -2*fund/(sat*targetpopsize*log((2*sat)/(sat+cov)-1))
+        try: unitcost = unitcost[0] # If it's an array, take the first element -- WARNING, should know
+        except: pass
 
         newprog.costcovfn.addccopar({'t': 2016.0, 
                                      'saturation':(sat, sat),
-                                     'unitcost':(unitcost[0], unitcost[0])}) 
+                                     'unitcost':(unitcost, unitcost)}) 
 
 
         # Append to list
@@ -334,7 +333,7 @@ def convert1to2(infile=None, outfile=None):
 
     new.runsim()
     new.data['hivprev'] = [[[y[x] if z==0 else nan for x in xrange(0,endind,invdt)] for y in old['R']['prev']['pops'][0]] for z in xrange(3)]
-    new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=None, maxiters=1000, inds=None) # Run automatic fitting
+    new.autofit(name='v1-autofit', orig='default', fitwhat=['force'], maxtime=maxtime, maxiters=1000, inds=None) # Run automatic fitting
 
     new.data['hivprev'] = old['data']['key']['hivprev']
     new.runsim('v1-autofit')   # Re-simulate autofit curves, but for old data.

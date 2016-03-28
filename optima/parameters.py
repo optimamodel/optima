@@ -7,7 +7,7 @@ Version: 1.4 (2016feb08)
 """
 
 from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, nan
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -536,8 +536,6 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
-                    if any(array(simpars[key]).flatten()<0.0):
-                        raise OptimaException('Negative parameters are not allowed!')
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -578,12 +576,16 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     
     # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
+        if isnan(y): return y # Give up
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
         newy = array(y) # Make sure it's an array and not a list
+        naninds = findinds(isnan(newy))
+        if len(naninds): newy[naninds] = limits[0] # Temporarily reset -- value shouldn't matter
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
+        newy[naninds] = nan # And return to nan
         if warn and any(newy!=array(y)):
             printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:

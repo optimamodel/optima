@@ -382,6 +382,7 @@ class Project(object):
         if name is not None and orig is not None and name!=orig:
             self.copyparset(orig=orig, new=name, overwrite=True) # Store parameters, user seems to know what she's doing, trust her!
         if name is None and orig is not None: name = orig # Specify name if not supplied
+        if name is not None and orig is None: orig = name # Specify orig if not supplied
         if name not in self.parsets.keys():
             if orig not in self.parsets.keys(): 
                 errormsg = 'Cannot use original parset "%s": parset does not exist; choices are:\n:%s' % (orig, self.parsets.keys())
