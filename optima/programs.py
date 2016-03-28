@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, runmodel, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, sort, transpose, nan, isnan, ndarray, concatenate as cat, maximum, minimum
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, ndarray, maximum, minimum
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -82,12 +82,12 @@ class Programset(object):
         if not hasattr(self, 'covout'): self.covout = odict()
 
         for targetpartype in self.targetpartypes: # Loop over parameter types
-            if not self.covout.get(targetpartype): self.covout[targetpartype] = {} # Initialize if it's not there already
+            if not self.covout.get(targetpartype): self.covout[targetpartype] = odict() # Initialize if it's not there already
             for thispop in self.progs_by_targetpar(targetpartype).keys(): # Loop over populations
                 if self.covout[targetpartype].get(thispop): # Take the pre-existing one if it's there... 
                     ccopars = self.covout[targetpartype][thispop].ccopars 
                 else: # ... or if not, set it up
-                    ccopars = {}
+                    ccopars = odict()
                     ccopars['intercept'] = []
                     ccopars['t'] = []
                 targetingprogs = [thisprog.short for thisprog in self.progs_by_targetpar(targetpartype)[thispop]]
@@ -620,7 +620,7 @@ class Programset(object):
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
 
-        cost_coverage_figures = {}
+        cost_coverage_figures = odict()
         for thisprog in self.programs.keys():
             if self.programs[thisprog].optimizable():
                 if not self.programs[thisprog].costcovfn.ccopars:
@@ -749,8 +749,8 @@ class Program(object):
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
 
         # Initialise outputs
-        popsizes = {}
-        targetpopsize = {}
+        popsizes = odict()
+        targetpopsize = odict()
         
 #        # Do everything possible to get settings
 #        try: settings = parset.project.settings
@@ -836,7 +836,7 @@ class Program(object):
 
         if total: return totalreached/totaltargeted if proportion else totalreached
         else:
-            popreached = {}
+            popreached = odict()
             targetcomposition = self.targetcomposition if self.targetcomposition else self.gettargetcomposition(t=t,parset=parset) 
             for targetpop in self.targetpops:
                 popreached[targetpop] = totalreached*targetcomposition[targetpop]
@@ -869,7 +869,7 @@ class Program(object):
 
         if isnumber(t): t = [t]
         colors = gridcolormap(len(t))
-        plotdata = {}
+        plotdata = odict()
         
         # Get caption & scatter data 
         caption = plotoptions['caption'] if plotoptions and plotoptions.get('caption') else ''
@@ -967,7 +967,7 @@ class CCOF(object):
     __metaclass__ = abc.ABCMeta # WARNING, this is the only place where this is used...is it necessary...?
 
     def __init__(self,ccopars=None,interaction=None):
-        self.ccopars = ccopars if ccopars else {}
+        self.ccopars = ccopars if ccopars else odict()
         self.interaction = interaction
 
     def __repr__(self):
@@ -999,7 +999,7 @@ class CCOF(object):
             else:
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
-                    oldccopar = {}
+                    oldccopar = odict()
                     for ccopartype in self.ccopars.keys():
                         oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
                         self.ccopars[ccopartype][ind] = ccopar[ccopartype]
@@ -1032,7 +1032,7 @@ class CCOF(object):
             raise OptimaException('Either select bounds or specify randseed')
 
         # Set up necessary variables
-        ccopar = {}
+        ccopar = odict()
         if isnumber(t): t = [t]
         nyrs = len(t)
         ccopars_no_t = dcp({k:v for k,v in self.ccopars.iteritems() if v})
@@ -1144,7 +1144,7 @@ class Costcov(CCOF):
         else: raise OptimaException('coverage vector should be the same length as params.')
 
     def emptypars(self):
-        ccopars = {}
+        ccopars = odict()
         ccopars['saturation'] = None
         ccopars['unitcost'] = None
         ccopars['t'] = None
@@ -1163,7 +1163,7 @@ class Covout(CCOF):
         pass
 
     def emptypars(self):
-        ccopars = {}
+        ccopars = odict()
         ccopars['intercept'] = None
         ccopars['t'] = None
         return ccopars
