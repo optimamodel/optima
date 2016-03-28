@@ -188,9 +188,17 @@ try:
 except: 
     _failed.append('geospatial')
 
-if not len(_failed): del _failed # If it's empty, don't bother keeping it
 
 
 
 # Finally, load defaults
 from . import defaults
+
+# And really finally, load other random things that don't matter
+try:
+    from . import misc
+except:
+    _failed.append('misc')
+    
+
+if not len(_failed): del _failed # If it's empty, don't bother keeping it
