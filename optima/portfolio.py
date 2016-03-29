@@ -430,38 +430,61 @@ class GAOptim(object):
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        def batchfunc(p, pind, outputqueue):
-            loadbalancer(index=pind)
-            printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
+        PARALLEL = False
+        if PARALLEL:
+            def batchfunc(p, pind, outputqueue):
+                loadbalancer(index=pind)
+                printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
+                
+                tmp = odict()
+                
+                # Crash if any project doesn't have progsets
+                if not p.progsets or not p.parsets: 
+                    errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
+                    raise OptimaException(errormsg)
+                
+                initobjectives = dcp(self.objectives)
+                initobjectives['budget'] = initbudgets[pind] + budgeteps
+                printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
+                tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
+                
+                optobjectives = dcp(self.objectives)
+                optobjectives['budget'] = optbudgets[pind] + budgeteps
+                printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
+                tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+    
+                outputqueue.put(tmp)
+                return None
             
-            tmp = odict()
-            
-            # Crash if any project doesn't have progsets
-            if not p.progsets or not p.parsets: 
-                errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-                raise OptimaException(errormsg)
-            
-            initobjectives = dcp(self.objectives)
-            initobjectives['budget'] = initbudgets[pind] + budgeteps
-            printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
-            
-            optobjectives = dcp(self.objectives)
-            optobjectives['budget'] = optbudgets[pind] + budgeteps
-            printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-
-            outputqueue.put(tmp)
-            return None
+            outputqueue = Queue()
+            processes = []
+            for pind,p in enumerate(projects.values()):
+                prc = Process(target=batchfunc, args=(p, pind, outputqueue))
+                prc.start()
+                processes.append(prc)
+            for pind,p in enumerate(projects.values()):
+                self.resultpairs[str(p.uid)] = outputqueue.get()
         
-        outputqueue = Queue()
-        processes = []
-        for pind,p in enumerate(projects.values()):
-            prc = Process(target=batchfunc, args=(p, pind, outputqueue))
-            prc.start()
-            processes.append(prc)
-        for pind,p in enumerate(projects.values()):
-            self.resultpairs[str(p.uid)] = outputqueue.get()
+        else:
+            for pind,p in enumerate(projects.values()):
+                printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
+                tmp = odict()
+                
+                # Crash if any project doesn't have progsets
+                if not p.progsets or not p.parsets: 
+                    errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
+                    raise OptimaException(errormsg)
+                
+                initobjectives = dcp(self.objectives)
+                initobjectives['budget'] = initbudgets[pind] + budgeteps
+                printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
+                tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
+                
+                optobjectives = dcp(self.objectives)
+                optobjectives['budget'] = optbudgets[pind] + budgeteps
+                printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
+                tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
+                self.resultpairs[str(p.uid)] = tmp
 
         return None
     
