@@ -212,6 +212,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ## Run simulation
     #new.runsim()
 
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
 
 
@@ -279,7 +280,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
         # Get target population size
         targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
-#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Add historical cost and coverage data
         for yearind in range(nyears):

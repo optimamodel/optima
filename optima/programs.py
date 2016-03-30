@@ -997,22 +997,14 @@ class CCOF(object):
             if (not self.ccopars['t']) or (ccopar['t'] not in self.ccopars['t']):
                 for ccopartype in self.ccopars.keys():
                     if ccopar.get(ccopartype):  # WARNING: need to check this more appropriately
-#                        printv('Warning, no parameter value supplied for "%s", setting to ZERO...' %(ccopartype), 3, verbose)
-#                        ccopar[ccopartype] = (0,0)
                         self.ccopars[ccopartype].append(ccopar[ccopartype])
                 printv('\nAdded CCO parameters "%s". \nCCO parameters are: %s' % (ccopar, self.ccopars), 4, verbose)
             else:
                 if overwrite:
                     ind = self.ccopars['t'].index(int(ccopar['t']))
                     oldccopar = odict()
-                    try: # WARNING ROBYN THIS IS STUPID PLEASE DON'T LET ME DO THIS
-                        for ccopartype in self.ccopars.keys():
-                            oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
-                            self.ccopars[ccopartype][ind] = ccopar[ccopartype]
-                    except: # OMG SO STUPID
-                        for ccopartype in ccopar.keys():
-                            while len(self.ccopars[ccopartype])<ind+1: # OMG SO STUPID
-                                self.ccopars[ccopartype].append(None) # Make just long enough...OMG SO DANGEROUS
+                    for ccopartype in ccopar.keys():
+                        if self.ccopars[ccopartype]:
                             oldccopar[ccopartype] = self.ccopars[ccopartype][ind]
                             self.ccopars[ccopartype][ind] = ccopar[ccopartype]
                     printv('\nModified CCO parameter from "%s" to "%s". \nCCO parameters for are: %s' % (oldccopar, ccopar, self.ccopars), 4, verbose)
@@ -1103,10 +1095,6 @@ class CCOF(object):
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
 
     @abc.abstractmethod # This method must be defined by the derived class
-    def emptypars(self):
-        pass
-
-    @abc.abstractmethod # This method must be defined by the derived class
     def function(self, x, ccopar, popsize):
         pass
 
@@ -1147,20 +1135,8 @@ class Costcov(CCOF):
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
         if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-#            y = zeros(nyrs)
-#            for yr in range(nyrs):
-#                y[yr] = maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-#            return y
-            
-#            return max(-0.5*popsize*s*u*log(2*s/(x/popsize+s)-1+eps),eps)
         else: raise OptimaException('coverage vector should be the same length as params.')
 
-    def emptypars(self):
-        ccopars = odict()
-        ccopars['saturation'] = None
-        ccopars['unitcost'] = None
-        ccopars['t'] = None
-        return ccopars
 
 ########################################################
 # COVERAGE OUTCOME FUNCTIONS
@@ -1173,10 +1149,4 @@ class Covout(CCOF):
 
     def inversefunction(self, x, ccopar, popsize):
         pass
-
-    def emptypars(self):
-        ccopars = odict()
-        ccopars['intercept'] = None
-        ccopars['t'] = None
-        return ccopars
 
