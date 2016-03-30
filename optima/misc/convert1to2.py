@@ -224,6 +224,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
     # Extract some useful variables
     ps = new.parsets[0].pars[0]
+    pops = new.parsets[0].pars[0]['popkeys']
     nyears = len(old['data']['epiyears'])
 
     # Initialise storage variables
@@ -239,6 +240,8 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         for effect in prog['effects']:
             if effect['param'][:6]=='condom': effect['param'] = 'cond'+effect['param'][6:]
             if effect['param']=='numfirstline': effect['param'] = 'numtx'
+            if effect['popname'] in ['Average','Total']: effect['popname'] = 'tot'
+            
             
             # Extract effects
             if isinstance(effect['coparams'],list):
@@ -254,7 +257,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
                     targeteffects.append({'param':effect['param'], 'pop':targetpship, 'ccopar': ccopar})
 
             # Convert non-partnership parameters 
-            else:
+            else:                    
                 targetpars.append({'param':effect['param'], 'pop':effect['popname']})
                 targeteffects.append({'param':effect['param'], 'pop':effect['popname'], 'ccopar': ccopar})
         
