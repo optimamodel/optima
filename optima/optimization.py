@@ -520,7 +520,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     if not(targetsmet): 
         terminate = True
         printv("Infinite allocation can't meet targets:\n%s" % summary, 1, verbose) # WARNING, this shouldn't be an exception, something more subtle
-    else: printv("Infinite allocation meets targets, as expected; proceeding...", 2, verbose)
+    else: printv("Infinite allocation meets targets, as expected; proceeding... (%s)" % summary, 2, verbose)
 
     # Next, try no money
     args['totalbudget'] = 1e-3
@@ -528,7 +528,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     if targetsmet: 
         terminate = True
         printv("Even zero allocation meets targets:\n%s" % summary, 1, verbose)
-    else: printv("Zero allocation doesn't meet targets, as expected; proceeding...", 2, verbose)
+    else: printv("Zero allocation doesn't meet targets, as expected; proceeding... (%s)" % summary, 2, verbose)
 
     # If those did as expected, proceed with checking what's actually going on to set objective weights for minoutcomes() function
     args['totalbudget'] = origtotalbudget
@@ -571,14 +571,14 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
             fundingfactor /= fundingchange
             args['totalbudget'] = origtotalbudget * fundingfactor
             targetsmet, summary = objectivecalc(budgetvec2, **args)
-            printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
+            printv('Scaling down: current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
     
         # If targets are not met, scale up until they are -- this will always be run at least once after the previous loop
         while not(targetsmet):
             fundingfactor *= fundingchange
             args['totalbudget'] = origtotalbudget * fundingfactor
             targetsmet, summary = objectivecalc(budgetvec2, **args)
-            printv('Current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
+            printv('Scaling up: current funding factor: %f (%s)' % (fundingfactor, summary), 2, verbose)
     
     
         ##########################################################################################################################
@@ -602,7 +602,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
             fundingfactor = (upperlim+lowerlim)/2.0
             args['totalbudget'] = newtotalbudget * fundingfactor
             targetsmet, summary = objectivecalc(budgetvec5, **args)
-            printv('Current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 2, verbose)
+            printv('Homing in: current funding factor (low, high): %f (%f, %f)' % (fundingfactor, lowerlim, upperlim), 2, verbose)
             if targetsmet: upperlim = fundingfactor
             else:          lowerlim = fundingfactor
         constrainedbudget, constrainedbudgetvec, lowerlim, upperlim = constrainbudget(origbudget=origbudget, budgetvec=budgetvec5, totalbudget=newtotalbudget*upperlim, budgetlims=optim.constraints, optiminds=optiminds, outputtype='full')
