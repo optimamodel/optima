@@ -169,6 +169,8 @@ def defaultconstraints(project=None, progset=None, which='outcomes', verbose=2):
             constraints['max'][prog.short] = 1.0
     if 'ART' in constraints['min'].keys():
         constraints['min']['ART'] = 1.0 # By default, don't let ART funding decrease
+    if 'PMTCT' in constraints['min'].keys():
+        constraints['min']['PMTCT'] = 1.0 # By default, don't let ART funding decrease
 
     return constraints
 
@@ -598,7 +600,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
         # And finally, home in on a solution
         upperlim = 1.0
         lowerlim = 1.0/fundingchange
-        while (upperlim-lowerlim>tolerance): # Keep looping until they converge to within "tolerance" of the budget
+        while (upperlim-lowerlim>tolerance) or not(targetsmet): # Keep looping until they converge to within "tolerance" of the budget
             fundingfactor = (upperlim+lowerlim)/2.0
             args['totalbudget'] = newtotalbudget * fundingfactor
             targetsmet, summary = objectivecalc(budgetvec5, **args)
