@@ -5,7 +5,7 @@ Version: 2016jan28
 """
 import os
 import optima as op
-from optima import OptimaException, Project, Program, Programset, printv
+from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen
 
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
@@ -520,3 +520,26 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     
     
     return P
+
+
+
+def defaultscenarios(project=None, which='budgets', year=2016, progset=-1):
+    ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
+    
+    if which=='budgets':
+        defaultbudget = project.progsets[progset].getdefaultbudget()
+        maxbudget = dcp(defaultbudget)
+        nobudget = dcp(defaultbudget)
+        for key in maxbudget: maxbudget[key] += 1e14
+        for key in nobudget: nobudget[key] *= 1e-6
+        scenlist = [
+            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[year], budget=nobudget),
+            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[year], budget=defaultbudget),
+            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[year], budget=maxbudget),
+            ]
+    
+    # Run the scenarios
+    project.addscenlist(scenlist)
+    project.runscenarios()
+    return scenlist # Return it as well
