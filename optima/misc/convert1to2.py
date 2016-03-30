@@ -10,7 +10,6 @@ Usage:
 
 Copies the data over, copies some aspects of the calibration over.
 
-TODO: copy programs
 TODO: copy scenario settings
 TODO: copy optimization settings
 
@@ -237,7 +236,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         targetpars=[]
 
         # Create program effects
-        #import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         for effect in prog['effects']:
             if effect['param'][:6]=='condom': effect['param'] = 'cond'+effect['param'][6:]
             if effect['param']=='numfirstline': effect['param'] = 'numtx'
@@ -265,9 +263,17 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
                           targetpars=targetpars,
                           targetpops=list(set([effect['popname'] for effect in prog['effects']]))
                           )
+                          
+        # Fix eligibility for ART and PMTCT -- WARNING, very hacky
+        if 'numtx' in [k['param'] for k in targetpars]:
+            newprog.criteria = {'hivstatus': new.settings.hivstates, 'pregnant': False}
+        if 'numpmtct' in [k['param'] for k in targetpars]:
+            newprog.criteria = {'hivstatus': new.settings.hivstates, 'pregnant': True}
+
 
         # Get target population size
-        targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0])
+        targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
+#        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
         # Add historical cost and coverage data
         for yearind in range(nyears):
