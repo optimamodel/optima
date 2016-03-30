@@ -240,27 +240,30 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         for effect in prog['effects']:
             if effect['param'][:6]=='condom': effect['param'] = 'cond'+effect['param'][6:]
             if effect['param']=='numfirstline': effect['param'] = 'numtx'
+            if effect['param']=='stiprevulc': effect['param'] = 'stiprev'
             if effect['popname'] in ['Average','Total']: effect['popname'] = 'tot'
-            
-            
-            # Extract effects
-            if isinstance(effect['coparams'],list):
-                ccopar = {'t':2016., 'intercept':(effect['coparams'][0],effect['coparams'][1]), prog['name']: (effect['coparams'][2],effect['coparams'][3])}
-            else:            
-                ccopar = {'t':2016., 'intercept':(0.,0.), prog['name']: []}
 
-            # Convert partnership parameters 
-            if ps[effect['param']].by=='pship':
-                targetpships = list(set([pship for pship in ps[effect['param']].y.keys() if effect['popname'] in pship]))
-                for targetpship in targetpships:
-                    targetpars.append({'param':effect['param'], 'pop':targetpship})
-                    targeteffects.append({'param':effect['param'], 'pop':targetpship, 'ccopar': ccopar})
+            if effect['param'] not in ['stiprevdis']:
+            
+                # Extract effects
+                if isinstance(effect['coparams'],list):
+                    ccopar = {'t':2016., 'intercept':(effect['coparams'][0],effect['coparams'][1]), prog['name']: (effect['coparams'][2],effect['coparams'][3])}
+                else:            
+                    ccopar = {'t':2016., 'intercept':(0.,0.), prog['name']: []}
+    
+                # Convert partnership parameters 
+                if ps[effect['param']].by=='pship':
+                    targetpships = list(set([pship for pship in ps[effect['param']].y.keys() if effect['popname'] in pship]))
+                    for targetpship in targetpships:
+                        targetpars.append({'param':effect['param'], 'pop':targetpship})
+                        targeteffects.append({'param':effect['param'], 'pop':targetpship, 'ccopar': ccopar})
+    
+                # Convert non-partnership parameters 
+                else:
+                    targetpars.append({'param':effect['param'], 'pop':effect['popname']})
+                    targeteffects.append({'param':effect['param'], 'pop':effect['popname'], 'ccopar': ccopar})
 
-            # Convert non-partnership parameters 
-            else:                    
-                targetpars.append({'param':effect['param'], 'pop':effect['popname']})
-                targeteffects.append({'param':effect['param'], 'pop':effect['popname'], 'ccopar': ccopar})
-        
+
         # Create program
         newprog = Program(short=prog['name'],
                           targetpars=targetpars,
@@ -327,9 +330,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
     # Add program set to project
     new.addprogset(name='default', progset = R)
-
-    # Compare outcoes under budget and calibration
-    #comparison = new.progsets[0].compareoutcomes(parset=new.parsets[0], year=2016, doprint=True)
 
 
 
