@@ -1,9 +1,9 @@
 from optima import odict, getdate, today, uuid, dcp, objrepr, printv, scaleratio, OptimaException, findinds # Import utilities
 from optima import gitinfo, tic, toc # Import functions
 from optima import __version__ # Get current version
-
+from multiprocessing import Process, Queue
+from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
-
 from numpy import arange
 
 #######################################################################################################
@@ -430,31 +430,41 @@ class GAOptim(object):
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        for pind,p in enumerate(projects.values()):
+        def batchfunc(p, pind, outputqueue):
+            loadbalancer(index=pind)
             printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
-            self.resultpairs[str(p.uid)] = odict()
-
+            
+            tmp = odict()
+            
             # Crash if any project doesn't have progsets
             if not p.progsets or not p.parsets: 
                 errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
                 raise OptimaException(errormsg)
-
+            
             initobjectives = dcp(self.objectives)
             initobjectives['budget'] = initbudgets[pind] + budgeteps
             printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[str(p.uid)]['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
-            preibudget = initobjectives['budget']
-            postibudget = self.resultpairs[str(p.uid)]['init'].budget[-1]
-#            assert abs(preibudget-sum(postibudget[:]))<tol
+            tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
             
             optobjectives = dcp(self.objectives)
             optobjectives['budget'] = optbudgets[pind] + budgeteps
             printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            self.resultpairs[str(p.uid)]['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-            preobudget = optobjectives['budget']
-            postobudget = self.resultpairs[str(p.uid)]['opt'].budget[-1]
-#            assert abs(preobudget-sum(postobudget[:]))<tol
+            tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
 
+            outputqueue.put(tmp)
+            return None
+        
+        outputqueue = Queue()
+        processes = []
+        for pind,p in enumerate(projects.values()):
+            prc = Process(target=batchfunc, args=(p, pind, outputqueue))
+            prc.start()
+            processes.append(prc)
+        for pind,p in enumerate(projects.values()):
+            self.resultpairs[str(p.uid)] = outputqueue.get()
+    
+        return None
+    
     # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
     # Be very wary of the indices being used...
     def printresults(self, verbose=2):
@@ -478,7 +488,6 @@ class GAOptim(object):
         projcov = []
         projoutcomes = []
         projoutcomesplit = []
-        ind = -1 # WARNING, should be a single index so doesn't actually matter
         
         for prj,x in enumerate(self.resultpairs.keys()):          # WARNING: Nervous about all this slicing. Problems foreseeable if format changes.
             # Figure out which indices to use
@@ -591,147 +600,147 @@ class GAOptim(object):
 #    #    return [y for x,y in sorted(enumerate(somelist), key = lambda x: -len(progs[x[0]]['effects']))]
         
     
-    def superplot(self):
-        
-        from matplotlib.pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
-        from gridcolormap import gridcolormap
-        from matplotlib import gridspec
-        import numpy
-        
-        progs = p1.regionlist[0].metadata['programs']    
-        
-        figure(figsize=(22,15))
-        
-        nprograms = len(p1.gpalist[-1][0].region.data['origalloc'])
-#        colors = sortfixed(gridcolormap(nprograms))
-#        colors[0] = numpy.array([ 0.20833333,  0.20833333,  0.54166667])  #CT
-#        colors[1] = numpy.array([ 0.45833333,  0.875     ,  0.79166667])  #OVC
-#        colors[2] = numpy.array([0.125, 0.125, 0.125])  #VMMC
-#        colors[3] = numpy.array([ 0.79166667,  0.45833333,  0.875     ])+numpy.array([ 0.125,  0.125,  0.125     ])  #SBCC
-#        colors[4] = numpy.array([ 0.54166667,  0.20833333,  0.20833333])  #FSW
-#        colors[5] = numpy.array([ 0.875     ,  0.45833333,  0.125     ])  #MSM
-#        colors[6] = numpy.array([ 0.125     ,  0.875     ,  0.45833333])+numpy.array([ 0.0,  0.125,  0.0     ])  #PMTCT
-#        colors[7] = numpy.array([ 0.54166667,  0.875     ,  0.125     ])   #HTC
-#        colors[8] = numpy.array([ 0.20833333,  0.54166667,  0.20833333])  #ART
-#        for i in xrange(7): colors[-(i+1)] = numpy.array([0.25+0.5*i/6.0, 0.25+0.5*i/6.0, 0.25+0.5*i/6.0])
-    
-        
-        
-        gpl = sorted(p1.gpalist[-1], key=lambda sbo: sbo.name)
-        ind = [val for pair in ([x, 0.25+x] for x in xrange(len(gpl))) for val in pair]
-        width = [0.25, 0.55]*(len(gpl))       # the width of the bars: can also be len(x) sequence
-        
-        bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-1] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
-        for p in xrange(2,nprograms+1):
-            bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-p] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val*1e-6 for pair in zip([sum(sortfixed(sb.simlist[1].alloc)[1-p:]) for sb in gpl], [sum(sortfixed(sb.simlist[2].alloc)[1-p:]) for sb in gpl]) for val in pair])
-        
-        xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
-        xlim([0,32])
-        tick_params(axis='both', which='major', labelsize=15)
-        tick_params(axis='both', which='minor', labelsize=15)
-        ylabel('Budget Allocation (US$m)', fontsize=15)
-        
-    
-    
-        fig = figure(figsize=(22,15))    
-        
-        gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
-        
-        for x in xrange(len(gpl)):
-            sb = gpl[x]
-            r = sb.region
-    
-            ind = xrange(len(sb.simlist[1:]))
-            width = 0.8       # the width of the bars: can also be len(x) sequence
-            
-            if x < 10: subplot(gs[x])
-            else: subplot(gs[x+1])
-            bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
-            for p in xrange(2,nprograms+1):
-                bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed([x*1e-6 for x in sim.alloc])[1-p:]) for sim in sb.simlist[1:]])
-            #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
-            xlabel(r.getregionname(), fontsize=18)
-            if x in [0,10,21]: ylabel('Budget Allocation (US$m)', fontsize=18)
-            tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
-        
-    #        ax = gca()
-    #        ax.ticklabel_format(style='sci', axis='y')
-    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
-            
-            tick_params(axis='both', which='major', labelsize=14)
-            tick_params(axis='both', which='minor', labelsize=14)
-        
-        fig.tight_layout()
-        
-        
-        
-    #    bar(ind, [val for pair in zip([sb.simlist[1].alloc[-1] for sb in gpl], [sb.simlist[2].alloc[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
-    #    for p in xrange(2,nprograms+1):
-    #        bar(ind, [val for pair in zip([sb.simlist[1].alloc[-p] for sb in gpl], [sb.simlist[2].alloc[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val for pair in zip([sum(sb.simlist[1].alloc[1-p:]) for sb in gpl], [sum(sb.simlist[2].alloc[1-p:]) for sb in gpl]) for val in pair])
-    #    
-    #    xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
-    #    xlim([0,32])
-    #    tick_params(axis='both', which='major', labelsize=15)
-    #    tick_params(axis='both', which='minor', labelsize=15)
-    #    ylabel('Budget Allocation ($)', fontsize=15)
-    #    
-    #
-    #
-    #    fig = figure(figsize=(22,15))    
-    #    
-    #    gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
-    #    
-    #    for x in xrange(len(gpl)):
-    #        sb = gpl[x]
-    #        r = sb.region
-    #
-    #        ind = xrange(len(sb.simlist[1:]))
-    #        width = 0.8       # the width of the bars: can also be len(x) sequence
-    #        
-    #        if x < 10: subplot(gs[x])
-    #        else: subplot(gs[x+1])
-    #        bar(ind, [sim.alloc[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
-    #        for p in xrange(2,nprograms+1):
-    #            bar(ind, [sim.alloc[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sim.alloc[1-p:]) for sim in sb.simlist[1:]])
-    #        #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
-    #        xlabel(r.getregionname(), fontsize=18)
-    #        if x in [0,10,21]: ylabel('Budget Allocation ($)', fontsize=18)
-    #        tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
-    #    
-    #        ax = gca()
-    #        ax.ticklabel_format(style='sci', axis='y')
-    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
-    #        
-    #        tick_params(axis='both', which='major', labelsize=13)
-    #        tick_params(axis='both', which='minor', labelsize=13)
-    #    
-    #    fig.tight_layout()    
-        
-        
-        
-    #    for x in xrange(len(p1.gpalist[-1])):
-        for x in xrange(1):
-            sb = p1.gpalist[-1][x]
-            r = sb.region
-            
-            nprograms = len(r.data['origalloc'])
-    #        colors = sortfixed(gridcolormap(nprograms))
-            
-            figure(figsize=(len(sb.simlist[1:])*2+4,nprograms/2))
-            gs = gridspec.GridSpec(1, 2, width_ratios=[len(sb.simlist[1:]), 2]) 
-            ind = xrange(len(sb.simlist[1:]))
-            width = 0.8       # the width of the bars: can also be len(x) sequence
-            
-            subplot(gs[0])
-            bar(ind, [sortfixed(sim.alloc)[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
-            for p in xrange(2,nprograms+1):
-                bar(ind, [sortfixed(sim.alloc)[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed(sim.alloc)[1-p:]) for sim in sb.simlist[1:]])
-            xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
-            ylabel('Budget Allocation ($)')
-            
-            subplot(gs[1])
-            for prog in xrange(nprograms): plot(0, 0, linewidth=3, color=colors[prog])
-            legend(sortfixed(r.data['meta']['progs']['short']))
-            
-        show()
+#    def superplot(self):
+#        
+#        from matplotlib.pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
+#        from gridcolormap import gridcolormap
+#        from matplotlib import gridspec
+#        import numpy
+#        
+#        progs = p1.regionlist[0].metadata['programs']    
+#        
+#        figure(figsize=(22,15))
+#        
+#        nprograms = len(p1.gpalist[-1][0].region.data['origalloc'])
+##        colors = sortfixed(gridcolormap(nprograms))
+##        colors[0] = numpy.array([ 0.20833333,  0.20833333,  0.54166667])  #CT
+##        colors[1] = numpy.array([ 0.45833333,  0.875     ,  0.79166667])  #OVC
+##        colors[2] = numpy.array([0.125, 0.125, 0.125])  #VMMC
+##        colors[3] = numpy.array([ 0.79166667,  0.45833333,  0.875     ])+numpy.array([ 0.125,  0.125,  0.125     ])  #SBCC
+##        colors[4] = numpy.array([ 0.54166667,  0.20833333,  0.20833333])  #FSW
+##        colors[5] = numpy.array([ 0.875     ,  0.45833333,  0.125     ])  #MSM
+##        colors[6] = numpy.array([ 0.125     ,  0.875     ,  0.45833333])+numpy.array([ 0.0,  0.125,  0.0     ])  #PMTCT
+##        colors[7] = numpy.array([ 0.54166667,  0.875     ,  0.125     ])   #HTC
+##        colors[8] = numpy.array([ 0.20833333,  0.54166667,  0.20833333])  #ART
+##        for i in xrange(7): colors[-(i+1)] = numpy.array([0.25+0.5*i/6.0, 0.25+0.5*i/6.0, 0.25+0.5*i/6.0])
+#    
+#        
+#        
+#        gpl = sorted(p1.gpalist[-1], key=lambda sbo: sbo.name)
+#        ind = [val for pair in ([x, 0.25+x] for x in xrange(len(gpl))) for val in pair]
+#        width = [0.25, 0.55]*(len(gpl))       # the width of the bars: can also be len(x) sequence
+#        
+#        bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-1] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
+#        for p in xrange(2,nprograms+1):
+#            bar(ind, [val*1e-6 for pair in zip([sortfixed(sb.simlist[1].alloc)[-p] for sb in gpl], [sortfixed(sb.simlist[2].alloc)[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val*1e-6 for pair in zip([sum(sortfixed(sb.simlist[1].alloc)[1-p:]) for sb in gpl], [sum(sortfixed(sb.simlist[2].alloc)[1-p:]) for sb in gpl]) for val in pair])
+#        
+#        xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
+#        xlim([0,32])
+#        tick_params(axis='both', which='major', labelsize=15)
+#        tick_params(axis='both', which='minor', labelsize=15)
+#        ylabel('Budget Allocation (US$m)', fontsize=15)
+#        
+#    
+#    
+#        fig = figure(figsize=(22,15))    
+#        
+#        gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
+#        
+#        for x in xrange(len(gpl)):
+#            sb = gpl[x]
+#            r = sb.region
+#    
+#            ind = xrange(len(sb.simlist[1:]))
+#            width = 0.8       # the width of the bars: can also be len(x) sequence
+#            
+#            if x < 10: subplot(gs[x])
+#            else: subplot(gs[x+1])
+#            bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+#            for p in xrange(2,nprograms+1):
+#                bar(ind, [sortfixed([x*1e-6 for x in sim.alloc])[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed([x*1e-6 for x in sim.alloc])[1-p:]) for sim in sb.simlist[1:]])
+#            #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+#            xlabel(r.getregionname(), fontsize=18)
+#            if x in [0,10,21]: ylabel('Budget Allocation (US$m)', fontsize=18)
+#            tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+#        
+#    #        ax = gca()
+#    #        ax.ticklabel_format(style='sci', axis='y')
+#    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
+#            
+#            tick_params(axis='both', which='major', labelsize=14)
+#            tick_params(axis='both', which='minor', labelsize=14)
+#        
+#        fig.tight_layout()
+#        
+#        
+#        
+#    #    bar(ind, [val for pair in zip([sb.simlist[1].alloc[-1] for sb in gpl], [sb.simlist[2].alloc[-1] for sb in gpl]) for val in pair], width, color=colors[-1])
+#    #    for p in xrange(2,nprograms+1):
+#    #        bar(ind, [val for pair in zip([sb.simlist[1].alloc[-p] for sb in gpl], [sb.simlist[2].alloc[-p] for sb in gpl]) for val in pair], width, color=colors[-p], bottom=[val for pair in zip([sum(sb.simlist[1].alloc[1-p:]) for sb in gpl], [sum(sb.simlist[2].alloc[1-p:]) for sb in gpl]) for val in pair])
+#    #    
+#    #    xticks([x+0.5 for x in xrange(len(gpl))], [sb.region.getregionname() for sb in gpl], rotation=-60)
+#    #    xlim([0,32])
+#    #    tick_params(axis='both', which='major', labelsize=15)
+#    #    tick_params(axis='both', which='minor', labelsize=15)
+#    #    ylabel('Budget Allocation ($)', fontsize=15)
+#    #    
+#    #
+#    #
+#    #    fig = figure(figsize=(22,15))    
+#    #    
+#    #    gs = gridspec.GridSpec(3, 11) #, width_ratios=[len(sb.simlist[1:]), 2])
+#    #    
+#    #    for x in xrange(len(gpl)):
+#    #        sb = gpl[x]
+#    #        r = sb.region
+#    #
+#    #        ind = xrange(len(sb.simlist[1:]))
+#    #        width = 0.8       # the width of the bars: can also be len(x) sequence
+#    #        
+#    #        if x < 10: subplot(gs[x])
+#    #        else: subplot(gs[x+1])
+#    #        bar(ind, [sim.alloc[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+#    #        for p in xrange(2,nprograms+1):
+#    #            bar(ind, [sim.alloc[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sim.alloc[1-p:]) for sim in sb.simlist[1:]])
+#    #        #xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+#    #        xlabel(r.getregionname(), fontsize=18)
+#    #        if x in [0,10,21]: ylabel('Budget Allocation ($)', fontsize=18)
+#    #        tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+#    #    
+#    #        ax = gca()
+#    #        ax.ticklabel_format(style='sci', axis='y')
+#    #        ax.yaxis.major.formatter.set_powerlimits((0,0))
+#    #        
+#    #        tick_params(axis='both', which='major', labelsize=13)
+#    #        tick_params(axis='both', which='minor', labelsize=13)
+#    #    
+#    #    fig.tight_layout()    
+#        
+#        
+#        
+#    #    for x in xrange(len(p1.gpalist[-1])):
+#        for x in xrange(1):
+#            sb = p1.gpalist[-1][x]
+#            r = sb.region
+#            
+#            nprograms = len(r.data['origalloc'])
+#    #        colors = sortfixed(gridcolormap(nprograms))
+#            
+#            figure(figsize=(len(sb.simlist[1:])*2+4,nprograms/2))
+#            gs = gridspec.GridSpec(1, 2, width_ratios=[len(sb.simlist[1:]), 2]) 
+#            ind = xrange(len(sb.simlist[1:]))
+#            width = 0.8       # the width of the bars: can also be len(x) sequence
+#            
+#            subplot(gs[0])
+#            bar(ind, [sortfixed(sim.alloc)[-1] for sim in sb.simlist[1:]], width, color=colors[-1])
+#            for p in xrange(2,nprograms+1):
+#                bar(ind, [sortfixed(sim.alloc)[-p] for sim in sb.simlist[1:]], width, color=colors[-p], bottom=[sum(sortfixed(sim.alloc)[1-p:]) for sim in sb.simlist[1:]])
+#            xticks([index+width/2.0 for index in ind], [sim.getname() for sim in sb.simlist[1:]])
+#            ylabel('Budget Allocation ($)')
+#            
+#            subplot(gs[1])
+#            for prog in xrange(nprograms): plot(0, 0, linewidth=3, color=colors[prog])
+#            legend(sortfixed(r.data['meta']['progs']['short']))
+#            
+#        show()
                 

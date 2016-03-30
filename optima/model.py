@@ -715,7 +715,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 totnewtreat =  proptx[t] * currdx - currtx 
             else:
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
-
+            tmpnewtreat = totnewtreat # Copy for modification later
 
             ## Diagnosed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
@@ -734,12 +734,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 inflows = progin + newdiagnoses[cd4]
                 outflows = progout + hivdeaths + otherdeaths
 
-                if totnewtreat: # Move people onto treatment if there are spots available
-                    thisnewtreat = min(totnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
+                if tmpnewtreat: # Move people onto treatment if there are spots available
+                    thisnewtreat = min(tmpnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
                     newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
                     newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # RS: I think it would be much nicer to do this with rates
-                    totnewtreat -= thisnewtreat # Adjust the number of available treatment spots
-                    totnewtreat = max(totnewtreat,0.) # Prevent it going negative
+                    tmpnewtreat -= thisnewtreat # Adjust the number of available treatment spots
+                    tmpnewtreat = max(tmpnewtreat,0.) # Prevent it going negative
 
                 dD.insert(0, inflows - outflows - newtreat[cd4])
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation

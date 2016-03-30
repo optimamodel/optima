@@ -1,8 +1,9 @@
 from optima import OptimaException, Settings, Parameterset, Programset, Resultset, BOC, Parscen, Optim # Import classes
-from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj # Import utilities
+from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, saveobj, defaultrepr # Import utilities
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
+import os
 
 #######################################################################################################
 ## Project class -- this contains everything else!
@@ -63,8 +64,10 @@ class Project(object):
         self.created = today()
         self.modified = today()
         self.spreadsheetdate = 'Spreadsheet never loaded'
+        self.spreadsheet = None # Binary version of the spreadsheet file
         self.version = __version__
         self.gitbranch, self.gitversion = gitinfo()
+        self.filename = None # File path, only present if self.save() is used
 
         ## Load spreadsheet, if available
         if spreadsheet is not None:
@@ -105,6 +108,7 @@ class Project(object):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
+        self.spreadsheet = Spreadsheet(filename) # Load spreadsheet binary file into project -- WARNING, only partly implemented since not sure how to read from
         self.data = loadspreadsheet(filename, verbose=self.settings.verbose) # Do the hard work of actually loading the spreadsheet
         self.spreadsheetdate = today() # Update date when spreadsheet was last loaded
         self.modified = today()
@@ -314,7 +318,9 @@ class Project(object):
     
     def save(self, filename=None, saveresults=False):
         ''' Save the current project, by default using its name, and without results '''
+        if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
+        self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
             saveobj(filename, self)
         else:
@@ -380,6 +386,7 @@ class Project(object):
         if name is not None and orig is not None and name!=orig:
             self.copyparset(orig=orig, new=name, overwrite=True) # Store parameters, user seems to know what she's doing, trust her!
         if name is None and orig is not None: name = orig # Specify name if not supplied
+        if name is not None and orig is None: orig = name # Specify orig if not supplied
         if name not in self.parsets.keys():
             if orig not in self.parsets.keys(): 
                 errormsg = 'Cannot use original parset "%s": parset does not exist; choices are:\n:%s' % (orig, self.parsets.keys())
@@ -388,6 +395,15 @@ class Project(object):
                 self.copyparset(orig=orig, new=name) # Store parameters
         return None
 
+
+    def pars(self):
+        ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
+        return self.parsets[-1].pars[0]
+    
+    
+    def progs(self):
+        ''' Shortcut for getting the latest active set of programs '''
+        return self.progsets[0].programs
 
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
@@ -546,4 +562,31 @@ class Project(object):
         if returnplot: return ax
         else: show()
         return None
+
+
+
+class Spreadsheet(object):
+    ''' A class for reading and writing spreadsheet data in binary format, so a project contains the spreadsheet loaded '''
+    
+    def __init__(self, filename=None):
+        self.data = None
+        self.filename = None
+        if filename is not None: self.load(filename)
+        return None
+    
+    def __repr__(self):
+        output = defaultrepr(self)
+        return output
+    
+    def load(self, filename=None):
+        if filename is not None:
+            self.filename = filename
+            with open(filename, mode='rb') as f: self.data = f.read()
+    
+    def save(self, filename=None, verbose=2):
+        if filename is None:
+            if self.filename is not None: filename = self.filename
+        if filename is not None:
+            with open(filename, mode='wb') as f: f.write(self.data)
+        printv('Spreadsheet "%s" saved.' % filename, 2, verbose)
     

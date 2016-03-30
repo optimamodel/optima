@@ -607,6 +607,36 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
+def loadbalancer(maxload=0.5, index=None, refresh=0.5, maxtime=3600, verbose=True):
+    ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
+    from psutil import cpu_percent
+    from time import sleep
+    from numpy.random import random
+    
+    # Set up processes to start asynchronously
+    if index is None:  delay = random()
+    else:              delay = index*refresh
+    if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
+    sleep(delay) # Give it time to asynchronize
+    
+    # Loop until load is OK
+    toohigh = True # Assume too high
+    count = 0
+    maxcount = maxtime/float(refresh)
+    while toohigh and count<maxcount:
+        count += 1
+        currentload = cpu_percent()/100.
+        if currentload>maxload:
+            if verbose: print('CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
+            sleep(refresh)
+        else: 
+            toohigh = False # print('CPU load fine (%0.2f/%0.2f)' % (currentload, maxload))
+    return None
+    
+    
+
+
+
 def runcommand(command, printinput=False, printoutput=False):
    """ Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 """
    from subprocess import Popen, PIPE

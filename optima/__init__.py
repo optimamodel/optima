@@ -68,7 +68,7 @@ from .colortools import alpinecolormap, bicolormap, gridcolormap, vectocolor
 
 ## Utilities
 from . import utils # Load high-level module as well
-from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
+from .utils import blank, checkmem, cleanresults, dataindex, defaultrepr, findinds, getdate, gitinfo, isnumber, loadbalancer, loadobj, loads, objectid, objatt, objmeth, objrepr, odict, OptimaException, pd, perturb, printarr, printdata, printv, quantile, runcommand, sanitize, saveobj, saves, scaleratio, setdate, sigfig, smoothinterp, tic, toc, vec2obj
 
 
 #####################################################################################################################
@@ -95,7 +95,7 @@ from .results import Result, Resultset, Multiresultset, BOC, getresults
 
 ## Define the model parameters
 from . import parameters as _parameters
-from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits # Parameter and Parameterset classes
+from .parameters import Par, Timepar, Popsizepar, Constant, Parameterset, makepars, makesimpars, partable, loadpartable, applylimits, comparepars # Parameter and Parameterset classes
 
 ## Define and run the model
 from . import model as _model
@@ -188,9 +188,17 @@ try:
 except: 
     _failed.append('geospatial')
 
-if not len(_failed): del _failed # If it's empty, don't bother keeping it
 
 
 
 # Finally, load defaults
 from . import defaults
+
+# And really finally, load other random things that don't matter
+try:
+    from . import misc
+except:
+    _failed.append('misc')
+    
+
+if not len(_failed): del _failed # If it's empty, don't bother keeping it
