@@ -5,7 +5,7 @@ Version: 2016jan28
 """
 import os
 import optima as op
-from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen
+from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
@@ -523,7 +523,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
 
 
 
-def defaultscenarios(project=None, which='budgets', year=2016, progset=-1):
+def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020, parset=-1, progset=-1):
     ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
     
     if which=='budgets':
@@ -534,10 +534,53 @@ def defaultscenarios(project=None, which='budgets', year=2016, progset=-1):
         for key in nobudget: nobudget[key] *= 1e-6
         scenlist = [
             Parscen(name='Current conditions', parsetname='default', pars=[]),
-            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[year], budget=nobudget),
-            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[year], budget=defaultbudget),
-            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[year], budget=maxbudget),
+            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[startyear], budget=nobudget),
+            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[startyear], budget=maxbudget),
             ]
+    
+    # WARNING, this may not entirely work
+    if which=='90-90-90':
+        project.runsim(parset) # Temporary, to get baseline
+        res = project.parsets[parset].getresults()
+        curryearind = findinds(res.tvec, startyear)
+        currnumplhiv = res.main['numplhiv'].tot[0][curryearind]
+        currnumdx =    res.main['numdiag'].tot[0][curryearind]
+        currnumtx =    res.main['numtreat'].tot[0][curryearind]
+        currpropdx = currnumdx/currnumplhiv
+        currproptx = currnumtx/currnumdx
+        currvs = project.parsets['default'].pars[0]['treatvs'].interp(startyear)
+        
+        scenlist = [
+            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Parscen(name='90-90-90',
+                  parsetname='default',
+                  pars=[
+                  {'name': 'propdx',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': currpropdx,
+                  'endval': 0.9,
+                  },
+                  
+                  {'name': 'proptx',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': currproptx,
+                  'endval': 0.9,
+                  },
+                  
+                  {'name': 'treatvs',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': currvs,
+                  'endval': .9,
+                  },
+                    ]),]
+
     
     # Run the scenarios
     project.addscenlist(scenlist)
