@@ -89,6 +89,8 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ## Population metadata
     new.data['pops'] = odict()
     new.data['pops']['short']     = old['data']['meta']['pops']['short']
+    npops = len(new.data['pops']['short']) # Number of population groups
+    new.data['npops'] = npops
     new.data['pops']['long']      = old['data']['meta']['pops']['long']
     new.data['pops']['male']      = old['data']['meta']['pops']['male']
     new.data['pops']['female']    = old['data']['meta']['pops']['female']
@@ -97,8 +99,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
 
     ## Convert the things that do not convert themselves
-    npops = len(new.data['pops']['short']) # Number of population groups
-    new.data['npops'] = npops
     new.data['pops']['age'] = [[15,49] for _ in range(npops)] # Assume 15-49 for all population groups
     nmalepops = sum(new.data['pops']['male'])
     nfemalepops = sum(new.data['pops']['female'])
@@ -193,6 +193,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     # Constants
     new.data['const'] = defaultproject.data['const'] 
 
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
 
     ##################################################################################################################
@@ -212,7 +213,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ## Run simulation
     #new.runsim()
 
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
 
 
@@ -240,8 +240,10 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         # Create program effects
         for effect in prog['effects']:
             if effect['param'][:6]=='condom': effect['param'] = 'cond'+effect['param'][6:]
+            if effect['param'][:7]=='numacts': effect['param'] = 'acts'+effect['param'][7:]
             if effect['param']=='numfirstline': effect['param'] = 'numtx'
             if effect['param']=='stiprevulc': effect['param'] = 'stiprev'
+            if effect['param']=='numcircum': effect['param'] = 'numcirc'
             if effect['popname'] in ['Average','Total']: effect['popname'] = 'tot'
 
             if effect['param'] not in ['stiprevdis']:
@@ -284,7 +286,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         # Add historical cost and coverage data
         for yearind in range(nyears):
             
-    #        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if len(old['data']['costcov']['realcost'][progno])==1: # It's an assumption, apply to every year
                 newcost = old['data']['costcov']['realcost'][progno][0]
             else:
