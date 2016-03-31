@@ -249,7 +249,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             if effect['param'] not in ['stiprevdis']:
             
                 # Extract effects
-                if isinstance(effect['coparams'],list):
+                if effect.get('coparams') and isinstance(effect['coparams'],list):
                     ccopar = {'t':2016., 'intercept':(effect['coparams'][0],effect['coparams'][1]), prog['name']: (effect['coparams'][2],effect['coparams'][3])}
                 else:            
                     ccopar = {'t':2016., 'intercept':(0.,0.), prog['name']: []}
