@@ -24,6 +24,7 @@ def testcostcoverage():
     })
     costcovfn.rmccopar(2015)
 
+    # No saturation given - assume (1., 1.)
     costcovfn.addccopar({'t': 2016.0, 'unitcost': (25, 35)})
     costcovfn.addccopar({'t': 2016.0, 'unitcost': (20, 30)}, overwrite=True)
 

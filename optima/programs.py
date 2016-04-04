@@ -1039,7 +1039,17 @@ class CCOF(object):
         return None
 
     def getccopar(self, t, verbose=2, randseed=None, bounds=None):
-        '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
+        '''
+        Get a cost-coverage-outcome parameter set for any year in range 1900-2100
+
+        Args:
+            t: years to interpolate sets of ccopar
+            verbose: level of verbosity
+            bounds: None - take middle of intervals,
+                    'upper' - take top of intervals,
+                    'lower' - take bottom if intervals
+            randseed: currently not implemented
+        '''
 
         # Error checks
         if not self.ccopars:
@@ -1119,7 +1129,7 @@ class CCOF(object):
 # COST COVERAGE FUNCTIONS
 ########################################################
 class Costcov(CCOF):
-    """
+    '''
     Cost-coverage object - used to calculate the coverage for a certain
     budget in a program. Best initialized with empty parameters,
     and later, add cost-coverage parameters with self.addccopar.
@@ -1144,7 +1154,7 @@ class Costcov(CCOF):
         getccopar(t, verbose=2, randseed=None, bounds=None)
             Returns an odict of cost-coverage parameters
                 { 'saturation': [..], 'unitcost': [...], 't':[...] }
-            used for self.evaulation
+            used for self.evaulate.
 
             Args:
                 t: a number/list of years to interpolate the ccopar
@@ -1162,7 +1172,7 @@ class Costcov(CCOF):
                 randseed: allows a randomization of the cost-cov parameters within
                     the given intervals
 
-    """
+    '''
 
     def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''
