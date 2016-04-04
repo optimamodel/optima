@@ -18,7 +18,7 @@ define([
     $stateProvider
       .state('home', {
         url: '/',
-        templateUrl: '/js/modules/home/home.html',
+        templateUrl: './js/modules/home/home.html',
         controller: 'HomeController',
         resolve: {
           project: function (projectApiService) {
