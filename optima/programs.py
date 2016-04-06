@@ -531,7 +531,7 @@ class Programset(object):
                         if die:
                             raise OptimaException(errormsg)
                         else:
-                            printv(errormsg, 1, verbose)
+                            printv(errormsg, 3, verbose) # WARNING, not sure how serious this is...feels like it shouldn't happen
                             thisoutcome = maximum(thisoutcome, lower) # Impose lower limit
                             thisoutcome = minimum(thisoutcome, upper) # Impose upper limit
                 
