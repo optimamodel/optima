@@ -515,9 +515,6 @@ class Programset(object):
         for outcome in outcomes.keys():
             thispar = pars[outcome]
             
-            print outcome
-            if outcome=='hivtest': import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            
             # Find last good value -- WARNING, copied from scenarios.py!!! and shouldn't be in this loop!
             last_t = min(years) - settings.dt # Last timestep before the scenario starts
             last_y = thispar.interp(tvec=last_t, dt=settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
