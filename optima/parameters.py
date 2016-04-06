@@ -674,7 +674,7 @@ class Timepar(Par):
         return self.y.keys()
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -690,8 +690,9 @@ class Timepar(Par):
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
+        meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+            yinterp = meta * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
@@ -718,7 +719,7 @@ class Popsizepar(Par):
         return self.p.keys()
     
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -732,8 +733,9 @@ class Popsizepar(Par):
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
+        meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys):
-            yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            yinterp = meta * popgrow(self.p[key], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
@@ -759,7 +761,7 @@ class Constant(Par):
         return self.y.keys()
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
