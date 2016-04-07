@@ -251,7 +251,7 @@ class Resultset(object):
         return None # make()
         
         
-    def export(self, filestem=None, sep=',', ind=0, sigfigs=3, verbose=2):
+    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, verbose=2):
         ''' Method for exporting results to a CSV file '''
         if filestem is None:  # Doesn't include extension, hence filestem
             if self.name is not None: filestem = self.name
@@ -259,27 +259,33 @@ class Resultset(object):
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
-        headers = ['Year']+keys
-        output = sep.join(headers)+'\n'
+        output = sep.join(['Indicator','Year:'])
         for t in range(npts):
             output += ('%i'+sep) % self.tvec[t]
-            for key in keys:
-                if self.main[key].isnumber: output += ('%i'+sep) % self.main[key].tot[ind][t]
-                else:                       output += ('%s'+sep) % sigfig(self.main[key].tot[ind][t], sigfigs=sigfigs)
-            output += '\n'
+        for key in keys:
+            if bypop: output += '\n'
+            if bypop: popkeys = self.popkeys
+            else:     popkeys = ['tot']
+            for pk in range(len(popkeys)):
+                output += '\n'
+                if bypop: data = self.main[key].pops[ind][pk,:]
+                else:     data = self.main[key].tot[ind][:]
+                output += key+sep+popkeys[pk]+sep
+                for t in range(npts):
+                    if self.main[key].isnumber: output += ('%i'+sep) % data[t]
+                    else:                       output += ('%s'+sep) % sigfig(data[t])
        
-        
-        if len(self.budget): # WARNING, does not support multiple years
+        if len(self.budget)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
             output += 'Budget\n'
             output += sep.join(self.budget[ind].keys()) + '\n'
             output += sep.join([str(val) for val in self.budget[ind].values()]) + '\n'
         
-        if len(self.coverage): # WARNING, does not support multiple years
+        if len(self.coverage)>ind: # WARNING, does not support multiple years
             output += '\n\n\n'
             output += 'Coverage\n'
             output += sep.join(self.coverage[ind].keys()) + '\n'
-            output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n'
+            output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
         with open(filename, 'w') as f: f.write(output)
         printv('Results exported to "%s"' % filename, 2, verbose)
@@ -365,14 +371,14 @@ class Multiresultset(Resultset):
         return output
     
     
-    def export(self, filestem=None):
+    def export(self, filestem=None, ind=None, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
             if self.name is not None: filestem = self.name
             else: filestem = str(self.uid)
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key
-            Resultset.export(self, filestem=thisfilestem, ind=k)
+            Resultset.export(self, filestem=thisfilestem, ind=k, **kwargs)
         return None
 
 
