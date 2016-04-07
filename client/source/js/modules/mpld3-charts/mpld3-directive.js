@@ -3,12 +3,14 @@ define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpl
 
 
   function val2str(val, limit, suffix) {
-   var reducedVal = val / limit
+    var reducedVal = val / limit
     var nDecimal = reducedVal >= 1 ? 0 : 1;
     return reducedVal.toFixed(nDecimal) + suffix;
   }
 
+
   function reformatFigure($figure) {
+
     var $yaxis = $figure.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text')
     $labels.each(function() {
@@ -55,23 +57,17 @@ define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpl
 
   module.directive('mpld3Chart', function () {
     return {
-      scope: {
-        chart: '=mpld3Chart'
-      },
+      scope: { chart: '=mpld3Chart' },
       link: function (scope, element, attrs) {
-        var $elem = $(element)
-        $elem.attr('class', 'mpld3-chart');
-        scope.$watch(
-          'chart',
-          function() {
+        scope.$watch('chart', function() {
+            var $elem = $(element)
+            $elem.attr('class', 'mpld3-chart');
             $elem.html("");
             var $$hashKey = scope.chart.$$hashKey
             delete scope.chart.$$hashKey
             mpld3.draw_figure(attrs.id, scope.chart);
             reformatFigure($elem)
-          },
-          true
-        );
+        }, true);
       }
     };
   });
