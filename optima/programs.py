@@ -1091,10 +1091,10 @@ class CCOF(object):
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self, x=0, t=2015, popsize=None, toplot=None, inverse=False, randseed=None, bounds=None, verbose=2):
+    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2):
         x = promotetoarray(x)
         t = promotetoarray(t)
-        if not(toplot) and not(len(x)==len(t)):
+        if (not toplot) and (not len(x)==len(t)):
             try: 
                 x = x[0:1]
                 t = t[0:1]
