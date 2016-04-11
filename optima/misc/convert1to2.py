@@ -269,6 +269,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
         # Create program
         newprog = Program(short=prog['name'],
+                          name=prog['name'],
                           targetpars=targetpars,
                           targetpops=list(set([effect['popname'] for effect in prog['effects']]))
                           )
@@ -297,7 +298,8 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             else:  # Data entered as a number, can use directly
                 newcov = old['data']['costcov']['cov'][progno][thisind]
 
-            newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
+            if newcov and newcost:
+                newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
                                      'cost': newcost,
                                      'coverage': newcov})
 
