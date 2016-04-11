@@ -220,7 +220,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ### Convert programs
     ##################################################################################################################
     from optima import Program, Programset
-    from numpy import log
+    from numpy import log, isnan
     print('Converting programs...')
 
     # Extract some useful variables
@@ -287,30 +287,31 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         for yearind in range(nyears):
             
             if len(old['data']['costcov']['realcost'][progno])==1: # It's an assumption, apply to every year
-                newcost = old['data']['costcov']['realcost'][progno][0]
+                newcost = old['data']['costcov']['realcost'][progno][0] if ~isnan(old['data']['costcov']['realcost'][progno][0]) else None
             else:
-                newcost = old['data']['costcov']['realcost'][progno][yearind]
+                newcost = old['data']['costcov']['realcost'][progno][yearind] if ~isnan(old['data']['costcov']['realcost'][progno][yearind]) else None
             if len(old['data']['costcov']['cov'][progno])==1: # It's an assumption, apply to every year
-                newcov = old['data']['costcov']['cov'][progno][0]
+                newcov = old['data']['costcov']['cov'][progno][0] if ~isnan(old['data']['costcov']['cov'][progno][0]) else None
             else:
-                newcov = old['data']['costcov']['cov'][progno][yearind]
+                newcov = old['data']['costcov']['cov'][progno][yearind] if ~isnan(old['data']['costcov']['cov'][progno][yearind]) else None
             newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
                                      'cost': newcost,
                                      'coverage': newcov})
 
         # Create cost functions
         sat = prog['ccparams']['saturation']
-        cov_u = prog['ccparams']['coverageupper']
-        cov_l = prog['ccparams']['coveragelower']
-        cov = (cov_u+cov_l)/2
-        fund = prog['ccparams']['funding']
-        unitcost = -2*fund/(sat*targetpopsize*log((2*sat)/(sat+cov)-1))
-        try: unitcost = unitcost[0] # If it's an array, take the first element -- WARNING, should know
-        except: pass
+        if ~isnan(sat):
+            cov_u = prog['ccparams']['coverageupper']
+            cov_l = prog['ccparams']['coveragelower']
+            cov = (cov_u+cov_l)/2
+            fund = prog['ccparams']['funding']
+            unitcost = -2*fund/(sat*targetpopsize*log((2*sat)/(sat+cov)-1))
+            try: unitcost = unitcost[0] # If it's an array, take the first element -- WARNING, should know
+            except: pass
 
-        newprog.costcovfn.addccopar({'t': 2016.0, 
-                                     'saturation':(sat, sat),
-                                     'unitcost':(unitcost, unitcost)}) 
+            newprog.costcovfn.addccopar({'t': 2016.0, 
+                                         'saturation':(sat, sat),
+                                         'unitcost':(unitcost, unitcost)}) 
 
 
         # Append to list
