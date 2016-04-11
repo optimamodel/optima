@@ -1,6 +1,6 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None, MaxRangeIter=1000,
-    MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-3, TolX=None, StallIterLimit=100,
+    MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-2, TolX=None, StallIterLimit=100,
     fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, randseed=None, verbose=2):
     """
     Optimization using the adaptive stochastic descent algorithm.
@@ -41,9 +41,9 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
       MaxFunEvals    {N*1e3}    -- Maximum number of function evaluations
       MaxIter        {1e3}      -- Maximum number of iterations (1 iteration = 1 function evaluation)
       AbsTolFun      {1e-3}     -- Minimum absolute change in objective function
-      RelTolFun      {5e-3}     -- Minimum relative change in objective function
+      RelTolFun      {1e-2}     -- Minimum relative change in objective function
       TolX           {N*1e-6}   -- Minimum change in parameters
-      StallIterLimit {50}       -- Number of iterations over which to calculate TolFun
+      StallIterLimit {100}      -- Number of iterations over which to calculate TolFun
       fulloutput     {True}     -- Whether or not to output the parameters and errors at each iteration
       maxarraysize   {1e6}      -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
       timelimit      {3600}     -- Maximum time allowed, in seconds
@@ -190,7 +190,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitflag = 2 
             if verbose>=2: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
             break
-        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (mean(relerrorhistory) < (RelTolFun/StallIterLimit)): # Stop if improvement is too small
             exitflag = 2 
             if verbose>=2: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break
