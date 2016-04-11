@@ -1099,7 +1099,7 @@ class CCOF(object):
                 x = x[0:1]
                 t = t[0:1]
             except:
-                x = array([0])
+                x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
                 t = array([2015])
             printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)

@@ -26,7 +26,7 @@ then
 fi
 
 # Ensure that the optima modelling module is available from the sandbox
-if [ ! -f "./p-env/lib/python2.7/site-packages/optima.egg-link" ]; then
+if [ ! -f "./p-env/lib/python2.7/site-packages/optima.egg-link" ]; then # not sure this is right
     echo "Installing optima in virtualenv for the celery webapps..."
     cd ..
     python setup.py develop
@@ -35,6 +35,6 @@ fi
 
 # delete to avoid some module import problems
 if [ -f "../optima/optima.pyc" ]; then
-  rm ../optima/optima.pyc
+  rm ../optima/*.pyc
 fi
 
