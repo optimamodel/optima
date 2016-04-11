@@ -178,7 +178,21 @@ def isnumber(x):
     from numbers import Number
     return isinstance(x, Number)
 
-    
+
+def promotetoarray(x):
+    ''' Small function to ensure consistent format for things that should be arrays '''
+    from numpy import ndarray, shape
+    if isnumber(x):
+        return array([x]) # e.g. 3
+    elif isinstance(x, (list, tuple)):
+        return array(x) # e.g. [3]
+    elif isinstance(x, ndarray): 
+        if shape(x):
+            return x # e.g. array([3])
+        else: 
+            return array([x]) # e.g. array(3)
+    else: # e.g. 'foo'
+        raise OptimaException("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):
@@ -322,7 +336,7 @@ def dataindex(dataarray, index):
     return output
 
 
-def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None):
+def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None, strictnans=False):
     """
     Smoothly interpolate over values and keep end points. Same format as numpy.interp.
     
@@ -351,8 +365,9 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     if not(origx.shape==origy.shape): 
         errormsg = 'To interpolate, original x and y vectors must be same length (x=%i, y=%i)' % (len(origx), len(origy))
         raise Exception(errormsg)
-    origy = origy[~isnan(origy)] 
-    origx = origx[~isnan(origy)]
+    if strictnans:
+        origy = origy[~isnan(origy)] 
+        origx = origx[~isnan(origy)]
     
     # Calculate smoothness: this is consistent smoothing regardless of the size of the arrays
     if smoothness is None: smoothness = ceil(len(newx)/len(origx))
@@ -368,8 +383,12 @@ def smoothinterp(newx=None, origx=None, origy=None, smoothness=None, growth=None
     kernel = exp(-linspace(-2,2,2*smoothness+1)**2)
     kernel /= kernel.sum()
     newy = interp(newx, origx, origy) # Use interpolation
-    newy = concatenate([newy[0]*ones(smoothness), newy, newy[-1]*ones(smoothness)])
-    newy = convolve(newy, kernel, 'valid') # Smooth it out a bit
+    validinds = findinds(~isnan(newy)) # Remove nans since these don't exactly smooth well
+    if len(validinds): # No point doing these steps if no non-nan values
+        validy = newy[validinds]
+        validy = concatenate([validy[0]*ones(smoothness), validy, validy[-1]*ones(smoothness)])
+        validy = convolve(validy, kernel, 'valid') # Smooth it out a bit
+        newy[validinds] = validy # Copy back into full vector
     
     # Apply growth if required
     if growth is not None:
@@ -624,6 +643,36 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
+def loadbalancer(maxload=0.5, index=None, refresh=0.5, maxtime=3600, verbose=True):
+    ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
+    from psutil import cpu_percent
+    from time import sleep
+    from numpy.random import random
+    
+    # Set up processes to start asynchronously
+    if index is None:  delay = random()
+    else:              delay = index*refresh
+    if maxload>1: maxload/100. # If it's >1, assume it was given as a percent
+    sleep(delay) # Give it time to asynchronize
+    
+    # Loop until load is OK
+    toohigh = True # Assume too high
+    count = 0
+    maxcount = maxtime/float(refresh)
+    while toohigh and count<maxcount:
+        count += 1
+        currentload = cpu_percent()/100.
+        if currentload>maxload:
+            if verbose: print('CPU load too high (%0.2f/%0.2f); process %s queued for the %ith time' % (currentload, maxload, index, count))
+            sleep(refresh)
+        else: 
+            toohigh = False # print('CPU load fine (%0.2f/%0.2f)' % (currentload, maxload))
+    return None
+    
+    
+
+
+
 def runcommand(command, printinput=False, printoutput=False):
    """ Make it easier to run bash commands. Version: 1.1 Date: 2015sep03 """
    from subprocess import Popen, PIPE
@@ -693,6 +742,24 @@ def loadobj(filename, verbose=True):
     with GzipFile(**kwargs) as fileobj: obj = pickle.load(fileobj)
     if verbose: print('Object loaded from "%s"' % filename)
     return obj
+
+
+def cleanresults(filelist=None):
+    ''' Remove results from one file or many files '''
+    from glob import glob
+    if filelist is None: 
+        filelist = glob('*.prj')
+        ans = raw_input('About to remove results from the following files:\n%s\n\nAre you sure? y/[n]\n' % filelist)
+        if ans!='y': 
+            print('\nResults removal aborted.')
+            return None
+    if isinstance(filelist, (str, unicode)): filelist = [filelist]
+    for filename in filelist:
+        P = loadobj(filename)
+        P.cleanresults()
+        saveobj(filename, P)
+    print('\nDone.')
+    return None
 
 
 def saves(obj):

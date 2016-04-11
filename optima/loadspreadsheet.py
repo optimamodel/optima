@@ -219,9 +219,9 @@ def loadspreadsheet(filename='simple.xlsx', verbose=2):
                     blhindices = {'best':0, 'low':1, 'high':2} # Define best-low-high indices
                     blh = sheetdata.cell_value(row, 2) # Read in whether indicator is best, low, or high
                     data[thispar][blhindices[blh]].append(thesedata) # Actually append the data
-                    validatedata(thesedata, sheetname, thispar, row, checkblank=False)
-                    if thispar=='hivprev':
-                       validatedata(thesedata, sheetname, thispar, row, checkupper=True, checkblank=False)
+                    if thispar=='hivprev': validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'), checkupper=True)  # Make sure at least the best estimate isn't blank
+                    else:                  validatedata(thesedata, sheetname, thispar, row, checkblank=(blh=='best'))
+                    
 
                     
                 

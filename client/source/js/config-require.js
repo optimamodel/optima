@@ -24,7 +24,7 @@ define({
     'ui.router'     : './vendor/angular-ui-router/release/angular-ui-router',
     'ui.bootstrap'  : './vendor/angular-bootstrap/ui-bootstrap-tpls',
     'underscore'    : './vendor/underscore/underscore',
-    'mpld3'         : './js/modules/d3-charts/mpld3.v0.3-patched'
+    'mpld3'         : './js/modules/mpld3-charts/mpld3.v0.3-patched'
   },
 
   shim: {
@@ -32,6 +32,7 @@ define({
       'deps': ['ng-file-upload-html5-shim', 'jquery'],
       'exports': 'angular'
     },
+    'toastr': ['angular'],
     'angular-loading-bar': ['angular'],
     'd3-box': ['d3'],
     'angular-messages': ['angular'],

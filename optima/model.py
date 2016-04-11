@@ -1,23 +1,21 @@
 ## Imports
 from math import pow as mpow
-from numpy import zeros, exp, maximum, minimum, hstack, inf, array
-from optima import OptimaException, printv, dcp, odict, makesimpars, Resultset
+from numpy import zeros, exp, maximum, minimum, hstack, inf, array, isnan
+from optima import OptimaException, printv, dcp, odict, findinds, makesimpars, Resultset
 
 def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.3 (2016feb07)
+    Version: 1.4 (2016mar04)
     """
-    
-    
     
     ##################################################################################################################
     ### Setup
     ##################################################################################################################
 
     # Hard-coded parameters that hopefully don't matter too much
-    cd4transnorm = 1.5 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
+    cd4transnorm = 1.2 # Was 3.3 -- estimated overestimate of infectiousness by splitting transmissibility multiple ways -- see commit 57057b2486accd494ef9ce1379c87a6abfababbd for calculations
     
     # Initialize basic quantities
     if simpars is None: raise OptimaException('model() requires simpars as an input')
@@ -49,7 +47,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     raw_newtreat   = zeros((npops, npts)) # Number initiating ART1 per timestep
     raw_death      = zeros((npops, npts)) # Number of deaths per timestep
     raw_otherdeath = zeros((npops, npts)) # Number of other deaths per timestep
-
     
     # Biological and failure parameters -- death etc
     prog       = array([simpars['progacute'], simpars['proggt500'], simpars['proggt350'], simpars['proggt200'], simpars['proggt50']]) # Ugly, but fast
@@ -179,8 +176,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # More parameters...should maybe be moved somewhere else?
     birth = simpars['birth']
     agetransit = simpars['agetransit']*dt # Multiply by dt here so don't have to later
-    risktransit = simpars['risktransit']*dt
-    birthtransit = simpars['birthtransit']*dt
+    risktransit = simpars['risktransit']*dt # Multiply by dt here so don't have to later
+    birthtransit = simpars['birthtransit']*dt # Multiply by dt here so don't have to later
     
     # Shorten to lists of key tuples so don't have to iterate over every population twice for every timestep!
     agetransitlist = []
@@ -189,6 +186,11 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             for p2 in range(npops):
                 if agetransit[p1,p2]: agetransitlist.append((p1,p2))
                 if risktransit[p1,p2]: risktransitlist.append((p1,p2))
+    
+    # Figure out which populations have age inflows -- don't force population
+    ageinflows   = agetransit.sum(axis=0) # Find populations with age inflows
+    birthinflows = birthtransit.sum(axis=0) # Find populations with age inflows
+    noinflows = findinds(ageinflows+birthinflows==0) # Find populations with no inflows
     
     
     
@@ -466,11 +468,15 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         background   = simpars['death'][:, t] # make OST effect this death rates
         
         ## Susceptibles
-        dS = -newinfections # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
+        otherdeaths = zeros((len(sus), npops)) 
+        for index in sus:
+            otherdeaths[index] = dt * people[sus[index],:,t] * background
+            raw_otherdeath[:,t] += otherdeaths[index]/dt    # Save annual other deaths 
+        dS = -newinfections - otherdeaths # Change in number of susceptibles -- death rate already taken into account in pm.totalpop and dt
         raw_inci[:,t] = (newinfections.sum(axis=0) + raw_mtct[:,t])/float(dt)  # Store new infections AND new MTCT births
 
         ## Undiagnosed
-        if propdx[t]:
+        if not(isnan(propdx[t])):
             currplhiv = people[allplhiv,:,t].sum(axis=0)
             currdx = people[alldx,:,t].sum(axis=0)
             currundx = currplhiv[:] - currdx[:]
@@ -489,16 +495,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             else: 
                 progout = 0  # Cannot progress out of AIDS stage
                 testingrate[cd4] = maximum(hivtest[:,t], aidstest[t]) # Testing rate in the AIDS stage (if larger!)
-            if propdx[t]:
+            if not(isnan(propdx[t])):
                 newdiagnoses[cd4] = fractiontodx * people[undx[cd4],:,t]
             else:
                 newdiagnoses[cd4] =  testingrate[cd4] * dt * people[undx[cd4],:,t]
             hivdeaths   = dt * people[undx[cd4],:,t] * death[cd4]
             otherdeaths = dt * people[undx[cd4],:,t] * background
-            dU.append(progin - progout - newdiagnoses[cd4] - hivdeaths - otherdeaths) # Add in new infections after loop
+            inflows = progin  # Add in new infections after loop
+            outflows = progout + newdiagnoses[cd4] + hivdeaths + otherdeaths
+            dU.append(inflows - outflows)
             raw_diag[:,t]    += newdiagnoses[cd4]/dt # Save annual diagnoses 
             raw_death[:,t] += hivdeaths/dt    # Save annual HIV deaths 
             raw_otherdeath[:,t] += otherdeaths/dt    # Save annual other deaths 
+
         dU[0] = dU[0] + newinfections.sum(axis=0) # Now add newly infected people
         
 
@@ -510,7 +519,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         if usecascade:
 
             ## Diagnosed
-            if propcare[t]:
+            if not(isnan(propcare[t])):
                 curralldx = people[alldx,:,t].sum(axis=0)
                 currcare  = people[allcare,:,t].sum(axis=0)
                 curruncare = curralldx[:] - currcare[:]
@@ -529,7 +538,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     progout = 0 # Cannot progress out of AIDS stage
                 hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[dx[cd4],:,t] * background
-                if propcare[t]:
+                if not(isnan(propcare[t])):
                     newlinkcaredx[cd4]   = fractiontocare * people[dx[cd4],:,t] # diagnosed moving into care
                     newlinkcarelost[cd4] = fractiontocare * people[lost[cd4],:,t] # lost moving into care
                 else:
@@ -545,14 +554,14 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## In care
             currentincare = people[care,:,t] # how many people currently in care (by population)
 
-            if proptx[t]: # WARNING, newtreat should remove people not just from 'care' but also from 'off'
+            if not(isnan(proptx[t])): # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
-                newtreattot =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
+                totnewtreat =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
             else:
-                newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
+                totnewtreat = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
                 
-            for cd4 in range(ncd4):
+            for cd4 in reversed(range(ncd4)):  # Going backwards so that lower CD4 counts move onto treatment first
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[care[cd4-1],:,t]
                 else: 
@@ -561,16 +570,21 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     progout = dt*prog[cd4]*people[care[cd4],:,t]
                 else: 
                     progout = 0 # Cannot progress out of AIDS stage
+
                 hivdeaths   = dt * people[care[cd4],:,t] * death[cd4]
                 otherdeaths = dt * people[care[cd4],:,t] * background
                 leavecareCD[cd4] = dt * people[care[cd4],:,t] * leavecare[:,t]
                 inflows = progin + newdiagnoses[cd4]*immediatecare[:,t] + newlinkcaredx[cd4] + newlinkcarelost[cd4] # People move in from both diagnosed and lost states
                 outflows = progout + hivdeaths + otherdeaths + leavecareCD[cd4]
-                newtreat[cd4] = newtreattot * currentincare[cd4,:] / (eps+currentincare.sum()) # Pull out evenly among incare
-                newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # Allow it to go negative
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[usvl[cd4],:,t]/(eps+1.-treatvs[t])) # Make sure it doesn't remove everyone from the usvl treatment compartment
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[svl[cd4],:,t]/(eps+treatvs[t])) # Make sure it doesn't remove everyone from the svl treatment compartment
-                dC.append(inflows - outflows - newtreat[cd4])
+
+                if totnewtreat: # Move people onto treatment if there are spots available
+                    thisnewtreat = min(totnewtreat, sum(currentincare[cd4,:])) # Figure out how many spots are available
+                    newtreat[cd4] = thisnewtreat * (currentincare[cd4,:]) / (eps+sum(currentincare[cd4,:])) # Pull out evenly from each population
+                    newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentincare[cd4,:]+inflows-outflows)) # RS: I think it would be much nicer to do this with rates
+                    totnewtreat -= thisnewtreat # Adjust the number of available treatment spots
+                    totnewtreat = max(totnewtreat,0.) # Prevent it going negative
+
+                dC.insert(0, inflows - outflows - newtreat[cd4])
                 dD[cd4] += leavecareCD[cd4]
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
@@ -580,7 +594,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## Unsuppressed/Detectable Viral Load (having begun treatment)
             currentusupp = people[usvl,:,t] # how many with suppressed viral load
             currentsupp  = people[svl,:,t]
-            if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+            if not(isnan(propsupp[t])): # WARNING this will replace consequence of viral monitoring programs
                 currsupp  = currentsupp.sum(axis=0)
                 currusupp = currentusupp.sum(axis=0)
                 newsupptot = (propsupp[t]*currusupp - currsupp).sum()
@@ -604,7 +618,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
                 hivdeaths         = dt * people[usvl[cd4],:,t] * death[cd4] * deathtx # Use death by CD4 state if lower than death on treatment
                 otherdeaths       = dt * people[usvl[cd4],:,t] * background
-                if propsupp[t]: # WARNING this will replace consequence of viral monitoring programs
+                if not(isnan(propsupp[t])): # WARNING this will replace consequence of viral monitoring programs
                     virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
                 else:
                     virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t]
@@ -695,17 +709,17 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         else: 
             
             # WARNING, copied from above!!
-            if proptx[t]:
-                currdx = people[alldx,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
-                currtx = people[alltx,:,t].sum(axis=0)
-                newtreattot =  proptx[t] * currdx - currtx 
+            if not(isnan(proptx[t])):
+                currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
+                currtx = people[alltx,:,t].sum()
+                totnewtreat =  proptx[t] * currdx - currtx 
             else:
-                newtreattot = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
-
+                totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
+            tmpnewtreat = totnewtreat # Copy for modification later
 
             ## Diagnosed
             currentdiagnosed = people[dx,:,t] # Find how many people are diagnosed
-            for cd4 in range(ncd4):
+            for cd4 in reversed(range(ncd4)): # Going backwards so that lower CD4 counts move onto treatment first
                 if cd4>0: 
                     progin = dt*prog[cd4-1]*people[dx[cd4-1],:,t]
                 else: 
@@ -714,16 +728,23 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     progout = dt*prog[cd4]*people[dx[cd4],:,t]
                 else: 
                     progout = 0 # Cannot progress out of AIDS stage
-                newtreat[cd4] = newtreattot * currentdiagnosed[cd4,:] / (eps+currentdiagnosed.sum()) # Pull out evenly among diagnosed
-                hivdeaths   = dt * people[dx[cd4],:,t] * death[cd4]
-                otherdeaths = dt * people[dx[cd4],:,t] * background
+
+                hivdeaths   = dt * currentdiagnosed[cd4,:] * death[cd4] 
+                otherdeaths = dt * currentdiagnosed[cd4,:] * background
                 inflows = progin + newdiagnoses[cd4]
                 outflows = progout + hivdeaths + otherdeaths
-                newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # Allow it to go negative
-                newtreat[cd4] = maximum(newtreat[cd4], -safetymargin*people[tx[cd4],:,t]) # Make sure it doesn't exceed the number of people in the treatment compartment
-                dD.append(inflows - outflows - newtreat[cd4])
+
+                if tmpnewtreat: # Move people onto treatment if there are spots available
+                    thisnewtreat = min(tmpnewtreat, sum(currentdiagnosed[cd4,:])) # Figure out how many spots are available
+                    newtreat[cd4] = thisnewtreat * (currentdiagnosed[cd4,:]) / (eps+sum(currentdiagnosed[cd4,:])) # Pull out evenly from each population
+                    newtreat[cd4] = minimum(newtreat[cd4], safetymargin*(currentdiagnosed[cd4,:]+inflows-outflows)) # RS: I think it would be much nicer to do this with rates
+                    tmpnewtreat -= thisnewtreat # Adjust the number of available treatment spots
+                    tmpnewtreat = max(tmpnewtreat,0.) # Prevent it going negative
+
+                dD.insert(0, inflows - outflows - newtreat[cd4])
                 raw_newtreat[:,t] += newtreat[cd4]/dt # Save annual treatment initiation
                 raw_death[:,t]  += hivdeaths/dt # Save annual HIV deaths 
+                
             
             ## 1st-line treatment
             for cd4 in range(ncd4):
@@ -747,8 +768,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-
-
         ##############################################################################################################
         ### Update next time point and check for errors
         ##############################################################################################################
@@ -756,7 +775,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         # Ignore the last time point, we don't want to update further
         if t<npts-1:
             change = zeros((nstates, npops))
-            change[sus,:] = dS # WARNING: could be confusing to take tranpose. Better use tranposed array the whole way through?
+            change[sus,:] = dS 
             for cd4 in range(ncd4): # this could be made much more efficient
                 change[undx[cd4],:] = dU[cd4]
                 change[dx[cd4],:]   = dD[cd4]
@@ -810,8 +829,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 peoplemoving1 = people[:, p1, t] * risktransit[p1,p2]  # Number of other people who are moving pop1 -> pop2
                 peoplemoving2 = people[:, p2, t] * risktransit[p1,p2] * (sum(people[:, p1, t])/sum(people[:, p2, t])) # Number of people who moving pop2 -> pop1, correcting for population size
                 peoplemoving1 = minimum(peoplemoving1, safetymargin*people[:, p1, t]) # Ensure positive
-                people[:, p1, t+1] -= peoplemoving1 # Take away from pop1...
-                people[:, p2, t+1] += peoplemoving2 # ... then add to pop2
+                # Symmetric flow in totality, but the state distribution will ideally change.                
+                people[:, p1, t+1] += peoplemoving2 - peoplemoving1
+                people[:, p2, t+1] += peoplemoving1 - peoplemoving2
             
             
             
@@ -822,22 +842,22 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## Reconcile things
             ###############################################################################
             
-            # Reconcile population sizes
-            thissusreg = people[susreg,:,t+1]
-            thisprogcirc = people[progcirc,:,t+1]
+            # Reconcile population sizes for populations with no inflows
+            thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
+            thisprogcirc = people[progcirc,noinflows,t+1]
             allsus = thissusreg+thisprogcirc
-            newpeople = popsize[:,t+1] - people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-            people[susreg,:,t+1]   += newpeople*thissusreg/allsus # Add new people
-            people[progcirc,:,t+1] += newpeople*thisprogcirc/allsus # Add new people
+            newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+            people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
+            people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
             
             # Handle circumcision
-            circppl = maximum(0, minimum(numcirc[:,t], safetymargin*people[susreg,:,t+1])) # Don't circumcise more people than are available
-            people[susreg,:,t+1]   -= circppl
-            people[progcirc,:,t+1] += circppl # And add these people into the circumcised compartment
+            circppl = maximum(0, minimum(numcirc[noinflows,t], safetymargin*people[susreg,noinflows,t+1])) # Don't circumcise more people than are available
+            people[susreg,noinflows,t+1]   -= circppl
+            people[progcirc,noinflows,t+1] += circppl # And add these people into the circumcised compartment
             
             # Check population sizes are correct
-            actualpeople = people[:,:,t+1].sum()
-            wantedpeople = popsize[:,t+1].sum()
+            actualpeople = people[:,:,t+1][:,noinflows].sum()
+            wantedpeople = popsize[noinflows,t+1].sum()
             if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)

@@ -162,6 +162,8 @@ class OptimizationResults(Resource):
         project_id = parset_entry.project_id
 
         status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, str(parset_entry.id), 'optimization')
+        if status == 'error':
+            raise Exception(error_text)
         return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
 
 

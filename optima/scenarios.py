@@ -109,7 +109,9 @@ def makescenarios(project=None, scenlist=None, verbose=2):
     scenparsets = odict()
     for scenno, scen in enumerate(scenlist):
         
-        try: thisparset = dcp(project.parsets[scen.parsetname])
+        try: 
+            thisparset = dcp(project.parsets[scen.parsetname])
+            thisparset.project = project # Replace copy of project with pointer -- WARNING, hacky
         except: raise OptimaException('Failed to extract parset "%s" from this project:\n%s' % (scen.parsetname, project))
         thisparset.modified = today()
         thisparset.name = scen.name
@@ -135,7 +137,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
 
                     # Find last good value # WARNING, FIX!!!!
                     last_t = scenpar['startyear'] - project.settings.dt # Last timestep before the scenario starts
-                    last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False) # Find what the model would get for this value
+                    last_y = thispar.interp(tvec=last_t, dt=project.settings.dt, asarray=False, usemeta=False) # Find what the model would get for this value
 
                     # Loop over populations
                     for pop in pops:
@@ -197,7 +199,7 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 
                 # If the coverage levels have been passed in as a vector, convert it to an odict & sort by program names
                 tmpbudget = dcp(thisprogset.getdefaultbudget())
-                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
+                tmpcoverage = thisprogset.getprogcoverage(budget=tmpbudget, t=2000, parset=thisparset) # WARNING, IT DOES NOT MATTER THE VALUE OF t YOU USE HERE!!!
 
                 if isinstance(scen.coverage, list) or isinstance(scen.coverage, type(array([]))):
                     scen.coverage = vec2obj(scen.progset.getdefaultbuget(), newvec=scen.coverage) # It seems to be a vector: convert to odict -- WARNING, super dangerous!!

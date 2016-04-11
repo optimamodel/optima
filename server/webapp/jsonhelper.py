@@ -12,14 +12,16 @@ def normalize_dict(elem):
         result = OrderedDict()
         for (k, v) in elem.iteritems():
             norm_k = str(k)
-            if type(v) == op.utils.odict:
+            if type(v) == op.utils.odict or isinstance(v, list):
                 norm_v = normalize_dict(v)
             else:
                 norm_v = v
             result[norm_k] = norm_v
         return result
-    else:
-        return elem
+    elif isinstance(elem, float):
+        if np.isnan(elem):
+            return None
+    return elem
 
 
 class OptimaJSONEncoder(flask.json.JSONEncoder):
@@ -43,7 +45,7 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
             return float(obj)
 
         if isinstance(obj, np.ndarray):
-            return [p for p in list(obj)]
+            return [normalize_dict(p) for p in list(obj)]
 
         if isinstance(obj, np.bool_):
             return bool(obj)
