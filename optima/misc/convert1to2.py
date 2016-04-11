@@ -89,6 +89,8 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ## Population metadata
     new.data['pops'] = odict()
     new.data['pops']['short']     = old['data']['meta']['pops']['short']
+    npops = len(new.data['pops']['short']) # Number of population groups
+    new.data['npops'] = npops
     new.data['pops']['long']      = old['data']['meta']['pops']['long']
     new.data['pops']['male']      = old['data']['meta']['pops']['male']
     new.data['pops']['female']    = old['data']['meta']['pops']['female']
@@ -97,8 +99,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
 
     ## Convert the things that do not convert themselves
-    npops = len(new.data['pops']['short']) # Number of population groups
-    new.data['npops'] = npops
     new.data['pops']['age'] = [[15,49] for _ in range(npops)] # Assume 15-49 for all population groups
     nmalepops = sum(new.data['pops']['male'])
     nfemalepops = sum(new.data['pops']['female'])
@@ -193,6 +193,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     # Constants
     new.data['const'] = defaultproject.data['const'] 
 
+#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
 
     ##################################################################################################################
@@ -212,7 +213,6 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ## Run simulation
     #new.runsim()
 
-#    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
 
 
@@ -220,7 +220,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     ### Convert programs
     ##################################################################################################################
     from optima import Program, Programset
-    from numpy import log
+    from numpy import log, isnan
     print('Converting programs...')
 
     # Extract some useful variables
@@ -240,14 +240,16 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         # Create program effects
         for effect in prog['effects']:
             if effect['param'][:6]=='condom': effect['param'] = 'cond'+effect['param'][6:]
+            if effect['param'][:7]=='numacts': effect['param'] = 'acts'+effect['param'][7:]
             if effect['param']=='numfirstline': effect['param'] = 'numtx'
             if effect['param']=='stiprevulc': effect['param'] = 'stiprev'
+            if effect['param']=='numcircum': effect['param'] = 'numcirc'
             if effect['popname'] in ['Average','Total']: effect['popname'] = 'tot'
 
             if effect['param'] not in ['stiprevdis']:
             
                 # Extract effects
-                if isinstance(effect['coparams'],list):
+                if effect.get('coparams') and isinstance(effect['coparams'],list):
                     ccopar = {'t':2016., 'intercept':(effect['coparams'][0],effect['coparams'][1]), prog['name']: (effect['coparams'][2],effect['coparams'][3])}
                 else:            
                     ccopar = {'t':2016., 'intercept':(0.,0.), prog['name']: []}
@@ -267,6 +269,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
 
         # Create program
         newprog = Program(short=prog['name'],
+                          name=prog['name'],
                           targetpars=targetpars,
                           targetpops=list(set([effect['popname'] for effect in prog['effects']]))
                           )
@@ -278,38 +281,43 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             newprog.criteria = {'hivstatus': new.settings.hivstates, 'pregnant': True}
 
 
-        # Get target population size
-        targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
-
         # Add historical cost and coverage data
         for yearind in range(nyears):
             
-    #        import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
-            if len(old['data']['costcov']['realcost'][progno])==1: # It's an assumption, apply to every year
-                newcost = old['data']['costcov']['realcost'][progno][0]
-            else:
-                newcost = old['data']['costcov']['realcost'][progno][yearind]
-            if len(old['data']['costcov']['cov'][progno])==1: # It's an assumption, apply to every year
-                newcov = old['data']['costcov']['cov'][progno][0]
-            else:
-                newcov = old['data']['costcov']['cov'][progno][yearind]
-            newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
+            thisind = 0 if len(old['data']['costcov']['realcost'][progno])==1 else yearind
+            newcost = old['data']['costcov']['realcost'][progno][thisind] if ~isnan(old['data']['costcov']['realcost'][progno][thisind]) else None
+
+            thisind = 0 if len(old['data']['costcov']['cov'][progno])==1 else yearind
+            thisyear = 2016 if len(old['data']['costcov']['cov'][progno])==1 else old['data']['epiyears'][yearind]
+
+            # Figure out what kind of coverage data it is...
+            if isnan(old['data']['costcov']['cov'][progno][thisind]): # No data
+                newcov = None
+            elif old['data']['costcov']['cov'][progno][thisind]<1: # Data entered as a proportion, need to convert to number
+                newcov = old['data']['costcov']['cov'][progno][thisind]*newprog.gettargetpopsize(t=thisyear, parset=new.parsets[0])[0]
+            else:  # Data entered as a number, can use directly
+                newcov = old['data']['costcov']['cov'][progno][thisind]
+
+            if newcov and newcost:
+                newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
                                      'cost': newcost,
                                      'coverage': newcov})
 
         # Create cost functions
         sat = prog['ccparams']['saturation']
-        cov_u = prog['ccparams']['coverageupper']
-        cov_l = prog['ccparams']['coveragelower']
-        cov = (cov_u+cov_l)/2
-        fund = prog['ccparams']['funding']
-        unitcost = -2*fund/(sat*targetpopsize*log((2*sat)/(sat+cov)-1))
-        try: unitcost = unitcost[0] # If it's an array, take the first element -- WARNING, should know
-        except: pass
+        if ~isnan(sat):
+            targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
+            cov_u = prog['ccparams']['coverageupper']
+            cov_l = prog['ccparams']['coveragelower']
+            cov = (cov_u+cov_l)/2
+            fund = prog['ccparams']['funding']
+            unitcost = -2*fund/(sat*targetpopsize*log((2*sat)/(sat+cov)-1))
+            try: unitcost = unitcost[0] # If it's an array, take the first element -- WARNING, should know
+            except: pass
 
-        newprog.costcovfn.addccopar({'t': 2016.0, 
-                                     'saturation':(sat, sat),
-                                     'unitcost':(unitcost, unitcost)}) 
+            newprog.costcovfn.addccopar({'t': 2016.0, 
+                                         'saturation':(sat, sat),
+                                         'unitcost':(unitcost, unitcost)}) 
 
 
         # Append to list

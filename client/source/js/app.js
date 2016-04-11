@@ -69,7 +69,7 @@ define([
           responseError: function (rejection) {
             if (rejection.status === 401 && rejection.config.url !== '/api/users/current') {
               // Redirect them back to login page
-              location.href = '/#/login';
+              location.href = './#/login';
 
               return $q.reject(rejection);
             } else {
