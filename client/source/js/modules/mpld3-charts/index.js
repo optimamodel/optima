@@ -1,3 +1,3 @@
 define([
-  './graphs-ctrl'
+  './mpld3-directive',
 ], function () {});

@@ -1,7 +1,7 @@
 define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $, svgToPng, _) {
   'use strict';
 
-  return angular.module('app.common.export-helpers',[])
+  return angular.module('app.mpld3-charts.export-helpers',[])
   .factory('exportHelpers', ['$http', function ($http) {
 
     var chartCssUrl = '/assets/css/chart.css';

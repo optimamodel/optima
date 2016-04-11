@@ -6,11 +6,11 @@ define(['angular', 'jquery', 'mpld3', 'underscore', 'saveAs', 'jsPDF', './svg-to
     .directive('chartToolbar', function ($http, modalService, exportHelpers, projectApiService) {
       return {
         restrict: 'E',
-        templateUrl: './js/modules/common/chart-toolbar.html',
+        templateUrl: './js/modules/mpld3-charts/chart-toolbar.html',
         replace:true,
         scope: true,
         link: function (scope, elem, attrs) {
-          var chartStylesheetUrl = '/assets/css/chart.css';
+          var chartStylesheetUrl = './assets/css/chart.css';
 
           /**
            * Initializes the directive.
