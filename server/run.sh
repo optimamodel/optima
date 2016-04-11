@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./env.sh
+source ./env.sh
 
 if [ ! -f "config.py" ]; then
   cp config.example.py config.py
