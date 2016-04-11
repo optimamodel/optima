@@ -4,7 +4,7 @@ if [ ! -f "src/config.py" ]; then
   cp config.example.py config.py
 fi
 
-./sandbox.sh
+./env.sh
 
 pip install gunicorn
 
