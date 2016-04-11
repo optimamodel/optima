@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj, runmodel
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, vec2obj, runmodel
 from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, ndarray, maximum, minimum, sort, concatenate as cat, transpose
 import abc
 
@@ -32,7 +32,7 @@ class Programset(object):
 
     def __repr__(self):
         ''' Print out useful information'''
-        output = '\n'
+        output = objrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
@@ -40,10 +40,7 @@ class Programset(object):
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                 UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        
         return output
 
     def getsettings(self):
