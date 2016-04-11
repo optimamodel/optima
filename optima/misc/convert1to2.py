@@ -280,20 +280,23 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             newprog.criteria = {'hivstatus': new.settings.hivstates, 'pregnant': True}
 
 
-        # Get target population size
-        targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
-
         # Add historical cost and coverage data
         for yearind in range(nyears):
             
-            if len(old['data']['costcov']['realcost'][progno])==1: # It's an assumption, apply to every year
-                newcost = old['data']['costcov']['realcost'][progno][0] if ~isnan(old['data']['costcov']['realcost'][progno][0]) else None
-            else:
-                newcost = old['data']['costcov']['realcost'][progno][yearind] if ~isnan(old['data']['costcov']['realcost'][progno][yearind]) else None
-            if len(old['data']['costcov']['cov'][progno])==1: # It's an assumption, apply to every year
-                newcov = old['data']['costcov']['cov'][progno][0] if ~isnan(old['data']['costcov']['cov'][progno][0]) else None
-            else:
-                newcov = old['data']['costcov']['cov'][progno][yearind] if ~isnan(old['data']['costcov']['cov'][progno][yearind]) else None
+            thisind = 0 if len(old['data']['costcov']['realcost'][progno])==1 else yearind
+            newcost = old['data']['costcov']['realcost'][progno][thisind] if ~isnan(old['data']['costcov']['realcost'][progno][thisind]) else None
+
+            thisind = 0 if len(old['data']['costcov']['cov'][progno])==1 else yearind
+            thisyear = 2016 if len(old['data']['costcov']['cov'][progno])==1 else old['data']['epiyears'][yearind]
+
+            # Figure out what kind of coverage data it is...
+            if isnan(old['data']['costcov']['cov'][progno][thisind]): # No data
+                newcov = None
+            elif old['data']['costcov']['cov'][progno][thisind]<1: # Data entered as a proportion, need to convert to number
+                newcov = old['data']['costcov']['cov'][progno][thisind]*newprog.gettargetpopsize(t=thisyear, parset=new.parsets[0])[0]
+            else:  # Data entered as a number, can use directly
+                newcov = old['data']['costcov']['cov'][progno][thisind]
+
             newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
                                      'cost': newcost,
                                      'coverage': newcov})
@@ -301,6 +304,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
         # Create cost functions
         sat = prog['ccparams']['saturation']
         if ~isnan(sat):
+            targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
             cov_u = prog['ccparams']['coverageupper']
             cov_l = prog['ccparams']['coveragelower']
             cov = (cov_u+cov_l)/2
