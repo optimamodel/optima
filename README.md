@@ -32,7 +32,12 @@ This README describes the steps involved in installing and running Optima. **Fol
 
 ## 2.1 Quick start installation
 
-To install, run `python setup.py develop` in the root repository directory. This will add Optima to the system path. Optima can then be used via Python. Note: do **not** use `python setup.py install`, as this will copy the source code into your system Python directory, and you won't be able to modify or update it easily. To uninstall, run `python setup.py develop --uninstall`.
+To install, run `python setup.py develop` in the root repository directory. This will add Optima to the system path. Optima can then be used via Python. 
+
+To uninstall, run `python setup.py develop --uninstall`.
+
+Note: do **not** use `python setup.py install`, as this will copy the source code into your system Python directory, and you won't be able to modify or update it easily. 
+
 
 ## 2.2 Detailed instructions
 
@@ -53,6 +58,7 @@ The full list of requirements (including for the frontend) is given in `server/r
 ### 2.2.3 Python path
 
 The last step is to make sure that Optima is available on the Python path. There are several ways of doing this:
+
  0. **Option 1: Spyder path**
     0. Run Spyder (part of Anaconda)
     0. Under the “Tools” (Linux and Windows) or “python” (under Mac) menu, go to “PYTHONPATH Manager”
@@ -91,7 +97,7 @@ For usage examples, see the scripts in the `tests` folder. In particular, `testw
 
 ## 3.1 Installing postgres 
 
-On the mac, install the `postgres` software with:
+On mac, install the `postgres` software with:
 
     brew install postgres
 
@@ -99,14 +105,13 @@ Then you create the default database store:
 
     initdb /usr/local/var/postgres -E utf8
 
-To turn on `postgres` daemon, it's most convenient to use:
+To run the `postgres` daemon in a terminal:
 
-    gem install lunchy
-    lunchy start postgres
-
-And if you ever want to turn it off
-
-    lunchy stop postgres
+```bash
+postgres -D /usr/local/var/postgresbrew
+```
+    
+If you want to, you can run the `postgres` daemon with the Mac system daemon manager `launchctl`, or via the ruby wrapper for `lunchy`.
 
 
 ## 3.2 Setting up the optima database
@@ -127,23 +132,34 @@ Alternatively, you can create the `postgres` user directly:
 
     createuser postgres -s
 
+You will first need to install the python database migration tools:
+
+```bash
+pip install sqlalchemy-migrate psycopg2
+```
+	
 Then to create the optima database, use these commands *from the root Optima directory* as `migrate` needs to find the migration scripts:
 
-    createdb optima # Create Optima database -- for run.sh
-    createdb test # Create test database -- for test.sh
-    createuser optima -P -s # with password optima
-    createuser test -P -s # with password test
-    migrate version_control postgresql://optima:optima@localhost:5432/optima server/db/ # Allow version control
-    migrate upgrade postgresql://optima:optima@localhost:5432/optima server/db/ # Run the migrations to be safe
+```bash
+createdb optima # Create Optima database -- for run.sh
+createdb test # Create test database -- for test.sh
+createuser optima -P -s # with password optima
+createuser test -P -s # with password test
+migrate version_control postgresql://optima:optima@localhost:5432/optima server/db/ # Allow version control
+migrate upgrade postgresql://optima:optima@localhost:5432/optima server/db/ # Run the migrations to be safe
+```
 
 The scripts require that the `optima` user is a superuser. To check this:
 
-    psql -d optima -c "\du"
+```bash
+psql -d optima -c "\du"
+```
 
 You should be able to see the users `optima` and `postgres`, and they are set to superusers. If not, to set `optima` to superuser:
 
-    psql -d optima -c "ALTER USER optima with SUPERUSER;"
-
+```bash
+psql -d optima -c "ALTER USER optima with SUPERUSER;"
+```
 
 
 
@@ -159,13 +175,13 @@ This has been made using seed project [ng-seed](https://github.com/StarterSquad/
 
 0. Install nginx:
 
-  - on Mac, use brew:  `brew install nginx` 
-  - on Ubuntu:  `sudo apt-get install nginx`
-  - on CentOS:  `sudo yum install nginx`
+   - on Mac, use brew:  `brew install nginx` 
+   - on Ubuntu:  `sudo apt-get install nginx`
+   - on CentOS:  `sudo yum install nginx`
 
-After install, run:  
+   After install, run:  
 
-    sudo nginx
+        sudo nginx
 
 0. Copy `client/nginx.conf.example` to your own file, say `client/optima.nginx.conf`.
 
@@ -177,32 +193,33 @@ After install, run:
      - line 106: `ABSOLUTE_PATH_TO_LOG_FILE` with the location for your nginx log file.
 
 0. Enable the new configuration:
-  - on Mac:
+   - on Mac:
       - Copy the file created in step 2 to `/usr/local/etc/nginx/servers`, or  
       - Go to you local nginx configuration folder (usually: `/usr/local/etc/nginx`). And open `nginx.conf`, add a line there to include the nginx configuration file for Optima like:
-      ```
-      server {
-        ...
-        include {PATH_TO_CONFIG_FILE}/optima-nginx.conf;
-      }
-      ```
-  - on Linux:
+        ```
+        server {
+          ...
+          include {PATH_TO_CONFIG_FILE}/optima-nginx.conf;
+        }
+        ```
+        
+    - on Linux:
       - copy the file created in step 2 to `/etc/nginx/sites-enabled/` (or copy it to `/etc/nginx/sites-available/` and create a symlink to it from `/etc/nginx/sites-enabled/`)
 
 0. *After any change to the configuration file*, restart `nginx`:
-  - on Mac, you can copy the `optima.nginx.conf` to the default locaition `/usr/local/etc/nginx/nginx.conf`, and then you run:
+    - on Mac, you can copy the `optima.nginx.conf` to the default locaition `/usr/local/etc/nginx/nginx.conf`, and then you run:
 
-        sudo nginx -s stop
-        sudo nginx
+          sudo nginx -s stop
+          sudo nginx
 
-     or you can run from your location:
+       or you can run from your location:
 
-        sudo nginx -s stop
-        sudo nginx -c {YOUR_NGINX_CONF_LOC}
+          sudo nginx -s stop
+          sudo nginx -c {YOUR_NGINX_CONF_LOC}
     
-  - on Linux:  
+    - on Linux:  
 
-        sudo service nginx restart
+           sudo service nginx restart
 
 
 ## 4.2 Installing the client
@@ -300,9 +317,7 @@ Make sure you have user "test" with the password "test" and database "optima_tes
 
 If all steps he been completed, run `run.sh` in the server directory, and then go to `http://optima.dev` in your browser (preferably Chrome). You should see the Optima login screen.
 
-In order to use the application you need to login a registered user. In order to register a new user visit:  
-`http://optima.dev/#/register`
-and register using any details.
+In order to use the application you need to login a registered user. In order to register a new user, visit <http://optima.dev/#/register>, and register using any details.
 
 Happy Optimaing!
 
