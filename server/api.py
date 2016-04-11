@@ -137,8 +137,7 @@ app.register_blueprint(api_bp, url_prefix='')
 @app.route('/')
 def site():
     """ site - needed to correctly redirect to it from blueprints """
-    redirect('/')
-    return "OK"
+    return redirect('/')
 
 
 @app.route('/api', methods=['GET'])

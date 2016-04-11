@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, vec2obj, runmodel
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, ndarray, maximum, minimum, sort, concatenate as cat, transpose
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -237,8 +237,7 @@ class Programset(object):
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if isnumber(t): t = [t]
-        if isinstance(t,ndarray): t = t.tolist()
+        if t is not None: t = promotetoarray(t)
 
         # Set up internal variables
         settings = self.getsettings()
@@ -827,10 +826,8 @@ class Program(object):
         '''Returns coverage for a time/spending vector'''
 
         # Validate inputs
-        if isnumber(x): x = [x]
-        if isnumber(t): t = [t]
-        if isinstance(x, list): x = array(x)
-        if isinstance(t, list): t = array(t)
+        x = promotetoarray(x)
+        t = promotetoarray(t)
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
         totaltargeted = sum(poptargeted.values())
@@ -869,7 +866,7 @@ class Program(object):
         wasinteractive = isinteractive() # Get current state of interactivity
         ioff() # Just in case, so we don't flood the user's screen with figures
 
-        if isnumber(t): t = [t]
+        t = promotetoarray(t)
         colors = gridcolormap(len(t))
         plotdata = odict()
         
@@ -1024,7 +1021,17 @@ class CCOF(object):
         return None
 
     def getccopar(self, t, verbose=2, randseed=None, bounds=None):
-        '''Get a cost-coverage-outcome parameter set for any year in range 1900-2100'''
+        '''
+        Get a cost-coverage-outcome parameter set for any year in range 1900-2100
+
+        Args:
+            t: years to interpolate sets of ccopar
+            verbose: level of verbosity
+            bounds: None - take middle of intervals,
+                    'upper' - take top of intervals,
+                    'lower' - take bottom if intervals
+            randseed: currently not implemented
+        '''
 
         # Error checks
         if not self.ccopars:
@@ -1034,7 +1041,7 @@ class CCOF(object):
 
         # Set up necessary variables
         ccopar = odict()
-        if isnumber(t): t = [t]
+        t = promotetoarray(t)
         nyrs = len(t)
         ccopars_no_t = dcp(odict({k:v for k,v in self.ccopars.iteritems() if v}))
         del ccopars_no_t['t']
@@ -1077,15 +1084,15 @@ class CCOF(object):
         return ccopar
 
     def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2):
-        if isnumber(x): x = [x]
-        if isnumber(t): t = [t]
-        if (not toplot) and (not len(x)==len(t)): 
+        x = promotetoarray(x)
+        t = promotetoarray(t)
+        if (not toplot) and (not len(x)==len(t)):
             try: 
-                x = [x[0]]
-                t = [t[0]]
+                x = x[0:1]
+                t = t[0:1]
             except:
-                x = [0]
-                t = [2015]
+                x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
+                t = array([2015])
             printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
         ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
@@ -1104,7 +1111,50 @@ class CCOF(object):
 # COST COVERAGE FUNCTIONS
 ########################################################
 class Costcov(CCOF):
-    '''Cost-coverage objects'''
+    '''
+    Cost-coverage object - used to calculate the coverage for a certain
+    budget in a program. Best initialized with empty parameters,
+    and later, add cost-coverage parameters with self.addccopar.
+
+    Methods:
+
+        addccopar(ccopar, overwrite=False, verbose=2)
+            Adds a set of cost-coverage parameters for a budget year
+
+            Args:
+                ccopar: {
+                            't': [2015,2016],
+                            'saturation': [.90,1.],
+                            'unitcost': [40,30]
+                        }
+                        The intervals in ccopar allow a randomization
+                        to explore uncertainties in the model.
+
+                overwrite: whether it should be added or replaced for
+                           interpolation
+
+        getccopar(t, verbose=2, randseed=None, bounds=None)
+            Returns an odict of cost-coverage parameters
+                { 'saturation': [..], 'unitcost': [...], 't':[...] }
+            used for self.evaulate.
+
+            Args:
+                t: a number/list of years to interpolate the ccopar
+                randseed: used to randomly generate a varying set of parameters
+                          to help determine the sensitivity/uncertainty of
+                          certain parameters
+
+        evaluate(x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2)
+            Returns coverage if x=cost, or cost if x=coverage, this is defined by inverse.
+
+            Args
+                x: number, or list of numbers, representing cost or coverage
+                t: years for each value of cost/coverage
+                inverse: False - returns a coverage, True - returns a cost
+                randseed: allows a randomization of the cost-cov parameters within
+                    the given intervals
+
+    '''
 
     def function(self, x, ccopar, popsize, eps=None):
         '''Returns coverage in a given year for a given spending amount.'''

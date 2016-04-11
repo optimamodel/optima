@@ -26,7 +26,7 @@ define(['./module', '../sha224/sha224'], function (module, SHA224) {
         function (response) {
           if (response.username) {
             // success
-            $window.location = '/#/login';
+            $window.location = './#/login';
           }
         },
         // error
