@@ -156,7 +156,21 @@ def isnumber(x):
     from numbers import Number
     return isinstance(x, Number)
 
-    
+
+def promotetoarray(x):
+    ''' Small function to ensure consistent format for things that should be arrays '''
+    from numpy import ndarray, shape
+    if isnumber(x):
+        return array([x]) # e.g. 3
+    elif isinstance(x, (list, tuple)):
+        return array(x) # e.g. [3]
+    elif isinstance(x, ndarray): 
+        if shape(x):
+            return x # e.g. array([3])
+        else: 
+            return array([x]) # e.g. array(3)
+    else: # e.g. 'foo'
+        raise OptimaException("Expecting a number/list/tuple/ndarray; got: %s" % str(x))
 
 
 def printdata(data, name='Variable', depth=1, maxlen=40, indent='', level=0, showcontents=False):

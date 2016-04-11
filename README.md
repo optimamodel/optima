@@ -34,7 +34,10 @@ This README describes the steps involved in installing and running Optima. **Fol
 
 To install, run `python setup.py develop` in the root repository directory. This will add Optima to the system path. Optima can then be used via Python. 
 
-Note: do **not** use `python setup.py install`, as this will copy the source code into your system Python directory, and you won't be able to modify or update it easily. To uninstall, run `python setup.py develop --uninstall`.
+To uninstall, run `python setup.py develop --uninstall`.
+
+Note: do **not** use `python setup.py install`, as this will copy the source code into your system Python directory, and you won't be able to modify or update it easily. 
+
 
 ## 2.2 Detailed instructions
 

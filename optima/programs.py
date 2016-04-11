@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objatt, objmeth, gridcolormap, isnumber, vec2obj, runmodel
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, ndarray, maximum, minimum, sort, concatenate as cat, transpose, ndarray
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objatt, objmeth, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, ndarray
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -15,17 +15,6 @@ import abc
 # ...though would be nice to have an easier way!
 coveragepars=['numtx','numpmtct','numost','numcirc'] 
 
-
-
-def promotetoarray(l):
-    if isnumber(l):
-        return array([l])
-    elif isinstance(l, list) or isinstance(l, tuple):
-        return array(l)
-    elif isinstance(l, ndarray):
-        return l
-    else:
-        raise OptimaException("Expecting a number/list/tuple/ndarray sequence: %s" % repr(l))
 
 
 
