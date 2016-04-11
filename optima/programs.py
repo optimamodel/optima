@@ -24,7 +24,8 @@ def promotetoarray(l):
         return array(l)
     elif isinstance(l, ndarray):
         return l
-    raise OptimaException("Expecting a number/list/tuple/ndarray sequence: %s" % repr(l))
+    else:
+        raise OptimaException("Expecting a number/list/tuple/ndarray sequence: %s" % repr(l))
 
 
 
