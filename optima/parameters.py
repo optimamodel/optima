@@ -3,10 +3,11 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.4 (2016feb08)
+Version: 1.5 (2016feb09)
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape, nan
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+
 from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
