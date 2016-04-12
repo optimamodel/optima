@@ -1,7 +1,7 @@
 """
 Functions for running optimizations.
 
-Version: 2016feb07
+Version: 2016apr11
 """
 
 from optima import OptimaException, Multiresultset, Programset, asd, runmodel, getresults # Main functions

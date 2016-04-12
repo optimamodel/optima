@@ -1074,16 +1074,15 @@ class CCOF(object):
             
         ccopartuples = sorted(zip(self.ccopars['t'], *ccopars_no_t.values()))
         knownt = array([ccopartuple[0] for ccopartuple in ccopartuples])
-        allt = arange(1900,2100)
         j = 1
 
         # Calculate interpolated parameters
         for param in ccopars_no_t.keys():
             knownparam = array([ccopartuple[j] for ccopartuple in ccopartuples])
-            allparams = smoothinterp(allt, knownt, knownparam, smoothness=1)
+            allparams = smoothinterp(t, knownt, knownparam, smoothness=1)
             ccopar[param] = zeros(nyrs)
             for yr in range(nyrs):
-                ccopar[param][yr] = allparams[findinds(allt,t[yr])]
+                ccopar[param][yr] = allparams[yr]
             if isinstance(t,list): ccopar[param] = ccopar[param].tolist()
             j += 1
 
