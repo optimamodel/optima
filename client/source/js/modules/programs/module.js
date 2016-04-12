@@ -11,12 +11,10 @@ define([
   '../validations/less-than-directive',
   '../validations/year-directive',
   '../validations/range-limit',
-  '../parameter-scenarios-modal/parameter-scenarios-modal',
-  '../program-scenarios-modal/program-scenarios-modal'
 ], function (angular) {
   'use strict';
 
-  return angular.module('app.project-set', [
+  return angular.module('app.programs', [
     'app.export-all-charts',
     'app.export-all-data',
     'app.resources.model',
@@ -26,20 +24,18 @@ define([
     'app.validations.less-than',
     'app.validations.year',
     'app.validations.range-limit',
-    'app.parameter-scenarios-modal',
-    'app.program-scenarios-modal',
     'toastr'
   ])
     .config(function ($stateProvider) {
       $stateProvider
-        .state('project-set', {
-          url: '/project-set',
+        .state('programs', {
+          url: '/programs',
           abstract: true,
           template: '<div ui-view></div>'
         })
-        .state('project-set.manageProgramSet', {
+        .state('programs.manageProgramSet', {
           url: '/programs',
-          templateUrl: 'js/modules/project-set/program-set/program-set.html',
+          templateUrl: 'js/modules/programs/program-set/program-set.html',
           controller: 'ProgramSetController',
           resolve: {
             currentProject: function(projectApiService) {
@@ -47,10 +43,10 @@ define([
             }
           }
         })
-        .state('project-set.define-cost-coverage-outcome', {
+        .state('programs.define-cost-coverage-outcome', {
           url: '/define-cost-coverage-outcome',
           controller: 'ModelCostCoverageController as vm',
-          templateUrl: 'js/modules/project-set/cost-coverage/cost-coverage.html',
+          templateUrl: 'js/modules/programs/cost-coverage/cost-coverage.html',
           bindToController: true,
           resolve: {
             activeProject: function (projectApiService) {

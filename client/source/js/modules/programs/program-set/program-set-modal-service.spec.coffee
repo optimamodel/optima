@@ -1,11 +1,11 @@
-define ['angular-mocks', 'Source/modules/project-set/program-set/program-set-modal-service',
+define ['angular-mocks', 'Source/modules/programs/program-set/program-set-modal-service',
   'Source/modules/ui/modal/modal-service'], ->
-  describe 'programSetModalService service in app.project-set', ->
+  describe 'programSetModalService service in app.programs', ->
 
     psModalService = null
 
     beforeEach ->
-      module 'app.project-set'
+      module 'app.programs'
       module 'app.ui.modal'
 
       inject (programSetModalService) ->

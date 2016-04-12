@@ -129,7 +129,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         var openScenarioModal = function(scenario, parsets, progsets) {
           if(scenario.scenario_type === "budget" || scenario.scenario_type === 'coverage'){
             return $modal.open({
-              templateUrl: 'js/modules/program-scenarios-modal/program-scenarios-modal.html',
+              templateUrl: 'js/modules/analysis/program-scenarios-modal.html',
               controller: 'ProgramScenariosModalController',
               resolve: {
                 scenarios: function () {
@@ -154,7 +154,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             });
           }else{
             return $modal.open({
-              templateUrl: 'js/modules/parameter-scenarios-modal/parameter-scenarios-modal.html',
+              templateUrl: 'js/modules/analysis/parameter-scenarios-modal.html',
               controller: 'ParameterScenariosModalController',
               resolve: {
                 scenarios: function () {

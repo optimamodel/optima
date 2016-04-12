@@ -39,7 +39,7 @@
                 <tfoot>
                   <tr>
                     <td colspan="6" class="text-right">
-                      <p class="error-hint" style="float: left; margin: 0px;" ng-show="missingProgramSet">Please create a program set to add budget and coverage scenario. <a  ui-sref="project-set.manageProgramSet">Define/manage program set</a></p>
+                      <p class="error-hint" style="float: left; margin: 0px;" ng-show="missingProgramSet">Please create a program set to add budget and coverage scenario. <a  ui-sref="programs.manageProgramSet">Define/manage program set</a></p>
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'budget'}, 'add', $event)" ng-disabled="missingProgramSet">Add a budget scenario</button>
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'coverage'}, 'add', $event)" ng-disabled="missingProgramSet">Add a coverage scenario</button>
                       <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'parameter'}, 'add', $event)">Add a parameter scenario</button>

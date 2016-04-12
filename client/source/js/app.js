@@ -24,7 +24,7 @@ define([
   './modules/home/index',
   './modules/model/index',
   './modules/project/index',
-  './modules/project-set/index',
+  './modules/programs/index',
   './modules/user-manager/index',
   './modules/ui/modal/modal-service',
   './modules/ui/index'
@@ -49,7 +49,7 @@ define([
     'app.validations.less-than',
     'app.local-storage',
     'app.model',
-    'app.project-set',
+    'app.programs',
     'app.validations.more-than',
     'app.validations.file-required',
     'app.project',

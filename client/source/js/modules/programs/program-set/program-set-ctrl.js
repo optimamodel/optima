@@ -71,7 +71,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Download  project-set data
+    // Download  programs data
     $scope.downloadProgramSet = function() {
       if(!$scope.activeProgramSet.id) {
         modalService.inform(
@@ -91,7 +91,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
     };
 
-    // Upload project-set data
+    // Upload programs data
     $scope.uploadProgramSet = function() {
       if(!$scope.activeProgramSet.id) {
         modalService.inform(

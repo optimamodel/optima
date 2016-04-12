@@ -15,7 +15,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         };
 
         var modalInstance = $modal.open({
-          templateUrl: 'js/modules/project-set/program-set/program-set-modal.html',
+          templateUrl: 'js/modules/programs/program-set/program-set-modal.html',
           controller: ['$scope', '$document', function ($scope, $document) {
 
             $scope.title = title;
@@ -55,7 +55,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
        */
       openProgramModal: function (program, openProject, programList, parameters, categories) {
         return $modal.open({
-          templateUrl: 'js/modules/project-set/program-set/program-modal.html',
+          templateUrl: 'js/modules/programs/program-set/program-modal.html',
           controller: 'ProgramModalController',
           size: 'lg',
           resolve: {
