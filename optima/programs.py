@@ -6,16 +6,14 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objatt, objmeth, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
-from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, ndarray
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
+from numpy import ones, prod, array, arange, zeros, exp, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
 # [par.coverage for par in P.parsets[0].pars[0].values() if hasattr(par,'coverage')]
 # ...though would be nice to have an easier way!
 coveragepars=['numtx','numpmtct','numost','numcirc'] 
-
-
 
 
 class Programset(object):
@@ -34,7 +32,7 @@ class Programset(object):
 
     def __repr__(self):
         ''' Print out useful information'''
-        output = '\n'
+        output = objrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
@@ -42,10 +40,7 @@ class Programset(object):
         output += '       Date modified: %s\n'    % getdate(self.modified)
         output += '                 UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objatt(self)
-        output += '============================================================\n'
-        output += objmeth(self)
-        output += '============================================================\n'
+        
         return output
 
     def getsettings(self):
@@ -242,8 +237,7 @@ class Programset(object):
         totalbudget, lastbudget, selectbudget = odict(), odict(), odict()
 
         # Validate inputs
-        if isnumber(t): t = [t]
-        if isinstance(t,ndarray): t = t.tolist()
+        if t is not None: t = promotetoarray(t)
 
         # Set up internal variables
         settings = self.getsettings()
@@ -968,9 +962,7 @@ class Program(object):
 # COST COVERAGE OUTCOME FUNCTIONS
 ########################################################
 class CCOF(object):
-    '''
-    Cost-coverage, coverage-outcome and cost-outcome objects
-    '''
+    '''Cost-coverage, coverage-outcome and cost-outcome objects'''
     __metaclass__ = abc.ABCMeta # WARNING, this is the only place where this is used...is it necessary...?
 
     def __init__(self,ccopars=None,interaction=None):

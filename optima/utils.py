@@ -73,15 +73,21 @@ def objmeth(obj, strlen = 18, ncol = 3):
     return createcollist(oldkeys, 'Methods', strlen = 18, ncol = 3)
 
 
-def objrepr(obj):
+def objrepr(obj, showid=True, showmeth=True, showatt=True):
     ''' Return useful printout for the Python __repr__ method '''
-    output =  objectid(obj)
-    output += '============================================================\n'
-    output += objatt(obj)
-    output += '============================================================\n'
-    output += objmeth(obj)
-    output += '============================================================\n'
+    divider = '============================================================\n'
+    output = ''
+    if showid:
+        output += objectid(obj)
+        output += divider
+    if showmeth:
+        output += objmeth(obj)
+        output += divider
+    if showatt:
+        output += objatt(obj)
+        output += divider
     return output
+
 
 def defaultrepr(obj, maxlen=55):
     ''' Prints out the default representation of an object -- all attributes, plust methods and ID '''
@@ -89,16 +95,13 @@ def defaultrepr(obj, maxlen=55):
     maxkeylen = max([len(key) for key in keys])
     if maxkeylen<maxlen: maxlen = maxlen - maxkeylen
     formatstr = '%'+ '%i'%maxkeylen + 's'
-    output = '============================================================\n'
-    output +=  objectid(obj)
-    output += '============================================================\n'
+    output  = objrepr(obj, showatt=False)
     for key in keys:
         thisattr = str(getattr(obj, key))
         if len(thisattr)>maxlen: thisattr = thisattr[:maxlen] + ' [...]'
         output += formatstr%key + ': ' + thisattr + '\n'
     output += '============================================================\n'
-    output += objmeth(obj)
-    output += '============================================================\n'
+
     return output
 
 
@@ -934,11 +937,34 @@ class odict(OrderedDict):
         return None
     
     
-    def __repr__(self):
+    def __repr__(self, maxlen=None, spaces=True, divider=True):
         ''' Print a meaningful representation of the odict '''
-        if len(self.keys())==0: output = 'odict()'
-        else: output = '\n'.join(["#%i: '%s': %s" % (i, self.keys()[i], self.values()[i]) for i in range(len(self))])
+         # Maximum length of string to display
+        toolong = ' [...]'
+        divider = '#############################################################\n'
+        if len(self.keys())==0: 
+            output = 'odict()'
+        else: 
+            output = ''
+            hasspaces = 0
+            for i in range(len(self)):
+                if divider and spaces and hasspaces: output += divider
+                thiskey = str(self.keys()[i]) # Probably don't need to cast to str, but just to be sure
+                thisval = str(self.values()[i])
+                if not(spaces):                    thisval = thisval.replace('\n','\\n') # Replace line breaks with characters
+                if maxlen and len(thisval)>maxlen: thisval = thisval[:maxlen-len(toolong)] + toolong # Trim long entries
+                if thisval.find('\n'): hasspaces = True
+                output += '#%i: "%s": %s\n' % (i, thiskey, thisval)
         return output
+    
+    def disp(self, maxlen=55, spaces=False, divider=False):
+        ''' Print out flexible representation, short by default'''
+        print(self.__repr__(maxlen=maxlen, spaces=spaces, divider=divider))
+    
+    def _repr_pretty_(self, p, cycle):
+        ''' Stupid function to fix __repr__ because IPython is stupid '''
+        print(self.__repr__())
+    
     
     def index(self, item):
         ''' Return the index of a given key '''

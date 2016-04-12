@@ -78,7 +78,7 @@ class Project(object):
 
     def __repr__(self):
         ''' Print out useful information when called '''
-        output = '============================================================\n'
+        output = objrepr(self)
         output += '      Project name: %s\n'    % self.name
         output += '\n'
         output += '    Parameter sets: %i\n'    % len(self.parsets)
@@ -95,7 +95,6 @@ class Project(object):
         output += '       Git version: %s\n'    % self.gitversion
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objrepr(self)
         return output
 
 
@@ -225,7 +224,7 @@ class Project(object):
         structlist = self.getwhat(what=what)
         self.checkname(what, checkexists=name)
         structlist.pop(name)
-        printv('Item "%s" removed from "%s"' % (name, what), 2, self.settings.verbose)
+        printv('%s "%s" removed' % (what, name), 2, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -240,7 +239,7 @@ class Project(object):
         structlist[new].created = today() # Update dates
         structlist[new].modified = today() # Update dates
         if hasattr(structlist[new], 'project'): structlist[new].project = self # Preserve information about project -- don't deep copy -- WARNING, may not work?
-        printv('Item "%s" copied to "%s"' % (new, what), 2, self.settings.verbose)
+        printv('%s "%s" copied to "%s"' % (what, orig, new), 2, self.settings.verbose)
         self.modified = today()
         return None
 
@@ -251,7 +250,7 @@ class Project(object):
         self.checkname(what, checkexists=orig, checkabsent=new, overwrite=overwrite)
         structlist[new] = structlist.pop(orig)
         structlist[new].name = new # Update name
-        printv('Item "%s" renamed to "%s" in "%s"' % (orig, new, what), 2, self.settings.verbose)
+        printv('%s "%s" renamed "%s"' % (what, orig, new), 2, self.settings.verbose)
         self.modified = today()
         return None
         
