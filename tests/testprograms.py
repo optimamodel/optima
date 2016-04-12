@@ -14,9 +14,9 @@ Version: 2016feb06
 
 ## Define tests to run here!!!
 tests = [
-#'makeprograms',
-#'compareoutcomes',
-'reconcilepars',
+'makeprograms',
+'compareoutcomes',
+#'reconcilepars',
 ]
 
 

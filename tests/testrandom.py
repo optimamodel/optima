@@ -1,42 +1,43 @@
 """
-Do random tests.
+Create a good test project
 
-Version: 2016feb09
+Version: 2016feb11
 """
 
-from line_profiler import LineProfiler
-
 import optima as op
-P = op.defaults.defaultproject('best')
-ps = P.parsets[0]
-tofollow = P.progsets[0].getoutcomes
+infile = 'exercise_optimization.prj'
+outfile = 'exercise_optimization.prj'
+P = op.loadobj(infile)
+#P.progsets[0].reconcile(parset=P.parsets[0], year=2016, maxiters=500)
+#op.saveobj(outfile,P)
+
+runoptimize = False
+runscenarios = False
+ind = 0
 
 
-def profile():
-    print('Profiling...')
 
-    def do_profile(follow=None):
-      def inner(func):
-          def profiled_func(*args, **kwargs):
-              try:
-                  profiler = LineProfiler()
-                  profiler.add_function(func)
-                  for f in follow:
-                      profiler.add_function(f)
-                  profiler.enable_by_count()
-                  return func(*args, **kwargs)
-              finally:
-                  profiler.print_stats()
-          return profiled_func
-      return inner
-    
-    
-    
-    @do_profile(follow=[tofollow]) # Add decorator to runmodel function
-    def runsimwrapper(): 
-        P.progsets[0].reconcile(parset=ps, year=2016, optmethod='asd', maxiters=10)
-    runsimwrapper()
-    
-    print('Done.')
 
-profile()
+if runscenarios:
+    defaultbudget = P.progsets[ind].getdefaultbudget()
+    maxbudget = op.dcp(defaultbudget)
+    for key in maxbudget: maxbudget[key] += 1e14
+    nobudget = op.dcp(defaultbudget)
+    for key in nobudget: nobudget[key] *= 1e-6
+    scenlist = [
+        op.Parscen(name='Current conditions', parsetname=ind, pars=[]),
+        op.Budgetscen(name='No budget', parsetname=ind, progsetname=ind, t=[2016], budget=nobudget),
+#        op.Budgetscen(name='Current budget', parsetname=ind, progsetname=ind, t=[2016], budget=defaultbudget),
+        op.Budgetscen(name='Unlimited spending', parsetname=ind, progsetname=ind, t=[2016], budget=maxbudget),
+        ]
+    
+    # Run the scenarios
+    P.scens = op.odict()
+    P.addscenlist(scenlist)
+    P.runscenarios() 
+    op.pygui(P.results[-1])
+
+
+if runoptimize:
+    P.optimize(maxtime=40)
+    op.pygui(P.results[-1])

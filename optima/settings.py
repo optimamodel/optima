@@ -18,13 +18,14 @@ from optima import OptimaException, defaultrepr, printv, dcp, isnumber
 
 
 class Settings():
-    def __init__(self):
+    def __init__(self, verbose=2):
         self.dt = 0.2 # Timestep
         self.start = 2000.0 # Default start year
         self.end = 2030.0 # Default end year
         self.hivstates = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'lt50']
         self.healthstates = ['susreg', 'progcirc', 'undx', 'dx', 'care', 'usvl', 'svl', 'lost', 'off']
         self.ncd4 = len(self.hivstates)
+        self.nhealth = len(self.healthstates)
         
         # Health states by diagnosis
         self.susreg   = arange(0,1) # Regular uninfected, may be uncircumcised
@@ -36,10 +37,13 @@ class Settings():
         self.svl      = arange(4*self.ncd4+2, 5*self.ncd4+2) # Infected, on treatment, with suppressed viral load
         self.lost     = arange(5*self.ncd4+2, 6*self.ncd4+2) # Infected, but lost to follow-up
         self.off      = arange(6*self.ncd4+2, 7*self.ncd4+2) # Infected, previously on treatment, off ART, but still in care
+
+        self.nsus     = len(self.susreg) + len(self.progcirc)
+        self.ninf     = self.nhealth - self.nsus
 		
        	
         # Health states by CD4 count
-        spacing = array([0,1,2])*self.ncd4 
+        spacing = arange(self.ninf)*self.ncd4 
         self.acute = 2 + spacing
         self.gt500 = 3 + spacing
         self.gt350 = 4 + spacing
@@ -79,7 +83,7 @@ class Settings():
         
         # Other
         self.optimablue = (0.16, 0.67, 0.94) # The color of Optima
-        self.verbose = 2 # Default verbosity for how much to print out -- see definitions in utils.py:printv()
+        self.verbose = verbose # Default verbosity for how much to print out -- see definitions in utils.py:printv()
         self.safetymargin = 0.5 # Do not move more than this fraction of people on a single timestep
         self.eps = 1e-3 # Must be small enough to be applied to prevalence, which might be ~0.1% or less
         printv('Initialized settings', 4, self.verbose) # And show how verbose is used

@@ -1,5 +1,5 @@
 ## Imports and globals...need Qt since matplotlib doesn't support edit boxes, grr!
-from optima import OptimaException, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
+from optima import OptimaException, Resultset, Multiresultset, dcp, printv, sigfig, makeplots, getplotselections, gridcolormap, odict, isnumber
 from pylab import figure, close, floor, ion, axes, ceil, sqrt, array, isinteractive, ioff, show, pause
 from pylab import subplot, xlabel, ylabel, transpose, legend, fill_between, xlim, title
 from matplotlib.widgets import CheckButtons, Button
@@ -130,8 +130,12 @@ def pygui(tmpresults, toplot=None):
     Version: 1.2 (2016feb04)
     '''
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
-    results = tmpresults # Copy results to global variable  
-    if type(results)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
+    elif type(tmpresults) not in [Resultset, Multiresultset]:
+        try: results = tmpresults.results[-1] # Maybe it's actually a project? Pull out results
+        except: raise OptimaException('Could not figure out how to get results from:\n%s' % tmpresults)
+    else: results = tmpresults # Just use directly
+            
     
     ## Define options for selection
     plotselections = getplotselections(results)
@@ -372,7 +376,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
             else:
                 printv('Parameter type "%s" not implemented!' % fulltypelist[b], 2, verbose)
         
-        simparslist = parset.interp()
+        simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
         updateplots(tmpresults=results)
         
@@ -395,7 +399,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
         parset.pars[0] = tmppars
         populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
-        simparslist = parset.interp()
+        simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
         updateplots(tmpresults=results)
         return None
@@ -404,8 +408,8 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     ## Set up GUI
     leftmargin = 10
     rowheight = 25
-    colwidth = 500
-    ncols = 3
+    colwidth = 450
+    ncols = 4
     nrows = ceil(nfull/float(ncols))
     panelwidth = colwidth*ncols
     panelheight = rowheight*(nfull/ncols+2)+50
@@ -452,7 +456,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=None, pops=None, animate=True, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     

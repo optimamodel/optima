@@ -1,7 +1,7 @@
 def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     pinitial=None, sinitial=None, absinitial=None, xmin=None, xmax=None, MaxRangeIter=1000,
-    MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-3, TolX=None, StallIterLimit=100,
-    fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, verbose=2):
+    MaxFunEvals=None, MaxIter=1e3, AbsTolFun=1e-6, RelTolFun=1e-2, TolX=None, StallIterLimit=100,
+    fulloutput=True, maxarraysize=1e6, timelimit=3600, stoppingfunc=None, randseed=None, verbose=2):
     """
     Optimization using the adaptive stochastic descent algorithm.
     
@@ -9,8 +9,8 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     local minimizer X of the function FUN. FUN accepts input X and returns a scalar 
     function value F evaluated  at X. X0 can be a scalar, list, or Numpy array of 
     any size. The outputs are:
-               X -- The parameter set that minimizes the objective function
-            FVAL -- The value of the objective function at X
+        X        -- The parameter set that minimizes the objective function
+        FVAL     -- The value of the objective function at X
         EXITFLAG -- The exit condition of the algorithm possibilities are:
                      0 -- Maximum number of function evaluations or iterations reached
                      1 -- Step size below threshold
@@ -21,34 +21,35 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
                     -1 -- Algorithm terminated for other reasons
           OUTPUT -- An object with the following attributes:
             iterations -- Number of iterations
-             funcCount -- Number of function evaluations
-                  fval -- Value of objective function at each iteration
-                     x -- Vector of parameter values at each iteration
+            funcCount  -- Number of function evaluations
+            fval       -- Value of objective function at each iteration
+            x          -- Vector of parameter values at each iteration
     
     asd() has the following options that can be set using keyword arguments. Their
     names and default values are as follows:
     
-                   stepsize {0.1} -- Initial step size as a fraction of each parameter
-                         sinc {2} -- Step size learning rate (increase)
-                         sdec {2} -- Step size learning rate (decrease)
-                         pinc {2} -- Parameter selection learning rate (increase)
-                         pdec {2} -- Parameter selection learning rate (decrease)
-      pinitial {ones(2*size(X0))} -- Set initial parameter selection probabilities
-                    sinitial {[]} -- Set initial step sizes; if empty, calculated from stepsize instead
-                        xmin {[]} -- Min value allowed for each parameter  
-                        xmax {[]} -- Max value allowed for each parameter 
-              MaxRangeIter {1000} -- Maximum number of iterations to calculate new parameter when out of range
-      MaxFunEvals {1000*size(X0)} -- Maximum number of function evaluations
-                    MaxIter {1e3} -- Maximum number of iterations (1 iteration = 1 function evaluation)
-                 AbsTolFun {1e-3} -- Minimum absolute change in objective function
-                 RelTolFun {5e-3} -- Minimum relative change in objective function
-              TolX {1e-6*size(x)} -- Minimum change in parameters
-              StallIterLimit {50} -- Number of iterations over which to calculate TolFun
-                fulloutput {True} -- Whether or not to output the parameters and errors at each iteration
-               maxarraysize {1e6} -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
-                 timelimit {3600} -- Maximum time allowed, in seconds
-              stoppingfunc {None} -- External method that can be used to stop the calculation from the outside.
-                      verbose {2} -- How much information to print during the run
+      stepsize       {0.1}      -- Initial step size as a fraction of each parameter
+      sinc           {2}        -- Step size learning rate (increase)
+      sdec           {2}        -- Step size learning rate (decrease)
+      pinc           {2}        -- Parameter selection learning rate (increase)
+      pdec           {2}        -- Parameter selection learning rate (decrease)
+      pinitial       {ones(2N)} -- Set initial parameter selection probabilities
+      sinitial       {[]}       -- Set initial step sizes; if empty, calculated from stepsize instead
+      xmin           {[]}       -- Min value allowed for each parameter  
+      xmax           {[]}       -- Max value allowed for each parameter 
+      MaxRangeIter   {1000}     -- Maximum number of iterations to calculate new parameter when out of range
+      MaxFunEvals    {N*1e3}    -- Maximum number of function evaluations
+      MaxIter        {1e3}      -- Maximum number of iterations (1 iteration = 1 function evaluation)
+      AbsTolFun      {1e-3}     -- Minimum absolute change in objective function
+      RelTolFun      {1e-2}     -- Minimum relative change in objective function
+      TolX           {N*1e-6}   -- Minimum change in parameters
+      StallIterLimit {100}      -- Number of iterations over which to calculate TolFun
+      fulloutput     {True}     -- Whether or not to output the parameters and errors at each iteration
+      maxarraysize   {1e6}      -- Limit on MaxIter and StallIterLimit to ensure arrays don't get too big
+      timelimit      {3600}     -- Maximum time allowed, in seconds
+      stoppingfunc   {None}     -- External method that can be used to stop the calculation from the outside.
+      randseed       {None}     -- The random seed to use
+      verbose        {2}        -- How much information to print during the run
   
     
     Example:
@@ -57,13 +58,14 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
         x, fval, exitflag, output = asd(norm, [1, 2, 3])
     
     
-    Version: 2016jan05 by Cliff Kerr (cliff@thekerrlab.com)
+    Version: 2016feb11 by Cliff Kerr (cliff@thekerrlab.com)
     """
     
-    from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero
-    from numpy.random import random # Was pylab.rand
+    from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero, isnan
+    from numpy.random import random, seed # Was pylab.rand
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
+    seed(randseed)
     
     def consistentshape(userinput):
         """
@@ -89,6 +91,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     TolX = 1e-6*mean(x) if TolX == None else TolX  # Minimum change in parameters
     StallIterLimit = min(StallIterLimit, maxarraysize); # Don't by default let users create arrays larger than this -- slow and pointless
     MaxIter = min(MaxIter, maxarraysize);
+    if sum(isnan(x)): raise Exception('At least one value in the vector of starting points is NaN:\n%s' % x)
     
     ## Initialization
     s1[s1==0] = mean(s1[s1!=0]) # Replace step sizes of zeros with the mean of non-zero entries
@@ -187,7 +190,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
             exitflag = 2 
             if verbose>=2: print('======== Absolute improvement too small (%f < %f), terminating ========' % (mean(abserrorhistory), AbsTolFun))
             break
-        if (count > StallIterLimit) and (mean(relerrorhistory) < RelTolFun): # Stop if improvement is too small
+        if (count > StallIterLimit) and (mean(relerrorhistory) < (RelTolFun/StallIterLimit)): # Stop if improvement is too small
             exitflag = 2 
             if verbose>=2: print('======== Relative improvement too small (%f < %f), terminating ========' % (mean(relerrorhistory), RelTolFun))
             break

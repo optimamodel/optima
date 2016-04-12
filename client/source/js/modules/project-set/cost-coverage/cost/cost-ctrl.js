@@ -3,7 +3,6 @@ define(['./../../module', 'underscore'], function (module, _) {
 
   module.controller('CostController', function ($scope, $http) {
 
-    var vc = $scope;
     $scope.state = {
       newCCData: {},
       newCPData: {},

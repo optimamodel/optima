@@ -593,7 +593,7 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
-        print('####################')
+        print('#### Hydrate Program from database')
         print({
             'name': self.name,
             'category': self.category,
@@ -711,18 +711,20 @@ class ProgsetsDb(db.Model):
                         't': int(year['year']),
                         'interact': year['interact'],
                     }
+
                     for row in year["programs"]:
-                        effect[row['name']] = (
-                            row['intercept_lower'],
-                            row['intercept_upper']
-                        ) if row['intercept_lower'] is not None and row['intercept_upper'] is not None else None
-                    print('??????????????????')
-                    print(program_effect['name'])
-                    print(program_effect['pop'])
-                    print(effect)
-                    progset_entry.covout[program_effect['name']][tuple(program_effect['pop']) if isinstance(program_effect['pop'], list) else program_effect['pop']].addccopar(
-                        effect, overwrite=True
-                    )
+                        if row['intercept_lower'] is not None and row['intercept_upper'] is not None:
+                            effect[row['name']] = (row['intercept_lower'], row['intercept_upper'])
+                        else:
+                            effect[row['name']] = None
+
+                    if program_effect['name'] not in progset_entry.covout:
+                        continue
+
+                    islist = isinstance(program_effect['pop'], list)
+                    poptuple = tuple(program_effect['pop']) if islist else program_effect['pop']
+                    covout = progset_entry.covout[program_effect['name']]
+                    covout[poptuple].addccopar(effect, overwrite=True)
 
         return progset_entry
 
@@ -801,7 +803,7 @@ class ProgsetsDb(db.Model):
                     ]
                 }
                 effects.append(item)
-        print('-*-*-*-*-*-*+++++++++++++++')
+        print('##### Restore effects')
         print(effects)
         parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
