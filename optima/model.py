@@ -206,7 +206,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # Set parameters
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    initpropcare = 0.8 # roughly estimating equilibrium proportion of diagnosed people in care
+    initpropcare = 0.1 # roughly estimating equilibrium proportion of diagnosed people in care
     initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
 
     # Shorten key variables
@@ -842,22 +842,22 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             ## Reconcile things
             ###############################################################################
             
-            # Reconcile population sizes for populations with no inflows
-            thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
-            thisprogcirc = people[progcirc,noinflows,t+1]
+            # Reconcile population sizes
+            thissusreg = people[susreg,:,t+1]
+            thisprogcirc = people[progcirc,:,t+1]
             allsus = thissusreg+thisprogcirc
-            newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
-            people[susreg,noinflows,t+1]   += newpeople*thissusreg/allsus # Add new people
-            people[progcirc,noinflows,t+1] += newpeople*thisprogcirc/allsus # Add new people
+            newpeople = popsize[:,t+1] - people[:,:,t+1].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
+            people[susreg,:,t+1]   += newpeople*thissusreg/allsus # Add new people
+            people[progcirc,:,t+1] += newpeople*thisprogcirc/allsus # Add new people
             
             # Handle circumcision
-            circppl = maximum(0, minimum(numcirc[noinflows,t], safetymargin*people[susreg,noinflows,t+1])) # Don't circumcise more people than are available
-            people[susreg,noinflows,t+1]   -= circppl
-            people[progcirc,noinflows,t+1] += circppl # And add these people into the circumcised compartment
+            circppl = maximum(0, minimum(numcirc[:,t], safetymargin*people[susreg,:,t+1])) # Don't circumcise more people than are available
+            people[susreg,:,t+1]   -= circppl
+            people[progcirc,:,t+1] += circppl # And add these people into the circumcised compartment
             
             # Check population sizes are correct
-            actualpeople = people[:,:,t+1][:,noinflows].sum()
-            wantedpeople = popsize[noinflows,t+1].sum()
+            actualpeople = people[:,:,t+1].sum()
+            wantedpeople = popsize[:,t+1].sum()
             if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
