@@ -3,10 +3,10 @@ Defines the default parameters for each program.
 
 Version: 2016jan28
 """
-from optima import OptimaException, Project, Program, Programset, printv
+import os
+import optima as op
+from optima import OptimaException, Project, Program, Programset, printv, dcp, Parscen, Budgetscen, findinds
 
-
-spreadsheetpath = '../tests/' # WARNING, will this work on all systems? If not can just move XLSX files into the Optima directory I suppose...
 
 def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make some default programs'''
@@ -311,9 +311,15 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     Options for easily creating default projects based on different spreadsheets, including
     program information -- useful for testing 
     
-    Version: 2016feb02
+    Version: 2016mar24
     '''
     
+    
+    # Figure out the path 
+    optimapath = op.__file__
+    parentdir = optimapath.split(os.sep)[:-2] # exclude /optima/__init__.pyc
+    testdir = parentdir + ['tests'+os.sep]
+    spreadsheetpath = os.sep.join(testdir)
     
     
     ##########################################################################################################################
@@ -337,7 +343,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         P = Project(spreadsheet=spreadsheetpath+'generalized.xlsx', verbose=verbose, **kwargs)
 
         # Get a default progset 
-        R = defaultprogset(P, addpars=True, addcostcov=False, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
+        R = defaultprogset(P, addpars=True, addcostcov=True, filterprograms=['Condoms', 'FSW programs', 'MSM programs', 'ART', 'PMTCT', 'VMMC', 'MGMT', 'Other'])
 
         pops = P.data['pops']['short']
         adultlist = [pops[i] for i in range(len(pops)) if P.data['pops']['age'][i][0]>0]
@@ -514,3 +520,69 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
     
     
     return P
+
+
+
+def defaultscenarios(project=None, which='budgets', startyear=2016, endyear=2020, parset=-1, progset=-1):
+    ''' Add default scenarios to a project...examples include min-max budgets and 90-90-90 '''
+    
+    if which=='budgets':
+        defaultbudget = project.progsets[progset].getdefaultbudget()
+        maxbudget = dcp(defaultbudget)
+        nobudget = dcp(defaultbudget)
+        for key in maxbudget: maxbudget[key] += 1e14
+        for key in nobudget: nobudget[key] *= 1e-6
+        scenlist = [
+            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Budgetscen(name='No budget', parsetname='default', progsetname='default', t=[startyear], budget=nobudget),
+            Budgetscen(name='Current budget', parsetname='default', progsetname='default', t=[startyear], budget=defaultbudget),
+            Budgetscen(name='Unlimited spending', parsetname='default', progsetname='default', t=[startyear], budget=maxbudget),
+            ]
+    
+    # WARNING, this may not entirely work
+    if which=='90-90-90':
+        project.runsim(parset) # Temporary, to get baseline
+        res = project.parsets[parset].getresults()
+        curryearind = findinds(res.tvec, startyear)
+        currnumplhiv = res.main['numplhiv'].tot[0][curryearind]
+        currnumdx =    res.main['numdiag'].tot[0][curryearind]
+        currnumtx =    res.main['numtreat'].tot[0][curryearind]
+        currpropdx = currnumdx/currnumplhiv
+        currproptx = currnumtx/currnumdx
+        currvs = project.parsets['default'].pars[0]['treatvs'].interp(startyear)
+        
+        scenlist = [
+            Parscen(name='Current conditions', parsetname='default', pars=[]),
+            Parscen(name='90-90-90',
+                  parsetname='default',
+                  pars=[
+                  {'name': 'propdx',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': currpropdx,
+                  'endval': 0.9,
+                  },
+                  
+                  {'name': 'proptx',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': currproptx,
+                  'endval': 0.9,
+                  },
+                  
+                  {'name': 'treatvs',
+                  'for': ['tot'],
+                  'startyear': startyear,
+                  'endyear': endyear,
+                  'startval': currvs,
+                  'endval': .9,
+                  },
+                    ]),]
+
+    
+    # Run the scenarios
+    project.addscenlist(scenlist)
+    project.runscenarios()
+    return scenlist # Return it as well

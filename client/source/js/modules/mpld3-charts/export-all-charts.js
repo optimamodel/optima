@@ -2,7 +2,7 @@ define(['angular', 'jquery', 'underscore', 'jsPDF', './export-helpers-service'],
 function (angular, $, _, JsPdf) {
   'use strict';
 
-  return angular.module('app.export-all-charts', ['app.common.export-helpers'])
+  return angular.module('app.export-all-charts', ['app.mpld3-charts.export-helpers'])
   .directive('exportAllCharts', function ($q, $http, exportHelpers) {
     return {
       restrict: 'E',

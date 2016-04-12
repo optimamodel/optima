@@ -3,11 +3,12 @@ This module defines the Timepar, Popsizepar, and Constant classes, which are
 used to define a single parameter (e.g., hivtest) and the full set of
 parameters, the Parameterset class.
 
-Version: 1.4 (2016feb08)
+Version: 1.5 (2016feb09)
 """
 
-from numpy import array, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
-from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber # Utilities 
+from numpy import array, nan, isnan, zeros, argmax, mean, log, polyfit, exp, maximum, minimum, Inf, linspace, median, shape
+
+from optima import OptimaException, odict, printv, sanitize, uuid, today, getdate, smoothinterp, dcp, defaultrepr, objrepr, isnumber, findinds # Utilities 
 from optima import Settings, getresults, convertlimits, gettvecdt # Heftier functions
 
 defaultsmoothness = 1.0 # The number of years of smoothing to do by default
@@ -178,8 +179,6 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
     for row,key in enumerate(keys):
         sanitizedy[key] = sanitize(data['popsize'][blh][row]) # Store each extant value
         sanitizedt[key] = array(data['years'])[~isnan(data['popsize'][blh][row])] # Store each year
-
-    largestpopkey = keys[argmax([mean(sanitizedy[key]) for key in keys])] # Find largest population size
     
     # Store a list of population sizes that have at least 2 data points
     atleast2datapoints = [] 
@@ -190,6 +189,8 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
         errormsg = 'Not more than one data point entered for any population size\n'
         errormsg += 'To estimate growth trends, at least one population must have at least 2 data points'
         raise OptimaException(errormsg)
+        
+    largestpopkey = atleast2datapoints[argmax([mean(sanitizedy[key]) for key in atleast2datapoints])] # Find largest population size (for at least 2 data points)
     
     # Perform 2-parameter exponential fit to data
     startyear = data['years'][0]
@@ -460,6 +461,12 @@ def makepars(data, label=None, verbose=2):
         pars['force'].y[key] = 1.0
         pars['inhomo'].y[key] = 0.0
     
+    # Overwrite parameters that shouldn't be being loaded from the data
+    for parname in ['propdx', 'proptx', 'propcare', 'propsupp']:
+        pars[parname].t['tot'] = [0.]
+        pars[parname].y['tot'] = [nan]
+        
+    
     
     # Balance partnerships parameters    
     tmpacts = odict()
@@ -530,8 +537,6 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
             try: 
                 if pars[key].visible or not(onlyvisible): # Optionally only show user-visible parameters
                     simpars[key] = pars[key].interp(tvec=simpars['tvec'], dt=dt, smoothness=smoothness, asarray=asarray) # WARNING, want different smoothness for ART
-                    if any(array(simpars[key]).flatten()<0.0):
-                        raise OptimaException('Negative parameters are not allowed!')
             except OptimaException as E: 
                 errormsg = 'Could not figure out how to interpolate parameter "%s"' % key
                 errormsg += 'Error: "%s"' % E.message
@@ -570,14 +575,18 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     # Convert any text in limits to a numerical value
     limits = convertlimits(limits=limits, dt=dt, verbose=verbose)
     
-    # Apply limits, preserving original class
+    # Apply limits, preserving original class -- WARNING, need to handle nans
     if isnumber(y):
+        if isnan(y): return y # Give up
         newy = median([limits[0], y, limits[1]])
         if warn and newy!=y: printv('Note, parameter value "%s" reset from %f to %f' % (parname, y, newy), 3, verbose)
     elif shape(y):
         newy = array(y) # Make sure it's an array and not a list
+        naninds = findinds(isnan(newy))
+        if len(naninds): newy[naninds] = limits[0] # Temporarily reset -- value shouldn't matter
         newy[newy<limits[0]] = limits[0]
         newy[newy>limits[1]] = limits[1]
+        newy[naninds] = nan # And return to nan
         if warn and any(newy!=array(y)):
             printv('Note, parameter "%s" value reset from:\n%s\nto:\n%s' % (parname, y, newy), 3, verbose)
     else:
@@ -591,6 +600,33 @@ def applylimits(y, par=None, limits=None, dt=None, warn=True, verbose=2):
     return newy
 
 
+
+
+
+def comparepars(pars1=None, pars2=None, ind=0):
+    ''' 
+    Function to compare two sets of pars. Example usage:
+    compareparsets(P.parsets[0], P.parsets[1])
+    '''
+    if type(pars1)==Parameterset: pars1 = pars1.pars[ind] # If parset is supplied instead of pars, use that instead
+    if type(pars2)==Parameterset: pars2 = pars2.pars[ind]
+    keys = pars1.keys()
+    nkeys = 0
+    count = 0
+    for key in keys:
+        if hasattr(pars1[key],'y'):
+            nkeys += 1
+            if str(pars1[key].y) != str(pars2[key].y): # Convert to string representation for testing equality
+                count += 1
+                msg = 'Parameter "%s" differs:\n' % key
+                msg += '%s\n' % pars1[key].y
+                msg += 'vs\n'
+                msg += '%s\n' % pars2[key].y
+                msg += '\n\n'
+                print(msg)
+    if count==0: print('All %i parameters match' % nkeys)
+    else:        print('%i of %i parameters did not match' % (count, nkeys))
+    return None
 
 
 
@@ -639,7 +675,7 @@ class Timepar(Par):
         return self.y.keys()
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True):
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True):
         """ Take parameters and turn them into model parameters """
         
         # Validate input
@@ -655,8 +691,9 @@ class Timepar(Par):
         if self.by=='pship': asarray= False # Force odict since too dangerous otherwise
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
+        meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys): # Loop over each population, always returning an [npops x npts] array
-            yinterp = self.m * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
+            yinterp = meta * smoothinterp(tvec, self.t[pop], self.y[pop], smoothness=smoothness) # Use interpolation
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
@@ -683,7 +720,7 @@ class Popsizepar(Par):
         return self.p.keys()
     
 
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # WARNING: smoothness isn't used, but kept for consistency with other methods...
         """ Take population size parameter and turn it into a model parameters """
         
         # Validate input
@@ -697,8 +734,9 @@ class Popsizepar(Par):
         npops = len(keys)
         if asarray: output = zeros((npops,len(tvec)))
         else: output = odict()
+        meta = self.m if usemeta else 1.0
         for pop,key in enumerate(keys):
-            yinterp = self.m * popgrow(self.p[key], array(tvec)-self.start)
+            yinterp = meta * popgrow(self.p[key], array(tvec)-self.start)
             yinterp = applylimits(par=self, y=yinterp, limits=self.limits, dt=dt)
             if asarray: output[pop,:] = yinterp
             else: output[key] = yinterp
@@ -724,7 +762,7 @@ class Constant(Par):
         return self.y.keys()
     
     
-    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True): # Keyword arguments are for consistency but not actually used
+    def interp(self, tvec=None, dt=None, smoothness=None, asarray=True, usemeta=True): # Keyword arguments are for consistency but not actually used
         """ Take parameters and turn them into model parameters -- here, just return a constant value at every time point """
         
         dt = gettvecdt(tvec=tvec, dt=dt, justdt=True) # Method for getting dt     
@@ -767,14 +805,13 @@ class Parameterset(object):
     
     def __repr__(self):
         ''' Print out useful information when called'''
-        output =  '============================================================\n'
+        output  = objrepr(self)
         output += 'Parameter set name: %s\n'    % self.name
         output += '    Number of runs: %s\n'    % len(self.pars)
         output += '      Date created: %s\n'    % getdate(self.created)
         output += '     Date modified: %s\n'    % getdate(self.modified)
         output += '               UID: %s\n'    % self.uid
         output += '============================================================\n'
-        output += objrepr(self)
         return output
     
     

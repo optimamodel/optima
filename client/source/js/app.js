@@ -19,9 +19,8 @@ define([
   './modules/common/normalise-height-directive',
   './modules/validations/more-than-directive',
   './modules/validations/file-required-directive',
-  './modules/common/chart-toolbar-directive',
-  './modules/d3-charts/index',
-  './modules/graphs/index',
+  './modules/mpld3-charts/chart-toolbar-directive',
+  './modules/mpld3-charts/index',
   './modules/home/index',
   './modules/model/index',
   './modules/project/index',
@@ -45,8 +44,7 @@ define([
     'app.common.file-upload',
     'app.common.normalise-height',
     'app.constants',
-    'app.d3-charts',
-    'app.graphs',
+    'app.mpld3-charts',
     'app.home',
     'app.validations.less-than',
     'app.local-storage',
@@ -71,7 +69,7 @@ define([
           responseError: function (rejection) {
             if (rejection.status === 401 && rejection.config.url !== '/api/users/current') {
               // Redirect them back to login page
-              location.href = '/#/login';
+              location.href = './#/login';
 
               return $q.reject(rejection);
             } else {
