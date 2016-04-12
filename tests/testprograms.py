@@ -16,7 +16,7 @@ Version: 2016feb06
 tests = [
 'makeprograms',
 'compareoutcomes',
-#'reconcilepars',
+'reconcilepars',
 ]
 
 
