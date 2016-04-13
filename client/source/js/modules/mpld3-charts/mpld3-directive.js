@@ -1,6 +1,6 @@
-define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpld3) {
-  'use strict';
+define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mpld3) {
 
+  'use strict';
 
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit
@@ -8,30 +8,32 @@ define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpl
     return reducedVal.toFixed(nDecimal) + suffix;
   }
 
+  function reformatValStr(text) {
+    var val = parseFloat(text);
+    if (val >= 1E9) {
+      text = val2str(val, 1E9, 'b')
+    } else if (val >= 1E6) {
+      text = val2str(val, 1E6, 'm')
+    } else if (val >= 1E3) {
+      text = val2str(val, 1E3, 'k')
+    }
+    return text;
+  }
 
   function reformatFigure($figure) {
-
     var $yaxis = $figure.find('.mpld3-yaxis');
-    var $labels = $yaxis.find('g.tick > text')
-    $labels.each(function() {
-      var $label = $(this)
-      var text = $label.text().replace(',', '')
-      var val = parseFloat(text)
-      if (val >= 1E9) {
-          text = val2str(val, 1E9, 'b')
-      } else if (val >= 1E6) {
-          text = val2str(val, 1E6, 'm')
-      } else if (val >= 1E3) {
-          text = val2str(val, 1E3, 'k')
-      }
-      $label.text(text);
+    var $labels = $yaxis.find('g.tick > text');
+    $labels.each(function () {
+      var $label = $(this);
+      var text = $label.text().replace(',', '');
+      $label.text(reformatValStr(text));
     });
 
-    $figure.find('svg.mpld3-figure').each(function() {
-      var $svgFigure = $(this)
+    $figure.find('svg.mpld3-figure').each(function () {
+      var $svgFigure = $(this);
 
-      // move the mouse-over to bottom right corner
-      $svgFigure.on('mouseover', function() {
+      // move mouse-over to bottom right corner
+      $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
         $svgFigure.find('.mpld3-coordinates').each(function () {
           $(this).attr('y', height + 7);
@@ -41,33 +43,39 @@ define(['./module','underscore', 'jquery', 'mpld3'], function (module, _, $, mpl
         });
       });
 
-      // add lines in legend
+      // add lines in legend labels
       var $axesLabels = $svgFigure.find('.mpld3-baseaxes > text');
       if ($axesLabels) {
-        var nLine = $axesLabels.length - 2;
+        var nLegendLabels = $axesLabels.length - 2;
         var $paths = $svgFigure.find('.mpld3-axes > path');
-        var $pathsToCopy = $paths.slice($paths.length - nLine, $paths.length);
-        $svgFigure.find('.mpld3-baseaxes')
-            .append($pathsToCopy);
+        var $pathsToCopy = $paths.slice($paths.length - nLegendLabels, $paths.length);
+        $svgFigure.find('.mpld3-baseaxes').append($pathsToCopy);
       }
-
     })
   }
 
-
   module.directive('mpld3Chart', function () {
     return {
-      scope: { chart: '=mpld3Chart' },
+      scope: {
+        chart: '=mpld3Chart'
+      },
       link: function (scope, element, attrs) {
-        scope.$watch('chart', function() {
-            var $elem = $(element)
+        scope.$watch(
+          'chart',
+          function () {
+            var $elem = $(element);
             $elem.attr('class', 'mpld3-chart');
             $elem.html("");
-            var $$hashKey = scope.chart.$$hashKey
-            delete scope.chart.$$hashKey
+
+            var $$hashKey = scope.chart.$$hashKey;
+            delete scope.chart.$$hashKey;
             mpld3.draw_figure(attrs.id, scope.chart);
-            reformatFigure($elem)
-        }, true);
+            scope.chart.$$hashKey = $$hashKey;
+
+            reformatFigure($elem);
+          },
+          true
+        );
       }
     };
   });

@@ -1,241 +1,137 @@
+
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
-    'use strict';
-    module.controller('AnalysisScenariosController', function ($scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse, parsetResponse, scenariosResponse, CONFIG, typeSelector, $state, modalService) {
-        // In case there is no model data the controller only needs to show the
-        // warning that the user should upload a spreadsheet with data.
-        var openProject  = info.data;
-        var responseData, availableScenarioParameters, availableScenarios;
-        $scope.scenarios = scenariosResponse.data.scenarios;
-        $scope.progsets = progsetsResponse.data.progsets;
-        $scope.parsets = parsetResponse.data.parsets;
 
-        if (!openProject.has_data) {
-          $scope.missingModelData = true;
-          return;
+  'use strict';
+
+  module.controller('AnalysisScenariosController', function (
+      $scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse,
+      parsetResponse, scenariosResponse) {
+
+    var project = info.data;
+    var parsets = parsetResponse.data.parsets;
+    var progsets = progsetsResponse.data.progsets;
+
+    $scope.scenarios = scenariosResponse.data.scenarios;
+    $scope.isMissingModelData = !project.has_data;
+    $scope.isMissingProgramSet = progsets.length == 0;
+
+    $scope.alerts = [];
+
+    var addTimedAlert = function(msg) {
+      $scope.alerts.push({ msg: msg });
+      setTimeout(
+        function() {
+          if ($scope.alerts.length > 0) {
+            $scope.alerts.shift();
+            $scope.$apply();
+          }
+        },
+        3000
+      );
+    };
+
+    var saveScenarios = function (scenarios, msg) {
+      $http
+        .put('/api/project/' + project.id + '/scenarios', {'scenarios': scenarios })
+        .success(function (response) {
+          $scope.scenarios = response.scenarios;
+          if (msg) { addTimedAlert(msg) }
+        });
+    };
+
+    var openScenarioModal = function (scenario) {
+      var templateUrl, controller;
+      var scenario_type = scenario.scenario_type;
+      if ((scenario_type === "budget" ) || (scenario_type === 'coverage')) {
+        templateUrl = 'js/modules/analysis/program-scenarios-modal.html';
+        controller = 'ProgramScenariosModalController';
+      } else  {
+        templateUrl = 'js/modules/analysis/parameter-scenarios-modal.html';
+        controller = 'ParameterScenariosModalController';
+      }
+      var ykeys = $http.get('/api/project/' + project.id + '/parsets/ykeys');
+      return $modal.open({
+        templateUrl: templateUrl,
+        controller: controller,
+        resolve: {
+          scenarios: function () { return $scope.scenarios; },
+          scenario: function () { return angular.copy(scenario); },
+          parsets: function () { return parsets; },
+          progsets: function () { return progsets; },
+          ykeys: function () { return ykeys; },
+          openProject: function () { return project; }
         }
+      });
 
-        if (!$scope.progsets.length) {
-          $scope.missingProgramSet = true;
-        }
-        /**
-         * Returns an graph based on the provided yData.
-         *
-         * yData should be an array where each entry contains an array of all
-         * y-values from one line.
-         */
-        var generateGraph = function(yData, xData, title, legend, xLabel,  yLabel) {
-          var graph = {
-            options: {
-              height: 200,
-              width: 320,
-              margin: CONFIG.GRAPH_MARGINS,
-              xAxis: {
-                axisLabel: 'Year'
-              },
-              yAxis: {
-                axisLabel: ''
-              },
-              areasOpacity: 0.1
-            },
-            data: {
-              lines: [],
-              scatter: [],
-              areas: []
-            },
-            title: title
-          };
+    };
 
-          graph.options.xAxis.axisLabel = xLabel;
-          graph.options.yAxis.axisLabel = yLabel;
-          graph.options.legend = legend;
-          graph.options.title = title;
+    $scope.runScenarios = function () {
+      $http
+        .get('/api/project/' + project.id + '/scenarios/results')
+        .success(function (data) { $scope.graphs = data; });
+    };
 
-          // scenario chart data like prevalence have `best` & `data`
-          // financial chart data only has one property `data`
-          var linesData = yData.best || yData.data;
-          _(linesData).each(function(lineData) {
-            graph.data.lines.push(_.zip(xData, lineData));
-          });
+    $scope.isRunnable = function () {
+      return _.filter($scope.scenarios, { active: true }).length > 0;
+    };
 
-          // the scenario charts have an uncertenty area `low` & `high`
-          if (!_.isEmpty(yData.low) && !_.isEmpty(yData.high)) {
-            _(yData.high).each(function(highLineData, index) {
-              graph.data.areas.push({
-                highLine: _.zip(xData, highLineData),
-                lowLine: _.zip(xData, yData.low[index])
-              });
+    $scope.parsetName = function (scenario) {
+      var theseParsets = _.filter(parsets, {id: scenario.parset_id});
+      return theseParsets.length > 0 ? theseParsets[0].name : '';
+    };
+
+    $scope.programSetName = function (scenario) {
+      var theseProgsets = _.filter(progsets, {id: scenario.progset_id});
+      return theseProgsets.length > 0 ? theseProgsets[0].name : '';
+    };
+
+    $scope.modal = function (scenario, action, $event) {
+      // action: 'add', 'edit', 'delete'
+
+      if ($event) {
+        $event.preventDefault();
+      }
+
+      var newScenarios = angular.copy($scope.scenarios);
+
+      if (action === 'add') {
+
+        return openScenarioModal(scenario)
+          .result
+          .then(
+            function (scenario) {
+              newScenarios.push(scenario);
+              saveScenarios(newScenarios, "Successfully added scenario");
             });
-          }
 
-          return graph;
-        };
+      } else if (action === 'edit') {
 
-        /**
-         * Returns a financial graph.
-         */
-        var generateFinancialGraph = function (data) {
-          var graph = generateGraph(data, data.xdata, data.title, data.legend, data.xlabel, data.ylabel);
-          return graph;
-        };
-
-        /**
-         * Regenerate graphs based on the response and type settings in the UI.
-         */
-        var updateGraphs = function (response) {
-          if (response) {
-            $scope.graphs = response;
-          }
-        };
-
-        /**
-         * Returns a collection of entries where all non-active antries are filtered
-         * out and the active attribute is removed from each of these entries.
-         */
-        var toCleanArray = function (collection) {
-          return _(collection).chain()
-          .where({ active: true })
-          .map(function (item) {
-            return _(item).omit(['active', '$$hashKey']);
-          })
-          .value();
-        };
-
-        $scope.runScenarios = function () {
-          var activeScenarios = _.filter($scope.scenarios, function(scenario){ return scenario.active; });
-          $http.get('/api/project/'+openProject.id+'/scenarios/results')
-            .success(function(data) {
-              responseData = data;
-              $scope.graphs = data;
+        return openScenarioModal(scenario)
+          .result
+          .then(
+            function (scenario) {
+              var i = newScenarios.indexOf(_.findWhere(newScenarios, { name: scenario.name }));
+              newScenarios[i] = scenario;
+              newScenarios[i].active = true;
+              saveScenarios(newScenarios, "Successfully changed scenario");
             });
-        };
 
-        $scope.saveScenarios = function (state) {
-          $http.put('/api/project/'+openProject.id+'/scenarios', {
-            'scenarios': $scope.scenarios
-          }).success(function(response) {
-            if(!state){
-              modalService.inform(
-                function (){ },
-                'Okay',
-                'Scenario saved successfully.',
-                'Saved successfully'
-              );
-            }
-            $scope.scenarios = response.scenarios;
-          });
-        };
+      } else if (action === 'copy') {
 
-        // Helper function to open a population modal
-        var openScenarioModal = function(scenario, parsets, progsets) {
-          if(scenario.scenario_type === "budget" || scenario.scenario_type === 'coverage'){
-            return $modal.open({
-              templateUrl: 'js/modules/analysis/program-scenarios-modal.html',
-              controller: 'ProgramScenariosModalController',
-              resolve: {
-                scenarios: function () {
-                  return $scope.scenarios;
-                },
-                scenario: function () {
-                  return angular.copy(scenario);
-                },
-                parsets: function() {
-                  return parsets;
-                },
-                progsets: function() {
-                  return progsets;
-                },
-                ykeys: function() {
-                  return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
-                },
-                openProject: function(){
-                  return openProject;
-                }
-              }
-            });
-          }else{
-            return $modal.open({
-              templateUrl: 'js/modules/analysis/parameter-scenarios-modal.html',
-              controller: 'ParameterScenariosModalController',
-              resolve: {
-                scenarios: function () {
-                  return $scope.scenarios;
-                },
-                scenario: function () {
-                  return angular.copy(scenario);
-                },
-                parsets: function() {
-                  return parsets;
-                },
-                progsets: function() {
-                  return progsets;
-                },
-                ykeys: function() {
-                  return $http.get('/api/project/'+openProject.id+'/parsets/ykeys')
-                },
-                openProject: function(){
-                  return openProject;
-                }
-              }
-            });
-          }
-        };
+        var newScenario = angular.copy(scenario);
+        newScenario.name = scenario.name + ' Copy';
+        newScenario.id = null;
+        newScenarios.push(newScenario);
+        saveScenarios(newScenarios, "Sucessfully copied scenario");
 
-        $scope.openScenarioModal = function (row, action, $event) {
-            if ($event) { $event.preventDefault(); }
+      } else if (action === 'delete') {
 
-            if(action === 'add'){
-              return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
-                function (newscenario) {
-                    $scope.scenarios.push(newscenario);
-                });
-            }else if(action === 'edit'){
-              return openScenarioModal(row, $scope.parsets, $scope.progsets).result.then(
-                function (updatescenario) {
-                  updatescenario.active = true;
-                  $scope.scenarios[$scope.scenarios.indexOf(row)] = updatescenario;
-                });
-            }else if(action === 'copy'){
-              var newscenario = angular.copy(row);
-              newscenario.name = row.name +' Copy'
-              newscenario.id = null;
-              $scope.scenarios.push(newscenario);
-            }else if(action === 'delete'){
-              modalService.confirm(
-                function () {
-                  $scope.scenarios = _.without($scope.scenarios, _.findWhere($scope.scenarios, {name: row.name}));
-                  if(row.id){ $scope.saveScenarios('delete'); }
-                }, function () {
-                }, 'Yes, remove this scenario', 'No',
-                'Are you sure you want to permanently remove scenario "' + row.name + '"?',
-                'Delete scenario'
-              );
-            }
-        };
+        var scenario = _.findWhere(newScenarios, { name: scenario.name });
+        saveScenarios(_.without(newScenarios, scenario), "Successfully deleted scenario");
 
-        $scope.gotoViewCalibrate = function() {
-          $state.go('model');
-        };
+      }
+    };
 
-        // The graphs are shown/hidden after updating the graph type checkboxes.
-        $scope.$watch('types', function () {
-          updateGraphs(responseData);
-        }, true);
-
-        $scope.progset_name = function(progset_id, row) {
-          var progset = _.filter($scope.progsets, {id: progset_id});
-          if (progset.length > 0) {
-            return progset[0].name;
-          }
-          return '';
-        };
-
-        $scope.parset_name = function(parset_id) {
-          var parset = _.filter($scope.parsets, {id: parset_id});
-          if (parset.length > 0) {
-            return parset[0].name;
-          }
-          return '';
-        }
-    });
+  });
 
 });
