@@ -6,77 +6,99 @@ define(['angular'], function (module) {
     .controller('ParameterScenariosModalController', function (
       $scope, $modalInstance, modalService, scenarios, scenario, parsets, progsets, ykeys) {
 
-      $scope.row = scenario;
       $scope.scenario = scenario;
       $scope.parsets = parsets;
       $scope.progsets = progsets;
+      $scope.editPar = {};
 
       var ykeys = ykeys.data.keys;
 
-      clearEditPar();
+      $scope.scenarioExists = function() {
+        return _.some(scenarios, function (scenario) {
+          return $scope.scenario.name === scenario.name
+              && $scope.scenario.id !== scenario.id;
+        });
+      }
 
-      $scope.parsForSelectedParset = function() {
-        var parset = _.filter($scope.parsets, {id: scenario.parset_id});
-        if (parset.length > 0) {
-          return _.filter(parset[0].pars[0], {visible: 1});
+      $scope.getParsInScenario = function() {
+        var parsets = $scope.parsets;
+        var parset_id = $scope.scenario.parset_id;
+        if (parset_id) {
+          parsets = _.filter($scope.parsets, {id: parset_id});
+        };
+        if (parsets.length > 0) {
+          return _.filter(parsets[0].pars[0], {visible: 1});
         }
         return [];
       };
 
-      $scope.popsForParam = function(param) {
-        if (ykeys.hasOwnProperty(scenario.parset_id)) {
-          var ykeysOfParset = ykeys[scenario.parset_id];
-          if (ykeysOfParset.hasOwnProperty(param)) {
-            return ykeysOfParset[param];
+      $scope.getPopsOfPar = function(par) {
+        if (ykeys.hasOwnProperty($scope.scenario.parset_id)) {
+          var ykeysOfParset = ykeys[$scope.scenario.parset_id];
+          if (ykeysOfParset.hasOwnProperty(par.name)) {
+            return ykeysOfParset[par.name];
           }
         }
         return [];
       };
 
-      function clearEditPar() {
-        $scope.editPar = {};
+      $scope.selectNewPar = function() {
+        $scope.editPar.for = $scope.getPopsOfPar($scope.editPar)[0].label;
+      }
+
+      $scope.clearEditPar = function (){
+        $scope.editPar = {}
+        var pars = $scope.getParsInScenario();
+        $scope.editPar.name = pars[0].short;
+        $scope.selectNewPar();
       }
 
       $scope.addPar = function() {
-        scenario.pars.push(angular.copy($scope.editPar));
+        $scope.scenario.pars.push(angular.copy($scope.editPar));
+        $scope.clearEditPar();
       }
 
-      $scope.manageScenario = function(){
-        var scenario = {
-          "scenario_type": $scope.row.scenario_type,
-          "name": $scope.row.name,
-          "parset_id": $scope.row.parset_id || null,
-          "active": true,
-          "pars": $scope.row.pars,
-          "id": $scope.row.id || null,
-          "progset_id": $scope.row.progset_id || null
-        };
+      $scope.removePar = function(i) {
+        $scope.scenario.pars = _.reject($scope.scenario.pars, function (val, j) { return i = j });
+      };
 
+      function isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+      }
+
+      $scope.isEditParValid = function() {
+        var keys = ['startval', 'endval', 'startyear', 'endyear'];
+        for (var i=0; i<keys.length; i+=1) {
+          if (!isNumber($scope.editPar[keys[i]])) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      $scope.save = function() {
+        var scenario = {
+          "scenario_type": $scope.scenario.scenario_type,
+          "name": $scope.scenario.name,
+          "parset_id": $scope.scenario.parset_id || null,
+          "active": true,
+          "pars": $scope.scenario.pars,
+          "id": $scope.scenario.id || null,
+          "progset_id": $scope.scenario.progset_id || null
+        };
         $modalInstance.close(scenario);
       };
 
-      $scope.addParam = function(scenario) {
-        if (!scenario.pars) {
-          scenario.pars = [];
-        }
-        scenario.pars.push({});
+      $scope.scenario.parset_id = $scope.parsets[0].id;
+      $scope.scenario.pars = [];
+      var i = 1;
+      while (!$scope.scenario.hasOwnProperty('name') || $scope.scenarioExists()) {
+        $scope.scenario.name = "Scenario " + i;
+        i += 1;
       };
 
-      $scope.removeParam = function(scenario, paramIndex) {
-        scenario.pars = _.reject(scenario.pars, function (param, index) {
-          return index === paramIndex
-        });
-      };
+      $scope.clearEditPar();
 
-      $scope.closeModal = function() {
-        $modalInstance.close($scope.row);
-      };
-
-      $scope.scenarioExists = function() {
-        return _.some(scenarios, function (scenario) {
-          return $scope.row.name === scenario.name && $scope.row.id !== scenario.id;
-        });
-      }
 
     });
 });

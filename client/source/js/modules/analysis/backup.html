@@ -1,0 +1,52 @@
+<div class="o-form__wrap" ng-repeat="rs in scenario.pars track by $index">
+  <div class="o-card c-parsce-modal__card">
+  <div class="c-parsce-modal__subform">
+
+  <!-- Parameters -->
+  <div class="c-parsce-modal__field-wrap">
+  <label class="c-parsce-modal__label"> Parameters </label>
+  <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.name" required ng-options="param.short as param.name for param in parsForSelectedParset()">
+  <option value=""> -- Select --</option>
+  </select>
+  </div>
+
+  <!-- For -->
+  <div class="c-parsce-modal__field-wrap">
+  <label class="c-parsce-modal__label"> For </label>
+  <select class="c-parsce-modal__input txbox" type="text" ng-model="rs.for" required ng-options="pop.val as pop.label for pop in popsForParam(rs.name)">
+  <option value=""> -- Select --</option>
+  </select>
+  </div>
+
+  <!-- Start year of scenario  -->
+<div class="c-parsce-modal__field-wrap">
+  <label class="c-parsce-modal__label"> Start year of scenario </label>
+<input class="c-parsce-modal__input c-parsce-modal__input--small txbox" ng-model="rs.startyear" type="number" required min="0"/>
+  </div>
+
+  <!-- Final year of scenario  -->
+<div class="c-parsce-modal__field-wrap">
+  <label class="c-parsce-modal__label"> Final year of scenario </label>
+<input class="c-parsce-modal__input c-parsce-modal__input--small txbox" ng-model="rs.endyear" type="number" required min="0"/>
+  </div>
+
+  <!-- Value at start of scenario  -->
+<div class="c-parsce-modal__field-wrap">
+  <label class="c-parsce-modal__label"> Value at start of scenario </label>
+<input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.startval" required/>
+</div>
+
+<!-- Value at end of scenario  -->
+<div class="c-parsce-modal__field-wrap">
+  <label class="c-parsce-modal__label"> Value at end of scenario </label>
+<input class="c-parsce-modal__input txbox" type="number"  ng-model="rs.endval" required/>
+</div>
+
+</div>
+<div class="o-card__delete" ng-click="removeParam(scenario, $index)">x</div>
+  </div>
+  </div>
+
+  <button type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter" ng-disabled="!scenario.parset_id" ng-click="addParam(scenario)">
+  Add parameter
+</button>
