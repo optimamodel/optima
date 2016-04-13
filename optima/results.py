@@ -259,7 +259,8 @@ class Resultset(object):
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
-        output = sep.join(['Indicator','Year:',''])
+        output = filename+'\n'
+        output += sep.join(['Indicator','Year:',''])
         for t in range(npts):
             output += ('%i'+sep) % self.tvec[t]
         for key in keys:
@@ -286,7 +287,9 @@ class Resultset(object):
             output += 'Coverage\n'
             output += sep.join(self.coverage[ind].keys()) + '\n'
             output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
-            
+
+        output += '\n'
+                    
         with open(filename, 'w') as f: f.write(output)
         printv('Results exported to "%s"' % filename, 2, verbose)
         return None
