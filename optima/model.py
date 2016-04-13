@@ -622,9 +622,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     virallysupp[cd4] = newsupptot * currentusupp[cd4,:] / (eps+currentusupp.sum()) # pull out evenly among usupp
                 else:
                     virallysupp[cd4]  = dt * people[usvl[cd4],:,t] * freqvlmon[t]
-                propdead          = dt * (death[cd4]*deathtx + background)
                 stopUSincare[cd4] = dt * people[usvl[cd4],:,t] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
-                stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * (1.-stoppropcare-propdead)  # People stopping ART and lost to followup
+                stopUSlost[cd4]   = dt * people[usvl[cd4],:,t] * stoprate[:,t] * (1.-stoppropcare)  # People stopping ART and lost to followup
                 inflows  = progin  + recovin  + newtreat[cd4]*(1.-treatvs[t]) # NB, treatvs will take care of the last 90... 
                 outflows = progout + recovout + hivdeaths + otherdeaths + stopUSincare[cd4] + stopUSlost[cd4] + virallysupp[cd4]
                 dUSVL.append(inflows - outflows)
@@ -646,9 +645,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
                 otherdeaths        = dt * currentsupp[cd4,:] * background
                 failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
-                propdead           = dt * (death[cd4] + background)
                 stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
-                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare-propdead) # People stopping ART and lost to followup
+                stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare) # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4] + newtreat[cd4]*treatvs[t]
                 outflows = recovout + hivdeaths + otherdeaths + failing[cd4] + stopSVLincare[cd4] + stopSVLlost[cd4]
                 dSVL.append(inflows - outflows)

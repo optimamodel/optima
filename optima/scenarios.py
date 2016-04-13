@@ -123,8 +123,8 @@ def makescenarios(project=None, scenlist=None, verbose=2):
                 for scenpar in scenlist[scenno].pars: # Loop over all parameters being changed
                     thispar = thisparset.pars[pardictno][scenpar['name']]
                     if type(scenpar['for'])==tuple: # If it's a partnership...
-                        par2 = (scenpar['for'][1],scenpar['for'][0])
-                        pops = [scenpar['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
+#                        par2 = (scenpar['for'][1],scenpar['for'][0])
+                        pops = [scenpar['for']] #[scenpar['for'], par2] # This is confusing - for partnership parameters, pops is a list of the two different partnership orderings.
                     elif type(scenpar['for'])==int: #... if its a population.
                         pops = range(npops) if scenpar['for'] > npops else [scenpar['for']]
                     elif type(scenpar['for']) in [list, type(array([]))]: #... if its a population.
