@@ -105,3 +105,12 @@
     width: 900px;
   }
 }
+
+.fat-modal {
+  width: auto;
+}
+
+.fat-modal .modal-dialog {
+  width: auto;
+  max-width: 900px;
+}

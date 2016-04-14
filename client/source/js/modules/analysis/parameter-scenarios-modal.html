@@ -56,7 +56,7 @@
       <td><input class="txbox __inline __m" ng-model="editPar.startval" type="number"/></td>
       <td><input class="txbox __inline __m" ng-model="editPar.endval" type="number"/></td>
       <td>
-        <button type="button" class="btn" ng-click="addPar()" ng-disabled="!isEditParValid()">add</button>
+        <button type="button" class="btn" ng-click="addPar()" ng-disabled="isEditInvalid()">add</button>
       </td>
     </tr>
   </table>

@@ -53,6 +53,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       return $modal.open({
         templateUrl: templateUrl,
         controller: controller,
+        windowClass: 'fat-modal',
         resolve: {
           scenarios: function () { return $scope.scenarios; },
           scenario: function () { return angular.copy(scenario); },

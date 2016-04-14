@@ -11,22 +11,34 @@ define(['angular'], function (module) {
       $scope.progsets = progsets;
       $scope.editPar = {};
       var ykeys = ykeys.data.keys;
+      var editKeys = ['startval', 'endval', 'startyear', 'endyear'];
 
       $scope.scenarioExists = function () {
-        return _.some(scenarios, function (scenario) {
-          return $scope.scenario.name === scenario.name
-            && $scope.scenario.id !== scenario.id;
-        });
-      }
+        var t = $scope.scenario;
+        return _.some(scenarios, function (s) { return t.name === s.name && t.id !== s.id; });
+      };
+
+      var initNewScenario = function() {
+        $scope.scenario.active = true;
+        $scope.scenario.id = null;
+        $scope.scenario.progset_id = null;
+        $scope.scenario.parset_id = $scope.parsets[0].id;
+        $scope.scenario.pars = [];
+        var i = 1;
+        do {
+          $scope.scenario.name = "Scenario " + i;
+          i += 1;
+        } while ($scope.scenarioExists());
+      };
 
       $scope.getParsInScenario = function () {
         var parsets = $scope.parsets;
         var parset_id = $scope.scenario.parset_id;
         if (parset_id) {
-          parsets = _.filter($scope.parsets, {id: parset_id});
+          parsets = _.filter($scope.parsets, { id: parset_id });
         };
         if (parsets.length > 0) {
-          return _.filter(parsets[0].pars[0], {visible: 1});
+          return _.filter(parsets[0].pars[0], { visible: 1 });
         }
         return [];
       };
@@ -49,55 +61,34 @@ define(['angular'], function (module) {
 
       $scope.selectNewPar = function () {
         $scope.editPar.for = $scope.getPopsOfPar($scope.editPar)[0].label;
-      }
-
-      var resetEditPar = function () {
-        $scope.editPar = {}
-        var pars = $scope.getParsInScenario();
-        $scope.editPar.name = pars[0].short;
-        $scope.selectNewPar();
-      }
-
-      $scope.addPar = function () {
-        $scope.scenario.pars.push(angular.copy($scope.editPar));
-        resetEditPar();
-      }
-
-      $scope.removePar = function (i) {
-        $scope.scenario.pars = _.reject(
-          $scope.scenario.pars, function (v, j) { return i = j });
       };
 
-      $scope.isEditParValid = function () {
-        function isNumber(n) {
-          return !isNaN(parseFloat(n)) && isFinite(n);
-        }
-        var keys = ['startval', 'endval', 'startyear', 'endyear'];
-        for (var i = 0; i < keys.length; i += 1) {
-          if (!isNumber($scope.editPar[keys[i]])) {
-            return false;
-          }
-        }
-        return true;
-      }
+      var resetEditPar = function () {
+        $scope.editPar = { 'name': $scope.getParsInScenario()[0].short };
+        $scope.selectNewPar();
+      };
+
+      $scope.addPar = function () {
+        $scope.scenario.pars.push($scope.editPar);
+        resetEditPar();
+      };
+
+      $scope.removePar = function (i) {
+        $scope.scenario.pars.splice(i, 1);
+      };
+
+      $scope.isEditInvalid = function () {
+        return _.some(_.map(editKeys, function(k) { return !_.isFinite($scope.editPar[k]) }));
+      };
 
       $scope.save = function () {
         $modalInstance.close($scope.scenario);
       };
 
-      if (!$scope.scenario.hasOwnProperty('name')) {
-        $scope.scenario.active = true;
-        $scope.scenario.id = null;
-        $scope.scenario.progset_id = null;
-        $scope.scenario.parset_id = $scope.parsets[0].id;
-        $scope.scenario.pars = [];
-        var i = 1;
-        do {
-          $scope.scenario.name = "Scenario " + i;
-          i += 1;
-        } while ($scope.scenarioExists());
+      // initialization
+      if (_.isUndefined($scope.scenario.name)) {
+        initNewScenario();
       }
-
       resetEditPar();
 
     });

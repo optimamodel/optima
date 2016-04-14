@@ -1,4 +1,7 @@
-<div class="modal-header c-prosce-modal__header"> CREATE A PROGRAM SCENARIO</div>
+
+<div class="modal-header c-prosce-modal__header">
+  CREATE/EDIT A {{scenario.scenario_type}} PROGRAM SCENARIO
+</div>
 
 <!-- Name -->
 <div class="o-form__field-wrap">
@@ -24,21 +27,23 @@
   <div class="o-form__field-wrap c-prosce-modal__input-with-space">
     <label class="o-form__label"> Select a program set to use as baseline </label>
     <select class="o-form__input txbox" type="text" ng-model="scenario.progset_id"
-            ng-options="progset as progset.name for progset in progsets" required>
+            ng-options="progset.id as progset.name for progset in progsets" required>
     </select>
   </div>
 
 </div>
 
 <div class="c-prosce-modal__selects u-layout-horizontal" ng-show="false">
-  <p class="error-hint">This program set is not ready to optimize, please pick another one</p>
+  <p class="error-hint">
+    This program set is not ready to optimize, please pick another one
+  </p>
 </div>
 
 <table class="table table-bordered">
   <tr>
-    <th style="width: 300px;">Year</th>
+    <th>Year</th>
     <th ng-repeat="iProgram in getProgramsIndexRange()">
-      {{timeChangesByProgram[iProgram].program}}
+      {{scenario[scenario_type][iProgram].program}}
     </th>
     <th style="width: 150px;">Manage</th>
   </tr>
@@ -46,19 +51,21 @@
   <tr ng-repeat="iYear in getYearIndexRange()">
     <td>{{scenario.years[iYear]}}</td>
     <td ng-repeat="iProgram in getProgramsIndexRange()">
-      {{timeChangesByProgram[iProgram].values[iYear]}}
+      {{scenario[scenario_type][iProgram].values[iYear]}}
     </td>
     <td><i class="fa fa-times" ng-click="removeYear(iYear)"></i></td>
   </tr>
 
   <tr>
     <td ng-repeat="i in getDataEntryRange()">
-      <input type="number" class="c-input-table__input txbox" ng-model="dataEntry[i]" required/>
+      <input type="number"
+             class="c-input-table__input txbox"
+             ng-model="dataEntry[i]" required/>
     </td>
     <td>
-      <button
-          type="button" class="btn c-parsce-modal__button c-parsce-modal__button--add-parameter"
-          ng-disabled="!isDataValid()" ng-click="addDataEntryYear()">
+      <button type="button"
+              class="btn" ng-disabled="isDataInvalid()"
+              ng-click="addDataEntryYear()">
         Add year
       </button>
     </td>
@@ -67,7 +74,8 @@
 </table>
 
 <div class="c-parsce-modal__buttons u-layout-horizontal">
-  <button type="submit" ng-click="save()" class="btn __s o-form__button o-form__button--save">
+  <button type="submit" ng-click="save()"
+          class="btn __s o-form__button o-form__button--save">
     save
   </button>
 </div>
