@@ -1,76 +1,68 @@
-<div class="c-parsce-modal">
+<div>
 
-  <div class="modal-header">
-    CREATE A PARAMETER SCENARIO
+  <div class="modal-header"> CREATE OR EDIT A PARAMETER SCENARIO </div>
+
+  <div class="c-parsce-modal__field-wrap">
+    <label class="c-parsce-modal__label"> Name </label>
+    <input class="c-parsce-modal__input txbox" type="text" ng-model="scenario.name" required/>
+    <div class="error-hint" ng-show="scenarioExists()">
+      Scenario with this name already exists, please choose a different name.
+    </div>
   </div>
 
-  <form name="manageScenarioForm" class="modal-body" novalidate ng-submit="save()">
+  <div class="c-parsce-modal__field-wrap">
+    <label class="c-parsce-modal__label"> Select a parameter set to use as baseline </label>
+    <select class="txbox" type="text" ng-model="scenario.parset_id" required
+          ng-options="parset.id as parset.name for parset in parsets">
+    </select>
+  </div>
 
-    <div class="c-parsce-modal__field-wrap">
-      <label class="c-parsce-modal__label"> Name </label>
-      <input class="c-parsce-modal__input txbox" type="text" ng-model="scenario.name" required/>
-      <div class="error-hint" ng-show="scenarioExists()">
-        Scenario with this name already exists, please choose a different name.
-      </div>
-    </div>
+  <table class="table table-bordered">
+    <tr>
+      <th style="width: 300px;">Model Parameters</th>
+      <th style="width: 300px;">Population</th>
+      <th style="width: 150px;">Start Year</th>
+      <th style="width: 100px;">Final Year</th>
+      <th style="width: 150px;">Start Value</th>
+      <th style="width: 150px;">Final Value</th>
+      <th style="width: 150px;">Manage</th>
+    </tr>
 
-    <div class="c-parsce-modal__field-wrap">
-      <label class="c-parsce-modal__label"> Select a parameter set to use as baseline </label>
-      <select class="txbox" type="text"
-          ng-model="scenario.parset_id"
-          ng-options="parset.id as parset.name for parset in parsets"
-          required>
-      </select>
-    </div>
+    <tr ng-repeat="par in scenario.pars">
+      <td>{{getLongParName(par.name)}}</td>
+      <td>{{par.for}}</td>
+      <td>{{par.startyear}}</td>
+      <td>{{par.endyear}}</td>
+      <td>{{par.startval}}</td>
+      <td>{{par.endval}}</td>
+      <td>
+        <i class="fa fa-times" ng-click="removePar($index)"></i>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <select class="txbox __inline __m" type="text" ng-model="editPar.name"
+            ng-options="par.short as par.name for par in getParsInScenario()"
+            ng-change="selectNewPar()">
+        </select>
+      </td>
+      <td>
+        <select class="txbox __inline __m" type="text" ng-model="editPar.for"
+            ng-options="pop.val as pop.label for pop in getPopsOfPar(editPar)">
+        </select>
+      </td>
+      <td><input class="txbox __inline __m" ng-model="editPar.startyear" type="number"/></td>
+      <td><input class="txbox __inline __m" ng-model="editPar.endyear" type="number"/></td>
+      <td><input class="txbox __inline __m" ng-model="editPar.startval" type="number"/></td>
+      <td><input class="txbox __inline __m" ng-model="editPar.endval" type="number"/></td>
+      <td>
+        <button type="button" class="btn" ng-click="addPar()" ng-disabled="!isEditParValid()">add</button>
+      </td>
+    </tr>
+  </table>
 
-    <table class="table table-bordered" style="margin-bottom:0">
-      <tr>
-        <th style="width: 300px;">Model Parameters</th>
-        <th style="width: 300px;">Population</th>
-        <th style="width: 150px;">Start Year</th>
-        <th style="width: 100px;">Final Year</th>
-        <th style="width: 150px;">Start Value</th>
-        <th style="width: 150px;">Final Value</th>
-        <th style="width: 150px;">Manage</th>
-      </tr>
-
-      <tr ng-repeat="par in scenario.pars">
-        <td>{{par.name}}</td>
-        <td>{{par.for}}</td>
-        <td>{{par.startyear}}</td>
-        <td>{{par.endyear}}</td>
-        <td>{{par.startval}}</td>
-        <td>{{par.endval}}</td>
-        <td>
-          <i class="fa fa-times" ng-click="removePar($index)"></i>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <select class="txbox __inline __m" type="text" ng-model="editPar.name"
-              ng-options="par.short as par.name for par in getParsInScenario()"
-              ng-change="selectNewPar()">
-          </select>
-        </td>
-        <td>
-          <select class="txbox __inline __m" type="text" ng-model="editPar.for"
-              ng-options="pop.val as pop.label for pop in getPopsOfPar(editPar)">
-          </select>
-        </td>
-        <td><input class="txbox __inline __m" ng-model="editPar.startyear" type="number"/></td>
-        <td><input class="txbox __inline __m" ng-model="editPar.endyear" type="number"/></td>
-        <td><input class="txbox __inline __m" ng-model="editPar.startval" type="number"/></td>
-        <td><input class="txbox __inline __m" ng-model="editPar.endval" type="number"/></td>
-        <td>
-          <button type="button" class="btn" ng-click="addPar()" ng-disabled="!isEditParValid()">add</button>
-        </td>
-      </tr>
-    </table>
-
-    <div style="width:100%; text-align:right; padding-top:2em;">
-      <button type="submit" class="btn">Save</button>
-    </div>
-
-  </form>
+  <div style="width:100%; text-align:right; padding-top:2em;">
+    <button type="submit" ng-click="save()" class="btn">Save</button>
+  </div>
 
 </div>

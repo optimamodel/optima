@@ -13,18 +13,16 @@
 
         <table class="section table table-bordered">
 
-          <thead>
           <tr>
-            <td style="width: 50px">Active</td>
-            <td>Scenario Name</td>
-            <td>Model Parameter Set</td>
-            <td>Program Set</td>
-            <td>Scenario Type</td>
-            <td style="width:200px; max-width:200px">Manage</td>
+            <th style="width: 50px">Active</th>
+            <th>Scenario Name</th>
+            <th>Model Parameter Set</th>
+            <th>Program Set</th>
+            <th>Scenario Type</th>
+            <th style="width:200px; max-width:200px">Manage</th>
+            <th>Delete</th>
           </tr>
-          </thead>
 
-          <tbody>
           <tr ng-repeat="scenario in scenarios">
             <td style="width: 50px" class="text-center" update-checkbox-on-click>
               <input type="checkbox" ng-model="scenario.active">
@@ -36,14 +34,15 @@
             <td style="white-space: nowrap; width:200px; max-width:200px">
               <button class="btn" ng-click="modal(scenario, 'edit', $event)">Edit</button>
               <button class="btn" ng-click="modal(scenario, 'copy', $event)">Copy</button>
-              <button class="btn" ng-click="modal(scenario, 'delete', $event)">Delete</button>
+              &nbsp;&nbsp;
+            </td>
+            <td style="width: 15px">
+            <i class="fa fa-times" ng-click="modal(scenario, 'delete', $event)"></i>
             </td>
           </tr>
-          </tbody>
 
-          <tfoot>
           <tr>
-            <td colspan="6" class="text-right">
+            <td colspan="7" class="text-right">
               <p class="error-hint" style="" ng-show="isMissingProgramSet">
                 Please create a program set to add budget and coverage scenario.
                 <a ui-sref="programs.manageProgramSet">Define/manage program set</a>
@@ -69,17 +68,14 @@
           </tr>
 
           <tr>
-            <td colspan="6">
-
+            <td colspan="7">
               <div class="text-right">
                 <button class="btn" ng-click="runScenarios()" ng-disabled="!isRunnable()">
                   Run scenarios
                 </button>
               </div>
-
             </td>
           </tr>
-          </tfoot>
 
         </table>
 
