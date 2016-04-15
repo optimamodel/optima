@@ -13,7 +13,9 @@ define([
 ], function (angular) {
   'use strict';
 
-  return angular.module('app.analysis', [
+  return angular.module(
+    'app.analysis',
+    [
       'app.export-all-charts',
       'app.export-all-data',
       'app.resources.model',

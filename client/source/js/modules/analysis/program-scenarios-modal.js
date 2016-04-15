@@ -44,8 +44,6 @@ define(['angular'], function (module) {
 
       $scope.getDataEntryRange = function() { return _.range($scope.dataEntry.length); };
 
-      $scope.save = function(){ $modalInstance.close($scope.scenario); };
-
       $scope.isDataInvalid = function() {
         return _.some(_.map($scope.dataEntry, function(d) { return !_.isFinite(d) }));
       };
@@ -57,9 +55,7 @@ define(['angular'], function (module) {
           var iProgram = iData - 1;
           changesByProgram[iProgram].values.push($scope.dataEntry[iData]);
         }
-        for (var i=0; i < $scope.dataEntry.length; i+= 1) {
-          $scope.dataEntry[i] = null;
-        }
+        _.each($scope.dataEntry, function(v, i, l) { l[i] = null; });
       };
 
       $scope.removeYear = function(i) {
@@ -67,6 +63,8 @@ define(['angular'], function (module) {
         $scope.scenario.years.splice(i, 1);
         angular.forEach(changesByProgram, function (v, k) { v.values.splice(i, 1); });
       };
+
+      $scope.save = function(){ $modalInstance.close($scope.scenario); };
 
       $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
 
