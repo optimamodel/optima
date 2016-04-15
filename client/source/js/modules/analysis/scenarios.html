@@ -20,7 +20,6 @@
             <th>Program Set</th>
             <th>Scenario Type</th>
             <th style="width:200px; max-width:200px">Manage</th>
-            <th>Delete</th>
           </tr>
 
           <tr ng-repeat="scenario in scenarios">
@@ -34,15 +33,13 @@
             <td style="white-space: nowrap; width:200px; max-width:200px">
               <button class="btn" ng-click="modal(scenario, 'edit', $event)">Edit</button>
               <button class="btn" ng-click="modal(scenario, 'copy', $event)">Copy</button>
-              &nbsp;&nbsp;
-            </td>
-            <td style="width: 15px">
-            <i class="fa fa-times" ng-click="modal(scenario, 'delete', $event)"></i>
+              &nbsp; &nbsp; &nbsp;
+              <span class="delete" ng-click="modal(scenario, 'delete', $event)">X</span>
             </td>
           </tr>
 
           <tr>
-            <td colspan="7" class="text-right">
+            <td colspan="6" class="text-right">
               <p class="error-hint" style="" ng-show="isMissingProgramSet">
                 Please create a program set to add budget and coverage scenario.
                 <a ui-sref="programs.manageProgramSet">Define/manage program set</a>

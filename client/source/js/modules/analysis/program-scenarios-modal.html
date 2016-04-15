@@ -1,12 +1,12 @@
 
-<div class="modal-header c-prosce-modal__header">
+<div class="modal-header">
   CREATE/EDIT A {{scenario.scenario_type}} PROGRAM SCENARIO
 </div>
 
 <!-- Name -->
 <div class="o-form__field-wrap">
-  <label class="o-form__label"> Name </label>
-  <input class="o-form__input txbox" type="text" ng-model="scenario.name" required/>
+  <label> Name </label>
+  <input class="txbox" type="text" ng-model="scenario.name" required/>
   <div class="error-hint" ng-show="scenarioExists()">
     Scenario with this name already exists, please choose a different name.
   </div>
@@ -39,41 +39,46 @@
   </p>
 </div>
 
-<table class="table table-bordered">
-  <tr>
-    <th>Year</th>
-    <th ng-repeat="iProgram in getProgramsIndexRange()">
-      {{scenario[scenario_type][iProgram].program}}
-    </th>
-    <th style="width: 150px;">Manage</th>
-  </tr>
+<div style="width:100%; overflow-x:scroll;">
+  <table class="table table-bordered" style="width:auto;">
+    <tr>
+      <th>Year</th>
+      <th ng-repeat="iProgram in getProgramsIndexRange()">
+        {{scenario[scenario_type][iProgram].program}}
+      </th>
+      <th style="width: 150px;">Manage</th>
+    </tr>
 
-  <tr ng-repeat="iYear in getYearIndexRange()">
-    <td>{{scenario.years[iYear]}}</td>
-    <td ng-repeat="iProgram in getProgramsIndexRange()">
-      {{scenario[scenario_type][iProgram].values[iYear]}}
-    </td>
-    <td><i class="fa fa-times" ng-click="removeYear(iYear)"></i></td>
-  </tr>
+    <tr ng-repeat="iYear in getYearIndexRange()">
+      <td>{{scenario.years[iYear]}}</td>
+      <td ng-repeat="iProgram in getProgramsIndexRange()">
+        {{scenario[scenario_type][iProgram].values[iYear]}}
+      </td>
+      <td>
+        <span class="" ng-click="removeYear(iYear)">X</span>
+      </td>
+    </tr>
 
-  <tr>
-    <td ng-repeat="i in getDataEntryRange()">
-      <input type="number"
-             class="c-input-table__input txbox"
-             ng-model="dataEntry[i]" required/>
-    </td>
-    <td>
-      <button type="button"
-              class="btn" ng-disabled="isDataInvalid()"
-              ng-click="addDataEntryYear()">
-        Add year
-      </button>
-    </td>
-  </tr>
+    <tr>
+      <td ng-repeat="i in getDataEntryRange()">
+        <input type="number" class="c-input-table__input txbox"
+               ng-model="dataEntry[i]" required/>
+      </td>
+      <td>
+        <button type="button"
+                class="btn" ng-disabled="isDataInvalid()"
+                ng-click="addDataEntryYear()">
+          Add year
+        </button>
+      </td>
+    </tr>
+  </table>
+</div>
 
-</table>
+<a class="modal-close" ng-click="cancel()">x</a>
 
 <div class="c-parsce-modal__buttons u-layout-horizontal">
+  <button ng-click="cancel()" class="btn">Cancel</button>
   <button type="submit" ng-click="save()"
           class="btn __s o-form__button o-form__button--save">
     save

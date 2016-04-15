@@ -49,18 +49,22 @@ define(['angular'], function (module) {
         return par ? par.name : '';
       };
 
-      $scope.getPopsOfPar = function (par) {
+      $scope.getPopsOfPar = function () {
+        var parName = $scope.editPar.name;
         if (ykeys.hasOwnProperty($scope.scenario.parset_id)) {
           var ykeysOfParset = ykeys[$scope.scenario.parset_id];
-          if (ykeysOfParset.hasOwnProperty(par.name)) {
-            return ykeysOfParset[par.name];
+          if (ykeysOfParset.hasOwnProperty(parName)) {
+            var result = ykeysOfParset[parName];
+            return result;
           }
         }
         return [];
       };
 
       $scope.selectNewPar = function () {
-        $scope.editPar.for = $scope.getPopsOfPar($scope.editPar)[0].label;
+        var pops = $scope.getPopsOfPar()
+        $scope.editPar.for = pops[0].label;
+        console.log('new', $scope.editPar.name, '->', _.pluck(pops, 'val'))
       };
 
       var resetEditPar = function () {
@@ -73,17 +77,16 @@ define(['angular'], function (module) {
         resetEditPar();
       };
 
-      $scope.removePar = function (i) {
-        $scope.scenario.pars.splice(i, 1);
-      };
+      $scope.removePar = function (i) { $scope.scenario.pars.splice(i, 1); };
 
       $scope.isEditInvalid = function () {
-        return _.some(_.map(editKeys, function(k) { return !_.isFinite($scope.editPar[k]) }));
+        function isValidKey(k) { return !_.isFinite($scope.editPar[k]) }
+        return _.some(_.map(editKeys, isValidKey));
       };
 
-      $scope.save = function () {
-        $modalInstance.close($scope.scenario);
-      };
+      $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
+
+      $scope.save = function () { $modalInstance.close($scope.scenario); };
 
       // initialization
       if (_.isUndefined($scope.scenario.name)) {

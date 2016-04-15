@@ -68,6 +68,8 @@ define(['angular'], function (module) {
         angular.forEach(changesByProgram, function (v, k) { v.values.splice(i, 1); });
       };
 
+      $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
+
       if (_.isUndefined($scope.scenario.parset_id)) {
         initNewScenario();
       }

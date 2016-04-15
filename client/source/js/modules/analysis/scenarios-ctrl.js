@@ -17,17 +17,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     $scope.alerts = [];
 
+    var killOldestAlert = function() {
+      if ($scope.alerts.length > 0) {
+        $scope.alerts.shift();
+        $scope.$apply();
+      }
+    }
+
     var addTimedAlert = function(msg) {
       $scope.alerts.push({ msg: msg });
-      setTimeout(
-        function() {
-          if ($scope.alerts.length > 0) {
-            $scope.alerts.shift();
-            $scope.$apply();
-          }
-        },
-        3000
-      );
+      setTimeout(killOldestAlert, 3000);
     };
 
     var saveScenarios = function (scenarios, msg) {
@@ -60,7 +59,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           parsets: function () { return parsets; },
           progsets: function () { return progsets; },
           ykeys: function () { return ykeys; },
-          openProject: function () { return project; }
         }
       });
 
@@ -102,7 +100,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .then(
             function (scenario) {
               newScenarios.push(scenario);
-              saveScenarios(newScenarios, "Successfully added scenario");
+              saveScenarios(newScenarios, "Created scenario");
             });
 
       } else if (action === 'edit') {
@@ -114,7 +112,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var i = newScenarios.indexOf(_.findWhere(newScenarios, { name: scenario.name }));
               newScenarios[i] = scenario;
               newScenarios[i].active = true;
-              saveScenarios(newScenarios, "Successfully changed scenario");
+              saveScenarios(newScenarios, "Saved changes");
             });
 
       } else if (action === 'copy') {
@@ -123,12 +121,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         newScenario.name = scenario.name + ' Copy';
         newScenario.id = null;
         newScenarios.push(newScenario);
-        saveScenarios(newScenarios, "Sucessfully copied scenario");
+        saveScenarios(newScenarios, "Copied scenario");
 
       } else if (action === 'delete') {
 
         var scenario = _.findWhere(newScenarios, { name: scenario.name });
-        saveScenarios(_.without(newScenarios, scenario), "Successfully deleted scenario");
+        saveScenarios(
+            _.without(newScenarios, scenario), "Deleted scenario");
 
       }
     };
