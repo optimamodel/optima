@@ -240,6 +240,49 @@ class Scenarios(Resource):
 # /api/project/<project-id>/scenarios/results
 
 
+def make_mpld3_graph_dict(result):
+    import re
+
+    graph_selectors = op.getplotselections(result)
+    keys = graph_selectors['keys']
+    names = graph_selectors['names']
+    checks = graph_selectors['defaults']
+    selectors = [{'key': key, 'name': name, 'checked': checked}
+                 for (key, name, checked) in zip(keys, names, checks)]
+
+    graph_dict = {
+        'graphs': {
+            "mpld3_graphs": [],
+            "selectors": selectors,
+            'graph_selectors': []
+        }
+    }
+
+    graphs = op.plotting.makeplots(result, toplot=keys, figsize=(4, 3))
+
+    def extract_graph_selector(graph_key):
+        s = repr(graph_key)
+        graph_selector = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
+        if "'t'" in s:
+            graph_selector += "-tot"
+        if "'p'" in s:
+            graph_selector += "-per"
+        return graph_selector
+
+    for graph_key in graphs:
+        # Add necessary plugins here
+        mpld3.plugins.connect(graphs[graph_key], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+
+        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+        json_string = json.dumps(mpld3.fig_to_dict(graphs[graph_key])).replace('NaN', 'null')
+        mpld3_dict = json.loads(json_string)
+
+        graph_dict['graphs']['graph_selectors'].append(extract_graph_selector(graph_key))
+        graph_dict['graphs']["mpld3_graphs"].append(mpld3_dict)
+
+    return graph_dict
+
+
 class ScenarioResults(Resource):
 
     method_decorators = [report_exception, login_required]
@@ -253,17 +296,8 @@ class ScenarioResults(Resource):
         project = project_entry.hydrate()
         project.runscenarios()
 
-        graphs = op.plotting.makeplots(project.results[-1], figsize=(4, 3))
+        return make_mpld3_graph_dict(project.results[-1])
 
-        jsons = []
-        for graph in graphs:
-            # Add necessary plugins here
-            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
-            jsons.append(json.loads(json_string))
-
-        return jsons
 
 
 # /api/project/<project-id>/scenarios/<scenarios-id>

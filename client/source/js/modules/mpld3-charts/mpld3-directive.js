@@ -3,7 +3,7 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
   'use strict';
 
   function val2str(val, limit, suffix) {
-    var reducedVal = val / limit
+    var reducedVal = val / limit;
     var nDecimal = reducedVal >= 1 ? 0 : 1;
     return reducedVal.toFixed(nDecimal) + suffix;
   }
@@ -63,16 +63,13 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
         scope.$watch(
           'chart',
           function () {
-            var $elem = $(element);
-            $elem.attr('class', 'mpld3-chart');
-            $elem.html("");
-
-            var $$hashKey = scope.chart.$$hashKey;
-            delete scope.chart.$$hashKey;
-            mpld3.draw_figure(attrs.id, scope.chart);
-            scope.chart.$$hashKey = $$hashKey;
-
-            reformatFigure($elem);
+            var $elememt = $(element);
+            // was used for nik graf's monkey-patching
+            // $elem.attr('class', 'mpld3-chart');
+            $elememt.html("");
+            // need to strip out the $$hashKey due ng-repeat
+            mpld3.draw_figure(attrs.id, angular.copy(scope.chart));
+            reformatFigure($elememt);
           },
           true
         );

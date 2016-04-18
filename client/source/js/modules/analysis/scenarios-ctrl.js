@@ -67,21 +67,27 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.runScenarios = function () {
       $http
         .get('/api/project/' + project.id + '/scenarios/results')
-        .success(function (data) { $scope.graphs = data; });
+        .success(function (data) { $scope.graphs = data.graphs; });
     };
 
+    $scope.isCheckedGraph = function(iGraphSelector) {
+      var graph_selector = $scope.graphs.graph_selectors[iGraphSelector];
+      var selector = _.findWhere($scope.graphs.selectors, { key: graph_selector });
+      return selector.checked;
+    }
+
     $scope.isRunnable = function () {
-      return _.filter($scope.scenarios, { active: true }).length > 0;
+      return _.some($scope.scenarios, function(s) { return s.active });
     };
 
     $scope.parsetName = function (scenario) {
-      var theseParsets = _.filter(parsets, {id: scenario.parset_id});
-      return theseParsets.length > 0 ? theseParsets[0].name : '';
+      var parset = _.findWhere(parsets, {id: scenario.parset_id});
+      return parset ? parset.name : '';
     };
 
     $scope.programSetName = function (scenario) {
-      var theseProgsets = _.filter(progsets, {id: scenario.progset_id});
-      return theseProgsets.length > 0 ? theseProgsets[0].name : '';
+      var progset = _.findWhere(progsets, {id: scenario.progset_id});
+      return progset ? progset.name : '';
     };
 
     $scope.modal = function (scenario, action, $event) {
@@ -126,8 +132,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       } else if (action === 'delete') {
 
         var scenario = _.findWhere(newScenarios, { name: scenario.name });
-        saveScenarios(
-            _.without(newScenarios, scenario), "Deleted scenario");
+        saveScenarios(_.without(newScenarios, scenario), "Deleted scenario");
 
       }
     };
