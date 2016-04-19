@@ -1,6 +1,8 @@
-import mpld3
 import json
 import uuid
+import re
+
+import mpld3
 
 from flask import current_app, request
 
@@ -240,15 +242,38 @@ class Scenarios(Resource):
 # /api/project/<project-id>/scenarios/results
 
 
-def make_mpld3_graph_dict(result):
-    import re
+def make_mpld3_graph_dict(result, which=None):
+    """
+    Converts an Optima sim Result into a dictionary containing
+    mpld3 graph dictionaries and associated keys for display.
+
+    Args:
+        result: the Optima simulation Result obect
+        which: a list of keys to determine which plots to generate
+
+    Returns:
+        A dictionary of the form:
+            { "graphs": {
+                "mpld3_graphs": [<mpld3 graph dictioanry>...],
+                "graph_selectors": ["key of a selector",...],
+                "selectors": [<selector dictionary>]
+            }
+        mpld3_graphs is the same length as graph_selectors
+        selectors are shown on screen and graph_selectors refer to selectors
+        selector: {
+            "key": "unique name",
+            "name": "Long description",
+            "checked": boolean
+        }
+    """
 
     graph_selectors = op.getplotselections(result)
     keys = graph_selectors['keys']
     names = graph_selectors['names']
     checks = graph_selectors['defaults']
-    selectors = [{'key': key, 'name': name, 'checked': checked}
-                 for (key, name, checked) in zip(keys, names, checks)]
+    selectors = [
+        {'key': key, 'name': name, 'checked': checked}
+         for (key, name, checked) in zip(keys, names, checks)]
 
     graph_dict = {
         'graphs': {
@@ -258,26 +283,34 @@ def make_mpld3_graph_dict(result):
         }
     }
 
-    graphs = op.plotting.makeplots(result, toplot=keys, figsize=(4, 3))
+    if which is None:
+        which = [s["key"] for s in selectors if s["checked"]]
+    which = keys
+    graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     def extract_graph_selector(graph_key):
         s = repr(graph_key)
-        graph_selector = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
+        base = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
         if "'t'" in s:
-            graph_selector += "-tot"
-        if "'p'" in s:
-            graph_selector += "-per"
-        return graph_selector
+            suffix = "-tot"
+        elif "'p'" in s:
+            suffix = "-per"
+        else:
+            suffix = ""
+        return base + suffix
 
     for graph_key in graphs:
         # Add necessary plugins here
-        mpld3.plugins.connect(graphs[graph_key], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+        mpld3.plugins.connect(
+            graphs[graph_key],
+            mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
 
+        mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        json_string = json.dumps(mpld3.fig_to_dict(graphs[graph_key])).replace('NaN', 'null')
-        mpld3_dict = json.loads(json_string)
+        mpld3_dict = json.loads(json.dumps(mpld3_dict).replace('NaN', 'null'))
 
-        graph_dict['graphs']['graph_selectors'].append(extract_graph_selector(graph_key))
+        graph_selector = extract_graph_selector(graph_key)
+        graph_dict['graphs']['graph_selectors'].append(graph_selector)
         graph_dict['graphs']["mpld3_graphs"].append(mpld3_dict)
 
     return graph_dict

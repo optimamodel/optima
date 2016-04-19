@@ -1,0 +1,29 @@
+
+<table style="width:100%; height:calc(100vh - 280px)">
+
+  <td class="small_bordered_list" style="margin-left:0; vertical-align:top; width:400px; height:100%">
+    <div style="overflow:scroll" ng-if="graphs.selectors.length > 0">
+      <div class="option_list"">
+        <div ng-repeat="selector in graphs.selectors" class="option">
+          <span><input type="checkbox" ng-model="selector.checked"/></span>
+          <span style="margin-left:10px">{{selector.name}}</span>
+        </div>
+      </div>
+    </div>
+  </td>
+
+  <td>
+    <div style="overflow:scroll; width:100%; height:100%; text-align:left;">
+      <div>
+        <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
+        <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
+      </div>
+      <div ng-repeat="chart in graphs.mpld3_graphs" ng-show="chart.isChecked()" class="chart-container __small">
+        <div mpld3-chart="chart" id="{{ chart.id }}"></div>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}">
+        </chart-toolbar>
+      </div>
+    </div>
+  </td>
+
+</table>

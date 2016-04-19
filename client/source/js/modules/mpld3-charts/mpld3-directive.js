@@ -2,11 +2,13 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
 
   'use strict';
 
+
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit;
     var nDecimal = reducedVal >= 1 ? 0 : 1;
     return reducedVal.toFixed(nDecimal) + suffix;
   }
+
 
   function reformatValStr(text) {
     var val = parseFloat(text);
@@ -19,6 +21,7 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
     }
     return text;
   }
+
 
   function reformatFigure($figure) {
     var $yaxis = $figure.find('.mpld3-yaxis');
@@ -54,6 +57,7 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
     })
   }
 
+
   module.directive('mpld3Chart', function () {
     return {
       scope: {
@@ -63,12 +67,14 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
         scope.$watch(
           'chart',
           function () {
-            var $elememt = $(element);
-            // was used for nik graf's monkey-patching
-            // $elem.attr('class', 'mpld3-chart');
-            $elememt.html("");
-            // need to strip out the $$hashKey due ng-repeat
-            mpld3.draw_figure(attrs.id, angular.copy(scope.chart));
+            // strip $$hashKey from ng-repeat
+            var figure = angular.copy(scope.chart);
+            delete figure.isChecked;
+
+            var $elememt = $(element)
+                .attr('class', 'mpld3-chart')
+                .html('');
+            mpld3.draw_figure(attrs.id, figure);
             reformatFigure($elememt);
           },
           true
@@ -76,4 +82,35 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
       }
     };
   });
+
+
+  module.directive('optimaGraphs', function () {
+    return {
+      scope: { 'graphs':'=' },
+      templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
+      link: function (scope, element, attrs) {
+
+        function isChecked(iGraph) {
+          var graph_selector = scope.graphs.graph_selectors[iGraph];
+          var selector = _.findWhere(scope.graphs.selectors, { key: graph_selector });
+          if (!_.isUndefined(selector) && (selector.checked)) {
+            return true;
+          };
+          return false;
+        }
+
+        scope.$watch(
+          'graphs',
+          function() {
+            if (!_.isUndefined(scope.graphs)) {
+              _.each(scope.graphs.mpld3_graphs, function (g, i) {
+                g.isChecked = function () { return isChecked(i); };
+              });
+            }
+          }
+        );
+      }
+    };
+  });
+
 });

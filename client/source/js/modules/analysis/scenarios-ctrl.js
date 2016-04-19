@@ -70,12 +70,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function (data) { $scope.graphs = data.graphs; });
     };
 
-    $scope.isCheckedGraph = function(iGraphSelector) {
-      var graph_selector = $scope.graphs.graph_selectors[iGraphSelector];
-      var selector = _.findWhere($scope.graphs.selectors, { key: graph_selector });
-      return selector.checked;
-    }
-
     $scope.isRunnable = function () {
       return _.some($scope.scenarios, function(s) { return s.active });
     };
