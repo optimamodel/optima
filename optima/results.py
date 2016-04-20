@@ -259,7 +259,7 @@ class Resultset(object):
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
-        output = filename+'\n'
+        output = self.name+'\n'
         output += sep.join(['Indicator','Year:',''])
         for t in range(npts):
             output += ('%i'+sep) % self.tvec[t]

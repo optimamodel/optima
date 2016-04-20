@@ -402,13 +402,14 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 if isperpop:  plottitle += ' -- ' + results.popkeys[i] # Add extra information to plot if by population
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
-                ax.set_xlim((results.tvec[0], results.tvec[-1]))
+#                ax.set_xlim((results.tvec[0], results.tvec[-1]))
+                ax.set_xlim((results.tvec[10], results.tvec[-1]))
                 if not ismultisim:
                     if istotal:  ax.legend(['Total'], **legendsettings) # Single entry, "Total"
                     if isperpop: ax.legend([results.popkeys[i]], **legendsettings) # Single entry, this population
                     if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
-                else:
-                    ax.legend(labels, **legendsettings) # Multiple simulations
+#                else:
+#                    ax.legend(labels, **legendsettings) # Multiple simulations
                 
                 reformatfigure(epiplots[pk])
 
