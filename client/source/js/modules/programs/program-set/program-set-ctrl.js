@@ -27,6 +27,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.programSetList = response.progsets;
           if (response.progsets && response.progsets.length > 0) {
             $scope.activeProgramSet = response.progsets[0];
+            console.log(_.pluck($scope.activeProgramSet, "category"));
           }
         }
       });

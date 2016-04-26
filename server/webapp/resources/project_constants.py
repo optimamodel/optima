@@ -1,3 +1,5 @@
+# only used project_test.py
+
 from flask.ext.login import login_required
 from flask_restful import Resource, fields, marshal_with
 from flask_restful_swagger import swagger
@@ -30,17 +32,17 @@ class Parameters(Resource):
     def get(self, project_id):
         """Gives back project parameters (modifiable)"""
 
-        from server.webapp.utils import load_project
+        from server.webapp.utils import load_project_record
         from optima.parameters import partable, loadpartable, Par
 
         default_pars = [par['short'] for par in loadpartable(partable)]
 
-        project = load_project(project_id, raise_exception=True)
+        project = load_project_record(project_id, raise_exception=True)
         be_parsets = [parset.hydrate() for parset in project.parsets]
         parameters = []
         added_parameters = set()
         for parset in be_parsets:
-            print(parset.pars)
+            print(">>> Parsets %s" % [p.keys() for p in parset.pars])
             for parameter in parset.pars:
                 for key in default_pars:
                     if key not in added_parameters and \

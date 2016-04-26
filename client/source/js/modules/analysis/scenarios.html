@@ -6,12 +6,14 @@
 
   <div ng-if="!isMissingModelData">
 
-    <div class="section grid">
-      <div class="cols-12">
+    <div style="display: flex; flex-direction: column; align-items: flex-start;
+                width: 100%; height: calc(100vh - 160px)">
+
+      <div style="flex: 0 0 auto; width: 100%">
 
         <h1>Manage scenarios</h1>
 
-        <table class="section table table-bordered">
+        <table class="section table table-bordered" style="width: 100%;">
 
           <tr>
             <th style="width: 50px">Active</th>
@@ -79,10 +81,12 @@
         <div class="error-hint" ng-repeat="alert in alerts"> {{alert.msg}} </div>
 
       </div>
-    </div>
 
-    <optima-graphs graphs="graphs"></optima-graphs>
+      <div style="flex: 1 1 auto; width: 100%; overflow:auto">
 
-  </table>
+        <optima-graphs graphs="graphs"></optima-graphs>
+
+      </div>
+  </div>
 
 </div>

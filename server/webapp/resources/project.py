@@ -21,7 +21,7 @@ from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid, Json
 
 from server.webapp.resources.common import file_resource, file_upload_form_parser
-from server.webapp.utils import (load_project, verify_admin_request, report_exception,
+from server.webapp.utils import (load_project_record, verify_admin_request, report_exception,
                                  save_result, delete_spreadsheet, RequestParser)
 
 
@@ -193,9 +193,9 @@ class Projects(ProjectBase):
         args = bulk_project_parser.parse_args(req=req)
 
         projects = [
-            load_project(id, raise_exception=True)
+            load_project_record(id, raise_exception=True)
             for id in args['projects']
-        ]
+            ]
 
         for project in projects:
             project.recursive_delete()
@@ -256,7 +256,7 @@ class Project(Resource):
         current_app.logger.debug("updateProject data: %s" % args)
 
         # Check whether we are editing a project
-        project_entry = load_project(project_id) if project_id else None
+        project_entry = load_project_record(project_id) if project_id else None
         if not project_entry:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -318,7 +318,7 @@ class Project(Resource):
     def delete(self, project_id):
         current_app.logger.debug("deleteProject %s" % project_id)
         # only loads the project if current user is either owner or admin
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         user_id = current_user.id
 
         if project_entry is None:
@@ -359,7 +359,7 @@ class ProjectSpreadsheet(Resource):
     def get(self, project_id):
         cu = current_user
         current_app.logger.debug("get ProjectSpreadsheet(%s %s)" % (cu.id, project_id))
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -410,7 +410,7 @@ class ProjectSpreadsheet(Resource):
         current_app.logger.debug(
             "PUT /api/project/%s/spreadsheet" % project_id)
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         project_name = project_entry.name
         user_id = current_user.id
@@ -438,7 +438,7 @@ class ProjectSpreadsheet(Resource):
         # from optima.parameters import Parameterset
         ParsetsDb.query.filter_by(project_id=project_id).delete('fetch')
         db.session.flush()
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         project_instance = project_entry.hydrate()
         project_instance.loadspreadsheet(server_filename)
         project_instance.modified = datetime.now(dateutil.tz.tzutc())
@@ -504,7 +504,7 @@ class ProjectEcon(Resource):
     def get(self, project_id):
         cu = current_user
         current_app.logger.debug("get ProjectEcon(%s %s)" % (cu.id, project_id))
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -548,7 +548,7 @@ class ProjectEcon(Resource):
         current_app.logger.debug(
             "POST /api/project/%s/economics" % project_id)
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         project_name = project_entry.name
         user_id = current_user.id
@@ -617,7 +617,7 @@ class ProjectEcon(Resource):
     def delete(self, project_id):
         cu = current_user
         current_app.logger.debug("user %s:POST /api/project/%s/economics" % (cu.id, project_id))
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -661,7 +661,7 @@ class ProjectData(Resource):
     @report_exception
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/data" % project_id)
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
@@ -692,8 +692,8 @@ class ProjectData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        project_entry = load_project(project_id)
-        if project_entry is None:
+        project_record = load_project_record(project_id)
+        if project_record is None:
             raise ProjectDoesNotExist(project_id)
 
         project_instance = op.loadobj(uploaded_file)
@@ -704,20 +704,20 @@ class ProjectData(Resource):
             current_app.logger.info(
                 "runsim result for project %s: %s" % (project_id, result))
 
-        project_entry.restore(project_instance)
-        db.session.add(project_entry)
+        project_record.restore(project_instance)
+        db.session.add(project_record)
         db.session.flush()
 
         if project_instance.data:
             assert(project_instance.parsets)
-            result_record = save_result(project_entry.id, result)
+            result_record = save_result(project_record.id, result)
             db.session.add(result_record)
 
         db.session.commit()
 
         reply = {
             'file': source_filename,
-            'result': 'Project %s is updated' % project_entry.name,
+            'result': 'Project %s is updated' % project_record.name,
         }
         return reply
 
@@ -755,36 +755,34 @@ class ProjectFromData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        project_instance = op.loadobj(uploaded_file)
-        project_instance.name = project_name
+        project = op.loadobj(uploaded_file)
+        project.name = project_name
 
         from optima.makespreadsheet import default_datastart, default_dataend
         datastart = default_datastart
         dataend = default_dataend
         pops = {}
 
-        project_entry = ProjectDb(
-            project_name, user_id, datastart,
-            dataend,
-            pops,
-            version=op.__version__)
+        print(">>>> Here we start processing upload:")
+
+        project_record = ProjectDb(
+            project_name, user_id, datastart, dataend, pops, version=op.__version__)
 
         # New project ID needs to be generated before calling restore
-        db.session.add(project_entry)
+        db.session.add(project_record)
         db.session.flush()
 
-        if project_instance.data:
-            assert(project_instance.parsets)
-            result = project_instance.runsim()
-            current_app.logger.info(
-                "runsim result for project %s: %s" % (project_entry.id, result))
+        if project.data:
+            assert(project.parsets)
+            result = project.runsim()
+            print('>>>> Runsim for project: "%s"' % (project_record.name))
 
-        project_entry.restore(project_instance)
-        db.session.add(project_entry)
+        project_record.restore(project)
+        db.session.add(project_record)
         db.session.flush()
 
-        if project_instance.data:
-            result_record = save_result(project_entry.id, result)
+        if project.data:
+            result_record = save_result(project_record.id, result)
             db.session.add(result_record)
 
         db.session.commit()
@@ -792,7 +790,7 @@ class ProjectFromData(Resource):
         reply = {
             'file': source_filename,
             'result': 'Project %s is created' % project_name,
-            'id': str(project_entry.id)
+            'id': str(project_record.id)
         }
         return reply
 
@@ -824,7 +822,7 @@ class ProjectCopy(Resource):
         new_project_name = args['to']
 
         # Get project row for current user with project name
-        project_entry = load_project(
+        project_entry = load_project_record(
             project_id, all_data=True, raise_exception=True)
         project_user_id = project_entry.user_id
 
@@ -911,9 +909,9 @@ class Portfolio(Resource):
             loaddir = TEMPLATEDIR
 
         projects = [
-            load_project(id, raise_exception=True).as_file(loaddir)
+            load_project_record(id, raise_exception=True).as_file(loaddir)
             for id in args['projects']
-        ]
+            ]
 
         zipfile_name = '{}.zip'.format(uuid4())
         zipfile_server_name = os.path.join(loaddir, zipfile_name)
@@ -940,18 +938,19 @@ class Defaults(Resource):
     @marshal_with(defaults_fields)
     @login_required
     def get(self, project_id):
-        from server.webapp.programs import get_default_programs, program_categories
+        from server.webapp.programs import get_default_program_summaries, program_categories
 
-        project = load_project(project_id, raise_exception=True)
+        project = load_project_record(project_id, raise_exception=True)
         be_project = project.hydrate()
-        programs = get_default_programs(be_project, for_fe = True)
+        program_summaries = get_default_program_summaries(be_project, for_fe = True)
         program_categories = program_categories(be_project)
-        for p in programs:
+        for p in program_summaries:
             p['active'] = False
         payload = {
-            "programs": programs,
+            "programs": program_summaries,
             "categories": program_categories
         }
+        print(">>> Sending default programs %s" % [p['short_name'] for p in program_summaries])
         return payload
 
 
@@ -971,7 +970,7 @@ class Partnerships(Resource):
     @marshal_with(pship_fields, envelope="populations")
     @login_required
     def get(self, project_id):
-        project = load_project(project_id, raise_exception=True)
+        project = load_project_record(project_id, raise_exception=True)
         be_project = project.hydrate()
         return [{
             'type': key,

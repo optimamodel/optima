@@ -14,7 +14,7 @@ from flask_restful_swagger import swagger
 from server.webapp.inputs import (SubParser, secure_filename_input, AllowedSafeFilenameStorage,
                                   Json as JsonInput)
 
-from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
+from server.webapp.utils import (load_project_record, RequestParser, report_exception, TEMPLATEDIR,
                                  upload_dir_user, save_result)
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
@@ -49,7 +49,7 @@ class ParsetYkeys(Resource):
     )
     @marshal_with(y_keys_fields)
     def get(self, project_id):
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         parsets = {str(item.id): item.hydrate() for item in reply}
@@ -70,7 +70,7 @@ class ParsetLimits(Resource):
     )
     @marshal_with(limits_fields)
     def get(self, project_id):
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         be_project = project_entry.hydrate()
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
@@ -105,7 +105,7 @@ class Parsets(Resource):
     def get(self, project_id):
 
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         result = [item.hydrate() for item in reply]
 
@@ -126,7 +126,7 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
         if name in project_instance.parsets:
             raise ParsetAlreadyExists(project_id, name)
@@ -191,7 +191,7 @@ class ParsetsDetail(Resource):
     def delete(self, project_id, parset_id):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
         if parset is None:
@@ -232,7 +232,7 @@ class ParsetsDetail(Resource):
         args = rename_parser.parse_args()
         name = args['name']
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         target_parset = [item for item in project_entry.parsets if item.id == parset_id]
         if target_parset:
             target_parset = target_parset[0]
@@ -325,7 +325,7 @@ class ParsetsCalibration(Resource):
         print "autofit", autofit
 
         if not autofit:
-            project_entry = load_project(project_id, raise_exception=True)
+            project_entry = load_project_record(project_id, raise_exception=True)
             project_instance = project_entry.hydrate()
         else: # todo bail out if no working project
             wp = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
@@ -391,7 +391,7 @@ class ParsetsCalibration(Resource):
             mflists['values'].append(param['value'])
         parset_instance.update(mflists)
         # recalculate
-        project_entry = load_project(parset_entry.project_id, raise_exception=True)
+        project_entry = load_project_record(parset_entry.project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
         simparslist = parset_instance.interp()
         result = project_instance.runsim(simpars=simparslist)
@@ -565,7 +565,7 @@ class ParsetsData(Resource):
         args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         parset_entry = project_entry.find_parset(parset_id)
         parset_instance = op.loadobj(uploaded_file)

@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 import traceback
+from pprint import pprint
 
 from dataio import TEMPLATEDIR, upload_dir_user, fromjson, tojson
 
@@ -15,6 +16,9 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, UserDb, ResultsDb, ParsetsDb
 
 import optima as op
+
+from server.webapp.jsonhelper import OptimaJSONEncoder, normalize_obj
+
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}  # TODO this should be checked per upload type
@@ -136,7 +140,7 @@ def project_exists(project_id, raise_exception=False):
     return count > 0
 
 
-def load_project(project_id, all_data=False, raise_exception=False, db_session=None):
+def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None):
     from sqlalchemy.orm import undefer, defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
     if not db_session:
@@ -161,46 +165,46 @@ def load_project(project_id, all_data=False, raise_exception=False, db_session=N
             # undefer('model'),
             # defaultload(ProjectDb.working_project).undefer('model'),
             defaultload(ProjectDb.project_data).undefer('meta'))
-    project = query.first()
-    if project is None:
+    project_record = query.first()
+    if project_record is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
         if raise_exception:
             raise ProjectDoesNotExist(id=project_id)
-    return project
+    return project_record
 
 
 def _load_project_child(project_id, record_id, record_class, exception_class, raise_exception=True):
     cu = current_user
     current_app.logger.debug("getting {} {} for user {}".format(record_class.__name__, record_id, cu.id))
 
-    print "record_id", record_id, "record_class", record_class
-    entry = db.session.query(record_class).get(record_id)
-    if entry is None:
+    print "record_id", record_id, "record_class", type(record_class)
+    record = db.session.query(record_class).get(record_id)
+    if record is None:
         if raise_exception:
             raise exception_class(id=record_id)
         return None
 
-    if entry.project_id != project_id:
+    if record.project_id != project_id:
         if raise_exception:
             raise exception_class(id=record_id)
         return None
 
-    if not cu.is_admin and entry.project.user_id != cu.id:
+    if not cu.is_admin and record.project.user_id != cu.id:
         if raise_exception:
             raise exception_class(id=record_id)
         return None
 
-    return entry
+    return record
 
 
-def load_progset(project_id, progset_id, raise_exception=True):
+def load_progset_record(project_id, progset_id, raise_exception=True):
     from server.webapp.dbmodels import ProgsetsDb
     from server.webapp.exceptions import ProgsetDoesNotExist
 
     return _load_project_child(project_id, progset_id, ProgsetsDb, ProgsetDoesNotExist, raise_exception)
 
 
-def load_parset(project_id, parset_id, raise_exception=True):
+def load_parset_record(project_id, parset_id, raise_exception=True):
     from server.webapp.dbmodels import ParsetsDb
     from server.webapp.exceptions import ParsetDoesNotExist
 
@@ -214,60 +218,60 @@ def load_parset(project_id, parset_id, raise_exception=True):
     cu = current_user
     current_app.logger.debug("getting parset {} for user {}".format(parset_id, cu.id))
 
-    parset_entry = db.session.query(ParsetsDb).get(parset_id)
-    if parset_entry is None:
+    parset_record = db.session.query(ParsetsDb).get(parset_id)
+    if parset_record is None:
         if raise_exception:
             raise ParsetDoesNotExist(id=parset_id)
         return None
 
-    if parset_entry.project_id != project_id:
+    if parset_record.project_id != project_id:
         if raise_exception:
             raise ParsetDoesNotExist(id=parset_id)
         return None
 
-    return parset_entry
+    return parset_record
 
 
-def load_program(project_id, progset_id, program_id, raise_exception=True):
+def load_program_record(project_id, progset_id, program_id, raise_exception=True):
     from server.webapp.dbmodels import ProgramsDb
     from server.webapp.exceptions import ProgramDoesNotExist
 
     cu = current_user
     current_app.logger.debug("getting project {} for user {}".format(progset_id, cu.id))
 
-    progset_entry = load_progset(project_id, progset_id,
-                                 raise_exception=raise_exception)
+    progset_record = load_progset_record(project_id, progset_id,
+                                         raise_exception=raise_exception)
 
-    program_entry = db.session.query(ProgramsDb).get(program_id)
+    program_record = db.session.query(ProgramsDb).get(program_id)
 
-    if program_entry.progset_id != progset_entry.id:
+    if program_record.progset_id != progset_record.id:
         if raise_exception:
             raise ProgramDoesNotExist(id=program_id)
         return None
 
-    return program_entry
+    return program_record
 
 
-def load_scenario(project_id, scenario_id, raise_exception=True):
+def load_scenario_record(project_id, scenario_id, raise_exception=True):
     from server.webapp.dbmodels import ScenariosDb
     from server.webapp.exceptions import ScenarioDoesNotExist
 
     cu = current_user
     current_app.logger.debug("getting scenario {} for user {}".format(scenario_id, cu.id))
 
-    scenario_entry = db.session.query(ScenariosDb).get(scenario_id)
+    scenario_record = db.session.query(ScenariosDb).get(scenario_id)
 
-    if scenario_entry is None:
+    if scenario_record is None:
         if raise_exception:
             raise ScenarioDoesNotExist(id=scenario_id)
         return None
 
-    if scenario_entry.project_id != project_id:
+    if scenario_record.project_id != project_id:
         if raise_exception:
             raise ScenarioDoesNotExist(id=scenario_id)
         return None
 
-    return scenario_entry
+    return scenario_record
 
 
 
@@ -308,7 +312,7 @@ def load_model(project_id, from_json=True, working_model=False):  # todo rename
     # TODO we won't have to do this for working_model, because this concept won't make sense in Optima 2.0
     current_app.logger.debug("load_model:%s" % project_id)
     model = None
-    project = load_project(project_id)
+    project = load_project_record(project_id)
     if project is not None:
         if not working_model or project.working_project is None:
             current_app.logger.debug("project %s loading main model" % project_id)
@@ -326,7 +330,7 @@ def load_model(project_id, from_json=True, working_model=False):  # todo rename
 def save_working_model_as_default(project_id):  # TODO will be about results, not about the model
     current_app.logger.debug("save_working_model_as_default %s" % project_id)
 
-    project = load_project(project_id)
+    project = load_project_record(project_id)
     model = project.model
 
     # Make sure there is a working project
@@ -342,7 +346,7 @@ def save_working_model_as_default(project_id):  # TODO will be about results, no
 def revert_working_model_to_default(project_id):  # TODO will be about results, not about the model
     current_app.logger.debug("revert_working_model_to_default %s" % project_id)
 
-    project = load_project(project_id, all_data=True)
+    project = load_project_record(project_id, all_data=True)
     model = project.model
 
     # Make sure there is a working project
@@ -361,7 +365,7 @@ def save_model(project_id, model, to_json=False):
 
     if to_json:
         model = model_as_dict(model)
-    project = load_project(project_id)
+    project = load_project_record(project_id)
     project.model = model  # we want it to fail if there is no project...
     db.session.add(project)
     db.session.commit()
@@ -392,7 +396,7 @@ def for_fe(item):  # only for json
         return item
 
 
-def update_or_create_parset(project_id, name, parset):
+def update_or_create_parset_record(project_id, name, parset):
 
     from datetime import datetime
     import dateutil
@@ -418,7 +422,7 @@ def update_or_create_parset(project_id, name, parset):
         db.session.add(parset_record)
 
 
-def update_or_create_progset(project_id, name, progset):
+def update_or_create_progset_record(project_id, name, progset):
 
     from datetime import datetime
     import dateutil
@@ -445,56 +449,59 @@ def update_or_create_progset(project_id, name, progset):
     return progset_record
 
 
-def update_or_create_program(project_id, progset_id, name, program, active=False):
+def update_or_create_program_record(project_id, progset_id, name, program_summary, active=False):
 
     from datetime import datetime
     import dateutil
     from server.webapp.dbmodels import ProgramsDb
     from optima.utils import saves
 
+    print('>>>>> Making program_record with program: %s' % program_summary['short'])
+
     program_record = ProgramsDb.query \
         .filter_by(
-            short=program.get('short', None),
+            short=program_summary.get('short', None),
             project_id=project_id,
             progset_id=progset_id
         ).first()
+
+    costcov = normalize_obj(program_summary.get('costcov', []))
 
     if program_record is None:
         program_record = ProgramsDb(
             project_id=project_id,
             progset_id=progset_id,
             name=name,
-            short=program.get('short', ''),
-            category=program.get('category', ''),
+            short=program_summary.get('short', ''),
+            category=program_summary.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
-            pars=ProgramsDb.program_pars_to_pars(program.get('targetpars', [])),
-            targetpops=program.get('targetpops', []),
+            pars=ProgramsDb.convert_to_pars(program_summary.get('targetpars', [])),
+            targetpops=program_summary.get('targetpops', []),
             active=active,
-            criteria=program.get('criteria', None),
-            costcov=program.get('costcov', [])
+            criteria=program_summary.get('criteria', None),
+            costcov=costcov
         )
-
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.pars = ProgramsDb.program_pars_to_pars(program.get('targetpars', []))
-        program_record.targetpops = program.get('targetpops', [])
-        program_record.short = program.get('short', '')
-        program_record.category = program.get('category', '')
+        program_record.pars = ProgramsDb.convert_to_pars(program_summary.get('targetpars', []))
+        program_record.targetpops = program_summary.get('targetpops', [])
+        program_record.short = program_summary.get('short', '')
+        program_record.category = program_summary.get('category', '')
         program_record.active = active
-        program_record.criteria = program.get('criteria', None)
-        program_record.costcov = program.get('costcov', [])
+        program_record.criteria = program_summary.get('criteria', None)
+        program_record.costcov = costcov
 
     program_record.blob = saves(program_record.hydrate())
     db.session.add(program_record)
     return program_record
 
 
-def modify_program(project_id, progset_id, program_id, args, program_modifier):
+def modify_program_record(project_id, progset_id, program_id, args, program_modifier):
     # looks up a program, hydrates it, calls a modifier
     # (function defined somewhere) with given args, saves the result
     # TODO could such things be done as decorators?
-    program_entry = load_program(project_id, progset_id, program_id)
+    program_entry = load_program_record(project_id, progset_id, program_id)
     if program_entry is None:
         raise ProgramDoesNotExist(id=program_id, project_id=project_id)
     program_instance = program_entry.hydrate()
@@ -507,7 +514,7 @@ def modify_program(project_id, progset_id, program_id, args, program_modifier):
     return result
 
 
-def update_or_create_scenario(project_id, project, name):  # project might have a different ID than the one we want
+def update_or_create_scenario_record(project_id, project, name):  # project might have a different ID than the one we want
 
     from datetime import datetime
     import dateutil
@@ -534,7 +541,8 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
         blob['years'] = scenario.t
     for key in ['budget', 'coverage', 'pars']:
         if hasattr(scenario, key) and getattr(scenario, key):
-            blob[key] = json.loads(json.dumps(getattr(scenario, key)))
+            val = getattr(scenario, key)
+            blob[key] = json.loads(json.dumps(val, cls=OptimaJSONEncoder))
 
     parset_name = scenario.parsetname
     if parset_name:
@@ -579,7 +587,7 @@ def update_or_create_scenario(project_id, project, name):  # project might have 
     return scenario_record
 
 
-def update_or_create_optimization(project_id, project, name):
+def update_or_create_optimization_record(project_id, project, name):
 
     from datetime import datetime
     import dateutil
@@ -665,14 +673,6 @@ def save_result(project_id, result, parset_name='default', calculation_type = Re
             blob=op.saves(result)
         )
     return result_record
-
-
-def remove_nans(obj):
-    import json
-    # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-    json_string = json.dumps(obj).replace('NaN', 'null')
-    return json.loads(json_string)
-
 
 
 def init_login_manager(login_manager):

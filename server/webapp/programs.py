@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from optima.defaults import defaultprograms
 
-def get_default_programs(project, for_fe = False):
+def get_default_program_summaries(project, for_fe = False):
 
     programs = defaultprograms(project)
     rv = []
@@ -33,7 +33,7 @@ def get_default_programs(project, for_fe = False):
 def program_categories(project):
     result = []
     next_category = None
-    for p in get_default_programs(project, for_fe = True):
+    for p in get_default_program_summaries(project, for_fe = True):
         current_category = p['category']
         if next_category is not None and next_category['category'] == current_category:
             next_category['programs'].append({'short_name': p['short_name'], 'name': p['name']})

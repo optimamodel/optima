@@ -1,19 +1,17 @@
 
-<table style="width:100%; height:calc(100vh - 280px)">
-
-  <td class="small_bordered_list" style="margin-left:0; vertical-align:top; width:400px; height:100%">
-    <div style="overflow:scroll" ng-if="graphs.selectors.length > 0">
-      <div class="option_list"">
+  <div style="position:absolute; width:400px; height:{{height}}px; overflow:auto;">
+    <div style="">
+      <div class="small_bordered_list" class="option_list" ng-if="graphs.selectors.length > 0">
         <div ng-repeat="selector in graphs.selectors" class="option">
           <span><input type="checkbox" ng-model="selector.checked"/></span>
           <span style="margin-left:10px">{{selector.name}}</span>
         </div>
       </div>
     </div>
-  </td>
+  </div>
 
-  <td>
-    <div style="overflow:scroll; width:100%; height:100%; text-align:left;">
+  <div style="padding-left:400px">
+    <div style="">
       <div>
         <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
         <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
@@ -24,6 +22,6 @@
         </chart-toolbar>
       </div>
     </div>
-  </td>
+  </div>
 
-</table>
+

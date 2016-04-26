@@ -1,4 +1,6 @@
-ALL_POPULATIONS_SOURCE = """ 
+# This looks like an unused file
+
+ALL_POPULATIONS_SOURCE = """
 Short name;Full name;Male;Female;AgeFrom;AgeTo;Injects;SexWorker
 FSW;Female sex workers;0;1;15;49;0;1;
 Clients;Clients of sex workers;1;0;15;49;0;1;

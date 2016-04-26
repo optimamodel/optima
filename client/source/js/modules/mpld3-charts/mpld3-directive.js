@@ -102,13 +102,27 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
         scope.$watch(
           'graphs',
           function() {
-            if (!_.isUndefined(scope.graphs)) {
-              _.each(scope.graphs.mpld3_graphs, function (g, i) {
-                g.isChecked = function () { return isChecked(i); };
-              });
+            if (_.isUndefined(scope.graphs)) {
+              return;
             }
+            _.each(scope.graphs.mpld3_graphs, function (g, i) {
+              g.isChecked = function () { return isChecked(i); };
+            });
+            var parent = $(element).parent();
+            scope.height = parent.height();
           }
         );
+
+        scope.onResize = function () {
+          var parent = $(element).parent();
+          scope.height = parent.height();
+          console.log("resize", parent, scope.height);
+          scope.$apply();
+        };
+
+        $(window).bind('resize', function () {
+          scope.onResize();
+        })
       }
     };
   });

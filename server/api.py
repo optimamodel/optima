@@ -10,7 +10,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
-
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if new_path not in sys.path:
@@ -57,7 +56,7 @@ def before_request():
         g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 
-from server.webapp.scenarios import scenarios
+# from server.webapp.scenarios import scenarios
 from server.webapp.model import model
 from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,

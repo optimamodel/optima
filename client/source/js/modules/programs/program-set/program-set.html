@@ -29,7 +29,7 @@
       <p></p>
 
       <!-- TODO: Category, Program loops can be improved for better performance -->
-      <div class="section" ng-repeat="category in categories">
+      <div class="section" ng-repeat="category in getCategories()">
         <table class="section table table-bordered">
           <tr>
             <td colspan="5"><b>{{category}}</b></td>
@@ -60,7 +60,7 @@
       <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
     </div>
     <div class="section" style="margin-top: 20px">
-      <button class="btn __green" type="submit" ng-click="saveProgramSet()" ng-disabled="!activeProgramSet">Save program set</button>
+      <button class="btn" type="submit" ng-click="saveProgramSet()" ng-disabled="!activeProgramSet">Save program set</button>
     </div>
   </div>
 </div>

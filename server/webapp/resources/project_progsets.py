@@ -9,7 +9,7 @@ from flask_restful_swagger import swagger
 from flask import helpers
 
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project, load_progset, report_exception, modify_program, load_program
+from server.webapp.utils import load_project_record, load_progset_record, report_exception, modify_program_record, load_program_record
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ParsetDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 
@@ -41,7 +41,7 @@ class Progsets(Resource):
     def get(self, project_id):
 
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -51,6 +51,7 @@ class Progsets(Resource):
             for program in progset.programs:
                 program.get_optimizable()
 
+        print "Get progsets", reply
         return reply
 
     @swagger.operation(
@@ -60,7 +61,7 @@ class Progsets(Resource):
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -96,7 +97,7 @@ class Progset(Resource):
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
 
         progset_entry.get_extra_data()
 
@@ -114,7 +115,7 @@ class Progset(Resource):
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
         args = progset_parser.parse_args()
         progset_entry.name = args['name']
         progset_entry.recreate_programs_from_list(args.get('programs', []), progset_id)
@@ -163,7 +164,7 @@ class ProgsetData(Resource):
     )
     def get(self, project_id, progset_id):
         current_app.logger.debug("GET /api/project/{}/progsets/{}/data".format(project_id, progset_id))
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
 
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
@@ -183,7 +184,7 @@ class ProgsetData(Resource):
         Uploads Data file, uses it to update the progrset and program models.
         Precondition: model should exist.
         """
-        from server.webapp.programs import get_default_programs
+        from server.webapp.programs import get_default_program_summaries
 
         current_app.logger.debug("POST /api/project/{}/progsets/{}/data".format(project_id, progset_id))
 
@@ -192,12 +193,12 @@ class ProgsetData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
 
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         project = project_entry.hydrate()
         if project.data != {}:
-            program_list = get_default_programs(project)
+            program_list = get_default_program_summaries(project)
         else:
             program_list = []
 
@@ -222,12 +223,12 @@ class ProgsetParams(Resource):
     )
     @marshal_with(param_fields)
     def get(self, project_id, progset_id, parset_id):
-        from server.webapp.utils import load_progset, load_parset
+        from server.webapp.utils import load_progset_record, load_parset_record
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
         progset_be = progset_entry.hydrate()
 
-        parset_entry = load_parset(project_id, parset_id)
+        parset_entry = load_parset_record(project_id, parset_id)
         parset_be = parset_entry.hydrate()
 
         param_names = set([p['param'] for p in progset_be.targetpars])
@@ -256,9 +257,9 @@ class ProgsetEffects(Resource):
     )
     @marshal_with(progset_effects_fields)
     def get(self, project_id, progset_id):
-        from server.webapp.utils import load_progset
+        from server.webapp.utils import load_progset_record
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
         return progset_entry
 
     @swagger.operation(
@@ -267,9 +268,9 @@ class ProgsetEffects(Resource):
     )
     @marshal_with(progset_effects_fields)
     def put(self, project_id, progset_id):
-        from server.webapp.utils import load_progset
+        from server.webapp.utils import load_progset_record
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
 
         args = effect_parser.parse_args()
         progset_entry.effects = args.get('effects', [])
@@ -293,11 +294,12 @@ class Programs(Resource):
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)
 
         reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
+        print(reply)
         return reply
 
     @swagger.operation(
@@ -307,7 +309,7 @@ class Programs(Resource):
     def post(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
 
-        progset_entry = load_progset(project_id, progset_id)
+        progset_entry = load_progset_record(project_id, progset_id)
         if progset_entry is None:
             raise ProgsetDoesNotExist(id=progset_id)
 
@@ -339,7 +341,7 @@ class PopSize(Resource):
         args = popsize_parser.parse_args()
         parset_id = args['parset_id']
 
-        program_entry = load_program(project_id, progset_id, program_id)
+        program_entry = load_program_record(project_id, progset_id, program_id)
         if program_entry is None:
             raise ProgramDoesNotExist(id=program_id, project_id=project_id)
         program_instance = program_entry.hydrate()
@@ -365,7 +367,7 @@ class CostCoverage(Resource):
         description="Get costcoverage parameters and data for the given program.")
     def get(self, project_id, progset_id, program_id):
 
-        program_entry = load_program(project_id, progset_id, program_id)
+        program_entry = load_program_record(project_id, progset_id, program_id)
 
         return {"params": program_entry.ccopars or {},
                 "data": program_entry.data_db_to_api()}
@@ -374,7 +376,7 @@ class CostCoverage(Resource):
         description="Replace costcoverage parameters and data for the given program.")
     def put(self, project_id, progset_id, program_id):
 
-        program_entry = load_program(project_id, progset_id, program_id)
+        program_entry = load_program_record(project_id, progset_id, program_id)
 
         args = costcov_data_parser.parse_args()
         program_entry.ccopars = args.get('params', {})
@@ -414,7 +416,7 @@ class CostCoverageGraph(Resource):
             if args.get(x):
                 plotoptions[x] = args[x]
 
-        program_entry = load_program(project_id, progset_id, program_id)
+        program_entry = load_program_record(project_id, progset_id, program_id)
         if program_entry is None:
             raise ProgramDoesNotExist(id=program_id, project_id=project_id)
         program_instance = program_entry.hydrate()
@@ -463,7 +465,7 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-        result = modify_program(project_id, progset_id, program_id, args, self.add_data_for_instance)
+        result = modify_program_record(project_id, progset_id, program_id, args, self.add_data_for_instance)
 
         return result, 201
 
@@ -480,7 +482,7 @@ class CostCoverageData(Resource):
             })
         """
         args = costcov_data_point_parser.parse_args()
-        result = modify_program(project_id, progset_id, program_id, args, self.update_data_for_instance)
+        result = modify_program_record(project_id, progset_id, program_id, args, self.update_data_for_instance)
 
         return result
 
@@ -491,7 +493,7 @@ class CostCoverageData(Resource):
         removes data point for the given year from program parameters.
         """
         args = costcov_data_locator_parser.parse_args()
-        result = modify_program(project_id, progset_id, program_id, args, self.delete_data_for_instance)
+        result = modify_program_record(project_id, progset_id, program_id, args, self.delete_data_for_instance)
 
         return result
 
@@ -527,7 +529,7 @@ class CostCoverageParam(Resource):
             'unitcost': (unitcost_lower,unitcost_upper)})
         """
         args = costcov_param_parser.parse_args()
-        result = modify_program(project_id, progset_id, program_id, args, self.add_param_for_instance)
+        result = modify_program_record(project_id, progset_id, program_id, args, self.add_param_for_instance)
 
 
         return result, 201
@@ -544,7 +546,7 @@ class CostCoverageParam(Resource):
             'unitcost': (unitcost_lower,unitcost_upper)})
         """
         args = costcov_param_parser.parse_args()
-        result = modify_program(project_id, progset_id, program_id, args, self.update_param_for_instance)
+        result = modify_program_record(project_id, progset_id, program_id, args, self.update_param_for_instance)
 
         return result
 
@@ -555,6 +557,6 @@ class CostCoverageParam(Resource):
         removes cco parameter for the given year from program parameters.
         """
         args = costcov_data_locator_parser.parse_args()
-        result = modify_program(project_id, progset_id, program_id, args, self.delete_param_for_instance)
+        result = modify_program_record(project_id, progset_id, program_id, args, self.delete_param_for_instance)
 
         return result

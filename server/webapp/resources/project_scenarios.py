@@ -14,7 +14,7 @@ from flask import helpers
 from server.webapp.inputs import SubParser, scenario_par, scenario_program, Json as JsonInput
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
 from server.webapp.utils import (
-    load_project, load_progset, load_program, load_scenario, RequestParser, report_exception, modify_program)
+    load_project_record, load_progset_record, load_program_record, load_scenario_record, RequestParser, report_exception, modify_program_record)
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ScenarioDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 from server.webapp.dbconn import db
@@ -137,7 +137,7 @@ class Scenarios(Resource):
         """
         Get the scenarios for the given project
         """
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -239,16 +239,28 @@ class Scenarios(Resource):
         return self._scenarios_for_fe(ScenariosDb.query.filter_by(project_id=project_id).all())
 
 
-# /api/project/<project-id>/scenarios/results
+
+def extract_graph_selector(graph_key):
+    s = repr(graph_key)
+    base = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
+    if "'t'" in s:
+        suffix = "-tot"
+    elif "'p'" in s:
+        suffix = "-per"
+    else:
+        suffix = ""
+    return base + suffix
+
 
 
 def make_mpld3_graph_dict(result, which=None):
     """
     Converts an Optima sim Result into a dictionary containing
-    mpld3 graph dictionaries and associated keys for display.
+    mpld3 graph dictionaries and associated keys for display,
+    which can be exported as JSON.
 
     Args:
-        result: the Optima simulation Result obect
+        result: the Optima simulation Result object
         which: a list of keys to determine which plots to generate
 
     Returns:
@@ -258,12 +270,13 @@ def make_mpld3_graph_dict(result, which=None):
                 "graph_selectors": ["key of a selector",...],
                 "selectors": [<selector dictionary>]
             }
-        mpld3_graphs is the same length as graph_selectors
-        selectors are shown on screen and graph_selectors refer to selectors
-        selector: {
-            "key": "unique name",
-            "name": "Long description",
-            "checked": boolean
+            - mpld3_graphs is the same length as graph_selectors
+            - selectors are shown on screen and graph_selectors refer to selectors
+            - selector: {
+                "key": "unique name",
+                "name": "Long description",
+                "checked": boolean
+              }
         }
     """
 
@@ -275,30 +288,13 @@ def make_mpld3_graph_dict(result, which=None):
         {'key': key, 'name': name, 'checked': checked}
          for (key, name, checked) in zip(keys, names, checks)]
 
-    graph_dict = {
-        'graphs': {
-            "mpld3_graphs": [],
-            "selectors": selectors,
-            'graph_selectors': []
-        }
-    }
-
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
     which = keys
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
-    def extract_graph_selector(graph_key):
-        s = repr(graph_key)
-        base = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
-        if "'t'" in s:
-            suffix = "-tot"
-        elif "'p'" in s:
-            suffix = "-per"
-        else:
-            suffix = ""
-        return base + suffix
-
+    graph_selectors = []
+    mpld3_graphs = []
     for graph_key in graphs:
         # Add necessary plugins here
         mpld3.plugins.connect(
@@ -306,15 +302,24 @@ def make_mpld3_graph_dict(result, which=None):
             mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
 
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
+
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        mpld3_dict = json.loads(json.dumps(mpld3_dict).replace('NaN', 'null'))
+        mpld3_dict = json.loads(json.dumps(mpld3_dict, cls=Op).replace('NaN', 'null'))
 
-        graph_selector = extract_graph_selector(graph_key)
-        graph_dict['graphs']['graph_selectors'].append(graph_selector)
-        graph_dict['graphs']["mpld3_graphs"].append(mpld3_dict)
+        graph_selectors.append(extract_graph_selector(graph_key))
+        mpld3_graphs.append(mpld3_dict)
 
-    return graph_dict
+    return {
+        'graphs': {
+            "mpld3_graphs": mpld3_graphs,
+            "selectors": selectors,
+            'graph_selectors': graph_selectors
+        }
+    }
 
+
+
+# /api/project/<project-id>/scenarios/results
 
 class ScenarioResults(Resource):
 
@@ -323,12 +328,11 @@ class ScenarioResults(Resource):
     @swagger.operation()
     def get(self, project_id):
         """
-        Run the scenarios for a given project.
+        Run the scenarios for a given project and returns the graphs.
         """
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         project = project_entry.hydrate()
         project.runscenarios()
-
         return make_mpld3_graph_dict(project.results[-1])
 
 
@@ -346,7 +350,7 @@ class Scenario(Resource):
         """
         Get a given single scenario.
         """
-        return load_scenario(project_id, scenario_id)
+        return load_scenario_record(project_id, scenario_id)
 
     @swagger.operation(
         parameters=scenario_parser.swagger_parameters(),
@@ -374,7 +378,7 @@ class Scenario(Resource):
         if coverage:
             blob['coverage'] = coverage
 
-        scenario_entry = load_scenario(project_id, scenario_id)
+        scenario_entry = load_scenario_record(project_id, scenario_id)
 
         scenario_entry.name = args['name']
         scenario_entry.scenario_type = args['scenario_type']
@@ -392,7 +396,7 @@ class Scenario(Resource):
         """
         Delete the given scenario.
         """
-        scenario_entry = load_scenario(project_id, scenario_id)
+        scenario_entry = load_scenario_record(project_id, scenario_id)
 
         db.session.delete(scenario_entry)
         db.session.commit()

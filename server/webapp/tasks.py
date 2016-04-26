@@ -6,7 +6,7 @@ from server.api import app
 #from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ParsetsDb, WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.utils import save_result, load_project
+from server.webapp.utils import save_result, load_project_record
 import optima as op
 
 import datetime
@@ -37,7 +37,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     can_start = False
     can_join = False
     wp_parset_id = parset_id
-    project_entry = load_project(project_id, raise_exception=False, db_session=db_session)
+    project_entry = load_project_record(project_id, raise_exception=False, db_session=db_session)
     if not project_entry:
         close_db_session(db_session)
         raise ProjectDoesNotExist(project_id)

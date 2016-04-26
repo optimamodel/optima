@@ -11,7 +11,7 @@ autocalib = 0 # Whether or not to run autofitting
 manualcalib = 0
 runscenarios = 1 # Run scenarios
 optimize = 0
-dosave = 0
+dosave = 1
 filename = 'best.prj'
 
 P = defaults.defaultproject('best')
