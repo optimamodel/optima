@@ -749,29 +749,26 @@ class ProgsetsDb(db.Model):
                 program = progset.programs[key]
                 # program_print(program)
                 loaded_program_summary = parse_program_summary(program)
-                for key in ['ccopars', 'costcov', 'targetpops', 'targetpars']:
-                    if key in loaded_program_summary:
-                        program_summary[key] = loaded_program_summary[key]
+                for replace_key in ['ccopars', 'costcov', 'targetpops', 'parameters']:
+                    if replace_key in loaded_program_summary:
+                        program_summary[replace_key] = loaded_program_summary[replace_key]
                 active = True
-                print '>>>> Parse default active program "%s":%s' % (key, program_summary['name'])
             else:
                 active = False
-                print '>>>> Parse default inactive program "%s":%s' % (key, program_summary['name'])
 
+            if active:
+                desc = "default active"
+            else:
+                desc = "default inactive"
+            print '>>>> Parse %s program "%s" - "%s"' % (desc, key, program_summary['name'])
             p = update_or_create_program_record(self.project.id, self.id, key, program_summary, active)
-            p.pprint()
-            # if active:
-            #     p.restore(progset.programs[key])
 
         # In case programs from prj are not in the defaults
         for key, program in progset.programs.iteritems():
             if key not in loaded_program_keys:
-                print '>>>> Parse custom active program "%s":%s' % (key, program_summary['name'])
+                print '>>>> Parse custom active "%s" - "%s"' % (key, program_summary['name'])
                 program_summary = parse_program_summary(program)
-                p = update_or_create_program_record(
-                    self.project.id, self.id, key, program_summary, True)
-                p.pprint()
-                # p.restore(program)
+                p = update_or_create_program_record(self.project.id, self.id, key, program_summary, True)
 
         effects = []
         for targetpartype in progset.targetpartypes:
