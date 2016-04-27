@@ -51,9 +51,7 @@ class Progsets(Resource):
             progset.get_extra_data()
             for program in progset.programs:
                 program.get_optimizable()
-                pprint(progset._program_to_dict(program))
 
-        print "Get progsets", reply
         return reply
 
     @swagger.operation(
@@ -301,7 +299,6 @@ class Programs(Resource):
             raise ProgsetDoesNotExist(id=progset_id)
 
         reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
-        print(reply)
         return reply
 
     @swagger.operation(

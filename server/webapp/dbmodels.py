@@ -249,7 +249,7 @@ class ProjectDb(db.Model):
             self.datastart = int(project.data['years'][0])
             self.dataend = int(project.data['years'][-1])
 
-            print(">>>> Populations")
+            print(">>>> Gather populations in project")
             self.populations = []
             project_pops = normalize_obj(project.data['pops'])
             # pprint(project_pops)
@@ -565,25 +565,6 @@ class ProgramsDb(db.Model):
                 ])
         return parameters
 
-    @classmethod
-    def convert_to_pars(cls, targetpars):
-        """From BE Program to API Program"""
-        parameters = defaultdict(list)
-        for parameter in targetpars:
-            short = parameter['param']
-            pop = parameter['pop']
-            parameters[short].append(pop)
-        pars = [
-            {
-                'active': True,
-                'param': short_name,
-                'pops': pop,
-            }
-            for short_name, pop
-            in parameters.iteritems()
-        ]
-        return pars
-
     def datapoint_api_to_db(self, pt):
         return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
 
@@ -602,7 +583,6 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
-        print('>>>>> Hydrating program "%s"' % self.short)
         pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
         costcovdata = {}
         if self.costcov is not None:
@@ -612,22 +592,12 @@ class ProgramsDb(db.Model):
                 'coverage': pluck(self.costcov, 'coverage'),
             }
         ccopars = None
-        if self.ccopars is not None:
+        if self.ccopars:
             ccopars = {
                 't': self.ccopars['t'],
                 'saturation': map(tuple, self.ccopars['saturation']),
                 'unitcost': map(tuple, self.ccopars['unitcost'])
             }
-        # pprint({
-        #     'short': self.short,
-        #     'name': self.name,
-        #     'targetpars': self.fetch_program_targetpars(),
-        #     'category': self.category,
-        #     'targetpops': self.targetpops,
-        #     'criteria': self.criteria,
-        #     'costcovdata': costcovdata,
-        #     'ccopars': ccopars
-        # })
         program_instance = op.Program(
             self.short,
             targetpars=self.fetch_program_targetpars(),
@@ -641,29 +611,34 @@ class ProgramsDb(db.Model):
         program_instance.id = self.id
         return program_instance
 
+    def pprint(self):
+        pprint({
+            'short': self.short,
+            'name': self.name,
+            'pars': self.pars,
+            'category': self.category,
+            'targetpops': self.targetpops,
+            'criteria': self.criteria,
+            'costcov': self.costcov,
+            'ccopars': self.ccopars
+        })
+
     def get_optimizable(self):
         be_program = self.hydrate()
         self.optimizable = be_program.optimizable()
 
     def restore(self, program):
-        print(">>>>> Restoring program_instance '%s'" % program.short)
-
+        print(">>>>> Restore program '%s'" % program.short)
+        from server.webapp.programs import parse_targetpars, parse_covcovdata
         self.category = program.category
         self.name = program.name
         self.short = program.short
-        self.pars = self.convert_to_pars(program.targetpars)
+        self.pars = parse_targetpars(program.targetpars)
         self.targetpops = normalize_obj(program.targetpops)
         self.criteria = program.criteria
-
-        costcovdata = normalize_obj(program.costcovdata)
-        self.costcov = []
-        for i in range(len(costcovdata['t'])):
-            self.costcov.append({
-                'year': costcovdata['t'][i],
-                'cost': costcovdata['cost'][i],
-                'coverage': costcovdata['coverage'][i]
-            })
+        self.costcov = parse_covcovdata(program.costcovdata)
         self.ccopars = normalize_obj(program.costcovfn.ccopars)
+        self.pprint()
 
 
 @swagger.model
@@ -734,25 +709,10 @@ class ProgsetsDb(db.Model):
                     islist = isinstance(program_effect['pop'], list)
                     poptuple = tuple(program_effect['pop']) if islist else program_effect['pop']
                     covout = progset.covout[program_effect['name']]
-                    covout[poptuple].addccopar(effect, overwrite=True)
+                    if poptuple in covout:
+                        covout[poptuple].addccopar(effect, overwrite=True)
 
         return progset
-
-    def _program_to_dict(self, program_be):
-        program = program_be.__dict__
-        program['parameters'] = program.get('targetpars', [])
-        if 'costcovdata' not in program:
-            program['costcov'] = []
-        else:
-            program['costcov'] = [
-                {
-                    'year': program['costcovdata']['t'][i],
-                    'cost': program['costcovdata']['cost'][i],
-                    'coverage': program['costcovdata']['coverage'][i],
-                }
-                for i in range(len(program['costcovdata']['t']))
-            ]
-        return normalize_obj(program)
 
     def get_extra_data(self):
         be_progset = self.hydrate()
@@ -762,41 +722,56 @@ class ProgsetsDb(db.Model):
 
     def restore(self, progset, default_program_summaries):
         from server.webapp.utils import update_or_create_program_record
+        from server.webapp.programs import parse_program_summary
 
-        print(">>>>>>>> Making progset_record \"%s\"" % progset.name)
+        print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name
 
-        print([p['short'] for p in default_program_summaries])
-        print(progset.programs.keys())
+        def program_print(program):
+            pprint({
+                'short': program.short,
+                'name': program.name,
+                'targetpars': program.targetpars,
+                'category': program.category,
+                'targetpops': program.targetpops,
+                'criteria': program.criteria,
+                'costcovdata': normalize_obj(program.costcovdata),
+                'costcovfn.ccopars': normalize_obj(program.costcovfn.ccopars)
+            })
+
         # only active programs are hydrated
         # therefore we need to retrieve the default list of programs
         loaded_program_keys = set()
         for program_summary in default_program_summaries:
             key = unicode(program_summary['short'])
             if key in progset.programs:
-                print ":: Loaded active program", key, program_summary['short']
                 loaded_program_keys.add(key)
                 program = progset.programs[key]
-                # print(program)
-                program_summary = self._program_to_dict(program)
-                print ":: program summary"
-                # print(program_summary)
-                pprint(program_summary)
+                # program_print(program)
+                loaded_program_summary = parse_program_summary(program)
+                for key in ['ccopars', 'costcov', 'targetpops', 'targetpars']:
+                    if key in loaded_program_summary:
+                        program_summary[key] = loaded_program_summary[key]
                 active = True
+                print '>>>> Parse default active program "%s":%s' % (key, program_summary['name'])
             else:
-                print(":: Loaded inactive program", key, key)
                 active = False
+                print '>>>> Parse default inactive program "%s":%s' % (key, program_summary['name'])
 
             p = update_or_create_program_record(self.project.id, self.id, key, program_summary, active)
-            if active:
-                p.restore(progset.programs[key])
+            p.pprint()
+            # if active:
+            #     p.restore(progset.programs[key])
 
         # In case programs from prj are not in the defaults
         for key, program in progset.programs.iteritems():
             if key not in loaded_program_keys:
-                print ":: Loaded active custom program", program_summary["name"]
-                update_or_create_program_record(
-                    self.project.id, self.id, key, self._program_to_dict(program), True)
+                print '>>>> Parse custom active program "%s":%s' % (key, program_summary['name'])
+                program_summary = parse_program_summary(program)
+                p = update_or_create_program_record(
+                    self.project.id, self.id, key, program_summary, True)
+                p.pprint()
+                # p.restore(program)
 
         effects = []
         for targetpartype in progset.targetpartypes:

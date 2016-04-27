@@ -18,7 +18,7 @@ from server.webapp.dbmodels import ProjectDb, UserDb, ResultsDb, ParsetsDb
 import optima as op
 
 from server.webapp.jsonhelper import OptimaJSONEncoder, normalize_obj
-
+from server.webapp.programs import parse_targetpars
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}  # TODO this should be checked per upload type
@@ -449,14 +449,12 @@ def update_or_create_progset_record(project_id, name, progset):
     return progset_record
 
 
-def update_or_create_program_record(project_id, progset_id, name, program_summary, active=False):
+def update_or_create_program_record(project_id, progset_id, short, program_summary, active=False):
 
     from datetime import datetime
     import dateutil
     from server.webapp.dbmodels import ProgramsDb
     from optima.utils import saves
-
-    print('>>>>> Making program_record with program: %s' % program_summary['short'])
 
     program_record = ProgramsDb.query \
         .filter_by(
@@ -465,32 +463,33 @@ def update_or_create_program_record(project_id, progset_id, name, program_summar
             progset_id=progset_id
         ).first()
 
-    costcov = normalize_obj(program_summary.get('costcov', []))
 
     if program_record is None:
         program_record = ProgramsDb(
             project_id=project_id,
             progset_id=progset_id,
-            name=name,
-            short=program_summary.get('short', ''),
+            short=short,
+            name=program_summary.get('name', ''),
             category=program_summary.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc()),
-            pars=ProgramsDb.convert_to_pars(program_summary.get('targetpars', [])),
+            pars=program_summary.get('parameters', []),
             targetpops=program_summary.get('targetpops', []),
             active=active,
             criteria=program_summary.get('criteria', None),
-            costcov=costcov
+            costcov=program_summary.get('costcov', None),
+            ccopars=program_summary.get('ccopars', None)
         )
     else:
         program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.pars = ProgramsDb.convert_to_pars(program_summary.get('targetpars', []))
+        program_record.pars = program_summary.get('parameters', [])
         program_record.targetpops = program_summary.get('targetpops', [])
         program_record.short = program_summary.get('short', '')
         program_record.category = program_summary.get('category', '')
         program_record.active = active
         program_record.criteria = program_summary.get('criteria', None)
-        program_record.costcov = costcov
+        program_record.costcov = program_summary.get('costcov', None)
+        program_record.costcov = program_summary.get('ccopars', None)
 
     program_record.blob = saves(program_record.hydrate())
     db.session.add(program_record)
