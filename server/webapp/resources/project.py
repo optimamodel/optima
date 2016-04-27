@@ -938,17 +938,15 @@ class Defaults(Resource):
     @marshal_with(defaults_fields)
     @login_required
     def get(self, project_id):
-        from server.webapp.programs import get_default_program_summaries, program_categories
+        from server.webapp.programs import get_default_program_summaries
 
         project = load_project_record(project_id, raise_exception=True)
         be_project = project.hydrate()
         program_summaries = get_default_program_summaries(be_project, for_fe = True)
-        program_categories = program_categories(be_project)
         for p in program_summaries:
             p['active'] = False
         payload = {
             "programs": program_summaries,
-            "categories": program_categories
         }
         print(">>> Sending default programs %s" % [p['short_name'] for p in program_summaries])
         return payload

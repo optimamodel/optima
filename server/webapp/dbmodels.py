@@ -727,18 +727,6 @@ class ProgsetsDb(db.Model):
         print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name
 
-        def program_print(program):
-            pprint({
-                'short': program.short,
-                'name': program.name,
-                'targetpars': program.targetpars,
-                'category': program.category,
-                'targetpops': program.targetpops,
-                'criteria': program.criteria,
-                'costcovdata': normalize_obj(program.costcovdata),
-                'costcovfn.ccopars': normalize_obj(program.costcovfn.ccopars)
-            })
-
         # only active programs are hydrated
         # therefore we need to retrieve the default list of programs
         loaded_program_keys = set()
@@ -747,7 +735,6 @@ class ProgsetsDb(db.Model):
             if key in progset.programs:
                 loaded_program_keys.add(key)
                 program = progset.programs[key]
-                # program_print(program)
                 loaded_program_summary = parse_program_summary(program)
                 for replace_key in ['ccopars', 'costcov', 'targetpops', 'parameters']:
                     if replace_key in loaded_program_summary:

@@ -63,18 +63,15 @@ def get_default_program_summaries(project, for_fe = False):
     return [parse_program_summary(p, for_fe) for p in defaultprograms(project)]
 
 
-def program_categories(project):
-    result = []
-    next_category = None
-    for p in get_default_program_summaries(project, for_fe = True):
-        current_category = p['category']
-        if next_category is not None and next_category['category'] == current_category:
-            next_category['programs'].append({'short_name': p['short_name'], 'name': p['name']})
-        else:
-            if next_category is not None:
-                result.append(next_category)
-            next_category = {'category':current_category}
-            next_category['programs'] = []
-    if next_category is not None: result.append(next_category)
-    return result
+def program_print(program):
+    pprint({
+        'short': program.short,
+        'name': program.name,
+        'targetpars': program.targetpars,
+        'category': program.category,
+        'targetpops': program.targetpops,
+        'criteria': program.criteria,
+        'costcovdata': normalize_obj(program.costcovdata),
+        'costcovfn.ccopars': normalize_obj(program.costcovfn.ccopars)
+    })
 
