@@ -24,19 +24,22 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $http.get('/api/project/' + openProject.id + '/progsets' )
       .success(function (response) {
         if(response.progsets) {
+          console.log(JSON.stringify(response, null, 2));
           $scope.programSetList = response.progsets;
           if (response.progsets && response.progsets.length > 0) {
             $scope.activeProgramSet = response.progsets[0];
-            console.log(_.pluck($scope.activeProgramSet, "category"));
           }
         }
       });
+
+    $scope.getCategories = function() {
+      return _.uniq(_.pluck($scope.activeProgramSet.programs, "category"));
+    }
 
     // Fetching default categories and programs for the open project
     projectApiService.getDefault(openProject.id)
       .success(function (response) {
         defaults = response;
-        $scope.categories = _.pluck(response.categories, 'category');
       });
 
     // Get the list of default parameters for the project
@@ -202,7 +205,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
       editProgram.short_name = editProgram.short || editProgram.short_name;
-      return programSetModalService.openProgramModal(editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
+      return programSetModalService.openProgramModal(editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
         }
@@ -216,7 +219,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
+      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         }
@@ -233,7 +236,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.short_name = (program.short || program.short_name ) + ' copy';
       program.short = undefined;
 
-      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.categories).result.then(
+      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
         function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
         }

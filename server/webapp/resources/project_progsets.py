@@ -1,5 +1,6 @@
 import mpld3
 import json
+from pprint import pprint
 
 from flask import current_app
 
@@ -50,6 +51,7 @@ class Progsets(Resource):
             progset.get_extra_data()
             for program in progset.programs:
                 program.get_optimizable()
+                pprint(progset._program_to_dict(program))
 
         print "Get progsets", reply
         return reply

@@ -741,7 +741,7 @@ class ProgsetsDb(db.Model):
     def _program_to_dict(self, program_be):
         program = program_be.__dict__
         program['parameters'] = program.get('targetpars', [])
-        if program['costcovdata'] is None:
+        if 'costcovdata' not in program:
             program['costcov'] = []
         else:
             program['costcov'] = [
