@@ -26,7 +26,7 @@
     <label>
       Select a program:<br>
       <select class="txbox"
-              ng-options="p.name for p in vm.programs"
+              ng-options="getProgramName(p) for p in vm.programs"
               ng-change="changeSelectedProgram()"
               ng-model="selectedProgram">
         <option value="">-- Please select a program --</option>

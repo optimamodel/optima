@@ -9,7 +9,7 @@
         <label>
           Select a program set: <br>
           <select class="txbox"
-                  ng-options="program as program.name for program in vm.programSetList"
+                  ng-options="progset as progset.name for progset in vm.programSetList"
                   ng-change="vm.changeDropdown()"
                   ng-model="vm.selectedProgramSet">
           </select>

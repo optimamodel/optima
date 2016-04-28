@@ -86,7 +86,6 @@ define(['./../module', 'underscore'], function (module, _) {
             console.warn('response is', response);
             vm.existingEffects = response;
           })
-
         }
 
         vm.programs = _.sortBy(_.filter(vm.selectedProgramSet.programs, isProgramActive), sortByName);
@@ -321,8 +320,7 @@ define(['./../module', 'underscore'], function (module, _) {
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
     if (!vm.openProject.has_data) {
       modalService.inform(
-        function () {
-        },
+        function () { },
         'Okay',
         'Please upload spreadsheet to proceed.',
         'Cannot proceed'
@@ -331,24 +329,23 @@ define(['./../module', 'underscore'], function (module, _) {
       return;
     }
 
-    // Fetch list of program-set for open-project from BE
+    // Fetch list of progsets
     $http.get('/api/project/' + vm.openProject.id + '/progsets').success(function (response) {
       vm.programSetList = response.progsets;
       vm.selectedProgramSet = vm.programSetList[0];
-      setProgramSet()
+      setProgramSet();
 
+      // Fetch parset limits
       $http.get('/api/project/' + vm.openProject.id + '/parsets/limits').success(function (response) {
         vm.allLimits = response;
 
-        // Fetch list of parameter-set for open-project from BE
+        // Fetch list of parameter-sets
         $http.get('/api/project/' + vm.openProject.id + '/parsets').success(function (response) {
           vm.parsets = response.parsets;
           vm.selectedParset = vm.parsets[0];
           setParamSet()
         });
-
       })
-
     });
 
 

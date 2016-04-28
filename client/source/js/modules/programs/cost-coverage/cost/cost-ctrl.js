@@ -12,6 +12,15 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
     $scope.Math = window.Math;
 
+    $scope.getProgramName = function(program) {
+      console.log(program);
+      if (program.name) {
+        return program.name;
+      } else {
+        return program.short_name;
+      }
+    }
+
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
       $scope.state.chartData = [];
