@@ -4,23 +4,29 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   module.controller('ProjectUploadController',
     function ($scope, projects, modalService, $upload, $state) {
 
+      // Initialize Params
+      $scope.projectParams = { name: "", file: undefined };
+
       $scope.onFileSelect = function(files) {
+        if (!files[0]) {
+          return;
+        }
+
         $scope.projectParams.file = files[0];
+
+        // if no projectname given, automatically fill in name from file
         if (!$scope.projectParams.name) {
-          if (files[0]) {
-            var fileName = files[0].name;
-            var i = 0;
-            $scope.projectParams.name = fileName;
-            while ($scope.projectExists()) {
-              i += 1;
-              $scope.projectParams.name = fileName + " (" + i + ")";
-            }
+          var fileName = files[0].name;
+
+          // if project name taken, try variants
+          var i = 0;
+          $scope.projectParams.name = fileName;
+          while ($scope.projectExists()) {
+            i += 1;
+            $scope.projectParams.name = fileName + " (" + i + ")";
           }
         }
       };
-
-      // Initialize Params
-      $scope.projectParams = { name: "", file: undefined };
 
       $scope.uploadProject = function() {
         if ($scope.UploadProjectForm.$invalid) {

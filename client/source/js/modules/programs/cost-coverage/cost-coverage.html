@@ -12,7 +12,6 @@
                   ng-options="program as program.name for program in vm.programSetList"
                   ng-change="vm.changeDropdown()"
                   ng-model="vm.selectedProgramSet">
-            <option value="">-- Please select a program set --</option>
           </select>
         </label>
       </span>
@@ -23,7 +22,6 @@
                   ng-options="parset as parset.name for parset in vm.parsets"
                   ng-change="vm.changeDropdown()"
                   ng-model="vm.selectedParset">
-            <option value="">-- Please select a parameter set --</option>
           </select>
         </label>
       </span>
