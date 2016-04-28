@@ -922,11 +922,6 @@ class Portfolio(Resource):
 
         return helpers.send_from_directory(loaddir, zipfile_name)
 
-defaults_fields = {
-    "categories": Json,
-    "programs": Json
-}
-
 
 class Defaults(Resource):
 
@@ -935,21 +930,12 @@ class Defaults(Resource):
                 for the given program"""
     )
     @report_exception
-    @marshal_with(defaults_fields)
+    @marshal_with({"programs": Json})
     @login_required
     def get(self, project_id):
         from server.webapp.programs import get_default_program_summaries
-
-        project = load_project_record(project_id, raise_exception=True)
-        be_project = project.hydrate()
-        program_summaries = get_default_program_summaries(be_project, for_fe = True)
-        for p in program_summaries:
-            p['active'] = False
-        payload = {
-            "programs": program_summaries,
-        }
-        print(">>> Sending default programs %s" % [p['short_name'] for p in program_summaries])
-        return payload
+        project = load_project_record(project_id, raise_exception=True).hydrate()
+        return { "programs": get_default_program_summaries(project, for_fe = True) }
 
 
 # It's a pship but it's used somewhat interchangeably with populations

@@ -629,14 +629,14 @@ class ProgramsDb(db.Model):
 
     def restore(self, program):
         print(">>>>> Restore program '%s'" % program.short)
-        from server.webapp.programs import parse_targetpars, parse_covcovdata
+        from server.webapp.programs import parse_targetpars, parse_costcovdata
         self.category = program.category
         self.name = program.name
         self.short = program.short
         self.pars = parse_targetpars(program.targetpars)
         self.targetpops = normalize_obj(program.targetpops)
         self.criteria = program.criteria
-        self.costcov = parse_covcovdata(program.costcovdata)
+        self.costcov = parse_costcovdata(program.costcovdata)
         self.ccopars = normalize_obj(program.costcovfn.ccopars)
         self.pprint()
 
@@ -722,40 +722,35 @@ class ProgsetsDb(db.Model):
 
     def restore(self, progset, default_program_summaries):
         from server.webapp.utils import update_or_create_program_record
-        from server.webapp.programs import parse_program_summary
+        from server.webapp.programs import parse_program
 
         print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name
 
-        # only active programs are hydrated
-        # therefore we need to retrieve the default list of programs
-        loaded_program_keys = set()
+        # store programs including default programs that are not progset
+        loaded_shorts = set()
         for program_summary in default_program_summaries:
-            key = unicode(program_summary['short'])
-            if key in progset.programs:
-                loaded_program_keys.add(key)
-                program = progset.programs[key]
-                loaded_program_summary = parse_program_summary(program)
+            short = unicode(program_summary['short'])
+            if short in progset.programs:
+                loaded_shorts.add(short)
+                program = progset.programs[short]
+                loaded_program_summary = parse_program(program)
                 for replace_key in ['ccopars', 'costcov', 'targetpops', 'parameters']:
                     if replace_key in loaded_program_summary:
                         program_summary[replace_key] = loaded_program_summary[replace_key]
                 active = True
             else:
                 active = False
+            desc = "default active" if active else "default inactive"
+            print '>>>> Parse %s program "%s" - "%s"' % (desc, short, program_summary['name'])
+            update_or_create_program_record(self.project.id, self.id, short, program_summary, active)
 
-            if active:
-                desc = "default active"
-            else:
-                desc = "default inactive"
-            print '>>>> Parse %s program "%s" - "%s"' % (desc, key, program_summary['name'])
-            p = update_or_create_program_record(self.project.id, self.id, key, program_summary, active)
-
-        # In case programs from prj are not in the defaults
-        for key, program in progset.programs.iteritems():
-            if key not in loaded_program_keys:
-                print '>>>> Parse custom active "%s" - "%s"' % (key, program_summary['name'])
-                program_summary = parse_program_summary(program)
-                p = update_or_create_program_record(self.project.id, self.id, key, program_summary, True)
+        # save programs that are not in defaults
+        for short, program in progset.programs.iteritems():
+            if short not in loaded_shorts:
+                print '>>>> Parse custom active "%s" - "%s"' % (short, program_summary['name'])
+                program_summary = parse_program(program)
+                update_or_create_program_record(self.project.id, self.id, short, program_summary, True)
 
         effects = []
         for targetpartype in progset.targetpartypes:

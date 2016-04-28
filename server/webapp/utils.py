@@ -439,7 +439,6 @@ def update_or_create_progset_record(project_id, name, progset):
             created=progset.created or datetime.now(dateutil.tz.tzutc()),
             updated=datetime.now(dateutil.tz.tzutc())
         )
-
         db.session.add(progset_record)
         db.session.flush()
     else:
@@ -462,7 +461,6 @@ def update_or_create_program_record(project_id, progset_id, short, program_summa
             project_id=project_id,
             progset_id=progset_id
         ).first()
-
 
     if program_record is None:
         program_record = ProgramsDb(
@@ -500,15 +498,17 @@ def modify_program_record(project_id, progset_id, program_id, args, program_modi
     # looks up a program, hydrates it, calls a modifier
     # (function defined somewhere) with given args, saves the result
     # TODO could such things be done as decorators?
-    program_entry = load_program_record(project_id, progset_id, program_id)
-    if program_entry is None:
+    program_record = load_program_record(project_id, progset_id, program_id)
+    if program_record is None:
         raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-    program_instance = program_entry.hydrate()
-    program_modifier(program_instance, args)
-    program_entry.restore(program_instance)
-    result = {"params": program_entry.ccopars or {},
-              "data": program_entry.data_db_to_api()}
-    db.session.add(program_entry)
+    program = program_record.hydrate()
+    program_modifier(program, args)
+    program_record.restore(program)
+    result = {
+        "params": program_record.ccopars or {},
+        "data": program_record.data_db_to_api()
+    }
+    db.session.add(program_record)
     db.session.commit()
     return result
 

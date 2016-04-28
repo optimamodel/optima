@@ -10,7 +10,7 @@ def normalize_obj(obj):
     This is the main conversion function for Python data-structures into
     JSON-compatible data structures.
 
-    Use this as much as possible to guard against data corruption in JSON!
+    Use this as much as possible to guard against data corruption!
 
     Args:
         obj: almost any kind of data structure that is a combination
