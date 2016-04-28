@@ -12,6 +12,8 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
     $scope.Math = window.Math;
 
+    $scope.selectedProgram = $scope.vm.programs[0];
+
     $scope.getProgramName = function(program) {
       console.log(program);
       if (program.name) {
@@ -19,7 +21,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       } else {
         return program.short_name;
       }
-    }
+    };
 
     $scope.changeSelectedProgram = function() {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
