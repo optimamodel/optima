@@ -6,6 +6,17 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.onFileSelect = function(files) {
         $scope.projectParams.file = files[0];
+        if (!$scope.projectParams.name) {
+          if (files[0]) {
+            var fileName = files[0].name;
+            var i = 0;
+            $scope.projectParams.name = fileName;
+            while ($scope.projectExists()) {
+              i += 1;
+              $scope.projectParams.name = fileName + " (" + i + ")";
+            }
+          }
+        }
       };
 
       // Initialize Params
@@ -35,9 +46,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       };
 
       $scope.projectExists = function() {
-        var projectNames = _(projects.projects).map(function(project) {
-          return project.name;
-        });
+        var projectNames = _.pluck(projects.data.projects, 'name');
         var exists = _(projectNames).contains($scope.projectParams.name);
         $scope.UploadProjectForm.ProjectName.$setValidity("projectExists", !exists);
         return exists;
