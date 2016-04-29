@@ -6,6 +6,8 @@ from pprint import pprint
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
+
+from optima import saves
 from server.webapp.fields import Json
 from server.webapp.exceptions import DuplicateProgram
 
@@ -602,7 +604,7 @@ class ProgramsDb(db.Model):
                 'saturation': map(tuple, self.ccopars['saturation']),
                 'unitcost': map(tuple, self.ccopars['unitcost'])
             }
-        program_instance = op.Program(
+        program = op.Program(
             self.short,
             targetpars=self.fetch_program_targetpars(),
             name=self.name,
@@ -612,8 +614,8 @@ class ProgramsDb(db.Model):
             costcovdata=costcovdata,
             ccopars=ccopars,
         )
-        program_instance.id = self.id
-        return program_instance
+        program.id = self.id
+        return program
 
     def pprint(self):
         pprint({
@@ -631,18 +633,24 @@ class ProgramsDb(db.Model):
         be_program = self.hydrate()
         self.optimizable = be_program.optimizable()
 
+    def update_program_record_from_summary(self, program_summary, active):
+        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.pars = program_summary.get('parameters', [])
+        self.targetpops = program_summary.get('populations', [])
+        self.short = program_summary.get('short', '')
+        self.category = program_summary.get('category', '')
+        self.active = active
+        self.criteria = program_summary.get('criteria', None)
+        self.costcov = program_summary.get('costcov', None)
+        self.ccopars = program_summary.get('ccopars', None)
+        self.optimizable = program_summary.get('optimizable', False)
+        self.blob = saves(self.hydrate())
+
     def restore(self, program):
+        from server.webapp.programs import parse_program_summary
         print(">>>>> Restore program '%s'" % program.short)
-        from server.webapp.programs import parse_targetpars, parse_costcovdata
-        self.category = program.category
-        self.name = program.name
-        self.short = program.short
-        self.pars = parse_targetpars(program.targetpars)
-        self.targetpops = normalize_obj(program.targetpops)
-        self.criteria = program.criteria
-        self.costcov = parse_costcovdata(program.costcovdata)
-        self.ccopars = normalize_obj(program.costcovfn.ccopars)
-        self.pprint()
+        program_summary = parse_program_summary(program)
+        self.update_program_record_from_summary(program_summary, False)
 
 
 @swagger.model
@@ -726,7 +734,7 @@ class ProgsetsDb(db.Model):
 
     def restore(self, progset, default_program_summaries):
         from server.webapp.utils import update_or_create_program_record
-        from server.webapp.programs import parse_program
+        from server.webapp.programs import parse_program_summary
 
         print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name
@@ -738,7 +746,7 @@ class ProgsetsDb(db.Model):
             if short in progset.programs:
                 loaded_shorts.add(short)
                 program = progset.programs[short]
-                loaded_program_summary = parse_program(program)
+                loaded_program_summary = parse_program_summary(program)
                 for replace_key in ['ccopars', 'costcov']:
                     if replace_key in loaded_program_summary:
                         program_summary[replace_key] = loaded_program_summary[replace_key]
@@ -753,7 +761,7 @@ class ProgsetsDb(db.Model):
         for short, program in progset.programs.iteritems():
             if short not in loaded_shorts:
                 print '>>>> Parse custom active "%s" - "%s"' % (short, program_summary['name'])
-                program_summary = parse_program(program)
+                program_summary = parse_program_summary(program)
                 update_or_create_program_record(self.project.id, self.id, short, program_summary, True)
 
         effects = []
@@ -1062,3 +1070,5 @@ class OptimizationsDb(db.Model):
             x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
 
         self.objectives = remove_nans(objectives)
+
+

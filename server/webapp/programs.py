@@ -41,7 +41,7 @@ def parse_costcovdata(costcovdata):
     return result
 
 
-def parse_program(program, for_fe=False):
+def parse_program_summary(program, for_fe=False):
     short_name_key = 'short_name' if for_fe else 'short'
     result = {
         'active': False,
@@ -50,16 +50,16 @@ def parse_program(program, for_fe=False):
         'populations': normalize_obj(program.targetpops),
         'criteria': program.criteria,
         'parameters': parse_targetpars(program.targetpars),
-        'targetpops': normalize_obj(program.targetpops),
         'ccopars': normalize_obj(program.costcovfn.ccopars),
         'category': program.category,
         'costcov': parse_costcovdata(program.costcovdata),
+        'optimizable': program.optimizable()
     }
     return result
 
 
 def get_default_program_summaries(project, for_fe=False):
-    return [parse_program(p, for_fe) for p in defaultprograms(project)]
+    return [parse_program_summary(p, for_fe) for p in defaultprograms(project)]
 
 
 def print_program(program):

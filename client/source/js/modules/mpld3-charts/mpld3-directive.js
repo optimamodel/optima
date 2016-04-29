@@ -6,7 +6,7 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
   function val2str(val, limit, suffix) {
     var reducedVal = val / limit;
     var nDecimal = reducedVal >= 1 ? 0 : 1;
-    return reducedVal.toFixed(nDecimal) + suffix;
+    return "" + reducedVal.toFixed(nDecimal) + suffix;
   }
 
 
@@ -28,8 +28,10 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
     var $labels = $yaxis.find('g.tick > text');
     $labels.each(function () {
       var $label = $(this);
-      var text = $label.text().replace(',', '');
-      $label.text(reformatValStr(text));
+      var text = $label.text().replace(/,/g, '');
+      var newText = reformatValStr(text);
+      console.log(text + " -> " + newText);
+      $label.text(newText);
     });
 
     $figure.find('svg.mpld3-figure').each(function () {

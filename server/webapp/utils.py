@@ -448,48 +448,25 @@ def update_or_create_progset_record(project_id, name, progset):
     return progset_record
 
 
+
+from server.webapp.dbmodels import ProgramsDb
+from datetime import datetime
+import dateutil
+
+
 def update_or_create_program_record(project_id, progset_id, short, program_summary, active=False):
-
-    from datetime import datetime
-    import dateutil
-    from server.webapp.dbmodels import ProgramsDb
-    from optima.utils import saves
-
-    program_record = ProgramsDb.query \
-        .filter_by(
-            short=program_summary.get('short', None),
-            project_id=project_id,
-            progset_id=progset_id
-        ).first()
-
+    program_record = ProgramsDb.query\
+        .filter_by(short=short, project_id=project_id, progset_id=progset_id)\
+        .first()
     if program_record is None:
         program_record = ProgramsDb(
             project_id=project_id,
             progset_id=progset_id,
             short=short,
             name=program_summary.get('name', ''),
-            category=program_summary.get('category', ''),
             created=datetime.now(dateutil.tz.tzutc()),
-            updated=datetime.now(dateutil.tz.tzutc()),
-            pars=program_summary.get('parameters', []),
-            targetpops=program_summary.get('targetpops', []),
-            active=active,
-            criteria=program_summary.get('criteria', None),
-            costcov=program_summary.get('costcov', None),
-            ccopars=program_summary.get('ccopars', None)
         )
-    else:
-        program_record.updated = datetime.now(dateutil.tz.tzutc())
-        program_record.pars = program_summary.get('parameters', [])
-        program_record.targetpops = program_summary.get('targetpops', [])
-        program_record.short = program_summary.get('short', '')
-        program_record.category = program_summary.get('category', '')
-        program_record.active = active
-        program_record.criteria = program_summary.get('criteria', None)
-        program_record.costcov = program_summary.get('costcov', None)
-        program_record.costcov = program_summary.get('ccopars', None)
-
-    program_record.blob = saves(program_record.hydrate())
+    program_record.update_program_record_from_summary(program_summary, active)
     db.session.add(program_record)
     return program_record
 

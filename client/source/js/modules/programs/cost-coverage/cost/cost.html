@@ -1,25 +1,3 @@
-<script>
-  function remove_default_plugin() {
-    var svgGraphFigures = $('svg.mpld3-figure');
-    if (svgGraphFigures.length > 0 && !$(svgGraphFigures[0]).attr('data-pro3')) {
-      svgGraphFigures.each(function () {
-        var that = this;
-        $(that).find('.mpld3-toolbar').each(function () {
-          $(this).remove();
-        });
-      });
-    } else {
-      setTimeout(remove_default_plugin, 150);
-    }
-  }
-
-  $(document).ready(function() {
-    remove_default_plugin();
-    $(document.body).on('click', '.updateGraph' ,function() {
-      remove_default_plugin();
-    });
-  });
-</script>
 <!-- Cost functions tab -->
 <div class="c-tab" ng-controller="CostController">
   <div style="width: 40%">
