@@ -24,10 +24,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $http.get('/api/project/' + openProject.id + '/progsets' )
       .success(function (response) {
         if(response.progsets) {
-          console.log(JSON.stringify(response, null, 2));
           $scope.programSetList = response.progsets;
           if (response.progsets && response.progsets.length > 0) {
             $scope.activeProgramSet = response.progsets[0];
+          console.log("active_programs = " + JSON.stringify($scope.activeProgramSet, null, 2));
           }
         }
       });
@@ -40,6 +40,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     projectApiService.getDefault(openProject.id)
       .success(function (response) {
         defaults = response;
+        console.log("default_programs = " + JSON.stringify(defaults, null, 2));
       });
 
     // Get the list of default parameters for the project

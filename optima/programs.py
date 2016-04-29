@@ -751,7 +751,7 @@ class Program(object):
         # If we are ignoring eligibility, just sum the popsizes...
         if not useelig:
             initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-            
+
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
 
@@ -830,6 +830,7 @@ class Program(object):
         t = promotetoarray(t)
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, bounds=bounds)
 

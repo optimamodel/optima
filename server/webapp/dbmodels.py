@@ -22,6 +22,10 @@ from werkzeug.utils import secure_filename
 import optima as op
 
 
+def log_var(name, obj):
+    current_app.logger.debug("%s = \n%s\n" % (name, pprint.pformat(obj, indent=2)))
+
+
 def db_model_as_file(model, loaddir, filename, name_field, extension):
     import os
     from optima.utils import saveobj
@@ -526,15 +530,15 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short='',
+    def __init__(self, project_id, progset_id, short='', name='',
                  category='No category', active=False, pars=None, created=None,
                  updated=None, id=None, targetpops=[], criteria=None, costcov=None,
                  ccopars=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
-        self.name = name
-        self.short = short if short is not None else name
+        self.short = short
+        self.name = name if name else short
         self.category = category
         self.pars = pars
         self.active = active
@@ -735,7 +739,7 @@ class ProgsetsDb(db.Model):
                 loaded_shorts.add(short)
                 program = progset.programs[short]
                 loaded_program_summary = parse_program(program)
-                for replace_key in ['ccopars', 'costcov', 'targetpops', 'parameters']:
+                for replace_key in ['ccopars', 'costcov']:
                     if replace_key in loaded_program_summary:
                         program_summary[replace_key] = loaded_program_summary[replace_key]
                 active = True

@@ -1,6 +1,7 @@
 import mpld3
 import json
 from pprint import pprint
+import pprint
 
 from flask import current_app
 
@@ -20,8 +21,78 @@ from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
 
 from server.webapp.serializers.project_progsets import (progset_parser, param_fields,
     effect_parser, progset_effects_fields, program_parser, query_program_parser,
-    popsize_parser, costcov_data_parser, costcov_graph_parser, costcov_data_point_parser,
+    costcov_graph_parser, costcov_data_point_parser,
     costcov_data_locator_parser, costcov_param_parser)
+
+from server.webapp.jsonhelper import normalize_obj
+
+import uuid
+from flask_restful import fields
+from server.webapp.utils import RequestParser
+from server.webapp.inputs import SubParser, Json as JsonInput
+from server.webapp.fields import Json, Uuid
+
+
+
+def load_program(project_id, progset_id, program_id):
+    program_entry = load_program_record(project_id, progset_id, program_id)
+    if program_entry is None:
+        raise ProgramDoesNotExist(id=program_id, project_id=project_id)
+    return program_entry.hydrate()
+
+
+def load_parset(project_id, parset_id):
+    parset_entry = db.session.query(ParsetsDb).filter_by(
+        id=parset_id, project_id=project_id).first()
+    if parset_entry is None:
+        raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+    return parset_entry.hydrate()
+
+
+def load_result(project_id, parset_id):
+    result_entry = db.session.query(ResultsDb).filter_by(
+        project_id=project_id, parset_id=parset_id,
+        calculation_type=ResultsDb.CALIBRATION_TYPE).first()
+    # TODO custom exception
+    if result_entry is None:
+        raise Exception
+    return result_entry.hydrate()
+
+
+def print_parset(parset):
+    result = {
+        'popkeys': normalize_obj(parset.popkeys),
+        'uid': str(parset.uid),
+        'name': parset.name,
+        'project_id': parset.project.id if parset.project else '',
+    }
+    s = pprint.pformat(result, indent=1) + "\n"
+    for pars in parset.pars:
+        for key, par in pars.items():
+            if hasattr(par, 'y'):
+                par = normalize_obj(par.y)
+            elif hasattr(par, 'p'):
+                par = normalize_obj(par.p)
+            else:
+                par = normalize_obj(par)
+            s += pprint.pformat({ key: par }) + "\n"
+    return s
+
+
+
+def promotetoarray(x):
+    ''' Small function to ensure consistent format for things that should be arrays '''
+    from numbers import Number
+    from numpy import ndarray
+    if isinstance(x, Number):
+        return [x]
+    elif isinstance(x, list):
+        return x
+    elif isinstance(x, ndarray):
+        return x.tolist()
+    else:
+        raise Exception("Expecting a list/number; got: %s" % str(x))
+
 
 
 class Progsets(Resource):
@@ -42,17 +113,17 @@ class Progsets(Resource):
     def get(self, project_id):
 
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_entry = load_project_record(project_id)
-        if project_entry is None:
+        project_record = load_project_record(project_id)
+        if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
 
-        reply = db.session.query(ProgsetsDb).filter_by(project_id=project_entry.id).all()
-        for progset in reply:
-            progset.get_extra_data()
-            for program in progset.programs:
-                program.get_optimizable()
+        progsets_record = db.session.query(ProgsetsDb).filter_by(project_id=project_record.id).all()
+        for progset_record in progsets_record:
+            progset_record.get_extra_data()
+            for program_record in progset_record.programs:
+                program_record.get_optimizable()
 
-        return reply
+        return progsets_record
 
     @swagger.operation(
         description='Create a progset for the project with the given id.',
@@ -324,6 +395,11 @@ class Programs(Resource):
         return program_entry, 201
 
 
+
+popsize_parser = RequestParser()
+popsize_parser.add_arguments(
+    {'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},})
+
 class PopSize(Resource):
     """
     Estimated popsize for the given Program.
@@ -334,27 +410,32 @@ class PopSize(Resource):
         description="Calculate popsize for the given program and parset(result).",
         parameters=popsize_parser.swagger_parameters())
     def get(self, project_id, progset_id, program_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s/programs/%s/popsize" %
-                                (project_id, progset_id, program_id))
+        current_app.logger.debug(
+            "/api/project/%s/progsets/%s/programs/%s/popsize" %
+            (project_id, progset_id, program_id))
+        parset_id = popsize_parser.parse_args()['parset_id']
+        program = load_program(project_id, progset_id, program_id)
+        if not program.targetpops:
+            program.targetpops = ['tot']
+        parset = load_parset(project_id, parset_id)
+        result = load_result(project_id, parset_id)
+        years = range(int(result.settings.start), int(result.settings.end + 1))
+        popsizes = program.gettargetpopsize(t=years, parset=parset, results=result)
+        popsizes = promotetoarray(popsizes)
+        result = {
+            'popsizes': [
+                { 'year': year, 'popsize': popsize }
+                for (year, popsize) in zip(years, popsizes) ]
+          }
+        # current_app.logger.debug("payload = \n%s\n" % pprint.pformat(result, indent=1))
+        return result
 
-        args = popsize_parser.parse_args()
-        parset_id = args['parset_id']
 
-        program_entry = load_program_record(project_id, progset_id, program_id)
-        if program_entry is None:
-            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-        program_instance = program_entry.hydrate()
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
-        if parset_entry is None:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-        parset_instance = parset_entry.hydrate()
-        result_entry = db.session.query(ResultsDb).filter_by(
-            project_id=project_id, parset_id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).first()
-        result_instance = result_entry.hydrate()  # TODO raise exception if none
-        years = range(int(result_instance.settings.start), int(result_instance.settings.end + 1))
-        popsizes = program_instance.gettargetpopsize(t=years, parset=parset_instance, results=result_instance)
-        return {'popsizes': [{'year': year, 'popsize': popsize} for (year, popsize) in zip(years, popsizes)]}
-
+costcov_data_parser = RequestParser()
+costcov_data_parser.add_arguments({
+    'data': {'type': list, 'location': 'json'},
+    'params': {'type': dict, 'location': 'json'}
+})
 
 class CostCoverage(Resource):
     """
@@ -415,18 +496,10 @@ class CostCoverageGraph(Resource):
             if args.get(x):
                 plotoptions[x] = args[x]
 
-        program_entry = load_program_record(project_id, progset_id, program_id)
-        if program_entry is None:
-            raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-        program_instance = program_entry.hydrate()
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
-        if parset_entry is None:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-        parset_instance = parset_entry.hydrate()
+        program = load_program(project_id, progset_id, program_id)
+        parset = load_parset(project_id, parset_id)
 
-
-        plot = program_instance.plotcoverage(t=t, parset=parset_instance,
-                                             plotoptions=plotoptions)
+        plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
@@ -505,9 +578,11 @@ class CostCoverageParam(Resource):
 
     def add_param_for_instance(self, program_instance, args, overwrite=False):
         program_instance.costcovfn.addccopar(
-            {'saturation': (args['saturationpercent_lower'], args['saturationpercent_upper']),
+            {
+                'saturation': (args['saturation_lower'], args['saturation_upper']),
                 't': args['year'],
-                'unitcost': (args['unitcost_lower'], args['unitcost_upper'])},
+                'unitcost': (args['unitcost_lower'], args['unitcost_upper'])
+            },
             overwrite=overwrite)
 
     def update_param_for_instance(self, program_instance, args):

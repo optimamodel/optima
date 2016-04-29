@@ -50,6 +50,7 @@ def parse_program(program, for_fe=False):
         'populations': normalize_obj(program.targetpops),
         'criteria': program.criteria,
         'parameters': parse_targetpars(program.targetpars),
+        'targetpops': normalize_obj(program.targetpops),
         'ccopars': normalize_obj(program.costcovfn.ccopars),
         'category': program.category,
         'costcov': parse_costcovdata(program.costcovdata),

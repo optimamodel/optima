@@ -15,7 +15,6 @@ define(['./../../module', 'underscore'], function (module, _) {
     $scope.selectedProgram = $scope.vm.programs[0];
 
     $scope.getProgramName = function(program) {
-      console.log(program);
       if (program.name) {
         return program.name;
       } else {
@@ -79,14 +78,25 @@ define(['./../../module', 'underscore'], function (module, _) {
       cpDataForm.year.$setValidity("valid", isValidCPDataYear());
 
       if(!cpDataForm.$invalid) {
-        $scope.state.newCPData.saturationpercent_lower /= 100;
-        $scope.state.newCPData.saturationpercent_upper /= 100;
-        $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-          $scope.selectedProgram.id + '/costcoverage/param', $scope.state.newCPData)
+        var newCPData = $scope.state.newCPData;
+        var payload = {
+          year: newCPData.year,
+          unitcost_lower: newCPData.unitcost_lower,
+          saturation_lower: newCPData.saturationpercent_lower/100.,
+          unitcost_upper: newCPData.unitcost_upper,
+          saturation_upper: newCPData.saturationpercent_lower/100.
+        };
+        console.log(newCPData);
+        console.log(payload);
+        $http.put(
+            '/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
+            $scope.selectedProgram.id + '/costcoverage/param',
+            payload)
           .success(function () {
-            $scope.state.cpData.push($scope.state.newCPData);
+            $scope.state.cpData.push(newCPData);
             $scope.state.newCPData = {};
             $scope.state.showAddCPData = false;
+            console.log(JSON.stringify($scope.state.cpData, null, 2));
           });
       }
     };
@@ -169,11 +179,13 @@ define(['./../../module', 'underscore'], function (module, _) {
               $scope.state.cpData.push({
                 year: response.params.t[index],
                 unitcost_lower: response.params.unitcost[index][0],
-                saturationpercent_lower: response.params.saturation[index][0],
+                saturationpercent_lower: response.params.saturation[index][0]*100.,
                 unitcost_upper: response.params.unitcost[index][1],
-                saturationpercent_upper: response.params.saturation[index][1]
+                saturationpercent_upper: response.params.saturation[index][1]*100.
               })
             }
+            console.log('>>> cpData');
+            console.log(JSON.stringify($scope.state.cpData, null, 2));
             $scope.updateGraph();
           }
         });

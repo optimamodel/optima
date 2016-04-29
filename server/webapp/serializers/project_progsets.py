@@ -27,13 +27,6 @@ costcov_graph_parser.add_arguments({
 })
 
 
-costcov_data_parser = RequestParser()
-costcov_data_parser.add_arguments({
-    'data': {'type': list, 'location': 'json'},
-    'params': {'type': dict, 'location': 'json'}
-})
-
-
 costcov_data_point_parser = RequestParser()
 costcov_data_point_parser.add_arguments({
     'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
@@ -51,17 +44,10 @@ costcov_data_locator_parser.add_arguments({
 costcov_param_parser = RequestParser()
 costcov_param_parser.add_arguments({
     'year': {'required': True, 'type': int},
-    'saturationpercent_lower': {'required': True, 'type': float},
-    'saturationpercent_upper': {'required': True, 'type': float},
+    'saturation_lower': {'required': True, 'type': float},
+    'saturation_upper': {'required': True, 'type': float},
     'unitcost_lower': {'required': True, 'type': float},
     'unitcost_upper': {'required': True, 'type': float},
-})
-
-
-popsize_parser = RequestParser()
-popsize_parser.add_arguments({
-#    'year': {'required': True, 'type': int, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
 })
 
 
