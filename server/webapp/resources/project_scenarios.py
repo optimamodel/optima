@@ -19,6 +19,7 @@ from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, P
 from server.webapp.resources.common import file_resource, file_upload_form_parser
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ScenariosDb
+from server.webapp.jsonhelper import normalize_obj
 
 import optima as op
 
@@ -304,7 +305,7 @@ def make_mpld3_graph_dict(result, which=None):
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
 
         # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        mpld3_dict = json.loads(json.dumps(mpld3_dict, cls=Op).replace('NaN', 'null'))
+        mpld3_dict = normalize_obj(mpld3_dict)
 
         graph_selectors.append(extract_graph_selector(graph_key))
         mpld3_graphs.append(mpld3_dict)

@@ -30,7 +30,6 @@ define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mp
       var $label = $(this);
       var text = $label.text().replace(/,/g, '');
       var newText = reformatValStr(text);
-      console.log(text + " -> " + newText);
       $label.text(newText);
     });
 

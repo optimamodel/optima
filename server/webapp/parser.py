@@ -4,6 +4,16 @@ from optima.defaults import defaultprograms
 from server.webapp.jsonhelper import normalize_obj
 
 
+"""
+Functions to convert Optima objects into JSON-compatible
+data structures, both for storing into a database, and
+to construct JSON web-packets.
+"""
+
+
+pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
+
+
 def parse_targetpars(targetpars):
     parameters = defaultdict(list)
     for parameter in targetpars:
@@ -19,6 +29,22 @@ def parse_targetpars(targetpars):
         for short_name, pop
         in parameters.items()
     ]
+
+
+def revert_targetpars(pars):
+    if pars is None:
+        return []
+    targetpars = []
+    for par in pars:
+        if par.get('active', False):
+            targetpars.extend([
+                {
+                    'param': par['param'],
+                    'pop': pop if type(pop) in (str, unicode) else tuple(pop)
+                }
+                for pop in par['pops']
+            ])
+    return targetpars
 
 
 def parse_costcovdata(costcovdata):
@@ -41,6 +67,28 @@ def parse_costcovdata(costcovdata):
     return result
 
 
+def revert_costcovdata(costcov):
+    result = {}
+    if costcov is not None:
+        result = {
+            't': pluck(costcov, 'year'),
+            'cost': pluck(costcov, 'cost'),
+            'coverage': pluck(costcov, 'coverage'),
+        }
+    return result
+
+
+def revert_ccopars(ccopars):
+    result = None
+    if ccopars:
+        result = {
+            't': ccopars['t'],
+            'saturation': map(tuple, ccopars['saturation']),
+            'unitcost': map(tuple, ccopars['unitcost'])
+        }
+    return result
+
+
 def parse_program_summary(program, for_fe=False):
     short_name_key = 'short_name' if for_fe else 'short'
     result = {
@@ -59,18 +107,9 @@ def parse_program_summary(program, for_fe=False):
 
 
 def get_default_program_summaries(project, for_fe=False):
-    return [parse_program_summary(p, for_fe) for p in defaultprograms(project)]
+    return [
+        parse_program_summary(p, for_fe)
+        for p in defaultprograms(project)
+    ]
 
-
-def print_program(program):
-    pprint({
-        'short': program.short,
-        'name': program.name,
-        'targetpars': program.targetpars,
-        'category': program.category,
-        'targetpops': program.targetpops,
-        'criteria': program.criteria,
-        'costcovdata': normalize_obj(program.costcovdata),
-        'costcovfn.ccopars': normalize_obj(program.costcovfn.ccopars)
-    })
 

@@ -22,18 +22,53 @@ from server.webapp.dbconn import db
 # from sim.autofit import autofit
 # TODO fix after v2
 # from sim.updatedata import updatedata
-from server.webapp.plotting import (generate_cost_coverage_chart, generate_coverage_outcome_chart,
-                                    generate_cost_outcome_chart)
 
 # route prefix: /api/model
 model = Blueprint('model',  __name__, static_folder='../static')
 model.config = {}
 
 
+###### old webapp/parameters.py
+
+'''
+Reads in parameter table from optima and provides additional functions
+'''
+from optima.parameters import loadpartable
+parameter_list = loadpartable()
+
+def input_parameter(short):
+    entry = [param for param in parameter_list if short in param['short']]
+    if entry:
+        return entry[0]
+    else:
+        return None
+
+def input_parameters(short):
+    return [param for param in parameter_list if short in param['short']]
+
+def input_parameter_name(short):
+    param = input_parameter(short)
+    if param:
+        return param['name']
+    else:
+        return None
+
+# TODO: is this still necessary??
+def parameter_name(key):
+    if not type(key)==list: key=[key]
+    entry = [param for param in parameter_list if ''.join(param['short'])==''.join(key)]
+    if entry:
+        return entry[0]['name']
+    else:
+        return None
+
+#######
+
 def add_calibration_parameters(project_instance, result=None):
     """
     picks the parameters for calibration based on D as dictionary and the parameters settings
     """
+    # BUG: parameters.parameters doesn't exist
     from parameters import parameters
     if not project_instance.parsets:
         raise Exception("No parsets are present for the project %s" % project_instance.uid)

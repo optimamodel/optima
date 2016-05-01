@@ -285,7 +285,7 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.utils import update_or_create_progset_record
-            from server.webapp.programs import get_default_program_summaries
+            from server.webapp.parser import get_default_program_summaries
 
             program_summaries = get_default_program_summaries(project)
 
@@ -488,12 +488,15 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
         self.updated = updated
 
 
+
+from server.webapp.parser import (
+    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata)
+
 costcov_fields = {
     'year': fields.Integer,
     'spending': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
-
 
 @swagger.model
 class ProgramsDb(db.Model):
@@ -532,10 +535,10 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, short='', name='',
-                 category='No category', active=False, pars=None, created=None,
-                 updated=None, id=None, targetpops=[], criteria=None, costcov=None,
-                 ccopars=None):
+    def __init__(
+            self, project_id, progset_id, short='', name='', category='No category',
+            active=False, pars=None, created=None, updated=None, id=None,
+            targetpops=[], criteria=None, costcov=None, ccopars=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
@@ -555,22 +558,6 @@ class ProgramsDb(db.Model):
         if id:
             self.id = id
 
-    def fetch_program_targetpars(self):
-        """From API Program to BE Program"""
-        if self.pars is None:
-            return []
-        parameters = []
-        for param in self.pars:
-            if param.get('active', False):
-                parameters.extend([
-                    {
-                        'param': param['param'],
-                        'pop': pop if type(pop) in (str, unicode) else tuple(pop)
-                    }
-                    for pop in param['pops']
-                ])
-        return parameters
-
     def datapoint_api_to_db(self, pt):
         return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
 
@@ -589,33 +576,39 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
-        pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
-        costcovdata = {}
-        if self.costcov is not None:
-            costcovdata = {
-                't': pluck(self.costcov, 'year'),
-                'cost': pluck(self.costcov, 'cost'),
-                'coverage': pluck(self.costcov, 'coverage'),
-            }
-        ccopars = None
-        if self.ccopars:
-            ccopars = {
-                't': self.ccopars['t'],
-                'saturation': map(tuple, self.ccopars['saturation']),
-                'unitcost': map(tuple, self.ccopars['unitcost'])
-            }
         program = op.Program(
             self.short,
-            targetpars=self.fetch_program_targetpars(),
+            targetpars=revert_targetpars(self.pars),
             name=self.name,
             category=self.category,
             targetpops=self.targetpops,
             criteria=self.criteria,
-            costcovdata=costcovdata,
-            ccopars=ccopars,
+            costcovdata=revert_costcovdata(self.costcov),
+            ccopars=revert_ccopars(self.ccopars),
         )
         program.id = self.id
         return program
+
+    def get_optimizable(self):
+        be_program = self.hydrate()
+        self.optimizable = be_program.optimizable()
+
+    def update_from_summary(self, program_summary, active):
+        self.short = program_summary.get('short', '')
+        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.pars = program_summary.get('parameters', [])
+        self.targetpops = program_summary.get('populations', [])
+        self.category = program_summary.get('category', '')
+        self.active = active
+        self.criteria = program_summary.get('criteria', None)
+        self.costcov = program_summary.get('costcov', None)
+        self.ccopars = program_summary.get('ccopars', None)
+        self.optimizable = program_summary.get('optimizable', False)
+        self.blob = saves(self.hydrate())
+
+    def restore(self, program):
+        print(">>>>> Restore program '%s'" % program.short)
+        self.update_from_summary(parse_program_summary(program), False)
 
     def pprint(self):
         pprint({
@@ -629,28 +622,6 @@ class ProgramsDb(db.Model):
             'ccopars': self.ccopars
         })
 
-    def get_optimizable(self):
-        be_program = self.hydrate()
-        self.optimizable = be_program.optimizable()
-
-    def update_program_record_from_summary(self, program_summary, active):
-        self.updated = datetime.now(dateutil.tz.tzutc())
-        self.pars = program_summary.get('parameters', [])
-        self.targetpops = program_summary.get('populations', [])
-        self.short = program_summary.get('short', '')
-        self.category = program_summary.get('category', '')
-        self.active = active
-        self.criteria = program_summary.get('criteria', None)
-        self.costcov = program_summary.get('costcov', None)
-        self.ccopars = program_summary.get('ccopars', None)
-        self.optimizable = program_summary.get('optimizable', False)
-        self.blob = saves(self.hydrate())
-
-    def restore(self, program):
-        from server.webapp.programs import parse_program_summary
-        print(">>>>> Restore program '%s'" % program.short)
-        program_summary = parse_program_summary(program)
-        self.update_program_record_from_summary(program_summary, False)
 
 
 @swagger.model
@@ -734,7 +705,7 @@ class ProgsetsDb(db.Model):
 
     def restore(self, progset, default_program_summaries):
         from server.webapp.utils import update_or_create_program_record
-        from server.webapp.programs import parse_program_summary
+        from server.webapp.parser import parse_program_summary
 
         print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name

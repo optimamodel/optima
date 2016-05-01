@@ -255,7 +255,7 @@ class ProgsetData(Resource):
         Uploads Data file, uses it to update the progrset and program models.
         Precondition: model should exist.
         """
-        from server.webapp.programs import get_default_program_summaries
+        from server.webapp.parser import get_default_program_summaries
 
         current_app.logger.debug("POST /api/project/{}/progsets/{}/data".format(project_id, progset_id))
 

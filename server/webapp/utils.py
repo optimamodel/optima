@@ -18,7 +18,7 @@ from server.webapp.dbmodels import ProjectDb, UserDb, ResultsDb, ParsetsDb
 import optima as op
 
 from server.webapp.jsonhelper import OptimaJSONEncoder, normalize_obj
-from server.webapp.programs import parse_targetpars
+from server.webapp.parser import parse_targetpars
 
 # json should probably removed from here since we are now using prj for up/download
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}  # TODO this should be checked per upload type
@@ -466,7 +466,7 @@ def update_or_create_program_record(project_id, progset_id, short, program_summa
             name=program_summary.get('name', ''),
             created=datetime.now(dateutil.tz.tzutc()),
         )
-    program_record.update_program_record_from_summary(program_summary, active)
+    program_record.update_from_summary(program_summary, active)
     db.session.add(program_record)
     return program_record
 
