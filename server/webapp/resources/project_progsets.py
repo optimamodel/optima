@@ -431,7 +431,6 @@ class PopSize(Resource):
         return result
 
 
-costcov_data_parser = RequestParser()
 costcov_data_parser.add_arguments({
     'data': {'type': list, 'location': 'json'},
     'params': {'type': dict, 'location': 'json'}

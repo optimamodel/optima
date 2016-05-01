@@ -165,30 +165,28 @@ define(['./../../module', 'underscore'], function (module, _) {
         });
     };
 
+    function console_log_var(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
+
     var fetchDefaultData = function() {
-      $http.get('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage')
-        .success(function (response) {
-          $scope.state.ccData = [];
-          $scope.state.cpData = [];
-          if(response.data) {
-            $scope.state.ccData = angular.copy(response.data);
-          }
-          if(response.params && response.params.t && response.params.t.length > 0) {
-            for(var index = 0;index < response.params.t.length;index++) {
-              $scope.state.cpData.push({
-                year: response.params.t[index],
-                unitcost_lower: response.params.unitcost[index][0],
-                saturationpercent_lower: response.params.saturation[index][0]*100.,
-                unitcost_upper: response.params.unitcost[index][1],
-                saturationpercent_upper: response.params.saturation[index][1]*100.
-              })
-            }
-            console.log('>>> cpData');
-            console.log(JSON.stringify($scope.state.cpData, null, 2));
-            $scope.updateGraph();
-          }
-        });
+      $scope.state.ccData = [];
+      $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
+      $scope.state.cpData = [];
+      var ccopar = angular.copy($scope.selectedProgram.ccopars);
+      if(ccopar && ccopar.t && ccopar.t.length > 0) {
+        for(var index = 0;index < ccopar.t.length;index++) {
+          $scope.state.cpData.push({
+            year: ccopar.t[index],
+            unitcost_lower: ccopar.unitcost[index][0],
+            saturationpercent_lower: ccopar.saturation[index][0]*100.,
+            unitcost_upper: ccopar.unitcost[index][1],
+            saturationpercent_upper: ccopar.saturation[index][1]*100.
+          })
+        }
+        $scope.updateGraph();
+      }
     };
 
   });

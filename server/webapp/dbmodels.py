@@ -516,6 +516,7 @@ class ProgramsDb(db.Model):
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
+        'ccopars': fields.Raw,
         'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
         'optimizable': fields.Raw,
     }

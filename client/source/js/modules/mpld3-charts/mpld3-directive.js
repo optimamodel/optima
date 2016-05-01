@@ -1,4 +1,6 @@
-define(['./module', 'underscore', 'jquery', 'mpld3'], function (module, _, $, mpld3) {
+define(
+    ['./module', 'underscore', 'jquery', 'mpld3'],
+    function (module, _, $, mpld3) {
 
   'use strict';
 
