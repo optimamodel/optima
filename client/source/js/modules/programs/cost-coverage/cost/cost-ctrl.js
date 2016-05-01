@@ -11,7 +11,6 @@ define(['./../../module', 'underscore'], function (module, _) {
       estdSize: []
     };
     $scope.Math = window.Math;
-
     $scope.selectedProgram = $scope.vm.programs[0];
 
     $scope.getProgramName = function(program) {
@@ -188,6 +187,8 @@ define(['./../../module', 'underscore'], function (module, _) {
         $scope.updateGraph();
       }
     };
+
+    $scope.changeSelectedProgram()
 
   });
 
