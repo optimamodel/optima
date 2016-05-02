@@ -494,7 +494,7 @@ from server.webapp.parser import (
 
 costcov_fields = {
     'year': fields.Integer,
-    'spending': LargeInt(attribute='cost'),
+    'cost': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
 
@@ -560,10 +560,10 @@ class ProgramsDb(db.Model):
             self.id = id
 
     def datapoint_api_to_db(self, pt):
-        return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
+        return {'cost': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
 
     def datapoint_db_to_api(self, pt):
-        return {'spending': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
+        return {'cost': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
 
     def data_api_to_db(self, data):
         costcov_data = [self.datapoint_api_to_db(x) for x in data]

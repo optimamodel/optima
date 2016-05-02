@@ -202,7 +202,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to add additional data
     $scope.addAddData = function () {
-      if($scope.state.newAddData.year && $scope.state.newAddData.spending >= 0 && $scope.state.newAddData.coverage >= 0) {
+      if($scope.state.newAddData.year && $scope.state.newAddData.cost >= 0 && $scope.state.newAddData.coverage >= 0) {
         if(!$scope.state.program.addData) {
           $scope.state.program.addData = [];
         }

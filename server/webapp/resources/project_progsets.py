@@ -359,54 +359,40 @@ query_program_parser.add_arguments({
 
 from server.webapp.utils import update_or_create_program_record
 
+
+def swap_keys(a_dict, old_key, new_key):
+    if old_key in a_dict:
+        a_dict[new_key] = a_dict[old_key]
+        del a_dict[old_key]
+
+
 class Program(Resource):
     """
-    Programs for a given progset.
+    Write to a given pogram
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description="Get programs for the progset with the given ID.",
-        responseClass=ProgramsDb.__name__)
-    @marshal_with(ProgramsDb.resource_fields, envelope='programs')
-    def get(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
-
-        progset_entry = load_progset_record(project_id, progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
-
-        reply = db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).all()
-        return reply
-
-    @swagger.operation(
-        description="Create a program for the progset with the given ID.",
-        parameters=program_parser.swagger_parameters())
     def post(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s/program" % (project_id, progset_id))
-
-        def swap_keys(a_dict, old_key, new_key):
-            a_dict[new_key] = a_dict[old_key]
-            del a_dict[old_key]
 
         args = query_program_parser.parse_args()
 
         program_summary = normalize_obj(args['program'])
+        pprint.pprint(program_summary, indent=2)
+
         swap_keys(program_summary, 'short_name', 'short')
         swap_keys(program_summary, 'addData', 'costcov')
         for entry in program_summary['costcov']:
             swap_keys(entry, 'spending', 'cost')
-        pprint.pprint(program_summary, indent=2)
 
         program_entry = update_or_create_program_record(
             project_id, progset_id, program_summary['short'], program_summary, program_summary['active'])
         program_entry.pprint()
-        db.session.add(program_entry)
         db.session.flush()
+        db.session.add(program_entry)
         db.session.commit()
 
-        return 201
-
+        return 204
 
 
 popsize_parser = RequestParser()

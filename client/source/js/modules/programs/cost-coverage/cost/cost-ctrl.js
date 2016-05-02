@@ -30,7 +30,7 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.addToCCData = function(ccDataForm) {
-      ccDataForm.spending.$setValidity("required", !angular.isUndefined($scope.state.newCCData.spending));
+      ccDataForm.cost.$setValidity("required", !angular.isUndefined($scope.state.newCCData.cost));
       ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
       ccDataForm.year.$setValidity("valid", isValidCCDataYear());
 
@@ -173,7 +173,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       var addData = [];
       table.rows.forEach(function(row, i_row, rows) {
         if (i_row != table.i_edit_row) {
-          addData.push({year: row[0], spending: row[1], coverage: row[2]});
+          addData.push({year: row[0], cost: row[1], coverage: row[2]});
         }
       });
       var program = angular.copy($scope.selectedProgram);
@@ -225,7 +225,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
 
       $scope.state.costCovDataTable = {
-        titles: ["Year", "Spending", "Coverage"],
+        titles: ["Year", "Cost", "Coverage"],
         rows: [],
         types: ["number", "number", "number"],
         widths: [],
@@ -234,7 +234,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       var table = $scope.state.costCovDataTable;
       $scope.selectedProgram.addData.forEach(function(val, i, list) {
         table.rows.push(
-            [val.year, val.spending, val.coverage]);
+            [val.year, val.cost, val.coverage]);
       });
       $scope.addBlankRow(table);
       console_log_var("table", table);

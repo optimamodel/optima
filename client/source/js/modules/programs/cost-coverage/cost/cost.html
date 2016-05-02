@@ -113,21 +113,21 @@
           <table class="table table-bordered" style="margin-bottom:0">
             <tr>
               <th>Year</th>
-              <th>Spending</th>
+              <th>Cost</th>
               <th>Coverage</th>
               <th>Delete</th>
             </tr>
             <tr ng-repeat="data in state.ccData">
               <td>{{data.year}}</td>
-              <td>{{data.spending}}</td>
+              <td>{{data.cost}}</td>
               <td>{{data.coverage}}</td>
               <td><i class="fa fa-times" ng-click="removeFromCCData(data)"></i></td>
             </tr>
             <tr ng-if="state.showAddCCData">
               <td><input name="year" class="txbox __inline __m" ng-model="state.newCCData.year"
                          type="number" ng-class="{'invalid': ccDataForm.year.$invalid}"/></td>
-              <td><input name="spending" class="txbox __inline __m" ng-model="state.newCCData.spending"
-                         style="width: 150px;" type="number" ng-class="{'invalid': ccDataForm.spending.$invalid}"/></td>
+              <td><input name="cost" class="txbox __inline __m" ng-model="state.newCCData.cost"
+                         style="width: 150px;" type="number" ng-class="{'invalid': ccDataForm.cost.$invalid}"/></td>
               <td><input name="coverage" class="txbox __inline __m" ng-model="state.newCCData.coverage"
                          style="width: 150px;" type="number" ng-class="{'invalid': ccDataForm.coverage.$invalid}"/></td>
               <td>

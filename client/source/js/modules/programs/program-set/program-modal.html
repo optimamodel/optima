@@ -141,19 +141,19 @@
           <div class="vertical_list">
             <div class="column">
               <div class="data">Year</div>
-              <div class="data">Spending</div>
+              <div class="data">Cost</div>
               <div class="data">Coverage</div>
               <div class="data">Delete</div>
             </div>
             <div class="column" ng-repeat="data in state.program.addData">
               <div class="data numeric">{{data.year}}</div>
-              <div class="data numeric">{{data.spending}}</div>
+              <div class="data numeric">{{data.cost}}</div>
               <div class="data numeric">{{data.coverage}}</div>
               <div class="data numeric" style="margin-right: 15px"><i class="fa fa-trash-o" ng-click="deleteAddData(data)"></i></div>
             </div>
             <div class="column" ng-if="state.showAddData">
               <div class="data"><input name="year" ng-model="state.newAddData.year" type="number" ng-class="{'invalid': programForm.year.$invalid}" min="{{1*state.program.addData[state.program.addData.length-1].year+1 || state.openProject.dataStart}}" max="{{state.openProject.dataEnd}}" class="txbox __inline __lm"/></div>
-              <div class="data"><input name="spending" ng-model="state.newAddData.spending" min="1" type="number" ng-class="{'invalid': programForm.spending.$invalid}" class="txbox __inline __lm"/></div>
+              <div class="data"><input name="cost" ng-model="state.newAddData.cost" min="1" type="number" ng-class="{'invalid': programForm.cost.$invalid}" class="txbox __inline __lm"/></div>
               <div class="data"><input name="coverage" ng-model="state.newAddData.coverage" min="1" type="number" ng-class="{'invalid': programForm.coverage.$invalid}" class="txbox __inline __lm"/></div>
               <div class="data" style="display: flex;justify-content: center">
                 <i class="fa fa-check" ng-click="addAddData()"></i>

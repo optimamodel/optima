@@ -12,7 +12,7 @@ from server.webapp.utils import RequestParser
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
     'year': {'required': True, 'type':int, 'location': 'json'},
-    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
 
@@ -30,7 +30,7 @@ costcov_graph_parser.add_arguments({
 costcov_data_point_parser = RequestParser()
 costcov_data_point_parser.add_arguments({
     'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
-    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
 
