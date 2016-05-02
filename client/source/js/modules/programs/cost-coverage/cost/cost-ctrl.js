@@ -4,14 +4,17 @@ define(['./../../module', 'underscore'], function (module, _) {
   module.controller('CostController', function ($scope, $http) {
 
     $scope.state = {
-      newCCData: {},
-      newCPData: {},
-      ccData: [],
-      cpData: [],
+      ccoparsTable: {},
+      costcovTable: {},
       estdSize: []
     };
     $scope.Math = window.Math;
     $scope.selectedProgram = $scope.vm.programs[0];
+
+    function console_log_var(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
 
     $scope.getProgramName = function(program) {
       if (program.name) {
@@ -22,112 +25,55 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.changeSelectedProgram = function() {
-      $scope.state.ccData = angular.copy($scope.selectedProgram.costcov);
       $scope.state.chartData = [];
-      fetchDefaultData();
+      buildTables();
       fetchEstimatedSize();
       $scope.updateGraph();
     };
 
-    $scope.addToCCData = function(ccDataForm) {
-      ccDataForm.cost.$setValidity("required", !angular.isUndefined($scope.state.newCCData.cost));
-      ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
-      ccDataForm.year.$setValidity("valid", isValidCCDataYear());
+      // ccDataForm.cost.$setValidity("required", !angular.isUndefined($scope.state.newCCData.cost));
+      // ccDataForm.coverage.$setValidity("required", !angular.isUndefined($scope.state.newCCData.coverage));
+      // ccDataForm.year.$setValidity("valid", isValidCCDataYear());
 
-      if(!ccDataForm.$invalid) {
-        $http.put('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-          $scope.selectedProgram.id + '/costcoverage/data', $scope.state.newCCData)
-          .success(function () {
-            $scope.state.ccData.push($scope.state.newCCData);
-            $scope.state.newCCData = {};
-            $scope.state.showAddCCData = false;
-          });
-      }
-    };
+    // var isValidCCDataYear = function() {
+    //   if ($scope.state.newCCData.year) {
+    //     if ($scope.state.newCCData.year >= $scope.vm.openProject.dataStart ||
+    //       $scope.state.newCCData.year <= $scope.vm.openProject.dataEnd) {
+    //       var recordExisting = _.filter($scope.state.ccData, function(ccData) {
+    //         return ccData.year === $scope.state.newCCData.year;
+    //       });
+    //       if(recordExisting.length === 0) {
+    //         return true;
+    //       }
+    //     }
+    //   }
+    //   return false;
+    // };
 
-    var isValidCCDataYear = function() {
-      if ($scope.state.newCCData.year) {
-        if ($scope.state.newCCData.year >= $scope.vm.openProject.dataStart ||
-          $scope.state.newCCData.year <= $scope.vm.openProject.dataEnd) {
-          var recordExisting = _.filter($scope.state.ccData, function(ccData) {
-            return ccData.year === $scope.state.newCCData.year;
-          });
-          if(recordExisting.length === 0) {
-            return true;
-          }
-        }
-      }
-      return false;
-    };
 
-    $scope.removeFromCCData = function(data) {
-      $http.delete('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/data?year=' + data.year)
-        .success(function () {
-          var index = $scope.state.ccData.indexOf(data);
-          $scope.state.ccData.splice(index, 1);
-        });
-    };
+      // cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
+      // cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
+      // cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
+      // cpDataForm.ucupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_upper));
+      // cpDataForm.year.$setValidity("valid", isValidCPDataYear());
 
-    $scope.addToCPData = function(cpDataForm) {
-      cpDataForm.splower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_lower));
-      cpDataForm.spupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.saturationpercent_upper));
-      cpDataForm.uclower.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_lower));
-      cpDataForm.ucupper.$setValidity("required", !angular.isUndefined($scope.state.newCPData.unitcost_upper));
-      cpDataForm.year.$setValidity("valid", isValidCPDataYear());
-
-      if(!cpDataForm.$invalid) {
-        var newCPData = $scope.state.newCPData;
-        var payload = {
-          year: newCPData.year,
-          unitcost_lower: newCPData.unitcost_lower,
-          saturation_lower: newCPData.saturationpercent_lower/100.,
-          unitcost_upper: newCPData.unitcost_upper,
-          saturation_upper: newCPData.saturationpercent_lower/100.
-        };
-        console.log(newCPData);
-        console.log(payload);
-        $http.put(
-            '/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-            $scope.selectedProgram.id + '/costcoverage/param',
-            payload)
-          .success(function () {
-            $scope.state.cpData.push(newCPData);
-            $scope.state.newCPData = {};
-            $scope.state.showAddCPData = false;
-            console.log(JSON.stringify($scope.state.cpData, null, 2));
-          });
-      }
-    };
-
-    var isValidCPDataYear = function() {
-      if ($scope.state.newCPData.year) {
-        if ($scope.state.newCPData.year >= $scope.vm.openProject.dataStart ||
-          $scope.state.newCPData.year <= $scope.vm.openProject.dataEnd) {
-          var recordExisting = _.filter($scope.state.cpData, function(cpData) {
-            return cpData.year === $scope.state.newCPData.year;
-          });
-          if(recordExisting.length === 0) {
-            return true;
-          }
-        }
-      }
-      return false;
-    };
-
-    $scope.removeFromCPData = function(data) {
-      $http.delete('/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
-        $scope.selectedProgram.id + '/costcoverage/param?year=' + data.year)
-        .success(function () {
-          var index = $scope.state.cpData.indexOf(data);
-          $scope.state.cpData.splice(index, 1);
-        });
-    };
+    // var isValidCPDataYear = function() {
+    //   if ($scope.state.newCPData.year) {
+    //     if ($scope.state.newCPData.year >= $scope.vm.openProject.dataStart ||
+    //       $scope.state.newCPData.year <= $scope.vm.openProject.dataEnd) {
+    //       var recordExisting = _.filter($scope.state.cpData, function(cpData) {
+    //         return cpData.year === $scope.state.newCPData.year;
+    //       });
+    //       if(recordExisting.length === 0) {
+    //         return true;
+    //       }
+    //     }
+    //   }
+    //   return false;
+    // };
 
     $scope.updateGraph = function() {
-      var years = _.map($scope.state.cpData, function(data) {
-        return data.year;
-      });
+      var years = $scope.selectedProgram.ccopars.t;
 
       if (years.length > 0) {
         var url = '/api/project/' + $scope.vm.openProject.id + '/progsets/' + $scope.vm.selectedProgramSet.id + '/programs/' +
@@ -164,25 +110,44 @@ define(['./../../module', 'underscore'], function (module, _) {
         });
     };
 
-    function console_log_var(name, val) {
-      console.log(name + ' = ');
-      console.log(JSON.stringify(val, null, 2));
-    }
+    var saveSelectedProgram = function() {
+      var projectId = $scope.vm.openProject.id;
+      var progsetId = $scope.selectedProgram.progset_id;
+      var payload = { 'program': $scope.selectedProgram };
+      console_log_var("payload", payload);
+      $http
+          .post('/api/project/' + projectId + '/progsets/' + progsetId + '/program', payload)
+          .success(function() {
+            $scope.updateGraph();
+          });
+    };
 
-    var validate_fn = function(table) {
+    var validateCostcovTable = function(table) {
       var costcov = [];
       table.rows.forEach(function(row, i_row, rows) {
         if (i_row != table.i_edit_row) {
           costcov.push({year: row[0], cost: row[1], coverage: row[2]});
         }
       });
-      var program = angular.copy($scope.selectedProgram);
-      program.costcov = costcov;
-      var projectId = $scope.vm.openProject.id;
-      var progsetId = program.progset_id;
-      var payload = { 'program': program };
-      $http.post('/api/project/' + projectId + '/progsets/' + progsetId + '/program', payload);
-      console_log_var("payload", payload);
+      $scope.selectedProgram.costcov = costcov;
+      saveSelectedProgram();
+    };
+
+    var validateCcoparsTable = function(table) {
+      var ccopars = {
+        t: [],
+        saturation: [],
+        unitcost: []
+      };
+      table.rows.forEach(function(row, i_row, rows) {
+        if (i_row != table.i_edit_row) {
+          ccopars.t.push(row[0]),
+          ccopars.saturation.push([row[1]/100., row[2]/100.]),
+          ccopars.unitcost.push([row[3], row[4]])
+        }
+      });
+      $scope.selectedProgram.ccopars = ccopars;
+      saveSelectedProgram();
     };
 
     $scope.addBlankRow = function(table) {
@@ -202,7 +167,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         $scope.addBlankRow(table);
       }
       table.i_edit_row = table.rows.length - 1;
-      validate_fn(table);
+      validateCostcovTable(table);
       console_log_var("table", table);
     }
 
@@ -216,46 +181,52 @@ define(['./../../module', 'underscore'], function (module, _) {
     }
 
     $scope.acceptEdit = function(table) {
+      console_log_var('accept table', table)
       $scope.addBlankRow(table);
-      table.validate_fn(table);
+      table.validateFn(table);
     };
 
-    var fetchDefaultData = function() {
-      $scope.state.ccData = [];
-      $scope.state.ccData = angular.copy($scope.selectedProgram.costcov);
-
-      $scope.state.costCovDataTable = {
+    var buildTables = function() {
+      $scope.state.costcovTable = {
         titles: ["Year", "Cost", "Coverage"],
         rows: [],
         types: ["number", "number", "number"],
         widths: [],
-        validate_fn: validate_fn,
+        validateFn: validateCostcovTable,
       };
-      var table = $scope.state.costCovDataTable;
+      var table = $scope.state.costcovTable;
       $scope.selectedProgram.costcov.forEach(function(val, i, list) {
         table.rows.push(
             [val.year, val.cost, val.coverage]);
       });
       $scope.addBlankRow(table);
-      console_log_var("table", table);
+      console_log_var("costcovTable", $scope.state.costcovTable);
 
-      $scope.state.cpData = [];
-      var ccopar = angular.copy($scope.selectedProgram.ccopars);
-      if(ccopar && ccopar.t && ccopar.t.length > 0) {
-        for(var index = 0;index < ccopar.t.length;index++) {
-          $scope.state.cpData.push({
-            year: ccopar.t[index],
-            unitcost_lower: ccopar.unitcost[index][0],
-            saturationpercent_lower: ccopar.saturation[index][0]*100.,
-            unitcost_upper: ccopar.unitcost[index][1],
-            saturationpercent_upper: ccopar.saturation[index][1]*100.
-          })
+      var ccopars = angular.copy($scope.selectedProgram.ccopars);
+
+      $scope.state.ccoparsTable = {
+        titles: ["Year", "Saturation % (low)", "Saturation % (High)", "Unitcost (low)", "Unitcost (high)"],
+        rows: [],
+        types: ["number", "number", "number", "number", "number"],
+        widths: [],
+        validateFn: validateCcoparsTable,
+      };
+      var table = $scope.state.ccoparsTable;
+      if (ccopars && ccopars.t && ccopars.t.length > 0) {
+        for (var i_year = 0; i_year < ccopars.t.length; i_year++) {
+          table.rows.push([
+            ccopars.t[i_year],
+            ccopars.saturation[i_year][0]*100.,
+            ccopars.saturation[i_year][1]*100.,
+            ccopars.unitcost[i_year][0],
+            ccopars.unitcost[i_year][1],
+          ])
         }
         $scope.updateGraph();
       }
+      $scope.addBlankRow(table);
+      console_log_var('ccoparsTable', $scope.state.ccoparsTable);
     };
-
-
 
     $scope.changeSelectedProgram()
 

@@ -359,35 +359,65 @@ query_program_parser.add_arguments({
 
 from server.webapp.utils import update_or_create_program_record
 
-
-def swap_keys(a_dict, old_key, new_key):
-    if old_key in a_dict:
-        a_dict[new_key] = a_dict[old_key]
-        del a_dict[old_key]
-
-
 class Program(Resource):
     """
-    Write to a given pogram
+    Write program to web-server (for cost-coverage and outcome changes)
+    The payload is JSON in the form:
+
+    'program': {
+      'active': True,
+      'category': 'Care and treatment',
+      'ccopars': { 'saturation': [[0.9, 0.9]],
+                   't': [2016],
+                   'unitcost': [[1.136849845773715, 1.136849845773715]]},
+      'costcov': [ { 'cost': 16616289, 'coverage': 8173260, 'year': 2012},
+                   { 'cost': 234234, 'coverage': 324234, 'year': 2013}],
+      'created': 'Mon, 02 May 2016 05:27:48 -0000',
+      'criteria': { 'hivstatus': 'allstates', 'pregnant': False},
+      'id': '9b5db736-1026-11e6-8ffc-f36c0fc28d89',
+      'name': 'HIV testing and counseling',
+      'optimizable': True,
+      'populations': [ 'FSW',
+                       'Clients',
+                       'Male Children 0-14',
+                       'Female Children 0-14',
+                       'Males 15-49',
+                       'Females 15-49',
+                       'Males 50+',
+                       'Females 50+'],
+      'progset_id': '9b55945c-1026-11e6-8ffc-130aba4858d2',
+      'project_id': '9b118ef6-1026-11e6-8ffc-571b10a45a1c',
+      'short': 'HTC',
+      'targetpars': [ { 'active': True,
+                        'param': 'hivtest',
+                        'pops': [ 'FSW',
+                                  'Clients',
+                                  'Male Children 0-14',
+                                  'Female Children 0-14',
+                                  'Males 15-49',
+                                  'Females 15-49',
+                                  'Males 50+',
+                                  'Females 50+']}],
+      'updated': 'Mon, 02 May 2016 06:22:29 -0000'
+    }
     """
     method_decorators = [report_exception, login_required]
 
     def post(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s/program" % (project_id, progset_id))
-
+        current_app.logger.debug(
+            "/api/project/%s/progsets/%s/program" % (project_id, progset_id))
         args = query_program_parser.parse_args()
-
         program_summary = normalize_obj(args['program'])
-        pprint.pprint(program_summary, indent=2)
-
         program_entry = update_or_create_program_record(
-            project_id, progset_id, program_summary['short'], program_summary, program_summary['active'])
-        program_entry.pprint()
-        db.session.flush()
+            project_id, progset_id, program_summary['short'],
+            program_summary, program_summary['active'])
+        current_app.logger.debug(
+            "writing program = \n%s\n" % pprint.pformat(program_summary, indent=2))
         db.session.add(program_entry)
+        db.session.flush()
         db.session.commit()
-
         return 204
+
 
 
 popsize_parser = RequestParser()
@@ -424,43 +454,6 @@ class PopSize(Resource):
         # current_app.logger.debug("payload = \n%s\n" % pprint.pformat(result, indent=1))
         return result
 
-
-costcov_data_parser = RequestParser()
-costcov_data_parser.add_arguments({
-    'data': {'type': list, 'location': 'json'},
-    'params': {'type': dict, 'location': 'json'}
-})
-
-class CostCoverage(Resource):
-    """
-    Costcoverage for a given Program.
-    """
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(
-        description="Get costcoverage parameters and data for the given program.")
-    def get(self, project_id, progset_id, program_id):
-
-        program_entry = load_program_record(project_id, progset_id, program_id)
-
-        return {"params": program_entry.ccopars or {},
-                "data": program_entry.data_db_to_api()}
-
-    @swagger.operation(
-        description="Replace costcoverage parameters and data for the given program.")
-    def put(self, project_id, progset_id, program_id):
-
-        program_entry = load_program_record(project_id, progset_id, program_id)
-
-        args = costcov_data_parser.parse_args()
-        program_entry.ccopars = args.get('params', {})
-        program_entry.costcov = program_entry.data_api_to_db(args.get('data', []))
-
-        db.session.flush()
-        db.session.commit()
-
-        return {"params": program_entry.ccopars or {},
-                "data": program_entry.data_db_to_api()}
 
 
 class CostCoverageGraph(Resource):
@@ -501,130 +494,3 @@ class CostCoverageGraph(Resource):
         return json.loads(json_string)
 
 
-class CostCoverageData(Resource):
-    """
-    Modification of data points for the given program.
-    """
-    method_decorators = [report_exception, login_required]
-
-    def add_data_for_instance(self, program_instance, args, overwrite=False):
-        program_instance.addcostcovdatum(
-            {'t': args['year'], 'cost': args['cost'], 'coverage': args['coverage']},
-            overwrite=overwrite)
-
-    def update_data_for_instance(self, program_instance, args):
-        self.add_data_for_instance(program_instance, args, overwrite=True)
-
-    def delete_data_for_instance(self, program_instance, args):
-        program_instance.rmcostcovdatum(year=args['year'])
-
-    @swagger.operation(description="Add new data point.",
-                       parameters=costcov_data_point_parser.swagger_parameters())
-    def post(self, project_id, progset_id, program_id):
-        """
-        adds a _new_ data point to program parameters.
-        It should then be given to BE in this way:
-        program.addcostcovdatum({
-            t=<args.year>,
-            cost=<args.cost>,
-            coverage=<args.coverage>
-            })
-        """
-        args = costcov_data_point_parser.parse_args()
-        result = modify_program_record(project_id, progset_id, program_id, args, self.add_data_for_instance)
-
-        return result, 201
-
-    @swagger.operation(description="Edit existing data point.",
-                       parameters=costcov_data_point_parser.swagger_parameters())
-    def put(self, project_id, progset_id, program_id):
-        """
-        edits existing data point to program parameters.
-        It should then be given to BE in this way:
-        program.addcostcovdatum({
-            t=<args.year>,
-            cost=<args.cost>,
-            coverage=<args.coverage>
-            })
-        """
-        args = costcov_data_point_parser.parse_args()
-        result = modify_program_record(project_id, progset_id, program_id, args, self.update_data_for_instance)
-
-        return result
-
-    @swagger.operation(description="Remove a data point.",
-                       parameters=costcov_data_locator_parser.swagger_parameters())
-    def delete(self, project_id, progset_id, program_id):
-        """
-        removes data point for the given year from program parameters.
-        """
-        args = costcov_data_locator_parser.parse_args()
-        result = modify_program_record(project_id, progset_id, program_id, args, self.delete_data_for_instance)
-
-        return result
-
-
-class CostCoverageParam(Resource):
-    """
-    Modification of parameters for the given program.
-    """
-    method_decorators = [report_exception, login_required]
-
-    def add_param_for_instance(self, program_instance, args, overwrite=False):
-        program_instance.costcovfn.addccopar(
-            {
-                'saturation': (args['saturation_lower'], args['saturation_upper']),
-                't': args['year'],
-                'unitcost': (args['unitcost_lower'], args['unitcost_upper'])
-            },
-            overwrite=overwrite)
-
-    def update_param_for_instance(self, program_instance, args):
-        self.add_param_for_instance(program_instance, args, overwrite=True)
-
-    def delete_param_for_instance(self, program_instance, args):
-        program_instance.costcovfn.rmccopar(t=args['year'])
-
-    @swagger.operation(description="Add new cco parameter.",
-                       parameters=costcov_param_parser.swagger_parameters())
-    def post(self, project_id, progset_id, program_id):
-        """
-        adds a _new_ cco param to program parameters.
-        It should then be given to BE in this way:
-        program.addccopar({
-            'saturation': (saturationpercent_lower,saturationpercent_upper),
-            't': year,
-            'unitcost': (unitcost_lower,unitcost_upper)})
-        """
-        args = costcov_param_parser.parse_args()
-        result = modify_program_record(project_id, progset_id, program_id, args, self.add_param_for_instance)
-
-
-        return result, 201
-
-    @swagger.operation(description="Edit existing cco parameter.",
-                       parameters=costcov_param_parser.swagger_parameters())
-    def put(self, project_id, progset_id, program_id):
-        """
-        edits existing data point to program parameters.
-        It should then be given to BE in this way:
-        program.addccopar({
-            'saturation': (saturationpercent_lower,saturationpercent_upper),
-            't': year,
-            'unitcost': (unitcost_lower,unitcost_upper)})
-        """
-        args = costcov_param_parser.parse_args()
-        result = modify_program_record(project_id, progset_id, program_id, args, self.update_param_for_instance)
-
-        return result
-
-    @swagger.operation(description="Remove cco parameter.",
-                       parameters=costcov_data_locator_parser.swagger_parameters())
-    def delete(self, project_id, progset_id, program_id):
-        """
-        removes cco parameter for the given year from program parameters.
-        """
-        args = costcov_data_locator_parser.parse_args()
-        result = modify_program_record(project_id, progset_id, program_id, args, self.delete_param_for_instance)
-
-        return result

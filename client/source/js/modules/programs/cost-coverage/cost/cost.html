@@ -19,127 +19,70 @@
       </div>
       <div class="flex-column margin_left">
         <div class="flex-column">
+
           <h3>Parameters for defining cost function</h3>
-          <form name="cpDataForm">
-          <table class="table table-bordered" style="margin-bottom:0">
+
+          <table ng-model="state.ccoparsTable" class="table table-bordered">
             <tr>
-              <th style="width: 100px;">Year</th>
-              <th style="width: 125px;">Estimated size</th>
-              <th style="width: 150px;">Saturation %</th>
-              <th style="width: 100px;">Saturation #</th>
-              <th style="width: 150px;">Unit cost</th>
-              <th style="width: 50px;">Delete</th>
-            </tr>
-            <tr ng-repeat="data in state.cpData">
-              <td>{{data.year}}</td>
-              <td>{{state.estdSize[data.year.toString()]}}</td>
-              <td>{{data.saturationpercent_lower}} - {{data.saturationpercent_upper}}</td>
-              <td>{{
-                ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_lower !== undefined ) ?
-                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_lower)) : '') + '-' +
-
-                ((state.estdSize[data.year.toString()] !== undefined && data.saturationpercent_upper !== undefined) ?
-                Math.round(state.estdSize[data.year.toString()] * (data.saturationpercent_upper)) : '')}}
-              </td>
-              <td>{{data.unitcost_lower}} - {{data.unitcost_upper}}</td>
-              <td><i class="fa fa-times" ng-click="removeFromCPData(data)"></i></td>
-            </tr>
-            <tr ng-if="state.showAddCPData">
-              <td><input name="year" class="txbox __inline __m" ng-model="state.newCPData.year"
-                         type="number" ng-class="{'invalid': cpDataForm.year.$invalid}"/></td>
-              <td>{{state.estdSize[state.newCPData.year]}}</td>
-              <td>
-                <input name="splower" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_lower"
-                       type="number" min="0" ng-class="{'invalid': cpDataForm.splower.$invalid}"/> -
-                <input name="spupper" class="txbox __inline __s" ng-model="state.newCPData.saturationpercent_upper"
-                       type="number" min="{{state.newCPData.saturationpercent_lower || 0}}" ng-class="{'invalid': cpDataForm.spupper.$invalid}"/>
-              </td>
-              <td>{{
-                ((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_lower !== undefined)
-                ? Math.round(state.estdSize[state.newCPData.year] * (state.newCPData.saturationpercent_lower)) : '') + '-' +
-
-                ((state.estdSize[state.newCPData.year] !== undefined && state.newCPData.saturationpercent_upper !== undefined) ?
-                Math.round(state.estdSize[state.newCPData.year] * (state.newCPData.saturationpercent_upper)) : '')}}</td>
-              <td>
-                <input name="uclower" class="txbox __inline __s" ng-model="state.newCPData.unitcost_lower"
-                       type="number" min="0" ng-class="{'invalid': cpDataForm.uclower.$invalid}"/> -
-                <input name="ucupper" class="txbox __inline __s" ng-model="state.newCPData.unitcost_upper"
-                       type="number" min="state.newCPData.unitcost_lower || 0" ng-class="{'invalid': cpDataForm.ucupper.$invalid}"/>
-              </td>
-              <td>
-                <i class="fa fa-check" ng-click="addToCPData(cpDataForm);"></i>
-                <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCPData = {};state.showAddCPData = false"></i>
-              </td>
-            </tr>
-          </table>
-          </form>
-          <div>
-            <button type="button" class="btn __m" ng-click="state.showAddCPData = true">Add year</button>
-          </div>
-        </div>
-        <br>
-        <br>
-        <div class="flex-column">
-          <h3>Historical cost and coverage data</h3>
-
-          <table ng-init="table=state.costCovDataTable" class="table table-bordered">
-            <tr>
-              <th ng-repeat="title in table.titles">
+              <th ng-repeat="title in state.ccoparsTable.titles">
                 {{title}}
               </th>
               <th>
                 Manage
               </th>
             </tr>
-            <tr ng-repeat="row in table.rows">
+            <tr ng-repeat="row in state.ccoparsTable.rows">
               <td  ng-repeat="cell in row track by $index">
-                <span ng-if="$parent.$index != table.i_edit_row" >{{cell}}</span>
-                <input ng-if="$parent.$index == table.i_edit_row" type="number" ng-model="row[$index]">
+                <span ng-if="$parent.$index != state.ccoparsTable.i_edit_row" >{{cell}}</span>
+                <input ng-if="$parent.$index == state.ccoparsTable.i_edit_row" type="number" ng-model="row[$index]">
               </td>
               <td>
-                <span ng-if="$index != table.i_edit_row" >
-                  <i class="fa fa-pencil" ng-click="editRow(table, $index)"></i>
+                <span ng-if="$index != state.ccoparsTable.i_edit_row" >
+                  <i class="fa fa-pencil" ng-click="editRow(state.ccoparsTable, $index)"></i>
                   &nbsp;
-                  <i class="fa fa-times" ng-click="deleteRow(table, $index)"></i>
+                  <i class="fa fa-times" ng-click="deleteRow(state.ccoparsTable, $index)"></i>
                 </span>
-                <span ng-if="$index == table.i_edit_row">
-                  <i class="fa fa-check" ng-click="acceptEdit(table)"></i>
+                <span ng-if="$index == state.ccoparsTable.i_edit_row">
+                  <i class="fa fa-check" ng-click="acceptEdit(state.ccoparsTable)"></i>
                 </span>
               </td>
             </tr>
           </table>
 
-          <form name="ccDataForm">
-          <table class="table table-bordered" style="margin-bottom:0">
+        </div>
+        <br>
+        <br>
+        <div class="flex-column">
+
+          <h3>Historical cost and coverage data</h3>
+
+          <table ng-model="state.costcovTable" class="table table-bordered">
             <tr>
-              <th>Year</th>
-              <th>Cost</th>
-              <th>Coverage</th>
-              <th>Delete</th>
+              <th ng-repeat="title in state.costcovTable.titles">
+                {{title}}
+              </th>
+              <th>
+                Manage
+              </th>
             </tr>
-            <tr ng-repeat="data in state.ccData">
-              <td>{{data.year}}</td>
-              <td>{{data.cost}}</td>
-              <td>{{data.coverage}}</td>
-              <td><i class="fa fa-times" ng-click="removeFromCCData(data)"></i></td>
-            </tr>
-            <tr ng-if="state.showAddCCData">
-              <td><input name="year" class="txbox __inline __m" ng-model="state.newCCData.year"
-                         type="number" ng-class="{'invalid': ccDataForm.year.$invalid}"/></td>
-              <td><input name="cost" class="txbox __inline __m" ng-model="state.newCCData.cost"
-                         style="width: 150px;" type="number" ng-class="{'invalid': ccDataForm.cost.$invalid}"/></td>
-              <td><input name="coverage" class="txbox __inline __m" ng-model="state.newCCData.coverage"
-                         style="width: 150px;" type="number" ng-class="{'invalid': ccDataForm.coverage.$invalid}"/></td>
+            <tr ng-repeat="row in state.costcovTable.rows">
+              <td  ng-repeat="cell in row track by $index">
+                <span ng-if="$parent.$index != state.costcovTable.i_edit_row" >{{cell}}</span>
+                <input ng-if="$parent.$index == state.costcovTable.i_edit_row" type="number" ng-model="row[$index]">
+              </td>
               <td>
-                <i class="fa fa-check" ng-click="addToCCData(ccDataForm);"></i>
-                <i class="fa fa-times" style="margin-left: 15px" ng-click="state.newCCData = {};state.showAddCCData = false"></i>
+                <span ng-if="$index != state.costcovTable.i_edit_row" >
+                  <i class="fa fa-pencil" ng-click="editRow(state.costcovTable, $index)"></i>
+                  &nbsp;
+                  <i class="fa fa-times" ng-click="deleteRow(state.costcovTable, $index)"></i>
+                </span>
+                <span ng-if="$index == state.costcovTable.i_edit_row">
+                  <i class="fa fa-check" ng-click="acceptEdit(state.costcovTable)"></i>
+                </span>
               </td>
             </tr>
           </table>
-          </form>
-          <div>
-            <button type="button" class="btn __m" ng-click="state.showAddCCData = true">Add year</button>
-          </div>
+
         </div>
         <div class="flex-column margin_top">
           <h3>Options for displaying curves</h3>
@@ -157,9 +100,6 @@
           <textarea ng-model="state.remarks"/>
         </div>
       </div>
-    </div>
-    <div class="u-center-horizontal margin-top-m">
-      <button type="button" class="btn __m updateGraph" style="margin-left: 15px" ng-click="updateGraph()">Update</button>
     </div>
   </div>
 </div>
