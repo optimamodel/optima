@@ -1,22 +1,29 @@
 <!-- Cost functions tab -->
 <div class="c-tab" ng-controller="CostController">
+
   <div style="width: 40%">
     <label>
       Select a program:<br>
       <select class="txbox"
-              ng-options="getProgramName(p) for p in vm.programs"
+              ng-options="p.name for p in vm.programs"
               ng-change="changeSelectedProgram()"
               ng-model="selectedProgram">
       </select>
     </label>
   </div>
+
   <div ng-if="selectedProgram">
+
     <div style="display: flex; margin-top: 2%">
+
       <div class="chart-container __medium">
         <div mpld3-chart="state.chartData" id="cost_cov_chart" ng-if="state.chartData"></div>
         <div class="c-caption" ng-if="state.displayCaption">{{state.displayCaption}}</div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData" chart-id="{{ state.chartData.id }}"></chart-toolbar>
+        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData"
+                       chart-id="{{ state.chartData.id }}">
+        </chart-toolbar>
       </div>
+
       <div class="flex-column margin_left">
         <div class="flex-column">
 
@@ -33,16 +40,16 @@
             </tr>
             <tr ng-repeat="row in state.ccoparsTable.rows">
               <td  ng-repeat="cell in row track by $index">
-                <span ng-if="$parent.$index != state.ccoparsTable.i_edit_row" >{{cell}}</span>
-                <input ng-if="$parent.$index == state.ccoparsTable.i_edit_row" type="number" ng-model="row[$index]">
+                <span ng-if="$parent.$index != state.ccoparsTable.iEditRow" >{{cell}}</span>
+                <input ng-if="$parent.$index == state.ccoparsTable.iEditRow" type="number" ng-model="row[$index]">
               </td>
               <td>
-                <span ng-if="$index != state.ccoparsTable.i_edit_row" >
+                <span ng-if="$index != state.ccoparsTable.iEditRow" >
                   <i class="fa fa-pencil" ng-click="editRow(state.ccoparsTable, $index)"></i>
                   &nbsp;
                   <i class="fa fa-times" ng-click="deleteRow(state.ccoparsTable, $index)"></i>
                 </span>
-                <span ng-if="$index == state.ccoparsTable.i_edit_row">
+                <span ng-if="$index == state.ccoparsTable.iEditRow">
                   <i class="fa fa-check" ng-click="acceptEdit(state.ccoparsTable)"></i>
                 </span>
               </td>
@@ -67,16 +74,16 @@
             </tr>
             <tr ng-repeat="row in state.costcovTable.rows">
               <td  ng-repeat="cell in row track by $index">
-                <span ng-if="$parent.$index != state.costcovTable.i_edit_row" >{{cell}}</span>
-                <input ng-if="$parent.$index == state.costcovTable.i_edit_row" type="number" ng-model="row[$index]">
+                <span ng-if="$parent.$index != state.costcovTable.iEditRow" >{{cell}}</span>
+                <input ng-if="$parent.$index == state.costcovTable.iEditRow" type="number" ng-model="row[$index]">
               </td>
               <td>
-                <span ng-if="$index != state.costcovTable.i_edit_row" >
+                <span ng-if="$index != state.costcovTable.iEditRow" >
                   <i class="fa fa-pencil" ng-click="editRow(state.costcovTable, $index)"></i>
                   &nbsp;
                   <i class="fa fa-times" ng-click="deleteRow(state.costcovTable, $index)"></i>
                 </span>
-                <span ng-if="$index == state.costcovTable.i_edit_row">
+                <span ng-if="$index == state.costcovTable.iEditRow">
                   <i class="fa fa-check" ng-click="acceptEdit(state.costcovTable)"></i>
                 </span>
               </td>
@@ -84,8 +91,11 @@
           </table>
 
         </div>
+
         <div class="flex-column margin_top">
+
           <h3>Options for displaying curves</h3>
+
           <div>
             Specify the maximum coverage shown on the plot:
             <input placeholder="e.g. 1000000" class="txbox __inline __xl" ng-model="state.maxFunc" type="number"/>
@@ -95,10 +105,12 @@
             <input type="checkbox" ng-model="state.dispCost"/>
           </div>
         </div>
+
         <div class="flex-column margin_top">
           <h3>Add notes</h3>
           <textarea ng-model="state.remarks"/>
         </div>
+
       </div>
     </div>
   </div>

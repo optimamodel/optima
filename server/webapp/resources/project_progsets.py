@@ -2,6 +2,7 @@ import mpld3
 import json
 from pprint import pprint
 import pprint
+import math
 
 from flask import current_app
 
@@ -420,24 +421,16 @@ class Program(Resource):
 
 
 
-popsize_parser = RequestParser()
-popsize_parser.add_arguments(
-    {'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},})
-
 class PopSize(Resource):
     """
-    Estimated popsize for the given Program.
+    Estimated popsize for the given Program & Parset.
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description="Calculate popsize for the given program and parset(result).",
-        parameters=popsize_parser.swagger_parameters())
-    def get(self, project_id, progset_id, program_id):
+    def get(self, project_id, progset_id, program_id, parset_id):
         current_app.logger.debug(
-            "/api/project/%s/progsets/%s/programs/%s/popsize" %
-            (project_id, progset_id, program_id))
-        parset_id = popsize_parser.parse_args()['parset_id']
+            "/api/project/%s/progsets/%s/program/%s/parset/%s/popsize" %
+            (project_id, progset_id, program_id, parset_id))
         program = load_program(project_id, progset_id, program_id)
         if not program.targetpops:
             program.targetpops = ['tot']
@@ -445,14 +438,11 @@ class PopSize(Resource):
         result = load_result(project_id, parset_id)
         years = range(int(result.settings.start), int(result.settings.end + 1))
         popsizes = program.gettargetpopsize(t=years, parset=parset, results=result)
-        popsizes = promotetoarray(popsizes)
-        result = {
-            'popsizes': [
-                { 'year': year, 'popsize': popsize }
-                for (year, popsize) in zip(years, popsizes) ]
-          }
-        # current_app.logger.debug("payload = \n%s\n" % pprint.pformat(result, indent=1))
-        return result
+        payload = {
+            'popsizes': dict({year:int(popsize) for (year, popsize) in zip(years, popsizes)})
+        }
+        current_app.logger.debug('popsizes = \n%s\n' % payload)
+        return payload
 
 
 
