@@ -22,7 +22,7 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.changeSelectedProgram = function() {
-      $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
+      $scope.state.ccData = angular.copy($scope.selectedProgram.costcov);
       $scope.state.chartData = [];
       fetchDefaultData();
       fetchEstimatedSize();
@@ -170,14 +170,14 @@ define(['./../../module', 'underscore'], function (module, _) {
     }
 
     var validate_fn = function(table) {
-      var addData = [];
+      var costcov = [];
       table.rows.forEach(function(row, i_row, rows) {
         if (i_row != table.i_edit_row) {
-          addData.push({year: row[0], cost: row[1], coverage: row[2]});
+          costcov.push({year: row[0], cost: row[1], coverage: row[2]});
         }
       });
       var program = angular.copy($scope.selectedProgram);
-      program.addData = addData;
+      program.costcov = costcov;
       var projectId = $scope.vm.openProject.id;
       var progsetId = program.progset_id;
       var payload = { 'program': program };
@@ -222,7 +222,7 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     var fetchDefaultData = function() {
       $scope.state.ccData = [];
-      $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
+      $scope.state.ccData = angular.copy($scope.selectedProgram.costcov);
 
       $scope.state.costCovDataTable = {
         titles: ["Year", "Cost", "Coverage"],
@@ -232,7 +232,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         validate_fn: validate_fn,
       };
       var table = $scope.state.costCovDataTable;
-      $scope.selectedProgram.addData.forEach(function(val, i, list) {
+      $scope.selectedProgram.costcov.forEach(function(val, i, list) {
         table.rows.push(
             [val.year, val.cost, val.coverage]);
       });

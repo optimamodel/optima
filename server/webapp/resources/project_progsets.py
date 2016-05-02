@@ -381,9 +381,6 @@ class Program(Resource):
         pprint.pprint(program_summary, indent=2)
 
         swap_keys(program_summary, 'short_name', 'short')
-        swap_keys(program_summary, 'addData', 'costcov')
-        for entry in program_summary['costcov']:
-            swap_keys(entry, 'spending', 'cost')
 
         program_entry = update_or_create_program_record(
             project_id, progset_id, program_summary['short'], program_summary, program_summary['active'])

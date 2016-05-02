@@ -196,17 +196,17 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Function to remove additional data
     $scope.deleteAddData = function (addData) {
-      var indexOfData = $scope.state.program.addData.indexOf(addData);
-      $scope.state.program.addData.splice(indexOfData,1);
+      var indexOfData = $scope.state.program.costcov.indexOf(addData);
+      $scope.state.program.costcov.splice(indexOfData,1);
     };
 
     // Function to add additional data
     $scope.addAddData = function () {
       if($scope.state.newAddData.year && $scope.state.newAddData.cost >= 0 && $scope.state.newAddData.coverage >= 0) {
-        if(!$scope.state.program.addData) {
-          $scope.state.program.addData = [];
+        if(!$scope.state.program.costcov) {
+          $scope.state.program.costcov = [];
         }
-        $scope.state.program.addData.push($scope.state.newAddData);
+        $scope.state.program.costcov.push($scope.state.newAddData);
         $scope.state.newAddData = {};
         $scope.state.showAddData = false;
       }
