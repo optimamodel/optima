@@ -262,7 +262,7 @@ class ProjectDb(db.Model):
             for i in range(len(project_pops['short'])):
                 new_pop = {
                     'name': project_pops['long'][i],
-                    'short_name': project_pops['short'][i],
+                    'short': project_pops['short'][i],
                     'female': project_pops['female'][i],
                     'male': project_pops['male'][i],
                     'age_from': int(project_pops['age'][i][0]),
@@ -508,7 +508,7 @@ class ProgramsDb(db.Model):
         'progset_id': Uuid,
         'project_id': Uuid,
         'category': fields.String,
-        'short_name': fields.String(attribute='short'),
+        'short': fields.String(attribute='short'),
         'name': fields.String,
         'parameters': fields.Raw(attribute='pars'),
         'active': fields.Boolean,

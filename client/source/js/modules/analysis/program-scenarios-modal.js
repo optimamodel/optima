@@ -25,7 +25,7 @@ define(['angular'], function (module) {
         $scope.scenario[$scope.scenario_type] = [];
         _.each($scope.activePrograms, function (program) {
           $scope.scenario[$scope.scenario_type].push(
-            {'program': program.short_name, 'values': []}
+            {'program': program.short, 'values': []}
           );
         });
         $scope.scenario.parset_id = $scope.parsets[0].id;

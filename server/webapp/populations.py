@@ -17,7 +17,7 @@ Other males;Other males [enter age];1;0;0;0;0;0;
 Other females;Other females [enter age];0;1;0;0;0;0;
 """ # WARNING, this should probably not be hard-coded here
 
-fields = {0:"short_name",1:"name", 2:"male", 3:"female",4:"age_from",5:"age_to",6:"injects",7:"sexworker"}
+fields = {0:"short",1:"name", 2:"male", 3:"female",4:"age_from",5:"age_to",6:"injects",7:"sexworker"}
 
 def maybe_bool(p):
     ''' A function that returns a Boolean value if the input is a string '0' or '1', else returns the original string '''
@@ -34,7 +34,7 @@ def populations():
 def project_population_data():
     pops = populations()
     return {
-        'short': [pop['short_name'] for pop in pops],
+        'short': [pop['short'] for pop in pops],
         'male': [pop['male'] for pop in pops],
         'female': [pop['female'] for pop in pops],
         'injects': [pop['injects'] for pop in pops],
@@ -43,5 +43,5 @@ def project_population_data():
 
 
 def population_keys():
-    return [pop['short_name'] for pop in populations()]
+    return [pop['short'] for pop in populations()]
 

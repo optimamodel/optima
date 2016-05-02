@@ -72,7 +72,7 @@ populations_fields = {
     "injects": fields.Boolean,
     "sexworker": fields.Boolean,
     "name": fields.String,
-    "short_name": fields.String,
+    "short": fields.String,
 }
 
 

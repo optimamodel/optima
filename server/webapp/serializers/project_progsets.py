@@ -55,7 +55,6 @@ program_parser = RequestParser()
 program_parser.add_arguments({
     'name': {'required': True, 'location': 'json'},
     'short': {'location': 'json'},
-    'short_name': {'location': 'json'},
     'category': {'required': True, 'location': 'json'},
     'active': {'type': bool, 'default': False, 'location': 'json'},
     'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},

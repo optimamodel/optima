@@ -41,7 +41,7 @@ class ProjectBase(Resource):
 
 population_parser = RequestParser()
 population_parser.add_arguments({
-    'short_name': {'required': True, 'location': 'json'},
+    'short': {'required': True, 'location': 'json'},
     'name':       {'required': True, 'location': 'json'},
     'female':     {'type': bool, 'required': True, 'location': 'json'},
     'male':       {'type': bool, 'required': True, 'location': 'json'},

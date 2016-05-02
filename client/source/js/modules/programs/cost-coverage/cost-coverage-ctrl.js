@@ -33,8 +33,8 @@ define(['./../module', 'underscore'], function (module, _) {
 
     /* Function definitions */
 
-    function getFullProgramName(short_name) {
-      var program = _.filter(vm.selectedProgramSet.programs, {short_name: short_name});
+    function getFullProgramName(short) {
+      var program = _.filter(vm.selectedProgramSet.programs, {short: short});
       if (program.length === 0) {
         return '';
       }
@@ -51,7 +51,7 @@ define(['./../module', 'underscore'], function (module, _) {
       console.log('programs', currentPop[0].programs);
       return _.map(currentPop[0].programs, function(program) {
         return {
-          name: program.short_name
+          name: program.short
         }
       });
     }

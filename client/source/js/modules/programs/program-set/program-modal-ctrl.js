@@ -42,7 +42,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         if(program.populations && program.populations.length > 0) {
           _.forEach($scope.state.populations, function(population) {
-            population.active = (program.populations.length === 0) || (program.populations.indexOf(population.short_name) > -1);
+            population.active = (program.populations.length === 0) || (program.populations.indexOf(population.short) > -1);
           });
           $scope.state.selectAll = !_.find($scope.state.populations, function(population) {
             return !population.active;
@@ -75,7 +75,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           parameter.populations = angular.copy($scope.state.populations);
           _.forEach(parameter.populations, function(population) {
             if (_.find(parameter.pops, 
-                       function(pop) { return pop === population.short_name })) {
+                       function(pop) { return pop === population.short })) {
               population.added = true;
             } else {
               population.added = false;
@@ -222,7 +222,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.state.program.populations = _.filter($scope.state.populations, function(population) {
           return population.active;
         }).map(function(population) {
-          return population.short_name;
+          return population.short;
         });
         
         $scope.state.program.criteria.hivstatus = _.filter(hivstatus, function(state) {
@@ -246,7 +246,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
           if(parameter.parameterObj.by !== 'tot' && addedPopulations && addedPopulations.length > 0) {
             parameter.pops = addedPopulations.map(function (population) {
-              return population.short_name;
+              return population.short;
             });
           }else{
             parameter.pops = ['tot'];

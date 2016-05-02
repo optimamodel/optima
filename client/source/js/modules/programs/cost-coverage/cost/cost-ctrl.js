@@ -17,7 +17,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       if (program.name) {
         return program.name;
       } else {
-        return program.short_name;
+        return program.short;
       }
     };
 

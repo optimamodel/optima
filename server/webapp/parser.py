@@ -23,10 +23,10 @@ def parse_targetpars(targetpars):
     return [
         {
             'active': True,
-            'param': short_name,
+            'param': short,
             'pops': pop,
         }
-        for short_name, pop
+        for short, pop
         in parameters.items()
     ]
 

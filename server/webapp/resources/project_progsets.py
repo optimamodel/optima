@@ -308,7 +308,7 @@ class ProgsetParams(Resource):
                 'pop': pop,
                 'programs': [{
                     'name': program.name,
-                    'short_name': program.short,
+                    'short': program.short,
                 } for program in progs]
             } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
             'coverage': parset_be.pars[0][name].coverage,
@@ -379,8 +379,6 @@ class Program(Resource):
 
         program_summary = normalize_obj(args['program'])
         pprint.pprint(program_summary, indent=2)
-
-        swap_keys(program_summary, 'short_name', 'short')
 
         program_entry = update_or_create_program_record(
             project_id, progset_id, program_summary['short'], program_summary, program_summary['active'])
