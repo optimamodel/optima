@@ -510,7 +510,7 @@ class ProgramsDb(db.Model):
         'category': fields.String,
         'short': fields.String(attribute='short'),
         'name': fields.String,
-        'parameters': fields.Raw(attribute='pars'),
+        'targetpars': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
         'populations': fields.List(fields.String, attribute='targetpops'),
         'criteria': fields.Raw(),
@@ -597,7 +597,7 @@ class ProgramsDb(db.Model):
     def update_from_summary(self, program_summary, active):
         self.short = program_summary.get('short', '')
         self.updated = datetime.now(dateutil.tz.tzutc())
-        self.pars = program_summary.get('parameters', [])
+        self.pars = program_summary.get('targetpars', [])
         self.targetpops = program_summary.get('populations', [])
         self.category = program_summary.get('category', '')
         self.active = active

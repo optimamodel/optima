@@ -89,15 +89,14 @@ def revert_ccopars(ccopars):
     return result
 
 
-def parse_program_summary(program, for_fe=False):
-    short_name_key = 'short_name' if for_fe else 'short'
+def parse_program_summary(program):
     result = {
         'active': False,
         'name': program.name,
-        short_name_key: program.short,
+        'short': program.short,
         'populations': normalize_obj(program.targetpops),
         'criteria': program.criteria,
-        'parameters': parse_targetpars(program.targetpars),
+        'targetpars': parse_targetpars(program.targetpars),
         'ccopars': normalize_obj(program.costcovfn.ccopars),
         'category': program.category,
         'costcov': parse_costcovdata(program.costcovdata),
@@ -106,10 +105,7 @@ def parse_program_summary(program, for_fe=False):
     return result
 
 
-def get_default_program_summaries(project, for_fe=False):
-    return [
-        parse_program_summary(p, for_fe)
-        for p in defaultprograms(project)
-    ]
+def get_default_program_summaries(project):
+    return [parse_program_summary(p) for p in defaultprograms(project)]
 
 

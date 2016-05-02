@@ -32,7 +32,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
        * 2. set the populations which have already been selected for the program as active.
        * 3. if all the populations have been selected for the program selectAll will be set to true.
        */
-      var isTot = _.some($scope.state.program.parameters, function(parameter) {
+      var isTot = _.some($scope.state.program.targetpars, function(parameter) {
         return parameter.pops.indexOf('tot') >= 0;
       });
       if(isTot) {
@@ -58,7 +58,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
        *    set the populations which have already been added to the program->parameters as added.
        * 4. set selectAll if all the partnerships / populations have already been added for the parameter.
        */
-      _.forEach($scope.state.program.parameters, function(parameter) {
+      _.forEach($scope.state.program.targetpars, function(parameter) {
         parameter.parameterObj = _.find(parameters, function(param) {
           return parameter.param === param.short;
         });
@@ -152,11 +152,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Add a new parameter
     $scope.addParameter = function() {
-      if ($scope.state.program.parameters == undefined) {
-        $scope.state.program.parameters = [];
+      if ($scope.state.program.targetpars == undefined) {
+        $scope.state.program.targetpars = [];
       }
 
-      $scope.state.program.parameters.push({active: true});
+      $scope.state.program.targetpars.push({active: true});
     };
 
     // When selection in parameter drop-down changes this code will add default population set to the parameterObj
@@ -191,7 +191,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     };
     // Function to remove a parameter
     $scope.removeParameter = function ($index) {
-      program.parameters.splice($index,1);
+      program.targetpars.splice($index,1);
     };
 
     // Function to remove additional data
@@ -231,13 +231,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           return state;
         });
         // tot
-        if($scope.state.program.parameters)
+        if($scope.state.program.targetpars)
 
         /**
          * The code below will extract the population / parameter arrays to be
          * saved and will delete any unwanted data from it.
          */
-        _.forEach($scope.state.program.parameters, function(parameter) {
+        _.forEach($scope.state.program.targetpars, function(parameter) {
           
           parameter.param = parameter.parameterObj.short;
           var addedPopulations = _.filter(parameter.populations, function(population){

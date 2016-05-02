@@ -75,7 +75,7 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function isProgramActive(program) {
-      return program.parameters && program.parameters.length > 0 && program.active;
+      return program.targetpars && program.targetpars.length > 0 && program.active;
     }
 
     function setProgramSet() {

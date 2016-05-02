@@ -57,7 +57,7 @@ program_parser.add_arguments({
     'short': {'location': 'json'},
     'category': {'required': True, 'location': 'json'},
     'active': {'type': bool, 'default': False, 'location': 'json'},
-    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
+    'targetpars': {'type': list, 'dest': 'pars', 'location': 'json'},
     'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
     'costcov': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
     'criteria': {'type': JsonInput, 'location': 'json'}

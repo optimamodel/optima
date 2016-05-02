@@ -935,7 +935,7 @@ class Defaults(Resource):
     def get(self, project_id):
         from server.webapp.parser import get_default_program_summaries
         project = load_project_record(project_id, raise_exception=True).hydrate()
-        return { "programs": get_default_program_summaries(project, for_fe = True) }
+        return { "programs": get_default_program_summaries(project) }
 
 
 # It's a pship but it's used somewhat interchangeably with populations
