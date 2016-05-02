@@ -438,9 +438,7 @@ class PopSize(Resource):
         result = load_result(project_id, parset_id)
         years = range(int(result.settings.start), int(result.settings.end + 1))
         popsizes = program.gettargetpopsize(t=years, parset=parset, results=result)
-        payload = {
-            'popsizes': dict({year:int(popsize) for (year, popsize) in zip(years, popsizes)})
-        }
+        payload = {'popsizes': dict(zip(years, popsizes))}
         current_app.logger.debug('popsizes = \n%s\n' % payload)
         return payload
 
