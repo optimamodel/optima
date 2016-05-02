@@ -5,6 +5,11 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Default list of criteria
     var hivstatus = ['acute', 'gt500', 'gt350', 'gt200', 'gt50', 'aids', 'allstates'];
 
+    function console_log_var(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
+
     // Initializes controller state and sets some default values in the program
     var initialize = function () {
 
