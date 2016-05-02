@@ -20,8 +20,7 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
 
 from server.webapp.serializers.project_progsets import (progset_parser, param_fields,
-    effect_parser, progset_effects_fields, program_parser, query_program_parser,
-    costcov_graph_parser, costcov_data_point_parser,
+    effect_parser, progset_effects_fields, program_parser, costcov_graph_parser, costcov_data_point_parser,
     costcov_data_locator_parser, costcov_param_parser)
 
 from server.webapp.jsonhelper import normalize_obj
@@ -352,7 +351,15 @@ class ProgsetEffects(Resource):
         return progset_entry
 
 
-class Programs(Resource):
+
+query_program_parser = RequestParser()
+query_program_parser.add_arguments({
+    'program': {'required': True, 'type': JsonInput, 'location': 'json'},
+})
+
+from server.webapp.utils import update_or_create_program_record
+
+class Program(Resource):
     """
     Programs for a given progset.
     """
@@ -375,24 +382,30 @@ class Programs(Resource):
     @swagger.operation(
         description="Create a program for the progset with the given ID.",
         parameters=program_parser.swagger_parameters())
-    @marshal_with(ProgramsDb.resource_fields)
     def post(self, project_id, progset_id):
-        current_app.logger.debug("/api/project/%s/progsets/%s/programs" % (project_id, progset_id))
+        current_app.logger.debug("/api/project/%s/progsets/%s/program" % (project_id, progset_id))
 
-        progset_entry = load_progset_record(project_id, progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
+        def swap_keys(a_dict, old_key, new_key):
+            a_dict[new_key] = a_dict[old_key]
+            del a_dict[old_key]
 
         args = query_program_parser.parse_args()
-        args["short"] = args["short_name"]
-        del args["short_name"]
 
-        program_entry = ProgramsDb(project_id, progset_id, **args)
+        program_summary = normalize_obj(args['program'])
+        swap_keys(program_summary, 'short_name', 'short')
+        swap_keys(program_summary, 'addData', 'costcov')
+        for entry in program_summary['costcov']:
+            swap_keys(entry, 'spending', 'cost')
+        pprint.pprint(program_summary, indent=2)
+
+        program_entry = update_or_create_program_record(
+            project_id, progset_id, program_summary['short'], program_summary, program_summary['active'])
+        program_entry.pprint()
         db.session.add(program_entry)
         db.session.flush()
         db.session.commit()
 
-        return program_entry, 201
+        return 201
 
 
 

@@ -878,7 +878,7 @@ class Program(object):
         # Make x data... 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
             xupperlim = plotoptions['xupperlim']
-        else: 
+        else:
             if costdata: xupperlim = 1.5*max(costdata)
             else: xupperlim = maxupperlim
         xlinedata = linspace(0,xupperlim,npts)

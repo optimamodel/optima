@@ -169,9 +169,76 @@ define(['./../../module', 'underscore'], function (module, _) {
       console.log(JSON.stringify(val, null, 2));
     }
 
+    var validate_fn = function(table) {
+      var addData = [];
+      table.rows.forEach(function(row, i_row, rows) {
+        if (i_row != table.i_edit_row) {
+          addData.push({year: row[0], spending: row[1], coverage: row[2]});
+        }
+      });
+      var program = angular.copy($scope.selectedProgram);
+      program.addData = addData;
+      var projectId = $scope.vm.openProject.id;
+      var progsetId = program.progset_id;
+      var payload = { 'program': program };
+      $http.post('/api/project/' + projectId + '/progsets/' + progsetId + '/program', payload);
+      console_log_var("payload", payload);
+    };
+
+    $scope.addBlankRow = function(table) {
+      var n_var = table.titles.length;
+      var row = [];
+      for (var j=0; j<n_var; j+=1) {
+        row.push("");
+      }
+      table.rows.push(row);
+      table.i_edit_row = table.rows.length - 1;
+    };
+
+    $scope.deleteRow = function(table, i_row) {
+      var i_last_row = table.rows.length - 1;
+      table.rows.splice(i_row, 1);
+      if (i_last_row == i_row) {
+        $scope.addBlankRow(table);
+      }
+      table.i_edit_row = table.rows.length - 1;
+      validate_fn(table);
+      console_log_var("table", table);
+    }
+
+    $scope.editRow = function(table, i) {
+      var i_last_row = table.rows.length - 1;
+      if (table.i_edit_row == i_last_row) {
+        table.rows.splice(i_last_row, 1);
+      }
+      table.i_edit_row = i;
+      console_log_var("table", table);
+    }
+
+    $scope.acceptEdit = function(table) {
+      $scope.addBlankRow(table);
+      table.validate_fn(table);
+    };
+
     var fetchDefaultData = function() {
       $scope.state.ccData = [];
       $scope.state.ccData = angular.copy($scope.selectedProgram.addData);
+
+      $scope.state.costCovDataTable = {
+        titles: ["Year", "Spending", "Coverage"],
+        rows: [],
+        types: ["number", "number", "number"],
+        widths: [],
+        validate_fn: validate_fn,
+      };
+      var table = $scope.state.costCovDataTable;
+      $scope.selectedProgram.addData.forEach(function(val, i, list) {
+        table.rows.push(
+            [val.year, val.spending, val.coverage]);
+      });
+      $scope.addBlankRow(table);
+      console_log_var("table", table);
+
       $scope.state.cpData = [];
       var ccopar = angular.copy($scope.selectedProgram.ccopars);
       if(ccopar && ccopar.t && ccopar.t.length > 0) {
@@ -187,6 +254,8 @@ define(['./../../module', 'underscore'], function (module, _) {
         $scope.updateGraph();
       }
     };
+
+
 
     $scope.changeSelectedProgram()
 

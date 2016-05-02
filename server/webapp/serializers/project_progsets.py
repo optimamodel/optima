@@ -65,18 +65,6 @@ program_parser.add_arguments({
 })
 
 
-query_program_parser = RequestParser()
-query_program_parser.add_arguments({
-    'name': {'required': True},
-    'short': {},
-    'short_name': {},
-    'category': {'required': True},
-    'active': {'type': bool, 'default': False},
-    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
-    'populations': {'type': list, 'dest': 'targetpops', 'location': 'json'},
-})
-
-
 progset_parser = RequestParser()
 progset_parser.add_arguments({
     'name': {'required': True},

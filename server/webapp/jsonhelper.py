@@ -45,6 +45,9 @@ def normalize_obj(obj):
         else:
             return float(obj)
 
+    if isinstance(obj, unicode):
+        return str(obj)
+
     return obj
 
 
