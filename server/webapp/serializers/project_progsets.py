@@ -17,40 +17,6 @@ costcov_parser.add_arguments({
 })
 
 
-costcov_graph_parser = RequestParser()
-costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': str, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
-    'caption': {'type': str, 'location': 'args'},
-    'xupperlim': {'type': long, 'location': 'args'},
-    'perperson': {'type': bool, 'location': 'args'},
-})
-
-
-costcov_data_point_parser = RequestParser()
-costcov_data_point_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
-    'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
-})
-
-
-costcov_data_locator_parser = RequestParser()
-costcov_data_locator_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'args'}
-})
-
-
-costcov_param_parser = RequestParser()
-costcov_param_parser.add_arguments({
-    'year': {'required': True, 'type': int},
-    'saturation_lower': {'required': True, 'type': float},
-    'saturation_upper': {'required': True, 'type': float},
-    'unitcost_lower': {'required': True, 'type': float},
-    'unitcost_upper': {'required': True, 'type': float},
-})
-
-
 program_parser = RequestParser()
 program_parser.add_arguments({
     'name': {'required': True, 'location': 'json'},

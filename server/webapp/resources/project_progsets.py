@@ -21,8 +21,7 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
 
 from server.webapp.serializers.project_progsets import (progset_parser, param_fields,
-    effect_parser, progset_effects_fields, program_parser, costcov_graph_parser, costcov_data_point_parser,
-    costcov_data_locator_parser, costcov_param_parser)
+    effect_parser, progset_effects_fields)
 
 from server.webapp.jsonhelper import normalize_obj
 
@@ -31,7 +30,6 @@ from flask_restful import fields
 from server.webapp.utils import RequestParser
 from server.webapp.inputs import SubParser, Json as JsonInput
 from server.webapp.fields import Json, Uuid
-
 
 
 def load_program(project_id, progset_id, program_id):
@@ -444,25 +442,33 @@ class PopSizes(Resource):
 
 
 
-class CostCoverageGraph(Resource):
+costcov_graph_parser = RequestParser()
+costcov_graph_parser.add_arguments({
+    't': {'required': True, 'type': str, 'location': 'args'},
+    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
+    'caption': {'type': str, 'location': 'args'},
+    'xupperlim': {'type': long, 'location': 'args'},
+    'perperson': {'type': bool, 'location': 'args'},
+})
+
+class CostcovGraph(Resource):
     """
-    Costcoverage graph for a Program.
+    Costcoverage graph for a Program and a Parset. A Parset is needed to
+    get population sizes to generate the coverage.
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description="Get graph.",
-                       parameters=costcov_graph_parser.swagger_parameters())
     def get(self, project_id, progset_id, program_id):
         """
-        parameters:
-        t = year, or comma-separated list of years (should be >= startyear in data)
-        parset_id - ID of the parset (one of the project parsets - not related to program parameters)
+        Args:
+            t: comma-separated list of years (>= startyear in data)
+            parset_id: parset ID of project (not related to program targetpars)
         """
         args = costcov_graph_parser.parse_args()
         parset_id = args['parset_id']
 
         try:
-            t = [int(x) for x in args['t'].split(',')]
+            t = map(int, args['t'].split(','))
         except ValueError:
             raise ValueError("t must be a year or a comma-separated list of years.")
 
@@ -477,8 +483,6 @@ class CostCoverageGraph(Resource):
         plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-        json_string = json.dumps(mpld3.fig_to_dict(plot)).replace('NaN', 'null').replace('None', '')
-        return json.loads(json_string)
+        return normalize_obj(mpld3.fig_to_dict(plot))
 
 

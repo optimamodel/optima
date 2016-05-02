@@ -69,7 +69,7 @@ from server.webapp.resources.project_constants import Parameters, Populations
 from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Program, PopSizes
 from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
                                                      ParsetsAutomaticCalibration, ParsetYkeys, ParsetLimits)
-from server.webapp.resources.project_progsets import CostCoverageGraph
+from server.webapp.resources.project_progsets import CostcovGraph
 from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
 from server.webapp.resources.project_optimizations import Optimizations, Optimization, OptimizationResults, OptimizationGraph
 
@@ -105,7 +105,7 @@ api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scena
 
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
-api.add_resource(CostCoverageGraph,
+api.add_resource(CostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 api.add_resource(PopSizes,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')

@@ -7,7 +7,7 @@ define(['./../../module', 'underscore'], function (module, _) {
     $scope.state = {
       ccoparsTable: {},
       costcovTable: {},
-      estdSize: []
+      popsizes: {}
     };
 
     // $scope.vm is from the controller of the cost-coverage template controller
@@ -90,17 +90,17 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     var fetchEstimatedSize = function() {
-      $scope.state.estdSize = {};
+      $scope.state.popsizes = {};
       $http
         .get(
           '/api/project/' + $scope.vm.openProject.id
             + '/progsets/' + $scope.vm.selectedProgramSet.id
             + '/program/' + $scope.selectedProgram.id
             + '/parset/' + $scope.vm.selectedParset.id
-            + '/popsize')
+            + '/popsizes')
         .success(function (response) {
-          $scope.state.estdSize = response.popsizes;
-          consoleLogVar('estdSize', $scope.state.estdSize);
+          $scope.state.popsizes = response.popsizes;
+          consoleLogVar('popsizes', $scope.state.popsizes);
         });
     };
 
