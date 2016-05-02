@@ -421,7 +421,7 @@ class Program(Resource):
 
 
 
-class PopSize(Resource):
+class PopSizes(Resource):
     """
     Estimated popsize for the given Program & Parset.
     """
@@ -429,7 +429,7 @@ class PopSize(Resource):
 
     def get(self, project_id, progset_id, program_id, parset_id):
         current_app.logger.debug(
-            "/api/project/%s/progsets/%s/program/%s/parset/%s/popsize" %
+            "/api/project/%s/progsets/%s/program/%s/parset/%s/popsizes" %
             (project_id, progset_id, program_id, parset_id))
         program = load_program(project_id, progset_id, program_id)
         if not program.targetpops:
