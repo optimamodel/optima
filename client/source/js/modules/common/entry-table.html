@@ -1,22 +1,46 @@
-  <table ng-model="table" class="table table-bordered">
-    <tr>
-      <th ng-repeat="title in table.titles"> {{title}}</th>
-      <th>Manage</th>
-    </tr>
-    <tr ng-repeat="row in table.rows">
-      <td  ng-repeat="cell in row track by $index">
-        <span ng-if="$parent.$index != table.iEditRow" >{{cell}}</span>
-        <input ng-if="$parent.$index == table.iEditRow" type="number" ng-model="row[$index]">
-      </td>
-      <td>
-        <span ng-if="$index != table.iEditRow" >
-          <i class="fa fa-pencil" ng-click="editRow(table, $index)"></i>
-          &nbsp;
-          <i class="fa fa-times" ng-click="deleteRow(table, $index)"></i>
-        </span>
-        <span ng-if="$index == table.iEditRow">
-          <i class="fa fa-check" ng-click="acceptEdit(table)"></i>
-        </span>
-      </td>
-    </tr>
-  </table>
+<table class="table table-bordered">
+  <tr>
+    <th ng-repeat="title in table.titles">
+      {{title}}
+    </th>
+    <th>Manage</th>
+  </tr>
+  <tr ng-repeat="row in table.rows">
+    <td ng-if="$parent.$index == table.iEditRow"
+        ng-repeat="cell in displayRow(row) track by $index">
+      <input
+          ng-if='table.types[$index] == "number"'
+          type="number"
+        ng-model="row[$index]">
+      <span
+         ng-if='table.types[$index] == "displayFn"'>
+        {{cell}}
+      </span>
+    </td>
+    <td ng-if="$parent.$index != table.iEditRow"
+        ng-repeat="cell in displayRow(row) track by $index">
+      <span ng-if='table.types[$index] == "number"'>
+        {{cell}}
+      </span>
+      <span ng-if='table.types[$index] == "displayFn"'>
+        {{cell}}
+      </span>
+    </td>
+    <td>
+      <span ng-if="$index != table.iEditRow" >
+        <i class="fa fa-pencil"
+           ng-click="editRow($index)">
+        </i>
+        &nbsp;
+        <i class="fa fa-times"
+           ng-click="deleteRow($index)">
+        </i>
+      </span>
+      <span ng-if="$index == table.iEditRow">
+        <i class="fa fa-check"
+           ng-click="acceptEdit()">
+        </i>
+      </span>
+    </td>
+  </tr>
+</table>

@@ -7,7 +7,6 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
     module.directive('entryTable', function () {
 
         /*
-
         Example of table dictionary that <entry-table> can handle:
 
             {
@@ -46,49 +45,66 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
          */
 
         return {
-            scope: { 'table': '='},
+            scope: { 'table': '=' },
             templateUrl: './js/modules/common/entry-table.html',
             link: function (scope) {
 
-                scope.addBlankRow = function (table) {
-                    var n_var = table.titles.length;
+                scope.addBlankRow = function () {
+                    var n_var = scope.table.titles.length;
                     var row = [];
                     for (var j = 0; j < n_var; j += 1) {
                         row.push("");
                     }
-                    table.rows.push(row);
-                    table.iEditRow = table.rows.length - 1;
+                    scope.table.rows.push(row);
+                    scope.table.iEditRow = scope.table.rows.length - 1;
                 };
 
-                scope.deleteRow = function (table, iRow) {
-                    var iLastRow = table.rows.length - 1;
-                    table.rows.splice(iRow, 1);
+                scope.deleteRow = function (iRow) {
+                    var iLastRow = scope.table.rows.length - 1;
+                    scope.table.rows.splice(iRow, 1);
                     if (iLastRow == iRow) {
-                        scope.addBlankRow(table);
+                        scope.addBlankRow(scope.table);
                     }
-                    table.iEditRow = table.rows.length - 1;
-                    table.validateFn(table);
+                    scope.table.iEditRow = scope.table.rows.length - 1;
+                    scope.table.validateFn(scope.table);
                 };
 
-                scope.editRow = function (table, iRow) {
-                    var iLastRow = table.rows.length - 1;
-                    if (table.iEditRow == iLastRow) {
-                        table.rows.splice(iLastRow, 1);
+                scope.editRow = function (iRow) {
+                    var iLastRow = scope.table.rows.length - 1;
+                    if (scope.table.iEditRow == iLastRow) {
+                        scope.table.rows.splice(iLastRow, 1);
                     }
-                    table.iEditRow = iRow;
+                    scope.table.iEditRow = iRow;
                 };
 
-                scope.acceptEdit = function (table) {
-                    scope.addBlankRow(table);
-                    table.validateFn(table);
+                scope.acceptEdit = function () {
+                    scope.addBlankRow(scope.table);
+                    scope.table.validateFn(scope.table);
+                };
+
+                scope.displayRow = function (row) {
+                    var result = [];
+                    for (var i=0; i<row.length; i+=1) {
+                        var val = row[i];
+                        if (scope.table.types[i] == "displayFn") {
+                            var fn = scope.table.displayRowFns[i];
+                            if (fn) {
+                                val = fn(row);
+                            }
+                        }
+                        result.push(val);
+                    }
+                    return result;
                 };
 
                 scope.$watch(
                     'table',
                     function () {
-                        var table = scope.table;
-                        if (_.isUndefined(table.iEditRow)) {
-                            scope.addBlankRow(table);
+                        if (_.isUndefined(scope.table)) {
+                            return;
+                        }
+                        if (_.isUndefined(scope.table.iEditRow)) {
+                            scope.addBlankRow(scope.table);
                         }
                     },
                     true

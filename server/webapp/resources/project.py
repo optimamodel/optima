@@ -790,6 +790,7 @@ class ProjectFromData(Resource):
         reply = {
             'file': source_filename,
             'result': 'Project %s is created' % project_name,
+            'name': project_name,
             'id': str(project_record.id)
         }
         return reply

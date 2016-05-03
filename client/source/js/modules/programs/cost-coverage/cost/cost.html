@@ -18,20 +18,20 @@
     <div style="display: flex; margin-top: 2%">
 
       <div class="chart-container __medium">
-        <div mpld3-chart="state.chartData"
-             chart-id="{{ state.chartData.id }}"
-             ng-if="state.chartData">
+        <div mpld3-chart="chartData"
+             chart-id="{{ chartData.id }}"
+             ng-if="chartData">
         </div>
         <div class="c-caption"
-             ng-if="state.displayCaption">
-          {{state.displayCaption}}
+             ng-if="displayCaption">
+          {{displayCaption}}
         </div>
       </div>
 
       <div class="flex-column margin_left">
         <div class="flex-column">
           <h3>Parameters for defining cost function</h3>
-          <entry-table table="state.ccoparsTable"></entry-table>
+          <entry-table table="ccoparsTable"></entry-table>
         </div>
 
         <br>
@@ -39,7 +39,7 @@
 
         <div class="flex-column">
           <h3>Historical cost and coverage data</h3>
-          <entry-table table="state.costcovTable"></entry-table>
+          <entry-table table="costcovTable"></entry-table>
         </div>
 
         <div class="flex-column margin_top">
@@ -48,20 +48,29 @@
 
           <div>
             Specify the maximum coverage shown on the plot:
-            <input placeholder="e.g. 1000000" class="txbox __inline __xl" ng-model="state.maxFunc" type="number"/>
+            <input
+                placeholder="e.g. 1000000"
+                class="txbox __inline __xl"
+                ng-model="maxFunc"
+                type="number"/>
           </div>
           <div>
             Display program costs in dollar spent per person in the targeted population
-            <input type="checkbox" ng-model="state.dispCost"/>
+            <input
+                type="checkbox"
+                ng-model="dispCost"/>
           </div>
         </div>
 
         <div class="flex-column margin_top">
           <h3>Add notes</h3>
-          <textarea ng-model="state.remarks"/>
+          <textarea ng-model="remarks"/>
         </div>
 
       </div>
+
     </div>
+
   </div>
+
 </div>

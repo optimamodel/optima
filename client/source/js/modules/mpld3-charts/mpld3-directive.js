@@ -71,8 +71,6 @@ define(
       'mpld3Chart',
       function ($http, modalService, exportHelpers, projectApiService) {
 
-    console.log("mpld3Chart!");
-
     return {
       scope: { chart: '=mpld3Chart' },
       templateUrl: './js/modules/mpld3-charts/mpld3-chart.html',

@@ -2,7 +2,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectUploadController',
-    function ($scope, projects, modalService, $upload, $state) {
+    function ($scope, projects, modalService, $upload, $state, UserManager, activeProject) {
 
       // Initialize Params
       $scope.projectParams = { name: "", file: undefined };
@@ -45,7 +45,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               fields: {name: $scope.projectParams.name},
               file: $scope.projectParams.file
             }).success(function (data, status, headers, config) {
-              $state.go('project.open');
+              var name = data['name'];
+              var projectId = data['id'];
+              console.log('upload', data);
+              activeProject.setActiveProjectFor(name, projectId, UserManager.data);
+              $state.go('home');
             });
           }
         }
