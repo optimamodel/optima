@@ -745,7 +745,7 @@ class ProjectFromData(Resource):
         parameters=project_upload_form_parser.swagger_parameters()
     )
     @report_exception
-    @marshal_with(project_upload_resource)
+    # @marshal_with(project_upload_resource)
     def post(self):
         user_id = current_user.id
 
@@ -793,6 +793,7 @@ class ProjectFromData(Resource):
             'name': project_name,
             'id': str(project_record.id)
         }
+        print(reply)
         return reply
 
 

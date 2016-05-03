@@ -47,7 +47,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }).success(function (data, status, headers, config) {
               var name = data['name'];
               var projectId = data['id'];
-              console.log('upload', data);
+              console.log('upload', JSON.stringify(data));
               activeProject.setActiveProjectFor(name, projectId, UserManager.data);
               $state.go('home');
             });
