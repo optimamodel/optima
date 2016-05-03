@@ -30,68 +30,16 @@
 
       <div class="flex-column margin_left">
         <div class="flex-column">
-
           <h3>Parameters for defining cost function</h3>
-
-          <table ng-model="state.ccoparsTable" class="table table-bordered">
-            <tr>
-              <th ng-repeat="title in state.ccoparsTable.titles"> {{title}}</th>
-              <th>Manage</th>
-            </tr>
-            <tr ng-repeat="row in state.ccoparsTable.rows">
-              <td  ng-repeat="cell in row track by $index">
-                <span ng-if="$parent.$index != state.ccoparsTable.iEditRow" >{{cell}}</span>
-                <input ng-if="$parent.$index == state.ccoparsTable.iEditRow" type="number" ng-model="row[$index]">
-              </td>
-              <td>
-                <span ng-if="$index != state.ccoparsTable.iEditRow" >
-                  <i class="fa fa-pencil" ng-click="editRow(state.ccoparsTable, $index)"></i>
-                  &nbsp;
-                  <i class="fa fa-times" ng-click="deleteRow(state.ccoparsTable, $index)"></i>
-                </span>
-                <span ng-if="$index == state.ccoparsTable.iEditRow">
-                  <i class="fa fa-check" ng-click="acceptEdit(state.ccoparsTable)"></i>
-                </span>
-              </td>
-            </tr>
-          </table>
-
+          <entry-table table="state.ccoparsTable"></entry-table>
         </div>
 
         <br>
         <br>
 
         <div class="flex-column">
-
           <h3>Historical cost and coverage data</h3>
-
-          <table ng-model="state.costcovTable" class="table table-bordered">
-            <tr>
-              <th ng-repeat="title in state.costcovTable.titles">
-                {{title}}
-              </th>
-              <th>
-                Manage
-              </th>
-            </tr>
-            <tr ng-repeat="row in state.costcovTable.rows">
-              <td  ng-repeat="cell in row track by $index">
-                <span ng-if="$parent.$index != state.costcovTable.iEditRow" >{{cell}}</span>
-                <input ng-if="$parent.$index == state.costcovTable.iEditRow" type="number" ng-model="row[$index]">
-              </td>
-              <td>
-                <span ng-if="$index != state.costcovTable.iEditRow" >
-                  <i class="fa fa-pencil" ng-click="editRow(state.costcovTable, $index)"></i>
-                  &nbsp;
-                  <i class="fa fa-times" ng-click="deleteRow(state.costcovTable, $index)"></i>
-                </span>
-                <span ng-if="$index == state.costcovTable.iEditRow">
-                  <i class="fa fa-check" ng-click="acceptEdit(state.costcovTable)"></i>
-                </span>
-              </td>
-            </tr>
-          </table>
-
+          <entry-table table="state.costcovTable"></entry-table>
         </div>
 
         <div class="flex-column margin_top">

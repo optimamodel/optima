@@ -10,9 +10,13 @@ define(['./../../module', 'underscore'], function (module, _) {
       popsizes: {}
     };
 
-    // $scope.vm is from the controller of the cost-coverage template controller
-    // that calls this template
+    // $scope.vm is from the cost-coverage template controller
     $scope.selectedProgram = $scope.vm.programs[0];
+
+    var initialize = function() {
+      buildTables();
+      $scope.changeSelectedProgram()
+    };
 
     function consoleLogVar(name, val) {
       console.log(name + ' = ');
@@ -141,40 +145,6 @@ define(['./../../module', 'underscore'], function (module, _) {
       saveSelectedProgram();
     };
 
-    $scope.addBlankRow = function(table) {
-      var n_var = table.titles.length;
-      var row = [];
-      for (var j=0; j<n_var; j+=1) {
-        row.push("");
-      }
-      table.rows.push(row);
-      table.iEditRow = table.rows.length - 1;
-    };
-
-    $scope.deleteRow = function(table, iRow) {
-      var iLastRow = table.rows.length - 1;
-      table.rows.splice(iRow, 1);
-      if (iLastRow == iRow) {
-        $scope.addBlankRow(table);
-      }
-      table.iEditRow = table.rows.length - 1;
-      table.validateFn(table);
-    };
-
-    $scope.editRow = function(table, iRow) {
-      var iLastRow = table.rows.length - 1;
-      if (table.iEditRow == iLastRow) {
-        table.rows.splice(iLastRow, 1);
-      }
-      table.iEditRow = iRow;
-      consoleLogVar("start_editing_table", table);
-    };
-
-    $scope.acceptEdit = function(table) {
-      $scope.addBlankRow(table);
-      table.validateFn(table);
-    };
-
     var buildTables = function() {
       $scope.state.costcovTable = {
         titles: ["Year", "Cost", "Coverage"],
@@ -187,7 +157,6 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.selectedProgram.costcov.forEach(function(val, i, list) {
         table.rows.push([val.year, val.cost, val.coverage]);
       });
-      $scope.addBlankRow(table);
       consoleLogVar("costcovTable", $scope.state.costcovTable);
 
       $scope.state.ccoparsTable = {
@@ -212,17 +181,15 @@ define(['./../../module', 'underscore'], function (module, _) {
           ])
         }
       }
-      $scope.addBlankRow(table);
-      // consoleLogVar('ccoparsTable', $scope.state.ccoparsTable);
+      consoleLogVar('ccoparsTable', $scope.state.ccoparsTable);
     };
 
     $scope.changeSelectedProgram = function() {
-      buildTables();
       fetchEstimatedSize();
       $scope.updateGraph();
     };
 
-    $scope.changeSelectedProgram()
+    initialize();
 
   });
 

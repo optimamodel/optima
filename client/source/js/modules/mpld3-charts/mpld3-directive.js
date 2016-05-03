@@ -71,6 +71,8 @@ define(
       'mpld3Chart',
       function ($http, modalService, exportHelpers, projectApiService) {
 
+    console.log("mpld3Chart!");
+
     return {
       scope: { chart: '=mpld3Chart' },
       templateUrl: './js/modules/mpld3-charts/mpld3-chart.html',
@@ -87,50 +89,46 @@ define(
           return _(mpld3.figures).findWhere({ figid: id })
         }
 
-        /**
-         * Opens a dialog to provide the user with the option to export the
-         * chart as svg or png.
-         */
-        scope.exportFigure = function (params) {
-          params.$event.preventDefault();
+        // scope.exportFigure = function (params) {
+        //   params.$event.preventDefault();
+        //
+        //   modalService.choice(
+        //     exportGraphAsSvg, // first button callback
+        //     exportGraphAsPng, // second button callback
+        //     'Download as SVG', // first button text
+        //     'Download as PNG', // second button text
+        //     'Please choose your preferred format', // modal message
+        //     'Export figure' // modal title
+        //   );
+        // };
 
-          modalService.choice(
-            exportGraphAsSvg, // first button callback
-            exportGraphAsPng, // second button callback
-            'Download as SVG', // first button text
-            'Download as PNG', // second button text
-            'Please choose your preferred format', // modal message
-            'Export figure' // modal title
-          );
-        };
-
-        /**
-         * Exports the data of this chart as xls file format and triggers the
-         * download.
-         */
-        scope.exportData = function (params) {
-          params.$event.preventDefault();
-
-          if (scope.chart) {
-            scope.exportMpld3From(scope.chart);
-          } else {
-            var chartAccessor = attrs.d3ChartData.replace(new RegExp('.data$'), '');
-            var chart = scope.$eval(chartAccessor);
-            scope.exportFrom(chart);
-          }
-        };
-
-        /**
-         * Returns the mpld3 figure of this chart.
-         */
-        /**
-         * Returns the zoomPlugin of the mpdl3 figure of this chart.
-         */
-        function getZoomPlugin () {
-          return _(getFigure().plugins).find(function(plugin) {
-            return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
-          });
-        }
+        // /**
+        //  * Exports the data of this chart as xls file format and triggers the
+        //  * download.
+        //  */
+        // scope.exportData = function (params) {
+        //   params.$event.preventDefault();
+        //
+        //   if (scope.chart) {
+        //     scope.exportMpld3From(scope.chart);
+        //   } else {
+        //     var chartAccessor = attrs.d3ChartData.replace(new RegExp('.data$'), '');
+        //     var chart = scope.$eval(chartAccessor);
+        //     scope.exportFrom(chart);
+        //   }
+        // };
+        //
+        // /**
+        //  * Returns the mpld3 figure of this chart.
+        //  */
+        // /**
+        //  * Returns the zoomPlugin of the mpdl3 figure of this chart.
+        //  */
+        // function getZoomPlugin () {
+        //   return _(getFigure().plugins).find(function(plugin) {
+        //     return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+        //   });
+        // }
 
         /**
          * Disable both the zoom and the pan button.
@@ -321,6 +319,7 @@ define(
 
             var $element = $(elem).find('.mpld3-chart').first();
             $element.attr('id', attrs.chartId);
+            $element.html("");
             mpld3.draw_figure(attrs.chartId, figure);
 
             reformatFigure($element);
@@ -377,7 +376,5 @@ define(
       }
     };
   });
-
-  return module;
 
 });
