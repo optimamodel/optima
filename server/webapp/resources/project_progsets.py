@@ -12,9 +12,11 @@ from flask_restful_swagger import swagger
 from flask import helpers
 
 from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project_record, load_progset_record, report_exception, modify_program_record, load_program_record
+from server.webapp.utils import load_project_record, load_progset_record, report_exception, load_program_record
 from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ParsetDoesNotExist
 from server.webapp.resources.common import file_resource, file_upload_form_parser
+
+from server.webapp.utils import update_or_create_program_record
 
 from server.webapp.dbconn import db
 
@@ -356,8 +358,6 @@ query_program_parser.add_arguments({
     'program': {'required': True, 'type': JsonInput, 'location': 'json'},
 })
 
-from server.webapp.utils import update_or_create_program_record
-
 class Program(Resource):
     """
     Write program to web-server (for cost-coverage and outcome changes)
@@ -405,6 +405,7 @@ class Program(Resource):
     def post(self, project_id, progset_id):
         current_app.logger.debug(
             "/api/project/%s/progsets/%s/program" % (project_id, progset_id))
+
         args = query_program_parser.parse_args()
         program_summary = normalize_obj(args['program'])
         program_entry = update_or_create_program_record(
@@ -412,16 +413,19 @@ class Program(Resource):
             program_summary, program_summary['active'])
         current_app.logger.debug(
             "writing program = \n%s\n" % pprint.pformat(program_summary, indent=2))
+
         db.session.add(program_entry)
         db.session.flush()
         db.session.commit()
+
         return 204
 
 
 
 class PopSizes(Resource):
     """
-    Estimated popsize for the given Program & Parset.
+    Estimated popsize for the given Program (for populations)
+    & Parset (initial population size).
     """
     method_decorators = [report_exception, login_required]
 
@@ -429,14 +433,15 @@ class PopSizes(Resource):
         current_app.logger.debug(
             "/api/project/%s/progsets/%s/program/%s/parset/%s/popsizes" %
             (project_id, progset_id, program_id, parset_id))
+
         program = load_program(project_id, progset_id, program_id)
-        if not program.targetpops:
-            program.targetpops = ['tot']
         parset = load_parset(project_id, parset_id)
         result = load_result(project_id, parset_id)
         years = range(int(result.settings.start), int(result.settings.end + 1))
+
         popsizes = program.gettargetpopsize(t=years, parset=parset, results=result)
-        payload = {'popsizes': dict(zip(years, popsizes))}
+
+        payload = dict(zip(years, popsizes))
         current_app.logger.debug('popsizes = \n%s\n' % payload)
         return payload
 
@@ -453,9 +458,9 @@ costcov_graph_parser.add_arguments({
 
 class CostcovGraph(Resource):
     """
-    Costcoverage graph for a Program and a Parset. A Parset is needed to
-    get population sizes to generate the coverage.
+    Costcoverage graph for a Program and a Parset (for population sizes).
     """
+
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id, progset_id, program_id):
@@ -463,6 +468,8 @@ class CostcovGraph(Resource):
         Args:
             t: comma-separated list of years (>= startyear in data)
             parset_id: parset ID of project (not related to program targetpars)
+
+        Returns an mpld3 dict that can be displayed with the mpld3 plugin
         """
         args = costcov_graph_parser.parse_args()
         parset_id = args['parset_id']

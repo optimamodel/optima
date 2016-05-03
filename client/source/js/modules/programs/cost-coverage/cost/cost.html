@@ -4,10 +4,11 @@
   <div style="width: 40%">
     <label>
       Select a program:<br>
-      <select class="txbox"
-              ng-options="p.name for p in vm.programs"
-              ng-change="changeSelectedProgram()"
-              ng-model="selectedProgram">
+      <select
+          class="txbox"
+          ng-options="p.name for p in vm.programs"
+          ng-change="changeSelectedProgram()"
+          ng-model="selectedProgram">
       </select>
     </label>
   </div>
@@ -17,11 +18,14 @@
     <div style="display: flex; margin-top: 2%">
 
       <div class="chart-container __medium">
-        <div mpld3-chart="state.chartData" id="cost_cov_chart" ng-if="state.chartData"></div>
-        <div class="c-caption" ng-if="state.displayCaption">{{state.displayCaption}}</div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="state.chartData"
-                       chart-id="{{ state.chartData.id }}">
-        </chart-toolbar>
+        <div mpld3-chart="state.chartData"
+             chart-id="{{ state.chartData.id }}"
+             ng-if="state.chartData">
+        </div>
+        <div class="c-caption"
+             ng-if="state.displayCaption">
+          {{state.displayCaption}}
+        </div>
       </div>
 
       <div class="flex-column margin_left">
@@ -31,12 +35,8 @@
 
           <table ng-model="state.ccoparsTable" class="table table-bordered">
             <tr>
-              <th ng-repeat="title in state.ccoparsTable.titles">
-                {{title}}
-              </th>
-              <th>
-                Manage
-              </th>
+              <th ng-repeat="title in state.ccoparsTable.titles"> {{title}}</th>
+              <th>Manage</th>
             </tr>
             <tr ng-repeat="row in state.ccoparsTable.rows">
               <td  ng-repeat="cell in row track by $index">
@@ -57,8 +57,10 @@
           </table>
 
         </div>
+
         <br>
         <br>
+
         <div class="flex-column">
 
           <h3>Historical cost and coverage data</h3>

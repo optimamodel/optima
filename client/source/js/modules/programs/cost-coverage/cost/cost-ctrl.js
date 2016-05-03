@@ -99,8 +99,7 @@ define(['./../../module', 'underscore'], function (module, _) {
             + '/parset/' + $scope.vm.selectedParset.id
             + '/popsizes')
         .success(function (response) {
-          $scope.state.popsizes = response.popsizes;
-          consoleLogVar('popsizes', $scope.state.popsizes);
+          $scope.state.popsizes = response;
         });
     };
 
@@ -214,7 +213,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         }
       }
       $scope.addBlankRow(table);
-      consoleLogVar('ccoparsTable', $scope.state.ccoparsTable);
+      // consoleLogVar('ccoparsTable', $scope.state.ccoparsTable);
     };
 
     $scope.changeSelectedProgram = function() {
