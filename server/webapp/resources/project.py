@@ -728,11 +728,6 @@ project_upload_form_parser.add_arguments({
     'name': {'required': True, 'help': 'Project name'},
 })
 
-
-project_upload_resource = file_resource.copy()
-project_upload_resource['id'] = Uuid
-
-
 class ProjectFromData(Resource):
 
     """
@@ -740,12 +735,7 @@ class ProjectFromData(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        summary='Creates a project & uploads data to initialize it.',
-        parameters=project_upload_form_parser.swagger_parameters()
-    )
     @report_exception
-    # @marshal_with(project_upload_resource)
     def post(self):
         user_id = current_user.id
 
@@ -763,7 +753,7 @@ class ProjectFromData(Resource):
         dataend = default_dataend
         pops = {}
 
-        print(">>>> Here we start processing upload:")
+        print(">>>> Process projecct upload")
 
         project_record = ProjectDb(
             project_name, user_id, datastart, dataend, pops, version=op.__version__)
@@ -787,14 +777,12 @@ class ProjectFromData(Resource):
 
         db.session.commit()
 
-        reply = {
+        response = {
             'file': source_filename,
-            'result': 'Project %s is created' % project_name,
             'name': project_name,
             'id': str(project_record.id)
         }
-        print(reply)
-        return reply
+        return response, 201
 
 
 project_copy_fields = {
