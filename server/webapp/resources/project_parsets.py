@@ -273,39 +273,88 @@ parset_save_with_autofit_parser.add_arguments({
     'result_id': {'type': uuid.UUID, 'required': True},
 })
 
-def get_parset_parameters(parset):
-    manualfit_list = parset.manualfitlists()
-    parameters = [
-        {
-            "key": key,
-            "label": label,
-            "subkey": subkey,
-            "value": value,
-            "type": ptype
-        }
-        for (key, label, subkey, value, ptype) in
-        zip(manualfit_list['keys'],
-            manualfit_list['labels'],
-            manualfit_list['subkeys'],
-            manualfit_list['values'],
-            manualfit_list['types'])
-    ]
+def get_parset_parameters(parset, ind=0):
+    '''
+    WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py
+    '''
+
+    if not parset.pars:
+        raise OptimaException("No parameters available!")
+    elif len(parset.pars) <= ind:
+        raise OptimaException("Parameter with index {} not found!".format(ind))
+
+    parameters = []
+    for key, par in parset.pars[ind].items():
+        if hasattr(par, 'fittable') and par.fittable != 'no':
+            if par.fittable == 'meta':
+                parameters.append({
+                    "key": key,
+                    "subkey": None,
+                    "type": par.fittable,
+                    "value": par.m,
+                    "label": '%s -- meta' % par.name,
+                })
+            elif par.fittable == 'const':
+                parameters.append({
+                    "key": key,
+                    "subkey": None,
+                    "type": par.fittable,
+                    "value": par.y,
+                    "label": par.name,
+                })
+            elif par.fittable in ['pop', 'pship']:
+                for subkey in par.y.keys():
+                    parameters.append({
+                        "key": key,
+                        "subkey": subkey,
+                        "type": par.fittable,
+                        "value": par.y[subkey],
+                        "label": '%s -- %s' % (par.name, str(subkey)),
+                    })
+            elif par.fittable == 'exp':
+                for subkey in par.p.keys():
+                    parameters.append({
+                        "key": key,
+                        "subkey": subkey,
+                        "type": par.fittable,
+                        "value": par.p[subkey][0],
+                        "label": '%s -- %s' % (par.name, str(subkey)),
+                    })
+            else:
+                print('Parameter type "%s" not implemented!' % par.fittable)
+
+    for p in parameters:
+        print "%s: %s - %s - '%s'" % (type(p['value']), p['value'], p['subkey'], p['label'])
+
     return parameters
 
-def put_parameters_in_parset(parameters, parset):
-    manualfit_list = {
-        'keys': [],
-        'subkeys': [],
-        'types': [],
-        'values': [],
-        'labels': []}
-    for param in parameters:
-        manualfit_list['keys'].append(param['key'])
-        manualfit_list['subkeys'].append(param['subkey'])
-        manualfit_list['types'].append(param['type'])
-        manualfit_list['labels'].append(param['label'])
-        manualfit_list['values'].append(param['value'])
-    parset.update(manualfit_list)
+def put_parameters_in_parset(parameters, parset, ind=0):
+    '''
+    Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!!
+    '''
+
+    if not parset.pars:
+        raise OptimaException("No parameters available!")
+    elif len(parset.pars) <= ind:
+        raise OptimaException("Parameter with index {} not found!".format(ind))
+
+    pars = parset.pars[ind]
+    for p_dict in parameters:
+        key = p_dict['key']
+        value = p_dict['value']
+        subkey = p_dict['subkey']
+        par_type = p_dict['type']
+        value = float(value)
+        if par_type == 'meta':  # Metaparameters
+            pars[key].m = value
+        elif par_type in ['pop', 'pship']:  # Populations or partnerships
+            pars[key].y[subkey] = value
+        elif par_type == 'exp':  # Population growth
+            pars[key].p[subkey][0] = value
+        elif par_type == 'const':  # Metaparameters
+            pars[key].y = value
+        else:
+            print('Parameter type "%s" not implemented!' % par_type)
 
     # check if stored correctly
     stored_parameters = get_parset_parameters(parset)
@@ -314,12 +363,6 @@ def put_parameters_in_parset(parameters, parset):
             print ">>> Error in saving param:"
             pprint.pprint(par1, indent=2)
             pprint.pprint(par2, indent=2)
-
-    # from server.webapp.jsonhelper import normalize_obj
-    # stored_parameters = normalize_obj(stored_parameters)
-    # for p in stored_parameters:
-    #     p['vtype'] = str(type(p['value']))
-    #     print "%s: %s - %s - '%s'" % (p['vtype'], p['value'], p['subkey'], p['label'])
 
 
 class ParsetsCalibration(Resource):
