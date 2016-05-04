@@ -13,19 +13,28 @@
           type="number"
         ng-model="row[$index]">
       <span
-         ng-if='table.types[$index] == "displayFn"'>
+         ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
+      <select
+          ng-if='table.types[$index] == "selector"'
+          type="text"
+          ng-model="row[$index]"
+          ng-options="o.value as o.label for o in getOptions(row, $index)">
+      </select>
     </td>
     <td ng-if="$parent.$index != table.iEditRow"
         ng-repeat="cell in displayRow(row) track by $index">
       <span ng-if='table.types[$index] == "number"'>
         {{cell}}
       </span>
-      <span ng-if='table.types[$index] == "displayFn"'>
+      <span ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
-    </td>
+      <span ng-if='table.types[$index] == "selector"'>
+        {{cell}}
+      </span>
+      </td>
     <td>
       <span ng-if="$index != table.iEditRow" >
         <i class="fa fa-pencil"

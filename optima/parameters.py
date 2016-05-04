@@ -990,24 +990,28 @@ class Parameterset(object):
         subkeylist = mflists['subkeys']
         typelist = mflists['types']
         valuelist = mflists['values']
+        labellist = mflists['labels']
 
         ## Loop over all parameters and update them
         verbose = 0
-        for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
+        for (key, subkey, ptype, value, label) in zip(keylist, subkeylist, typelist, valuelist, labellist):
+            vtype = float
+            if 'number of' in label.lower():
+                vtype = int
             if ptype == 'meta': # Metaparameters
-                vtype = type(tmppars[key].m)
+                # vtype = type(tmppars[key].m)
                 tmppars[key].m = vtype(value)
                 printv('%s.m = %s' % (key, value), 4, verbose)
             elif ptype in ['pop', 'pship']: # Populations or partnerships
-                vtype = type(tmppars[key].y[subkey])
+                # vtype = type(tmppars[key].y[subkey])
                 tmppars[key].y[subkey] = vtype(value)
                 printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'exp': # Population growth
-                vtype = type(tmppars[key].p[subkey][0])
+                # vtype = type(tmppars[key].p[subkey][0])
                 tmppars[key].p[subkey][0] = vtype(value)
                 printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
             elif ptype == 'const': # Metaparameters
-                vtype = type(tmppars[key].y)
+                # vtype = type(tmppars[key].y)
                 tmppars[key].y = vtype(value)
                 printv('%s.y = %s' % (key, value), 4, verbose)
             else:

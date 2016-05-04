@@ -441,9 +441,9 @@ class PopSizes(Resource):
 
         popsizes = program.gettargetpopsize(t=years, parset=parset, results=result)
 
-        payload = dict(zip(years, popsizes))
+        payload = normalize_obj(dict(zip(years, popsizes)))
         current_app.logger.debug('popsizes = \n%s\n' % payload)
-        return payload
+        return payload, 201
 
 
 
