@@ -238,10 +238,11 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if(response.status === 'started') {
             $scope.statusMessage = 'Automatic calibration started.';
-            pollAutoCalibration();
           } else if(response.status === 'running') {
             $scope.statusMessage = 'Automatic calibration already running.'
           }
+          $scope.secondsRun = 0;
+          pollAutoCalibration();
         })
     };
 
@@ -253,7 +254,9 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
             $scope.statusMessage = 'Automatic calibration successfully completed.';
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
-            $scope.pollTimer = $timeout(pollAutoCalibration, 5000);
+            $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
+            $scope.statusMessage = "Running: " + $scope.secondsRun + "/ " + $scope.state.maxtime + " s.";
+            $scope.secondsRun += 1;
           }
         });
     };

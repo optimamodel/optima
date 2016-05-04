@@ -273,16 +273,8 @@ parset_save_with_autofit_parser.add_arguments({
     'result_id': {'type': uuid.UUID, 'required': True},
 })
 
+
 def get_parset_parameters(parset, ind=0):
-    '''
-    WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py
-    '''
-
-    if not parset.pars:
-        raise OptimaException("No parameters available!")
-    elif len(parset.pars) <= ind:
-        raise OptimaException("Parameter with index {} not found!".format(ind))
-
     parameters = []
     for key, par in parset.pars[ind].items():
         if hasattr(par, 'fittable') and par.fittable != 'no':
@@ -322,22 +314,10 @@ def get_parset_parameters(parset, ind=0):
                     })
             else:
                 print('Parameter type "%s" not implemented!' % par.fittable)
-
-    for p in parameters:
-        print "%s: %s - %s - '%s'" % (type(p['value']), p['value'], p['subkey'], p['label'])
-
     return parameters
 
+
 def put_parameters_in_parset(parameters, parset, ind=0):
-    '''
-    Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!!
-    '''
-
-    if not parset.pars:
-        raise OptimaException("No parameters available!")
-    elif len(parset.pars) <= ind:
-        raise OptimaException("Parameter with index {} not found!".format(ind))
-
     pars = parset.pars[ind]
     for p_dict in parameters:
         key = p_dict['key']
@@ -355,14 +335,6 @@ def put_parameters_in_parset(parameters, parset, ind=0):
             pars[key].y = value
         else:
             print('Parameter type "%s" not implemented!' % par_type)
-
-    # check if stored correctly
-    stored_parameters = get_parset_parameters(parset)
-    for par1, par2 in zip(parameters, stored_parameters):
-        if par1 != par2:
-            print ">>> Error in saving param:"
-            pprint.pprint(par1, indent=2)
-            pprint.pprint(par2, indent=2)
 
 
 class ParsetsCalibration(Resource):
