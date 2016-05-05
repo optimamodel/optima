@@ -6,25 +6,10 @@
     <th>Manage</th>
   </tr>
   <tr ng-repeat="row in table.rows">
-    <td ng-if="$parent.$index == table.iEditRow"
-        ng-repeat="cell in displayRow(row) track by $index">
-      <input
-          ng-if='table.types[$index] == "number"'
-          type="number"
-        ng-model="row[$index]">
-      <span
-         ng-if='table.types[$index] == "display"'>
-        {{cell}}
-      </span>
-      <select
-          ng-if='table.types[$index] == "selector"'
-          type="text"
-          ng-model="row[$index]"
-          ng-options="o.value as o.label for o in getOptions(row, $index)">
-      </select>
-    </td>
+
+    <!-- Normal cell values -->
     <td ng-if="$parent.$index != table.iEditRow"
-        ng-repeat="cell in displayRow(row) track by $index">
+        ng-repeat="cell in getDisplayRow($index) track by $index">
       <span ng-if='table.types[$index] == "number"'>
         {{cell}}
       </span>
@@ -34,7 +19,30 @@
       <span ng-if='table.types[$index] == "selector"'>
         {{cell}}
       </span>
-      </td>
+    </td>
+
+    <!-- Editable cell values -->
+    <td ng-if="$parent.$index == table.iEditRow"
+        ng-repeat="cell in getDisplayRow($index) track by $index">
+      <input
+          ng-if='table.types[$index] == "number"'
+          type="number"
+        ng-model="row[$index]">
+      <span
+         ng-if='table.types[$index] == "display"'>
+        {{cell}}
+      </span>
+      <div ng-init="options=getOptions($parent.$index, $index)">
+        <select
+            ng-if='table.types[$index] == "selector"'
+            ng-model="row[$index]"
+            ng-options="o.value as o.label for o in options">
+          </option>
+        </select>
+      </div>
+    </td>
+
+    <!-- Control elements -->
     <td>
       <span ng-if="$index != table.iEditRow" >
         <i class="fa fa-pencil"

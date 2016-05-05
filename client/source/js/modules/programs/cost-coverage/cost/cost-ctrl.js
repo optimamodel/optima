@@ -18,7 +18,6 @@ define(['./../../module', 'underscore'], function (module, _) {
     }
 
     $scope.changeSelectedProgram = function() {
-      buildTables();
       $scope.popsizes = {};
       var url = '/api/project/' + $scope.vm.openProject.id
             + '/progsets/' + $scope.vm.selectedProgramSet.id
@@ -30,13 +29,9 @@ define(['./../../module', 'underscore'], function (module, _) {
         .get(url)
         .success(function (response) {
           $scope.popsizes = response;
-          var yearSelectors = [];
-          _.keys($scope.popsizes).forEach(function(year) {
-            yearSelectors.push({'value':year, 'label':year.toString()});
-          });
-          $scope.ccoparsTable.selectors[0] = yearSelectors;
+          buildTables();
+          $scope.updateGraph();
         });
-      $scope.updateGraph();
     };
 
     $scope.updateGraph = function() {
@@ -60,22 +55,18 @@ define(['./../../module', 'underscore'], function (module, _) {
       if ($scope.dispCost) {
         url += '&perperson=1';
       }
-      console.log('step 1');
       $http
         .get(url)
         .success(
           function (data) {
-            console.log('step 2');
-            console.log('graph response', data);
             $scope.chartData = data;
-            console.log('step 3');
           }
         );
     };
 
     var saveSelectedProgram = function() {
       var payload = { 'program': $scope.selectedProgram };
-      consoleLogVar("payload", payload);
+      // consoleLogVar("payload", payload);
       $http
         .post(
           '/api/project/' + $scope.vm.openProject.id
@@ -91,7 +82,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       var costcov = [];
       table.rows.forEach(function(row, iRow, rows) {
         if (iRow != table.iEditRow) {
-          costcov.push({year: row[0], cost: row[1], coverage: row[2]});
+          costcov.push({year: parseInt(row[0]), cost: row[1], coverage: row[2]});
         }
       });
       $scope.selectedProgram.costcov = costcov;
@@ -102,7 +93,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       var ccopars = {t: [], saturation: [], unitcost: []};
       table.rows.forEach(function(row, iRow) {
         if (iRow != table.iEditRow) {
-          ccopars.t.push(row[0]);
+          ccopars.t.push(parseInt(row[0]));
           ccopars.saturation.push([row[2]/100., row[3]/100.]);
           ccopars.unitcost.push([row[4], row[5]]);
         }
@@ -113,38 +104,40 @@ define(['./../../module', 'underscore'], function (module, _) {
 
     var showEstPopFn = function(row) {
       var year = row[0];
-      if (!_.isNumber(parseInt(year)))
-          return "";
+      if (_.isUndefined(year) || _.isUndefined($scope.popsizes)) {
+        return "";
+      }
       var popsize = $scope.popsizes[year.toString()];
       if (!_.isNumber(popsize))
           return "";
       return parseInt(popsize);
     };
 
-    var buildTables = function() {
-      $scope.costcovTable = {
-        titles: ["Year", "Cost", "Coverage"],
-        rows: [],
-        types: ["number", "number", "number"],
-        widths: [],
-        displayRowFns: [],
-        validateFn: validateCostcovTable,
-      };
-      var table = $scope.costcovTable;
-      $scope.selectedProgram.costcov.forEach(function(val, i, list) {
-        table.rows.push([val.year, val.cost, val.coverage]);
+    var getYearSelectors = function(row) {
+      if (_.isUndefined($scope.popsizes)) {
+        console.log("no popsizes for selectors");
+        return [];
+      }
+      var years = _.keys($scope.popsizes);
+      var result = [];
+      years.forEach(function(year) {
+        var yearStr = year.toString();
+        result.push({'value':yearStr, 'label':yearStr});
       });
-      consoleLogVar("costcovTable", $scope.costcovTable);
+      return result;
+    };
+
+    var buildTables = function() {
 
       $scope.ccoparsTable = {
         titles: [
           "Year", "Population", "Saturation % (low)", "Saturation % (High)",
           "Unitcost (low)", "Unitcost (high)"],
         rows: [],
-        types: ["number", "display", "number", "number", "number", "number"],
+        types: ["selector", "display", "number", "number", "number", "number"],
         widths: [],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
-        selectors: [null, null, null, null, null, null],
+        selectors: [getYearSelectors, null, null, null, null, null],
         validateFn: validateCcoparsTable
       };
       var ccopars = angular.copy($scope.selectedProgram.ccopars);
@@ -152,7 +145,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       if (ccopars && ccopars.t && ccopars.t.length > 0) {
         for (var iYear = 0; iYear < ccopars.t.length; iYear++) {
           table.rows.push([
-            ccopars.t[iYear],
+            ccopars.t[iYear].toString(),
             "",
             ccopars.saturation[iYear][0]*100.,
             ccopars.saturation[iYear][1]*100.,
@@ -162,6 +155,23 @@ define(['./../../module', 'underscore'], function (module, _) {
         }
       }
       consoleLogVar('ccoparsTable', $scope.ccoparsTable);
+
+      $scope.costcovTable = {
+        titles: ["Year", "Cost", "Coverage"],
+        rows: [],
+        types: ["selector", "number", "number"],
+        widths: [],
+        displayRowFns: [],
+        selectors: [getYearSelectors],
+        validateFn: validateCostcovTable,
+      };
+      var table = $scope.costcovTable;
+      $scope.selectedProgram.costcov.forEach(function(val, i, list) {
+        table.rows.push([val.year.toString(), val.cost, val.coverage]);
+      });
+      consoleLogVar("costcovTable", $scope.costcovTable);
+
+
     };
 
     initialize();

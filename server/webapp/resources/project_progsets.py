@@ -79,22 +79,6 @@ def print_parset(parset):
     return s
 
 
-
-def promotetoarray(x):
-    ''' Small function to ensure consistent format for things that should be arrays '''
-    from numbers import Number
-    from numpy import ndarray
-    if isinstance(x, Number):
-        return [x]
-    elif isinstance(x, list):
-        return x
-    elif isinstance(x, ndarray):
-        return x.tolist()
-    else:
-        raise Exception("Expecting a list/number; got: %s" % str(x))
-
-
-
 class Progsets(Resource):
     """
     Progsets for a given project.
@@ -400,8 +384,8 @@ class Program(Resource):
       'updated': 'Mon, 02 May 2016 06:22:29 -0000'
     }
     """
-    method_decorators = [report_exception, login_required]
 
+    method_decorators = [report_exception, login_required]
     def post(self, project_id, progset_id):
         current_app.logger.debug(
             "/api/project/%s/progsets/%s/program" % (project_id, progset_id))
@@ -427,8 +411,8 @@ class PopSizes(Resource):
     Estimated popsize for the given Program (for populations)
     & Parset (initial population size).
     """
-    method_decorators = [report_exception, login_required]
 
+    method_decorators = [report_exception, login_required]
     def get(self, project_id, progset_id, program_id, parset_id):
         current_app.logger.debug(
             "/api/project/%s/progsets/%s/program/%s/parset/%s/popsizes" %
@@ -468,6 +452,9 @@ class CostcovGraph(Resource):
         Args:
             t: comma-separated list of years (>= startyear in data)
             parset_id: parset ID of project (not related to program targetpars)
+            caption: string to display in graph
+            xupperlim: maximum dollar shown
+            perperson: cost per person shown as data point
 
         Returns an mpld3 dict that can be displayed with the mpld3 plugin
         """

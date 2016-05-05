@@ -52,10 +52,18 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
       link: function (scope) {
 
         scope.addBlankRow = function () {
-          var n_var = scope.table.titles.length;
+          var nCell = scope.table.titles.length;
           var row = [];
-          for (var j = 0; j < n_var; j += 1) {
-            row.push("");
+          for (var iCell = 0; iCell < nCell; iCell += 1) {
+            var val = "";
+            if (scope.table.types[iCell] == "selector") {
+              var selectorFn = scope.table.selectors[iCell];
+              if (selectorFn) {
+                row.push(selectorFn(row)[0].value);
+              }
+            } else {
+              row.push("");
+            }
           }
           scope.table.rows.push(row);
           scope.table.iEditRow = scope.table.rows.length - 1;
@@ -84,7 +92,8 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
           scope.table.validateFn(scope.table);
         };
 
-        scope.displayRow = function (row) {
+        scope.getDisplayRow = function (iRow) {
+          var row = scope.table.rows[iRow];
           var result = [];
           for (var i = 0; i < row.length; i += 1) {
             var val = row[i];
@@ -94,26 +103,21 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
                 val = fn(row);
               }
             }
-            if (scope.table.types[i] == "selector") {
-              if (_.isUndefined(val) || val == "") {
-                if (scope.table.selectors[i]) {
-                  row[i] = scope.table.selectors[i][0].value;
-                  val = row[i];
-                }
-              }
-
-            }
             result.push(val);
           }
           return result;
         };
 
-        scope.getOptions = function(row, iCell) {
-          var selectors = scope.table.selectors[iCell];
-          if (!selectors) {
+        scope.getOptions = function(iRow, iCell) {
+          var row = scope.table.rows[iRow];
+          if (_.isUndefined(scope.table.selectors)) {
             return [];
           }
-          return selectors;
+          var selectorFn = scope.table.selectors[iCell];
+          if (selectorFn) {
+            return selectorFn(row);
+          }
+          return [];
         };
 
         scope.$watch(
@@ -123,7 +127,7 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
                 return;
               }
               if (_.isUndefined(scope.table.iEditRow)) {
-                scope.addBlankRow(scope.table);
+                scope.addBlankRow();
               }
             },
             true

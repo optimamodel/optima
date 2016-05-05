@@ -7,7 +7,7 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
     var defaultParameters;
     $scope.parsets = [];
     $scope.activeParset = undefined;
-    $scope.state = {maxtime: ''};
+    $scope.state = {maxtime: '10'};
 
     // Check if current active project has spreadsheet uploaded for it.
     if (!activeProjectInfo.has_data) {
@@ -255,7 +255,7 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-            $scope.statusMessage = "Running: " + $scope.secondsRun + "/ " + $scope.state.maxtime + " s.";
+            $scope.statusMessage = "Running: " + $scope.secondsRun + " / " + $scope.state.maxtime + " s.";
             $scope.secondsRun += 1;
           }
         });
