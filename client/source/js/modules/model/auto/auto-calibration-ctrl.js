@@ -238,11 +238,12 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if(response.status === 'started') {
             $scope.statusMessage = 'Automatic calibration started.';
+            $scope.secondsRun = 0;
+            $scope.setMaxtime = data.maxtime;
+            pollAutoCalibration();
           } else if(response.status === 'running') {
             $scope.statusMessage = 'Automatic calibration already running.'
           }
-          $scope.secondsRun = 0;
-          pollAutoCalibration();
         })
     };
 
@@ -255,7 +256,7 @@ define(['../module', 'angular', 'underscore'], function (module, angular, _) {
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-            $scope.statusMessage = "Running: " + $scope.secondsRun + " / " + $scope.state.maxtime + " s.";
+            $scope.statusMessage = "Running: " + $scope.secondsRun + " / " + $scope.setMaxtime + " s.";
             $scope.secondsRun += 1;
           }
         });

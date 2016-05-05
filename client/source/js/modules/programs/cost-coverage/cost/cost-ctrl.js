@@ -18,7 +18,6 @@ define(['./../../module', 'underscore'], function (module, _) {
     }
 
     $scope.changeSelectedProgram = function() {
-      $scope.popsizes = {};
       var url = '/api/project/' + $scope.vm.openProject.id
             + '/progsets/' + $scope.vm.selectedProgramSet.id
             + '/program/' + $scope.selectedProgram.id
@@ -131,7 +130,7 @@ define(['./../../module', 'underscore'], function (module, _) {
 
       $scope.ccoparsTable = {
         titles: [
-          "Year", "Population", "Saturation % (low)", "Saturation % (High)",
+          "Year", "Estimated Population", "Saturation % (low)", "Saturation % (high)",
           "Unitcost (low)", "Unitcost (high)"],
         rows: [],
         types: ["selector", "display", "number", "number", "number", "number"],
@@ -170,7 +169,6 @@ define(['./../../module', 'underscore'], function (module, _) {
         table.rows.push([val.year.toString(), val.cost, val.coverage]);
       });
       consoleLogVar("costcovTable", $scope.costcovTable);
-
 
     };
 

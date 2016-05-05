@@ -16,9 +16,9 @@ define(['./../module', 'underscore'], function (module, _) {
       name: 'Define outcome functions',
       slug: 'outcome'
     }/*, {
-      name: 'View summary',
-      slug: 'summary'
-    }*/];
+     name: 'View summary',
+     slug: 'summary'
+     }*/];
 
     /* VM functions */
     vm.addYear = addYear;
@@ -32,6 +32,11 @@ define(['./../module', 'underscore'], function (module, _) {
     vm.getFullProgramName = getFullProgramName;
 
     /* Function definitions */
+
+    function consoleLogVar(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
 
     function getFullProgramName(short) {
       var program = _.filter(vm.selectedProgramSet.programs, {short: short});
@@ -49,7 +54,7 @@ define(['./../module', 'underscore'], function (module, _) {
         return [];
       }
       console.log('programs', currentPop[0].programs);
-      return _.map(currentPop[0].programs, function(program) {
+      return _.map(currentPop[0].programs, function (program) {
         return {
           name: program.short
         }
@@ -104,7 +109,8 @@ define(['./../module', 'underscore'], function (module, _) {
           vm.params = _.map(response, function (par) {
             return _.extend(par, vm.selectedParset.pars[0][par.name])
           });
-
+          vm.selectedParameter = vm.params[0];
+          vm.changeParameter();
           console.log('vm.params', vm.params);
         });
 
@@ -198,6 +204,93 @@ define(['./../module', 'underscore'], function (module, _) {
       return existingPopulations;
     }
 
+    function dummySelector(row) {
+      return [
+        {'value':'ha','label':'ha'},
+        {'value':'ka','label':'ka'},
+        {'value':'ba','label':'ba'}
+      ]
+    }
+
+    function validateTable(table) {
+      console.log(table.rows);
+    }
+
+    function buildTable() {
+      vm.parTable = {
+        titles: [
+          "Pop", "Year", "Program", "Description", "Value (lo)", "Value (hi)", "Interact"],
+        rows: [],
+        types: ["selector", "selector", "selector", "number", "number", "number", "selector"],
+        widths: [],
+        displayRowFns: [null, null, null, null, null, null],
+        selectors: [dummySelector, dummySelector, dummySelector, null, null, null, dummySelector],
+        validateFn: validateTable
+      };
+
+      _.each(vm.existingEffects.effects, function(effect) {
+
+        console.log('loop >', vm.selectedParameter.short, effect.parset);
+
+        _.each(effect.parameters, function(parameter) {
+
+          console.log('loop >', parameter.name, parameter.pop);
+
+          if (parameter.name != vm.selectedParameter.short) {
+            return;
+          };
+
+          _.each(parameter.years, function(year) {
+
+            console.log('loop >>', year.year);
+
+            vm.parTable.rows.push([
+              parameter.pop,
+              year.year,
+              "<baseline>",
+              "<baseline>",
+              year.intercept_lower,
+              year.intercept_upper,
+              year.interact,
+            ]);
+
+            _.each(year.programs, function (program) {
+
+              consoleLogVar("program", program);
+              vm.parTable.rows.push([
+                parameter.pop,
+                year.year,
+                program.name,
+                vm.getFullProgramName(program.name),
+                program.intercept_lower,
+                program.intercept_upper,
+                year.interact
+              ]);
+
+            });
+
+          });
+        })
+
+      });
+
+      // var ccopars = angular.copy($scope.selectedProgram.ccopars);
+      // var table = $scope.ccoparsTable;
+      // if (ccopars && ccopars.t && ccopars.t.length > 0) {
+      //   for (var iYear = 0; iYear < ccopars.t.length; iYear++) {
+      //     $scope.parTable.rows.push([
+      //       ccopars.t[iYear].toString(),
+      //       "",
+      //       ccopars.saturation[iYear][0] * 100.,
+      //       ccopars.saturation[iYear][1] * 100.,
+      //       ccopars.unitcost[iYear][0],
+      //       ccopars.unitcost[iYear][1]
+      //     ])
+      //   }
+      // }
+      consoleLogVar('parTable', vm.parTable);
+    }
+
 
     function changeParameter() {
       console.group('changing parameter', vm.selectedParameter)
@@ -242,6 +335,7 @@ define(['./../module', 'underscore'], function (module, _) {
         }
       });
 
+      buildTable();
       console.log('currentParsetEffect', currentParsetEffect);
     }
 

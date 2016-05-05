@@ -495,14 +495,7 @@ class ParsetsCalibration(Resource):
 
         # get manual parameters
         parset_instance = parset_entry.hydrate()
-        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
-        for param in parameters:
-            mflists['keys'].append(param['key'])
-            mflists['subkeys'].append(param['subkey'])
-            mflists['types'].append(param['type'])
-            mflists['labels'].append(param['label'])
-            mflists['values'].append(param['value'])
-        parset_instance.update(mflists)
+        put_parameters_in_parset(parameters, parset_instance)
 
         parset_entry.pars = op.saves(parset_instance.pars)
         parset_entry.updated = datetime.now(dateutil.tz.tzutc())

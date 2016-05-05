@@ -30,6 +30,8 @@
       <div class="option_list" style="height: calc(100vh - 280px);">
         <div style="margin-top: 20px">
 
+          Run auto-fit for&nbsp;
+
           <select ng-model="state.maxtime">
             <option value="10">10 seconds</option>
             <option value="30">30 seconds</option>
@@ -44,6 +46,9 @@
             <!--<span style="width: 100px;display: inline-block;"></span>-->
             <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
           </div>
+
+          <br>
+
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
             {{ statusMessage }}
           </div>
