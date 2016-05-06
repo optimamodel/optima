@@ -29,6 +29,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         .success(function (response) {
           $scope.popsizes = response;
           buildTables();
+          console.log(response;)
           $scope.updateGraph();
         });
     };

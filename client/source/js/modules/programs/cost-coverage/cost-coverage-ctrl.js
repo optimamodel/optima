@@ -274,20 +274,6 @@ define(['./../module', 'underscore'], function (module, _) {
 
       });
 
-      // var ccopars = angular.copy($scope.selectedProgram.ccopars);
-      // var table = $scope.ccoparsTable;
-      // if (ccopars && ccopars.t && ccopars.t.length > 0) {
-      //   for (var iYear = 0; iYear < ccopars.t.length; iYear++) {
-      //     $scope.parTable.rows.push([
-      //       ccopars.t[iYear].toString(),
-      //       "",
-      //       ccopars.saturation[iYear][0] * 100.,
-      //       ccopars.saturation[iYear][1] * 100.,
-      //       ccopars.unitcost[iYear][0],
-      //       ccopars.unitcost[iYear][1]
-      //     ])
-      //   }
-      // }
       consoleLogVar('parTable', vm.parTable);
     }
 

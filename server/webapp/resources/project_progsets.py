@@ -33,30 +33,7 @@ from server.webapp.utils import RequestParser
 from server.webapp.inputs import SubParser, Json as JsonInput
 from server.webapp.fields import Json, Uuid
 
-
-def load_program(project_id, progset_id, program_id):
-    program_entry = load_program_record(project_id, progset_id, program_id)
-    if program_entry is None:
-        raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-    return program_entry.hydrate()
-
-
-def load_parset(project_id, parset_id):
-    parset_entry = db.session.query(ParsetsDb).filter_by(
-        id=parset_id, project_id=project_id).first()
-    if parset_entry is None:
-        raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-    return parset_entry.hydrate()
-
-
-def load_result(project_id, parset_id):
-    result_entry = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id,
-        calculation_type=ResultsDb.CALIBRATION_TYPE).first()
-    # TODO custom exception
-    if result_entry is None:
-        raise Exception
-    return result_entry.hydrate()
+from server.webapp.loader import load_project, load_program, load_parset, load_result
 
 
 def print_parset(parset):
@@ -417,14 +394,12 @@ class PopSizes(Resource):
         current_app.logger.debug(
             "/api/project/%s/progsets/%s/program/%s/parset/%s/popsizes" %
             (project_id, progset_id, program_id, parset_id))
-
         program = load_program(project_id, progset_id, program_id)
         parset = load_parset(project_id, parset_id)
-        result = load_result(project_id, parset_id)
-        years = range(int(result.settings.start), int(result.settings.end + 1))
-
-        popsizes = program.gettargetpopsize(t=years, parset=parset, results=result)
-
+        project = load_project(project_id)
+        settings = project.settings
+        years = range(int(settings.start), int(settings.end) + 1)
+        popsizes = program.gettargetpopsize(t=years, parset=parset)
         payload = normalize_obj(dict(zip(years, popsizes)))
         current_app.logger.debug('popsizes = \n%s\n' % payload)
         return payload, 201

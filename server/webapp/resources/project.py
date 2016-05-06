@@ -765,6 +765,7 @@ class ProjectFromData(Resource):
         if project.data:
             assert(project.parsets)
             result = project.runsim()
+
             print('>>>> Runsim for project: "%s"' % (project_record.name))
 
         project_record.restore(project)

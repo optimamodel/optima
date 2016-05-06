@@ -331,7 +331,7 @@ def put_parameters_in_parset(parameters, parset, ind=0):
             pars[key].y[subkey] = value
         elif par_type == 'exp':  # Population growth
             pars[key].p[subkey][0] = value
-        elif par_type == 'const':  # Metaparameters
+        elif par_type == 'const':
             pars[key].y = value
         else:
             print('Parameter type "%s" not implemented!' % par_type)
@@ -511,7 +511,7 @@ class ParsetsCalibration(Resource):
 
         return {
             "parset_id": parset_id,
-            "parameters": args['parameters'],
+            "parameters": get_parset_parameters(parset_instance),
             "result_id": result_entry.id
         }
 
