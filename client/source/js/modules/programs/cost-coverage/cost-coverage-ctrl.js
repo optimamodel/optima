@@ -204,12 +204,56 @@ define(['./../module', 'underscore'], function (module, _) {
       return existingPopulations;
     }
 
-    function dummySelector(row) {
+    function yearSelector(row) {
+      var start = vm.openProject.dataStart;
+      var end = vm.openProject.dataEnd;
+      var years = _.range(start, end+1);
+      var result = _.map(years, function(y) { return {'label':y, 'value':y} });
+      console.log('yearSelector', result);
+      return result;
+    }
+
+    function interactSelector(row) {
       return [
-        {'value':'ha','label':'ha'},
-        {'value':'ka','label':'ka'},
-        {'value':'ba','label':'ba'}
+        {'value':'random','label':'random'},
+        {'value':'nested','label':'nested'},
+        {'value':'additive','label':'additive'}
       ]
+    }
+
+    function popSelector(row) {
+      var parsetId = vm.selectedParset.id;
+      var effect = _.findWhere(vm.existingEffects.effects, {parset: parsetId});
+      var parShort = vm.selectedParameter.short;
+      var pops = [];
+      _.each(effect.parameters, function(parameter) {
+        if (parameter.name == parShort) {
+          pops.push(parameter.pop);
+        }
+      });
+      var result = _.map(_.uniq(pops), function(p) { return {'label':p, 'value':p} });
+      console.log('popselector', result);
+      return result;
+    }
+
+    function progSelector(row) {
+      var parsetId = vm.selectedParset.id;
+      var effect = _.findWhere(vm.existingEffects.effects, {parset: parsetId});
+      var parShort = vm.selectedParameter.short;
+      var names = [];
+      _.each(effect.parameters, function(parameter) {
+        _.each(parameter.years, function(year) {
+          _.each(year.programs, function(program) {
+            names.push(program.name);
+          })
+        })
+      });
+      var result = _.map(_.uniq(names), function(name) {
+        return {'label':vm.getFullProgramName(name), 'value':name}
+      });
+      result.splice(0, 0, {'label':'<baseline>', 'value':'<baseline>'});
+      console.log('progSelector', result);
+      return result;
     }
 
     function validateTable(table) {
@@ -217,14 +261,15 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function buildTable() {
+
       vm.parTable = {
         titles: [
-          "Pop", "Year", "Program", "Description", "Value (lo)", "Value (hi)", "Interact"],
+          "Pop", "Year", "Program", "Value (lo)", "Value (hi)", "Interaction"],
         rows: [],
-        types: ["selector", "selector", "selector", "number", "number", "number", "selector"],
+        types: ["selector", "selector", "selector", "number", "number", "selector"],
         widths: [],
         displayRowFns: [null, null, null, null, null, null],
-        selectors: [dummySelector, dummySelector, dummySelector, null, null, null, dummySelector],
+        selectors: [popSelector, yearSelector, progSelector, null, null, interactSelector],
         validateFn: validateTable
       };
 
@@ -245,9 +290,8 @@ define(['./../module', 'underscore'], function (module, _) {
             console.log('loop >>', year.year);
 
             vm.parTable.rows.push([
-              parameter.pop,
+              "" + parameter.pop,
               year.year,
-              "<baseline>",
               "<baseline>",
               year.intercept_lower,
               year.intercept_upper,
@@ -258,10 +302,9 @@ define(['./../module', 'underscore'], function (module, _) {
 
               consoleLogVar("program", program);
               vm.parTable.rows.push([
-                parameter.pop,
+                "" + parameter.pop,
                 year.year,
                 program.name,
-                vm.getFullProgramName(program.name),
                 program.intercept_lower,
                 program.intercept_upper,
                 year.interact

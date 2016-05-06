@@ -103,6 +103,15 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
                 val = fn(row);
               }
             }
+            if (scope.table.types[i] == "selector") {
+              var selectorFn = scope.table.selectors[i];
+              var options = selectorFn(row);
+              _.each(options, function(o) {
+                if (o.value == val) {
+                  val = o.label;
+                }
+              });
+            }
             result.push(val);
           }
           return result;

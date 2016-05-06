@@ -385,10 +385,8 @@ class Program(Resource):
 
 class PopSizes(Resource):
     """
-    Estimated popsize for the given Program (for populations)
-    & Parset (initial population size).
+    Return estimated popsize for a Program & Parset
     """
-
     method_decorators = [report_exception, login_required]
     def get(self, project_id, progset_id, program_id, parset_id):
         current_app.logger.debug(
@@ -396,11 +394,12 @@ class PopSizes(Resource):
             (project_id, progset_id, program_id, parset_id))
         program = load_program(project_id, progset_id, program_id)
         parset = load_parset(project_id, parset_id)
-        project = load_project(project_id)
-        settings = project.settings
+        settings = load_project(project_id).settings
+
         years = range(int(settings.start), int(settings.end) + 1)
         popsizes = program.gettargetpopsize(t=years, parset=parset)
         payload = normalize_obj(dict(zip(years, popsizes)))
+
         current_app.logger.debug('popsizes = \n%s\n' % payload)
         return payload, 201
 

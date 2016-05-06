@@ -61,7 +61,6 @@ def load_result(project_id, parset_id):
     result_entry = db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id,
         calculation_type=ResultsDb.CALIBRATION_TYPE).first()
-    # TODO custom exception
     if result_entry is None:
         return None
     return result_entry.hydrate()
