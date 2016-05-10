@@ -11,49 +11,46 @@ from flask_restful import Resource, marshal_with
 from flask_restful_swagger import swagger
 from flask import helpers
 
-from server.webapp.dataio import TEMPLATEDIR, upload_dir_user
-from server.webapp.utils import load_project_record, load_progset_record, report_exception, load_program_record
-from server.webapp.exceptions import ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ParsetDoesNotExist
-from server.webapp.resources.common import file_resource, file_upload_form_parser
-
-from server.webapp.utils import update_or_create_program_record
-
+from server.webapp.dataio import (
+    load_project_record, load_progset_record, load_project, load_program, load_parset,
+    update_or_create_program_record)
+from server.webapp.exceptions import (
+    ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ParsetDoesNotExist)
+from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.dbconn import db
-
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
-
-from server.webapp.serializers.project_progsets import (progset_parser, param_fields,
-    effect_parser, progset_effects_fields)
-
 from server.webapp.jsonhelper import normalize_obj
+from server.webapp.inputs import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user
 
 import uuid
 from flask_restful import fields
-from server.webapp.utils import RequestParser
-from server.webapp.inputs import SubParser, Json as JsonInput
-from server.webapp.fields import Json, Uuid
 
-from server.webapp.loader import load_project, load_program, load_parset, load_result
+costcov_parser = RequestParser()
+costcov_parser.add_arguments({
+    'year': {'required': True, 'type':int, 'location': 'json'},
+    'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
+})
 
 
-def print_parset(parset):
-    result = {
-        'popkeys': normalize_obj(parset.popkeys),
-        'uid': str(parset.uid),
-        'name': parset.name,
-        'project_id': parset.project.id if parset.project else '',
-    }
-    s = pprint.pformat(result, indent=1) + "\n"
-    for pars in parset.pars:
-        for key, par in pars.items():
-            if hasattr(par, 'y'):
-                par = normalize_obj(par.y)
-            elif hasattr(par, 'p'):
-                par = normalize_obj(par.p)
-            else:
-                par = normalize_obj(par)
-            s += pprint.pformat({ key: par }) + "\n"
-    return s
+program_parser = RequestParser()
+program_parser.add_arguments({
+    'name': {'required': True, 'location': 'json'},
+    'short': {'location': 'json'},
+    'category': {'required': True, 'location': 'json'},
+    'active': {'type': bool, 'default': False, 'location': 'json'},
+    'targetpars': {'type': list, 'dest': 'pars', 'location': 'json'},
+    'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
+    'costcov': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
+    'criteria': {'type': Json, 'location': 'json'}
+})
+
+
+progset_parser = RequestParser()
+progset_parser.add_arguments({
+    'name': {'required': True},
+    'programs': {'required': True, 'type': SubParser(program_parser), 'action': 'append'}
+})
 
 
 class Progsets(Resource):
@@ -110,6 +107,7 @@ class Progsets(Resource):
         progset_entry.get_extra_data()
 
         return progset_entry, 201
+
 
 
 class Progset(Resource):
@@ -216,7 +214,7 @@ class ProgsetData(Resource):
         Uploads Data file, uses it to update the progrset and program models.
         Precondition: model should exist.
         """
-        from server.webapp.parser import get_default_program_summaries
+        from server.webapp.parse import get_default_program_summaries
 
         current_app.logger.debug("POST /api/project/{}/progsets/{}/data".format(project_id, progset_id))
 
@@ -248,6 +246,15 @@ class ProgsetData(Resource):
         return reply
 
 
+
+
+
+param_fields = {
+    'name': fields.String,
+    'populations': fields.Raw,
+    'coverage': fields.Boolean,
+}
+
 class ProgsetParams(Resource):
 
     @swagger.operation(
@@ -255,7 +262,7 @@ class ProgsetParams(Resource):
     )
     @marshal_with(param_fields)
     def get(self, project_id, progset_id, parset_id):
-        from server.webapp.utils import load_progset_record, load_parset_record
+        from server.webapp.dataio import load_progset_record, load_parset_record
 
         progset_entry = load_progset_record(project_id, progset_id)
         progset_be = progset_entry.hydrate()
@@ -280,6 +287,89 @@ class ProgsetParams(Resource):
         return params
 
 
+
+# stack of resource fields for parsing
+
+program_effect_fields = {
+    'name': fields.String,
+    'intercept_lower': fields.Float,
+    'intercept_upper': fields.Float
+}
+
+param_year_effect_fields = {
+    'year': fields.Integer,
+    'intercept_lower': fields.Float,
+    'intercept_upper': fields.Float,
+    'interact': fields.String,
+    'programs': fields.List(fields.Nested(program_effect_fields), default=[])
+}
+
+param_effect_fields = {
+    'name': fields.String,
+    'pop': fields.Raw,  # ToDo implement a field type that matches String or List of Strings
+    'years': fields.List(fields.Nested(param_year_effect_fields), default=[])
+}
+
+parset_effect_fields = {
+    'parset': fields.String,
+    'parameters': fields.List(fields.Nested(param_effect_fields), default=[])
+}
+
+progset_effects_fields = {
+    'effects': fields.List(fields.Nested(parset_effect_fields), default=[])
+}
+
+program_effect_parser = RequestParser()
+program_effect_parser.add_arguments({
+    'name': {'required': False, 'location': 'json'},
+    'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
+    'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
+})
+
+param_year_effect_parser = RequestParser()
+param_year_effect_parser.add_arguments({
+    'year': {'type': int, 'required': False, 'location': 'json'},
+    'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
+    'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
+    'interact': {'location': 'json', 'required': False},
+    'programs': {
+        'type': SubParser(program_effect_parser),
+        # 'action': 'append',
+        'default': [],
+        'location': 'json',
+        'required': False,
+    },
+})
+
+param_effect_parser = RequestParser()
+param_effect_parser.add_arguments({
+    'name': {'required': False, 'location': 'json'},
+    'pop': {'required': False, 'location': 'json', 'type': Json},
+    'years': {
+        'type': SubParser(param_year_effect_parser),
+        # 'action': 'append',
+        'default': [],
+        'location': 'json',
+        'required': False,
+    },
+})
+
+parset_effect_parser = RequestParser()
+parset_effect_parser.add_arguments({
+    'parset': {'required': False, 'location': 'json'},
+    'parameters': {
+        'type': SubParser(param_effect_parser),
+        # 'action': 'append',
+        'default': [],
+        'location': 'json',
+        'required': False
+    }
+})
+
+
+effect_parser = RequestParser()
+effect_parser.add_argument('effects', type=SubParser(parset_effect_parser), action='append')
+
 class ProgsetEffects(Resource):
 
     method_decorators = [report_exception, login_required]
@@ -289,7 +379,7 @@ class ProgsetEffects(Resource):
     )
     @marshal_with(progset_effects_fields)
     def get(self, project_id, progset_id):
-        from server.webapp.utils import load_progset_record
+        from server.webapp.dataio import load_progset_record
 
         progset_entry = load_progset_record(project_id, progset_id)
         return progset_entry
@@ -300,7 +390,7 @@ class ProgsetEffects(Resource):
     )
     @marshal_with(progset_effects_fields)
     def put(self, project_id, progset_id):
-        from server.webapp.utils import load_progset_record
+        from server.webapp.dataio import load_progset_record
 
         progset_entry = load_progset_record(project_id, progset_id)
 
@@ -316,7 +406,7 @@ class ProgsetEffects(Resource):
 
 query_program_parser = RequestParser()
 query_program_parser.add_arguments({
-    'program': {'required': True, 'type': JsonInput, 'location': 'json'},
+    'program': {'required': True, 'type': Json, 'location': 'json'},
 })
 
 class Program(Resource):
@@ -369,13 +459,12 @@ class Program(Resource):
 
         args = query_program_parser.parse_args()
         program_summary = normalize_obj(args['program'])
-        program_entry = update_or_create_program_record(
+        program_record = update_or_create_program_record(
             project_id, progset_id, program_summary['short'],
             program_summary, program_summary['active'])
         current_app.logger.debug(
             "writing program = \n%s\n" % pprint.pformat(program_summary, indent=2))
-
-        db.session.add(program_entry)
+        db.session.add(program_record)
         db.session.flush()
         db.session.commit()
 
@@ -383,7 +472,7 @@ class Program(Resource):
 
 
 
-class PopSizes(Resource):
+class ProgramPopSizes(Resource):
     """
     Return estimated popsize for a Program & Parset
     """
@@ -414,7 +503,7 @@ costcov_graph_parser.add_arguments({
     'perperson': {'type': bool, 'location': 'args'},
 })
 
-class CostcovGraph(Resource):
+class ProgramCostcovGraph(Resource):
     """
     Costcoverage graph for a Program and a Parset (for population sizes).
     """

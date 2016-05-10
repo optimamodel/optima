@@ -6,7 +6,7 @@ from server.api import app
 #from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ParsetsDb, WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.utils import save_result, load_project_record
+from server.webapp.dataio import save_result, load_project_record
 import optima as op
 
 import datetime
@@ -16,6 +16,7 @@ import dateutil.tz
 
 celery = make_celery(app)
 db = SQLAlchemy(app)
+
 
 def init_db_session():
     return scoped_session(sessionmaker(db.engine)) #creating scoped_session, eventually bound to engine

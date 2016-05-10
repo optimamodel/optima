@@ -14,18 +14,10 @@ from flask_restful_swagger import swagger
 
 import optima as op
 
-from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb, OptimizationsDb
-
-from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.fields import Uuid, Json
-
-from server.webapp.resources.common import file_resource, file_upload_form_parser
-from server.webapp.utils import (load_project_record, verify_admin_request, report_exception,
-                                 save_result, delete_spreadsheet, RequestParser)
-
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, OptimizationsDb
+from server.webapp.resources.common import report_exception
+from server.webapp.inputs import RequestParser
 from server.webapp.jsonhelper import OptimaJSONEncoder
 
 
@@ -173,10 +165,10 @@ optimization_which_parser = RequestParser()
 optimization_which_parser.add_argument('which', location='args', default=None, action='append')
 
 optimization_fields = {
-    "optimization_id": Uuid,
-    "graphs": Json,
-    "selectors": Json,
-    "result_id": Uuid,
+    "optimization_id": fields.String,
+    "graphs": fields.Raw,
+    "selectors": fields.Raw,
+    "result_id": fields.String,
 }
 
 

@@ -3,6 +3,8 @@ from datetime import datetime
 import dateutil
 
 from flask import current_app, helpers, request, Response
+from flask.ext.restful import fields, Resource, marshal_with
+from flask.ext.restful_swagger import swagger
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
 
@@ -12,17 +14,15 @@ from flask_restful_swagger import swagger
 
 import optima as op
 
-from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
-
-from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
+from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage, RequestParser, \
+    TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.fields import Uuid, Json
-
-from server.webapp.resources.common import file_resource, file_upload_form_parser
-from server.webapp.utils import (load_project_record, verify_admin_request, report_exception,
-                                 save_result, delete_spreadsheet, RequestParser)
+from server.webapp.parse import get_default_populations
+from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception, \
+    verify_admin_request
+from server.webapp.dataio import load_project_record, save_result, delete_spreadsheet
 
 
 class ProjectBase(Resource):
@@ -51,7 +51,6 @@ population_parser.add_arguments({
     'age_to':     {'location': 'json'},
 })
 
-
 project_parser = RequestParser()
 project_parser.add_arguments({
     'name': {'required': True, 'type': str},
@@ -62,7 +61,6 @@ project_parser.add_arguments({
     'populations': {'type': dict, 'required': True, 'action': 'append'},
 })
 
-
 # editing datastart & dataend currently is not allowed
 project_update_parser = RequestParser()
 project_update_parser.add_arguments({
@@ -72,7 +70,6 @@ project_update_parser.add_arguments({
     'datastart': {'type': int, 'default': None},
     'dataend': {'type': int, 'default': None}
 })
-
 
 class ProjectsAll(ProjectBase):
     """
@@ -90,11 +87,11 @@ class ProjectsAll(ProjectBase):
         return super(ProjectsAll, self).get()
 
 
+
 bulk_project_parser = RequestParser()
 bulk_project_parser.add_arguments({
     'projects': {'required': True, 'action': 'append'},
 })
-
 
 class Projects(ProjectBase):
     """
@@ -787,9 +784,9 @@ class ProjectFromData(Resource):
 
 
 project_copy_fields = {
-    'project': Uuid,
-    'user': Uuid,
-    'copy_id': Uuid
+    'project': fields.String,
+    'user': fields.String,
+    'copy_id': fields.String
 }
 project_copy_parser = RequestParser()
 project_copy_parser.add_arguments({
@@ -914,28 +911,29 @@ class Portfolio(Resource):
         return helpers.send_from_directory(loaddir, zipfile_name)
 
 
-class Defaults(Resource):
+
+class DefaultPrograms(Resource):
 
     @swagger.operation(
         summary="""Gives default programs, program categories and program parameters
                 for the given program"""
     )
     @report_exception
-    @marshal_with({"programs": Json})
+    @marshal_with({"programs": fields.Raw})
     @login_required
     def get(self, project_id):
-        from server.webapp.parser import get_default_program_summaries
+        from server.webapp.parse import get_default_program_summaries
         project = load_project_record(project_id, raise_exception=True).hydrate()
         return { "programs": get_default_program_summaries(project) }
+
 
 
 # It's a pship but it's used somewhat interchangeably with populations
 
 pship_fields = {
     "type": fields.String,
-    "populations": Json
+    "populations": fields.Raw
 }
-
 
 class Partnerships(Resource):
     @swagger.operation(
@@ -951,3 +949,67 @@ class Partnerships(Resource):
             'type': key,
             'populations': value
         } for key, value in be_project.data['pships'].iteritems()]
+
+
+parameter_fields = {
+    'fittable': fields.String,
+    'name': fields.String,
+    'auto': fields.String,
+    'partype': fields.String,
+    'proginteract': fields.String,
+    'short': fields.String,
+    'coverage': fields.Boolean,
+    'by': fields.String,
+    'pships': fields.Raw,
+}
+
+class DefaultParameters(Resource):
+
+    @swagger.operation(
+        summary="List default parameters"
+    )
+    @report_exception
+    @marshal_with(parameter_fields, envelope='parameters')
+    @login_required
+    def get(self, project_id):
+        """Gives back project parameters (modifiable)"""
+
+        print "Default parameters"
+
+        from server.webapp.dataio import load_project_record
+        from optima.parameters import partable, loadpartable, Par
+
+        default_pars = [par['short'] for par in loadpartable(partable)]
+
+        project = load_project_record(project_id, raise_exception=True)
+        be_parsets = [parset.hydrate() for parset in project.parsets]
+        parameters = []
+        added_parameters = set()
+        for parset in be_parsets:
+            print(">>> Parsets %s" % [p.keys() for p in parset.pars])
+            for parameter in parset.pars:
+                for key in default_pars:
+                    if key not in added_parameters and \
+                            key in parameter and \
+                            isinstance(parameter[key], Par) and \
+                            parameter[key].visible == 1 and \
+                            parameter[key].y.keys():
+                        param = parameter[key].__dict__
+                        if parameter[key].by == 'pship':
+                            pships = parameter[key].y.keys()
+                        else:
+                            pships = []
+                        param['pships'] = pships
+
+                        parameters.append(param)
+                        added_parameters.add(key)
+
+        return parameters
+
+
+class DefaultPopulations(Resource):
+    @swagger.operation(summary='Gives back default populations')
+    @report_exception
+    @login_required
+    def get(self):
+        return { 'populations': get_default_populations()}

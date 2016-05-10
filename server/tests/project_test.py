@@ -409,7 +409,7 @@ class ProjectTestCase(OptimaTestCase):
 
     def test_default_programs_for_project_restore(self):
         from server.webapp.dbmodels import ProgramsDb, ProjectDb
-        from server.webapp.parser import get_default_program_summaries
+        from server.webapp.parse import get_default_program_summaries
         from server.webapp.populations import populations
 
         progsets_count = 1

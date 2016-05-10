@@ -239,7 +239,6 @@ define(['./../module', 'underscore'], function (module, _) {
     function progSelector(row) {
       var parsetId = vm.selectedParset.id;
       var effect = _.findWhere(vm.existingEffects.effects, {parset: parsetId});
-      var parShort = vm.selectedParameter.short;
       var names = [];
       _.each(effect.parameters, function(parameter) {
         _.each(parameter.years, function(year) {

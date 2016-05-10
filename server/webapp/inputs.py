@@ -1,9 +1,20 @@
+import os
+
+from flask import current_app
+from flask.ext.restful.reqparse import RequestParser as OrigReqParser
 from validate_email import validate_email
-
-from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 
-from server.webapp.utils import allowed_file
+# json should probably removed from here since we are now using prj for up/download
+# TODO this should be checked per upload type
+ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}
+
+def allowed_file(filename):
+    """
+    Finds out if this file is allowed to be uploaded
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def nullable_email(email_str):
@@ -34,50 +45,6 @@ def secure_filename_input(orig_name):
 
 def Json(orig):
     return orig
-
-
-def scenario_par(orig_pars):
-    if not isinstance(orig_pars, list):
-        raise ValueError("needs to be a list.")
-
-    pars = []
-
-    for i in orig_pars:
-
-        pars.append({
-            'endval': float(i['endval']),
-            'endyear': int(i['endyear']),
-            'name': str(i['name']),
-            'for': [i['for']],
-            'startval': float(i['startval']),
-            'startyear': int(i['startyear'])
-        })
-
-    return pars
-
-def scenario_program(orig_programs):  # result is either budget or coverage, depending on scenario type
-    if not isinstance(orig_programs, list):
-        raise ValueError("needs to be a list or dictionaries.")
-
-    if len(orig_programs) == 0:
-        return []
-
-    if not isinstance(orig_programs[0], dict):
-        raise ValueError("needs to be a list or dictionaries.")
-
-    programs = {}
-    for program_entry in orig_programs:
-        program_name = str(program_entry['program'])
-        values = program_entry['values']
-        print('---------')
-        print(values)
-        if not isinstance(values, list):
-            values = [values]
-        programs[program_name] = []
-        for elem in values:
-            programs[program_name].append(float(elem))
-
-    return programs
 
 
 class SubRequest:
@@ -125,3 +92,118 @@ class AllowedFiletypeStorage(AllowedFileTypeMixin, FileStorage):
 
 class AllowedSafeFilenameStorage(AllowedFileTypeMixin, SafeFilenameStorage):
     pass
+
+
+class RequestParser(OrigReqParser):
+
+    def __init__(self, *args, **kwargs):
+        super(RequestParser, self).__init__(*args, **kwargs)
+        self.abort_on_error = True
+
+    def get_swagger_type(self, arg):
+        try:
+            if issubclass(arg.type, FileStorage):
+                return 'file'
+        except TypeError:
+            ## this arg.type was not a class
+            pass
+
+        if callable(arg.type):
+            return arg.type.__name__
+        return arg.type
+
+    def get_swagger_location(self, arg):
+
+        if isinstance(arg.location, tuple):
+            loc = arg.location[0]
+        else:
+            loc = arg.location.split(',')[0]
+
+        if loc == "args":
+            return "query"
+        return loc
+
+
+    def swagger_parameters(self):
+        return [
+            {
+                'name': arg.name,
+                'dataType': self.get_swagger_type(arg),
+                'required': arg.required,
+                'description': arg.help,
+                'paramType': self.get_swagger_location(arg),
+            }
+            for arg in self.args
+        ]
+
+    def add_arguments(self, arguments_dict):
+        for argument_name, kwargs in arguments_dict.iteritems():
+            self.add_argument(argument_name, **kwargs)
+
+    def parse_args(self, req=None, strict=False):
+        from werkzeug.exceptions import HTTPException
+
+        try:
+            return super(RequestParser, self).parse_args(req, strict)
+        except HTTPException as e:
+            if self.abort_on_error:
+                raise e
+            else:
+                raise ValueError(e.data['message'])
+
+
+TEMPLATEDIR = "/tmp/templates"
+PROJECTDIR = "/tmp/projects"
+
+
+def fullpath(filename, datadir=None):
+    """
+    "Normalizes" filename:  if it is full path, leaves it alone. Otherwise, prepends it with datadir.
+    """
+
+    if datadir == None:
+        datadir = current_app.config['UPLOAD_FOLDER']
+
+    result = filename
+
+    # get user dir path
+    datadir = upload_dir_user(datadir)
+
+    if not(os.path.exists(datadir)):
+        os.makedirs(datadir)
+    if os.path.dirname(filename)=='' and not os.path.exists(filename):
+        result = os.path.join(datadir, filename)
+
+    return result
+
+
+def templatepath(filename):
+    return fullpath(filename, TEMPLATEDIR)
+
+
+def upload_dir_user(dirpath, user_id = None):
+
+    try:
+        from flask.ext.login import current_user # pylint: disable=E0611,F0401
+
+        # get current user
+        if current_user.is_anonymous() == False:
+
+            current_user_id = user_id if user_id else current_user.id
+
+            # user_path
+            user_path = os.path.join(dirpath, str(current_user_id))
+
+            # if dir does not exist
+            if not(os.path.exists(dirpath)):
+                os.makedirs(dirpath)
+
+            # if dir with user id does not exist
+            if not(os.path.exists(user_path)):
+                os.makedirs(user_path)
+
+            return user_path
+    except:
+        return dirpath
+
+    return dirpath

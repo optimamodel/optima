@@ -1,6 +1,5 @@
 from datetime import datetime
 import dateutil
-from collections import defaultdict
 from copy import deepcopy
 from pprint import pprint
 
@@ -8,7 +7,6 @@ from flask_restful_swagger import swagger
 from flask_restful import fields
 
 from optima import saves
-from server.webapp.fields import Json
 from server.webapp.exceptions import DuplicateProgram
 
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
@@ -16,16 +14,18 @@ from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
 from server.webapp.dbconn import db
-from server.webapp.fields import Uuid, Json, LargeInt
 from server.webapp.exceptions import ParsetDoesNotExist
-from server.webapp.jsonhelper import OptimaJSONEncoder, normalize_obj
+from server.webapp.jsonhelper import normalize_obj
+from server.webapp.parse import (
+    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata)
 
-from werkzeug.utils import secure_filename
 import optima as op
+
 
 
 def log_var(name, obj):
     current_app.logger.debug("%s = \n%s\n" % (name, pprint.pformat(obj, indent=2)))
+
 
 
 def db_model_as_file(model, loaddir, filename, name_field, extension):
@@ -48,7 +48,7 @@ class UserDb(db.Model):
     __tablename__ = 'users'
 
     resource_fields = {
-        'id': Uuid,
+        'id': fields.String,
         'displayName': fields.String(attribute='name'),
         'username': fields.String,
         'email': fields.String,
@@ -89,12 +89,12 @@ class ProjectDb(db.Model):
     __tablename__ = 'projects'
 
     resource_fields = {
-        'id': Uuid,
+        'id': fields.String,
         'name': fields.String,
-        'user_id': Uuid,
+        'user_id': fields.String,
         'dataStart': fields.Integer(attribute='datastart'),
         'dataEnd': fields.Integer(attribute='dataend'),
-        'populations': Json,
+        'populations': fields.Raw,
         'creation_time': fields.DateTime(attribute='created'),
         'updated_time': fields.DateTime(attribute='updated'),
         'data_upload_time': fields.DateTime,
@@ -275,7 +275,7 @@ class ProjectDb(db.Model):
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}
         if project.parsets:
-            from server.webapp.utils import update_or_create_parset_record
+            from server.webapp.dataio import update_or_create_parset_record
             for name, parset in project.parsets.iteritems():
                 if not is_same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
@@ -284,8 +284,8 @@ class ProjectDb(db.Model):
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
         if project.progsets:
-            from server.webapp.utils import update_or_create_progset_record
-            from server.webapp.parser import get_default_program_summaries
+            from server.webapp.dataio import update_or_create_progset_record
+            from server.webapp.parse import get_default_program_summaries
 
             program_summaries = get_default_program_summaries(project)
 
@@ -295,18 +295,18 @@ class ProjectDb(db.Model):
 
 
         if project.scens:
-            from server.webapp.utils import update_or_create_scenario_record
+            from server.webapp.dataio import update_or_create_scenario_record
             for name in project.scens:
                 update_or_create_scenario_record(self.id, project, name)
 
         if project.optims:
-            from server.webapp.utils import update_or_create_optimization_record
+            from server.webapp.dataio import update_or_create_optimization_record
             for name in project.optims:
                 update_or_create_optimization_record(self.id, project, name)
 
         if project.results:
             # only save optimization ones for now...
-            from server.webapp.utils import save_result
+            from server.webapp.dataio import save_result
             for name in project.results:
                 if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
                     result = project.results[name]
@@ -348,12 +348,12 @@ class ParsetsDb(db.Model):
     __tablename__ = 'parsets'
 
     resource_fields = {
-        'id': Uuid(attribute='uid'),
-        'project_id': Uuid,
+        'id': fields.String(attribute='uid'),
+        'project_id': fields.String,
         'name': fields.String,
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'pars': Json,
+        'pars': fields.Raw,
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -489,8 +489,14 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
 
 
 
-from server.webapp.parser import (
-    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata)
+class LargeInt(fields.Integer):
+    def format(self, value):
+        try:
+            if value is None:
+                return self.default
+            return int(float(value))
+        except ValueError as ve:
+            raise fields.MarshallingException(ve)
 
 costcov_fields = {
     'year': fields.Integer,
@@ -504,9 +510,9 @@ class ProgramsDb(db.Model):
     __tablename__ = 'programs'
 
     resource_fields = {
-        'id': Uuid,
-        'progset_id': Uuid,
-        'project_id': Uuid,
+        'id': fields.String,
+        'progset_id': fields.String,
+        'project_id': fields.String,
         'category': fields.String,
         'short': fields.String(attribute='short'),
         'name': fields.String,
@@ -629,8 +635,8 @@ class ProgramsDb(db.Model):
 class ProgsetsDb(db.Model):
 
     resource_fields = {
-        'id': Uuid,
-        'project_id': Uuid,
+        'id': fields.String,
+        'project_id': fields.String,
         'name': fields.String,
         'created': fields.DateTime,
         'updated': fields.DateTime,
@@ -705,8 +711,8 @@ class ProgsetsDb(db.Model):
         self.readytooptimize = be_progset.readytooptimize()
 
     def restore(self, progset, default_program_summaries):
-        from server.webapp.utils import update_or_create_program_record
-        from server.webapp.parser import parse_program_summary
+        from server.webapp.dataio import update_or_create_program_record
+        from server.webapp.parse import parse_program_summary
 
         print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name
@@ -838,16 +844,16 @@ class ScenariosDb(db.Model):
     __tablename__ = 'scenarios'
 
     resource_fields = {
-        'id': Uuid,
-        'progset_id': Uuid,
+        'id': fields.String,
+        'progset_id': fields.String,
         'scenario_type': fields.String,
         'active': fields.Boolean,
         'name': fields.String,
-        'parset_id': Uuid,
-        'pars': Json(attribute='pars'),
-        'budget': Json(attribute='budget'),
-        'coverage': Json(attribute='coverage'),
-        'years': Json(attribute='years')
+        'parset_id': fields.String,
+        'pars': fields.Raw(attribute='pars'),
+        'budget': fields.Raw(attribute='budget'),
+        'coverage': fields.Raw(attribute='coverage'),
+        'years': fields.Raw(attribute='years')
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -889,7 +895,7 @@ class ScenariosDb(db.Model):
 
     def hydrate(self):
 
-        from server.webapp.utils import load_progset_record, load_parset_record
+        from server.webapp.dataio import load_progset_record, load_parset_record
 
         parset = load_parset_record(self.project_id, self.parset_id)
 
@@ -975,13 +981,13 @@ class OptimizationsDb(db.Model):
     __tablename__ = 'optimizations'
 
     resource_fields = {
-        'id': Uuid,
+        'id': fields.String,
         'which': fields.String,
         'name': fields.String,
-        'parset_id': Uuid,
-        'progset_id': Uuid,
-        'objectives': Json(),
-        'constraints': Json()
+        'parset_id': fields.String,
+        'progset_id': fields.String,
+        'objectives': fields.Raw(),
+        'constraints': fields.Raw()
     }
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
@@ -1010,7 +1016,7 @@ class OptimizationsDb(db.Model):
         """
         Make sure the objectives and constraints are current.
         """
-        from server.webapp.utils import load_parset_record, load_progset_record, load_project_record, remove_nans
+        from server.webapp.dataio import load_parset_record, load_progset_record, load_project_record, remove_nans
 
         if not self.constraints:
             self.constraints = {}

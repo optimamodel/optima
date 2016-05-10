@@ -1,47 +1,32 @@
 from datetime import datetime
 import dateutil
 import uuid
-import json
-import pprint
+
 
 from flask import current_app, helpers, make_response, request
 
-from flask import jsonify
-
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, abort
+from flask_restful import Resource, marshal_with, abort, marshal, fields
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import (SubParser, secure_filename_input, AllowedSafeFilenameStorage,
-                                  Json as JsonInput)
-
-from server.webapp.utils import (load_project_record, RequestParser, report_exception, TEMPLATEDIR,
-                                 upload_dir_user, save_result)
+from server.webapp.inputs import AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR, upload_dir_user
+from server.webapp.dataio import (
+    load_project_record, TEMPLATEDIR,
+    upload_dir_user, save_result, load_project, load_parset_list,
+    load_project, load_parset_list)
+from server.webapp.resources.common import report_exception
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
-
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb, ScenariosDb,OptimizationsDb
-from server.webapp.fields import Json, Uuid
-
-import math
+from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
 
 import optima as op
 
 
-copy_parser = RequestParser()
-copy_parser.add_arguments({
-    'name': {'required': True},
-    'parset_id': {'type': uuid.UUID}
-})
 
 y_keys_fields = {
-    'keys': Json
+    'keys': fields.Raw
 }
-
-limits_fields = {
-    'parsets': Json
-}
-
 
 class ParsetYkeys(Resource):
 
@@ -65,6 +50,11 @@ class ParsetYkeys(Resource):
         return {'keys': y_keys}
 
 
+
+limits_fields = {
+    'parsets': fields.Raw
+}
+
 class ParsetLimits(Resource):
     @swagger.operation(
         summary='get parameters limits'
@@ -87,6 +77,14 @@ class ParsetLimits(Resource):
         return {'parsets': limits}
 
 
+
+copy_parser = RequestParser()
+copy_parser.add_arguments({
+    'name': {'required': True},
+    'parset_id': {'type': uuid.UUID}
+})
+
+
 class Parsets(Resource):
     """
     Parsets for a given project.
@@ -101,16 +99,12 @@ class Parsets(Resource):
         """,
         responseClass=ParsetsDb.__name__
     )
-
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
-
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        project_entry = load_project_record(project_id, raise_exception=True)
-        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        result = [item.hydrate() for item in reply]
-
-        return result
+        # loads project to see if it exists
+        load_project_record(project_id, raise_exception=True)
+        return load_parset_list(project_id)
 
     @swagger.operation(
         description='Create new parset with default settings or copy existing parset',
@@ -127,15 +121,15 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_entry = load_project_record(project_id, raise_exception=True)
-        project_instance = project_entry.hydrate()
-        if name in project_instance.parsets:
+        project = load_project(project_id)
+
+        if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
         if not parset_id:
             # create new parset with default settings
-            project_instance.makeparset(name, overwrite=False)
-            new_result = project_instance.runsim(name)
-            project_entry.restore(project_instance)
+            project.makeparset(name, overwrite=False)
+            new_result = project.runsim(name)
+            project_entry.restore(project)
             db.session.add(project_entry)
 
             result_record = save_result(project_entry.id, new_result, name)
@@ -147,8 +141,8 @@ class Parsets(Resource):
                 raise ParsetDoesNotExist(parset_id, project_id=project_id)
             original_parset = original_parset[0]
             parset_name = original_parset.name
-            project_instance.copyparset(orig=parset_name, new=name)
-            project_entry.restore(project_instance)
+            project.copyparset(orig=parset_name, new=name)
+            project_entry.restore(project)
             db.session.add(project_entry)
 
             old_result_record = db.session.query(ResultsDb).filter_by(
@@ -203,8 +197,8 @@ class ParsetsDetail(Resource):
         #     abort(403)
 
         # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(project_id=project_id,
-            id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        db.session.query(ResultsDb).filter_by(
+            project_id=project_id, id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         db.session.query(ScenariosDb).filter_by(project_id=project_id,
             parset_id=parset_id).delete()
         db.session.query(OptimizationsDb).filter_by(project_id=project_id,
@@ -246,11 +240,11 @@ class ParsetsDetail(Resource):
 
 
 calibration_fields = {
-    "parset_id": Uuid,
-    "parameters": Json,
-    "graphs": Json,
-    "selectors": Json,
-    "result_id": Uuid,
+    "parset_id": fields.String,
+    "parameters": fields.Raw,
+    "graphs": fields.Raw,
+    "selectors": fields.Raw,
+    "result_id": fields.String,
 }
 
 calibration_parser = RequestParser()
@@ -269,77 +263,15 @@ calibration_update_parser.add_arguments({
 
 parset_save_with_autofit_parser = RequestParser()
 parset_save_with_autofit_parser.add_arguments({
-    'parameters': {'type': JsonInput, 'required': True, 'action': 'append'},
+    'parameters': {'type': fields.Raw, 'required': True, 'action': 'append'},
     'result_id': {'type': uuid.UUID, 'required': True},
 })
 
 
-def get_parset_parameters(parset, ind=0):
-    parameters = []
-    for key, par in parset.pars[ind].items():
-        if hasattr(par, 'fittable') and par.fittable != 'no':
-            if par.fittable == 'meta':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.m,
-                    "label": '%s -- meta' % par.name,
-                })
-            elif par.fittable == 'const':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.y,
-                    "label": par.name,
-                })
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.y[subkey],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            elif par.fittable == 'exp':
-                for subkey in par.p.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.p[subkey][0],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            else:
-                print('Parameter type "%s" not implemented!' % par.fittable)
-    return parameters
-
-
-def put_parameters_in_parset(parameters, parset, ind=0):
-    pars = parset.pars[ind]
-    for p_dict in parameters:
-        key = p_dict['key']
-        value = p_dict['value']
-        subkey = p_dict['subkey']
-        par_type = p_dict['type']
-        value = float(value)
-        if par_type == 'meta':  # Metaparameters
-            pars[key].m = value
-        elif par_type in ['pop', 'pship']:  # Populations or partnerships
-            pars[key].y[subkey] = value
-        elif par_type == 'exp':  # Population growth
-            pars[key].p[subkey][0] = value
-        elif par_type == 'const':
-            pars[key].y = value
-        else:
-            print('Parameter type "%s" not implemented!' % par_type)
-
-
 class ParsetsCalibration(Resource):
     """
-    Calibration info for the Parset.
+    This objects handles calls for calibration, which involves storing the
+    parameters of a parset and then generating the graphs.
     """
 
     method_decorators = [report_exception, login_required]
@@ -535,9 +467,16 @@ class ParsetsAutomaticCalibration(Resource):
         parset_entry = ParsetsDb.query.get(parset_id)
         parset_name = parset_entry.name
 
-        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, parset_id, 'autofit')
+        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(
+            project_id, parset_id, 'autofit')
 
-        result = {'can_start': can_start, 'can_join': can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
+        result = {
+            'can_start': can_start,
+            'can_join': can_join,
+            'parset_id': wp_parset_id,
+            'work_type': work_type
+        }
+
         if not can_start or not can_join:
             result['status'] = 'running'
             return result, 208
@@ -555,8 +494,15 @@ class ParsetsAutomaticCalibration(Resource):
         parset_entry = ParsetsDb.query.get(parset_id)
         project_id = parset_entry.project_id
 
-        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, parset_id, 'autofit')
-        return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
+        status, error_text, start_time, stop_time, result_id = \
+            check_calculation_status(project_id, parset_id, 'autofit')
+        return {
+            'status': status,
+            'error_text': error_text,
+            'start_time': start_time,
+            'stop_time': stop_time,
+            'result_id': result_id
+        }
 
 
 file_upload_form_parser = RequestParser()
