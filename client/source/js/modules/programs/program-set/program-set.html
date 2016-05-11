@@ -1,0 +1,66 @@
+
+<!--<div class="grid">-->
+  <!--<h1>Define programs &#8594; Define/manage program set</h1>-->
+<!--</div>-->
+
+<div class="rich" >
+  <div class="grid" style="margin: 0px 0px;">
+    <h1>Manage programs</h1>
+  </div>
+  <div ng-if="!missingData">
+    <div class="3">
+      <label for="programSet-selection">Select a saved program set:</label>
+    </div>
+    <div style="display: flex;justify-content: flex-start;">
+      <select id="programSet-selection" name="programSet-selection" class="txbox"
+              ng-model="activeProgramSet"
+              ng-change="setActiveProgramSet(activeProgramSet)"
+              ng-options="res.name for res in programSetList"
+              style="width: 20%;">
+      </select>
+      <button ng-click="addProgramSet()" type="button" class="btn" style="margin-left:2%">New program set</button>
+      <button ng-if="activeProgramSet" ng-click="copyProgramSet()" type="button" class="btn" style="margin-left:2%">Copy program set</button>
+      <button ng-if="activeProgramSet" ng-click="renameProgramSet()" type="button" class="btn" style="margin-left:2%">Rename program set</button>
+      <button ng-if="activeProgramSet" ng-click="downloadProgramSet()" type="button" class="btn" style="margin-left:2%">Download program set</button>
+      <button ng-if="activeProgramSet" ng-click="uploadProgramSet()" type="button" class="btn" style="margin-left:2%">Upload program set</button>
+      <button ng-if="activeProgramSet" ng-click="deleteProgramSet()" type="button" class="btn" style="margin-left:2%">Delete program set</button>
+    </div>
+    <div class="6" ng-if="activeProgramSet.programs && activeProgramSet.programs.length > 0">
+      <p></p>
+
+      <!-- TODO: Category, Program loops can be improved for better performance -->
+      <div class="section" ng-repeat="category in getCategories()">
+        <table class="section table table-bordered">
+          <tr>
+            <td colspan="5"><b>{{category}}</b></td>
+          </tr>
+          <tr>
+            <td><b>Active</b></td>
+            <td><b>Name</b></td>
+            <td><b>Short name</b></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr ng-repeat="program in activeProgramSet.programs | orderBy : 'name'" ng-if="program.category==category">
+            <td class="text-center" style="width: 50px" update-checkbox-on-click>
+              <input type="checkbox" ng-model="program.active">
+            </td>
+            <td style="width: 450px">{{ program.name }}</td>
+            <td style="width: 300px">{{ program.short }}</td>
+            <td>
+              <button type="button" class="btn" ng-click="openEditProgramModal($event, program)">Edit</button>
+            </td>
+            <td>
+              <button type="button" class="btn" ng-click="copyProgram($event, program)">Copy</button>
+            </td>
+          </tr>
+        </table>
+        </td>
+      </div>
+      <button type="button" class="btn" ng-click="openAddProgramModal($event)">Add a program</button>
+    </div>
+    <div class="section" style="margin-top: 20px">
+      <button class="btn" type="submit" ng-click="saveProgramSet()" ng-disabled="!activeProgramSet">Save program set</button>
+    </div>
+  </div>
+</div>

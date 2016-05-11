@@ -2,9 +2,12 @@ from datetime import datetime
 import dateutil
 from collections import defaultdict
 from copy import deepcopy
+from pprint import pprint
 
 from flask_restful_swagger import swagger
 from flask_restful import fields
+
+from optima import saves
 from server.webapp.fields import Json
 from server.webapp.exceptions import DuplicateProgram
 
@@ -15,9 +18,14 @@ from sqlalchemy.orm import deferred
 from server.webapp.dbconn import db
 from server.webapp.fields import Uuid, Json, LargeInt
 from server.webapp.exceptions import ParsetDoesNotExist
+from server.webapp.jsonhelper import OptimaJSONEncoder, normalize_obj
 
 from werkzeug.utils import secure_filename
 import optima as op
+
+
+def log_var(name, obj):
+    current_app.logger.debug("%s = \n%s\n" % (name, pprint.pformat(obj, indent=2)))
 
 
 def db_model_as_file(model, loaddir, filename, name_field, extension):
@@ -206,7 +214,6 @@ class ProjectDb(db.Model):
                     for parset in project_entry.parsets.values():
                         if parset.uid == result_entry.parset_id:
                             parset.resultsref = result.uid
-
         return project_entry
 
     def as_file(self, loaddir, filename=None):
@@ -219,12 +226,11 @@ class ProjectDb(db.Model):
         import dateutil
         import pytz
 
-        same_project = str(project.uid) == str(self.id)
+        is_same_project = str(project.uid) == str(self.id)
         str_project_id = str(self.id)
-        print "same_project:", same_project, project.uid, self.id
         db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
-        if same_project:
+        if is_same_project:
             self.name = project.name
         else:
             db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
@@ -240,19 +246,27 @@ class ProjectDb(db.Model):
         else:
             self.updated = datetime.now(dateutil.tz.tzutc())
         self.settings = op.saves(project.settings)
+
+        # self.data is a pickled blob, maybe should be called data_blob
         self.data = op.saves(project.data)
 
         if project.data:
             self.has_econ = 'econ' in project.data
             self.datastart = int(project.data['years'][0])
             self.dataend = int(project.data['years'][-1])
+
+            print(">>>> Gather populations in project")
             self.populations = []
-            project_pops = project.data['pops']
+            project_pops = normalize_obj(project.data['pops'])
+            # pprint(project_pops)
             for i in range(len(project_pops['short'])):
                 new_pop = {
-                    'name': project_pops['long'][i], 'short_name': project_pops['short'][i],
-                    'female': project_pops['female'][i], 'male': project_pops['male'][i],
-                    'age_from': int(project_pops['age'][i][0]), 'age_to': int(project_pops['age'][i][1])
+                    'name': project_pops['long'][i],
+                    'short': project_pops['short'][i],
+                    'female': project_pops['female'][i],
+                    'male': project_pops['male'][i],
+                    'age_from': int(project_pops['age'][i][0]),
+                    'age_to': int(project_pops['age'][i][1])
                 }
                 self.populations.append(new_pop)
         else:
@@ -261,36 +275,34 @@ class ProjectDb(db.Model):
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}
         if project.parsets:
-            from server.webapp.utils import update_or_create_parset
+            from server.webapp.utils import update_or_create_parset_record
             for name, parset in project.parsets.iteritems():
-                if not same_project:
+                if not is_same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
-                update_or_create_parset(self.id, name, parset)
+                update_or_create_parset_record(self.id, name, parset)
 
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
         if project.progsets:
-            from server.webapp.utils import update_or_create_progset
-            from server.webapp.programs import get_default_programs
+            from server.webapp.utils import update_or_create_progset_record
+            from server.webapp.parser import get_default_program_summaries
 
-            if project.data != {}:
-                program_list = get_default_programs(project)
-            else:
-                program_list = []
+            program_summaries = get_default_program_summaries(project)
 
             for name, progset in project.progsets.iteritems():
-                progset_record = update_or_create_progset(self.id, name, progset)
-                progset_record.restore(progset, program_list)
+                progset_record = update_or_create_progset_record(self.id, name, progset)
+                progset_record.restore(progset, program_summaries)
+
 
         if project.scens:
-            from server.webapp.utils import update_or_create_scenario
+            from server.webapp.utils import update_or_create_scenario_record
             for name in project.scens:
-                update_or_create_scenario(self.id, project, name)
+                update_or_create_scenario_record(self.id, project, name)
 
         if project.optims:
-            from server.webapp.utils import update_or_create_optimization
+            from server.webapp.utils import update_or_create_optimization_record
             for name in project.optims:
-                update_or_create_optimization(self.id, project, name)
+                update_or_create_optimization_record(self.id, project, name)
 
         if project.results:
             # only save optimization ones for now...
@@ -298,7 +310,7 @@ class ProjectDb(db.Model):
             for name in project.results:
                 if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
                     result = project.results[name]
-                    print "simpars", result.simpars[0], type(result.simpars[0])
+                    # print "simpars", result.simpars[0], type(result.simpars[0])
                     result_entry = save_result(self.id, result,
                         project.parsets[0].name, # TODO : will break if more than one parset
                         'optimization')
@@ -475,12 +487,16 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
         self.meta = meta
         self.updated = updated
 
+
+
+from server.webapp.parser import (
+    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata)
+
 costcov_fields = {
     'year': fields.Integer,
-    'spending': LargeInt(attribute='cost'),
+    'cost': LargeInt(attribute='cost'),
     'coverage': LargeInt(attribute='coverage'),
 }
-
 
 @swagger.model
 class ProgramsDb(db.Model):
@@ -492,15 +508,16 @@ class ProgramsDb(db.Model):
         'progset_id': Uuid,
         'project_id': Uuid,
         'category': fields.String,
-        'short_name': fields.String(attribute='short'),
+        'short': fields.String(attribute='short'),
         'name': fields.String,
-        'parameters': fields.Raw(attribute='pars'),
+        'targetpars': fields.Raw(attribute='pars'),
         'active': fields.Boolean,
         'populations': fields.List(fields.String, attribute='targetpops'),
         'criteria': fields.Raw(),
         'created': fields.DateTime,
         'updated': fields.DateTime,
-        'addData': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
+        'ccopars': fields.Raw,
+        'costcov': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
         'optimizable': fields.Raw,
     }
 
@@ -519,15 +536,15 @@ class ProgramsDb(db.Model):
     created = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
     updated = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
 
-    def __init__(self, project_id, progset_id, name, short='',
-                 category='No category', active=False, pars=None, created=None,
-                 updated=None, id=None, targetpops=[], criteria=None, costcov=None,
-                 ccopars=None):
+    def __init__(
+            self, project_id, progset_id, short='', name='', category='No category',
+            active=False, pars=None, created=None, updated=None, id=None,
+            targetpops=[], criteria=None, costcov=None, ccopars=None):
 
         self.project_id = project_id
         self.progset_id = progset_id
-        self.name = name
-        self.short = short if short is not None else name
+        self.short = short
+        self.name = name if name else short
         self.category = category
         self.pars = pars
         self.active = active
@@ -542,44 +559,11 @@ class ProgramsDb(db.Model):
         if id:
             self.id = id
 
-    def pars_to_program_pars(self):
-        """From API Program to BE Program"""
-
-        if self.pars is None:
-            return []
-
-        parameters = []
-
-        for param in self.pars:
-            if param.get('active', False):
-                parameters.extend([{
-                    'param': param['param'],
-                    'pop': pop if type(pop) in (str, unicode) else tuple(pop)
-                } for pop in param['pops']])
-
-        return parameters
-
-    @classmethod
-    def program_pars_to_pars(cls, targetpars):
-        """From BE Program to API Program"""
-
-        parameters = defaultdict(list)
-        for parameter in targetpars:
-            parameters[parameter['param']].append(parameter['pop'])
-
-        pars = [{
-                'active': True,
-                'param': short_name,
-                'pops': pop,
-                } for short_name, pop in parameters.iteritems()]
-
-        return pars
-
     def datapoint_api_to_db(self, pt):
-        return {'cost': pt['spending'], 'year': pt['year'], 'coverage': pt['coverage']}
+        return {'cost': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
 
     def datapoint_db_to_api(self, pt):
-        return {'spending': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
+        return {'cost': pt['cost'], 'year': pt['year'], 'coverage': pt['coverage']}
 
     def data_api_to_db(self, data):
         costcov_data = [self.datapoint_api_to_db(x) for x in data]
@@ -593,68 +577,52 @@ class ProgramsDb(db.Model):
         return int(float(num))
 
     def hydrate(self):
-        print('#### Hydrate Program from database')
-        print({
-            'name': self.name,
-            'category': self.category,
-            'targetpops': self.targetpops,
-            'criteria': self.criteria,
-            'costcovdata': {
-                't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['coverage']
-                if self.costcov[i] is not None
-                else None for i in range(len(self.costcov))],
-            } if self.costcov is not None else None,
-            'ccopars': {
-                't': self.ccopars['t'],
-                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
-                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
-            } if self.ccopars else None
-        })
-        program_entry = op.Program(
+        program = op.Program(
             self.short,
-            targetpars=self.pars_to_program_pars(),
+            targetpars=revert_targetpars(self.pars),
             name=self.name,
             category=self.category,
             targetpops=self.targetpops,
             criteria=self.criteria,
-            costcovdata={
-                't': [self.costcov[i]['year'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'cost': [self.costcov[i]['cost'] if self.costcov[i] is not None else None for i in range(len(self.costcov))],
-                'coverage': [self.costcov[i]['coverage']
-                if self.costcov[i] is not None
-                else None for i in range(len(self.costcov))],
-            } if self.costcov is not None else None,
-            ccopars={
-                't': self.ccopars['t'],
-                'saturation': [tuple(satpair) for satpair in self.ccopars['saturation']],
-                'unitcost': [tuple(costpair) for costpair in self.ccopars['unitcost']]
-            } if self.ccopars else None,
+            costcovdata=revert_costcovdata(self.costcov),
+            ccopars=revert_ccopars(self.ccopars),
         )
-        program_entry.id = self.id
-        return program_entry
+        program.id = self.id
+        return program
 
     def get_optimizable(self):
         be_program = self.hydrate()
         self.optimizable = be_program.optimizable()
 
-    def restore(self, program_instance):
-        import json
-        self.category = program_instance.category
-        self.name = program_instance.name
-        self.short = program_instance.short
-        self.pars = self.program_pars_to_pars(program_instance.targetpars)
-        self.targetpops = program_instance.targetpops
-        self.criteria = program_instance.criteria
-        self.costcov = []
-        for i in range(len(program_instance.costcovdata['t'])):
-            self.costcov.append(
-                {'year': program_instance.costcovdata['t'][i],
-                 'cost': program_instance.costcovdata['cost'][i],
-                 'coverage': program_instance.costcovdata['coverage'][i]})
-        self.costcov = json.loads(json.dumps(self.costcov))  # silently bails on floats otherwise. No idea why?
-        self.ccopars = program_instance.costcovfn.ccopars
+    def update_from_summary(self, program_summary, active):
+        self.short = program_summary.get('short', '')
+        self.updated = datetime.now(dateutil.tz.tzutc())
+        self.pars = program_summary.get('targetpars', [])
+        self.targetpops = program_summary.get('populations', [])
+        self.category = program_summary.get('category', '')
+        self.active = active
+        self.criteria = program_summary.get('criteria', None)
+        self.costcov = program_summary.get('costcov', None)
+        self.ccopars = program_summary.get('ccopars', None)
+        self.optimizable = program_summary.get('optimizable', False)
+        self.blob = saves(self.hydrate())
+
+    def restore(self, program):
+        print(">>>>> Restore program '%s'" % program.short)
+        self.update_from_summary(parse_program_summary(program), False)
+
+    def pprint(self):
+        pprint({
+            'short': self.short,
+            'name': self.name,
+            'pars': self.pars,
+            'category': self.category,
+            'targetpops': self.targetpops,
+            'criteria': self.criteria,
+            'costcov': self.costcov,
+            'ccopars': self.ccopars
+        })
+
 
 
 @swagger.model
@@ -696,11 +664,12 @@ class ProgsetsDb(db.Model):
     def hydrate(self):
         # In BE, programs don't have an "active" flag
         # therefore only hydrating active programs
-        progset_entry = op.Programset(
+        progset = op.Programset(
             name=self.name,
             programs=[
                 program.hydrate()
-                for program in self.programs if program.active
+                for program in self.programs
+                if program.active
             ]
         )
         for parset_effect in self.effects:
@@ -718,30 +687,16 @@ class ProgsetsDb(db.Model):
                         else:
                             effect[row['name']] = None
 
-                    if program_effect['name'] not in progset_entry.covout:
+                    if program_effect['name'] not in progset.covout:
                         continue
 
                     islist = isinstance(program_effect['pop'], list)
                     poptuple = tuple(program_effect['pop']) if islist else program_effect['pop']
-                    covout = progset_entry.covout[program_effect['name']]
-                    covout[poptuple].addccopar(effect, overwrite=True)
+                    covout = progset.covout[program_effect['name']]
+                    if poptuple in covout:
+                        covout[poptuple].addccopar(effect, overwrite=True)
 
-        return progset_entry
-
-    def _program_to_dict(self, program_be):
-        program = program_be.__dict__
-        program['parameters'] = program.get('targetpars', [])
-        if program['costcovdata'] is None:
-            program['costcov'] = []
-        else:
-            program['costcov'] = [
-                {
-                    'year': program['costcovdata']['t'][i],
-                    'cost': program['costcovdata']['cost'][i],
-                    'coverage': program['costcovdata']['coverage'][i],
-                } for i in range(len(program['costcovdata']['t']))
-            ]
-        return program
+        return progset
 
     def get_extra_data(self):
         be_progset = self.hydrate()
@@ -749,34 +704,37 @@ class ProgsetsDb(db.Model):
         self.targetpartypes = be_progset.targetpartypes
         self.readytooptimize = be_progset.readytooptimize()
 
-    def restore(self, progset, program_list):
-        from server.webapp.utils import update_or_create_program
+    def restore(self, progset, default_program_summaries):
+        from server.webapp.utils import update_or_create_program_record
+        from server.webapp.parser import parse_program_summary
 
+        print(">>>>>>>> Restore progset_record '%s'" % progset.name)
         self.name = progset.name
-        # only active programs are hydrated
-        # therefore we need to retrieve the default list of programs
-        loaded_programs = set()
-        for program in program_list:
-            program_name = program['name']
-            if program_name in progset.programs:
-                loaded_programs.add(program_name)
-                program = self._program_to_dict(progset.programs[program_name])
+
+        # store programs including default programs that are not progset
+        loaded_shorts = set()
+        for program_summary in default_program_summaries:
+            short = unicode(program_summary['short'])
+            if short in progset.programs:
+                loaded_shorts.add(short)
+                program = progset.programs[short]
+                loaded_program_summary = parse_program_summary(program)
+                for replace_key in ['ccopars', 'costcov']:
+                    if replace_key in loaded_program_summary:
+                        program_summary[replace_key] = loaded_program_summary[replace_key]
                 active = True
             else:
                 active = False
+            desc = "default active" if active else "default inactive"
+            print '>>>> Parse %s program "%s" - "%s"' % (desc, short, program_summary['name'])
+            update_or_create_program_record(self.project.id, self.id, short, program_summary, active)
 
-            p = update_or_create_program(self.project.id, self.id, program_name, program, active)
-            try:
-                p.restore(progset.programs[program['short']])
-            except Exception:  # Sorry, can't do better than that for now
-                pass
-
-
-        # In case programs from prj are not in the defaults
-        for program_name, program in progset.programs.iteritems():
-            if program_name not in loaded_programs:
-                program = self._program_to_dict(program)
-                update_or_create_program(self.project.id, self.id, program_name, program, True)
+        # save programs that are not in defaults
+        for short, program in progset.programs.iteritems():
+            if short not in loaded_shorts:
+                print '>>>> Parse custom active "%s" - "%s"' % (short, program_summary['name'])
+                program_summary = parse_program_summary(program)
+                update_or_create_program_record(self.project.id, self.id, short, program_summary, True)
 
         effects = []
         for targetpartype in progset.targetpartypes:
@@ -914,7 +872,7 @@ class ScenariosDb(db.Model):
 
     @property
     def pars(self):
-        print(self.blob)
+        # print(self.blob)
         return self.blob.get('pars', [])
 
     @property
@@ -931,14 +889,14 @@ class ScenariosDb(db.Model):
 
     def hydrate(self):
 
-        from server.webapp.utils import load_progset, load_parset
+        from server.webapp.utils import load_progset_record, load_parset_record
 
-        parset = load_parset(self.project_id, self.parset_id)
+        parset = load_parset_record(self.project_id, self.parset_id)
 
         progset = None
 
         if self.progset_id:
-            progset = load_progset(self.project_id, self.progset_id)
+            progset = load_progset_record(self.project_id, self.progset_id)
 
         blob = deepcopy(self.blob)
 
@@ -1052,7 +1010,7 @@ class OptimizationsDb(db.Model):
         """
         Make sure the objectives and constraints are current.
         """
-        from server.webapp.utils import load_parset, load_progset, load_project, remove_nans
+        from server.webapp.utils import load_parset_record, load_progset_record, load_project_record, remove_nans
 
         if not self.constraints:
             self.constraints = {}
@@ -1061,9 +1019,9 @@ class OptimizationsDb(db.Model):
             self.objectives = {}
 
         if project is None:
-            project = load_project(self.project_id).hydrate()
-        progset = load_progset(self.project_id, self.progset_id).hydrate()
-        parset = load_parset(self.project_id, self.parset_id).hydrate()
+            project = load_project_record(self.project_id).hydrate()
+        progset = load_progset_record(self.project_id, self.progset_id).hydrate()
+        parset = load_parset_record(self.project_id, self.parset_id).hydrate()
 
         constraints = op.defaultconstraints(project=project, progset=progset)
 
@@ -1084,3 +1042,5 @@ class OptimizationsDb(db.Model):
             x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
 
         self.objectives = remove_nans(objectives)
+
+

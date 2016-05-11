@@ -1,0 +1,78 @@
+<!-- Cost functions tab -->
+<div class="c-tab" ng-controller="CostController">
+  <div style="width: 40%">
+
+    <label>
+      Select a program:<br>
+      <select
+          class="txbox"
+          ng-options="p.name for p in vm.programs"
+          ng-change="changeSelectedProgram()"
+          ng-model="selectedProgram">
+      </select>
+    </label>
+
+  </div>
+  <div ng-if="selectedProgram">
+
+    <div style="display: flex; margin-top: 2%">
+      <div class="chart-container __medium">
+
+        <div mpld3-chart="chartData"
+             chart-id="{{ chartData.id }}"
+             ng-if="chartData">
+        </div>
+        <div class="c-caption" ng-if="displayCaption">
+          {{displayCaption}}
+        </div>
+
+      </div>
+
+      <div class="flex-column margin_left">
+        <div class="flex-column">
+
+          <h3>Parameters for defining cost function</h3>
+          <entry-table table="ccoparsTable"></entry-table>
+
+        </div>
+        <br>
+        <br>
+        <div class="flex-column">
+
+          <h3>Historical cost and coverage data</h3>
+          <entry-table table="costcovTable"></entry-table>
+
+        </div>
+
+        <!--<div class="flex-column margin_top">-->
+
+          <!--<h3>Options for displaying curves</h3>-->
+          <!--<div>-->
+            <!--Specify the maximum coverage shown on the plot:-->
+            <!--<input-->
+                <!--placeholder="e.g. 1000000"-->
+                <!--class="txbox __inline __xl"-->
+                <!--ng-model="maxFunc"-->
+                <!--type="number"/>-->
+          <!--</div>-->
+          <!--<div>-->
+            <!--Display program costs in dollar spent per-->
+            <!--person in the targeted population-->
+            <!--<input-->
+                <!--type="checkbox"-->
+                <!--ng-model="dispCost"/>-->
+          <!--</div>-->
+
+        <!--</div>-->
+
+        <!--<div class="flex-column margin_top">-->
+
+          <!--<h3>Captions: warning - not saved in database at the moment</h3>-->
+          <!--<textarea ng-model="remarks"/>-->
+
+        <!--</div>-->
+
+      <!--</div>-->
+    </div>
+  </div>
+</div>

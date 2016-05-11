@@ -30,8 +30,9 @@
       <div class="option_list" style="height: calc(100vh - 280px);">
         <div style="margin-top: 20px">
 
+          Run auto-fit for&nbsp;
+
           <select ng-model="state.maxtime">
-            <option value="">Select maximum time</option>
             <option value="10">10 seconds</option>
             <option value="30">30 seconds</option>
             <option value="60">1 minute</option>
@@ -45,6 +46,9 @@
             <!--<span style="width: 100px;display: inline-block;"></span>-->
             <button class="btn __m" ng-click="startAutoCalibration()">Start</button>
           </div>
+
+          <br>
+
           <div style="font-style: italic;color: lightgreen;margin-top: 5px">
             {{ statusMessage }}
           </div>
@@ -70,8 +74,7 @@
         <!--<export-all-data charts="calibrationChart" name="Optimization analyses" ng-if="calibrationChart.length > 0"></export-all-data>-->
       </div>
       <div ng-repeat="chart in calibrationChart" class="chart-container __small">
-        <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
+        <div mpld3-chart="chart" chart-id="{{ chart.id }}"></div>
       </div>
     </div>
     <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
