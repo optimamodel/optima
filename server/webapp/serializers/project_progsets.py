@@ -12,56 +12,8 @@ from server.webapp.utils import RequestParser
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
     'year': {'required': True, 'type':int, 'location': 'json'},
-    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
+    'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
-})
-
-
-costcov_graph_parser = RequestParser()
-costcov_graph_parser.add_arguments({
-    't': {'required': True, 'type': str, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
-    'caption': {'type': str, 'location': 'args'},
-    'xupperlim': {'type': long, 'location': 'args'},
-    'perperson': {'type': bool, 'location': 'args'},
-})
-
-
-costcov_data_parser = RequestParser()
-costcov_data_parser.add_arguments({
-    'data': {'type': list, 'location': 'json'},
-    'params': {'type': dict, 'location': 'json'}
-})
-
-
-costcov_data_point_parser = RequestParser()
-costcov_data_point_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'json'},  # 't' for BE
-    'spending': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
-})
-
-
-costcov_data_locator_parser = RequestParser()
-costcov_data_locator_parser.add_arguments({
-    'year': {'required': True, 'type': int, 'location': 'args'}
-})
-
-
-costcov_param_parser = RequestParser()
-costcov_param_parser.add_arguments({
-    'year': {'required': True, 'type': int},
-    'saturationpercent_lower': {'required': True, 'type': float},
-    'saturationpercent_upper': {'required': True, 'type': float},
-    'unitcost_lower': {'required': True, 'type': float},
-    'unitcost_upper': {'required': True, 'type': float},
-})
-
-
-popsize_parser = RequestParser()
-popsize_parser.add_arguments({
-#    'year': {'required': True, 'type': int, 'location': 'args'},
-    'parset_id': {'required': True, 'type': uuid.UUID, 'location': 'args'},
 })
 
 
@@ -69,25 +21,12 @@ program_parser = RequestParser()
 program_parser.add_arguments({
     'name': {'required': True, 'location': 'json'},
     'short': {'location': 'json'},
-    'short_name': {'location': 'json'},
     'category': {'required': True, 'location': 'json'},
     'active': {'type': bool, 'default': False, 'location': 'json'},
-    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
+    'targetpars': {'type': list, 'dest': 'pars', 'location': 'json'},
     'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
-    'addData': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
+    'costcov': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
     'criteria': {'type': JsonInput, 'location': 'json'}
-})
-
-
-query_program_parser = RequestParser()
-query_program_parser.add_arguments({
-    'name': {'required': True},
-    'short': {},
-    'short_name': {},
-    'category': {'required': True},
-    'active': {'type': bool, 'default': False},
-    'parameters': {'type': list, 'dest': 'pars', 'location': 'json'},
-    'populations': {'type': list, 'dest': 'targetpops', 'location': 'json'},
 })
 
 

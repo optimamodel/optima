@@ -10,7 +10,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
-
 new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 if new_path not in sys.path:
@@ -57,7 +56,7 @@ def before_request():
         g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 
-from server.webapp.scenarios import scenarios
+# from server.webapp.scenarios import scenarios
 from server.webapp.model import model
 from server.webapp.optimization import optimization
 from server.webapp.resources.user import (User, UserDetail, CurrentUser,
@@ -67,10 +66,10 @@ from server.webapp.resources.project import (Projects, ProjectsAll, Project,
                                              ProjectData, ProjectFromData, Portfolio,
                                              Defaults, Partnerships)
 from server.webapp.resources.project_constants import Parameters, Populations
-from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Programs, PopSize
+from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Program, PopSizes
 from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
                                                      ParsetsAutomaticCalibration, ParsetYkeys, ParsetLimits)
-from server.webapp.resources.project_progsets import CostCoverage, CostCoverageGraph, CostCoverageData, CostCoverageParam
+from server.webapp.resources.project_progsets import CostcovGraph
 from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
 from server.webapp.resources.project_optimizations import Optimizations, Optimization, OptimizationResults, OptimizationGraph
 
@@ -105,17 +104,11 @@ api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/resu
 api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scenario_id>')
 
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
-api.add_resource(Programs, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs')
-api.add_resource(CostCoverage,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage')
-api.add_resource(CostCoverageGraph,
+api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
+api.add_resource(CostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
-api.add_resource(CostCoverageData,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/data')
-api.add_resource(CostCoverageParam,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/param')
-api.add_resource(PopSize,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/popsize')
+api.add_resource(PopSizes,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
 api.add_resource(ProgsetParams, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')

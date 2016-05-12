@@ -2,6 +2,7 @@ from datetime import datetime
 import dateutil
 import uuid
 import json
+import pprint
 
 from flask import current_app, helpers, make_response, request
 
@@ -14,7 +15,7 @@ from flask_restful_swagger import swagger
 from server.webapp.inputs import (SubParser, secure_filename_input, AllowedSafeFilenameStorage,
                                   Json as JsonInput)
 
-from server.webapp.utils import (load_project, RequestParser, report_exception, TEMPLATEDIR,
+from server.webapp.utils import (load_project_record, RequestParser, report_exception, TEMPLATEDIR,
                                  upload_dir_user, save_result)
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 
@@ -49,7 +50,7 @@ class ParsetYkeys(Resource):
     )
     @marshal_with(y_keys_fields)
     def get(self, project_id):
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         parsets = {str(item.id): item.hydrate() for item in reply}
@@ -70,7 +71,7 @@ class ParsetLimits(Resource):
     )
     @marshal_with(limits_fields)
     def get(self, project_id):
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         be_project = project_entry.hydrate()
 
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
@@ -105,7 +106,7 @@ class Parsets(Resource):
     def get(self, project_id):
 
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
         result = [item.hydrate() for item in reply]
 
@@ -126,7 +127,7 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         project_instance = project_entry.hydrate()
         if name in project_instance.parsets:
             raise ParsetAlreadyExists(project_id, name)
@@ -191,7 +192,7 @@ class ParsetsDetail(Resource):
     def delete(self, project_id, parset_id):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
         if parset is None:
@@ -232,7 +233,7 @@ class ParsetsDetail(Resource):
         args = rename_parser.parse_args()
         name = args['name']
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
         target_parset = [item for item in project_entry.parsets if item.id == parset_id]
         if target_parset:
             target_parset = target_parset[0]
@@ -271,6 +272,69 @@ parset_save_with_autofit_parser.add_arguments({
     'parameters': {'type': JsonInput, 'required': True, 'action': 'append'},
     'result_id': {'type': uuid.UUID, 'required': True},
 })
+
+
+def get_parset_parameters(parset, ind=0):
+    parameters = []
+    for key, par in parset.pars[ind].items():
+        if hasattr(par, 'fittable') and par.fittable != 'no':
+            if par.fittable == 'meta':
+                parameters.append({
+                    "key": key,
+                    "subkey": None,
+                    "type": par.fittable,
+                    "value": par.m,
+                    "label": '%s -- meta' % par.name,
+                })
+            elif par.fittable == 'const':
+                parameters.append({
+                    "key": key,
+                    "subkey": None,
+                    "type": par.fittable,
+                    "value": par.y,
+                    "label": par.name,
+                })
+            elif par.fittable in ['pop', 'pship']:
+                for subkey in par.y.keys():
+                    parameters.append({
+                        "key": key,
+                        "subkey": subkey,
+                        "type": par.fittable,
+                        "value": par.y[subkey],
+                        "label": '%s -- %s' % (par.name, str(subkey)),
+                    })
+            elif par.fittable == 'exp':
+                for subkey in par.p.keys():
+                    parameters.append({
+                        "key": key,
+                        "subkey": subkey,
+                        "type": par.fittable,
+                        "value": par.p[subkey][0],
+                        "label": '%s -- %s' % (par.name, str(subkey)),
+                    })
+            else:
+                print('Parameter type "%s" not implemented!' % par.fittable)
+    return parameters
+
+
+def put_parameters_in_parset(parameters, parset, ind=0):
+    pars = parset.pars[ind]
+    for p_dict in parameters:
+        key = p_dict['key']
+        value = p_dict['value']
+        subkey = p_dict['subkey']
+        par_type = p_dict['type']
+        value = float(value)
+        if par_type == 'meta':  # Metaparameters
+            pars[key].m = value
+        elif par_type in ['pop', 'pship']:  # Populations or partnerships
+            pars[key].y[subkey] = value
+        elif par_type == 'exp':  # Population growth
+            pars[key].p[subkey][0] = value
+        elif par_type == 'const':
+            pars[key].y = value
+        else:
+            print('Parameter type "%s" not implemented!' % par_type)
 
 
 class ParsetsCalibration(Resource):
@@ -322,48 +386,43 @@ class ParsetsCalibration(Resource):
         args = calibration_parser.parse_args()
         which = args.get('which')
         autofit = args.get('autofit', False)
-        print "autofit", autofit
+        print "is autofit", autofit
 
         if not autofit:
-            project_entry = load_project(project_id, raise_exception=True)
-            project_instance = project_entry.hydrate()
+            project_record = load_project_record(project_id, raise_exception=True)
+            project = project_record.hydrate()
         else: # todo bail out if no working project
             wp = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
-            project_instance = op.loads(wp.project)
+            project = op.loads(wp.project)
         
-        parset_instance = [project_instance.parsets[item] for item in project_instance.parsets
-            if project_instance.parsets[item].uid == parset_id]
-        if not parset_instance:
+        parset = [project.parsets[item] for item in project.parsets
+            if project.parsets[item].uid == parset_id]
+        if not parset:
             raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
         else:
-            parset_instance = parset_instance[0]
-        # get manual parameters
-        mflists = parset_instance.manualfitlists()
-        parameters = [{"key": key, "label": label, "subkey": subkey, "value": value, "type": ptype}
-                      for (key, label, subkey, value, ptype) in
-                      zip(mflists['keys'], mflists['labels'], mflists['subkeys'], mflists['values'], mflists['types'])]
-        # REMARK: manualfitlists() in parset returns the lists compatible with usage on BE,
-        # but for FE we prefer list of dicts
+            parset = parset[0]
 
+        # store simulation results for plotting
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        result_entry = db.session.query(ResultsDb).filter_by(
+        result_record = db.session.query(ResultsDb).filter_by(
             project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-        if result_entry:
-            result = result_entry.hydrate()
+        if result_record:
+            result = result_record.hydrate()
         else:
-            simparslist = parset_instance.interp()
-            result = project_instance.runsim(simpars=simparslist)
+            simparslist = parset.interp()
+            result = project.runsim(simpars=simparslist)
 
+        # generate graphs
         selectors = self._selectors_from_result(result, which)
         which = which or self._which_from_selectors(selectors)
         graphs = self._result_to_jsons(result, which)
 
         return {
             "parset_id": parset_id,
-            "parameters": parameters,
+            "parameters": get_parset_parameters(parset),
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_entry.id if result_entry else None
+            "result_id": result_record.id if result_record else None
         }
 
     @report_exception
@@ -376,56 +435,51 @@ class ParsetsCalibration(Resource):
         doSave = args.get('doSave')
         autofit = args.get('autofit', False)
 
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_entry is None or parset_entry.project_id!=project_id:
+        parset_record = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_record is None or parset_record.project_id!=project_id:
             raise ParsetDoesNotExist(id=parset_id)
 
-        # get manual parameters
-        parset_instance = parset_entry.hydrate()
-        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
-        for param in parameters:
-            mflists['keys'].append(param['key'])
-            mflists['subkeys'].append(param['subkey'])
-            mflists['types'].append(param['type'])
-            mflists['labels'].append(param['label'])
-            mflists['values'].append(param['value'])
-        parset_instance.update(mflists)
+        # save parameters
+        parset = parset_record.hydrate()
+        put_parameters_in_parset(parameters, parset)
+
         # recalculate
-        project_entry = load_project(parset_entry.project_id, raise_exception=True)
-        project_instance = project_entry.hydrate()
-        simparslist = parset_instance.interp()
-        result = project_instance.runsim(simpars=simparslist)
-        result_entry = None
+        project_record = load_project_record(parset_record.project_id, raise_exception=True)
+        project = project_record.hydrate()
+        simparslist = parset.interp()
+        result = project.runsim(simpars=simparslist)
+        result_record = None
 
         if doSave:  # save the updated results
-            parset_entry.pars = op.saves(parset_instance.pars)
-            parset_entry.updated = datetime.now(dateutil.tz.tzutc())
-            db.session.add(parset_entry)
-            result_entry = [item for item in project_entry.results if
+            parset_record.pars = op.saves(parset.pars)
+            parset_record.updated = datetime.now(dateutil.tz.tzutc())
+            db.session.add(parset_record)
+            result_record = [item for item in project_record.results if
                             item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
-            if result_entry:
-                result_entry = result_entry[-1]
-                result_entry.blob = op.saves(result)
+            if result_record:
+                result_record = result_record[-1]
+                result_record.blob = op.saves(result)
             else:
-                result_entry = ResultsDb(
+                result_record = ResultsDb(
                     parset_id=parset_id,
-                    project_id=project_entry.id,
+                    project_id=project_record.id,
                     calculation_type=ResultsDb.CALIBRATION_TYPE,
                     blob=op.saves(result)
                 )
-            db.session.add(result_entry)
+            db.session.add(result_record)
             db.session.commit()
 
+        # generate graphs
         selectors = self._selectors_from_result(result, which)
         which = which or self._which_from_selectors(selectors)
         graphs = self._result_to_jsons(result, which)
 
         return {
             "parset_id": parset_id,
-            "parameters": args['parameters'],
+            "parameters": get_parset_parameters(parset),
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_entry.id if result_entry is not None else None
+            "result_id": result_record.id if result_record is not None else None
         }
 
     @report_exception
@@ -441,14 +495,7 @@ class ParsetsCalibration(Resource):
 
         # get manual parameters
         parset_instance = parset_entry.hydrate()
-        mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
-        for param in parameters:
-            mflists['keys'].append(param['key'])
-            mflists['subkeys'].append(param['subkey'])
-            mflists['types'].append(param['type'])
-            mflists['labels'].append(param['label'])
-            mflists['values'].append(param['value'])
-        parset_instance.update(mflists)
+        put_parameters_in_parset(parameters, parset_instance)
 
         parset_entry.pars = op.saves(parset_instance.pars)
         parset_entry.updated = datetime.now(dateutil.tz.tzutc())
@@ -464,7 +511,7 @@ class ParsetsCalibration(Resource):
 
         return {
             "parset_id": parset_id,
-            "parameters": args['parameters'],
+            "parameters": get_parset_parameters(parset_instance),
             "result_id": result_entry.id
         }
 
@@ -565,7 +612,7 @@ class ParsetsData(Resource):
         args = file_upload_form_parser.parse_args()
         uploaded_file = args['file']
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         parset_entry = project_entry.find_parset(parset_id)
         parset_instance = op.loadobj(uploaded_file)

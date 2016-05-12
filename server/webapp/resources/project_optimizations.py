@@ -23,8 +23,10 @@ from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.fields import Uuid, Json
 
 from server.webapp.resources.common import file_resource, file_upload_form_parser
-from server.webapp.utils import (load_project, verify_admin_request, report_exception,
+from server.webapp.utils import (load_project_record, verify_admin_request, report_exception,
                                  save_result, delete_spreadsheet, RequestParser)
+
+from server.webapp.jsonhelper import OptimaJSONEncoder
 
 
 optimization_parser = RequestParser()
@@ -46,7 +48,7 @@ class Optimizations(Resource):
         """
         Get the optimizations for the given project.
         """
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         reply = db.session.query(OptimizationsDb).filter_by(project_id=project_entry.id).all()
 
@@ -63,7 +65,7 @@ class Optimizations(Resource):
     @marshal_with(OptimizationsDb.resource_fields)
     def post(self, project_id):
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         args = optimization_parser.parse_args()
         optimization_entry = OptimizationsDb(project_id=project_id, **args)
@@ -83,7 +85,7 @@ class Optimization(Resource):
     @marshal_with(OptimizationsDb.resource_fields)
     def get(self, project_id, optimization_id):
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         reply = db.session.query(OptimizationsDb).get(optimization_id)
 
@@ -96,7 +98,7 @@ class Optimization(Resource):
     @marshal_with(OptimizationsDb.resource_fields)
     def put(self, project_id, optimization_id):
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         reply = db.session.query(OptimizationsDb).get(optimization_id)
 
@@ -191,7 +193,7 @@ class OptimizationGraph(Resource):
             # Add necessary plugins here
             mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
             # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
+            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph]), cls=OptimaJSONEncoder)
             jsons.append(json.loads(json_string))
         return jsons
 

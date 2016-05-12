@@ -102,8 +102,8 @@ from . import model as _model
 from .model import model, runmodel
 
 ## Define the programs and cost functions
-from . import programs as _programs 
-from .programs import Program, Programset 
+from . import programs as _programs
+from .programs import Program, Programset
 
 ## Economics functions -- WARNING, not functional yet
 from . import economics as _economics
