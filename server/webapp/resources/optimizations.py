@@ -17,8 +17,7 @@ import optima as op
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, OptimizationsDb
 from server.webapp.resources.common import report_exception
-from server.webapp.inputs import RequestParser
-from server.webapp.jsonhelper import OptimaJSONEncoder
+from server.webapp.utils import RequestParser, OptimaJSONEncoder
 
 
 optimization_parser = RequestParser()

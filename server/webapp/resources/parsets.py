@@ -9,11 +9,10 @@ from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, abort, marshal, fields
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR, upload_dir_user
+from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR, upload_dir_user
 from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR,
-    upload_dir_user, save_result, load_project, load_parset_list,
-    load_project, load_parset_list)
+    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_project, load_parset_list,
+    load_result, load_result_record, load_project, load_parset_list, get_parset_from_project)
 from server.webapp.resources.common import report_exception
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 from server.webapp.dbconn import db
@@ -24,16 +23,8 @@ import optima as op
 
 
 
-y_keys_fields = {
-    'keys': fields.Raw
-}
-
 class ParsetYkeys(Resource):
-
-    @swagger.operation(
-        summary='get parsets ykeys'
-    )
-    @marshal_with(y_keys_fields)
+    @swagger.operation(summary='get parsets ykeys')
     def get(self, project_id):
         project_entry = load_project_record(project_id, raise_exception=True)
 
@@ -50,32 +41,32 @@ class ParsetYkeys(Resource):
         return {'keys': y_keys}
 
 
-
-limits_fields = {
-    'parsets': fields.Raw
-}
-
 class ParsetLimits(Resource):
-    @swagger.operation(
-        summary='get parameters limits'
-    )
-    @marshal_with(limits_fields)
+    """
+    /api/project/{project_id}/parsets/limits
+    """
+    @swagger.operation(summary='get parameters limits')
     def get(self, project_id):
-        project_entry = load_project_record(project_id, raise_exception=True)
-        be_project = project_entry.hydrate()
+        settings = load_project(project_id).settings
+        parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
+        parset_dict = {str(record.id): record.hydrate() for record in parset_records}
 
-        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        parsets = {str(item.id): item.hydrate() for item in reply}
-        limits = {
-           id: {par.short: [
-                    be_project.settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
-                    for limit in par.limits
-                ] for par in parset.pars[0].values()
-           if hasattr(par, 'y') and par.visible}
-           for id, parset in parsets.iteritems()
+        def convert_limit(limit):
+            if isinstance(limit, str):
+                return settings.convertlimits(limits=limit)
+            else:
+                return limit
+
+        return {
+            'parsets': {
+                parset_id: {
+                    par.short: map(convert_limit, par.limits)
+                    for par in parset.pars[0].values()
+                    if hasattr(par, 'y') and par.visible
+                    }
+                for parset_id, parset in parset_dict.items()
+            }
         }
-        return {'parsets': limits}
-
 
 
 copy_parser = RequestParser()
@@ -84,10 +75,11 @@ copy_parser.add_arguments({
     'parset_id': {'type': uuid.UUID}
 })
 
-
 class Parsets(Resource):
     """
-    Parsets for a given project.
+    /api/project/{project_id}/parsets
+
+    Get parsets for a given project
     """
     method_decorators = [report_exception, login_required]
 
@@ -167,20 +159,13 @@ class Parsets(Resource):
 rename_parser = RequestParser()
 rename_parser.add_argument('name', required=True)
 
-
 class ParsetsDetail(Resource):
     """
     Single Parset.
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description='Delete parset with the given id.',
-        notes="""
-            if parset exists, delete it
-            if parset does not exist, returns an error.
-        """
-    )
+    @swagger.operation(description='Delete parset with the given id.')
     @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def delete(self, project_id, parset_id):
@@ -227,16 +212,16 @@ class ParsetsDetail(Resource):
         args = rename_parser.parse_args()
         name = args['name']
 
-        project_entry = load_project_record(project_id, raise_exception=True)
-        target_parset = [item for item in project_entry.parsets if item.id == parset_id]
-        if target_parset:
-            target_parset = target_parset[0]
-        if not target_parset:
+        project_record = load_project_record(project_id, raise_exception=True)
+        parset_records = [record for record in project_record.parsets if record.id == parset_id]
+        if not parset_records:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-        target_parset.name = name
-        db.session.add(target_parset)
+        parset_record = parset_records[0]
+        parset_record.name = name
+        db.session.add(parset_record)
         db.session.commit()
-        return [item.hydrate() for item in project_entry.parsets]
+        return [record.hydrate() for record in project_record.parsets]
+
 
 
 calibration_fields = {
@@ -251,7 +236,6 @@ calibration_parser = RequestParser()
 calibration_parser.add_argument('which', location='args', default=None, action='append')
 calibration_parser.add_argument('autofit', location='args', default=False, type=bool)
 
-
 calibration_update_parser = RequestParser()
 calibration_update_parser.add_arguments({
     'which': {'default': None, 'action': 'append'},
@@ -260,13 +244,11 @@ calibration_update_parser.add_arguments({
     'autofit': {'default': False, 'type': bool, 'location': 'args'}
 })
 
-
 parset_save_with_autofit_parser = RequestParser()
 parset_save_with_autofit_parser.add_arguments({
     'parameters': {'type': fields.Raw, 'required': True, 'action': 'append'},
     'result_id': {'type': uuid.UUID, 'required': True},
 })
-
 
 class ParsetsCalibration(Resource):
     """
@@ -318,31 +300,16 @@ class ParsetsCalibration(Resource):
         args = calibration_parser.parse_args()
         which = args.get('which')
         autofit = args.get('autofit', False)
+        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         print "is autofit", autofit
 
-        if not autofit:
-            project_record = load_project_record(project_id, raise_exception=True)
-            project = project_record.hydrate()
-        else: # todo bail out if no working project
-            wp = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
-            project = op.loads(wp.project)
-        
-        parset = [project.parsets[item] for item in project.parsets
-            if project.parsets[item].uid == parset_id]
-        if not parset:
-            raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
-        else:
-            parset = parset[0]
-
-        # store simulation results for plotting
-        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        result_record = db.session.query(ResultsDb).filter_by(
-            project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-        if result_record:
-            result = result_record.hydrate()
-        else:
+        project = load_project(project_id, autofit)
+        parset = get_parset_from_project(project, parset_id)
+        result = load_result(project_id, parset_id, calculation_type)
+        if result is None:
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
+            save_result(project_id, result, parset.name, calculation_type)
 
         # generate graphs
         selectors = self._selectors_from_result(result, which)
@@ -354,7 +321,7 @@ class ParsetsCalibration(Resource):
             "parameters": get_parset_parameters(parset),
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_record.id if result_record else None
+            "result_id": result.uid if result else None
         }
 
     @report_exception

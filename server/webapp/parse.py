@@ -1,17 +1,20 @@
-from collections import defaultdict
-
-from optima.defaults import defaultprograms
-from server.webapp.jsonhelper import normalize_obj
 
 
 """
+
 Functions to convert Optima objects into JSON-compatible
 data structures, both for storing into a database, and
 to construct JSON web-packets.
 
 There should be no references to the database here!
+
 """
 
+
+from collections import defaultdict
+
+from optima.defaults import defaultprograms
+from server.webapp.utils import normalize_obj
 
 pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
 
@@ -194,6 +197,8 @@ def print_parset(parset):
     return s
 
 
+# WARNING, this should probably not be hard-coded here
+
 ALL_POPULATIONS_SOURCE = """
 Short name;Full name;Male;Female;AgeFrom;AgeTo;Injects;SexWorker
 FSW;Female sex workers;0;1;15;49;0;1;
@@ -209,11 +214,9 @@ Males;Other males;1;0;15;49;0;0;
 Females;Other females;0;1;0;15;49;0;0;
 Other males;Other males [enter age];1;0;0;0;0;0;
 Other females;Other females [enter age];0;1;0;0;0;0;
-""" # WARNING, this should probably not be hard-coded here
-
+"""
 
 keys = "short name male female age_from age_to injects sexworker".split()
-
 
 def get_default_populations():
     maybe_bool = lambda (p): bool(int(p)) if p in ['0', '1'] else p

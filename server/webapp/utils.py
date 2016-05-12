@@ -1,4 +1,8 @@
 import os
+from collections import OrderedDict
+
+import flask.json
+import numpy as np
 
 from flask import current_app
 from flask.ext.restful.reqparse import RequestParser as OrigReqParser
@@ -6,9 +10,11 @@ from validate_email import validate_email
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-# json should probably removed from here since we are now using prj for up/download
-# TODO this should be checked per upload type
+import optima as op
+
+
 ALLOWED_EXTENSIONS = {'txt', 'xlsx', 'xls', 'json', 'prj', 'prg', 'par'}
+
 
 def allowed_file(filename):
     """
@@ -207,3 +213,87 @@ def upload_dir_user(dirpath, user_id = None):
         return dirpath
 
     return dirpath
+
+
+def normalize_obj(obj):
+    """
+    This is the main conversion function for Python data-structures into
+    JSON-compatible data structures.
+
+    Use this as much as possible to guard against data corruption!
+
+    Args:
+        obj: almost any kind of data structure that is a combination
+            of list, numpy.ndarray, odicts etc
+
+    Returns:
+        A converted dict/list/value that should be JSON compatible
+    """
+
+    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
+        return [normalize_obj(p) for p in obj]
+
+    if isinstance(obj, dict):
+        return {str(k): normalize_obj(v) for k, v in obj.items()}
+
+    if isinstance(obj, op.utils.odict):
+        result = OrderedDict()
+        for k, v in obj.items():
+            result[str(k)] = normalize_obj(v)
+        return result
+
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    if isinstance(obj, float):
+        if np.isnan(obj):
+            return None
+
+    if isinstance(obj, np.float64):
+        if np.isnan(obj):
+            return None
+        else:
+            return float(obj)
+
+    if isinstance(obj, unicode):
+        return str(obj)
+
+    return obj
+
+
+class OptimaJSONEncoder(flask.json.JSONEncoder):
+    """
+    Custom JSON encoder, supporting optima-specific objects.
+    """
+    def default(self, obj):
+        # TODO preserve order of keys
+        if isinstance(obj, op.parameters.Parameterset):
+            return OrderedDict([(k, normalize_obj(v)) for (k, v) in obj.__dict__.iteritems()])
+
+        if isinstance(obj, op.parameters.Par):
+            return OrderedDict([(k, normalize_obj(v)) for (k, v) in obj.__dict__.iteritems()])
+
+        if isinstance(obj, np.float64):
+            return normalize_obj(obj)
+
+        if isinstance(obj, np.ndarray):
+            return [normalize_obj(p) for p in list(obj)]
+
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+
+        if isinstance(obj, set):
+            return list(obj)
+
+        if isinstance(obj, op.utils.odict):  # never seems to get there
+            return normalize_obj(obj)
+
+        if isinstance(obj, op.project.Project):
+            return None
+
+        if isinstance(obj, op.results.Resultset):
+            return None
+
+        obj = normalize_obj(obj)
+
+        return flask.json.JSONEncoder.default(self, obj)

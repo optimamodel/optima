@@ -15,7 +15,7 @@ from sqlalchemy.orm import deferred
 
 from server.webapp.dbconn import db
 from server.webapp.exceptions import ParsetDoesNotExist
-from server.webapp.jsonhelper import normalize_obj
+from server.webapp.utils import normalize_obj
 from server.webapp.parse import (
     parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata)
 
@@ -160,8 +160,8 @@ class ProjectDb(db.Model):
         # the problem here: if a record gets created outside of project, we have a big problem.
         # (which is currently the case for progsets)
         # TODO: make it possible to uncomment the two lines of code below :)
-#        if self.blob and len(self.blob):
-#            project_entry = op.loads(self.blob)
+        # if self.blob and len(self.blob):
+        #     project_entry = op.loads(self.blob)
         project_entry = op.Project()
         project_entry.uid = self.id
         project_entry.name = self.name
@@ -678,29 +678,30 @@ class ProgsetsDb(db.Model):
                 if program.active
             ]
         )
-        for parset_effect in self.effects:
-            for program_effect in parset_effect['parameters']:
-                for year in program_effect['years']:
-                    effect = {
-                        'intercept': (year['intercept_lower'], year['intercept_upper']),
-                        't': int(year['year']),
-                        'interact': year['interact'],
-                    }
+        if self.effects is not None:
+            for parset_effect in self.effects:
+                for program_effect in parset_effect['parameters']:
+                    for year in program_effect['years']:
+                        effect = {
+                            'intercept': (year['intercept_lower'], year['intercept_upper']),
+                            't': int(year['year']),
+                            'interact': year['interact'],
+                        }
 
-                    for row in year["programs"]:
-                        if row['intercept_lower'] is not None and row['intercept_upper'] is not None:
-                            effect[row['name']] = (row['intercept_lower'], row['intercept_upper'])
-                        else:
-                            effect[row['name']] = None
+                        for row in year["programs"]:
+                            if row['intercept_lower'] is not None and row['intercept_upper'] is not None:
+                                effect[row['name']] = (row['intercept_lower'], row['intercept_upper'])
+                            else:
+                                effect[row['name']] = None
 
-                    if program_effect['name'] not in progset.covout:
-                        continue
+                        if program_effect['name'] not in progset.covout:
+                            continue
 
-                    islist = isinstance(program_effect['pop'], list)
-                    poptuple = tuple(program_effect['pop']) if islist else program_effect['pop']
-                    covout = progset.covout[program_effect['name']]
-                    if poptuple in covout:
-                        covout[poptuple].addccopar(effect, overwrite=True)
+                        islist = isinstance(program_effect['pop'], list)
+                        poptuple = tuple(program_effect['pop']) if islist else program_effect['pop']
+                        covout = progset.covout[program_effect['name']]
+                        if poptuple in covout:
+                            covout[poptuple].addccopar(effect, overwrite=True)
 
         return progset
 

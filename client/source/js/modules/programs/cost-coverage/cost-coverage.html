@@ -9,9 +9,9 @@
         <label>
           Select a program set: <br>
           <select class="txbox"
-                  ng-options="progset as progset.name for progset in vm.programSetList"
+                  ng-options="progset as progset.name for progset in vm.progsets"
                   ng-change="vm.changeDropdown()"
-                  ng-model="vm.selectedProgramSet">
+                  ng-model="vm.selectedProgset">
           </select>
         </label>
       </span>
@@ -27,7 +27,7 @@
       </span>
   </div>
 
-  <div ng-if="vm.selectedProgramSet && vm.selectedParset">
+  <div ng-if="vm.selectedProgset && vm.selectedParset">
     <div style="padding: 40px 0 20px;border-bottom: 1px solid gray;display: flex;">
 
     <span class="small_bordered_section" ng-repeat="tab in vm.tabs"
@@ -44,7 +44,7 @@
       <div class="c-select">
         <label class="c-select__label"> Select a parameter: </label>
         <select class="txbox c-select__input"
-                ng-options="p.name for p in vm.params"
+                ng-options="p.name for p in vm.parameters"
                 ng-change="vm.changeParameter()"
                 ng-model="vm.selectedParameter">
         </select>
@@ -61,7 +61,7 @@
             class="c-populations"
             novalidate ng-if="vm.currentParameter!==undefined">
 
-        <div ng-repeat=" effect in vm.existingEffects.effects "
+        <div ng-repeat=" effect in vm.effects "
              ng-if="effect.parset === vm.selectedParset.id">
 
           <div class="c-population-wrap o-form__wrap u-layout-vertical"
@@ -86,8 +86,8 @@
                   <th class="c-table__header c-table__header--centered">
                     Parameter value <br/>
                     <div class="c-table__range-hint">
-                      {{vm.currentParsetLimits[parameter.name][0]}} -
-                      {{vm.currentParsetLimits[parameter.name][1]}}</div>
+                      {{vm.selectedParsetLimits[parameter.name][0]}} -
+                      {{vm.selectedParsetLimits[parameter.name][1]}}</div>
                   </th>
                 </tr>
 
@@ -109,13 +109,13 @@
                   <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
                     <input class="txbox c-table__input c-table__input--half"
                            type="number"
-                           range-limit="[vm.currentParsetLimits[effect.name][0], year.intercept_upper]"
+                           range-limit="[vm.selectedParsetLimits[effect.name][0], year.intercept_upper]"
                            ng-model="year.intercept_lower"/>
                     <span class="c-table__between-input"> - </span>
                     <input class="txbox c-table__input c-table__input--half"
                            type="number"
                            ng-required="true"
-                           range-limit="[year.intercept_lower, vm.currentParsetLimits[effect.name][1]]"
+                           range-limit="[year.intercept_lower, vm.selectedParsetLimits[effect.name][1]]"
                            ng-model="year.intercept_upper"/>
                   </td>
 
@@ -135,18 +135,18 @@
                   <td></td>
                   <td class="c-table__column">
                     {{vm.selectedParameter.name}} under maximal attainable coverage of
-                    {{vm.getFullProgramName(program.name)}} operating in isolation
+                    {{vm.getProgramName(program.name)}} operating in isolation
                   </td>
                   <td class="c-table__column c-table__column--inputs u-layout-horizontal u-center-horizontal-v">
                     <input class="txbox c-table__input c-table__input--half"
                            ng-model="program.intercept_lower"
-                           range-limit="[vm.currentParsetLimits[effect.name][0], program.intercept_upper]"
+                           range-limit="[vm.selectedParsetLimits[effect.name][0], program.intercept_upper]"
                            ng-required="true"
                            type="number"/>
                     <span class="c-table__between-input"> - </span>
                     <input class="txbox c-table__input c-table__input--half"
                            ng-model="program.intercept_upper"
-                           range-limit="[program.intercept_lower, vm.currentParsetLimits[effect.name][1]]"
+                           range-limit="[program.intercept_lower, vm.selectedParsetLimits[effect.name][1]]"
                            ng-required="true"
                            type="number"/>
                   </td>

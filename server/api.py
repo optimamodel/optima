@@ -16,52 +16,50 @@ if new_path not in sys.path:
     print "appending to sys.path: %s" % new_path
     sys.path.append(new_path)
 
-import server.webapp.dbconn
-
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
+import server.webapp.dbconn
 server.webapp.dbconn.db = SQLAlchemy(app)
+
+from server.webapp.dbmodels import UserDb
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 
 
-def init_login_manager(login_manager):
+@login_manager.user_loader
+def load_user(userid):
+    try:
+        user = UserDb.query.filter_by(id=userid).first()
+    except Exception:
+        user = None
+    return user
 
-    @login_manager.user_loader
-    def load_user(userid):
-        from server.webapp.dbmodels import UserDb
-        try:
-            user = UserDb.query.filter_by(id=userid).first()
-        except Exception:
-            user = None
-        return user
 
-    @login_manager.request_loader
-    def load_user_from_request(request):  # pylint: disable=redefined-outer-name
+@login_manager.request_loader
+def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 
-        # try to login using the secret url arg
-        secret = request.args.get('secret')
-        if secret:
-            from server.webapp.dbmodels import UserDb
-            user = UserDb.query.filter_by(password=secret, is_admin=True).first()
-            if user:
-                return user
+    # try to login using the secret url arg
+    secret = request.args.get('secret')
+    if secret:
+        user = UserDb.query.filter_by(password=secret, is_admin=True).first()
+        if user:
+            return user
 
-        # finally, return None if both methods did not login the user
-        return None
+    # finally, return None if both methods did not login the user
+    return None
 
-    @login_manager.unauthorized_handler
-    def unauthorized_handler():
-        abort(401)
 
-init_login_manager(login_manager)
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    abort(401)
 
-from server.webapp.jsonhelper import OptimaJSONEncoder
+
+from server.webapp.utils import OptimaJSONEncoder
 from server.webapp.resources.user import (
     User, UserDetail, CurrentUser, UserLogin, UserLogout)
 from server.webapp.resources.project import (
@@ -69,7 +67,7 @@ from server.webapp.resources.project import (
     ProjectData, ProjectFromData, Portfolio, DefaultPrograms, Partnerships,
     DefaultParameters, DefaultPopulations)
 from server.webapp.resources.progsets import (
-    Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Program, ProgramPopSizes)
+    Progsets, Progset, ProgsetData, ParameterProgramDetails, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
     Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration,
     ParsetYkeys, ParsetLimits)
@@ -77,7 +75,6 @@ from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, Scenario, ScenarioResults
 from server.webapp.resources.optimizations import (
     Optimizations, Optimization, OptimizationResults, OptimizationGraph)
-
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
@@ -111,7 +108,8 @@ api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scena
 
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
-api.add_resource(ProgsetParams, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
+api.add_resource(ParameterProgramDetails,
+     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
 
 api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')

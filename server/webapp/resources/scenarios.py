@@ -11,7 +11,7 @@ from server.webapp.resources.common import report_exception
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ScenariosDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.inputs import SubParser, RequestParser
+from server.webapp.utils import SubParser, RequestParser
 from server.webapp.parse import scenario_par, scenario_program
 from server.webapp.plot import make_mpld3_graph_dict
 
@@ -80,7 +80,7 @@ def check_pars(blob, raise_exception = True):
 
 
 def check_program(blob, key): # result is either budget or coverage, depending on scenario type
-    from server.webapp.inputs import scenario_program
+    from server.webapp.utils import scenario_program
     programs = {}
     if key not in blob.keys():
         return programs

@@ -19,11 +19,12 @@ from server.webapp.exceptions import (
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
-from server.webapp.jsonhelper import normalize_obj
-from server.webapp.inputs import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user
+from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
 
 import uuid
 from flask_restful import fields
+
+
 
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
@@ -31,7 +32,6 @@ costcov_parser.add_arguments({
     'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
     'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
 })
-
 
 program_parser = RequestParser()
 program_parser.add_arguments({
@@ -45,13 +45,11 @@ program_parser.add_arguments({
     'criteria': {'type': Json, 'location': 'json'}
 })
 
-
 progset_parser = RequestParser()
 progset_parser.add_arguments({
     'name': {'required': True},
     'programs': {'required': True, 'type': SubParser(program_parser), 'action': 'append'}
 })
-
 
 class Progsets(Resource):
     """
@@ -255,7 +253,7 @@ param_fields = {
     'coverage': fields.Boolean,
 }
 
-class ProgsetParams(Resource):
+class ParameterProgramDetails(Resource):
 
     @swagger.operation(
         description='Get param/populations sets for the selected progset'
@@ -287,8 +285,6 @@ class ProgsetParams(Resource):
         return params
 
 
-
-# stack of resource fields for parsing
 
 program_effect_fields = {
     'name': fields.String,
@@ -471,25 +467,24 @@ class Program(Resource):
         return 204
 
 
+def get_popsizes(project_id, parset_id, progset_id, program_id):
+    program = load_program(project_id, progset_id, program_id)
+    parset = load_parset(project_id, parset_id)
+    settings = load_project(project_id).settings
+    years = range(int(settings.start), int(settings.end) + 1)
+    popsizes = program.gettargetpopsize(t=years, parset=parset)
+    return normalize_obj(dict(zip(years, popsizes)))
+
 
 class ProgramPopSizes(Resource):
     """
     Return estimated popsize for a Program & Parset
+    /api/project/{project_id}/progsets/{progset_id}/program/{program_id}/parset/{progset_id}/popsizes
     """
     method_decorators = [report_exception, login_required]
+
     def get(self, project_id, progset_id, program_id, parset_id):
-        current_app.logger.debug(
-            "/api/project/%s/progsets/%s/program/%s/parset/%s/popsizes" %
-            (project_id, progset_id, program_id, parset_id))
-        program = load_program(project_id, progset_id, program_id)
-        parset = load_parset(project_id, parset_id)
-        settings = load_project(project_id).settings
-
-        years = range(int(settings.start), int(settings.end) + 1)
-        popsizes = program.gettargetpopsize(t=years, parset=parset)
-        payload = normalize_obj(dict(zip(years, popsizes)))
-
-        current_app.logger.debug('popsizes = \n%s\n' % payload)
+        payload = get_popsizes(project_id, parset_id, progset_id, program_id)
         return payload, 201
 
 

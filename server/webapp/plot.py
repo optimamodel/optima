@@ -3,7 +3,7 @@ import re
 import mpld3
 
 import optima as op
-from server.webapp.jsonhelper import normalize_obj
+from server.webapp.utils import normalize_obj
 
 
 def extract_graph_selector(graph_key):
@@ -30,7 +30,7 @@ def make_mpld3_graph_dict(result, which=None):
 
     Returns:
         A dictionary of the form:
-            { "graphs": {
+            { "graphs":
                 "mpld3_graphs": [<mpld3 graph dictioanry>...],
                 "graph_selectors": ["key of a selector",...],
                 "selectors": [<selector dictionary>]

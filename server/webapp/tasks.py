@@ -143,6 +143,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
     close_db_session(db_session)
     app.logger.debug("stopped autofit")
 
+
 @celery.task()
 def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints):
     import traceback

@@ -5,7 +5,7 @@ define(
   'use strict';
 
 
-  function consoleLogVar(name, val) {
+  function consoleLogJson(name, val) {
     console.log(name + ' = ');
     console.log(JSON.stringify(val, null, 2));
   }

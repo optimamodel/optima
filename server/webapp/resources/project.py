@@ -16,7 +16,7 @@ import optima as op
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
-from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage, RequestParser, \
+from server.webapp.utils import secure_filename_input, AllowedSafeFilenameStorage, RequestParser, \
     TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.parse import get_default_populations

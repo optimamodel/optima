@@ -6,7 +6,7 @@ from flask.ext.login import current_user
 from flask_restful import fields
 
 from server.webapp.dbmodels import UserDb
-from server.webapp.inputs import AllowedSafeFilenameStorage, RequestParser
+from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser
 
 
 file_resource = {
@@ -21,7 +21,6 @@ file_upload_form_parser.add_argument(
 
 
 # api decorators
-
 
 def report_exception(api_call):
     @wraps(api_call)

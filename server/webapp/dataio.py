@@ -1,9 +1,12 @@
 
-"""
+__doc__ = """
+
 dataio.py contains all the functions that fetch and saves optima objects to/from database
 and the file system. These functions abstracts out the data i/o for the web-server
 api calls.
+
 """
+
 
 import os
 from datetime import datetime
@@ -15,11 +18,11 @@ from flask.ext.login import current_user
 import optima as op
 from optima.utils import saves
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb
+from server.webapp.dbmodels import ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
-from server.webapp.inputs import TEMPLATEDIR, upload_dir_user
-from server.webapp.jsonhelper import OptimaJSONEncoder
+from server.webapp.utils import TEMPLATEDIR, upload_dir_user, OptimaJSONEncoder
+
 
 
 def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None):
@@ -328,48 +331,18 @@ def update_or_create_optimization_record(project_id, project, name):
     return optimization_record
 
 
-def save_result(project_id, result, parset_name='default', calculation_type = ResultsDb.CALIBRATION_TYPE,
-    db_session=None):
-    if not db_session:
-        db_session=db.session
-    # find relevant parset for the result
-    print("save_result(%s, %s, %s" % (project_id, parset_name, calculation_type))
-    project_parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
-    default_parset = [item for item in project_parsets if item.name == parset_name]
-    if default_parset:
-        default_parset = default_parset[0]
-    else:
-        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
-    result_parset_id = default_parset.id
-
-    # update results (after runsim is invoked)
-    project_results = db_session.query(ResultsDb).filter_by(project_id=project_id)
-
-    result_record = [item for item in project_results if
-                     item.parset_id == result_parset_id and
-                     item.calculation_type == calculation_type]
-    if result_record:
-        if len(result_record) > 1:
-            abort(500, "Found multiple records for result")
-        result_record = result_record[0]
-        result_record.blob = op.saves(result)
-
-    if not result_record:
-        result_record = ResultsDb(
-            parset_id=result_parset_id,
-            project_id=project_id,
-            calculation_type=calculation_type,
-            blob=op.saves(result)
-        )
-
-    return result_record
-
-
-def load_project(project_id):
-    project_record = load_project_record(project_id)
-    if project_record is None:
-        raise ProjectDoesNotExist(id=project_id)
-    return project_record.hydrate()
+def load_project(project_id, autofit=False):
+    if not autofit:
+        project_record = load_project_record(project_id, raise_exception=True)
+        if project_record is None:
+            raise ProjectDoesNotExist(id=project_id)
+        project = project_record.hydrate()
+    else:  # todo bail out if no working project
+        working_project_record = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
+        if working_project_record is None:
+            raise ProjectDoesNotExist(id=project_id)
+        project = op.loads(working_project_record.project)
+    return project
 
 
 def load_program(project_id, progset_id, program_id):
@@ -388,9 +361,6 @@ def load_parset(project_id, parset_id):
     from server.webapp.dbmodels import ParsetsDb
     from server.webapp.exceptions import ParsetDoesNotExist
 
-    cu = current_user
-    current_app.logger.debug("getting parset {} for user {}".format(parset_id, cu.id))
-
     parset_record = db.session.query(ParsetsDb).get(parset_id)
     if parset_record is None:
         if raise_exception:
@@ -405,10 +375,66 @@ def load_parset(project_id, parset_id):
     return parset_record.hydrate()
 
 
-def load_result(project_id, parset_id):
+def get_parset_from_project(project, parset_id):
+    parsets = [
+        project.parsets[key]
+        for key in project.parsets
+        if project.parsets[key].uid == parset_id
+    ]
+    if not parsets:
+        raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
+    return parsets[0]
+
+
+def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
     result_record = db.session.query(ResultsDb).filter_by(
-        project_id=project_id, parset_id=parset_id,
-        calculation_type=ResultsDb.CALIBRATION_TYPE).first()
+        project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
+    if result_record is None:
+        return None
+    return result_record
+
+
+def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+    result_record = load_result_record(project_id, parset_id, calculation_type)
     if result_record is None:
         return None
     return result_record.hydrate()
+
+
+def save_result(
+        project_id, result, parset_name='default',
+        calculation_type=ResultsDb.CALIBRATION_TYPE,
+        db_session=None):
+
+    if not db_session:
+        db_session=db.session
+
+    # find relevant parset for the result
+    print("save_result(%s, %s, %s" % (project_id, parset_name, calculation_type))
+    parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
+    parset = [item for item in parsets if item.name == parset_name]
+    if parset:
+        parset = parset[0]
+    else:
+        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
+
+    # update results (after runsim is invoked)
+    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id)
+    result_record = [item for item in result_records
+                     if item.parset_id == parset.id
+                        and item.calculation_type == calculation_type]
+    if result_record:
+        if len(result_record) > 1:
+            abort(500, "Found multiple records for result")
+        result_record = result_record[0]
+        result_record.blob = op.saves(result)
+
+    if not result_record:
+        result_record = ResultsDb(
+            parset_id=parset.id,
+            project_id=project_id,
+            calculation_type=calculation_type,
+            blob=op.saves(result)
+        )
+
+    return result_record
