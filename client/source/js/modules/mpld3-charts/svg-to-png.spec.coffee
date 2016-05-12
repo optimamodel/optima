@@ -1,4 +1,4 @@
-define ['Source/modules/common/svg-to-png', 'jquery'], (svgToPng, $) ->
+define ['Source/modules/mpld3-charts/svg-to-png', 'jquery'], (svgToPng, $) ->
 
   describe 'svg-to-png in app.common', ->
 
