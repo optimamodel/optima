@@ -805,8 +805,10 @@ class Program(object):
                 targetpopsize[targetpop] = sum(popsizes.values())
             else:
                 targetpopsize[targetpop] = popsizes[targetpop]
+                
+        finalpopsize = [sum(targetpopsize.values())] if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
                     
-        if total: return sum(targetpopsize.values())
+        if total: return finalpopsize
         else: return targetpopsize
 
 
