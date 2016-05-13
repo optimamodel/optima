@@ -256,6 +256,7 @@ Other females;Other females [enter age];0;1;0;0;0;0;
 
 keys = "short name male female age_from age_to injects sexworker".split()
 
+
 def get_default_populations():
     maybe_bool = lambda (p): bool(int(p)) if p in ['0', '1'] else p
     result = []
@@ -271,20 +272,16 @@ def get_default_populations():
 def scenario_par(orig_pars):
     if not isinstance(orig_pars, list):
         raise ValueError("needs to be a list.")
-
     pars = []
-
-    for i in orig_pars:
-
+    for par in orig_pars:
         pars.append({
-            'endval': float(i['endval']),
-            'endyear': int(i['endyear']),
-            'name': str(i['name']),
-            'for': [i['for']],
-            'startval': float(i['startval']),
-            'startyear': int(i['startyear'])
+            'endval': float(par['endval']),
+            'endyear': int(par['endyear']),
+            'name': str(par['name']),
+            'for': [par['for']],
+            'startval': float(par['startval']),
+            'startyear': int(par['startyear'])
         })
-
     return pars
 
 

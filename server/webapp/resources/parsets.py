@@ -2,22 +2,20 @@ from datetime import datetime
 import dateutil
 import uuid
 
-
-from flask import current_app, helpers, make_response, request
-
+from flask import current_app, helpers, request
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, abort, marshal, fields
+from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 
-from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR, upload_dir_user
-from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_project, load_parset_list,
-    load_result, load_result_record, load_project, load_parset_list, get_parset_from_project)
+from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser
 from server.webapp.resources.common import report_exception
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb, ScenariosDb,OptimizationsDb
 from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
+from server.webapp.dbconn import db
+from server.webapp.dataio import (
+    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
+    load_project, load_parset_record, load_parset_list, get_parset_from_project)
 
 import optima as op
 
@@ -43,7 +41,9 @@ class ParsetYkeys(Resource):
 
 class ParsetLimits(Resource):
     """
-    /api/project/{project_id}/parsets/limits
+    GET /api/project/{project_id}/parsets/limits
+
+    Returns the limits of all parameters in the parsets of a given project
     """
     @swagger.operation(summary='get parameters limits')
     def get(self, project_id):
@@ -77,12 +77,16 @@ copy_parser.add_arguments({
 
 class Parsets(Resource):
     """
-    /api/project/{project_id}/parsets
+    GET /api/project/<project_id>/parsets
 
-    Get parsets for a given project, these are JSON compatible structures
-    marshalled from ParsetsDb but the main structure pars is a straight-forward
-    JSON compatible datastructure.
+    Returns the parsets of a projects that are marshalled from the parset records.
+
+    POST /api/project/<project_id>/parsets
+
+    Makes a copy of the parset that is passed in as an argument in the body as parset_id,
+    and or makes a new parset
     """
+
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(
@@ -254,8 +258,17 @@ parset_save_with_autofit_parser.add_arguments({
 
 class ParsetsCalibration(Resource):
     """
-    This objects handles calls for calibration, which involves storing the
-    parameters of a parset and then generating the graphs.
+    GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+
+    Returns parameter summaries and graphs for a project/parset
+
+    PUT /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+
+    Saves the parameters and gets graphs
+
+    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+
+    Save parameters without fetching graphs
     """
 
     method_decorators = [report_exception, login_required]
@@ -422,6 +435,28 @@ manual_calibration_parser.add_argument('maxtime', required=False, type=int, defa
 
 
 class ParsetsAutomaticCalibration(Resource):
+    """
+    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
+
+    Starts celery task to autofit parameters to historical data, returns:
+    {
+        'can_start': can_start,
+        'can_join': can_join,
+        'parset_id': wp_parset_id,
+        'work_type': work_type
+    }
+
+    GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
+
+    Returns the status for the current job:
+     {
+        'status': work_log.status,
+        'error_text': work_log.error,
+        'start_time': work_log.start_time,
+        'stop_time': work_log.stop_time,
+        'result_id': work_log.result_id
+    }
+    """
 
     @swagger.operation(
         summary='Launch auto calibration for the selected parset',
@@ -430,27 +465,13 @@ class ParsetsAutomaticCalibration(Resource):
     @report_exception
     def post(self, project_id, parset_id):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
-        from server.webapp.dbmodels import ParsetsDb
-
         args = manual_calibration_parser.parse_args()
-        parset_entry = ParsetsDb.query.get(parset_id)
-        parset_name = parset_entry.name
-
-        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(
-            project_id, parset_id, 'autofit')
-
-        result = {
-            'can_start': can_start,
-            'can_join': can_join,
-            'parset_id': wp_parset_id,
-            'work_type': work_type
-        }
-
-        if not can_start or not can_join:
+        result = start_or_report_calculation(project_id, parset_id, 'autofit')
+        if not result['can_start'] or not result['can_join']:
             result['status'] = 'running'
             return result, 208
         else:
-            run_autofit.delay(project_id, parset_name, args['maxtime'])
+            run_autofit.delay(project_id, parset_id, args['maxtime'])
             result['status'] = 'started'
             result['maxtime'] = args['maxtime']
             return result, 201

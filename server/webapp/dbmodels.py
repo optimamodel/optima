@@ -12,12 +12,12 @@ from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy import text
 from sqlalchemy.orm import deferred
 
-from server.webapp.dbconn import db
 from server.webapp.exceptions import ParsetDoesNotExist
 from server.webapp.utils import normalize_obj
 from server.webapp.parse import (
     parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata,
     parse_default_program_summaries)
+from server.webapp.dbconn import db
 
 from optima import saves
 import optima as op

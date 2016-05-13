@@ -7,10 +7,10 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 import optima as op
 
+from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result, load_project_record
-from server.api import app
+from server.webapp.dataio import save_result, load_project_record, load_parset_record
 
 from celery import Celery
 
@@ -95,24 +95,19 @@ def start_or_report_calculation(project_id, parset_id, work_type):
                 work_type = wp.work_type
     db_session.commit()
     close_db_session(db_session)
-    return can_start, can_join, wp_parset_id, work_type
+    return {
+        'can_start': can_start,
+        'can_join': can_join,
+        'parset_id': wp_parset_id,
+        'work_type': work_type
+    }
 
 
 def check_calculation_status(project_id):
-
     db_session = init_db_session()
-
-    result = {
-        'status': 'unknown',
-        'error_text': None,
-        'start_time': None,
-        'stop_time': None,
-        'result_id': None
-    }
-
     wp = db_session.query(WorkingProjectDb).get(project_id)
     work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
-
+    close_db_session(db_session)
     if work_log is not None:
         result = {
             'status': work_log.status,
@@ -121,21 +116,32 @@ def check_calculation_status(project_id):
             'stop_time': work_log.stop_time,
             'result_id': work_log.result_id
         }
-
-    close_db_session(db_session)
-
+    else:
+        result = {
+            'status': 'unknown',
+            'error_text': None,
+            'start_time': None,
+            'stop_time': None,
+            'result_id': None
+        }
     return result
 
 
 @celery_instance.task()
-def run_autofit(project_id, parset_name, maxtime=60):
+def run_autofit(project_id, parset_id, maxtime=60):
     import traceback
-    app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
     error_text = ""
     status = 'completed'
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     project_instance = op.loads(wp.project)
+    parset_name = None
+    for key in project_instance.parsets:
+        parset = project_instance.parsets[key]
+        if str(parset.uid) == str(parset_id):
+            parset_name = parset.name
+            break
+    app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
     close_db_session(db_session)
     result = None
     try:
