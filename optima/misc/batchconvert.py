@@ -29,7 +29,7 @@ for f,origfile in enumerate(allorigfiles):
 
         # Convert project
         print('Converting project...')
-        E = convert1to2(old=D, outfile=newfile, autofit=False, dosave=False) # Don't save automatically
+        E = convert1to2(old=D, outfile=newfile, autofit=True, dosave=False) # Don't save automatically
         
         # Save project
         E.name = basename
