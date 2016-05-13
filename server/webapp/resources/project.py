@@ -3,26 +3,27 @@ from datetime import datetime
 import dateutil
 
 from flask import current_app, helpers, request, Response
-from flask.ext.restful import fields, Resource, marshal_with
-from flask.ext.restful_swagger import swagger
+from flask.ext.login import current_user, login_required
+from flask_restful import Resource, marshal_with, fields, marshal
+from flask_restful_swagger import swagger
+
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
-
-from flask.ext.login import current_user, login_required
-from flask_restful import Resource, marshal_with, fields
-from flask_restful_swagger import swagger
 
 import optima as op
 
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
-from server.webapp.utils import secure_filename_input, AllowedSafeFilenameStorage, RequestParser, \
-    TEMPLATEDIR, templatepath, upload_dir_user
+from server.webapp.utils import (
+    secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
+    templatepath, upload_dir_user)
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.parse import get_default_populations
-from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception, \
-    verify_admin_request
-from server.webapp.dataio import load_project_record, save_result, delete_spreadsheet
+from server.webapp.resources.common import (
+    file_resource, file_upload_form_parser, report_exception, verify_admin_request)
+from server.webapp.dataio import (
+    load_project_record, save_result, delete_spreadsheet, get_project_parameters,
+    load_project_program_summaries)
 
 
 class ProjectBase(Resource):
@@ -42,13 +43,13 @@ class ProjectBase(Resource):
 population_parser = RequestParser()
 population_parser.add_arguments({
     'short': {'required': True, 'location': 'json'},
-    'name':       {'required': True, 'location': 'json'},
-    'female':     {'type': bool, 'required': True, 'location': 'json'},
-    'male':       {'type': bool, 'required': True, 'location': 'json'},
-    'injects':    {'type': bool, 'required': True, 'location': 'json'},
-    'sexworker':  {'type': bool, 'required': True, 'location': 'json'},
-    'age_from':   {'location': 'json'},
-    'age_to':     {'location': 'json'},
+    'name': {'required': True, 'location': 'json'},
+    'female': {'type': bool, 'required': True, 'location': 'json'},
+    'male': {'type': bool, 'required': True, 'location': 'json'},
+    'injects': {'type': bool, 'required': True, 'location': 'json'},
+    'sexworker': {'type': bool, 'required': True, 'location': 'json'},
+    'age_from': {'location': 'json'},
+    'age_to': {'location': 'json'},
 })
 
 project_parser = RequestParser()
@@ -71,6 +72,7 @@ project_update_parser.add_arguments({
     'dataend': {'type': int, 'default': None}
 })
 
+
 class ProjectsAll(ProjectBase):
     """
     A collection of all projects.
@@ -87,11 +89,11 @@ class ProjectsAll(ProjectBase):
         return super(ProjectsAll, self).get()
 
 
-
 bulk_project_parser = RequestParser()
 bulk_project_parser.add_arguments({
     'projects': {'required': True, 'action': 'append'},
 })
+
 
 class Projects(ProjectBase):
     """
@@ -220,7 +222,7 @@ class Project(Resource):
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
         if not current_user.is_admin and \
-                str(project_entry.user_id) != str(current_user.id):
+                        str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
         project_entry.has_data_now = project_entry.has_data()
         # no other way to make it work for methods and not attributes?
@@ -248,8 +250,8 @@ class Project(Resource):
             "project %s is in edit mode" % project_id)
         current_app.logger.debug(args)
 
-# can_update = args.pop('canUpdate', False) we'll calculate it based on DB
-# info + request info
+        # can_update = args.pop('canUpdate', False) we'll calculate it based on DB
+        # info + request info
         current_app.logger.debug("updateProject data: %s" % args)
 
         # Check whether we are editing a project
@@ -338,7 +340,6 @@ class Project(Resource):
 
 
 class ProjectSpreadsheet(Resource):
-
     """
     Spreadsheet upload and download for the given project.
     """
@@ -641,7 +642,6 @@ class ProjectEcon(Resource):
 
 
 class ProjectData(Resource):
-
     """
     Export and import of the existing project in / from pickled format.
     """
@@ -696,7 +696,7 @@ class ProjectData(Resource):
         project_instance = op.loadobj(uploaded_file)
 
         if project_instance.data:
-            assert(project_instance.parsets)
+            assert (project_instance.parsets)
             result = project_instance.runsim()
             current_app.logger.info(
                 "runsim result for project %s: %s" % (project_id, result))
@@ -706,7 +706,7 @@ class ProjectData(Resource):
         db.session.flush()
 
         if project_instance.data:
-            assert(project_instance.parsets)
+            assert (project_instance.parsets)
             result_record = save_result(project_record.id, result)
             db.session.add(result_record)
 
@@ -725,8 +725,8 @@ project_upload_form_parser.add_arguments({
     'name': {'required': True, 'help': 'Project name'},
 })
 
-class ProjectFromData(Resource):
 
+class ProjectFromData(Resource):
     """
     Import of a new project from pickled format.
     """
@@ -760,7 +760,7 @@ class ProjectFromData(Resource):
         db.session.flush()
 
         if project.data:
-            assert(project.parsets)
+            assert (project.parsets)
             result = project.runsim()
 
             print('>>>> Runsim for project: "%s"' % (project_record.name))
@@ -795,7 +795,6 @@ project_copy_parser.add_arguments({
 
 
 class ProjectCopy(Resource):
-
     @swagger.operation(
         summary='Copies the given project to a different name',
         parameters=project_copy_parser.swagger_parameters()
@@ -872,6 +871,13 @@ class ProjectCopy(Resource):
 
 
 class Portfolio(Resource):
+    """
+    POST /api/project/portfolio
+
+    Accessed in project-api-services.js, used in open-ctrl.js to download
+    selected projects in one big ZIP package. Requires the name
+    of the projects that have to be collated.
+    """
 
     @swagger.operation(
         produces='application/x-zip',
@@ -911,105 +917,45 @@ class Portfolio(Resource):
         return helpers.send_from_directory(loaddir, zipfile_name)
 
 
-
 class DefaultPrograms(Resource):
+    """
+    GET /api/project/<uuid:project_id>/defaults
 
-    @swagger.operation(
-        summary="""Gives default programs, program categories and program parameters
-                for the given program"""
-    )
+    Packaged in api-service but used in program-set-ctrl to get the default set
+    of programs when creating a new program set.
+    """
+
+    @swagger.operation(summary="Returns default programs, their categories and parameters")
     @report_exception
-    @marshal_with({"programs": fields.Raw})
     @login_required
     def get(self, project_id):
-        from server.webapp.parse import get_default_program_summaries
-        project = load_project_record(project_id, raise_exception=True).hydrate()
-        return { "programs": get_default_program_summaries(project) }
+        return {"programs": load_project_program_summaries(project_id)}
 
-
-
-# It's a pship but it's used somewhat interchangeably with populations
-
-pship_fields = {
-    "type": fields.String,
-    "populations": fields.Raw
-}
-
-class Partnerships(Resource):
-    @swagger.operation(
-        summary="List partnerships for project"
-    )
-    @report_exception
-    @marshal_with(pship_fields, envelope="populations")
-    @login_required
-    def get(self, project_id):
-        project = load_project_record(project_id, raise_exception=True)
-        be_project = project.hydrate()
-        return [{
-            'type': key,
-            'populations': value
-        } for key, value in be_project.data['pships'].iteritems()]
-
-
-parameter_fields = {
-    'fittable': fields.String,
-    'name': fields.String,
-    'auto': fields.String,
-    'partype': fields.String,
-    'proginteract': fields.String,
-    'short': fields.String,
-    'coverage': fields.Boolean,
-    'by': fields.String,
-    'pships': fields.Raw,
-}
 
 class DefaultParameters(Resource):
+    """
+    GET /api/project/<project_id>/parameters
 
-    @swagger.operation(
-        summary="List default parameters"
-    )
+    Returns all available parameters with their properties. Used by
+    program-set to construct the project effects drop down.
+    """
+
+    @swagger.operation(summary="List default parameters")
     @report_exception
-    @marshal_with(parameter_fields, envelope='parameters')
     @login_required
     def get(self, project_id):
-        """Gives back project parameters (modifiable)"""
-
-        print "Default parameters"
-
-        from server.webapp.dataio import load_project_record
-        from optima.parameters import partable, loadpartable, Par
-
-        default_pars = [par['short'] for par in loadpartable(partable)]
-
-        project = load_project_record(project_id, raise_exception=True)
-        be_parsets = [parset.hydrate() for parset in project.parsets]
-        parameters = []
-        added_parameters = set()
-        for parset in be_parsets:
-            print(">>> Parsets %s" % [p.keys() for p in parset.pars])
-            for parameter in parset.pars:
-                for key in default_pars:
-                    if key not in added_parameters and \
-                            key in parameter and \
-                            isinstance(parameter[key], Par) and \
-                            parameter[key].visible == 1 and \
-                            parameter[key].y.keys():
-                        param = parameter[key].__dict__
-                        if parameter[key].by == 'pship':
-                            pships = parameter[key].y.keys()
-                        else:
-                            pships = []
-                        param['pships'] = pships
-
-                        parameters.append(param)
-                        added_parameters.add(key)
-
-        return parameters
+        return {'parameters': get_project_parameters(project_id)}
 
 
 class DefaultPopulations(Resource):
-    @swagger.operation(summary='Gives back default populations')
+    """
+    GET /api/project/populations
+
+    Report populations in projects in the project management page
+    """
+
+    @swagger.operation(summary='Returns default populations')
     @report_exception
     @login_required
     def get(self):
-        return { 'populations': get_default_populations()}
+        return {'populations': get_default_populations()}

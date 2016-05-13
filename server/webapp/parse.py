@@ -10,10 +10,13 @@ There should be no references to the database here!
 
 """
 
-
 from collections import defaultdict
 
+from flask.ext.restful import fields, marshal
+
+from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
+
 from server.webapp.utils import normalize_obj
 
 pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
@@ -110,8 +113,8 @@ def parse_program_summary(program):
     return result
 
 
-def get_default_program_summaries(project):
-    return [parse_program_summary(p) for p in defaultprograms(project)]
+def parse_default_program_summaries(project):
+    return map(parse_program_summary, defaultprograms(project))
 
 
 def get_parset_parameters(parset, ind=0):
@@ -197,6 +200,41 @@ def print_parset(parset):
     return s
 
 
+parameter_fields = {
+    'fittable': fields.String,
+    'name': fields.String,
+    'auto': fields.String,
+    'partype': fields.String,
+    'proginteract': fields.String,
+    'short': fields.String,
+    'coverage': fields.Boolean,
+    'by': fields.String,
+    'pships': fields.Raw,
+}
+
+
+def parse_parameters_of_parset_list(parset_list):
+    default_pars = [par['short'] for par in loadpartable(partable)]
+    parameters = []
+    added_par_keys = set()
+    for parset in parset_list:
+        for par in parset.pars:
+            for par_key in default_pars:
+                if par_key not in added_par_keys \
+                and par_key in par \
+                and isinstance(par[par_key], Par) \
+                and par[par_key].visible == 1 \
+                and par[par_key].y.keys():
+                    parameter = par[par_key].__dict__
+                    parameter['pships'] = []
+                    if par[par_key].by == 'pship':
+                        parameter['pships'] = par[par_key].y.keys()
+                    parameters.append(parameter)
+                    added_par_keys.add(par_key)
+    return marshal(parameters, parameter_fields)
+
+
+
 # WARNING, this should probably not be hard-coded here
 
 ALL_POPULATIONS_SOURCE = """
@@ -273,3 +311,5 @@ def scenario_program(orig_programs):  # result is either budget or coverage, dep
             programs[program_name].append(float(elem))
 
     return programs
+
+

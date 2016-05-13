@@ -1,30 +1,24 @@
-import mpld3
-import json
-from pprint import pprint
 import pprint
-import math
+import uuid
+from pprint import pprint
 
+import mpld3
 from flask import current_app
-
+from flask import helpers
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with
+from flask_restful import fields
 from flask_restful_swagger import swagger
-from flask import helpers
 
 from server.webapp.dataio import (
-    load_project_record, load_progset_record, load_project, load_program, load_parset,
-    update_or_create_program_record)
-from server.webapp.exceptions import (
-    ProjectDoesNotExist, ProgsetDoesNotExist, ProgramDoesNotExist, ParsetDoesNotExist)
-from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
+    load_project_record, load_progset_record, load_program, load_parset,
+    update_or_create_program_record, get_target_popsizes)
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb, ParsetsDb, ResultsDb
+from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
+from server.webapp.exceptions import (
+    ProjectDoesNotExist, ProgsetDoesNotExist)
+from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
-
-import uuid
-from flask_restful import fields
-
-
 
 costcov_parser = RequestParser()
 costcov_parser.add_arguments({
@@ -407,6 +401,8 @@ query_program_parser.add_arguments({
 
 class Program(Resource):
     """
+    POST /api/project/<project_id>/progsets/<progset_id>/program"
+
     Write program to web-server (for cost-coverage and outcome changes)
     The payload is JSON in the form:
 
@@ -450,9 +446,6 @@ class Program(Resource):
 
     method_decorators = [report_exception, login_required]
     def post(self, project_id, progset_id):
-        current_app.logger.debug(
-            "/api/project/%s/progsets/%s/program" % (project_id, progset_id))
-
         args = query_program_parser.parse_args()
         program_summary = normalize_obj(args['program'])
         program_record = update_or_create_program_record(
@@ -463,28 +456,20 @@ class Program(Resource):
         db.session.add(program_record)
         db.session.flush()
         db.session.commit()
-
         return 204
-
-
-def get_popsizes(project_id, parset_id, progset_id, program_id):
-    program = load_program(project_id, progset_id, program_id)
-    parset = load_parset(project_id, parset_id)
-    settings = load_project(project_id).settings
-    years = range(int(settings.start), int(settings.end) + 1)
-    popsizes = program.gettargetpopsize(t=years, parset=parset)
-    return normalize_obj(dict(zip(years, popsizes)))
 
 
 class ProgramPopSizes(Resource):
     """
-    Return estimated popsize for a Program & Parset
     /api/project/{project_id}/progsets/{progset_id}/program/{program_id}/parset/{progset_id}/popsizes
+
+    Return estimated popsize for a given program and parset. Used in
+    cost-coverage function page to help estimate populations.
     """
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id, progset_id, program_id, parset_id):
-        payload = get_popsizes(project_id, parset_id, progset_id, program_id)
+        payload = get_target_popsizes(project_id, parset_id, progset_id, program_id)
         return payload, 201
 
 

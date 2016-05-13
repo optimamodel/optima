@@ -64,8 +64,8 @@ from server.webapp.resources.user import (
     User, UserDetail, CurrentUser, UserLogin, UserLogout)
 from server.webapp.resources.project import (
     Projects, ProjectsAll, Project, ProjectCopy, ProjectSpreadsheet, ProjectEcon,
-    ProjectData, ProjectFromData, Portfolio, DefaultPrograms, Partnerships,
-    DefaultParameters, DefaultPopulations)
+    ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
+    DefaultPopulations)
 from server.webapp.resources.progsets import (
     Progsets, Progset, ProgsetData, ParameterProgramDetails, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
@@ -93,7 +93,6 @@ api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
-api.add_resource(Partnerships, '/api/project/<uuid:project_id>/partnerships')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 

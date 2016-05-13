@@ -1,3 +1,5 @@
+from optima.defaults import defaultprograms
+from server.webapp.parse import parse_program_summary, parse_parameters_of_parset_list
 
 __doc__ = """
 
@@ -5,6 +7,11 @@ dataio.py contains all the functions that fetch and saves optima objects to/from
 and the file system. These functions abstracts out the data i/o for the web-server
 api calls.
 
+function call pairs are load_*/save_* and refers to saving to database.
+
+Database record variables should have suffix _record
+
+Parsed data structures should have suffix _summary
 """
 
 
@@ -15,14 +22,15 @@ import dateutil
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
-import optima as op
-from optima.utils import saves
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
-from server.webapp.utils import TEMPLATEDIR, upload_dir_user, OptimaJSONEncoder
+from server.webapp.utils import TEMPLATEDIR, upload_dir_user, OptimaJSONEncoder, normalize_obj
+from server.webapp.parse import parse_default_program_summaries
 
+import optima as op
+from optima.utils import saves
 
 
 def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None):
@@ -331,9 +339,9 @@ def update_or_create_optimization_record(project_id, project, name):
     return optimization_record
 
 
-def load_project(project_id, autofit=False):
+def load_project(project_id, autofit=False, raise_exception=True):
     if not autofit:
-        project_record = load_project_record(project_id, raise_exception=True)
+        project_record = load_project_record(project_id, raise_exception=raise_exception)
         if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
         project = project_record.hydrate()
@@ -352,11 +360,6 @@ def load_program(project_id, progset_id, program_id):
     return program_entry.hydrate()
 
 
-def load_parset_list(project_id):
-    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
-    return [parset_record.hydrate() for parset_record in parset_records]
-
-
 def load_parset(project_id, parset_id):
     from server.webapp.dbmodels import ParsetsDb
     from server.webapp.exceptions import ParsetDoesNotExist
@@ -373,6 +376,15 @@ def load_parset(project_id, parset_id):
         return None
 
     return parset_record.hydrate()
+
+
+def load_parset_list(project_id):
+    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
+    return [parset_record.hydrate() for parset_record in parset_records]
+
+
+def get_project_parameters(project_id):
+    return parse_parameters_of_parset_list(load_parset_list(project_id))
 
 
 def get_parset_from_project(project, parset_id):
@@ -438,3 +450,20 @@ def save_result(
         )
 
     return result_record
+
+
+def load_project_program_summaries(project_id):
+    return parse_default_program_summaries(load_project(project_id, raise_exception=True))
+
+
+def get_project_years(project_id):
+    settings = load_project(project_id).settings
+    return range(int(settings.start), int(settings.end) + 1)
+
+
+def get_target_popsizes(project_id, parset_id, progset_id, program_id):
+    program = load_program(project_id, progset_id, program_id)
+    parset = load_parset(project_id, parset_id)
+    years = get_project_years(project_id)
+    popsizes = program.gettargetpopsize(t=years, parset=parset)
+    return normalize_obj(dict(zip(years, popsizes)))

@@ -1,25 +1,44 @@
-from server.celery_app import make_celery
-from flask.ext.sqlalchemy import SQLAlchemy
-
-from sqlalchemy.orm import sessionmaker, scoped_session
-from server.api import app
-#from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ParsetsDb, WorkLogDb, WorkingProjectDb
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result, load_project_record
-import optima as op
 
 import datetime
 import dateutil.tz
 
+from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import sessionmaker, scoped_session
+
+import optima as op
+
+from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
+from server.webapp.exceptions import ProjectDoesNotExist
+from server.webapp.dataio import save_result, load_project_record
+from server.api import app
+
+from celery import Celery
 
 
-celery = make_celery(app)
 db = SQLAlchemy(app)
+
+celery_instance = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
+celery_instance.conf.update(app.config)
+
+TaskBase = celery_instance.Task
+
+
+class ContextTask(TaskBase):
+    abstract = True
+
+    def __call__(self, *args, **kwargs):
+        with app.app_context():
+            return TaskBase.__call__(self, *args, **kwargs)
+
+
+celery_instance.Task = ContextTask
 
 
 def init_db_session():
-    return scoped_session(sessionmaker(db.engine)) #creating scoped_session, eventually bound to engine
+    """
+    Create scoped_session, eventually bound to engine
+    """
+    return scoped_session(sessionmaker(db.engine))
 
 
 def close_db_session(db_session):
@@ -79,26 +98,36 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     return can_start, can_join, wp_parset_id, work_type
 
 
-def check_calculation_status(project_id, parset_id, work_type):
-    from sqlalchemy import desc
+def check_calculation_status(project_id):
+
     db_session = init_db_session()
-    status = 'unknown'
-    error_text = None
-    stop_time = None
-    result_id = None
+
+    result = {
+        'status': 'unknown',
+        'error_text': None,
+        'start_time': None,
+        'stop_time': None,
+        'result_id': None
+    }
+
     wp = db_session.query(WorkingProjectDb).get(project_id)
     work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
+
     if work_log is not None:
-        status = work_log.status
-        error_text = work_log.error
-        start_time = work_log.start_time
-        stop_time = work_log.stop_time
-        result_id = work_log.result_id
+        result = {
+            'status': work_log.status,
+            'error_text': work_log.error,
+            'start_time': work_log.start_time,
+            'stop_time': work_log.stop_time,
+            'result_id': work_log.result_id
+        }
+
     close_db_session(db_session)
-    return status, error_text, start_time, stop_time, result_id
+
+    return result
 
 
-@celery.task()
+@celery_instance.task()
 def run_autofit(project_id, parset_name, maxtime=60):
     import traceback
     app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
@@ -144,7 +173,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
     app.logger.debug("stopped autofit")
 
 
-@celery.task()
+@celery_instance.task()
 def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints):
     import traceback
     app.logger.debug('started optimization: {} {} {} {} {} {}'.format(

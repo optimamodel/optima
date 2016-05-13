@@ -79,7 +79,9 @@ class Parsets(Resource):
     """
     /api/project/{project_id}/parsets
 
-    Get parsets for a given project
+    Get parsets for a given project, these are JSON compatible structures
+    marshalled from ParsetsDb but the main structure pars is a straight-forward
+    JSON compatible datastructure.
     """
     method_decorators = [report_exception, login_required]
 
@@ -456,20 +458,7 @@ class ParsetsAutomaticCalibration(Resource):
     @report_exception
     def get(self, project_id, parset_id):
         from server.webapp.tasks import check_calculation_status
-        from server.webapp.dbmodels import ParsetsDb
-
-        parset_entry = ParsetsDb.query.get(parset_id)
-        project_id = parset_entry.project_id
-
-        status, error_text, start_time, stop_time, result_id = \
-            check_calculation_status(project_id, parset_id, 'autofit')
-        return {
-            'status': status,
-            'error_text': error_text,
-            'start_time': start_time,
-            'stop_time': stop_time,
-            'result_id': result_id
-        }
+        return check_calculation_status(project_id)
 
 
 file_upload_form_parser = RequestParser()

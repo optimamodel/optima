@@ -6,7 +6,6 @@ from pprint import pprint
 from flask_restful_swagger import swagger
 from flask_restful import fields
 
-from optima import saves
 from server.webapp.exceptions import DuplicateProgram
 
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
@@ -17,8 +16,10 @@ from server.webapp.dbconn import db
 from server.webapp.exceptions import ParsetDoesNotExist
 from server.webapp.utils import normalize_obj
 from server.webapp.parse import (
-    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata)
+    parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata,
+    parse_default_program_summaries)
 
+from optima import saves
 import optima as op
 
 
@@ -285,9 +286,9 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.dataio import update_or_create_progset_record
-            from server.webapp.parse import get_default_program_summaries
+            from server.webapp.dataio import load_project_program_summaries
 
-            program_summaries = get_default_program_summaries(project)
+            program_summaries = parse_default_program_summaries(project)
 
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset_record(self.id, name, progset)
@@ -679,9 +680,9 @@ class ProgsetsDb(db.Model):
             ]
         )
         if self.effects is not None:
-            for parset_effect in self.effects:
-                for program_effect in parset_effect['parameters']:
-                    for year in program_effect['years']:
+            for effect in self.effects:
+                for parameter in effect['parameters']:
+                    for year in parameter['years']:
                         effect = {
                             'intercept': (year['intercept_lower'], year['intercept_upper']),
                             't': int(year['year']),
@@ -694,12 +695,12 @@ class ProgsetsDb(db.Model):
                             else:
                                 effect[row['name']] = None
 
-                        if program_effect['name'] not in progset.covout:
+                        if parameter['name'] not in progset.covout:
                             continue
 
-                        islist = isinstance(program_effect['pop'], list)
-                        poptuple = tuple(program_effect['pop']) if islist else program_effect['pop']
-                        covout = progset.covout[program_effect['name']]
+                        islist = isinstance(parameter['pop'], list)
+                        poptuple = tuple(parameter['pop']) if islist else parameter['pop']
+                        covout = progset.covout[parameter['name']]
                         if poptuple in covout:
                             covout[poptuple].addccopar(effect, overwrite=True)
 
