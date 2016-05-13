@@ -31,10 +31,10 @@ class DuplicateProgram(BaseRESTException):
     code = 400
     _message = 'Duplicate program short name'
 
-    def __init__(self, short_name=None):
+    def __init__(self, short=None):
         super(DuplicateProgram, self).__init__()
-        if short_name is not None:
-            self.description = 'Duplicate program short name: {}'.format(short_name)
+        if short is not None:
+            self.description = 'Duplicate program short name: {}'.format(short)
 
 
 class RecordDoesNotExist(BaseRESTException):

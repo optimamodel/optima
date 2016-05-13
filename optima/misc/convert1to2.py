@@ -24,7 +24,7 @@ newext = '.prj'
 ### Read old file
 ##################################################################################################################
 
-from optima import Project, printv, odict, defaults, saveobj, dcp, OptimaException
+from optima import Project, printv, odict, defaults, saveobj, dcp, OptimaException, isnumber
 from sys import argv
 from numpy import nan, zeros
 
@@ -291,6 +291,9 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             thisyear = 2016 if len(old['data']['costcov']['cov'][progno])==1 else old['data']['epiyears'][yearind]
 
             # Figure out what kind of coverage data it is...
+            if not isnumber(old['data']['costcov']['cov'][progno][thisind]): old['data']['costcov']['cov'][progno][thisind] = nan
+#                try: isnan(old['data']['costcov']['cov'][progno][thisind])
+#            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             if isnan(old['data']['costcov']['cov'][progno][thisind]): # No data
                 newcov = None
             elif old['data']['costcov']['cov'][progno][thisind]<1: # Data entered as a proportion, need to convert to number

@@ -1,10 +1,12 @@
+# also not used
+
 from flask import Blueprint, request, jsonify, current_app
 import json
 import traceback
 from dataio import tojson, fromjson
 # TODO fix after v2
 # from sim.scenarios import runscenarios
-from server.webapp.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project
+from server.webapp.utils import load_model, save_model, check_project_exists, check_project_name, report_exception, load_project_record
 from flask.ext.login import login_required # pylint: disable=E0611,F0401
 
 # route prefix: /api/analysis/scenarios
@@ -26,7 +28,7 @@ def get_scenario_parameters():
     from sim.scenarios import getparvalues
     scenario_params = parameters()
     real_parameters = []
-    project = load_project(request.project_id)
+    project = load_project_record(request.project_id)
     D = fromjson(project.model)
 
     for parameter in scenario_params:

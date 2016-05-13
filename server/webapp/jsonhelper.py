@@ -5,23 +5,51 @@ import numpy as np
 from collections import OrderedDict
 
 
-def normalize_dict(elem):
-    if isinstance(elem, list):
-        return [normalize_dict(p) for p in elem]
-    elif isinstance(elem, op.utils.odict):
+def normalize_obj(obj):
+    """
+    This is the main conversion function for Python data-structures into
+    JSON-compatible data structures.
+
+    Use this as much as possible to guard against data corruption!
+
+    Args:
+        obj: almost any kind of data structure that is a combination
+            of list, numpy.ndarray, odicts etc
+
+    Returns:
+        A converted dict/list/value that should be JSON compatible
+    """
+
+    if isinstance(obj, list) or isinstance(obj, np.ndarray) or isinstance(obj, tuple):
+        return [normalize_obj(p) for p in obj]
+
+    if isinstance(obj, dict):
+        return {str(k): normalize_obj(v) for k, v in obj.items()}
+
+    if isinstance(obj, op.utils.odict):
         result = OrderedDict()
-        for (k, v) in elem.iteritems():
-            norm_k = str(k)
-            if type(v) == op.utils.odict or isinstance(v, list):
-                norm_v = normalize_dict(v)
-            else:
-                norm_v = v
-            result[norm_k] = norm_v
+        for k, v in obj.items():
+            result[str(k)] = normalize_obj(v)
         return result
-    elif isinstance(elem, float):
-        if np.isnan(elem):
+
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    if isinstance(obj, float):
+        if np.isnan(obj):
             return None
-    return elem
+
+    if isinstance(obj, np.float64):
+        if np.isnan(obj):
+            return None
+        else:
+            return float(obj)
+
+    if isinstance(obj, unicode):
+        return str(obj)
+
+    return obj
+
 
 
 class OptimaJSONEncoder(flask.json.JSONEncoder):
@@ -34,18 +62,17 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
         """
         Support additional data types when encoding to JSON.
         """
-#        print type(obj)
         if isinstance(obj, op.parameters.Parameterset):  # TODO preserve order of keys
-            return OrderedDict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])
+            return OrderedDict([(k, normalize_obj(v)) for (k, v) in obj.__dict__.iteritems()])
 
         if isinstance(obj, op.parameters.Par):
-            return OrderedDict([(k, normalize_dict(v)) for (k, v) in obj.__dict__.iteritems()])
+            return OrderedDict([(k, normalize_obj(v)) for (k, v) in obj.__dict__.iteritems()])
 
         if isinstance(obj, np.float64):
-            return float(obj)
+            return normalize_obj(obj)
 
         if isinstance(obj, np.ndarray):
-            return [normalize_dict(p) for p in list(obj)]
+            return [normalize_obj(p) for p in list(obj)]
 
         if isinstance(obj, np.bool_):
             return bool(obj)
@@ -54,12 +81,14 @@ class OptimaJSONEncoder(flask.json.JSONEncoder):
             return list(obj)
 
         if isinstance(obj, op.utils.odict):  # never seems to get there
-            return normalize_dict(obj)
+            return normalize_obj(obj)
 
         if isinstance(obj, op.project.Project):
             return None
 
         if isinstance(obj, op.results.Resultset):
             return None
+
+        obj = normalize_obj(obj)
 
         return flask.json.JSONEncoder.default(self, obj)

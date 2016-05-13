@@ -47,6 +47,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
         .success(function (response) {
           setCalibrationData(response.calibration);
+          console.log(JSON.stringify(response.calibration.parameters, null, 2))
         });
     };
 

@@ -9,7 +9,7 @@ define(['./module', 'angular'], function (module, angular) {
     $scope.population = angular.copy(population);
     $scope.population.active = true;
 
-    populations = _.filter(populations, function(p) { return p.short_name !== $scope.population.short_name; });
+    populations = _.filter(populations, function(p) { return p.short !== $scope.population.short; });
 
     $scope.populationExists = function(key){
       return _.find(populations, function (population) {
@@ -18,7 +18,7 @@ define(['./module', 'angular'], function (module, angular) {
     };
 
     $scope.isFormValid = function(){
-      if(!$scope.populationExists('name') && !$scope.populationExists('short_name') && !$scope.PopulationForm.$invalid){
+      if(!$scope.populationExists('name') && !$scope.populationExists('short') && !$scope.PopulationForm.$invalid){
         return true;  
       }else{
         return false;

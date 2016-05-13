@@ -8,7 +8,7 @@ from server.api import app
 from flask import helpers
 from uuid import uuid4
 import optima as op
-from server.webapp.jsonhelper import normalize_dict, OptimaJSONEncoder
+from server.webapp.jsonhelper import normalize_obj, OptimaJSONEncoder
 
 
 class JsonHelperTestCase(unittest.TestCase):

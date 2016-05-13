@@ -751,7 +751,7 @@ class Program(object):
         # If we are ignoring eligibility, just sum the popsizes...
         if not useelig:
             initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-            
+
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
 
@@ -806,7 +806,7 @@ class Program(object):
             else:
                 targetpopsize[targetpop] = popsizes[targetpop]
                 
-        finalpopsize = [sum(targetpopsize.values())] if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
+        finalpopsize = array([sum(targetpopsize.values())]) if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
                     
         if total: return finalpopsize
         else: return targetpopsize
@@ -832,6 +832,7 @@ class Program(object):
         t = promotetoarray(t)
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+
         totaltargeted = sum(poptargeted.values())
         totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, bounds=bounds)
 
@@ -879,7 +880,7 @@ class Program(object):
         # Make x data... 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
             xupperlim = plotoptions['xupperlim']
-        else: 
+        else:
             if costdata: xupperlim = 1.5*max(costdata)
             else: xupperlim = maxupperlim
         xlinedata = linspace(0,xupperlim,npts)
