@@ -119,7 +119,8 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project = load_project(project_id)
+        project_entry = load_project_record(project_id)
+        project = project_entry.hydrate()
 
         if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
@@ -167,13 +168,18 @@ rename_parser.add_argument('name', required=True)
 
 class ParsetsDetail(Resource):
     """
-    Single Parset.
+    DELETE /api/project/<uuid:project_id>/parsets/<uuid:parset_id>
+
+    Deletes given parset
+
+    PUT /api/project/<uuid:project_id>/parsets/<uuid:parset_id>
+
+    Renames the given parset
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description='Delete parset with the given id.')
+    @swagger.operation(description='Delete parset with parset_id.')
     @report_exception
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def delete(self, project_id, parset_id):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
@@ -182,10 +188,6 @@ class ParsetsDetail(Resource):
         parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
         if parset is None:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-
-        # # Is this how we should check for default parset?
-        # if parset.name.lower() == 'default':  # TODO: it is lowercase
-        #     abort(403)
 
         # TODO: also delete the corresponding calibration results
         db.session.query(ResultsDb).filter_by(
@@ -199,13 +201,7 @@ class ParsetsDetail(Resource):
 
         return '', 204
 
-    @swagger.operation(
-        description='Rename parset with the given id',
-        notes="""
-            if parset exists, rename it
-            if parset does not exist, return an error.
-            """
-    )
+    @swagger.operation(description='Rename parset with parset_id')
     @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def put(self, project_id, parset_id):
@@ -466,12 +462,13 @@ class ParsetsAutomaticCalibration(Resource):
     def post(self, project_id, parset_id):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         args = manual_calibration_parser.parse_args()
+        parset_name = load_parset_record(project_id, parset_id).name
         result = start_or_report_calculation(project_id, parset_id, 'autofit')
         if not result['can_start'] or not result['can_join']:
             result['status'] = 'running'
             return result, 208
         else:
-            run_autofit.delay(project_id, parset_id, args['maxtime'])
+            run_autofit.delay(project_id, parset_name, args['maxtime'])
             result['status'] = 'started'
             result['maxtime'] = args['maxtime']
             return result, 201

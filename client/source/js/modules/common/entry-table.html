@@ -1,6 +1,6 @@
 <table class="table table-bordered">
   <tr>
-    <th ng-repeat="title in table.titles">
+    <th ng-repeat="title in table.titles track by $index">
       {{title}}
     </th>
     <th>Manage</th>

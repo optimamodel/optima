@@ -12,7 +12,7 @@ from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
     load_project_record, load_progset_record, load_program, load_parset,
-    update_or_create_program_record, get_target_popsizes)
+    update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 from server.webapp.exceptions import (
@@ -164,7 +164,6 @@ class Progset(Resource):
         if progset_entry.project_id != project_id:
             raise ProgsetDoesNotExist(id=progset_id)
 
-        progset_entry.name
         db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
         db.session.delete(progset_entry)
         db.session.commit()
@@ -238,45 +237,16 @@ class ProgsetData(Resource):
         return reply
 
 
+class ParametersOfProgset(Resource):
 
+    """
+    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>
 
-
-param_fields = {
-    'name': fields.String,
-    'populations': fields.Raw,
-    'coverage': fields.Boolean,
-}
-
-class ParameterProgramDetails(Resource):
-
-    @swagger.operation(
-        description='Get param/populations sets for the selected progset'
-    )
-    @marshal_with(param_fields)
+    Fetches parameters for a progset/parset combo to be used in outcome functions.
+    """
+    @swagger.operation(description='Get parameters sets for the selected progset')
     def get(self, project_id, progset_id, parset_id):
-        from server.webapp.dataio import load_progset_record, load_parset_record
-
-        progset_entry = load_progset_record(project_id, progset_id)
-        progset_be = progset_entry.hydrate()
-
-        parset_entry = load_parset_record(project_id, parset_id)
-        parset_be = parset_entry.hydrate()
-
-        param_names = set([p['param'] for p in progset_be.targetpars])
-        params = [{
-            'name': name,
-            'populations': [{
-                'pop': pop,
-                'programs': [{
-                    'name': program.name,
-                    'short': program.short,
-                } for program in progs]
-            } for pop, progs in progset_be.progs_by_targetpar(name).iteritems()],
-            'coverage': parset_be.pars[0][name].coverage,
-            'proginteract': parset_be.pars[0][name].proginteract
-        } for name in param_names]
-
-        return params
+        return load_parameters_from_progset_parset(project_id, progset_id, parset_id)
 
 
 
@@ -361,6 +331,16 @@ effect_parser = RequestParser()
 effect_parser.add_argument('effects', type=SubParser(parset_effect_parser), action='append')
 
 class ProgsetEffects(Resource):
+    """
+    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
+
+    Fetch the effects of a given progset, given in the marshalled fields of
+    a ProgsetsDB record
+
+    PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
+
+    Saves the effects of a given progset
+    """
 
     method_decorators = [report_exception, login_required]
 

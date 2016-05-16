@@ -11,14 +11,17 @@ define(['./../module', 'underscore'], function (module, _) {
     vm.openProject = activeProject.data;
     console.log('vm.openProject', vm.openProject);
 
-    vm.activeTab = 'cost';
-    vm.tabs = [{
-      name: 'Define cost functions',
-      slug: 'cost'
-    }, {
-      name: 'Define outcome functions',
-      slug: 'outcome'
-    }];
+    vm.activeTab = 'outcome';
+    vm.tabs = [
+      {
+        name: 'Define cost functions',
+        slug: 'cost'
+      },
+      {
+        name: 'Define outcome functions',
+        slug: 'outcome'
+      }
+    ];
 
 
     function consoleLogJson(name, val) {
@@ -27,15 +30,10 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function initialize() {
-      vm.addYear = addYear;
       vm.selectTab = selectTab;
-      vm.deleteYear = deleteYear;
       vm.submit = submit;
       vm.changeParameter = changeParameter;
       vm.changeDropdown = changeDropdown;
-      vm.getPopulationTitle = getPopulationTitle;
-      vm.initYearPrograms = initYearPrograms;
-      vm.getProgramName = getProgramName;
 
       // Stop here if spreadsheet has not been uploaded
       if (!vm.openProject.has_data) {
@@ -76,32 +74,8 @@ define(['./../module', 'underscore'], function (module, _) {
       });
     }
 
-    function getProgramName(short) {
-      var program = _.filter(vm.selectedProgset.programs, {short: short});
-      return program.length === 0 ? '' : program[0].name;
-    }
-
-    function initYearPrograms(pop) {
-      console.log('initYearPrograms called with', pop);
-      var currentPop = _.filter(vm.selectedParameter.populations, {pop: pop});
-      console.log('currentPop', currentPop);
-      if (currentPop.length === 0) {
-        return [];
-      }
-      console.log('programs', currentPop[0].programs);
-      return _.map(currentPop[0].programs, function (program) {
-        return {
-          name: program.short
-        }
-      });
-    }
-
-    function getPopulationTitle(population) {
-      if (population) {
-        var title = population;
-        return title === undefined ? '' : (typeof title === 'string' ? title : title.join(' - '))
-      }
-      return ''
+    function selectTab(tab) {
+      vm.activeTab = tab;
     }
 
     function changeDropdown() {
@@ -109,14 +83,14 @@ define(['./../module', 'underscore'], function (module, _) {
       changeParset();
     }
 
-    function fetchProgsetEffects(progsetId) {
+    function fetchOutcomeSets(progsetId) {
       $http.get(
         '/api/project/' + vm.openProject.id
         + '/progsets/' + vm.selectedProgset.id
         + '/effects')
       .success(function (response) {
         console.warn('loading effects=', response);
-        vm.effects = response.effects;
+        vm.outcomeSets = response.effects;
       })
     }
 
@@ -127,10 +101,11 @@ define(['./../module', 'underscore'], function (module, _) {
       function isProgramActive(program) {
         return program.targetpars && program.targetpars.length > 0 && program.active;
       }
-      var activePrograms = _.filter(vm.selectedProgset.programs, isProgramActive);
-      vm.programs = _.sortBy(activePrograms, function(p) { return p.name; });
-      if (_.isUndefined(vm.effects)) {
-        fetchProgsetEffects();
+      var allPrograms = vm.selectedProgset.programs;
+      vm.programs = _.sortBy(_.filter(allPrograms, isProgramActive), 'name');
+
+      if (_.isUndefined(vm.outcomeSets)) {
+        fetchOutcomeSets();
       }
     }
 
@@ -147,96 +122,62 @@ define(['./../module', 'underscore'], function (module, _) {
           + '/parameters/' + vm.selectedParset.id)
         .success(function (parameters) {
           console.log('loading target parameters=', parameters);
-
+          // {
+          //   "name": "hivtest",
+          //   "coverage": false,
+          //   "populations": [
+          //     {
+          //       "pop": "FSW",
+          //       "programs": [
+          //         {
+          //           "short": "FSW programs",
+          //           "name": "Programs for female sex workers and clients"
+          //         },
+          //         {
+          //           "short": "HTC",
+          //           "name": "HIV testing and counseling"
+          //         }
+          //       ]
+          //     },
+          console.log('fetch progset/parset parameters', parameters);
           function addParsetProperties(parameter) {
             return _.extend(parameter, vm.selectedParset.pars[0][parameter.name]) ;
           }
-
           vm.parameters = _.map(parameters, addParsetProperties);
           vm.selectedParameter = vm.parameters[0];
           vm.changeParameter();
-          console.log('vm.parameters', vm.parameters);
         });
       }
     }
 
-    function makePopKey(population) {
-      var popKey = population.pop;
-      return typeof popKey === 'string' ? popKey : popKey.join('+++');
-    }
-
-    function makePopDict() {
-      var completePopDict = getAllPopInParameterDict(
-          vm.selectedParset.id, vm.selectedParameter.short);
-      var popDict = {};
-      _.each(vm.selectedParameter.populations, function (population) {
-        var popKey = makePopKey(population);
-        popDict[popKey] = _.extend(population, { key: popKey, years: [{}]});
-        if (!_.isUndefined(completePopDict[popKey])) {
-          popDict[popKey] = _.extend(popDict[popKey], completePopDict[popKey])
-        }
-      });
-      return popDict
-    }
-
-    function getYearsFromParameters(parameters) {
-      var years = [];
-      _.each(parameters, function (parameter) {
-        years = years.concat(_.map(parameter.years, function (y) {
-          return _.pick(y, ['intercept_lower', 'intercept_upper', 'year', 'interact'])
-        }))
-      })
-      return years
-    }
-
-    function getProgramsFromParameters(parameters) {
-      var programs = [];
-      _.each(parameters, function (parameter) {
-        _.each(parameter.years, function (year) {
-          _.each(year.programs, function (program) {
-            var foundPrograms = _.filter(programs, {name: program.name});
-            if (foundPrograms.length === 0) {
-              programs.push(program)
-            }
-          })
-        })
-      });
-      console.log('getProgramsFromParameters', programs);
-      return programs;
-    }
-
-    function getAllPopInParameterDict(parsetId, parameterShort) {
-      var effect = _.findWhere(vm.effects, {parset: parsetId})
-      if (effect === undefined) {
-        console.log('no effects for this parameter');
-        return [];
+    function getOutcomesForSelectedParset() {
+      var outcomeSets = _.filter(vm.outcomeSets, {parset: vm.selectedParset.id});
+      if (outcomeSets.length === 0) {
+        var newOutcomeSet = {
+          parset: vm.selectedParset.id,
+          parameters: []
+        };
+        vm.outcomeSets.push(newOutcomeSet);
+        return newOutcomeSet.parameters;
+      } else {
+        return outcomeSets[0].parameters;
       }
-      var parameter = _.filter(effect.parameters, {name: parameterShort})
-      var parametersByName = _.groupBy(parameter, 'name');
+    }
 
-      console.log('parametersByName', parametersByName);
-      var popDict = {};
-      _.each(parametersByName, function (parameters) {
-        var key = makePopKey(parameters[0]);
-        popDict[key] = {
-          key: key,
-          years: getYearsFromParameters(parameters),
-          programs: getProgramsFromParameters(parameters)
-        }
-      });
-      console.log('completePopDict', popDict);
-      return popDict;
+    function makePopulationLabel(population) {
+      var popKey = population.pop;
+      return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
     }
 
     function yearSelector(row) {
       var start = vm.openProject.dataStart;
       var end = vm.openProject.dataEnd;
       var years = _.range(start, end+1);
-      var result = _.map(years, function(y) { return {'label':y, 'value':y} });
+      var result = _.map(years, function(y) { return {'label': y, 'value': y} });
       return result;
     }
 
-    function interactSelector(row) {
+    function makeInteractSelector(row) {
       return [
         {'value':'random','label':'random'},
         {'value':'nested','label':'nested'},
@@ -244,36 +185,31 @@ define(['./../module', 'underscore'], function (module, _) {
       ]
     }
 
-    function popSelector(row) {
-      var parsetId = vm.selectedParset.id;
-      var effect = _.findWhere(vm.effects, {parset: parsetId});
-      var parShort = vm.selectedParameter.short;
-      var pops = [];
-      _.each(effect.parameters, function(parameter) {
-        if (parameter.name == parShort) {
-          pops.push(parameter.pop);
-        }
+    function makePopulationSelector(row) {
+      var selector = [];
+      _.each(vm.selectedParameter.populations, function(population) {
+        selector.push({
+          'label':makePopulationLabel(population),
+          'value':population.pop
+        });
       });
-      var result = _.map(_.uniq(pops), function(p) { return {'label':p, 'value':p} });
-      return result;
+      return selector;
     }
 
-    function progSelector(row) {
-      var parsetId = vm.selectedParset.id;
-      var effect = _.findWhere(vm.effects, {parset: parsetId});
-      var names = [];
-      _.each(effect.parameters, function(parameter) {
-        _.each(parameter.years, function(year) {
-          _.each(year.programs, function(program) {
-            names.push(program.name);
-          })
+    function makeProgramSelectors(row) {
+      var selectors = [];
+      function hasBeenAdded(program) {
+        return _.filter(selectors, {'value': program.short}).length > 0;
+      }
+      _.each(vm.selectedParameter.populations, function(population) {
+        _.each(population.programs, function(program) {
+          if (!hasBeenAdded(program)) {
+            selectors.push({ 'label': program.name, 'value': program.short });
+          }
         })
       });
-      var result = _.map(_.uniq(names), function(name) {
-        return {'label':vm.getProgramName(name), 'value':name}
-      });
-      result.splice(0, 0, {'label':'<baseline>', 'value':'<baseline>'});
-      return result;
+      selectors.splice(0, 0, {'label':'<none>', 'value':''});
+      return selectors;
     }
 
     function validateTable(table) {
@@ -283,92 +219,104 @@ define(['./../module', 'underscore'], function (module, _) {
     function buildTable() {
       vm.parTable = {
         titles: [
-          "Pop", "Year", "Program", "Value (lo)", "Value (hi)", "Interaction"],
+          "Pop",
+          "Year",
+          "Lo",
+          "Hi",
+          "Program 1",
+          "Lo",
+          "Hi",
+          "Program 2",
+          "Lo",
+          "Hi",
+          "Interact"
+        ],
         rows: [],
-        types: ["selector", "selector", "selector", "number", "number", "selector"],
+        types: [
+          "selector", "selector",
+          "number", "number",
+          "selector", "number", "number",
+          "selector", "number", "number",
+          "selector"
+        ],
         widths: [],
-        displayRowFns: [null, null, null, null, null, null],
-        selectors: [popSelector, yearSelector, progSelector, null, null, interactSelector],
+        displayRowFns: [
+          null, null, null, null, null, null, null, null, null],
+        selectors: [
+          makePopulationSelector,
+          yearSelector,
+          null, null,
+          makeProgramSelectors,
+          null,
+          null,
+          makeProgramSelectors,
+          null,
+          null,
+          makeInteractSelector
+        ],
         validateFn: validateTable
       };
-      _.each(vm.effects, function(effect) {
-        _.each(effect.parameters, function(parameter) {
-          if (parameter.name == vm.selectedParameter.short) {
-            _.each(parameter.years, function (year) {
-              vm.parTable.rows.push([
-                "" + parameter.pop,
-                year.year,
-                "<baseline>",
-                year.intercept_lower,
-                year.intercept_upper,
-                year.interact,
-              ]);
-              _.each(year.programs, function (program) {
-                vm.parTable.rows.push([
-                  "" + parameter.pop,
-                  year.year,
+
+      _.each(getOutcomesForSelectedParset(), function(outcome) {
+        if (outcome.name == vm.selectedParameter.short) {
+          _.each(outcome.years, function (year) {
+
+            var table = [
+              "" + outcome.pop,
+              year.year,
+              year.intercept_lower,
+              year.intercept_upper
+            ];
+
+            var restOfTable = [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ];
+
+            if (!vm.selectedParameter.coverage) {
+              if (year.programs.length == 1) {
+                var program = year.programs[0];
+                restOfTable = [
                   program.name,
                   program.intercept_lower,
                   program.intercept_upper,
-                  year.interact
+                  "<none>",
+                  "",
+                  "",
+                  ""
+                ];
+              } else {
+                var program0 = year.programs[0];
+                var program1 = year.programs[1];
+                table = table.concat([
+                  program0.name,
+                  program0.intercept_lower,
+                  program0.intercept_upper,
+                  program1.name,
+                  program1.intercept_lower,
+                  program1.intercept_upper,
+                  program0.interact,
                 ]);
 
-              });
-            });
-          }
-        })
+              }
+            }
+
+            table = table.concat(restOfTable);
+            vm.parTable.rows.push(table);
+
+          });
+        }
       });
       console.log('parTable', vm.parTable);
     }
 
-    function getEffectForSelectedParset() {
-      var effects = _.filter(vm.effects, {parset: vm.selectedParset.id});
-      if (effects.length === 0) {
-        // create a new targeted effect
-        var newEffect = {
-          parset: vm.selectedParset.id,
-          parameters: []
-        };
-        vm.effects.push(newEffect);
-        return newEffect;
-      } else {
-        return effects[0];
-      }
-    }
-
-    function containsPopulation(parameters, population) {
-      function hasPopulation(parameter) {
-        if (population.pop instanceof Array) {
-          if (parameter.pop.length != population.pop.length) {
-            return false;
-          }
-          return _.difference(parameter.pop, population.pop).length === 0;
-        }
-        return population.pop === parameter.pop;
-      }
-      var selectedParameters = _.filter(parameters, {name: vm.selectedParameter.short});
-      // consoleLogJson("selectedParameters", selectedParameters);
-      return _.filter(selectedParameters, hasPopulation).length > 0;
-    }
-
     function changeParameter() {
-      var parameter = _.pick(vm.selectedParameter, ['name', 'short', 'coverage']);
-      vm.currentParameter = _.extend(parameter, {populations: makePopDict()});
-      console.log("vm.currentParameter", vm.currentParameter);
-
-      // ensure effect has selected parameter and populations
-      var effect = getEffectForSelectedParset();
-      _.each(vm.currentParameter.populations, function(population) {
-        if (!containsPopulation(effect.parameters, population)) {
-          var newParameter = {
-            name: vm.selectedParameter.short,
-            pop: population.pop,
-            years: []
-          };
-          effect.parameters.push(newParameter);
-        }
-      });
-      // consoleLogJson('effect', effect);
+      consoleLogJson("vm.selectedParameter", vm.selectedParameter);
       buildTable();
     }
 
@@ -377,35 +325,16 @@ define(['./../module', 'underscore'], function (module, _) {
         console.error('form is invalid!');
         return false;
       }
-      console.log('submitting effects=', vm.effects);
+      console.log('submitting effects=', vm.outcomeSets);
       $http.put(
         '/api/project/' + vm.openProject.id
         + '/progsets/' + vm.selectedProgset.id
-        + '/effects', vm.effects)
+        + '/effects', vm.outcomeSets)
       .success(function (result) {
         console.log('returned effects=', result);
-        vm.effects = result.effects;
-        toastr.success('Effects were successfully saved!', 'Success');
+        vm.outcomeSets = result.effects;
+        toastr.success('Outcomes were successfully saved!', 'Success');
       });
-    }
-
-    function selectTab(tab) {
-      vm.activeTab = tab;
-    }
-
-    function deleteYear(yearObject, yearIndex) {
-      yearObject.years = _.reject(yearObject.years, function (year, index) {
-        return index === yearIndex
-      });
-      console.log(vm.effects);
-    }
-
-    function addYear(yearObject) {
-      yearObject.years.push({
-        id: _.random(1, 10000),
-        programs: vm.initYearPrograms(yearObject.pop)
-      });
-
     }
 
     initialize();

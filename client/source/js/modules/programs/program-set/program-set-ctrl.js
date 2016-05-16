@@ -166,7 +166,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.activeProgramSet = copiedProgramSet;
         };
-        programSetModalService.openProgramSetModal(copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
+        programSetModalService.openProgramSetModal(
+            copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
       }
     };
 
@@ -185,7 +186,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         );
       } else {
         $http({
-          url: '/api/project/' + openProject.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
+          url: '/api/project/' + openProject.id
+                + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
           method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
           data: $scope.activeProgramSet
         }).success(function (response) {
@@ -206,11 +208,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
       editProgram.short = editProgram.short || editProgram.short;
-      return programSetModalService.openProgramModal(editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
-        function (newProgram) {
+      return programSetModalService
+        .openProgramModal(
+          editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+        .result
+        .then(function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
-        }
-      );
+        });
     };
 
     // Creates a new program and opens a modal for editing.
@@ -220,11 +224,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
-        function (newProgram) {
+      return programSetModalService
+        .openProgramModal(
+            program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+        .result
+        .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
-        }
-      );
+        });
     };
 
     // Makes a copy of an existing program and opens a modal for editing.
@@ -237,11 +243,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.short = (program.short || program.short ) + ' copy';
       program.short = undefined;
 
-      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
-        function (newProgram) {
+      return programSetModalService
+        .openProgramModal(
+          program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+        .result
+        .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
-        }
-      );
+        });
     };
 
   });

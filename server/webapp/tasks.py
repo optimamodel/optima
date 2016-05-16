@@ -10,7 +10,7 @@ import optima as op
 from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result, load_project_record, load_parset_record
+from server.webapp.dataio import save_result, load_project_record
 
 from celery import Celery
 
@@ -128,20 +128,14 @@ def check_calculation_status(project_id):
 
 
 @celery_instance.task()
-def run_autofit(project_id, parset_id, maxtime=60):
+def run_autofit(project_id, parset_name, maxtime=60):
     import traceback
+    app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
     error_text = ""
     status = 'completed'
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     project_instance = op.loads(wp.project)
-    parset_name = None
-    for key in project_instance.parsets:
-        parset = project_instance.parsets[key]
-        if str(parset.uid) == str(parset_id):
-            parset_name = parset.name
-            break
-    app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
     close_db_session(db_session)
     result = None
     try:

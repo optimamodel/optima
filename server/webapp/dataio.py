@@ -1,5 +1,4 @@
-from optima.defaults import defaultprograms
-from server.webapp.parse import parse_program_summary, parse_parameters_of_parset_list
+from server.webapp.parse import parse_parameters_of_parset_list, parse_parameters_from_progset_parset
 
 __doc__ = """
 
@@ -467,3 +466,13 @@ def get_target_popsizes(project_id, parset_id, progset_id, program_id):
     years = get_project_years(project_id)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
     return normalize_obj(dict(zip(years, popsizes)))
+
+
+def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
+    progset_record = load_progset_record(project_id, progset_id)
+    progset = progset_record.hydrate()
+
+    parset_record = load_parset_record(project_id, parset_id)
+    parset = parset_record.hydrate()
+
+    return parse_parameters_from_progset_parset(progset, parset)

@@ -1,5 +1,3 @@
-
-
 """
 
 Functions to convert Optima objects into JSON-compatible
@@ -36,7 +34,7 @@ def parse_targetpars(targetpars):
         }
         for short, pop
         in parameters.items()
-    ]
+        ]
 
 
 def revert_targetpars(pars):
@@ -46,12 +44,12 @@ def revert_targetpars(pars):
     for par in pars:
         if par.get('active', False):
             targetpars.extend([
-                {
-                    'param': par['param'],
-                    'pop': pop if type(pop) in (str, unicode) else tuple(pop)
-                }
-                for pop in par['pops']
-            ])
+                                  {
+                                      'param': par['param'],
+                                      'pop': pop if type(pop) in (str, unicode) else tuple(pop)
+                                  }
+                                  for pop in par['pops']
+                                  ])
     return targetpars
 
 
@@ -118,6 +116,30 @@ def parse_default_program_summaries(project):
 
 
 def get_parset_parameters(parset, ind=0):
+    """
+
+    Args:
+        parset: optima parameterset object
+
+    Returns:
+    [
+      {
+        "value": 13044975.57899749,
+        "type": "exp",
+        "subkey": "Males 15-49",
+        "key": "popsize",
+        "label": "Population size -- Males 15-49"
+      },
+      {
+        "value": 0.7,
+        "type": "const",
+        "subkey": null,
+        "key": "recovgt350",
+        "label": "Treatment recovery rate into CD4>350 (%/year)"
+      },
+    ]
+
+    """
     parameters = []
     for key, par in parset.pars[ind].items():
         if hasattr(par, 'fittable') and par.fittable != 'no':
@@ -196,8 +218,42 @@ def print_parset(parset):
                 par = normalize_obj(par.p)
             else:
                 par = normalize_obj(par)
-            s += pprint.pformat({ key: par }) + "\n"
+            s += pprint.pformat({key: par}) + "\n"
     return s
+
+
+param_fields = {
+    'name': fields.String,
+    'populations': fields.Raw,
+    'coverage': fields.Boolean,
+}
+
+
+def parse_parameters_from_progset_parset(progset, parset):
+    target_par_keys = set([p['param'] for p in progset.targetpars])
+    pars = parset.pars[0]
+    parameters = [
+        {
+            'name': par_key,
+            'coverage': pars[par_key].coverage,
+            'proginteract': pars[par_key].proginteract,
+            'populations': [
+                {
+                    'pop': popKey,
+                    'programs': [
+                        {
+                            'name': program.name,
+                            'short': program.short,
+                        }
+                        for program in programs
+                    ]
+                }
+                for popKey, programs in progset.progs_by_targetpar(par_key).items()
+            ],
+        }
+        for par_key in target_par_keys
+    ]
+    return marshal(parameters, param_fields)
 
 
 parameter_fields = {
@@ -221,10 +277,10 @@ def parse_parameters_of_parset_list(parset_list):
         for par in parset.pars:
             for par_key in default_pars:
                 if par_key not in added_par_keys \
-                and par_key in par \
-                and isinstance(par[par_key], Par) \
-                and par[par_key].visible == 1 \
-                and par[par_key].y.keys():
+                        and par_key in par \
+                        and isinstance(par[par_key], Par) \
+                        and par[par_key].visible == 1 \
+                        and par[par_key].y.keys():
                     parameter = par[par_key].__dict__
                     parameter['pships'] = []
                     if par[par_key].by == 'pship':
@@ -232,7 +288,6 @@ def parse_parameters_of_parset_list(parset_list):
                     parameters.append(parameter)
                     added_par_keys.add(par_key)
     return marshal(parameters, parameter_fields)
-
 
 
 # WARNING, this should probably not be hard-coded here
@@ -308,5 +363,95 @@ def scenario_program(orig_programs):  # result is either budget or coverage, dep
             programs[program_name].append(float(elem))
 
     return programs
+
+
+def parse_outcomes_from_progset(progset):
+    """
+    Args:
+        progset: an Optima set of programs
+
+    Returns:
+        The outcomes in a list of dictionaries:
+
+    [ { 'name': 'numcirc',
+        'pop': 'tot',
+        'years': [ { 'interact': 'random',
+                     'intercept_lower': 0.0,
+                     'intercept_upper': 0.0,
+                     'programs': [ { 'intercept_lower': None,
+                                     'intercept_upper': None,
+                                     'name': u'VMMC'}],
+                     'year': 2016.0}]},
+      { 'name': u'condcom',
+        'pop': (u'Clients', u'FSW'),
+        'years': [ { 'interact': 'random',
+                     'intercept_lower': 0.3,
+                     'intercept_upper': 0.6,
+                     'programs': [ { 'intercept_lower': 0.9,
+                                     'intercept_upper': 0.95,
+                                     'name': u'FSW programs'}],
+                     'year': 2016.0}]},
+    ]
+    """
+    outcomes = []
+    for par_short in progset.targetpartypes:
+        pop_keys = progset.progs_by_targetpar(par_short).keys()
+        for pop_key in pop_keys:
+            covout = progset.covout[par_short][pop_key]
+            n_year = len(covout.ccopars['t'])
+            outcome = {
+                'name': par_short,
+                'pop': pop_key,
+                'years': [
+                    {
+                        'intercept_upper': covout.ccopars['intercept'][i_year][1],
+                        'intercept_lower': covout.ccopars['intercept'][i_year][0],
+                        'interact': covout.ccopars['interact'][i_year]
+                                    if 'interact' in covout.ccopars.keys()
+                                    else 'random',
+                        'programs': [
+                            {
+                                'name': program_name,
+                                'intercept_lower': program_intercepts[i_year][0] if len(program_intercepts) > i_year else None,
+                                'intercept_upper': program_intercepts[i_year][1] if len(program_intercepts) > i_year else None,
+                            }
+                            for program_name, program_intercepts in covout.ccopars.items()
+                            if program_name not in ['intercept', 't', 'interact']
+                        ],
+                        'year': covout.ccopars['t'][i_year]
+                    }
+                    for i_year in range(n_year)
+                ]
+            }
+            outcomes.append(outcome)
+    return outcomes
+
+
+def put_outcomes_into_progset(outcomes, progset):
+    for outcome in outcomes:
+        for year in outcome['years']:
+            par_short = outcome['name']
+            if par_short not in progset.covout:
+                continue
+            covout = progset.covout[par_short]
+
+            ccopar = {
+                'intercept': (year['intercept_lower'], year['intercept_upper']),
+                't': int(year['year']),
+                'interact': year['interact'],
+            }
+
+            for program in year["programs"]:
+                if program['intercept_lower'] is not None \
+                and program['intercept_upper'] is not None:
+                    ccopar[program['name']] = \
+                        (program['intercept_lower'], program['intercept_upper'])
+                else:
+                    ccopar[program['name']] = None
+
+            islist = isinstance(outcome['pop'], list)
+            poptuple = tuple(outcome['pop']) if islist else outcome['pop']
+            if poptuple in covout:
+                covout[poptuple].addccopar(ccopar, overwrite=True)
 
 

@@ -937,7 +937,7 @@ class DefaultParameters(Resource):
     GET /api/project/<project_id>/parameters
 
     Returns all available parameters with their properties. Used by
-    program-set to construct the project effects drop down.
+    program-set in the program modal.
     """
 
     @swagger.operation(summary="List default parameters")

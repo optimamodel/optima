@@ -1,27 +1,23 @@
-from datetime import datetime
-import dateutil
 from copy import deepcopy
+from datetime import datetime
 from pprint import pprint
 
-from flask_restful_swagger import swagger
+import dateutil
 from flask_restful import fields
-
-from server.webapp.exceptions import DuplicateProgram
-
-from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
+from flask_restful_swagger import swagger
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy.orm import deferred
 
+import optima as op
+from optima import saves
+from server.webapp.dbconn import db
+from server.webapp.exceptions import DuplicateProgram
 from server.webapp.exceptions import ParsetDoesNotExist
-from server.webapp.utils import normalize_obj
 from server.webapp.parse import (
     parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata,
-    parse_default_program_summaries)
-from server.webapp.dbconn import db
-
-from optima import saves
-import optima as op
-
+    parse_default_program_summaries, parse_outcomes_from_progset, put_outcomes_into_progset)
+from server.webapp.utils import normalize_obj
 
 
 def log_var(name, obj):
@@ -286,7 +282,6 @@ class ProjectDb(db.Model):
         # This is the same behaviour as with parsets.
         if project.progsets:
             from server.webapp.dataio import update_or_create_progset_record
-            from server.webapp.dataio import load_project_program_summaries
 
             program_summaries = parse_default_program_summaries(project)
 
@@ -631,7 +626,6 @@ class ProgramsDb(db.Model):
         })
 
 
-
 @swagger.model
 class ProgsetsDb(db.Model):
 
@@ -669,6 +663,7 @@ class ProgsetsDb(db.Model):
         self.effects = effects
 
     def hydrate(self):
+        print(">>>>>>>> Hydrate progset '%s'" % self.name)
         # In BE, programs don't have an "active" flag
         # therefore only hydrating active programs
         progset = op.Programset(
@@ -681,36 +676,14 @@ class ProgsetsDb(db.Model):
         )
         if self.effects is not None:
             for effect in self.effects:
-                for parameter in effect['parameters']:
-                    for year in parameter['years']:
-                        effect = {
-                            'intercept': (year['intercept_lower'], year['intercept_upper']),
-                            't': int(year['year']),
-                            'interact': year['interact'],
-                        }
-
-                        for row in year["programs"]:
-                            if row['intercept_lower'] is not None and row['intercept_upper'] is not None:
-                                effect[row['name']] = (row['intercept_lower'], row['intercept_upper'])
-                            else:
-                                effect[row['name']] = None
-
-                        if parameter['name'] not in progset.covout:
-                            continue
-
-                        islist = isinstance(parameter['pop'], list)
-                        poptuple = tuple(parameter['pop']) if islist else parameter['pop']
-                        covout = progset.covout[parameter['name']]
-                        if poptuple in covout:
-                            covout[poptuple].addccopar(effect, overwrite=True)
-
+                put_outcomes_into_progset(effect['parameters'], progset)
         return progset
 
     def get_extra_data(self):
-        be_progset = self.hydrate()
-        be_progset.gettargetpartypes()
-        self.targetpartypes = be_progset.targetpartypes
-        self.readytooptimize = be_progset.readytooptimize()
+        progset = self.hydrate()
+        progset.gettargetpartypes()
+        self.targetpartypes = progset.targetpartypes
+        self.readytooptimize = progset.readytooptimize()
 
     def restore(self, progset, default_program_summaries):
         from server.webapp.dataio import update_or_create_program_record
@@ -744,38 +717,14 @@ class ProgsetsDb(db.Model):
                 program_summary = parse_program_summary(program)
                 update_or_create_program_record(self.project.id, self.id, short, program_summary, True)
 
-        effects = []
-        for targetpartype in progset.targetpartypes:
-            for thispop in progset.progs_by_targetpar(targetpartype).keys():
-                item = {
-                    'name': targetpartype,
-                    'pop': thispop,
-                    'years': [
-                        {
-                            'intercept_upper': progset.covout[targetpartype][thispop].ccopars['intercept'][i][1],
-                            'intercept_lower': progset.covout[targetpartype][thispop].ccopars['intercept'][i][0],
-                            'interact': progset.covout[targetpartype][thispop].ccopars['interact'][i] if 'interact' in progset.covout[targetpartype][thispop].ccopars.keys() else 'random',
-                            'programs': [
-                                {
-                                    'name': k,
-                                    'intercept_lower': v[i][0] if len(v) > i else None,
-                                    'intercept_upper': v[i][1] if len(v) > i else None,
-                                }
-                                for k, v in progset.covout[targetpartype][thispop].ccopars.iteritems()
-                                if k not in ['intercept', 't', 'interact']
-                            ],
-                            'year': progset.covout[targetpartype][thispop].ccopars['t'][i]
-                        } for i in range(len(progset.covout[targetpartype][thispop].ccopars['t']))
-                    ]
-                }
-                effects.append(item)
-        print('##### Restore effects')
-        print(effects)
+        print('>>> Restore outcomes/effects')
+        parameters = parse_outcomes_from_progset(progset)
+        pprint(parameters, indent=2)
         parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
         self.effects = [
             {
                 'parset': str(parset.id) if parset else None,
-                'parameters': effects
+                'parameters': parameters
             }
         ]
         db.session.commit()
