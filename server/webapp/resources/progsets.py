@@ -86,7 +86,7 @@ class Progsets(Resource):
         db.session.add(progset_entry)
         db.session.flush()
 
-        progset_entry.recreate_programs_from_list(args['programs'], progset_entry.id)
+        progset_entry.update_from_program_summaries(args['programs'], progset_entry.id)
 
         db.session.commit()
 
@@ -123,7 +123,7 @@ class Progset(Resource):
         progset_entry = load_progset_record(project_id, progset_id)
         args = progset_parser.parse_args()
         progset_entry.name = args['name']
-        progset_entry.recreate_programs_from_list(args.get('programs', []), progset_id)
+        progset_entry.update_from_program_summaries(args.get('programs', []), progset_id)
 
         db.session.commit()
 

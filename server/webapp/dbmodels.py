@@ -730,7 +730,7 @@ class ProgsetsDb(db.Model):
         ]
         db.session.commit()
 
-    def recreate_programs_from_list(self, program_summaries, progset_id):
+    def update_from_program_summaries(self, program_summaries, progset_id):
         from server.webapp.dataio import update_or_create_program_record
 
         desired_shorts = set([summary.get('short', '') for summary in program_summaries])
