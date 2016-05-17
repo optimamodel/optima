@@ -700,23 +700,21 @@ class ProgsetsDb(db.Model):
             if short in progset.programs:
                 loaded_shorts.add(short)
                 program = progset.programs[short]
-                loaded_program_summary = parse_program_summary(program)
+                loaded_program_summary = parse_program_summary(program, True)
                 for replace_key in ['ccopars', 'costcov']:
                     if replace_key in loaded_program_summary:
                         program_summary[replace_key] = loaded_program_summary[replace_key]
-                active = True
-            else:
-                active = False
-            desc = "default active" if active else "default inactive"
+                program_summary['active'] = True
+            desc = "default active" if program_summary['active'] else "default inactive"
             print '>>>> Parse %s program "%s" - "%s"' % (desc, short, program_summary['name'])
-            update_or_create_program_record(self.project.id, self.id, short, program_summary, active)
+            update_or_create_program_record(self.project.id, self.id, short, program_summary)
 
         # save programs that are not in defaults
         for short, program in progset.programs.iteritems():
             if short not in loaded_shorts:
                 print '>>>> Parse custom active "%s" - "%s"' % (short, program_summary['name'])
-                program_summary = parse_program_summary(program)
-                update_or_create_program_record(self.project.id, self.id, short, program_summary, True)
+                program_summary = parse_program_summary(program, True)
+                update_or_create_program_record(self.project.id, self.id, short, program_summary)
 
         print('>>> Restore outcomes/effects')
         parameters = parse_outcomes_from_progset(progset)
