@@ -5,6 +5,7 @@
   </div>
 
   <div style="display: flex">
+
       <span style="margin-right: 20px">
         <label>
           Select a program set: <br>
@@ -16,7 +17,8 @@
           </select>
         </label>
       </span>
-      <span style="">
+
+      <span>
         <label>
           Select a parameter set: <br>
           <select
@@ -27,6 +29,7 @@
           </select>
         </label>
       </span>
+
   </div>
 
   <div ng-if="vm.selectedProgset && vm.selectedParset">
@@ -62,10 +65,6 @@
       <br>
 
       <entry-table table="vm.parTable"></entry-table>
-
-      <br/>
-
-      <button ng-click="vm.submit()" class="btn">Submit</button>
 
     </div>
   </div>

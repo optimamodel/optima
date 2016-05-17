@@ -10,7 +10,9 @@
     <!-- Normal cell values -->
     <td ng-if="$parent.$index != table.iEditRow"
         ng-repeat="cell in getDisplayRow($index) track by $index">
-      <span ng-if='table.types[$index] == "number"'>
+      <span
+          style="width:{{table.widths[$index]}}px"
+          ng-if='table.types[$index] == "number"'>
         {{cell}}
       </span>
       <span ng-if='table.types[$index] == "display"'>
@@ -26,6 +28,7 @@
         ng-repeat="cell in getDisplayRow($index) track by $index">
       <input
           ng-if='table.types[$index] == "number"'
+          style="width:{{table.widths[$index]}}px"
           type="number"
         ng-model="row[$index]">
       <span

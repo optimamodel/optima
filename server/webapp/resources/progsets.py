@@ -3,11 +3,9 @@ import uuid
 from pprint import pprint
 
 import mpld3
-from flask import current_app
-from flask import helpers
+from flask import current_app, request, helpers
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with
-from flask_restful import fields
+from flask_restful import Resource, marshal_with, marshal, fields
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
@@ -327,19 +325,16 @@ parset_effect_parser.add_arguments({
 })
 
 
-effect_parser = RequestParser()
-effect_parser.add_argument('effects', type=SubParser(parset_effect_parser), action='append')
-
 class ProgsetEffects(Resource):
     """
     GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
 
     Fetch the effects of a given progset, given in the marshalled fields of
-    a ProgsetsDB record
+    a ProgsetsDB record, used in cost-coverage-ctrl.js
 
     PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
 
-    Saves the effects of a given progset
+    Saves the effects of a given progset, used in cost-coverage-ctrl.js
     """
 
     method_decorators = [report_exception, login_required]
@@ -350,27 +345,20 @@ class ProgsetEffects(Resource):
     @marshal_with(progset_effects_fields)
     def get(self, project_id, progset_id):
         from server.webapp.dataio import load_progset_record
-
         progset_entry = load_progset_record(project_id, progset_id)
         return progset_entry
 
-    @swagger.operation(
-        summary='Saves a list of Progset effects for the selected progset',
-        parameters=effect_parser.swagger_parameters()
-    )
-    @marshal_with(progset_effects_fields)
+    @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
+        effects = request.get_json(force=True)
         from server.webapp.dataio import load_progset_record
-
         progset_entry = load_progset_record(project_id, progset_id)
-
-        args = effect_parser.parse_args()
-        progset_entry.effects = args.get('effects', [])
-
+        progset_entry.effects = normalize_obj(effects)
+        print "Save Effects = "
+        pprint(progset_entry.effects)
         db.session.add(progset_entry)
         db.session.commit()
-
-        return progset_entry
+        return marshal(progset_entry, progset_effects_fields)
 
 
 

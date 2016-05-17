@@ -23,7 +23,6 @@ define(['./../module', 'underscore'], function (module, _) {
       }
     ];
 
-
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
@@ -112,6 +111,7 @@ define(['./../module', 'underscore'], function (module, _) {
       if (vm.selectedProgset && vm.selectedProgset.targetpartypes && vm.selectedParset) {
 
         // fetch target parameters of this progset/parset combo
+        // todo: parse the parsets directly here
         $http.get(
           '/api/project/' + vm.openProject.id
           + '/progsets/' + vm.selectedProgset.id
@@ -160,41 +160,157 @@ define(['./../module', 'underscore'], function (module, _) {
       return vm.programSelector;
     }
 
+    function submit() {
+      var payload = vm.outcomeSets;
+      console.log('submitting payload=', payload);
+      $http.put(
+        '/api/project/' + vm.openProject.id
+          + '/progsets/' + vm.selectedProgset.id
+          + '/effects',
+        payload)
+      .success(function (result) {
+        console.log('returned effects=', result);
+        vm.outcomeSets = result.effects;
+        toastr.success('Outcomes were successfully saved!', 'Success');
+      });
+    }
+
+    function getOptVal(val, defaultVal) {
+      if (val === "" || _.isUndefined(val)) {
+        return defaultVal;
+      }
+      return val;
+    }
+
     function validateTable(table) {
-      console.log(table.rows);
+      // {
+      //   "name": "condcas",
+      //   "pop": [
+      //     "Females 15-49",
+      //     "Clients"
+      //   ],
+      //   "years": [
+      //     {
+      //       "intercept_upper": 0.4,
+      //       "interact": "random",
+      //       "intercept_lower": 0.3,
+      //       "programs": [
+      //         {
+      //           "intercept_upper": 0.7,
+      //           "name": "SBCC + Condoms",
+      //           "intercept_lower": 0.5
+      //         }
+      //       ],
+      //       "year": 2016
+      //     }
+      //   ]
+      // }
+      var outcomes = getOutcomesForSelectedParset();
+      var parShort = vm.selectedParameter.short;
+
+      _.each(vm.parTable.rows, function(row, iRow) {
+        
+        if (iRow == vm.parTable.iEditRow) {
+          return;
+        }
+
+        var outcome = _.findWhere(outcomes, {'name':parShort, 'pop':row[0]});
+        if (_.isUndefined(outcome)) {
+          outcome = {
+            name: parShort,
+            pop: row[0],
+            interact: "random",
+            years: []
+          };
+          outcomes.push(outcome);
+        }
+
+        var years = outcome.years;
+        var yearVal = parseInt(row[1]);
+        year = _.findWhere(years, {year: yearVal});
+        if (_.isUndefined(year)) {
+          var year = {
+            year: yearVal,
+            intercept_lower: row[2],
+            intercept_upper: row[3],
+            interact: getOptVal(row[10], "random"),
+            programs: []
+          };
+          years.push(year);
+        } else {
+          year.programs.splice(0, year.programs.length);
+        }
+
+        var program1 = row[4];
+        if (program1) {
+          year.programs.push({
+            name: program1,
+            intercept_lower: getOptVal(row[5], null),
+            intercept_upper: getOptVal(row[6], null),
+          })
+        }
+        var program2 = row[7];
+        if (program2) {
+          year.programs.push({
+            name: program2,
+            intercept_lower: getOptVal(row[8], null),
+            intercept_upper: getOptVal(row[9], null)
+          })
+        }
+
+        console.log("row", row);
+        consoleLogJson("new outcome", outcome);
+      });
+      submit();
     }
 
-    function hasBeenAdded(program, selector) {
-      return _.filter(selector, { 'value': program.short }).length > 0;
+    function hasNotBeenAdded(program, programSelector) {
+      return _.filter(programSelector, { 'value': program.short }).length == 0;
     }
 
-    function resetSelectors() {
+    function resetDynamicSelectors() {
       var currPop = vm.populationSelector[0].value;
       var iEditRow = vm.parTable.iEditRow;
       if (!_.isUndefined(iEditRow)) {
         currPop = vm.parTable.rows[iEditRow][0];
       }
 
-      vm.populationProgramSelector = [{ 'label': '<none>', 'value': '' }];
+      var firstProgramSelector = [{ 'label': '<none>', 'value': '' }];
       _.each(vm.selectedParameter.populations, function (population) {
         _.each(population.programs, function (program) {
           if (population.pop == currPop) {
-            if (!hasBeenAdded(program, vm.populationProgramSelector)) {
-              vm.populationProgramSelector.push({ 'label': program.name, 'value': program.short });
+            if (hasNotBeenAdded(program, firstProgramSelector)) {
+              firstProgramSelector.push({
+                'label': program.name, 'value': program.short });
             }
           }
         })
       });
+
+      var secondProgramSelector = [{ 'label': '<none>', 'value': '' }];
+      if (firstProgramSelector.length > 2) {
+        _.each(vm.selectedParameter.populations, function (population) {
+          _.each(population.programs, function (program) {
+            if (population.pop == currPop) {
+              if (hasNotBeenAdded(program, secondProgramSelector)) {
+                secondProgramSelector.push({
+                  'label': program.name, 'value': program.short
+                });
+              }
+            }
+          })
+        });
+      }
 
       vm.parTable.options = [
         vm.populationSelector,
         vm.yearSelector,
         null,
         null,
-        vm.populationProgramSelector,
+        firstProgramSelector,
         null,
         null,
-        vm.populationProgramSelector,
+        secondProgramSelector,
         null,
         null,
         vm.interactSelector
@@ -205,7 +321,7 @@ define(['./../module', 'underscore'], function (module, _) {
 
       vm.parTable = {
         titles: [
-          "Pop",
+          "Population / Partnerships",
           "Year",
           "Lo",
           "Hi",
@@ -225,7 +341,7 @@ define(['./../module', 'underscore'], function (module, _) {
           "selector", "number", "number",
           "selector"
         ],
-        widths: [],
+        widths: ["", "", 100, 100, "", 100, 100, "", 100, 100],
         displayRowFns: [
           null, null, null, null, null, null, null, null, null],
         selectors: [
@@ -240,7 +356,7 @@ define(['./../module', 'underscore'], function (module, _) {
           null,
           makeInteractSelector
         ],
-        updateFn: resetSelectors,
+        updateFn: resetDynamicSelectors,
         validateFn: validateTable
       };
 
@@ -248,67 +364,51 @@ define(['./../module', 'underscore'], function (module, _) {
         if (outcome.name == vm.selectedParameter.short) {
           _.each(outcome.years, function (year) {
 
-            var table = [
+            var row = [
               "" + outcome.pop,
               year.year,
               year.intercept_lower,
               year.intercept_upper
             ];
 
-            var restOfTable = [
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                ""
+            var restOfTable = ["", "", "", "", "", "", ""];
+
+            if (year.programs.length == 1) {
+              var program = year.programs[0];
+              restOfTable = [
+                program.name,
+                program.intercept_lower,
+                program.intercept_upper,
+                "", "", "", ""
               ];
-
-            if (!vm.selectedParameter.coverage) {
-              if (year.programs.length == 1) {
-                var program = year.programs[0];
-                restOfTable = [
-                  program.name,
-                  program.intercept_lower,
-                  program.intercept_upper,
-                  "<none>",
-                  "",
-                  "",
-                  ""
-                ];
-              } else {
-                var program0 = year.programs[0];
-                var program1 = year.programs[1];
-                table = table.concat([
-                  program0.name,
-                  program0.intercept_lower,
-                  program0.intercept_upper,
-                  program1.name,
-                  program1.intercept_lower,
-                  program1.intercept_upper,
-                  program0.interact,
-                ]);
-
-              }
+            } else if (year.programs.length == 2) {
+              var program0 = year.programs[0];
+              var program1 = year.programs[1];
+              row = row.concat([
+                program0.name,
+                program0.intercept_lower,
+                program0.intercept_upper,
+                program1.name,
+                program1.intercept_lower,
+                program1.intercept_upper,
+                program0.interact,
+              ]);
             }
 
-            table = table.concat(restOfTable);
-            vm.parTable.rows.push(table);
-
+            row = row.concat(restOfTable);
+            consoleLogJson("outcome", outcome);
+            console.log("row", row);
+            vm.parTable.rows.push(row);
           });
         }
       });
-      console.log('parTable', vm.parTable);
     }
 
-    function changeParameter() {
-      consoleLogJson("vm.selectedParameter", vm.selectedParameter);
-
+    function buildParameterSelectors() {
       vm.interactSelector = [
-        {'value':'random','label':'random'},
-        {'value':'nested','label':'nested'},
-        {'value':'additive','label':'additive'}
+        { 'value': 'random', 'label': 'random' },
+        { 'value': 'nested', 'label': 'nested' },
+        { 'value': 'additive', 'label': 'additive' }
       ];
 
       vm.populationSelector = [];
@@ -322,33 +422,18 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.programSelector = [{ 'label': '<none>', 'value': '' }];
       _.each(vm.selectedParameter.populations, function (population) {
         _.each(population.programs, function (program) {
-          if (!hasBeenAdded(program, vm.programSelector)) {
+          if (hasNotBeenAdded(program, vm.programSelector)) {
             vm.programSelector.push({ 'label': program.name, 'value': program.short });
           }
         })
       });
-
-      buildTable();
-
-      resetSelectors();
-
     }
 
-    function submit() {
-      if (vm.TableForm.$invalid) {
-        console.error('form is invalid!');
-        return false;
-      }
-      console.log('submitting effects=', vm.outcomeSets);
-      $http.put(
-        '/api/project/' + vm.openProject.id
-        + '/progsets/' + vm.selectedProgset.id
-        + '/effects', vm.outcomeSets)
-      .success(function (result) {
-        console.log('returned effects=', result);
-        vm.outcomeSets = result.effects;
-        toastr.success('Outcomes were successfully saved!', 'Success');
-      });
+    function changeParameter() {
+      console.log("vm.selectedParameter", vm.selectedParameter);
+      buildParameterSelectors();
+      buildTable();
+      resetDynamicSelectors();
     }
 
     initialize();
