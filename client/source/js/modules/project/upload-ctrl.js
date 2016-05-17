@@ -16,7 +16,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
         // if no projectname given, automatically fill in name from file
         if (!$scope.projectParams.name) {
-          var fileName = files[0].name.replace(".prj", "");
+          var fileName = files[0].name.replace(/\.prj$/, "");
 
           // if project name taken, try variants
           var i = 0;
