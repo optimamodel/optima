@@ -9,6 +9,7 @@ There should be no references to the database here!
 """
 
 from collections import defaultdict
+from pprint import pprint
 
 from flask.ext.restful import fields, marshal
 
@@ -222,21 +223,24 @@ def print_parset(parset):
     return s
 
 
-param_fields = {
-    'name': fields.String,
-    'populations': fields.Raw,
-    'coverage': fields.Boolean,
-}
+def parse_parameters_from_progset_parset(settings, progset, parset):
 
+    def convert(limit):
+        return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
 
-def parse_parameters_from_progset_parset(progset, parset):
-    target_par_keys = set([p['param'] for p in progset.targetpars])
+    def get_limits(par):
+        result = map(convert, par.limits)
+        return result
+
+    target_par_shorts = set([p['param'] for p in progset.targetpars])
     pars = parset.pars[0]
     parameters = [
         {
-            'name': par_key,
-            'coverage': pars[par_key].coverage,
-            'proginteract': pars[par_key].proginteract,
+            'short': par_short,
+            'name': pars[par_short].name,
+            'coverage': pars[par_short].coverage,
+            'limits': get_limits(pars[par_short]),
+            'interact': pars[par_short].proginteract,
             'populations': [
                 {
                     'pop': popKey,
@@ -248,12 +252,13 @@ def parse_parameters_from_progset_parset(progset, parset):
                         for program in programs
                     ]
                 }
-                for popKey, programs in progset.progs_by_targetpar(par_key).items()
+                for popKey, programs in progset.progs_by_targetpar(par_short).items()
             ],
         }
-        for par_key in target_par_keys
+        for par_short in target_par_shorts
     ]
-    return marshal(parameters, param_fields)
+
+    return parameters
 
 
 parameter_fields = {

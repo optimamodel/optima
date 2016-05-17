@@ -39,36 +39,6 @@ class ParsetYkeys(Resource):
         return {'keys': y_keys}
 
 
-class ParsetLimits(Resource):
-    """
-    GET /api/project/{project_id}/parsets/limits
-
-    Returns the limits of all parameters in the parsets of a given project
-    """
-    @swagger.operation(summary='get parameters limits')
-    def get(self, project_id):
-        settings = load_project(project_id).settings
-        parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
-        parset_dict = {str(record.id): record.hydrate() for record in parset_records}
-
-        def convert_limit(limit):
-            if isinstance(limit, str):
-                return settings.convertlimits(limits=limit)
-            else:
-                return limit
-
-        return {
-            'parsets': {
-                parset_id: {
-                    par.short: map(convert_limit, par.limits)
-                    for par in parset.pars[0].values()
-                    if hasattr(par, 'y') and par.visible
-                    }
-                for parset_id, parset in parset_dict.items()
-            }
-        }
-
-
 copy_parser = RequestParser()
 copy_parser.add_arguments({
     'name': {'required': True},

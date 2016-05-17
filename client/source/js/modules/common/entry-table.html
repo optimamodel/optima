@@ -32,12 +32,12 @@
          ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
-      <div ng-init="options=getOptions($parent.$index, $index)">
+      <div>
         <select
             ng-if='table.types[$index] == "selector"'
             ng-model="row[$index]"
-            ng-options="o.value as o.label for o in options">
-          </option>
+            ng-change="update()"
+            ng-options="o.value as o.label for o in table.options[$index]">
         </select>
       </div>
     </td>

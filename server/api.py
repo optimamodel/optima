@@ -70,7 +70,7 @@ from server.webapp.resources.progsets import (
     Progsets, Progset, ProgsetData, ParametersOfProgset, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
     Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration,
-    ParsetYkeys, ParsetLimits)
+    ParsetYkeys)
 from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, Scenario, ScenarioResults
 from server.webapp.resources.optimizations import (
@@ -124,7 +124,6 @@ api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetYkeys, '/api/project/<uuid:project_id>/parsets/ykeys')
-api.add_resource(ParsetLimits, '/api/project/<uuid:project_id>/parsets/limits')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')

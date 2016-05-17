@@ -35,6 +35,11 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.changeParameter = changeParameter;
       vm.changeDropdown = changeDropdown;
 
+      var start = vm.openProject.dataStart;
+      var end = vm.openProject.dataEnd;
+      var years = _.range(start, end+1);
+      vm.yearSelector = _.map(years, function(y) { return {'label': y, 'value': y} });
+
       // Stop here if spreadsheet has not been uploaded
       if (!vm.openProject.has_data) {
         modalService.inform(
@@ -55,22 +60,15 @@ define(['./../module', 'underscore'], function (module, _) {
         vm.selectedProgset = vm.progsets[0];
         changeProgset();
 
-        // Fetch parset limits (independent of parset and progset)
+        // Fetch parsets (independent of progset)
         $http.get(
-          '/api/project/' + vm.openProject.id + '/parsets/limits')
+          '/api/project/' + vm.openProject.id + '/parsets')
         .success(function (response) {
-          vm.allParsetsLimits = response;
-
-          // Fetch parsets (independent of progset)
-          $http.get(
-            '/api/project/' + vm.openProject.id + '/parsets')
-          .success(function (response) {
-            vm.parsets = response.parsets;
-            console.log('vm.parsets', vm.parsets);
-            vm.selectedParset = vm.parsets[0];
-            changeParset()
-          });
-        })
+          vm.parsets = response.parsets;
+          console.log('vm.parsets', vm.parsets);
+          vm.selectedParset = vm.parsets[0];
+          changeParset()
+        });
       });
     }
 
@@ -113,8 +111,6 @@ define(['./../module', 'underscore'], function (module, _) {
       console.log('selected parset=', vm.selectedParset);
       if (vm.selectedProgset && vm.selectedProgset.targetpartypes && vm.selectedParset) {
 
-        vm.selectedParsetLimits = vm.allParsetsLimits.parsets[vm.selectedParset.id];
-
         // fetch target parameters of this progset/parset combo
         $http.get(
           '/api/project/' + vm.openProject.id
@@ -122,28 +118,7 @@ define(['./../module', 'underscore'], function (module, _) {
           + '/parameters/' + vm.selectedParset.id)
         .success(function (parameters) {
           console.log('loading target parameters=', parameters);
-          // {
-          //   "name": "hivtest",
-          //   "coverage": false,
-          //   "populations": [
-          //     {
-          //       "pop": "FSW",
-          //       "programs": [
-          //         {
-          //           "short": "FSW programs",
-          //           "name": "Programs for female sex workers and clients"
-          //         },
-          //         {
-          //           "short": "HTC",
-          //           "name": "HIV testing and counseling"
-          //         }
-          //       ]
-          //     },
-          console.log('fetch progset/parset parameters', parameters);
-          function addParsetProperties(parameter) {
-            return _.extend(parameter, vm.selectedParset.pars[0][parameter.name]) ;
-          }
-          vm.parameters = _.map(parameters, addParsetProperties);
+          vm.parameters = parameters;
           vm.selectedParameter = vm.parameters[0];
           vm.changeParameter();
         });
@@ -169,54 +144,65 @@ define(['./../module', 'underscore'], function (module, _) {
       return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
     }
 
-    function yearSelector(row) {
-      var start = vm.openProject.dataStart;
-      var end = vm.openProject.dataEnd;
-      var years = _.range(start, end+1);
-      var result = _.map(years, function(y) { return {'label': y, 'value': y} });
-      return result;
+    function getYearSelector(row) {
+      return vm.yearSelector;
     }
 
     function makeInteractSelector(row) {
-      return [
-        {'value':'random','label':'random'},
-        {'value':'nested','label':'nested'},
-        {'value':'additive','label':'additive'}
-      ]
+      return vm.interactSelector;
     }
 
     function makePopulationSelector(row) {
-      var selector = [];
-      _.each(vm.selectedParameter.populations, function(population) {
-        selector.push({
-          'label':makePopulationLabel(population),
-          'value':population.pop
-        });
-      });
-      return selector;
+      return vm.populationSelector;
     }
 
     function makeProgramSelectors(row) {
-      var selectors = [];
-      function hasBeenAdded(program) {
-        return _.filter(selectors, {'value': program.short}).length > 0;
-      }
-      _.each(vm.selectedParameter.populations, function(population) {
-        _.each(population.programs, function(program) {
-          if (!hasBeenAdded(program)) {
-            selectors.push({ 'label': program.name, 'value': program.short });
-          }
-        })
-      });
-      selectors.splice(0, 0, {'label':'<none>', 'value':''});
-      return selectors;
+      return vm.programSelector;
     }
 
     function validateTable(table) {
       console.log(table.rows);
     }
 
+    function hasBeenAdded(program, selector) {
+      return _.filter(selector, { 'value': program.short }).length > 0;
+    }
+
+    function resetSelectors() {
+      var currPop = vm.populationSelector[0].value;
+      var iEditRow = vm.parTable.iEditRow;
+      if (!_.isUndefined(iEditRow)) {
+        currPop = vm.parTable.rows[iEditRow][0];
+      }
+
+      vm.populationProgramSelector = [{ 'label': '<none>', 'value': '' }];
+      _.each(vm.selectedParameter.populations, function (population) {
+        _.each(population.programs, function (program) {
+          if (population.pop == currPop) {
+            if (!hasBeenAdded(program, vm.populationProgramSelector)) {
+              vm.populationProgramSelector.push({ 'label': program.name, 'value': program.short });
+            }
+          }
+        })
+      });
+
+      vm.parTable.options = [
+        vm.populationSelector,
+        vm.yearSelector,
+        null,
+        null,
+        vm.populationProgramSelector,
+        null,
+        null,
+        vm.populationProgramSelector,
+        null,
+        null,
+        vm.interactSelector
+      ];
+    }
+
     function buildTable() {
+
       vm.parTable = {
         titles: [
           "Pop",
@@ -244,7 +230,7 @@ define(['./../module', 'underscore'], function (module, _) {
           null, null, null, null, null, null, null, null, null],
         selectors: [
           makePopulationSelector,
-          yearSelector,
+          getYearSelector,
           null, null,
           makeProgramSelectors,
           null,
@@ -254,6 +240,7 @@ define(['./../module', 'underscore'], function (module, _) {
           null,
           makeInteractSelector
         ],
+        updateFn: resetSelectors,
         validateFn: validateTable
       };
 
@@ -317,7 +304,34 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function changeParameter() {
       consoleLogJson("vm.selectedParameter", vm.selectedParameter);
+
+      vm.interactSelector = [
+        {'value':'random','label':'random'},
+        {'value':'nested','label':'nested'},
+        {'value':'additive','label':'additive'}
+      ];
+
+      vm.populationSelector = [];
+      _.each(vm.selectedParameter.populations, function(population) {
+        vm.populationSelector.push({
+          'label': makePopulationLabel(population),
+          'value': population.pop
+        });
+      });
+
+      vm.programSelector = [{ 'label': '<none>', 'value': '' }];
+      _.each(vm.selectedParameter.populations, function (population) {
+        _.each(population.programs, function (program) {
+          if (!hasBeenAdded(program, vm.programSelector)) {
+            vm.programSelector.push({ 'label': program.name, 'value': program.short });
+          }
+        })
+      });
+
       buildTable();
+
+      resetSelectors();
+
     }
 
     function submit() {

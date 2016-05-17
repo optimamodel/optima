@@ -475,4 +475,6 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     parset_record = load_parset_record(project_id, parset_id)
     parset = parset_record.hydrate()
 
-    return parse_parameters_from_progset_parset(progset, parset)
+    settings = load_project(project_id).settings
+
+    return parse_parameters_from_progset_parset(settings, progset, parset)

@@ -117,16 +117,8 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
           return result;
         };
 
-        scope.getOptions = function(iRow, iCell) {
-          var row = scope.table.rows[iRow];
-          if (_.isUndefined(scope.table.selectors)) {
-            return [];
-          }
-          var selectorFn = scope.table.selectors[iCell];
-          if (selectorFn) {
-            return selectorFn(row);
-          }
-          return [];
+        scope.update = function() {
+          scope.table.updateFn();
         };
 
         scope.$watch(
