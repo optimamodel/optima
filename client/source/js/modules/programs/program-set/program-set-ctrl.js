@@ -2,7 +2,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, currentProject, projectApiService, $upload) {
+    modalService, toastr, currentProject, projectApiService, $upload) {
 
     var openProject = currentProject.data;
     var defaults;
@@ -194,12 +194,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
           }
-          modalService.inform(
-            function (){},
-            'Okay',
-            'Program set saved successfully',
-            'Program set saved'
-          );
+          toastr.success('Program set was saved');
+          // modalService.inform(
+          //   function (){},
+          //   'Okay',
+          //   'Program set saved successfully',
+          //   'Program set saved'
+          // );
         });
       }
     };

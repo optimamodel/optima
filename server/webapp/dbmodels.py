@@ -707,6 +707,8 @@ class ProgsetsDb(db.Model):
                 program_summary['active'] = True
             desc = "default active" if program_summary['active'] else "default inactive"
             print '>>>> Parse %s program "%s" - "%s"' % (desc, short, program_summary['name'])
+            if program_summary['active']:
+                pprint(program_summary)
             update_or_create_program_record(self.project.id, self.id, short, program_summary)
 
         # save programs that are not in defaults
@@ -714,6 +716,7 @@ class ProgsetsDb(db.Model):
             if short not in loaded_shorts:
                 print '>>>> Parse custom active "%s" - "%s"' % (short, program_summary['name'])
                 program_summary = parse_program_summary(program, True)
+                pprint(program_summary)
                 update_or_create_program_record(self.project.id, self.id, short, program_summary)
 
         print('>>> Restore outcomes/effects')
@@ -752,6 +755,8 @@ class ProgsetsDb(db.Model):
                     raise DuplicateProgram(short)
                 else:
                     saved_shorts.append(short)
+            if program_summary['active']:
+                pprint(program_summary)
             update_or_create_program_record(self.project_id, self.id, short, program_summary)
 
     def recursive_delete(self, synchronize_session=False):

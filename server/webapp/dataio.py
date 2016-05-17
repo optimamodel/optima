@@ -471,6 +471,10 @@ def get_target_popsizes(project_id, parset_id, progset_id, program_id):
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     progset_record = load_progset_record(project_id, progset_id)
     progset = progset_record.hydrate()
+    print progset
+    progset.gettargetpops()
+    progset.gettargetpars()
+    progset.gettargetpartypes()
 
     parset_record = load_parset_record(project_id, parset_id)
     parset = parset_record.hydrate()

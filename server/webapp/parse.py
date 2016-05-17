@@ -225,6 +225,7 @@ def print_parset(parset):
 
 def parse_parameters_from_progset_parset(settings, progset, parset):
 
+    print ">>> Parsing parameters"
     def convert(limit):
         return settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
 
@@ -233,6 +234,7 @@ def parse_parameters_from_progset_parset(settings, progset, parset):
         return result
 
     target_par_shorts = set([p['param'] for p in progset.targetpars])
+    pprint(progset.targetpars)
     pars = parset.pars[0]
     parameters = [
         {
@@ -258,6 +260,7 @@ def parse_parameters_from_progset_parset(settings, progset, parset):
         for par_short in target_par_shorts
     ]
 
+    pprint(parameters)
     return parameters
 
 

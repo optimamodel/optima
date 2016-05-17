@@ -118,7 +118,9 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
         };
 
         scope.update = function() {
-          scope.table.updateFn();
+          if (_.isFunction(scope.table.updateFn)) {
+            scope.table.updateFn();
+          }
         };
 
         scope.$watch(

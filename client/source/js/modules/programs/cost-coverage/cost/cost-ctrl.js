@@ -26,6 +26,13 @@ define(['./../../module', 'underscore'], function (module, _) {
           + '/popsizes')
       .success(function (response) {
         $scope.popsizes = response;
+
+        $scope.yearSelector = [];
+        var years = _.keys($scope.popsizes);
+        years.forEach(function(year) {
+          $scope.yearSelector.push({'value':year, 'label':year.toString()});
+        });
+
         buildTables();
         $scope.updateGraph();
       });
@@ -134,6 +141,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         widths: [],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
         selectors: [getYearSelectors, null, null, null, null, null],
+        options: [$scope.yearSelector],
         validateFn: validateCcoparsTable
       };
       var ccopars = angular.copy($scope.selectedProgram.ccopars);
@@ -159,6 +167,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         widths: [],
         displayRowFns: [],
         selectors: [getYearSelectors],
+        options: [$scope.yearSelector],
         validateFn: validateCostcovTable,
       };
       var table = $scope.costcovTable;

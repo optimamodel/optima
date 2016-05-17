@@ -18,30 +18,10 @@ from server.webapp.exceptions import (
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
 
-costcov_parser = RequestParser()
-costcov_parser.add_arguments({
-    'year': {'required': True, 'type':int, 'location': 'json'},
-    'cost': {'required': True, 'type': float, 'location': 'json', 'dest': 'cost'},
-    'coverage': {'required': True, 'type': float, 'location': 'json', 'dest': 'coverage'},
-})
-
-program_parser = RequestParser()
-program_parser.add_arguments({
-    'name': {'required': True, 'location': 'json'},
-    'short': {'location': 'json'},
-    'category': {'required': True, 'location': 'json'},
-    'active': {'type': bool, 'default': False, 'location': 'json'},
-    'targetpars': {'type': list, 'dest': 'pars', 'location': 'json'},
-    'populations': {'type': list, 'location': 'json', 'dest': 'targetpops'},
-    'costcov': {'type': SubParser(costcov_parser), 'dest': 'costcov', 'action': 'append', 'default': []},
-    'criteria': {'type': Json, 'location': 'json'}
-})
 
 progset_parser = RequestParser()
-progset_parser.add_arguments({
-    'name': {'required': True},
-    'programs': {'required': True, 'type': SubParser(program_parser), 'action': 'append'}
-})
+progset_parser.add_arguments(
+    {'name': {'required': True}, 'programs': {'type': Json, 'location': 'json'}})
 
 class Progsets(Resource):
     """
@@ -76,32 +56,28 @@ class Progsets(Resource):
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_entry = load_project_record(project_id)
-        if project_entry is None:
+        project_record = load_project_record(project_id)
+        if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
-
         args = progset_parser.parse_args()
-
-        progset_entry = ProgsetsDb(project_id, args['name'])
-        db.session.add(progset_entry)
+        progset_record = ProgsetsDb(project_id, args['name'])
+        progset_record.update_from_program_summaries(args['programs'], progset_record.id)
+        progset_record.get_extra_data()
+        db.session.add(progset_record)
         db.session.flush()
-
-        progset_entry.update_from_program_summaries(args['programs'], progset_entry.id)
-
         db.session.commit()
-
-        progset_entry.get_extra_data()
-
-        return progset_entry, 201
-
+        return progset_record, 201
 
 
 class Progset(Resource):
     """
+    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
+
+    Download progset - is this ever used?
+
     PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
 
     Update existing project
-
     """
     method_decorators = [report_exception, login_required]
 
@@ -110,26 +86,24 @@ class Progset(Resource):
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset_record(project_id, progset_id)
-
         progset_entry.get_extra_data()
-
         return progset_entry
 
     @swagger.operation(description='Update progset with the given id.')
     @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-
-        progset_entry = load_progset_record(project_id, progset_id)
         args = progset_parser.parse_args()
-        progset_entry.name = args['name']
-        progset_entry.update_from_program_summaries(args.get('programs', []), progset_id)
+
+        progset_record = load_progset_record(project_id, progset_id)
+        progset_record.name = args['name']
+
+        program_summaries = normalize_obj(args.get('programs', []))
+        progset_record.update_from_program_summaries(program_summaries, progset_id)
+        progset_record.get_extra_data()
 
         db.session.commit()
-
-        progset_entry.get_extra_data()
-
-        return progset_entry
+        return progset_record
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
@@ -227,83 +201,6 @@ class ProgsetParameters(Resource):
 
 
 
-program_effect_fields = {
-    'name': fields.String,
-    'intercept_lower': fields.Float,
-    'intercept_upper': fields.Float
-}
-
-param_year_effect_fields = {
-    'year': fields.Integer,
-    'intercept_lower': fields.Float,
-    'intercept_upper': fields.Float,
-    'interact': fields.String,
-    'programs': fields.List(fields.Nested(program_effect_fields), default=[])
-}
-
-param_effect_fields = {
-    'name': fields.String,
-    'pop': fields.Raw,  # ToDo implement a field type that matches String or List of Strings
-    'years': fields.List(fields.Nested(param_year_effect_fields), default=[])
-}
-
-parset_effect_fields = {
-    'parset': fields.String,
-    'parameters': fields.List(fields.Nested(param_effect_fields), default=[])
-}
-
-progset_effects_fields = {
-    'effects': fields.List(fields.Nested(parset_effect_fields), default=[])
-}
-
-program_effect_parser = RequestParser()
-program_effect_parser.add_arguments({
-    'name': {'required': False, 'location': 'json'},
-    'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
-    'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
-})
-
-param_year_effect_parser = RequestParser()
-param_year_effect_parser.add_arguments({
-    'year': {'type': int, 'required': False, 'location': 'json'},
-    'intercept_lower': {'required': False, 'type': float, 'location': 'json'},
-    'intercept_upper': {'required': False, 'type': float, 'location': 'json'},
-    'interact': {'location': 'json', 'required': False},
-    'programs': {
-        'type': SubParser(program_effect_parser),
-        # 'action': 'append',
-        'default': [],
-        'location': 'json',
-        'required': False,
-    },
-})
-
-param_effect_parser = RequestParser()
-param_effect_parser.add_arguments({
-    'name': {'required': False, 'location': 'json'},
-    'pop': {'required': False, 'location': 'json', 'type': Json},
-    'years': {
-        'type': SubParser(param_year_effect_parser),
-        # 'action': 'append',
-        'default': [],
-        'location': 'json',
-        'required': False,
-    },
-})
-
-parset_effect_parser = RequestParser()
-parset_effect_parser.add_arguments({
-    'parset': {'required': False, 'location': 'json'},
-    'parameters': {
-        'type': SubParser(param_effect_parser),
-        # 'action': 'append',
-        'default': [],
-        'location': 'json',
-        'required': False
-    }
-})
-
-
 class ProgsetEffects(Resource):
     """
     GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
@@ -318,26 +215,21 @@ class ProgsetEffects(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        summary='Get List of existing Progset effects for the selected progset'
-    )
-    @marshal_with(progset_effects_fields)
+    @swagger.operation(summary='Get List of existing Progset effects for the selected progset')
     def get(self, project_id, progset_id):
         from server.webapp.dataio import load_progset_record
-        progset_entry = load_progset_record(project_id, progset_id)
-        return progset_entry
+        progset_record = load_progset_record(project_id, progset_id)
+        return { 'effects': progset_record.effects }
 
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
         effects = request.get_json(force=True)
         from server.webapp.dataio import load_progset_record
-        progset_entry = load_progset_record(project_id, progset_id)
-        progset_entry.effects = normalize_obj(effects)
-        print "Save Effects = "
-        pprint(progset_entry.effects)
-        db.session.add(progset_entry)
+        progset_record = load_progset_record(project_id, progset_id)
+        progset_record.effects = normalize_obj(effects)
+        db.session.add(progset_record)
         db.session.commit()
-        return marshal(progset_entry, progset_effects_fields)
+        return { 'effects': progset_record.effects }
 
 
 
