@@ -1011,7 +1011,95 @@ def update(self, mflists, ind=0):
         else:
             print('Parameter type "%s" not implemented!' % ptype)
 
+            # parset.interp() and calculate results are supposed to be called from the outside
+
+
+def manualfitlists(self, ind=0):
+    ''' WARNING -- not sure if this function is needed; if it is needed, it should be combined with manualgui,py '''
+    if not self.pars:
+        raise OptimaException("No parameters available!")
+    elif len(self.pars) <= ind:
+        raise OptimaException("Parameter with index {} not found!".format(ind))
+
+    tmppars = self.pars[ind]
+    mflists = {'keys': [], 'subkeys': [], 'types': [], 'values': [], 'labels': []}
+    keylist = mflists['keys']
+    subkeylist = mflists['subkeys']
+    typelist = mflists['types']
+    valuelist = mflists['values']
+    labellist = mflists['labels']
+
+    for key in tmppars.keys():
+        par = tmppars[key]
+        if hasattr(par,
+                   'fittable') and par.fittable != 'no':  # Don't worry if it doesn't work, not everything in tmppars is actually a parameter
+            if par.fittable == 'meta':
+                keylist.append(key)
+                subkeylist.append(None)
+                typelist.append(par.fittable)
+                valuelist.append(par.m)
+                labellist.append('%s -- meta' % par.name)
+            elif par.fittable == 'const':
+                keylist.append(key)
+                subkeylist.append(None)
+                typelist.append(par.fittable)
+                valuelist.append(par.y)
+                labellist.append(par.name)
+            elif par.fittable in ['pop', 'pship']:
+                for subkey in par.y.keys():
+                    keylist.append(key)
+                    subkeylist.append(subkey)
+                    typelist.append(par.fittable)
+                    valuelist.append(par.y[subkey])
+                    labellist.append('%s -- %s' % (par.name, str(subkey)))
+            elif par.fittable == 'exp':
+                for subkey in par.p.keys():
+                    keylist.append(key)
+                    subkeylist.append(subkey)
+                    typelist.append(par.fittable)
+                    valuelist.append(par.p[subkey][0])
+                    labellist.append('%s -- %s' % (par.name, str(subkey)))
+            else:
+                print('Parameter type "%s" not implemented!' % par.fittable)
+
+    return mflists
+
+
+## Define update step
+def update(self, mflists, ind=0):
+    ''' Update Parameterset with new results -- WARNING, duplicates the function in gui.py!!!! '''
+    if not self.pars:
+        raise OptimaException("No parameters available!")
+    elif len(self.pars) <= ind:
+        raise OptimaException("Parameter with index {} not found!".format(ind))
+
+    tmppars = self.pars[ind]
+
+    keylist = mflists['keys']
+    subkeylist = mflists['subkeys']
+    typelist = mflists['types']
+    valuelist = mflists['values']
+
+    ## Loop over all parameters and update them
+    verbose = 0
+    for (key, subkey, ptype, value) in zip(keylist, subkeylist, typelist, valuelist):
+        if ptype == 'meta':  # Metaparameters
+            vtype = type(tmppars[key].m)
+            tmppars[key].m = vtype(value)
+            printv('%s.m = %s' % (key, value), 4, verbose)
+        elif ptype in ['pop', 'pship']:  # Populations or partnerships
+            vtype = type(tmppars[key].y[subkey])
+            tmppars[key].y[subkey] = vtype(value)
+            printv('%s.y[%s] = %s' % (key, subkey, value), 4, verbose)
+        elif ptype == 'exp':  # Population growth
+            vtype = type(tmppars[key].p[subkey][0])
+            tmppars[key].p[subkey][0] = vtype(value)
+            printv('%s.p[%s] = %s' % (key, subkey, value), 4, verbose)
+        elif ptype == 'const':  # Metaparameters
+            vtype = type(tmppars[key].y)
+            tmppars[key].y = vtype(value)
+            printv('%s.y = %s' % (key, value), 4, verbose)
+        else:
+            print('Parameter type "%s" not implemented!' % ptype)
+
             # parset.interp() and calculate results are supposed to be called from the outside      
-
-
-
