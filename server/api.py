@@ -67,7 +67,7 @@ from server.webapp.resources.project import (
     ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
     DefaultPopulations)
 from server.webapp.resources.progsets import (
-    Progsets, Progset, ProgsetData, ParametersOfProgset, ProgsetEffects, Program, ProgramPopSizes)
+    Progsets, Progset, ProgsetData, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
     Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration,
     ParsetYkeys)
@@ -94,7 +94,6 @@ api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
-api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(Optimization, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>')
@@ -105,9 +104,10 @@ api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/results')
 api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scenario_id>')
 
+api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
-api.add_resource(ParametersOfProgset,
+api.add_resource(ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
 

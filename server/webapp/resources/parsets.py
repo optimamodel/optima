@@ -22,6 +22,9 @@ import optima as op
 
 
 class ParsetYkeys(Resource):
+    """
+    Used in scenario program modal.
+    """
     @swagger.operation(summary='get parsets ykeys')
     def get(self, project_id):
         project_entry = load_project_record(project_id, raise_exception=True)
@@ -59,19 +62,10 @@ class Parsets(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description='Download parsets for the project with the given id.',
-        notes="""
-            if project exists, returns parsets for it
-            if project does not exist, returns an error.
-        """,
-        responseClass=ParsetsDb.__name__
-    )
+    @swagger.operation(description='Download parsets for the project with the given id.')
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        # loads project to see if it exists
-        load_project_record(project_id, raise_exception=True)
         return load_parset_list(project_id)
 
     @swagger.operation(

@@ -45,18 +45,17 @@ progset_parser.add_arguments({
 
 class Progsets(Resource):
     """
-    Progsets for a given project.
+    GET /api/project/<uuid:project_id>/progsets
+
+    Download progsets for list in program-set manage page
+
+    POST /api/project/<uuid:project_id>/progsets
+
+    Save new project
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description='Download progsets for the project with the given id.',
-        notes="""
-            if project exists, returns progsets for it
-            if project does not exist, returns an error.
-        """,
-        responseClass=ProgsetsDb.__name__
-    )
+    @swagger.operation(description='Download progsets for the project with the given id.')
     @marshal_with(ProgsetsDb.resource_fields, envelope='progsets')
     def get(self, project_id):
 
@@ -73,10 +72,7 @@ class Progsets(Resource):
 
         return progsets_record
 
-    @swagger.operation(
-        description='Create a progset for the project with the given id.',
-        parameters=progset_parser.swagger_parameters()
-    )
+    @swagger.operation(description='Create a progset for the project with the given id.')
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
@@ -102,18 +98,14 @@ class Progsets(Resource):
 
 class Progset(Resource):
     """
-    An individual progset.
+    PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
+
+    Update existing project
+
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description='Download progset with the given id.',
-        notes="""
-            if progset exists, returns it
-            if progset does not exist, returns an error.
-        """,
-        responseClass=ProgsetsDb.__name__
-    )
+    @swagger.operation(description='Download progset with the given id.')
     @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -123,14 +115,7 @@ class Progset(Resource):
 
         return progset_entry
 
-    @swagger.operation(
-        description='Update progset with the given id.',
-        notes="""
-            if progset exists, returns the updated version
-            if progset does not exist, returns an error.
-        """,
-        responseClass=ProgsetsDb.__name__
-    )
+    @swagger.operation(description='Update progset with the given id.')
     @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
@@ -146,13 +131,7 @@ class Progset(Resource):
 
         return progset_entry
 
-    @swagger.operation(
-        description='Delete progset with the given id.',
-        notes="""
-            if progset exists, deletes it
-            if progset does not exist, returns an error.
-        """
-    )
+    @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = db.session.query(ProgsetsDb).get(progset_id)
@@ -235,7 +214,7 @@ class ProgsetData(Resource):
         return reply
 
 
-class ParametersOfProgset(Resource):
+class ProgsetParameters(Resource):
 
     """
     GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>

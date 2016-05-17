@@ -96,9 +96,9 @@ def revert_ccopars(ccopars):
     return result
 
 
-def parse_program_summary(program):
+def parse_program_summary(program, active):
     result = {
-        'active': False,
+        'active': active,
         'name': program.name,
         'short': program.short,
         'populations': normalize_obj(program.targetpops),
@@ -113,7 +113,7 @@ def parse_program_summary(program):
 
 
 def parse_default_program_summaries(project):
-    return map(parse_program_summary, defaultprograms(project))
+    return [parse_program_summary(p, False) for p in defaultprograms(project)]
 
 
 def get_parset_parameters(parset, ind=0):
@@ -324,7 +324,6 @@ def get_default_populations():
     for line in lines:
         tokens = line.split(";")
         entry = dict((key, maybe_bool(token)) for key, token in zip(keys, tokens))
-        result['active'] = False
         result.append(entry)
     return result
 

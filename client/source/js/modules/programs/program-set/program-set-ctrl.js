@@ -27,14 +27,14 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.programSetList = response.progsets;
           if (response.progsets && response.progsets.length > 0) {
             $scope.activeProgramSet = response.progsets[0];
-          console.log("active_programs = " + JSON.stringify($scope.activeProgramSet, null, 2));
+            console.log("active_programs = " + JSON.stringify($scope.activeProgramSet, null, 2));
           }
         }
       });
 
     $scope.getCategories = function() {
       return _.uniq(_.pluck($scope.activeProgramSet.programs, "category"));
-    }
+    };
 
     // Fetching default categories and programs for the open project
     projectApiService.getDefault(openProject.id)

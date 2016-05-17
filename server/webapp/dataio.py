@@ -199,7 +199,7 @@ def update_or_create_progset_record(project_id, name, progset):
     return progset_record
 
 
-def update_or_create_program_record(project_id, progset_id, short, program_summary, active=False):
+def update_or_create_program_record(project_id, progset_id, short, program_summary):
     program_record = ProgramsDb.query\
         .filter_by(short=short, project_id=project_id, progset_id=progset_id)\
         .first()
@@ -211,7 +211,7 @@ def update_or_create_program_record(project_id, progset_id, short, program_summa
             name=program_summary.get('name', ''),
             created=datetime.now(dateutil.tz.tzutc()),
         )
-    program_record.update_from_summary(program_summary, active)
+    program_record.update_from_summary(program_summary)
     db.session.add(program_record)
     return program_record
 

@@ -596,22 +596,23 @@ class ProgramsDb(db.Model):
         be_program = self.hydrate()
         self.optimizable = be_program.optimizable()
 
-    def update_from_summary(self, program_summary, active):
+    def update_from_summary(self, program_summary):
         self.short = program_summary.get('short', '')
         self.updated = datetime.now(dateutil.tz.tzutc())
         self.pars = program_summary.get('targetpars', [])
         self.targetpops = program_summary.get('populations', [])
         self.category = program_summary.get('category', '')
-        self.active = active
+        self.active = program_summary.get('active', '')
         self.criteria = program_summary.get('criteria', None)
         self.costcov = program_summary.get('costcov', None)
         self.ccopars = program_summary.get('ccopars', None)
         self.optimizable = program_summary.get('optimizable', False)
         self.blob = saves(self.hydrate())
 
-    def restore(self, program):
+    def restore(self, program, active):
         print(">>>>> Restore program '%s'" % program.short)
-        self.update_from_summary(parse_program_summary(program), False)
+        program_summary = parse_program_summary(program, active)
+        self.update_from_summary(program_summary)
 
     def pprint(self):
         pprint({
@@ -729,56 +730,31 @@ class ProgsetsDb(db.Model):
         ]
         db.session.commit()
 
-    def recreate_programs_from_list(self, programs, progset_id):
-        prog_shorts = []
-        desired_shorts = set([program.get('short_name', program.get('short', '')) for program in programs])
-        print "desired_shorts", desired_shorts
-        existing_programs = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
+    def recreate_programs_from_list(self, program_summaries, progset_id):
+        from server.webapp.dataio import update_or_create_program_record
 
-        existing_shorts = {}
-        for program in existing_programs:
-            if program.short not in desired_shorts:
-                db.session.delete(program)
+        desired_shorts = set([summary.get('short', '') for summary in program_summaries])
+        program_records = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
+        program_records_by_short = {}
+        for program_record in program_records:
+            if program_record.short not in desired_shorts:
+                db.session.delete(program_record)
             else:
-                existing_shorts[program.short]=program
+                program_records_by_short[program_record.short] = program_record
         db.session.flush()
 
-
-        for program in programs:
-            # Kind of a hack but sometimes we receive short ans sometimes short_name
-            short = program.get('short_name', program.get('short', ''))
-            if short in existing_shorts:
+        saved_shorts = []
+        for program_summary in program_summaries:
+            short = program_summary.get('short', '')
+            if short in program_records_by_short:
                 print "Updating program %s" % short
-                program_entry = existing_shorts[short]
-                for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
-                    setattr(program_entry, field, program[field])
-                program_entry.active = program.get('active', False)
-                db.session.add(program_entry)
             else:
                 print "Creating new program %s" % short
-                kwargs = {}
-                for field in ['name', 'category', 'targetpops', 'pars', 'costcov', 'criteria']:
-                    kwargs[field] = program[field]
-
-                kwargs['short'] = short
-                if not 'pregnant' in kwargs['criteria']:
-                    kwargs['criteria']['pregnant'] = False
-
-                if kwargs['short'] in prog_shorts:
-                    raise DuplicateProgram(kwargs['short'])
+                if short in saved_shorts:
+                    raise DuplicateProgram(short)
                 else:
-                    prog_shorts.append(kwargs['short'])
-
-                program_entry = ProgramsDb(
-                    self.project_id,
-                    self.id,
-                    active=program.get('active', False),
-                    **kwargs
-                )
-
-                program_instance = program_entry.hydrate()
-                program_entry.restore(program_instance)
-                db.session.add(program_entry)
+                    saved_shorts.append(short)
+            update_or_create_program_record(self.project_id, self.id, short, program_summary)
 
     def recursive_delete(self, synchronize_session=False):
         db.session.query(ProgramsDb).filter_by(progset_id=str(self.id)).delete(synchronize_session)
