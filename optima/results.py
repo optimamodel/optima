@@ -66,9 +66,11 @@ class Resultset(object):
         self.popkeys = raw[0]['popkeys']
         self.datayears = data['years'] if data is not None else None # Only get data years if data available
         self.project = project # ...and just store the whole project
-        self.parset = parset # Store parameters
-        self.progset = progset # Store programs
-        self.data = data # Store data
+        self.parset = dcp(parset) # Store parameters
+        try: self.parset.project = project # Replace copy of project with reference to project -- see scenarios.py
+        except: pass
+        self.progset = dcp(progset) # Store programs
+        self.data = dcp(data) # Store data
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
