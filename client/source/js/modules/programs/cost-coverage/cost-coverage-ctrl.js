@@ -144,20 +144,24 @@ define(['./../module', 'underscore'], function (module, _) {
       return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
     }
 
-    function getYearSelector(row) {
-      return vm.yearSelector;
+    function extractLabelFromSelector(selector, value) {
+      var option = _.find(selector, function(option) {
+        // hack to compare stringified values of lists to allow comparison
+        return "" + option.value === "" + value;
+      });
+      return option ? option.label : value;
     }
 
-    function makeInteractSelector(row) {
-      return vm.interactSelector;
+    function getProgram1Label(row) {
+      return extractLabelFromSelector(vm.programSelector, row[7]);
     }
 
-    function makePopulationSelector(row) {
-      return vm.populationSelector;
+    function getProgram2Label(row) {
+      return extractLabelFromSelector(vm.programSelector, row[4]);
     }
 
-    function makeProgramSelectors(row) {
-      return vm.programSelector;
+    function getPopOrPshipLabel(row) {
+      return extractLabelFromSelector(vm.populationSelector, row[0]);
     }
 
     function submit() {
@@ -343,19 +347,7 @@ define(['./../module', 'underscore'], function (module, _) {
         ],
         widths: ["", "", 100, 100, "", 100, 100, "", 100, 100],
         displayRowFns: [
-          null, null, null, null, null, null, null, null, null],
-        selectors: [
-          makePopulationSelector,
-          getYearSelector,
-          null, null,
-          makeProgramSelectors,
-          null,
-          null,
-          makeProgramSelectors,
-          null,
-          null,
-          makeInteractSelector
-        ],
+          getPopOrPshipLabel, null, null, null, getProgram2Label, null, null, getProgram1Label, null],
         updateFn: resetDynamicSelectors,
         validateFn: validateTable
       };
@@ -365,7 +357,7 @@ define(['./../module', 'underscore'], function (module, _) {
           _.each(outcome.years, function (year) {
 
             var row = [
-              "" + outcome.pop,
+              outcome.pop,
               year.year,
               year.intercept_lower,
               year.intercept_upper
@@ -396,8 +388,8 @@ define(['./../module', 'underscore'], function (module, _) {
             }
 
             row = row.concat(restOfTable);
-            consoleLogJson("outcome", outcome);
-            console.log("row", row);
+            consoleLogJson("from outcome", outcome);
+            console.log("buitl row", row);
             vm.parTable.rows.push(row);
           });
         }

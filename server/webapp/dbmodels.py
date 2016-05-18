@@ -733,7 +733,8 @@ class ProgsetsDb(db.Model):
 
     def update_from_program_summaries(self, program_summaries, progset_id):
         from server.webapp.dataio import update_or_create_program_record
-
+        self.id = progset_id
+        print ">>> Update progset", self.id
         desired_shorts = set([summary.get('short', '') for summary in program_summaries])
         program_records = db.session.query(ProgramsDb).filter_by(progset_id=progset_id)
         program_records_by_short = {}

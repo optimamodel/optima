@@ -57,9 +57,8 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
           for (var iCell = 0; iCell < nCell; iCell += 1) {
             var val = "";
             if (scope.table.types[iCell] == "selector") {
-              var selectorFn = scope.table.selectors[iCell];
-              if (selectorFn) {
-                row.push(selectorFn(row)[0].value);
+              if (scope.table.options[iCell]) {
+                row.push(scope.table.options[iCell][0].value);
               }
             } else {
               row.push("");
@@ -97,20 +96,8 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
           var result = [];
           for (var i = 0; i < row.length; i += 1) {
             var val = row[i];
-            if (scope.table.types[i] == "display") {
-              var fn = scope.table.displayRowFns[i];
-              if (fn) {
-                val = fn(row);
-              }
-            }
-            if (scope.table.types[i] == "selector") {
-              var selectorFn = scope.table.selectors[i];
-              var options = selectorFn(row);
-              _.each(options, function(o) {
-                if (o.value == val) {
-                  val = o.label;
-                }
-              });
+            if (_.isFunction(scope.table.displayRowFns[i])) {
+              val = scope.table.displayRowFns[i](row);
             }
             result.push(val);
           }

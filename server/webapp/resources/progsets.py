@@ -1,6 +1,8 @@
-import pprint
 import uuid
+import pprint
 from pprint import pprint
+from datetime import datetime
+import dateutil
 
 import mpld3
 from flask import current_app, request, helpers
@@ -35,37 +37,43 @@ class Progsets(Resource):
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description='Download progsets for the project with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields, envelope='progsets')
+    @swagger.operation(description='Download progsets')
     def get(self, project_id):
-
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
         project_record = load_project_record(project_id)
         if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
 
-        progsets_record = db.session.query(ProgsetsDb).filter_by(project_id=project_record.id).all()
-        for progset_record in progsets_record:
+        progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_record.id).all()
+        for progset_record in progset_records:
             progset_record.get_extra_data()
+            print ">>> progset", progset_record.id, len(progset_record.programs)
             for program_record in progset_record.programs:
                 program_record.get_optimizable()
 
-        return progsets_record
+        payload = { 'progsets': marshal(progset_records, ProgsetsDb.resource_fields) }
+        return payload
 
-    @swagger.operation(description='Create a progset for the project with the given id.')
+    @swagger.operation(description='Save progset')
     @marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
         current_app.logger.debug("/api/project/%s/progsets" % project_id)
         project_record = load_project_record(project_id)
         if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
+
         args = progset_parser.parse_args()
-        progset_record = ProgsetsDb(project_id, args['name'])
-        progset_record.update_from_program_summaries(args['programs'], progset_record.id)
-        progset_record.get_extra_data()
+        progset_name = args['name']
+        program_summaries = args['programs']
+
+        progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
+        # need to flush first to force the generation of progset_record.id if new
         db.session.add(progset_record)
         db.session.flush()
+        progset_record.update_from_program_summaries(program_summaries, progset_record.id)
+        progset_record.get_extra_data()
         db.session.commit()
+
         return progset_record, 201
 
 
@@ -77,7 +85,7 @@ class Progset(Resource):
 
     PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
 
-    Update existing project
+    Update existing project - is this ever used?
     """
     method_decorators = [report_exception, login_required]
 

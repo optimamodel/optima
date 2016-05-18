@@ -16,8 +16,8 @@ Parsed data structures should have suffix _summary
 
 import os
 from datetime import datetime
-
 import dateutil
+
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
