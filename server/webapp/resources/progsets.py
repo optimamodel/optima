@@ -29,7 +29,7 @@ class Progsets(Resource):
     """
     GET /api/project/<uuid:project_id>/progsets
 
-    Download progsets for list in program-set manage page
+    Get progsets for program-set manage page
 
     POST /api/project/<uuid:project_id>/progsets
 
@@ -234,9 +234,13 @@ class ProgsetEffects(Resource):
         effects = request.get_json(force=True)
         from server.webapp.dataio import load_progset_record
         progset_record = load_progset_record(project_id, progset_id)
-        progset_record.effects = normalize_obj(effects)
         db.session.add(progset_record)
+        db.session.flush()
+        effects = normalize_obj(effects)
+        pprint(effects)
+        progset_record.effects = effects
         db.session.commit()
+        progset_record = load_progset_record(project_id, progset_id)
         return { 'effects': progset_record.effects }
 
 

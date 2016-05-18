@@ -30,9 +30,9 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function initialize() {
       vm.selectTab = selectTab;
-      vm.submit = submit;
+      vm.submit = submitOutcomeSetsOfProgset;
       vm.changeParameter = changeParameter;
-      vm.changeDropdown = changeDropdown;
+      vm.changeProgsetAndParset = changeProgsetAndParset;
 
       var start = vm.openProject.dataStart;
       var end = vm.openProject.dataEnd;
@@ -52,12 +52,11 @@ define(['./../module', 'underscore'], function (module, _) {
       }
 
       // Fetch progsets
-      $http.get(
-        '/api/project/' + vm.openProject.id + '/progsets')
+      vm.progsets = [];
+      $http.get('/api/project/' + vm.openProject.id + '/progsets')
       .success(function (response) {
         vm.progsets = response.progsets;
         vm.selectedProgset = vm.progsets[0];
-        changeProgset();
 
         // Fetch parsets (independent of progset)
         $http.get(
@@ -66,63 +65,30 @@ define(['./../module', 'underscore'], function (module, _) {
           vm.parsets = response.parsets;
           console.log('vm.parsets', vm.parsets);
           vm.selectedParset = vm.parsets[0];
-          changeParset()
+          changeProgsetAndParset();
         });
       });
     }
 
-    function selectTab(tab) {
-      vm.activeTab = tab;
-    }
+    function changeProgsetAndParset() {
+      if (vm.selectedProgset === undefined) {
+        return;
+      }
+      function isActive(program) {
+        return program.targetpars && program.targetpars.length > 0 && program.active;
+      }
+      vm.programs = _.sortBy(_.filter(vm.selectedProgset.programs, isActive), 'name');
 
-    function changeDropdown() {
-      changeProgset();
-      changeParset();
-    }
-
-    function fetchOutcomeSets(progsetId) {
+      // Fetch outcomes for this progset
       $http.get(
         '/api/project/' + vm.openProject.id
         + '/progsets/' + vm.selectedProgset.id
         + '/effects')
       .success(function (response) {
-        console.warn('loading effects=', response);
+        console.log('loading progset outcome sets =', response);
         vm.outcomeSets = response.effects;
+        changeParset();
       })
-    }
-
-    function changeProgset() {
-      if (vm.selectedProgset === undefined) {
-        return;
-      }
-      function isProgramActive(program) {
-        return program.targetpars && program.targetpars.length > 0 && program.active;
-      }
-      var allPrograms = vm.selectedProgset.programs;
-      vm.programs = _.sortBy(_.filter(allPrograms, isProgramActive), 'name');
-
-      if (_.isUndefined(vm.outcomeSets)) {
-        fetchOutcomeSets();
-      }
-    }
-
-    function changeParset() {
-      console.log('selected parset=', vm.selectedParset);
-      if (vm.selectedProgset && vm.selectedProgset.targetpartypes && vm.selectedParset) {
-
-        // fetch target parameters of this progset/parset combo
-        // todo: parse the parsets directly here
-        $http.get(
-          '/api/project/' + vm.openProject.id
-          + '/progsets/' + vm.selectedProgset.id
-          + '/parameters/' + vm.selectedParset.id)
-        .success(function (parameters) {
-          console.log('loading target parameters=', parameters);
-          vm.parameters = parameters;
-          vm.selectedParameter = vm.parameters[0];
-          vm.changeParameter();
-        });
-      }
     }
 
     function getOutcomesForSelectedParset() {
@@ -139,6 +105,40 @@ define(['./../module', 'underscore'], function (module, _) {
       }
     }
 
+    function submitOutcomeSetsOfProgset() {
+      var outcomeSets = vm.outcomeSets;
+      console.log('submitting outcomes for', vm.selectedParset.name, '=', outcomeSets);
+      $http.put(
+        '/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgset.id + '/effects',
+        outcomeSets)
+      .success(function (result) {
+        toastr.success('Outcomes were saved');
+        vm.outcomeSets = result.effects;
+        changeParameter();
+      });
+    }
+
+    function changeParset() {
+      console.log('selected parset =', vm.selectedParset);
+      if (vm.selectedProgset && vm.selectedProgset.targetpartypes && vm.selectedParset) {
+        // fetch target parameters of this progset/parset combo
+        // todo: parse the parsets directly here
+        $http.get(
+          '/api/project/' + vm.openProject.id
+          + '/progsets/' + vm.selectedProgset.id
+          + '/parameters/' + vm.selectedParset.id)
+        .success(function (parameters) {
+          console.log('loading targeted parameters =', parameters);
+          vm.parameters = parameters;
+          vm.selectedParameter = vm.parameters[0];
+          vm.changeParameter();
+        });
+      }
+    }
+    function selectTab(tab) {
+      vm.activeTab = tab;
+    }
+
     function makePopulationLabel(population) {
       var popKey = population.pop;
       return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
@@ -146,7 +146,7 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function extractLabelFromSelector(selector, value) {
       var option = _.find(selector, function(option) {
-        // hack to compare stringified values of lists to allow comparison
+        // hack: compare stringified lists
         return "" + option.value === "" + value;
       });
       return option ? option.label : value;
@@ -162,21 +162,6 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function getPopOrPshipLabel(row) {
       return extractLabelFromSelector(vm.populationSelector, row[0]);
-    }
-
-    function submit() {
-      var payload = vm.outcomeSets;
-      console.log('submitting payload=', payload);
-      $http.put(
-        '/api/project/' + vm.openProject.id
-          + '/progsets/' + vm.selectedProgset.id
-          + '/effects',
-        payload)
-      .success(function (result) {
-        console.log('returned effects=', result);
-        vm.outcomeSets = result.effects;
-        toastr.success('Outcomes were successfully saved!', 'Success');
-      });
     }
 
     function getOptVal(val, defaultVal) {
@@ -261,11 +246,8 @@ define(['./../module', 'underscore'], function (module, _) {
             intercept_upper: getOptVal(row[9], null)
           })
         }
-
-        console.log("row", row);
-        consoleLogJson("new outcome", outcome);
       });
-      submit();
+      submitOutcomeSetsOfProgset();
     }
 
     function hasNotBeenAdded(program, programSelector) {
@@ -388,8 +370,6 @@ define(['./../module', 'underscore'], function (module, _) {
             }
 
             row = row.concat(restOfTable);
-            consoleLogJson("from outcome", outcome);
-            console.log("buitl row", row);
             vm.parTable.rows.push(row);
           });
         }

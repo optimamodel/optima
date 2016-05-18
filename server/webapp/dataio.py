@@ -68,9 +68,8 @@ def load_project_record(project_id, all_data=False, raise_exception=False, db_se
 def _load_project_child(
         project_id, record_id, record_class, exception_class, raise_exception=True):
     cu = current_user
-    current_app.logger.debug("getting {} {} for user {}".format(record_class.__name__, record_id, cu.id))
 
-    print "record_id", record_id, "record_class", type(record_class)
+    print ">>> Fetching record_id", record_id, "of", repr(record_class)
     record = db.session.query(record_class).get(record_id)
     if record is None:
         if raise_exception:
@@ -471,7 +470,7 @@ def get_target_popsizes(project_id, parset_id, progset_id, program_id):
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     progset_record = load_progset_record(project_id, progset_id)
     progset = progset_record.hydrate()
-    print progset
+    print ">>> Fetching target parameters from progset", progset_id
     progset.gettargetpops()
     progset.gettargetpars()
     progset.gettargetpartypes()

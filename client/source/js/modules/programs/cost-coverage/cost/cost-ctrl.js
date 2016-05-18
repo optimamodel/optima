@@ -140,7 +140,6 @@ define(['./../../module', 'underscore'], function (module, _) {
         types: ["selector", "display", "number", "number", "number", "number"],
         widths: [],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
-        selectors: [getYearSelectors, null, null, null, null, null],
         options: [$scope.yearSelector],
         validateFn: validateCcoparsTable
       };

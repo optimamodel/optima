@@ -670,14 +670,15 @@ class ProgsetsDb(db.Model):
         progset = op.Programset(
             name=self.name,
             programs=[
-                program.hydrate()
-                for program in self.programs
-                if program.active
+                program_record.hydrate()
+                for program_record in self.programs
+                if program_record.active
             ]
         )
         if self.effects is not None:
             for effect in self.effects:
                 put_outcomes_into_progset(effect['parameters'], progset)
+        progset.gettargetpartypes()
         return progset
 
     def get_extra_data(self):
