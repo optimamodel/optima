@@ -11,7 +11,7 @@ define(['./../module', 'underscore'], function (module, _) {
     vm.openProject = activeProject.data;
     console.log('vm.openProject', vm.openProject);
 
-    vm.activeTab = 'outcome';
+    vm.activeTab = 'cost';
     vm.tabs = [
       {
         name: 'Define cost functions',
@@ -176,36 +176,13 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function validateTable(table) {
-      // {
-      //   "name": "condcas",
-      //   "pop": [
-      //     "Females 15-49",
-      //     "Clients"
-      //   ],
-      //   "years": [
-      //     {
-      //       "intercept_upper": 0.4,
-      //       "interact": "random",
-      //       "intercept_lower": 0.3,
-      //       "programs": [
-      //         {
-      //           "intercept_upper": 0.7,
-      //           "name": "SBCC + Condoms",
-      //           "intercept_lower": 0.5
-      //         }
-      //       ],
-      //       "year": 2016
-      //     }
-      //   ]
-      // }
       var outcomeSet = getOutcomeSetForSelectedParset();
       var parShort = vm.selectedParameter.short;
 
-      // clear outcomes for current selected target parameter
+      // must keep reference so use parent structure
       outcomeSet.parameters = _.reject(outcomeSet.parameters, _.iteratee({ 'name': parShort }));
 
       _.each(vm.parTable.rows, function(row, iRow) {
-        
         if (iRow == vm.parTable.iEditRow) {
           return;
         }

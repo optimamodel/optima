@@ -301,9 +301,7 @@ class Program(Resource):
         program_summary = normalize_obj(args['program'])
         program_record = update_or_create_program_record(
             project_id, progset_id, program_summary['short'],
-            program_summary, program_summary['active'])
-        current_app.logger.debug(
-            "writing program = \n%s\n" % pprint.pformat(program_summary, indent=2))
+            program_summary)
         db.session.add(program_record)
         db.session.flush()
         db.session.commit()

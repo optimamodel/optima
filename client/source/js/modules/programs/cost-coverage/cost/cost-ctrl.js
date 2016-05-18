@@ -2,7 +2,7 @@ define(['./../../module', 'underscore'], function (module, _) {
 
   'use strict';
 
-  module.controller('CostController', function ($scope, $http) {
+  module.controller('CostController', function ($scope, $http, toastr) {
 
     // $scope.vm is from the cost-coverage template controller
     $scope.selectedProgram = $scope.vm.programs[0];
@@ -77,6 +77,7 @@ define(['./../../module', 'underscore'], function (module, _) {
             + '/program',
           payload)
         .success(function() {
+          toastr.success('Cost data were saved');
           $scope.updateGraph();
         });
     };
