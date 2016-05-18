@@ -91,7 +91,7 @@ define(['./../module', 'underscore'], function (module, _) {
       })
     }
 
-    function getOutcomesForSelectedParset() {
+    function getOutcomeSetForSelectedParset() {
       var outcomeSets = _.filter(vm.outcomeSets, {parset: vm.selectedParset.id});
       if (outcomeSets.length === 0) {
         var newOutcomeSet = {
@@ -99,15 +99,19 @@ define(['./../module', 'underscore'], function (module, _) {
           parameters: []
         };
         vm.outcomeSets.push(newOutcomeSet);
-        return newOutcomeSet.parameters;
+        return newOutcomeSet;
       } else {
-        return outcomeSets[0].parameters;
+        return outcomeSets[0];
       }
+    }
+
+    function getOutcomesForSelectedParset() {
+      return getOutcomeSetForSelectedParset().parameters;
     }
 
     function submitOutcomeSetsOfProgset() {
       var outcomeSets = vm.outcomeSets;
-      console.log('submitting outcomes for', vm.selectedParset.name, '=', outcomeSets);
+      consoleLogJson('submitting outcomes', outcomeSets);
       $http.put(
         '/api/project/' + vm.openProject.id + '/progsets/' + vm.selectedProgset.id + '/effects',
         outcomeSets)
@@ -194,8 +198,11 @@ define(['./../module', 'underscore'], function (module, _) {
       //     }
       //   ]
       // }
-      var outcomes = getOutcomesForSelectedParset();
+      var outcomeSet = getOutcomeSetForSelectedParset();
       var parShort = vm.selectedParameter.short;
+
+      // clear outcomes for current selected target parameter
+      outcomeSet.parameters = _.reject(outcomeSet.parameters, _.iteratee({ 'name': parShort }));
 
       _.each(vm.parTable.rows, function(row, iRow) {
         
@@ -203,16 +210,13 @@ define(['./../module', 'underscore'], function (module, _) {
           return;
         }
 
-        var outcome = _.findWhere(outcomes, {'name':parShort, 'pop':row[0]});
-        if (_.isUndefined(outcome)) {
-          outcome = {
-            name: parShort,
-            pop: row[0],
-            interact: "random",
-            years: []
-          };
-          outcomes.push(outcome);
-        }
+        var outcome = {
+          name: parShort,
+          pop: row[0],
+          interact: "random",
+          years: []
+        };
+        outcomeSet.parameters.push(outcome);
 
         var years = outcome.years;
         var yearVal = parseInt(row[1]);
@@ -247,6 +251,7 @@ define(['./../module', 'underscore'], function (module, _) {
           })
         }
       });
+
       submitOutcomeSetsOfProgset();
     }
 
