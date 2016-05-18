@@ -293,16 +293,15 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             # Figure out what kind of coverage data it is...
             if not isnumber(old['data']['costcov']['cov'][progno][thisind]): old['data']['costcov']['cov'][progno][thisind] = nan
             if isnan(old['data']['costcov']['cov'][progno][thisind]): # No data
-                newcov = None
+                newcov = nan
             elif old['data']['costcov']['cov'][progno][thisind]<1: # Data entered as a proportion, need to convert to number
                 newcov = old['data']['costcov']['cov'][progno][thisind]*newprog.gettargetpopsize(t=thisyear, parset=new.parsets[0])[0]
             else:  # Data entered as a number, can use directly
                 newcov = old['data']['costcov']['cov'][progno][thisind]
 
-            if newcov and newcost:
-                newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
-                                     'cost': newcost,
-                                     'coverage': newcov})
+            newprog.addcostcovdatum({'t': old['data']['epiyears'][yearind],
+                                 'cost': newcost,
+                                 'coverage': newcov})
 
         # Create cost functions
         sat = prog['ccparams']['saturation']
