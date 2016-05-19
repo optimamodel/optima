@@ -519,7 +519,7 @@ class ProgramsDb(db.Model):
         'created': fields.DateTime,
         'updated': fields.DateTime,
         'ccopars': fields.Raw,
-        'costcov': fields.Nested(costcov_fields, allow_null=True, attribute='costcov'),
+        'costcov': fields.Raw,
         'optimizable': fields.Raw,
     }
 

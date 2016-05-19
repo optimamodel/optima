@@ -1,8 +1,10 @@
-"""
+_doc_ = """
 
-Functions to convert Optima objects into JSON-compatible
-data structures, both for storing into a database, and
-to construct JSON web-packets.
+# parse.py
+
+containcs functions to convert Optima
+objects into JSON-compatible data structures, both
+for storing into a database, and to construct JSON web-packets.
 
 There should be no references to the database here!
 
@@ -18,6 +20,7 @@ from optima.defaults import defaultprograms
 
 from server.webapp.utils import normalize_obj
 
+
 pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
 
 
@@ -27,15 +30,18 @@ def parse_targetpars(targetpars):
         short = parameter['param']
         pop = parameter['pop']
         parameters[short].append(pop)
-    return [
-        {
+    pars = []
+    for short, pop in parameters.items():
+        pars.append({
             'active': True,
             'param': short,
             'pops': pop,
-        }
-        for short, pop
-        in parameters.items()
-        ]
+        })
+    return pars
+
+
+def make_pop_tuple(pop):
+    return pop if type(pop) in (str, unicode) else tuple(pop)
 
 
 def revert_targetpars(pars):
@@ -44,13 +50,11 @@ def revert_targetpars(pars):
     targetpars = []
     for par in pars:
         if par.get('active', False):
-            targetpars.extend([
-                                  {
-                                      'param': par['param'],
-                                      'pop': pop if type(pop) in (str, unicode) else tuple(pop)
-                                  }
-                                  for pop in par['pops']
-                                  ])
+            for pop in par['pops']:
+                targetpars.append({
+                    'param': par['param'],
+                    'pop': make_pop_tuple(pop)
+                })
     return targetpars
 
 
@@ -66,9 +70,7 @@ def parse_costcovdata(costcovdata):
             'cost': costcovdata['cost'][i_year],
             'coverage': costcovdata['coverage'][i_year]
         }
-        if None in entry.values():
-            continue
-        if entry['cost'] == 0 or entry['coverage'] == 0:
+        if entry["cost"] is None and entry["coverage"] is None:
             continue
         result.append(entry)
     return result
@@ -224,7 +226,6 @@ def print_parset(parset):
 
 
 def parse_parameters_from_progset_parset(settings, progset, parset):
-
     print ">>> Parsing parameters"
 
     def convert(limit):
@@ -252,13 +253,13 @@ def parse_parameters_from_progset_parset(settings, progset, parset):
                             'short': program.short,
                         }
                         for program in programs
-                    ]
+                        ]
                 }
                 for popKey, programs in progset.progs_by_targetpar(par_short).items()
-            ],
+                ],
         }
         for par_short in target_par_shorts
-    ]
+        ]
 
     return parameters
 
@@ -413,21 +414,23 @@ def parse_outcomes_from_progset(progset):
                         'intercept_upper': covout.ccopars['intercept'][i_year][1],
                         'intercept_lower': covout.ccopars['intercept'][i_year][0],
                         'interact': covout.ccopars['interact'][i_year]
-                                    if 'interact' in covout.ccopars.keys()
-                                    else 'random',
+                        if 'interact' in covout.ccopars.keys()
+                        else 'random',
                         'programs': [
                             {
                                 'name': program_name,
-                                'intercept_lower': program_intercepts[i_year][0] if len(program_intercepts) > i_year else None,
-                                'intercept_upper': program_intercepts[i_year][1] if len(program_intercepts) > i_year else None,
+                                'intercept_lower': program_intercepts[i_year][0] if len(
+                                    program_intercepts) > i_year else None,
+                                'intercept_upper': program_intercepts[i_year][1] if len(
+                                    program_intercepts) > i_year else None,
                             }
                             for program_name, program_intercepts in covout.ccopars.items()
                             if program_name not in ['intercept', 't', 'interact']
-                        ],
+                            ],
                         'year': covout.ccopars['t'][i_year]
                     }
                     for i_year in range(n_year)
-                ]
+                    ]
             }
             outcomes.append(outcome)
     return outcomes
@@ -449,7 +452,7 @@ def put_outcomes_into_progset(outcomes, progset):
 
             for program in year["programs"]:
                 if program['intercept_lower'] is not None \
-                and program['intercept_upper'] is not None:
+                        and program['intercept_upper'] is not None:
                     ccopar[program['name']] = \
                         (program['intercept_lower'], program['intercept_upper'])
                 else:
@@ -459,5 +462,3 @@ def put_outcomes_into_progset(outcomes, progset):
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
             if poptuple in covout:
                 covout[poptuple].addccopar(ccopar, overwrite=True)
-
-
