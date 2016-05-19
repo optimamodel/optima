@@ -41,7 +41,7 @@ def parse_targetpars(targetpars):
 
 
 def make_pop_tuple(pop):
-    return pop if type(pop) in (str, unicode) else tuple(pop)
+    return str(pop) if type(pop) in (str, unicode) else tuple(map(str, pop))
 
 
 def revert_targetpars(pars):
