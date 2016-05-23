@@ -1,46 +1,23 @@
-from datetime import datetime
-import dateutil
 import uuid
+from datetime import datetime
+from pprint import pprint
 
+import dateutil
 from flask import current_app, helpers, request
 from flask.ext.login import login_required
 from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 
-from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser
-from server.webapp.resources.common import report_exception
-from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
-from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
-from server.webapp.dbconn import db
+import optima as op
 from server.webapp.dataio import (
     load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
     load_project, load_parset_record, load_parset_list, get_parset_from_project)
-
-import optima as op
-
-
-
-class ParsetYkeys(Resource):
-    """
-    Used in scenario program modal.
-    """
-    @swagger.operation(summary='get parsets ykeys')
-    def get(self, project_id):
-        project_entry = load_project_record(project_id, raise_exception=True)
-
-        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        parsets = {str(item.id): item.hydrate() for item in reply}
-        y_keys = {
-           id: {par.short: [{
-                    'val': k,
-                    'label': ' - '.join(k) if isinstance(k, tuple) else k
-                } for k in par.y.keys()] for par in parset.pars[0].values()
-           if hasattr(par, 'y') and par.visible}
-           for id, parset in parsets.iteritems()
-        }
-        return {'keys': y_keys}
-
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
+from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
+from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
+from server.webapp.resources.common import report_exception
+from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, normalize_obj
 
 copy_parser = RequestParser()
 copy_parser.add_arguments({
@@ -357,37 +334,29 @@ class ParsetsCalibration(Resource):
         }
 
     @report_exception
-    @marshal_with(calibration_fields, envelope="calibration")
     def post(self, project_id, parset_id):
         current_app.logger.debug("POST /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
-        args = parset_save_with_autofit_parser.parse_args()
-        parameters = args['parameters']
+        data = normalize_obj(request.get_json(force=True))
 
         parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
         if parset_entry is None or parset_entry.project_id != project_id:
             raise ParsetDoesNotExist(id=parset_id)
-
-        # get manual parameters
         parset_instance = parset_entry.hydrate()
-        put_parameters_in_parset(parameters, parset_instance)
+        put_parameters_in_parset(data['parameters'], parset_instance)
 
         parset_entry.pars = op.saves(parset_instance.pars)
         parset_entry.updated = datetime.now(dateutil.tz.tzutc())
         db.session.add(parset_entry)
-        ResultsDb.query.filter_by(parset_id=parset_id, 
-            project_id=project_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        result_entry = ResultsDb.query.filter_by(id=args['result_id']).first()
-        result_entry.parset_id = parset_id
-        result_entry.project_id = project_id
-        result_entry.calculation_type = ResultsDb.CALIBRATION_TYPE
-        db.session.add(result_entry)
+
+        ResultsDb.query \
+            .filter_by(
+                parset_id=parset_id, project_id=project_id,
+                calculation_type=ResultsDb.CALIBRATION_TYPE) \
+            .delete()
+
         db.session.commit()
 
-        return {
-            "parset_id": parset_id,
-            "parameters": get_parset_parameters(parset_instance),
-            "result_id": result_entry.id
-        }
+        return 200
 
 
 manual_calibration_parser = RequestParser()

@@ -384,7 +384,6 @@ class Programset(object):
                 if thispartype in coveragepars:
                     if len(self.covout[thispartype][thispop].ccopars["t"]) == 0:
                         continue
-                    print "Programset.getoutcomes >>> self.covout[thispartype]", self.covout[thispartype][thispop]
                     outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t)['intercept'])
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                         if thispop == 'tot':

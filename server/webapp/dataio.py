@@ -1,7 +1,3 @@
-from pprint import pprint
-
-from server.webapp.parse import parse_parameters_of_parset_list, parse_parameters_from_progset_parset
-
 __doc__ = """
 
 dataio.py contains all the functions that fetch and saves optima objects to/from database
@@ -19,17 +15,22 @@ Parsed data structures should have suffix _summary
 import os
 from datetime import datetime
 import dateutil
+from pprint import pprint
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb, \
-    ScenariosDb
+from server.webapp.dbmodels import (
+    ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb,
+    ScenariosDb)
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
-from server.webapp.utils import TEMPLATEDIR, upload_dir_user, OptimaJSONEncoder, normalize_obj
-from server.webapp.parse import parse_default_program_summaries
+from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
+from server.webapp.parse import (
+    parse_default_program_summaries, parse_parameters_of_parset_list,
+    parse_parameters_from_progset_parset)
+
 
 import optima as op
 from optima.utils import saves
@@ -224,58 +225,6 @@ def update_or_create_program_record(project_id, progset_id, short, program_summa
     return program_record
 
 
-
-def update_or_create_optimization_record(project_id, project, name):
-
-    from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb
-
-    parset_id = None
-    progset_id = None
-
-    optim = project.optims[name]
-    if not optim:
-        raise Exception("optimization {} not present in project {}!".format(name, project_id))
-
-    parset_name = optim.parsetname
-    if parset_name:
-        parset_record = ParsetsDb.query \
-        .filter_by(project_id=project_id, name=parset_name) \
-        .first()
-        if parset_record:
-            parset_id = parset_record.id
-
-    progset_name = optim.progsetname
-    if progset_name:
-        progset_record = ProgsetsDb.query \
-        .filter_by(project_id=project_id, name=progset_name) \
-        .first()
-        if progset_record:
-            progset_id = progset_record.id
-
-    optimization_record = OptimizationsDb.query.filter_by(name=name, project_id=project_id).first()
-    if optimization_record is None:
-        optimization_record = OptimizationsDb(
-            project_id=project_id,
-            name=name,
-            which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome',
-            parset_id=parset_id,
-            progset_id=progset_id,
-            objectives=(optim.objectives or {}),
-            constraints=(optim.constraints or {})
-        )
-        db.session.add(optimization_record)
-        db.session.flush()
-    else:
-        optimization_record.which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome'
-        optimization_record.parset_id = parset_id
-        optimization_record.progset_id = progset_id
-        optimization_record.objectives = (optim.objectives or {})
-        optimization_record.constraints = (optim.constraints or {})
-        db.session.add(optimization_record)
-
-    return optimization_record
-
-
 def load_project(project_id, autofit=False, raise_exception=True):
     if not autofit:
         project_record = load_project_record(project_id, raise_exception=raise_exception)
@@ -422,6 +371,26 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     return parse_parameters_from_progset_parset(settings, progset, parset)
 
 
+def get_parset_keys_with_y_values(project_id):
+    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
+    parsets = {str(record.id): record.hydrate() for record in parset_records}
+    y_keys = {
+        id: {
+            par.short: [
+                {
+                    'val': k,
+                    'label': ' - '.join(k) if isinstance(k, tuple) else k
+                }
+                for k in par.y.keys()
+                ]
+            for par in parset.pars[0].values()
+            if hasattr(par, 'y') and par.visible
+            }
+        for id, parset in parsets.iteritems()
+        }
+    return y_keys
+
+
 def get_scenario_summary_from_record(scenario_record):
     result = {
         'id': scenario_record.id,
@@ -464,15 +433,10 @@ def update_or_create_scenario_record(project_id, scenario_summary):
 def get_scenario_summaries(project_id):
     scenario_records = db.session.query(ScenariosDb).filter_by(project_id=project_id).all()
     scenario_summaries = map(get_scenario_summary_from_record, scenario_records)
-    pprint("get scenario summaries")
-    pprint(normalize_obj(scenario_summaries), indent=2)
     return {'scenarios': normalize_obj(scenario_summaries)}
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
-    print(">>> save scenario summaries to db")
-    pprint(scenario_summaries, indent=2)
-
     # delete any records with id's that aren't in summaries
     existing_scenario_ids = [
         scenario_summary['id']
@@ -488,3 +452,56 @@ def save_scenario_summaries(project_id, scenario_summaries):
     for scenario_summary in scenario_summaries:
         update_or_create_scenario_record(project_id, scenario_summary)
     db.session.commit()
+
+
+def update_or_create_optimization_record(project_id, project, name):
+
+    from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb
+
+    parset_id = None
+    progset_id = None
+
+    optim = project.optims[name]
+    if not optim:
+        raise Exception("optimization {} not present in project {}!".format(name, project_id))
+
+    parset_name = optim.parsetname
+    if parset_name:
+        parset_record = ParsetsDb.query \
+        .filter_by(project_id=project_id, name=parset_name) \
+        .first()
+        if parset_record:
+            parset_id = parset_record.id
+
+    progset_name = optim.progsetname
+    if progset_name:
+        progset_record = ProgsetsDb.query \
+        .filter_by(project_id=project_id, name=progset_name) \
+        .first()
+        if progset_record:
+            progset_id = progset_record.id
+
+    optimization_record = OptimizationsDb.query.filter_by(name=name, project_id=project_id).first()
+    if optimization_record is None:
+        optimization_record = OptimizationsDb(
+            project_id=project_id,
+            name=name,
+            which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome',
+            parset_id=parset_id,
+            progset_id=progset_id,
+            objectives=(optim.objectives or {}),
+            constraints=(optim.constraints or {})
+        )
+        db.session.add(optimization_record)
+        db.session.flush()
+    else:
+        optimization_record.which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome'
+        optimization_record.parset_id = parset_id
+        optimization_record.progset_id = progset_id
+        optimization_record.objectives = (optim.objectives or {})
+        optimization_record.constraints = (optim.constraints or {})
+        db.session.add(optimization_record)
+
+    return optimization_record
+
+

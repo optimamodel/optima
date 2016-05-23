@@ -435,18 +435,17 @@ def force_tuple_list(item):
         return item
 
 
-def convert_pars_list(blob):
+def convert_pars_list(pars):
     result = []
-    if 'pars' in blob:
-        for item in blob['pars']:
-            result.append({
-                'name': item['name'],
-                'startyear': item['startyear'],
-                'endval': item['endval'],
-                'endyear': item['endyear'],
-                'startval': item['startval'],
-                'for': force_tuple_list(item['for'])
-            })
+    for par in pars:
+        result.append({
+            'name': par['name'],
+            'startyear': par['startyear'],
+            'endval': par['endval'],
+            'endyear': par['endyear'],
+            'startval': par['startval'],
+            'for': force_tuple_list(par['for'])
+        })
     return result
 
 

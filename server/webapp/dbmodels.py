@@ -771,7 +771,6 @@ class ScenariosDb(db.Model):
 
     def __init__(self, project_id, parset_id, name, scenario_type,
                  active=False, progset_id=None, blob={}):
-
         self.project_id = project_id
         self.name = name
         self.scenario_type = scenario_type
@@ -782,44 +781,50 @@ class ScenariosDb(db.Model):
 
     def hydrate(self):
         from server.webapp.dataio import load_progset_record, load_parset_record
-        print ">>>> Hydrating scenarios", self.name
         parset_record = load_parset_record(self.project_id, self.parset_id)
+        blob = normalize_obj(self.blob)
+
         if self.scenario_type == "parameter":
             kwargs = {
                 'name': self.name,
                 'parsetname': parset_record.name,
-                'pars': convert_pars_list(self.blob.get('pars', []))
+                'pars': convert_pars_list(blob.get('pars', []))
             }
-            print "parameter scenario"
+            print ">>>> Hydrating parameter scenario"
             pprint(kwargs, indent=2)
             return op.Parscen(**kwargs)
+
         else:
+
             progset_record = load_progset_record(self.project_id, self.progset_id)
             # TODO: remove this hack (dummy values)
-            if 'years' not in self.blob:
-                self.blob['years'] = 2030
+            if 'years' not in blob:
+                blob['years'] = 2030
+
             if self.scenario_type == "budget":
                 kwargs = {
                     'name': self.name,
                     'parsetname': parset_record.name,
                     'progsetname': progset_record.name,
-                    'budget': convert_program_list(self.blob.get('budget', [])),
-                    't': self.blob['years']
+                    'budget': convert_program_list(blob.get('budget', [])),
+                    't': blob['years']
                 }
-                print "budget scenario"
+                print ">>>> Hydrating budget scenario"
                 pprint(kwargs, indent=2)
                 return op.Budgetscen(**normalize_obj(kwargs))
+
             if self.scenario_type == "coverage":
                 kwargs = {
                     'name': self.name,
                     'parsetname': parset_record.name,
                     'progsetname': progset_record.name,
-                    'coverage': convert_program_list(self.blob.get('coverage', [])),
-                    't': self.blob['years']
+                    'coverage': convert_program_list(blob.get('coverage', [])),
+                    't': blob['years']
                 }
-                print "coverage scenario"
+                print ">>>> Hydrating coverage scenario"
                 pprint(kwargs, indent=2)
                 return op.Coveragescen(**normalize_obj(kwargs))
+
         raise ValueError("Couldn't hydrate scenario record")
 
 
