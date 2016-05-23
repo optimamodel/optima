@@ -320,8 +320,8 @@ def objectivecalc(budgetvec=None, which=None, project=None, parset=None, progset
     constrainedbudget = constrainbudget(origbudget=origbudget, budgetvec=budgetvec, totalbudget=totalbudget, budgetlims=constraints, optiminds=optiminds, outputtype='odict')
 
     # Run model
-    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, ccsample=ccsample)
-    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, ccsample=ccsample)
+    thiscoverage = progset.getprogcoverage(budget=constrainedbudget, t=objectives['start'], parset=parset, sample=ccsample)
+    thisparsdict = progset.getpars(coverage=thiscoverage, t=objectives['start'], parset=parset, sample=ccsample)
     results = runmodel(pars=thisparsdict, project=project, parset=parset, progset=progset, tvec=tvec, verbose=0)
 
     # Figure out which indices to use
@@ -421,11 +421,11 @@ def optimize(which=None, project=None, optim=None, inds=0, maxiters=1000, maxtim
 
     # Run outcomes minimization
     if which=='outcomes':
-        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget)
+        multires = minoutcomes(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, overwritebudget=overwritebudget, ccsample=ccsample)
 
     # Run money minimization
     elif which=='money':
-        multires = minmoney(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, fundingchange=1.2)
+        multires = minmoney(project=project, optim=optim, inds=inds, tvec=tvec, verbose=verbose, maxtime=maxtime, maxiters=maxiters, fundingchange=1.2, ccsample=ccsample)
 
     return multires
 
@@ -458,7 +458,7 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
     thisparset = dcp(parset) # WARNING, kludge because some later functions expect parset instead of pars
     try: thisparset.pars = [thisparset.pars[inds[0]]] # Turn into a list -- WARNING
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
-    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
+    args = {'which':'outcomes', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample':ccsample, 'verbose':verbose}
     budgetvecnew, fval, exitflag, output = asd(objectivecalc, constrainedbudgetvec, args=args, xmin=xmin, timelimit=maxtime, MaxIter=maxiters, verbose=verbose)
 
     ## Tidy up -- WARNING, need to think of a way to process multiple inds
@@ -482,7 +482,7 @@ def minoutcomes(name=None, project=None, optim=None, inds=None, tvec=None, verbo
 
 
 
-def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2):
+def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=None, maxtime=None, maxiters=None, fundingchange=1.2, tolerance=1e-2, ccsample='best'):
     '''
     A function to minimize money for a fixed objective. Note that it calls minoutcomes() in the process.
 
@@ -507,7 +507,7 @@ def minmoney(name=None, project=None, optim=None, inds=None, tvec=None, verbose=
     except: raise OptimaException('Could not load parameters %i from parset %s' % (inds, parset.name))
 
     # Define arguments for ASD
-    args = {'which':'money', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'verbose':verbose}
+    args = {'which':'money', 'project':project, 'parset':thisparset, 'progset':progset, 'objectives':optim.objectives, 'constraints':optim.constraints, 'totalbudget':totalbudget, 'optiminds':optiminds, 'origbudget':origbudget, 'tvec':tvec, 'ccsample': ccsample, 'verbose':verbose}
 
 
     ##########################################################################################################################
