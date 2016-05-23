@@ -116,17 +116,17 @@ define(
         //   }
         // };
         //
-        // /**
-        //  * Returns the mpld3 figure of this chart.
-        //  */
-        // /**
-        //  * Returns the zoomPlugin of the mpdl3 figure of this chart.
-        //  */
-        // function getZoomPlugin () {
-        //   return _(getFigure().plugins).find(function(plugin) {
-        //     return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
-        //   });
-        // }
+        /**
+         * Returns the mpld3 figure of this chart.
+         */
+        /**
+         * Returns the zoomPlugin of the mpdl3 figure of this chart.
+         */
+        function getZoomPlugin () {
+          return _(getFigure().plugins).find(function(plugin) {
+            return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+          });
+        }
 
         /**
          * Disable both the zoom and the pan button.
