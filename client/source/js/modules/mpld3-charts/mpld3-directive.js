@@ -364,7 +364,7 @@ define(
         scope.onResize = function () {
           var parent = $(elem).parent();
           scope.height = parent.height();
-          console.log("resize", parent, scope.height);
+          // console.log("resize", parent, scope.height);
           scope.$apply();
         };
 

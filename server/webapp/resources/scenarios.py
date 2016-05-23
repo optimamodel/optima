@@ -1,248 +1,50 @@
-import json
-import uuid
-
 from flask import request
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with
+from flask_restful import Resource
 from flask_restful_swagger import swagger
 
-from server.webapp.dataio import load_project_record, load_scenario_record
-from server.webapp.resources.common import report_exception
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ScenariosDb
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.utils import SubParser, RequestParser
-from server.webapp.parse import scenario_par, scenario_program
+from server.webapp.dataio import (
+    load_project_record, check_project_exists, get_scenario_summaries,
+    save_scenario_summaries)
 from server.webapp.plot import make_mpld3_graph_dict
-
-
-scenario_parser = RequestParser()
-scenario_parser.add_arguments({
-    'name': {'type': str, 'location': 'args', 'required': True},
-    'parset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
-    'progset_id': {'type': uuid.UUID, 'location': 'args', 'required': True},
-    'scenario_type': {'type': str, 'location': 'args', 'required': True},
-    'active': {'type': bool, 'location': 'args', 'required': True}
-})
-
-scenario_list_scenario_parser = RequestParser()
-scenario_list_scenario_parser.add_arguments({
-    'id': {'required': False, 'location': 'json'},
-    'name': {'type': str, 'required': True, 'location': 'json'},
-    'parset_id': {'required': True, 'location': 'json'},
-    'progset_id': {'type': uuid.UUID, 'location': 'json', 'required': True},
-    'scenario_type': {'type': str, 'required': True, 'location': 'json'},
-    'active': {'type': bool, 'required': True, 'location': 'json'},
-    'pars': {'type': scenario_par, 'required': False, 'location': 'json'},  # only for Paramscen
-    'years': {'type': list, 'required': False, 'location': 'json'}, # only for Budgetscen /Coveragescen
-    'budget': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Budgetscen
-    'coverage': {'type': scenario_program, 'required': False, 'location': 'json'}, # only for Coveragescen
-})
-
-scenario_list_parser = RequestParser()
-scenario_list_parser.add_arguments({
-    'scenarios': {
-        'type': SubParser(scenario_list_scenario_parser),
-        'action': 'append',
-        'required': False,
-        'default': []
-    },
-})
-
-
-def check_pars(blob, raise_exception = True):
-    """
-    Check the pars attribute for scenarios.
-    """
-    pars = []
-
-    if 'pars' not in blob.keys():
-        if raise_exception:
-            raise ValueError("JSON body requires 'pars' parameter")
-        else:
-            return pars
-
-    if not isinstance(blob['pars'], list):
-        raise ValueError("'pars' needs to be a list.")
-
-    for i in blob['pars']:
-
-        pars.append({
-            'endval': int(i['endval']),
-            'endyear': int(i['endyear']),
-            'name': str(i['name']),
-            'for': list(i['for']),
-            'startval': int(i['startval']),
-            'startyear': int(i['startyear'])
-        })
-
-    return pars
-
-
-def check_program(blob, key): # result is either budget or coverage, depending on scenario type
-    from server.webapp.utils import scenario_program
-    programs = {}
-    if key not in blob.keys():
-        return programs
-
-    orig_programs = blob[key]
-    return scenario_program(orig_programs)
-
-
-# /api/project/<project-id>/scenarios
+from server.webapp.resources.common import report_exception
+from server.webapp.utils import normalize_obj
 
 
 class Scenarios(Resource):
     """
-    Scenarios for a given project.
+    /api/project/<uuid:project_id>/scenarios
+
+    Used in the scenario and program-scenarios pages
+
+    - GET: get scenarios for a project
+    - PUT: update all scenarios
     """
+
     method_decorators = [report_exception, login_required]
 
-    def _scenarios_for_fe(self, scenarios):
-        rv = []
-        for scenario in scenarios:
-            print "scenario", scenario.blob
-            if 'pars' in scenario.blob:
-                pars = []
-                for par in scenario.blob['pars']:
-                    par['for'] = par['for'][0]
-                    pars.append(par)
-                scenario.blob['pars'] = pars
-
-            for key in ['budget', 'coverage']:
-                if key in scenario.blob:
-                    item_list = []
-                    for k, v in scenario.blob[key].iteritems():
-                        item = {
-                            'program': k,
-                            'values': v
-                        }
-                        item_list.append(item)
-                    scenario.blob[key] = item_list
-
-            rv.append(scenario)
-        print "rv", rv
-        return rv
-
     @swagger.operation()
-    @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
     def get(self, project_id):
-        """
-        Get the scenarios for the given project
-        """
-        project_entry = load_project_record(project_id)
-        if project_entry is None:
-            raise ProjectDoesNotExist(id=project_id)
+        check_project_exists(project_id)
+        return get_scenario_summaries(project_id)
 
-        reply = db.session.query(ScenariosDb).filter_by(project_id=project_entry.id).all()
-        return self._scenarios_for_fe(reply)
-
-    @swagger.operation(
-        parameters=scenario_parser.swagger_parameters(),
-        notes="""
-            Create a new scenario.
-
-            If it is a Parameter scenario, the request body should be a JSON
-            dict with the 'pars' key.
-        """
-    )
-    @marshal_with(ScenariosDb.resource_fields)
-    def post(self, project_id):
-        """
-        Create a new scenario for the given project.
-        """
-        args = scenario_parser.parse_args()
-
-        if args.get('scenario_type') not in ["parameter", "budget", "coverage"]:
-            raise ValueError("Type needs to be 'parameter', 'budget' or 'coverage'.")
-
-        blob = {}
-        data = json.loads(request.data)
-        pars = check_pars(data, raise_exception = (args['scenario_type'] == "parameter"))
-        budget = check_program(data, 'budget')
-        coverage = check_program(data, 'coverage')
-        if pars:
-            blob['pars'] = pars
-        if budget:
-            blob['budget'] = budget
-        if coverage:
-            blob['coverage'] = coverage
-
-        scenario_entry = ScenariosDb(project_id, blob=blob, **args)
-
-        db.session.add(scenario_entry)
-        db.session.flush()
-        db.session.commit()
-
-        return scenario_entry, 201
-
-    def _upsert_scenario(self, project_id, id, **kwargs):
-        pars = kwargs.pop('pars', None)
-        budget = kwargs.pop('budget', None)
-        coverage = kwargs.pop('coverage', None)
-        years = kwargs.pop('years', None)
-        print "years", years
-        if years:
-            years = [int(y) for y in years]
-        print "years", years
-
-        blob = {}
-        if pars:
-            blob['pars'] = pars
-        if budget:
-            blob['budget'] = budget
-        if coverage:
-            blob['coverage'] = coverage
-        if years:
-            blob['years'] = years
-
-        scenario_entry = None
-        if id is not None:
-            scenario_entry = ScenariosDb.query.filter_by(id=id).first()
-            scenario_entry.blob = blob
-        if not scenario_entry:
-            scenario_entry = ScenariosDb(project_id, blob=blob, **kwargs)
-        else:
-            for key, value in kwargs.iteritems():
-                setattr(scenario_entry, key, value)
-
-        db.session.add(scenario_entry)
-        db.session.flush()
-        db.session.commit()
-
-    @swagger.operation(
-        parameters=scenario_list_parser.swagger_parameters(),
-        responseClass=ScenariosDb.__name__
-    )
-    @marshal_with(ScenariosDb.resource_fields, envelope='scenarios')
     def put(self, project_id):
-        args = scenario_list_parser.parse_args()
+        data = normalize_obj(request.get_json(force=True))
+        save_scenario_summaries(project_id, data['scenarios'])
+        return get_scenario_summaries(project_id)
 
-        scenarios = args['scenarios']
-
-        db.session.query(ScenariosDb).filter_by(project_id=project_id).filter(
-            ~ScenariosDb.id.in_([scenario['id'] for scenario in scenarios if 'id' in scenario and scenario['id']])
-        ).delete(synchronize_session='fetch')
-        db.session.flush()
-
-        for scenario in scenarios:
-            self._upsert_scenario(project_id, **scenario)
-        db.session.commit()
-
-        return self._scenarios_for_fe(ScenariosDb.query.filter_by(project_id=project_id).all())
-
-
-# /api/project/<project-id>/scenarios/results
 
 class ScenarioResults(Resource):
+    """
+    /api/project/<project-id>/scenarios/results
+
+    - GET: Run scenarios and returns the graphs
+    """
 
     method_decorators = [report_exception, login_required]
 
     @swagger.operation()
     def get(self, project_id):
-        """
-        Run the scenarios for a given project and returns the graphs.
-        """
         project_entry = load_project_record(project_id)
         project = project_entry.hydrate()
         project.runscenarios()
@@ -250,68 +52,4 @@ class ScenarioResults(Resource):
 
 
 
-# /api/project/<project-id>/scenarios/<scenarios-id>
-class Scenario(Resource):
-    """
-    A given scenario.
-    """
-    method_decorators = [report_exception, login_required]
 
-    @swagger.operation()
-    @marshal_with(ScenariosDb.resource_fields)
-    def get(self, project_id, scenario_id):
-        """
-        Get a given single scenario.
-        """
-        return load_scenario_record(project_id, scenario_id)
-
-    @swagger.operation(
-        parameters=scenario_parser.swagger_parameters(),
-        notes="""
-            Update an existing scenario.
-
-            If it is a Parameter scenario, the request body should be a JSON
-            dict with the 'pars' key.
-        """
-    )
-    @marshal_with(ScenariosDb.resource_fields)
-    def put(self, project_id, scenario_id):
-        """
-        Update the given single scenario.
-        """
-        args = scenario_parser.parse_args()
-
-        pars = check_pars(data, raise_exception = (args['scenario_type'] == "Parameter"))
-        budget = check_program(data, 'budget')
-        coverage = check_program(data, 'coverage')
-        if pars:
-            blob['pars'] = pars
-        if budget:
-            blob['budget'] = budget
-        if coverage:
-            blob['coverage'] = coverage
-
-        scenario_entry = load_scenario_record(project_id, scenario_id)
-
-        scenario_entry.name = args['name']
-        scenario_entry.scenario_type = args['scenario_type']
-        scenario_entry.parset_id = args['parset_id']
-        scenario_entry.progset_id = args.get('progset_id')
-        scenario_entry.active = args['active']
-        scenario_entry.blob = blob
-
-        db.session.commit()
-
-        return scenario_entry
-
-    @swagger.operation()
-    def delete(self, project_id, scenario_id):
-        """
-        Delete the given scenario.
-        """
-        scenario_entry = load_scenario_record(project_id, scenario_id)
-
-        db.session.delete(scenario_entry)
-        db.session.commit()
-
-        return b'', 204

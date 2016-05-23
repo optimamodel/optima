@@ -5,36 +5,33 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AnalysisScenariosController', function (
       $scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse,
-      parsetResponse, scenariosResponse) {
+      parsetResponse, scenariosResponse, toastr) {
 
     var project = info.data;
     var parsets = parsetResponse.data.parsets;
     var progsets = progsetsResponse.data.progsets;
 
+    function consoleLogJson(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
+
     $scope.scenarios = scenariosResponse.data.scenarios;
+    consoleLogJson("loading scenarios", $scope.scenarios);
+
     $scope.isMissingModelData = !project.has_data;
     $scope.isMissingProgramSet = progsets.length == 0;
 
-    $scope.alerts = [];
-
-    var killOldestAlert = function() {
-      if ($scope.alerts.length > 0) {
-        $scope.alerts.shift();
-        $scope.$apply();
-      }
-    }
-
-    var addTimedAlert = function(msg) {
-      $scope.alerts.push({ msg: msg });
-      setTimeout(killOldestAlert, 3000);
-    };
-
     var saveScenarios = function (scenarios, msg) {
+      consoleLogJson("saving scenarios", scenarios);
       $http
         .put('/api/project/' + project.id + '/scenarios', {'scenarios': scenarios })
         .success(function (response) {
           $scope.scenarios = response.scenarios;
-          if (msg) { addTimedAlert(msg) }
+          consoleLogJson("returned scenarios", $scope.scenarios);
+          if (msg) {
+            toastr.success(msg)
+          }
         });
     };
 
@@ -58,7 +55,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           scenario: function () { return angular.copy(scenario); },
           parsets: function () { return parsets; },
           progsets: function () { return progsets; },
-          ykeys: function () { return ykeys; },
+          ykeys: function () { return ykeys; }
         }
       });
 

@@ -1,3 +1,5 @@
+from numpy.core.numeric import array
+
 _doc_ = """
 
 # parse.py
@@ -12,6 +14,7 @@ There should be no references to the database here!
 
 from collections import defaultdict
 from pprint import pprint
+from numpy import nan
 
 from flask.ext.restful import fields, marshal
 
@@ -19,9 +22,6 @@ from optima import loadpartable, partable, Par
 from optima.defaults import defaultprograms
 
 from server.webapp.utils import normalize_obj
-
-
-pluck = lambda l, k: [e[k] for e in l if e[k] is not None]
 
 
 def parse_targetpars(targetpars):
@@ -76,9 +76,12 @@ def parse_costcovdata(costcovdata):
     return result
 
 
+pluck = lambda l, k: [e[k] if e[k] is not None else nan for e in l]
+
+
 def revert_costcovdata(costcov):
     result = {}
-    if costcov is not None:
+    if costcov:
         result = {
             't': pluck(costcov, 'year'),
             'cost': pluck(costcov, 'cost'),
@@ -331,47 +334,6 @@ def get_default_populations():
     return result
 
 
-def scenario_par(orig_pars):
-    if not isinstance(orig_pars, list):
-        raise ValueError("needs to be a list.")
-    pars = []
-    for par in orig_pars:
-        pars.append({
-            'endval': float(par['endval']),
-            'endyear': int(par['endyear']),
-            'name': str(par['name']),
-            'for': [par['for']],
-            'startval': float(par['startval']),
-            'startyear': int(par['startyear'])
-        })
-    return pars
-
-
-def scenario_program(orig_programs):  # result is either budget or coverage, depending on scenario type
-    if not isinstance(orig_programs, list):
-        raise ValueError("needs to be a list or dictionaries.")
-
-    if len(orig_programs) == 0:
-        return []
-
-    if not isinstance(orig_programs[0], dict):
-        raise ValueError("needs to be a list or dictionaries.")
-
-    programs = {}
-    for program_entry in orig_programs:
-        program_name = str(program_entry['program'])
-        values = program_entry['values']
-        print('---------')
-        print(values)
-        if not isinstance(values, list):
-            values = [values]
-        programs[program_name] = []
-        for elem in values:
-            programs[program_name].append(float(elem))
-
-    return programs
-
-
 def parse_outcomes_from_progset(progset):
     """
     Args:
@@ -462,3 +424,41 @@ def put_outcomes_into_progset(outcomes, progset):
             poptuple = tuple(outcome['pop']) if islist else outcome['pop']
             if poptuple in covout:
                 covout[poptuple].addccopar(ccopar, overwrite=True)
+
+
+def force_tuple_list(item):
+    if isinstance(item, str) or isinstance(item, unicode):
+        return [str(item)]
+    if isinstance(item, list):
+        return [tuple(map(str, tokens)) for tokens in item]
+    else:
+        return item
+
+
+def convert_pars_list(blob):
+    result = []
+    if 'pars' in blob:
+        for item in blob['pars']:
+            result.append({
+                'name': item['name'],
+                'startyear': item['startyear'],
+                'endval': item['endval'],
+                'endyear': item['endyear'],
+                'startval': item['startval'],
+                'for': force_tuple_list(item['for'])
+            })
+    return result
+
+
+def convert_program_list(program_list):
+    result = {}
+    for entry in program_list:
+        key = entry["program"]
+        vals = entry["values"]
+        if all(v is None for v in vals):
+            continue
+        vals = [v if v is not None else 0 for v in vals]
+        result[key] = array(vals)
+    return result
+
+

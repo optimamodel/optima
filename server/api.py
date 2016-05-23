@@ -72,7 +72,7 @@ from server.webapp.resources.parsets import (
     Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration,
     ParsetYkeys)
 from server.webapp.resources.progsets import ProgramCostcovGraph
-from server.webapp.resources.scenarios import Scenarios, Scenario, ScenarioResults
+from server.webapp.resources.scenarios import Scenarios, ScenarioResults
 from server.webapp.resources.optimizations import (
     Optimizations, Optimization, OptimizationResults, OptimizationGraph)
 
@@ -102,7 +102,7 @@ api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimization
 
 api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/results')
-api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scenario_id>')
+api.add_resource(ParsetYkeys, '/api/project/<uuid:project_id>/parsets/ykeys')
 
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
@@ -123,7 +123,6 @@ api.add_resource(ProgramCostcovGraph,
 api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
-api.add_resource(ParsetYkeys, '/api/project/<uuid:project_id>/parsets/ykeys')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')

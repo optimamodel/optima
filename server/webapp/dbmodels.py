@@ -1,9 +1,8 @@
-from copy import deepcopy
 from datetime import datetime
 from pprint import pprint
 
 import dateutil
-from flask_restful import fields
+from flask_restful import fields, marshal
 from flask_restful_swagger import swagger
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
@@ -16,7 +15,8 @@ from server.webapp.exceptions import DuplicateProgram
 from server.webapp.exceptions import ParsetDoesNotExist
 from server.webapp.parse import (
     parse_program_summary, revert_targetpars, revert_ccopars, revert_costcovdata,
-    parse_default_program_summaries, parse_outcomes_from_progset, put_outcomes_into_progset)
+    parse_default_program_summaries, parse_outcomes_from_progset, put_outcomes_into_progset, convert_pars_list,
+    convert_program_list)
 from server.webapp.utils import normalize_obj
 
 
@@ -485,21 +485,6 @@ class ProjectEconDb(db.Model):  # pylint: disable=R0903
 
 
 
-class LargeInt(fields.Integer):
-    def format(self, value):
-        try:
-            if value is None:
-                return self.default
-            return int(float(value))
-        except ValueError as ve:
-            raise fields.MarshallingException(ve)
-
-costcov_fields = {
-    'year': fields.Integer,
-    'cost': LargeInt(attribute='cost'),
-    'coverage': LargeInt(attribute='coverage'),
-}
-
 @swagger.model
 class ProgramsDb(db.Model):
 
@@ -775,19 +760,6 @@ class ScenariosDb(db.Model):
 
     __tablename__ = 'scenarios'
 
-    resource_fields = {
-        'id': fields.String,
-        'progset_id': fields.String,
-        'scenario_type': fields.String,
-        'active': fields.Boolean,
-        'name': fields.String,
-        'parset_id': fields.String,
-        'pars': fields.Raw(attribute='pars'),
-        'budget': fields.Raw(attribute='budget'),
-        'coverage': fields.Raw(attribute='coverage'),
-        'years': fields.Raw(attribute='years')
-    }
-
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     project_id = db.Column(UUID(True), db.ForeignKey('projects.id'))
     name = db.Column(db.String)
@@ -808,102 +780,47 @@ class ScenariosDb(db.Model):
         self.parset_id = parset_id
         self.blob = blob
 
-    @property
-    def pars(self):
-        # print(self.blob)
-        return self.blob.get('pars', [])
-
-    @property
-    def budget(self):
-        return self.blob.get('budget', [])
-
-    @property
-    def coverage(self):
-        return self.blob.get('coverage', [])
-
-    @property
-    def years(self):
-        return self.blob.get('years', [])
-
     def hydrate(self):
-
         from server.webapp.dataio import load_progset_record, load_parset_record
-
-        parset = load_parset_record(self.project_id, self.parset_id)
-
-        progset = None
-
-        if self.progset_id:
-            progset = load_progset_record(self.project_id, self.progset_id)
-
-        blob = deepcopy(self.blob)
-
-        key = self.scenario_type
-        if key == 'parameter':
-            if 'pars' in blob and blob['pars']:
-                blob['pars'] = [
-                    {
-                        'name': item['name'],
-                        'startyear': item['startyear'],
-                        'endval': item['endval'],
-                        'endyear': item['endyear'],
-                        'startval': item['startval'],
-                        'for': [
-                            tuple([str(i) for i in for_item]) if isinstance(for_item, list) else str(for_item)
-                            for for_item in item['for']
-                        ]
-                    } for item in blob['pars'] if 'pars' in blob
-                ]
-            else:
-                blob['pars'] = []
-        else:
-            print(blob)
-            blob[key] = {
-                str(k): v
-                for k, v in blob[key].iteritems() if key in blob
+        print ">>>> Hydrating scenarios", self.name
+        parset_record = load_parset_record(self.project_id, self.parset_id)
+        if self.scenario_type == "parameter":
+            kwargs = {
+                'name': self.name,
+                'parsetname': parset_record.name,
+                'pars': convert_pars_list(self.blob.get('pars', []))
             }
-
-        if self.scenario_type == "budget":
-
-            blob.pop('coverage', None)
-            blob.pop('pars', None)
-
+            print "parameter scenario"
+            pprint(kwargs, indent=2)
+            return op.Parscen(**kwargs)
+        else:
+            progset_record = load_progset_record(self.project_id, self.progset_id)
             # TODO: remove this hack (dummy values)
-            if 'years' not in blob:
-                blob['t'] = 2030
-            else:
-                blob['t'] = blob['years']
-                del blob['years']
-            print "blob", blob
-            return op.Budgetscen(name=self.name,
-                               parsetname=parset.name,
-                               progsetname=progset.name,
-                               **blob)
-
-        if self.scenario_type == "coverage":
-
-            blob.pop('budget', None)
-            blob.pop('pars', None)
-
-            # TODO: remove this hack (dummy values)
-            if 'years' not in blob:
-                blob['t'] = 2030
-            else:
-                blob['t'] = blob['years']
-                del blob['years']
-            return op.Coveragescen(name=self.name,
-                               parsetname=parset.name,
-                               progsetname=progset.name,
-                               **blob)
-
-        elif self.scenario_type == "parameter":
-
-            blob.pop('coverage', None)
-            blob.pop('budget', None)
-
-            return op.Parscen(name=self.name,
-                              parsetname=parset.name,
-                              **blob)
+            if 'years' not in self.blob:
+                self.blob['years'] = 2030
+            if self.scenario_type == "budget":
+                kwargs = {
+                    'name': self.name,
+                    'parsetname': parset_record.name,
+                    'progsetname': progset_record.name,
+                    'budget': convert_program_list(self.blob.get('budget', [])),
+                    't': self.blob['years']
+                }
+                print "budget scenario"
+                pprint(kwargs, indent=2)
+                return op.Budgetscen(**normalize_obj(kwargs))
+            if self.scenario_type == "coverage":
+                kwargs = {
+                    'name': self.name,
+                    'parsetname': parset_record.name,
+                    'progsetname': progset_record.name,
+                    'coverage': convert_program_list(self.blob.get('coverage', [])),
+                    't': self.blob['years']
+                }
+                print "coverage scenario"
+                pprint(kwargs, indent=2)
+                return op.Coveragescen(**normalize_obj(kwargs))
+        raise ValueError("Couldn't hydrate scenario record")
 
 
 
@@ -948,7 +865,7 @@ class OptimizationsDb(db.Model):
         """
         Make sure the objectives and constraints are current.
         """
-        from server.webapp.dataio import load_parset_record, load_progset_record, load_project_record, remove_nans
+        from server.webapp.dataio import load_parset_record, load_progset_record, load_project_record
 
         if not self.constraints:
             self.constraints = {}
@@ -979,6 +896,6 @@ class OptimizationsDb(db.Model):
         objectives.update({
             x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
 
-        self.objectives = remove_nans(objectives)
+        self.objectives = normalize_obj(objectives)
 
 

@@ -33,7 +33,7 @@ class Progsets(Resource):
 
     POST /api/project/<uuid:project_id>/progsets
 
-    Save new project
+    Save newly created progset in the client
     """
     method_decorators = [report_exception, login_required]
 
@@ -85,7 +85,7 @@ class Progset(Resource):
 
     PUT /api/project/<uuid:project_id>/progsets/<uuid:progset_id>
 
-    Update existing project - is this ever used?
+    Update existing progset
     """
     method_decorators = [report_exception, login_required]
 

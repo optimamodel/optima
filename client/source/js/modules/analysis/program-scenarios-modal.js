@@ -8,13 +8,22 @@ define(['angular'], function (module) {
 
       $scope.parsets = parsets;
       $scope.progsets = progsets;
-      $scope.activePrograms = _.filter(progsets[0].programs, {active: true});
+      $scope.activePrograms = [];
+      _.each(progsets[0].programs, function(program) {
+        var years = program.ccopars.t;
+        if (!_.isUndefined(years) && years.length > 0) {
+          if (program.active) {
+            $scope.activePrograms.push(program);
+          }
+        }
+      });
 
       var nProgram = $scope.activePrograms.length;
       $scope.dataEntry = new Array(nProgram + 1);
 
       $scope.scenario = scenario;
-      $scope.scenario_type = $scope.scenario.scenario_type.toLowerCase();
+      $scope.scenario_type = $scope
+          .scenario.scenario_type.toLowerCase();
 
       $scope.scenarioExists = function() {
         var t = $scope.scenario;
@@ -30,12 +39,23 @@ define(['angular'], function (module) {
         });
         $scope.scenario.parset_id = $scope.parsets[0].id;
         $scope.scenario.progset_id = $scope.progsets[0].id;
+        $scope.scenario.active = true;
         $scope.scenario.years = [];
         var i = 1;
         do {
           $scope.scenario.name = "Scenario " + i;
           i += 1;
         } while ($scope.scenarioExists());
+
+        // $scope.table = {
+        //   titles: _.pluck($scope.activePrograms, 'short');
+        //   rows: [],
+        //   types: [],
+        //   widths: [],
+        //   displayRowFns: [],
+        //   options:
+        //   validateFn:
+        // }
       }
 
       $scope.getProgramsIndexRange = function() { return _.range(nProgram); };
@@ -45,7 +65,8 @@ define(['angular'], function (module) {
       $scope.getDataEntryRange = function() { return _.range($scope.dataEntry.length); };
 
       $scope.isDataInvalid = function() {
-        return _.some(_.map($scope.dataEntry, function(d) { return !_.isFinite(d) }));
+        // return _.some(_.map($scope.dataEntry, function(d) { return !_.isFinite(d) }));
+        return false;
       };
 
       $scope.addDataEntryYear = function() {
@@ -64,7 +85,10 @@ define(['angular'], function (module) {
         angular.forEach(changesByProgram, function (v, k) { v.values.splice(i, 1); });
       };
 
-      $scope.save = function(){ $modalInstance.close($scope.scenario); };
+      $scope.save = function(){
+        console.log('dialog scenario', $scope.scenario);
+        $modalInstance.close($scope.scenario);
+      };
 
       $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
 

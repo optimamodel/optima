@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from server.webapp.parse import parse_parameters_of_parset_list, parse_parameters_from_progset_parset
 
 __doc__ = """
@@ -22,7 +24,8 @@ from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb
+from server.webapp.dbmodels import ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb, \
+    ScenariosDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, OptimaJSONEncoder, normalize_obj
@@ -65,11 +68,17 @@ def load_project_record(project_id, all_data=False, raise_exception=False, db_se
     return project_record
 
 
+def check_project_exists(project_id):
+    project_record = load_project_record(project_id)
+    if project_record is None:
+        raise ProjectDoesNotExist(id=project_id)
+
+
 def _load_project_child(
         project_id, record_id, record_class, exception_class, raise_exception=True):
     cu = current_user
 
-    print ">>> Fetching record_id", record_id, "of", repr(record_class)
+    print ">>> Fetching record", record_id, "of", repr(record_class)
     record = db.session.query(record_class).get(record_id)
     if record is None:
         if raise_exception:
@@ -214,76 +223,6 @@ def update_or_create_program_record(project_id, progset_id, short, program_summa
     db.session.add(program_record)
     return program_record
 
-
-def update_or_create_scenario_record(project_id, project, name):  # project might have a different ID than the one we want
-
-    from server.webapp.dbmodels import ScenariosDb, ParsetsDb, ProgsetsDb
-    import json
-
-    parset_id = None
-    progset_id = None
-    blob = {}
-    scenario_type = None
-
-    scenario = project.scens[name]
-    if not scenario:
-        raise Exception("scenario {} not present in project {}!".format(name, project_id))
-
-    if isinstance(scenario, op.Parscen):
-        scenario_type = 'parameter'
-    elif isinstance(scenario, op.Budgetscen):
-        scenario_type = 'budget'
-    elif isinstance(scenario, op.Coveragescen):
-        scenario_type = 'coverage'
-
-    if scenario.t:
-        blob['years'] = scenario.t
-    for key in ['budget', 'coverage', 'pars']:
-        if hasattr(scenario, key) and getattr(scenario, key):
-            val = getattr(scenario, key)
-            blob[key] = json.loads(json.dumps(val, cls=OptimaJSONEncoder))
-
-    parset_name = scenario.parsetname
-    if parset_name:
-        parset_record = ParsetsDb.query \
-            .filter_by(project_id=project_id, name=parset_name) \
-            .first()
-        if parset_record:
-            parset_id = parset_record.id
-
-    progset_id = None
-    if hasattr(scenario, 'progsetname') and scenario.progsetname:
-        progset_name = scenario.progsetname
-        progset_record = ProgsetsDb.query \
-            .filter_by(project_id=project_id, name=progset_name) \
-            .first()
-        if progset_record:
-            progset_id = progset_record.id
-
-    scenario_record = ScenariosDb.query \
-        .filter_by(project_id=project_id, name=name) \
-        .first()
-
-    if scenario_record is None:
-        scenario_record = ScenariosDb(
-            project_id=project_id,
-            parset_id=parset_id,
-            progset_id=progset_id,
-            name=name,
-            scenario_type=scenario_type,
-            active=scenario.active,
-            blob=blob
-        )
-        db.session.add(scenario_record)
-        db.session.flush()
-    else:
-        scenario_record.parset_id = parset_id
-        scenario_record.scenario_type = scenario_type
-        scenario_record.active=scenario.active
-        scenario_record.blob = blob
-        db.session.add(scenario_record)
-
-    return scenario_record
 
 
 def update_or_create_optimization_record(project_id, project, name):
@@ -481,3 +420,71 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     settings = load_project(project_id).settings
 
     return parse_parameters_from_progset_parset(settings, progset, parset)
+
+
+def get_scenario_summary_from_record(scenario_record):
+    result = {
+        'id': scenario_record.id,
+        'progset_id': scenario_record.progset_id,
+        'scenario_type': scenario_record.scenario_type,
+        'active': scenario_record.active,
+        'name': scenario_record.name,
+        'parset_id': scenario_record.parset_id,
+    }
+    result.update(scenario_record.blob)
+    return result
+
+
+def update_or_create_scenario_record(project_id, scenario_summary):
+    scenario_id = scenario_summary.pop("id", None)
+
+    # put scenario type specific keys in blob
+    blob = {}
+    for blob_key in ['pars', 'budget', 'coverage', 'years']:
+        value = scenario_summary.pop(blob_key, None)
+        if value is not None:
+            blob[blob_key] = value
+
+    if 'years' in blob:
+        blob['years'] = map(int, blob['years'])
+
+    if scenario_id is None:
+        record = ScenariosDb(project_id, blob=blob, **scenario_summary)
+    else:
+        record = ScenariosDb.query.filter_by(id=scenario_id).first()
+        record.blob = blob
+        for key, value in scenario_summary.items():
+            setattr(record, key, value)
+
+    db.session.add(record)
+    db.session.flush()
+    return record
+
+
+def get_scenario_summaries(project_id):
+    scenario_records = db.session.query(ScenariosDb).filter_by(project_id=project_id).all()
+    scenario_summaries = map(get_scenario_summary_from_record, scenario_records)
+    pprint("get scenario summaries")
+    pprint(normalize_obj(scenario_summaries), indent=2)
+    return {'scenarios': normalize_obj(scenario_summaries)}
+
+
+def save_scenario_summaries(project_id, scenario_summaries):
+    print(">>> save scenario summaries to db")
+    pprint(scenario_summaries, indent=2)
+
+    # delete any records with id's that aren't in summaries
+    existing_scenario_ids = [
+        scenario_summary['id']
+        for scenario_summary in scenario_summaries
+        if scenario_summary.get('id', False)
+    ]
+    db.session.query(ScenariosDb) \
+        .filter_by(project_id=project_id) \
+        .filter(~ScenariosDb.id.in_(existing_scenario_ids)) \
+        .delete(synchronize_session='fetch')
+    db.session.flush()
+
+    for scenario_summary in scenario_summaries:
+        update_or_create_scenario_record(project_id, scenario_summary)
+    db.session.commit()

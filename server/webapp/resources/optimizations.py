@@ -18,6 +18,7 @@ from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, OptimizationsDb
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import RequestParser, OptimaJSONEncoder
+from server.webapp.dataio import load_project_record
 
 
 optimization_parser = RequestParser()
