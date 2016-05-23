@@ -62,7 +62,7 @@ if 'minimizeoutcomes' in tests:
     objectives = defaultobjectives(P.progsets[0]) # This or P
     objectives['budget'] *= 0.5
     constraints = defaultconstraints(P) # This or P.progsets[0]
-    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10, ccsample='best')
+    P.optimize(name='minoutcome', parsetname='default', progsetname='default', objectives=objectives, method='asd', maxtime=10, ccsample='random')
     
     print('Original allocation: '),
     print(P.results[-1].budget[0])
@@ -92,7 +92,7 @@ if 'minimizemoney' in tests:
     objectives['deathfrac'] = 0.1 # Yes, this means an increase in deaths
     objectives['incifrac'] = 0.2
     constraints = defaultconstraints(P.progsets[0])
-    P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10)
+    P.optimize(name='minmoney', parsetname='default', progsetname='default', objectives=objectives, constraints=constraints, maxtime=10, ccsample='random')
     
     print('Original allocation: ($%g)' % sum(P.results[-1].budget[0][:]))
     print(P.results[-1].budget[0])
