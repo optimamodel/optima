@@ -303,9 +303,9 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
                                  'cost': newcost,
                                  'coverage': newcov})
 
-        # Create cost functions
+        # Create cost functions IF the program has target parameters
         sat = prog['ccparams']['saturation']
-        if ~isnan(sat):
+        if targetpars and ~isnan(sat):
             targetpopsize = newprog.gettargetpopsize(t=2016, parset = new.parsets[0], useelig=True)
             cov_u = prog['ccparams']['coverageupper']
             cov_l = prog['ccparams']['coveragelower']

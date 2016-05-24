@@ -195,7 +195,7 @@ if 'makeprograms' in tests:
 
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace, array
-    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False,bounds=None)
+    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
     HTC.targetcomposition = {'Clients': array([ 0.01]),
                        'F 15+': array([ 0.3]),
                        'FSW': array([ 0.24]),
