@@ -33,7 +33,7 @@ for f,origfile in enumerate(allorigfiles):
         
         # Save project
         E.name = basename
-        E.save(filename=newfile) 
+#        E.save(filename=newfile) 
         worked.append(origfile)
     except Exception as E:
         failed.append(origfile+' | '+str(E))
