@@ -10,7 +10,7 @@ import optima as op
 from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result, load_project_record
+from server.webapp.dataio import save_result_record, load_project_record
 
 from celery import Celery
 
@@ -100,14 +100,20 @@ def start_or_report_calculation(project_id, parset_id, work_type):
         print("A WorkingProjectRecord is present for %s with different job settings" % project_id)
         result['work_type'] = working_project_record.work_type
     else:
-        # Log a new job
-        work_log = WorkLogDb(project_id=project_record.id, parset_id=parset_id, work_type=work_type)
-        work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+        work_log = db_session.query(WorkLogDb).filter_by(
+            project_id=project_id, parset_id=parset_id, work_type=work_type).first()
+        if work_log is None:
+            # Log a new job
+            work_log = WorkLogDb(project_id=project_id, parset_id=parset_id, work_type=work_type)
+            work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+        else:
+            if work_log.status != 'started':
+                working_project_record.is_working = False
+                work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
         db_session.add(work_log)
         db_session.flush()
 
         if working_project_record is None:
-
             print("No working project was found - creating new one")
             db_session.add(
                 WorkingProjectDb(
@@ -203,7 +209,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
     work_log.error = error_text
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
     if result:
-        result_entry = save_result(project_id, result, parset_name, 'autofit', db_session=db_session)
+        result_entry = save_result_record(project_id, result, parset_name, 'autofit', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id
@@ -219,8 +225,11 @@ def run_autofit(project_id, parset_name, maxtime=60):
 @celery_instance.task()
 def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints):
     import traceback
-    app.logger.debug('started optimization: {} {} {} {} {} {}'.format(
+    import pprint
+    app.logger.debug('started optimization: {} {} {} {}'.format(
         project_id, optimization_name, parset_name, progset_name, objectives, constraints))
+    app.logger.debug(pprint.pformat(objectives, indent=2))
+    app.logger.debug(pprint.pformat(constraints, indent=2))
 
     error_text = ""
     status = 'completed'
@@ -259,7 +268,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
+        result_entry = save_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id

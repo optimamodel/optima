@@ -299,7 +299,7 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TY
     return result_record.hydrate()
 
 
-def save_result(
+def save_result_record(
         project_id, result, parset_name='default',
         calculation_type=ResultsDb.CALIBRATION_TYPE,
         db_session=None):
@@ -392,6 +392,32 @@ def get_parset_keys_with_y_values(project_id):
 
 
 def get_scenario_summary_from_record(scenario_record):
+    """
+
+    Args:
+        scenario_record:
+
+    Returns:
+    {
+        'id': scenario_record.id,
+        'progset_id': scenario_record.progset_id,
+        'scenario_type': scenario_record.scenario_type,
+        'active': scenario_record.active,
+        'name': scenario_record.name,
+        'parset_id': scenario_record.parset_id,
+        'budgets': [
+          {
+            "program": "VMMC",
+            "values": [ null ]
+          },
+          },
+          {
+            "program": "HTC",
+            "values": [ 33333 ]
+          },
+          "years": [ 2020 ],
+    }
+    """
     result = {
         'id': scenario_record.id,
         'progset_id': scenario_record.progset_id,

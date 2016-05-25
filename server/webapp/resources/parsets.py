@@ -10,7 +10,7 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
+    load_project_record, TEMPLATEDIR, upload_dir_user, save_result_record, load_result,
     load_project, load_parset_record, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
@@ -72,7 +72,7 @@ class Parsets(Resource):
             project_entry.restore(project)
             db.session.add(project_entry)
 
-            result_record = save_result(project_entry.id, new_result, name)
+            result_record = save_result_record(project_entry.id, new_result, name)
             db.session.add(result_record)
         else:
             # dealing with uid's directly might be messy...
@@ -90,7 +90,7 @@ class Parsets(Resource):
                 calculation_type=ResultsDb.CALIBRATION_TYPE).first()
             old_result = old_result_record.hydrate()
             new_result = op.dcp(old_result)
-            new_result_record = save_result(project_entry.id, new_result, name)
+            new_result_record = save_result_record(project_entry.id, new_result, name)
             db.session.add(new_result_record)
 
         db.session.commit()
@@ -261,7 +261,7 @@ class ParsetsCalibration(Resource):
         if result is None:
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            save_result(project_id, result, parset.name, calculation_type)
+            save_result_record(project_id, result, parset.name, calculation_type)
 
         # generate graphs
         selectors = self._selectors_from_result(result, which)
@@ -482,7 +482,7 @@ class ParsetsData(Resource):
         db.session.add(project_entry)  # todo: do we need to log that project was updated?
         db.session.flush()
 
-        result_record = save_result(project_entry.id, result, parset_entry.name)
+        result_record = save_result_record(project_entry.id, result, parset_entry.name)
         db.session.add(result_record)
 
         db.session.commit()

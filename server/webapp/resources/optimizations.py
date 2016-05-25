@@ -1,5 +1,5 @@
 import json
-from pprint import pprint
+from pprint import pprint, pformat
 
 from flask import current_app, helpers, request, Response
 
@@ -76,8 +76,11 @@ class Optimizations(Resource):
         for progset_record in progset_records:
             progset = progset_record.hydrate()
             progset_id = progset_record.id
+            constraints = op.defaultconstraints(project=project, progset=progset)
+            pprint(constraints["max"]["ART"])
+            pprint(normalize_obj(constraints))
             defaults[progset_id] = {
-                'constraints': op.defaultconstraints(project=project, progset=progset),
+                'constraints': constraints,
                 'objectives': {}
             }
             for which in objective_types:
@@ -123,15 +126,32 @@ class OptimizationCalculation(Resource):
         parset_name = parset_entry.name
 
         progset_entry = ProgsetsDb.query.get(progset_id)
+        progset = progset_entry.hydrate()
         progset_name = progset_entry.name
+
+        if not progset.readytooptimize():
+            error_msg = "Not ready to optimize\n"
+            costcov_errors = progset.hasallcostcovpars(detail=True)
+            if costcov_errors:
+                error_msg += "Missing: cost-coverage parameters of:\n"
+                error_msg += pformat(costcov_errors, indent=2)
+            covout_errors = progset.hasallcovoutpars(detail=True)
+            if covout_errors:
+                error_msg += "Missing: coverage-outcome parameters of:\n"
+                error_msg += pformat(covout_errors, indent=2)
+            raise Exception(error_msg)
 
         calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
         if not calc_state['can_start'] or not calc_state['can_join']:
             calc_state['status'] = 'running'
             return calc_state, 208
         else:
-            objectives = optimization_record.objectives
-            constraints = optimization_record.constraints
+            objectives = normalize_obj(optimization_record.objectives)
+            constraints = normalize_obj(optimization_record.constraints)
+            constraints["max"] = op.odict(constraints["max"])
+            constraints["min"] = op.odict(constraints["min"])
+            constraints["name"] = op.odict(constraints["name"])
+            print constraints
             run_optimization.delay(
                 project_id, optimization_name, parset_name,
                 progset_name, objectives, constraints)

@@ -48,7 +48,7 @@ def revert_targetpars(pars):
     if pars is None:
         return []
     targetpars = []
-    for par in pars:
+    for par in normalize_obj(pars):
         if par.get('active', False):
             for pop in par['pops']:
                 targetpars.append({
@@ -87,7 +87,7 @@ def revert_costcovdata(costcov):
             'cost': pluck(costcov, 'cost'),
             'coverage': pluck(costcov, 'coverage'),
         }
-    return result
+    return normalize_obj(result)
 
 
 def revert_ccopars(ccopars):
