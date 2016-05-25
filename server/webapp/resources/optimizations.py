@@ -1,164 +1,150 @@
-import os
-from datetime import datetime
-import dateutil
-import uuid
 import json
+from pprint import pprint
 
 from flask import current_app, helpers, request, Response
-from werkzeug.exceptions import Unauthorized
-from werkzeug.utils import secure_filename
 
 from flask.ext.login import current_user, login_required
-from flask_restful import Resource, marshal_with, fields
+from flask_restful import Resource, marshal_with, fields, marshal
 from flask_restful_swagger import swagger
 
 import optima as op
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, OptimizationsDb
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, OptimizationsDb, ProgsetsDb
 from server.webapp.resources.common import report_exception
-from server.webapp.utils import RequestParser, OptimaJSONEncoder
-from server.webapp.dataio import load_project_record
+from server.webapp.utils import RequestParser, OptimaJSONEncoder, normalize_obj
+from server.webapp.dataio import load_progset_record, load_project_record, load_project
 
 
-optimization_parser = RequestParser()
-optimization_parser.add_arguments({
-    'name': {'type': str, 'required': True},
-    'parset_id': {'type': uuid.UUID, 'required': True},
-    'progset_id': {'type': uuid.UUID, 'required': True},
-    'which': {'type': str, 'required': True},
-})
+def get_optimization_summaries(project_id):
+    optimization_records = db.session.query(OptimizationsDb) \
+        .filter_by(project_id=project_id).all()
+    result = marshal(optimization_records, OptimizationsDb.resource_fields)
+    result = normalize_obj(result)
+    return result
+
+
+def update_or_create_optimization_record(project_id,  optimization_summaries):
+    existing_ids = [
+        summary['id'] for summary in optimization_summaries if summary.get('id', False)]
+    db.session.query(OptimizationsDb) \
+        .filter_by(project_id=project_id) \
+        .filter(~OptimizationsDb.id.in_(existing_ids)) \
+        .delete(synchronize_session='fetch')
+    db.session.flush()
+
+    for summary in optimization_summaries:
+        id = summary.get('id', None)
+
+        if id is None:
+            print ">>> Creating optimizaton", summary['name']
+            record = OptimizationsDb(
+                project_id=project_id,
+                parset_id=summary['parset_id'],
+                progset_id=summary['progset_id'],
+                name=summary['name'],
+                which=summary['which'])
+        else:
+            print ">>> Updating optimizaton", summary['name']
+            record = db.session.query(OptimizationsDb).get(id)
+        constraints = summary['constraints']
+        objectives = summary['objectives']
+        record.update(constraints=constraints, objectives=objectives)
+        pprint(summary)
+
+        db.session.add(record)
+        db.session.flush()
+
+    db.session.commit()
 
 
 class Optimizations(Resource):
+    """
+    /api/project/<uuid:project_id>/optimizations
 
+    - GET: get the optimizations
+    - POST: save new optimization
+    """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(responseClass=OptimizationsDb.__name__)
-    @marshal_with(OptimizationsDb.resource_fields, envelope='optimizations')
+    @swagger.operation()
     def get(self, project_id):
-        """
-        Get the optimizations for the given project.
-        """
-        project_entry = load_project_record(project_id, raise_exception=True)
+        project = load_project(project_id)
+        progset_records = ProgsetsDb.query.filter_by(project_id=project_id).all()
+        defaults = {}
+        objective_types = ['outcomes', 'money']
+        for progset_record in progset_records:
+            progset = progset_record.hydrate()
+            progset_id = progset_record.id
+            defaults[progset_id] = {
+                'constraints': op.defaultconstraints(project=project, progset=progset),
+                'objectives': {}
+            }
+            for which in objective_types:
+                defaults[progset_id]['objectives'][which] = \
+                    op.defaultobjectives(project=project, progset=progset, which=which)
+        return {
+            'optimizations': get_optimization_summaries(project_id),
+            'defaultsByProgsetId': normalize_obj(defaults)
+        }
 
-        reply = db.session.query(OptimizationsDb).filter_by(project_id=project_entry.id).all()
-
-        r = []
-
-        for i in reply:
-            i._ensure_current()
-            r.append(i)
-
-        return r
-
-    @swagger.operation(responseClass=OptimizationsDb.__name__,
-                       parameters=optimization_parser.swagger_parameters())
-    @marshal_with(OptimizationsDb.resource_fields)
+    @swagger.operation()
     def post(self, project_id):
-
-        project_entry = load_project_record(project_id, raise_exception=True)
-
-        args = optimization_parser.parse_args()
-        optimization_entry = OptimizationsDb(project_id=project_id, **args)
-
-        db.session.add(optimization_entry)
-        db.session.flush()
-        db.session.commit()
-
-        return optimization_entry
+        optimization_summaries = normalize_obj(request.get_json(force=True))
+        update_or_create_optimization_record(project_id, optimization_summaries)
+        optimization_summaries = get_optimization_summaries(project_id)
+        print "Save optimizations"
+        pprint(optimization_summaries)
+        return {'optimizations': optimization_summaries}
 
 
-class Optimization(Resource):
+class OptimizationCalculation(Resource):
+    """
+    /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/results
 
-    method_decorators = [report_exception, login_required]
-
-    @swagger.operation(responseClass=OptimizationsDb.__name__)
-    @marshal_with(OptimizationsDb.resource_fields)
-    def get(self, project_id, optimization_id):
-
-        project_entry = load_project_record(project_id, raise_exception=True)
-
-        reply = db.session.query(OptimizationsDb).get(optimization_id)
-
-        reply._ensure_current()
-
-        return reply
-
-    @swagger.operation(responseClass=OptimizationsDb.__name__,
-                       parameters=optimization_parser.swagger_parameters())
-    @marshal_with(OptimizationsDb.resource_fields)
-    def put(self, project_id, optimization_id):
-
-        project_entry = load_project_record(project_id, raise_exception=True)
-
-        reply = db.session.query(OptimizationsDb).get(optimization_id)
-
-        try:
-            body = json.loads(request.data)
-        except ValueError:
-            body = {}
-
-        reply.objectives = body.get("objectives", {})
-        reply.constraints = body.get("constraints", {})
-
-        reply._ensure_current()
-
-        return reply
-
-
-class OptimizationResults(Resource):
+    - POST: launch the optimization for a project
+    - GET: poll running optimization for a project
+    """
 
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        summary='Launch auto calibration for the selected parset'
-    )
-    @report_exception
+    @swagger.operation(summary='Launch optimization')
     def post(self, project_id, optimization_id):
+
         from server.webapp.tasks import run_optimization, start_or_report_calculation
         from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
-        optimization_entry = OptimizationsDb.query.get(optimization_id)
-        optimization_entry._ensure_current()
+        optimization_record = OptimizationsDb.query.get(optimization_id)
+        optimization_name = optimization_record.name
+        parset_id = optimization_record.parset_id
+        progset_id = optimization_record.progset_id
 
-        optimization_name = optimization_entry.name
-        parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
+        parset_entry = ParsetsDb.query.get(parset_id)
         parset_name = parset_entry.name
-        progset_entry = ProgsetsDb.query.get(optimization_entry.progset_id)
+
+        progset_entry = ProgsetsDb.query.get(progset_id)
         progset_name = progset_entry.name
-        objectives = optimization_entry.objectives
-        constraints = optimization_entry.constraints
 
-        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, optimization_entry.parset_id, 'optimization')
-
-        result = {'can_start': can_start, 'can_join': can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
-        if not can_start or not can_join:
-            result['status'] = 'running'
-            return result, 208
+        calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
+        if not calc_state['can_start'] or not calc_state['can_join']:
+            calc_state['status'] = 'running'
+            return calc_state, 208
         else:
-            run_optimization.delay(project_id, optimization_name, parset_name, progset_name, objectives, constraints)
-            result['status'] = 'started'
-            return result, 201
+            objectives = optimization_record.objectives
+            constraints = optimization_record.constraints
+            run_optimization.delay(
+                project_id, optimization_name, parset_name,
+                progset_name, objectives, constraints)
+            calc_state['status'] = 'started'
+            return calc_state, 201
 
-    @swagger.operation(
-        summary='Retrieve optimization results for the given parset'
-    )
-    @report_exception
+    @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
-        from server.webapp.dbmodels import OptimizationsDb
-
-        optimization_entry = OptimizationsDb.query.get(optimization_id)
-        optimization_entry._ensure_current()
-
-        parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
-        project_id = parset_entry.project_id
-
-        result = check_calculation_status(project_id)
-        if result['status'] == 'error':
-            raise Exception(result['error_text'])
-        return result
+        calc_state = check_calculation_status(project_id)
+        if calc_state['status'] == 'error':
+            raise Exception(calc_state['error_text'])
+        return calc_state
 
 
 optimization_which_parser = RequestParser()
@@ -222,16 +208,18 @@ class OptimizationGraph(Resource):
         result_entry = db.session.query(ResultsDb).filter_by(project_id=project_id, calculation_type='optimization').first()
         if result_entry:
             result = result_entry.hydrate()
+            selectors = self._selectors_from_result(result, which)
+            which = which or self._which_from_selectors(selectors)
+            graphs = self._result_to_jsons(result, which)
+            payload = {
+                "optimization_id": optimization_id,
+                "graphs": graphs,
+                "selectors": selectors,
+                "result_id": result_entry.id if result_entry else None
+            }
         else:
-            raise Exception("Optimization result for project {} does not exist".format(project_id))
+            payload = {
+                "result_id": None
+            }
 
-        selectors = self._selectors_from_result(result, which)
-        which = which or self._which_from_selectors(selectors)
-        graphs = self._result_to_jsons(result, which)
-
-        return {
-            "optimization_id": optimization_id,
-            "graphs": graphs,
-            "selectors": selectors,
-            "result_id": result_entry.id if result_entry else None
-        }
+        return payload

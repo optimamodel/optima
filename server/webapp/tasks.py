@@ -50,57 +50,100 @@ def close_db_session(db_session):
 
 
 def start_or_report_calculation(project_id, parset_id, work_type):
+    """
+    Checks and sets up a WorkLog and WorkingProject for async calculation.
+    A WorkingProject takes a given project, a chosen parset and a type of
+    calculation to proceed. If a job is requested for a given project with
+    the same parset and work_type, then a can-join = True is issued.
+
+    Args:
+        project_id: the project that will be extracted and pickled for async calc
+        parset_id: the chosen parset for the calculation
+        work_type: "autofit" or "optimization"
+
+    Returns:
+        A status update on the state of the async queue for the given project.
+        {
+            'can_start': can_start,
+            'can_join': can_join,
+            'parset_id': wp_parset_id,
+            'work_type': work_type
+        }
+    """
     print "start_or_report_calculation(%s %s %s)" % (project_id, parset_id, work_type)
-    # work type is supposed to correspond to the method of Project class
-    # db_session = init_db_session() this does not work
+
     db_session = init_db_session()
-    can_start = False
-    can_join = False
-    wp_parset_id = parset_id
-    project_entry = load_project_record(project_id, raise_exception=False, db_session=db_session)
-    if not project_entry:
+
+    result = {
+        'can_start': False,
+        'can_join': False,
+        'parset_id': parset_id,
+        'work_type': work_type
+    }
+
+    project_record = load_project_record(project_id, raise_exception=False, db_session=db_session)
+    if not project_record:
         close_db_session(db_session)
         raise ProjectDoesNotExist(project_id)
-    project_instance = project_entry.hydrate()
-    project_pickled = op.saves(project_instance)
-    wp = db_session.query(WorkingProjectDb).filter_by(id=project_entry.id).first()
-    if wp is not None and wp.is_working and (wp.parset_id != parset_id or wp.work_type != work_type):
-        print("wp is already present for %s" % project_entry.id)
-        work_type = wp.work_type
+
+    project = project_record.hydrate()
+    project_pickled = op.saves(project)
+
+    working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+
+    is_already_working = (working_project_record is not None
+                          and working_project_record.is_working
+                          and (working_project_record.parset_id != parset_id
+                               or working_project_record.work_type != work_type))
+
+    if is_already_working:
+        print("A WorkingProjectRecord is present for %s with different job settings" % project_id)
+        result['work_type'] = working_project_record.work_type
     else:
-        work_log = WorkLogDb(project_id=project_entry.id, parset_id=parset_id, work_type = work_type)
+        # Log a new job
+        work_log = WorkLogDb(project_id=project_record.id, parset_id=parset_id, work_type=work_type)
         work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
         db_session.add(work_log)
         db_session.flush()
-        if wp is None:
+
+        if working_project_record is None:
+
             print("No working project was found - creating new one")
-            db_session.add(WorkingProjectDb(project_entry.id, parset_id = parset_id,
-                project = project_pickled,
-                is_working = True, work_type = work_type, work_log_id = work_log.id))
-            can_start = True
-            can_join = True
+            db_session.add(
+                WorkingProjectDb(
+                    project_record.id,
+                    parset_id = parset_id,
+                    project = project_pickled,
+                    is_working = True,
+                    work_type = work_type,
+                    work_log_id = work_log.id))
+            result['can_start'] = True
+            result['can_join'] = True
+
         else:
-            print("Found working project for %s: %s %s %s" % (wp.id, wp.work_type, wp.parset_id, wp.is_working))
-            can_start = not wp.is_working
-            can_join = (not wp.is_working) or (wp.parset_id == parset_id and wp.work_type == work_type)
-            if can_start:
-                wp.work_type = work_type
-                wp.parset_id = parset_id
-                wp.is_working = True
-                wp.project = project_pickled
-                wp.work_log_id = work_log.id
-                db_session.add(wp)
+            is_same_parset_work_type = (working_project_record.parset_id == parset_id
+                                        and working_project_record.work_type == work_type)
+
+            print("Found working project for %s: %s %s %s" % (working_project_record.id, working_project_record.work_type, working_project_record.parset_id, working_project_record.is_working))
+            result['can_start'] = not working_project_record.is_working
+            result['can_join'] = is_same_parset_work_type or not working_project_record.is_working
+
+            if result['can_start']:
+                working_project_record.work_type = work_type
+                working_project_record.parset_id = parset_id
+                working_project_record.is_working = True
+                working_project_record.project = project_pickled
+                working_project_record.work_log_id = work_log.id
+                db_session.add(working_project_record)
+
             else:
-                wp_parset_id = wp.parset_id
-                work_type = wp.work_type
+                result['parset_id'] = working_project_record.parset_id
+                result['work_type'] = working_project_record.work_type
+
     db_session.commit()
     close_db_session(db_session)
-    return {
-        'can_start': can_start,
-        'can_join': can_join,
-        'parset_id': wp_parset_id,
-        'work_type': work_type
-    }
+
+    return result
 
 
 def check_calculation_status(project_id):
@@ -178,16 +221,21 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     import traceback
     app.logger.debug('started optimization: {} {} {} {} {} {}'.format(
         project_id, optimization_name, parset_name, progset_name, objectives, constraints))
+
     error_text = ""
     status = 'completed'
+
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     project_instance = op.loads(wp.project)
     close_db_session(db_session)
+
     result = None
     if not objectives['budget']:
         objectives['budget'] = 1000000
+
     try:
+        # result = op.defaults.defaultproject('generalized').optimize()
         result = project_instance.optimize(
             name=optimization_name,
             parsetname=parset_name,
@@ -195,7 +243,6 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
             objectives=objectives,
             constraints=constraints
         )
-        # result = op.defaults.defaultproject('generalized').optimize()  # TODO replace with the real thing late
         print "result", result
     except Exception:
         var = traceback.format_exc()
@@ -210,15 +257,19 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log.status = status
     work_log.error = error_text
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+
     if result:
         result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id
+
     db_session.add(work_log)
+
     wp.is_working = False
     wp.work_type = None
     db_session.add(wp)
     db_session.commit()
     close_db_session(db_session)
+
     app.logger.debug("stopped optimization")

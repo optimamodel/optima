@@ -116,6 +116,7 @@ define(
         //   }
         // };
         //
+
         /**
          * Returns the mpld3 figure of this chart.
          */

@@ -29,7 +29,7 @@ class Scenarios(Resource):
     Used in the scenario pages
 
     - GET: get scenarios for a project
-    - PUT: update and add scenarios
+    - PUT: update scenarios; returns scenarios so client-side can check
     """
 
     method_decorators = [report_exception, login_required]

@@ -188,7 +188,6 @@ class ProjectDb(db.Model):
                     project_entry.addscen(scenario_entry.name, scenario_entry)
         if self.optimizations:
             for optimization_record in self.optimizations:
-                optimization_record._ensure_current(self)
                 parset_name = None
                 progset_name = None
                 if optimization_record.parset_id:
@@ -853,54 +852,18 @@ class OptimizationsDb(db.Model):
     objectives = db.Column(JSON)
     constraints = db.Column(JSON)
 
-    def __init__(self, project_id, parset_id, progset_id, name, which,
-                 objectives={}, constraints={}):
-
+    def __init__(self, project_id, parset_id, progset_id, name, which):
         self.project_id = project_id
         self.name = name
         self.which = which
         self.progset_id = progset_id
         self.parset_id = parset_id
+        self.constraints = {'max': {}, 'min': {}, 'name': {}}
+        self.objectives = {}
+
+    def update(self, constraints={}, objectives={}):
+        self.constraints = constraints
         self.objectives = objectives
-        self.constraints = constraints
 
-        self._ensure_current()
-
-    def _ensure_current(self, project=None):
-        """
-        Make sure the objectives and constraints are current.
-        """
-        from server.webapp.dataio import load_parset_record, load_progset_record, load_project_record
-
-        if not self.constraints:
-            self.constraints = {}
-
-        if not self.objectives:
-            self.objectives = {}
-
-        if project is None:
-            project = load_project_record(self.project_id).hydrate()
-        progset = load_progset_record(self.project_id, self.progset_id).hydrate()
-        parset = load_parset_record(self.project_id, self.parset_id).hydrate()
-
-        constraints = op.defaultconstraints(project=project, progset=progset)
-
-        # Update the min and the max according to what the user put, do not
-        # update the names, that should change from the programs.
-        constraints['max'].update({
-            x:y for x,y in self.constraints.get('min', {}).items() if x in constraints})
-        constraints['min'].update({
-            x:y for x,y in self.constraints.get('max', {}).items() if x in constraints})
-
-
-        self.constraints = constraints
-
-        objectives = op.defaultobjectives(project=project, progset=progset,
-                                          which=self.which)
-
-        objectives.update({
-            x:y for x,y in self.objectives.items() if x not in ['keys', 'keylabels']})
-
-        self.objectives = normalize_obj(objectives)
 
 
