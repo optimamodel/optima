@@ -454,6 +454,88 @@ def save_scenario_summaries(project_id, scenario_summaries):
     db.session.commit()
 
 
+def get_program_summary_from_program_record(program_record):
+    """
+    Extract required fields from Program object
+    
+    Field names taken to be consistent with dbModels.ProgramsDb resource fields
+    
+    @TODO: optimizable field needs to be made consistent within ProgramDb
+    """
+    program_summary = {
+        'id': program_record.id,
+        'progset_id': program_record.progset_id,
+        'project_id': program_record.project_id,
+        'category': program_record.category,
+        'short': program_record.short,
+        'name': program_record.name,
+        'targetpars': program_record.pars, #NOTE change in field name
+        'active': program_record.active,
+        'populations': program_record.targetpops, #NOTE change in field name
+        'criteria': program_record.criteria,
+        'created': program_record.created,
+        'updated': program_record.updated,
+        'ccopars': program_record.ccopars,
+        'costcov': program_record.costcov,
+        #'optimizable': program_record.optimizable,
+    }
+    return program_summary
+
+def get_progset_summary_from_record(progset_record):
+    """
+
+    @TODO: targetpartypes and readytooptimize fields needs to be made consistent within ProgsetDb
+
+    """
+
+    progset_summary = {
+        'id': progset_record.id,
+        'project_id': progset_record.project_id,
+        'name': progset_record.name,
+        'created': progset_record.created,
+        'updated': progset_record.updated,
+        'programs': map(get_program_summary_from_program_record,progset_record.programs),
+        #'targetpartypes': progset_record.targetpartypes,
+        #'readytooptimize': progset_record.readytooptimize
+    }
+    return progset_summary
+
+def get_progset_summaries(project_id):
+    """
+    
+    """
+    progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_id).all()   
+    progset_summaries = map(get_progset_summary_from_record, progset_records)
+  
+    return { 'progsets': normalize_obj(progset_summaries)}
+  
+
+
+def save_progset_summaries(project_id):
+    """
+
+    """
+    # @TODO have to replace marshal_with call
+    
+    args = progset_parser.parse_args()
+    progset_name = args['name']
+    program_summaries = args['programs']
+    
+    current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, program_summaries))
+
+    progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
+    # need to flush first to force the generation of progset_record.id if new
+    db.session.add(progset_record)
+    db.session.flush()
+    
+    progset_record.update_from_program_summaries(program_summaries, progset_record.id)
+    progset_record.get_extra_data()
+    db.session.commit()
+
+    
+
+
+
 def update_or_create_optimization_record(project_id, project, name):
 
     from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb

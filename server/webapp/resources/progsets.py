@@ -11,12 +11,13 @@ from flask_restful import Resource, marshal_with, marshal, fields
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
+    get_progset_summaries, save_progset_summaries,
     load_project_record, load_progset_record, load_program, load_parset,
-    update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset)
+    update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset,
+    check_project_exists)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
-from server.webapp.exceptions import (
-    ProjectDoesNotExist, ProgsetDoesNotExist)
+from server.webapp.exceptions import (ProgsetDoesNotExist)
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
 
@@ -39,42 +40,24 @@ class Progsets(Resource):
 
     @swagger.operation(description='Download progsets')
     def get(self, project_id):
-        current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_record = load_project_record(project_id)
-        if project_record is None:
-            raise ProjectDoesNotExist(id=project_id)
-
-        progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_record.id).all()
-        for progset_record in progset_records:
-            progset_record.get_extra_data()
-            print ">>> progset", progset_record.id, len(progset_record.programs)
-            for program_record in progset_record.programs:
-                program_record.get_optimizable()
-
-        payload = { 'progsets': marshal(progset_records, ProgsetsDb.resource_fields) }
-        return payload
+        
+        check_project_exists(project_id)
+        return get_progset_summaries(project_id)
+        
 
     @swagger.operation(description='Save progset')
-    @marshal_with(ProgsetsDb.resource_fields)
+    #@marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
-        current_app.logger.debug("/api/project/%s/progsets" % project_id)
-        project_record = load_project_record(project_id)
-        if project_record is None:
-            raise ProjectDoesNotExist(id=project_id)
 
-        args = progset_parser.parse_args()
-        progset_name = args['name']
-        program_summaries = args['programs']
+        check_project_exists(project_id)
+        
+        data = normalize_obj(request.get_json(force=True))
+        current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
 
-        progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
-        # need to flush first to force the generation of progset_record.id if new
-        db.session.add(progset_record)
-        db.session.flush()
-        progset_record.update_from_program_summaries(program_summaries, progset_record.id)
-        progset_record.get_extra_data()
-        db.session.commit()
+        #save_progset_summaries(project_id,data['progsets'])
+        return get_progset_summaries(project_id)
 
-        return progset_record, 201
+        
 
 
 class Progset(Resource):
