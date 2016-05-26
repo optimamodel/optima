@@ -42,7 +42,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             console.log('loading optimizations', JSON.stringify(response, null, 2));
             $scope.state.optimizations = response.optimizations;
-            $scope.defaultsByProgsetId = response.defaultsByProgsetId;
+            $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
             if ($scope.state.optimizations.length > 0) {
               $scope.setActiveOptimization($scope.state.optimizations[0]);
@@ -87,9 +87,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       selectDefaultProgsetAndParset(newOptimization);
       $scope.state.optimizations.push(newOptimization);
       var progset_id = newOptimization.progset_id;
-      var progset_default = $scope.defaultsByProgsetId[progset_id];
-      newOptimization.constraints = progset_default.constraints,
-      newOptimization.objectives = progset_default.objectives.outcomes
+      var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
+      newOptimization.constraints = defaultOptimization.constraints;
+      newOptimization.objectives = defaultOptimization.objectives.outcomes;
       $scope.setActiveOptimization(newOptimization);
     };
 

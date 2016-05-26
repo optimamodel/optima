@@ -20,13 +20,17 @@ def get_optimization_summaries(project_id):
     optimization_records = db.session.query(OptimizationsDb) \
         .filter_by(project_id=project_id).all()
     result = marshal(optimization_records, OptimizationsDb.resource_fields)
-    result = normalize_obj(result)
-    return result
+    return normalize_obj(result)
 
 
-def update_or_create_optimization_record(project_id,  optimization_summaries):
+def save_optimization_summaries(project_id, optimization_summaries):
+
     existing_ids = [
-        summary['id'] for summary in optimization_summaries if summary.get('id', False)]
+        summary['id']
+        for summary in optimization_summaries
+        if summary.get('id', False)
+    ]
+
     db.session.query(OptimizationsDb) \
         .filter_by(project_id=project_id) \
         .filter(~OptimizationsDb.id.in_(existing_ids)) \
@@ -37,7 +41,6 @@ def update_or_create_optimization_record(project_id,  optimization_summaries):
         id = summary.get('id', None)
 
         if id is None:
-            print ">>> Creating optimizaton", summary['name']
             record = OptimizationsDb(
                 project_id=project_id,
                 parset_id=summary['parset_id'],
@@ -45,17 +48,40 @@ def update_or_create_optimization_record(project_id,  optimization_summaries):
                 name=summary['name'],
                 which=summary['which'])
         else:
-            print ">>> Updating optimizaton", summary['name']
             record = db.session.query(OptimizationsDb).get(id)
-        constraints = summary['constraints']
-        objectives = summary['objectives']
-        record.update(constraints=constraints, objectives=objectives)
+
+        record.update(
+            constraints=summary['constraints'],
+            objectives=summary['objectives'])
+
+        verb = "Creating" if id is None else "Updating"
+        print ">>>", verb, " optimizaton", summary['name']
         pprint(summary)
 
         db.session.add(record)
         db.session.flush()
 
     db.session.commit()
+
+
+def get_default_optimization_summaries(project_id):
+    project = load_project(project_id)
+    progset_records = ProgsetsDb.query.filter_by(project_id=project_id).all()
+
+    defaults_by_progset_id = {}
+    for progset_record in progset_records:
+        progset = progset_record.hydrate()
+        progset_id = progset_record.id
+        default = {
+            'constraints': op.defaultconstraints(project=project, progset=progset),
+            'objectives': {}
+        }
+        for which in ['outcomes', 'money']:
+            default['objectives'][which] = op.defaultobjectives(
+                project=project, progset=progset, which=which)
+        defaults_by_progset_id[progset_id] = default
+
+    return normalize_obj(defaults_by_progset_id)
 
 
 class Optimizations(Resource):
@@ -69,36 +95,18 @@ class Optimizations(Resource):
 
     @swagger.operation()
     def get(self, project_id):
-        project = load_project(project_id)
-        progset_records = ProgsetsDb.query.filter_by(project_id=project_id).all()
-        defaults = {}
-        objective_types = ['outcomes', 'money']
-        for progset_record in progset_records:
-            progset = progset_record.hydrate()
-            progset_id = progset_record.id
-            constraints = op.defaultconstraints(project=project, progset=progset)
-            pprint(constraints["max"]["ART"])
-            pprint(normalize_obj(constraints))
-            defaults[progset_id] = {
-                'constraints': constraints,
-                'objectives': {}
-            }
-            for which in objective_types:
-                defaults[progset_id]['objectives'][which] = \
-                    op.defaultobjectives(project=project, progset=progset, which=which)
         return {
-            'optimizations': get_optimization_summaries(project_id),
-            'defaultsByProgsetId': normalize_obj(defaults)
+            'optimizations':
+                get_optimization_summaries(project_id),
+            'defaultOptimizationsByProgsetId':
+                get_default_optimization_summaries(project_id)
         }
 
     @swagger.operation()
     def post(self, project_id):
         optimization_summaries = normalize_obj(request.get_json(force=True))
-        update_or_create_optimization_record(project_id, optimization_summaries)
-        optimization_summaries = get_optimization_summaries(project_id)
-        print "Save optimizations"
-        pprint(optimization_summaries)
-        return {'optimizations': optimization_summaries}
+        save_optimization_summaries(project_id, optimization_summaries)
+        return {'optimizations': get_optimization_summaries(project_id)}
 
 
 class OptimizationCalculation(Resource):
@@ -120,11 +128,17 @@ class OptimizationCalculation(Resource):
         optimization_record = OptimizationsDb.query.get(optimization_id)
         optimization_name = optimization_record.name
         parset_id = optimization_record.parset_id
-        progset_id = optimization_record.progset_id
+
+        calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
+
+        if not calc_state['can_start'] or not calc_state['can_join']:
+            calc_state['status'] = 'running'
+            return calc_state, 208
 
         parset_entry = ParsetsDb.query.get(parset_id)
         parset_name = parset_entry.name
 
+        progset_id = optimization_record.progset_id
         progset_entry = ProgsetsDb.query.get(progset_id)
         progset = progset_entry.hydrate()
         progset_name = progset_entry.name
@@ -141,22 +155,18 @@ class OptimizationCalculation(Resource):
                 error_msg += pformat(covout_errors, indent=2)
             raise Exception(error_msg)
 
-        calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
-        if not calc_state['can_start'] or not calc_state['can_join']:
-            calc_state['status'] = 'running'
-            return calc_state, 208
-        else:
-            objectives = normalize_obj(optimization_record.objectives)
-            constraints = normalize_obj(optimization_record.constraints)
-            constraints["max"] = op.odict(constraints["max"])
-            constraints["min"] = op.odict(constraints["min"])
-            constraints["name"] = op.odict(constraints["name"])
-            print constraints
-            run_optimization.delay(
-                project_id, optimization_name, parset_name,
-                progset_name, objectives, constraints)
-            calc_state['status'] = 'started'
-            return calc_state, 201
+        objectives = normalize_obj(optimization_record.objectives)
+        constraints = normalize_obj(optimization_record.constraints)
+        constraints["max"] = op.odict(constraints["max"])
+        constraints["min"] = op.odict(constraints["min"])
+        constraints["name"] = op.odict(constraints["name"])
+
+        run_optimization.delay(
+            project_id, optimization_name, parset_name, progset_name, objectives, constraints)
+
+        calc_state['status'] = 'started'
+
+        return calc_state, 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
@@ -210,14 +220,7 @@ class OptimizationGraph(Resource):
     def _which_from_selectors(self, graph_selectors):
         return [item['key'] for item in graph_selectors if item['checked']]
 
-    @swagger.operation(
-        description='Provides optimization graph for the given project',
-        notes="""
-        Returns the set of corresponding graphs.
-        """,
-        parameters=optimization_which_parser.swagger_parameters()
-    )
-    @report_exception
+    @swagger.operation(description='Provides optimization graph for the given project')
     @marshal_with(optimization_fields, envelope="optimization")
     def get(self, project_id, optimization_id):
         current_app.logger.debug("/api/project/{}/optimizations/{}/graph".format(project_id, optimization_id))
