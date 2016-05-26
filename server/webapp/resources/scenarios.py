@@ -11,17 +11,6 @@ from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
 
 
-class ScenarioParameterKeys(Resource):
-    """
-    /api/project/<uuid:project_id>/parsets/ykeys
-
-    - GET: Get the keys of parameters that are controllable by programs
-    """
-    @swagger.operation(summary='get parsets ykeys')
-    def get(self, project_id):
-        return {'keys': get_parset_keys_with_y_values(project_id)}
-
-
 class Scenarios(Resource):
     """
     /api/project/<uuid:project_id>/scenarios
@@ -37,12 +26,15 @@ class Scenarios(Resource):
     @swagger.operation()
     def get(self, project_id):
         check_project_exists(project_id)
-        return get_scenario_summaries(project_id)
+        return {
+            'scenarios': get_scenario_summaries(project_id),
+            'ykeysByParsetId': get_parset_keys_with_y_values(project_id)
+        }
 
     def put(self, project_id):
         data = normalize_obj(request.get_json(force=True))
         save_scenario_summaries(project_id, data['scenarios'])
-        return get_scenario_summaries(project_id)
+        return {'scenarios': get_scenario_summaries(project_id)}
 
 
 class ScenarioSimulationGraphs(Resource):

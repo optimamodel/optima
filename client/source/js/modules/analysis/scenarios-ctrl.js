@@ -17,7 +17,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.scenarios = scenariosResponse.data.scenarios;
-    consoleLogJson("loading scenarios", $scope.scenarios);
+    $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
+    consoleLogJson("loading scenarios", scenariosResponse.data);
 
     $scope.isMissingModelData = !project.has_data;
     $scope.isMissingProgramSet = progsets.length == 0;
@@ -45,7 +46,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         templateUrl = 'js/modules/analysis/parameter-scenarios-modal.html';
         controller = 'ParameterScenariosModalController';
       }
-      var ykeys = $http.get('/api/project/' + project.id + '/parsets/ykeys');
       return $modal.open({
         templateUrl: templateUrl,
         controller: controller,
@@ -55,7 +55,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           scenario: function () { return angular.copy(scenario); },
           parsets: function () { return parsets; },
           progsets: function () { return progsets; },
-          ykeys: function () { return ykeys; }
+          ykeys: function () { return $scope.ykeys; }
         }
       });
 

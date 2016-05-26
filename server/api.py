@@ -71,7 +71,7 @@ from server.webapp.resources.progsets import (
 from server.webapp.resources.parsets import (
     Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration)
 from server.webapp.resources.progsets import ProgramCostcovGraph
-from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs, ScenarioParameterKeys
+from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
 from server.webapp.resources.optimizations import (
     Optimizations, OptimizationCalculation, OptimizationGraph)
 
@@ -100,7 +100,6 @@ api.add_resource(OptimizationGraph, '/api/project/<uuid:project_id>/optimization
 
 api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioSimulationGraphs, '/api/project/<uuid:project_id>/scenarios/results')
-api.add_resource(ScenarioParameterKeys, '/api/project/<uuid:project_id>/parsets/ykeys')
 
 api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')

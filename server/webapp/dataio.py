@@ -459,7 +459,7 @@ def update_or_create_scenario_record(project_id, scenario_summary):
 def get_scenario_summaries(project_id):
     scenario_records = db.session.query(ScenariosDb).filter_by(project_id=project_id).all()
     scenario_summaries = map(get_scenario_summary_from_record, scenario_records)
-    return {'scenarios': normalize_obj(scenario_summaries)}
+    return normalize_obj(scenario_summaries)
 
 
 def save_scenario_summaries(project_id, scenario_summaries):
