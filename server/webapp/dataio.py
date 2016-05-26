@@ -511,28 +511,26 @@ def get_progset_summaries(project_id):
   
 
 
-def save_progset_summaries(project_id):
+def save_progset_summaries(project_id, progset_summaries):
     """
 
-    """
-    # @TODO have to replace marshal_with call
-    
-    args = progset_parser.parse_args()
-    progset_name = args['name']
-    program_summaries = args['programs']
-    
-    current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, program_summaries))
+    """ 
 
+    progset_name = progset_summaries['name']
+    progset_programs = progset_summaries['programs']
+    
+    current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
+   
     progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
     # need to flush first to force the generation of progset_record.id if new
     db.session.add(progset_record)
     db.session.flush()
-    
-    progset_record.update_from_program_summaries(program_summaries, progset_record.id)
+       
+    progset_record.update_from_program_summaries(progset_programs, progset_record.id)
     progset_record.get_extra_data()
     db.session.commit()
+       
 
-    
 
 
 

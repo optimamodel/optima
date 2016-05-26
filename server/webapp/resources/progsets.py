@@ -46,18 +46,16 @@ class Progsets(Resource):
         
 
     @swagger.operation(description='Save progset')
-    #@marshal_with(ProgsetsDb.resource_fields)
     def post(self, project_id):
 
         check_project_exists(project_id)
-        
+         
         data = normalize_obj(request.get_json(force=True))
         current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
-
-        #save_progset_summaries(project_id,data['progsets'])
+        save_progset_summaries(project_id,data)
         return get_progset_summaries(project_id)
 
-        
+
 
 
 class Progset(Resource):
