@@ -409,7 +409,7 @@ class ProjectTestCase(OptimaTestCase):
 
     def test_default_programs_for_project_restore(self):
         from server.webapp.dbmodels import ProgramsDb, ProjectDb
-        from server.webapp.parser import get_default_program_summaries
+        from server.webapp.dataio import load_project_program_summaries
         from server.webapp.populations import populations
 
         progsets_count = 1
@@ -436,7 +436,7 @@ class ProjectTestCase(OptimaTestCase):
         project = ProjectDb.query.filter_by(id=project.id).first()
         be_project = project.hydrate()
 
-        program_list = get_default_program_summaries(be_project)
+        program_list = load_project_program_summaries(be_project)
         program_count = ProgramsDb.query.filter_by(project_id=str(project.id)).count()
 
         self.assertEqual(program_count, len(program_list)*progsets_count) # CK: This is more general I think

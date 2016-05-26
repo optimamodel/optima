@@ -1,54 +1,31 @@
 from datetime import datetime
 import dateutil
 import uuid
-import json
-import pprint
 
-from flask import current_app, helpers, make_response, request
-
-from flask import jsonify
-
+from flask import current_app, helpers, request
 from flask.ext.login import login_required
-from flask_restful import Resource, marshal_with, abort
+from flask_restful import Resource, marshal_with, fields
 from flask_restful_swagger import swagger
 
-from server.webapp.inputs import (SubParser, secure_filename_input, AllowedSafeFilenameStorage,
-                                  Json as JsonInput)
-
-from server.webapp.utils import (load_project_record, RequestParser, report_exception, TEMPLATEDIR,
-                                 upload_dir_user, save_result)
+from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser
+from server.webapp.resources.common import report_exception
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
-
+from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, WorkingProjectDb, ScenariosDb,OptimizationsDb
-from server.webapp.fields import Json, Uuid
-
-import math
+from server.webapp.dataio import (
+    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
+    load_project, load_parset_record, load_parset_list, get_parset_from_project)
 
 import optima as op
 
 
-copy_parser = RequestParser()
-copy_parser.add_arguments({
-    'name': {'required': True},
-    'parset_id': {'type': uuid.UUID}
-})
-
-y_keys_fields = {
-    'keys': Json
-}
-
-limits_fields = {
-    'parsets': Json
-}
-
 
 class ParsetYkeys(Resource):
-
-    @swagger.operation(
-        summary='get parsets ykeys'
-    )
-    @marshal_with(y_keys_fields)
+    """
+    Used in scenario program modal.
+    """
+    @swagger.operation(summary='get parsets ykeys')
     def get(self, project_id):
         project_entry = load_project_record(project_id, raise_exception=True)
 
@@ -65,52 +42,31 @@ class ParsetYkeys(Resource):
         return {'keys': y_keys}
 
 
-class ParsetLimits(Resource):
-    @swagger.operation(
-        summary='get parameters limits'
-    )
-    @marshal_with(limits_fields)
-    def get(self, project_id):
-        project_entry = load_project_record(project_id, raise_exception=True)
-        be_project = project_entry.hydrate()
-
-        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        parsets = {str(item.id): item.hydrate() for item in reply}
-        limits = {
-           id: {par.short: [
-                    be_project.settings.convertlimits(limits=limit) if isinstance(limit, str) else limit
-                    for limit in par.limits
-                ] for par in parset.pars[0].values()
-           if hasattr(par, 'y') and par.visible}
-           for id, parset in parsets.iteritems()
-        }
-        return {'parsets': limits}
-
+copy_parser = RequestParser()
+copy_parser.add_arguments({
+    'name': {'required': True},
+    'parset_id': {'type': uuid.UUID}
+})
 
 class Parsets(Resource):
     """
-    Parsets for a given project.
+    GET /api/project/<project_id>/parsets
+
+    Returns the parsets of a projects that are marshalled from the parset records.
+
+    POST /api/project/<project_id>/parsets
+
+    Makes a copy of the parset that is passed in as an argument in the body as parset_id,
+    and or makes a new parset
     """
+
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description='Download parsets for the project with the given id.',
-        notes="""
-            if project exists, returns parsets for it
-            if project does not exist, returns an error.
-        """,
-        responseClass=ParsetsDb.__name__
-    )
-
+    @swagger.operation(description='Download parsets for the project with the given id.')
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
-
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        project_entry = load_project_record(project_id, raise_exception=True)
-        reply = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id).all()
-        result = [item.hydrate() for item in reply]
-
-        return result
+        return load_parset_list(project_id)
 
     @swagger.operation(
         description='Create new parset with default settings or copy existing parset',
@@ -127,15 +83,16 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_entry = load_project_record(project_id, raise_exception=True)
-        project_instance = project_entry.hydrate()
-        if name in project_instance.parsets:
+        project_entry = load_project_record(project_id)
+        project = project_entry.hydrate()
+
+        if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
         if not parset_id:
             # create new parset with default settings
-            project_instance.makeparset(name, overwrite=False)
-            new_result = project_instance.runsim(name)
-            project_entry.restore(project_instance)
+            project.makeparset(name, overwrite=False)
+            new_result = project.runsim(name)
+            project_entry.restore(project)
             db.session.add(project_entry)
 
             result_record = save_result(project_entry.id, new_result, name)
@@ -147,8 +104,8 @@ class Parsets(Resource):
                 raise ParsetDoesNotExist(parset_id, project_id=project_id)
             original_parset = original_parset[0]
             parset_name = original_parset.name
-            project_instance.copyparset(orig=parset_name, new=name)
-            project_entry.restore(project_instance)
+            project.copyparset(orig=parset_name, new=name)
+            project_entry.restore(project)
             db.session.add(project_entry)
 
             old_result_record = db.session.query(ResultsDb).filter_by(
@@ -173,22 +130,20 @@ class Parsets(Resource):
 rename_parser = RequestParser()
 rename_parser.add_argument('name', required=True)
 
-
 class ParsetsDetail(Resource):
     """
-    Single Parset.
+    DELETE /api/project/<uuid:project_id>/parsets/<uuid:parset_id>
+
+    Deletes given parset
+
+    PUT /api/project/<uuid:project_id>/parsets/<uuid:parset_id>
+
+    Renames the given parset
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        description='Delete parset with the given id.',
-        notes="""
-            if parset exists, delete it
-            if parset does not exist, returns an error.
-        """
-    )
+    @swagger.operation(description='Delete parset with parset_id.')
     @report_exception
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def delete(self, project_id, parset_id):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
@@ -198,13 +153,9 @@ class ParsetsDetail(Resource):
         if parset is None:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
 
-        # # Is this how we should check for default parset?
-        # if parset.name.lower() == 'default':  # TODO: it is lowercase
-        #     abort(403)
-
         # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(project_id=project_id,
-            id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
+        db.session.query(ResultsDb).filter_by(
+            project_id=project_id, id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
         db.session.query(ScenariosDb).filter_by(project_id=project_id,
             parset_id=parset_id).delete()
         db.session.query(OptimizationsDb).filter_by(project_id=project_id,
@@ -214,13 +165,7 @@ class ParsetsDetail(Resource):
 
         return '', 204
 
-    @swagger.operation(
-        description='Rename parset with the given id',
-        notes="""
-            if parset exists, rename it
-            if parset does not exist, return an error.
-            """
-    )
+    @swagger.operation(description='Rename parset with parset_id')
     @report_exception
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def put(self, project_id, parset_id):
@@ -233,30 +178,29 @@ class ParsetsDetail(Resource):
         args = rename_parser.parse_args()
         name = args['name']
 
-        project_entry = load_project_record(project_id, raise_exception=True)
-        target_parset = [item for item in project_entry.parsets if item.id == parset_id]
-        if target_parset:
-            target_parset = target_parset[0]
-        if not target_parset:
+        project_record = load_project_record(project_id, raise_exception=True)
+        parset_records = [record for record in project_record.parsets if record.id == parset_id]
+        if not parset_records:
             raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-        target_parset.name = name
-        db.session.add(target_parset)
+        parset_record = parset_records[0]
+        parset_record.name = name
+        db.session.add(parset_record)
         db.session.commit()
-        return [item.hydrate() for item in project_entry.parsets]
+        return [record.hydrate() for record in project_record.parsets]
+
 
 
 calibration_fields = {
-    "parset_id": Uuid,
-    "parameters": Json,
-    "graphs": Json,
-    "selectors": Json,
-    "result_id": Uuid,
+    "parset_id": fields.String,
+    "parameters": fields.Raw,
+    "graphs": fields.Raw,
+    "selectors": fields.Raw,
+    "result_id": fields.String,
 }
 
 calibration_parser = RequestParser()
 calibration_parser.add_argument('which', location='args', default=None, action='append')
 calibration_parser.add_argument('autofit', location='args', default=False, type=bool)
-
 
 calibration_update_parser = RequestParser()
 calibration_update_parser.add_arguments({
@@ -266,80 +210,25 @@ calibration_update_parser.add_arguments({
     'autofit': {'default': False, 'type': bool, 'location': 'args'}
 })
 
-
 parset_save_with_autofit_parser = RequestParser()
 parset_save_with_autofit_parser.add_arguments({
-    'parameters': {'type': JsonInput, 'required': True, 'action': 'append'},
+    'parameters': {'type': fields.Raw, 'required': True, 'action': 'append'},
     'result_id': {'type': uuid.UUID, 'required': True},
 })
 
-
-def get_parset_parameters(parset, ind=0):
-    parameters = []
-    for key, par in parset.pars[ind].items():
-        if hasattr(par, 'fittable') and par.fittable != 'no':
-            if par.fittable == 'meta':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.m,
-                    "label": '%s -- meta' % par.name,
-                })
-            elif par.fittable == 'const':
-                parameters.append({
-                    "key": key,
-                    "subkey": None,
-                    "type": par.fittable,
-                    "value": par.y,
-                    "label": par.name,
-                })
-            elif par.fittable in ['pop', 'pship']:
-                for subkey in par.y.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.y[subkey],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            elif par.fittable == 'exp':
-                for subkey in par.p.keys():
-                    parameters.append({
-                        "key": key,
-                        "subkey": subkey,
-                        "type": par.fittable,
-                        "value": par.p[subkey][0],
-                        "label": '%s -- %s' % (par.name, str(subkey)),
-                    })
-            else:
-                print('Parameter type "%s" not implemented!' % par.fittable)
-    return parameters
-
-
-def put_parameters_in_parset(parameters, parset, ind=0):
-    pars = parset.pars[ind]
-    for p_dict in parameters:
-        key = p_dict['key']
-        value = p_dict['value']
-        subkey = p_dict['subkey']
-        par_type = p_dict['type']
-        value = float(value)
-        if par_type == 'meta':  # Metaparameters
-            pars[key].m = value
-        elif par_type in ['pop', 'pship']:  # Populations or partnerships
-            pars[key].y[subkey] = value
-        elif par_type == 'exp':  # Population growth
-            pars[key].p[subkey][0] = value
-        elif par_type == 'const':
-            pars[key].y = value
-        else:
-            print('Parameter type "%s" not implemented!' % par_type)
-
-
 class ParsetsCalibration(Resource):
     """
-    Calibration info for the Parset.
+    GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+
+    Returns parameter summaries and graphs for a project/parset
+
+    PUT /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+
+    Saves the parameters and gets graphs
+
+    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
+
+    Save parameters without fetching graphs
     """
 
     method_decorators = [report_exception, login_required]
@@ -386,31 +275,16 @@ class ParsetsCalibration(Resource):
         args = calibration_parser.parse_args()
         which = args.get('which')
         autofit = args.get('autofit', False)
+        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         print "is autofit", autofit
 
-        if not autofit:
-            project_record = load_project_record(project_id, raise_exception=True)
-            project = project_record.hydrate()
-        else: # todo bail out if no working project
-            wp = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
-            project = op.loads(wp.project)
-        
-        parset = [project.parsets[item] for item in project.parsets
-            if project.parsets[item].uid == parset_id]
-        if not parset:
-            raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
-        else:
-            parset = parset[0]
-
-        # store simulation results for plotting
-        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        result_record = db.session.query(ResultsDb).filter_by(
-            project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
-        if result_record:
-            result = result_record.hydrate()
-        else:
+        project = load_project(project_id, autofit)
+        parset = get_parset_from_project(project, parset_id)
+        result = load_result(project_id, parset_id, calculation_type)
+        if result is None:
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
+            save_result(project_id, result, parset.name, calculation_type)
 
         # generate graphs
         selectors = self._selectors_from_result(result, which)
@@ -422,7 +296,7 @@ class ParsetsCalibration(Resource):
             "parameters": get_parset_parameters(parset),
             "graphs": graphs,
             "selectors": selectors,
-            "result_id": result_record.id if result_record else None
+            "result_id": result.uid if result else None
         }
 
     @report_exception
@@ -521,6 +395,28 @@ manual_calibration_parser.add_argument('maxtime', required=False, type=int, defa
 
 
 class ParsetsAutomaticCalibration(Resource):
+    """
+    POST /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
+
+    Starts celery task to autofit parameters to historical data, returns:
+    {
+        'can_start': can_start,
+        'can_join': can_join,
+        'parset_id': wp_parset_id,
+        'work_type': work_type
+    }
+
+    GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration
+
+    Returns the status for the current job:
+     {
+        'status': work_log.status,
+        'error_text': work_log.error,
+        'start_time': work_log.start_time,
+        'stop_time': work_log.stop_time,
+        'result_id': work_log.result_id
+    }
+    """
 
     @swagger.operation(
         summary='Launch auto calibration for the selected parset',
@@ -529,16 +425,10 @@ class ParsetsAutomaticCalibration(Resource):
     @report_exception
     def post(self, project_id, parset_id):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
-        from server.webapp.dbmodels import ParsetsDb
-
         args = manual_calibration_parser.parse_args()
-        parset_entry = ParsetsDb.query.get(parset_id)
-        parset_name = parset_entry.name
-
-        can_start, can_join, wp_parset_id, work_type = start_or_report_calculation(project_id, parset_id, 'autofit')
-
-        result = {'can_start': can_start, 'can_join': can_join, 'parset_id': wp_parset_id, 'work_type': work_type}
-        if not can_start or not can_join:
+        parset_name = load_parset_record(project_id, parset_id).name
+        result = start_or_report_calculation(project_id, parset_id, 'autofit')
+        if not result['can_start'] or not result['can_join']:
             result['status'] = 'running'
             return result, 208
         else:
@@ -550,13 +440,7 @@ class ParsetsAutomaticCalibration(Resource):
     @report_exception
     def get(self, project_id, parset_id):
         from server.webapp.tasks import check_calculation_status
-        from server.webapp.dbmodels import ParsetsDb
-
-        parset_entry = ParsetsDb.query.get(parset_id)
-        project_id = parset_entry.project_id
-
-        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, parset_id, 'autofit')
-        return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
+        return check_calculation_status(project_id)
 
 
 file_upload_form_parser = RequestParser()

@@ -3,7 +3,7 @@ import os
 import sys
 import logging
 
-from flask import Flask, redirect, Blueprint, g, session, make_response
+from flask import Flask, redirect, Blueprint, g, session, make_response, abort
 
 from flask_restful import Api
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -16,66 +16,69 @@ if new_path not in sys.path:
     print "appending to sys.path: %s" % new_path
     sys.path.append(new_path)
 
-import server.webapp.dbconn
-
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
-api_bp = Blueprint('api', __name__, static_folder='static')
-api = swagger.docs(Api(api_bp), apiVersion='2.0')
-
+import server.webapp.dbconn
 server.webapp.dbconn.db = SQLAlchemy(app)
+
+from server.webapp.dbmodels import UserDb
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-from server.webapp.utils import init_login_manager
-init_login_manager(login_manager)
 
-from server.webapp.jsonhelper import OptimaJSONEncoder
-
-
-@api.representation('application/json')
-def output_json(data, code, headers=None):
-    inner = json.dumps(data, cls=OptimaJSONEncoder)
-    resp = make_response(inner, code)
-    resp.headers.extend(headers or {})
-    return resp
+@login_manager.user_loader
+def load_user(userid):
+    try:
+        user = UserDb.query.filter_by(id=userid).first()
+    except Exception:
+        user = None
+    return user
 
 
-@api_bp.before_request
-def before_request():
-    from server.webapp.dbconn import db
-    from server.webapp.dbmodels import UserDb
-    db.engine.dispose()
-    g.user = None
-    if 'user_id' in session:
-        g.user = UserDb.query.filter_by(id=session['user_id']).first()
+@login_manager.request_loader
+def load_user_from_request(request):  # pylint: disable=redefined-outer-name
+
+    # try to login using the secret url arg
+    secret = request.args.get('secret')
+    if secret:
+        user = UserDb.query.filter_by(password=secret, is_admin=True).first()
+        if user:
+            return user
+
+    # finally, return None if both methods did not login the user
+    return None
 
 
-# from server.webapp.scenarios import scenarios
-from server.webapp.model import model
-from server.webapp.optimization import optimization
-from server.webapp.resources.user import (User, UserDetail, CurrentUser,
-                                          UserLogin, UserLogout)
-from server.webapp.resources.project import (Projects, ProjectsAll, Project,
-                                             ProjectCopy, ProjectSpreadsheet, ProjectEcon,
-                                             ProjectData, ProjectFromData, Portfolio,
-                                             Defaults, Partnerships)
-from server.webapp.resources.project_constants import Parameters, Populations
-from server.webapp.resources.project_progsets import Progsets, Progset, ProgsetData, ProgsetParams, ProgsetEffects, Program, PopSizes
-from server.webapp.resources.project_parsets import (Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration,
-                                                     ParsetsAutomaticCalibration, ParsetYkeys, ParsetLimits)
-from server.webapp.resources.project_progsets import CostcovGraph
-from server.webapp.resources.project_scenarios import Scenarios, Scenario, ScenarioResults
-from server.webapp.resources.project_optimizations import Optimizations, Optimization, OptimizationResults, OptimizationGraph
+@login_manager.unauthorized_handler
+def unauthorized_handler():
+    abort(401)
 
 
-app.register_blueprint(model, url_prefix='/api/model')
-app.register_blueprint(optimization, url_prefix='/api/analysis/optimization')
+from server.webapp.utils import OptimaJSONEncoder
+from server.webapp.resources.user import (
+    User, UserDetail, CurrentUser, UserLogin, UserLogout)
+from server.webapp.resources.project import (
+    Projects, ProjectsAll, Project, ProjectCopy, ProjectSpreadsheet, ProjectEcon,
+    ProjectData, ProjectFromData, Portfolio, DefaultPrograms, DefaultParameters,
+    DefaultPopulations)
+from server.webapp.resources.progsets import (
+    Progsets, Progset, ProgsetData, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
+from server.webapp.resources.parsets import (
+    Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration,
+    ParsetYkeys)
+from server.webapp.resources.progsets import ProgramCostcovGraph
+from server.webapp.resources.scenarios import Scenarios, Scenario, ScenarioResults
+from server.webapp.resources.optimizations import (
+    Optimizations, Optimization, OptimizationResults, OptimizationGraph)
+
+api_blueprint = Blueprint('api', __name__, static_folder='static')
+
+api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
 
 api.add_resource(User, '/api/user')
 api.add_resource(UserDetail, '/api/user/<uuid:user_id>')
@@ -90,9 +93,7 @@ api.add_resource(ProjectCopy, '/api/project/<uuid:project_id>/copy')
 api.add_resource(ProjectFromData, '/api/project/data')
 api.add_resource(ProjectData, '/api/project/<uuid:project_id>/data')
 api.add_resource(ProjectSpreadsheet, '/api/project/<uuid:project_id>/spreadsheet')
-api.add_resource(Partnerships, '/api/project/<uuid:project_id>/partnerships')
 api.add_resource(ProjectEcon, '/api/project/<uuid:project_id>/economics')
-api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 
 api.add_resource(Optimizations, '/api/project/<uuid:project_id>/optimizations')
 api.add_resource(Optimization, '/api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>')
@@ -103,28 +104,50 @@ api.add_resource(Scenarios, '/api/project/<uuid:project_id>/scenarios')
 api.add_resource(ScenarioResults, '/api/project/<uuid:project_id>/scenarios/results')
 api.add_resource(Scenario, '/api/project/<uuid:project_id>/scenarios/<uuid:scenario_id>')
 
+api.add_resource(Progsets, '/api/project/<uuid:project_id>/progsets')
 api.add_resource(Progset, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>')
-api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
-api.add_resource(CostcovGraph,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
-api.add_resource(PopSizes,
-    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
 api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/data')
-api.add_resource(ProgsetParams, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
+api.add_resource(ProgsetParameters,
+     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+
+api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
+api.add_resource(DefaultPopulations, '/api/project/populations')
+api.add_resource(DefaultParameters, '/api/project/<project_id>/parameters')
+
+api.add_resource(Program, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program')
+api.add_resource(ProgramPopSizes,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
+api.add_resource(ProgramCostcovGraph,
+    '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
 api.add_resource(Portfolio, '/api/project/portfolio')
-api.add_resource(Parameters, '/api/project/<project_id>/parameters')
-api.add_resource(Populations, '/api/project/populations')
-api.add_resource(Defaults, '/api/project/<uuid:project_id>/defaults')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetYkeys, '/api/project/<uuid:project_id>/parsets/ykeys')
-api.add_resource(ParsetLimits, '/api/project/<uuid:project_id>/parsets/limits')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
 api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetsData, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
-app.register_blueprint(api_bp, url_prefix='')
+
+app.register_blueprint(api_blueprint, url_prefix='')
+
+
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    inner = json.dumps(data, cls=OptimaJSONEncoder)
+    resp = make_response(inner, code)
+    resp.headers.extend(headers or {})
+    return resp
+
+
+@api_blueprint.before_request
+def before_request():
+    from server.webapp.dbconn import db
+    from server.webapp.dbmodels import UserDb
+    db.engine.dispose()
+    g.user = None
+    if 'user_id' in session:
+        g.user = UserDb.query.filter_by(id=session['user_id']).first()
 
 
 @app.route('/')

@@ -14,19 +14,10 @@ from flask_restful_swagger import swagger
 
 import optima as op
 
-from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb, OptimizationsDb
-
-from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
-from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.fields import Uuid, Json
-
-from server.webapp.resources.common import file_resource, file_upload_form_parser
-from server.webapp.utils import (load_project_record, verify_admin_request, report_exception,
-                                 save_result, delete_spreadsheet, RequestParser)
-
-from server.webapp.jsonhelper import OptimaJSONEncoder
+from server.webapp.dbmodels import ParsetsDb, ResultsDb, OptimizationsDb
+from server.webapp.resources.common import report_exception
+from server.webapp.utils import RequestParser, OptimaJSONEncoder
 
 
 optimization_parser = RequestParser()
@@ -163,20 +154,20 @@ class OptimizationResults(Resource):
         parset_entry = ParsetsDb.query.get(optimization_entry.parset_id)
         project_id = parset_entry.project_id
 
-        status, error_text, start_time, stop_time, result_id = check_calculation_status(project_id, str(parset_entry.id), 'optimization')
-        if status == 'error':
-            raise Exception(error_text)
-        return {'status': status, 'error_text': error_text, 'start_time': start_time, 'stop_time': stop_time, 'result_id': result_id}
+        result = check_calculation_status(project_id)
+        if result['status'] == 'error':
+            raise Exception(result['error_text'])
+        return result
 
 
 optimization_which_parser = RequestParser()
 optimization_which_parser.add_argument('which', location='args', default=None, action='append')
 
 optimization_fields = {
-    "optimization_id": Uuid,
-    "graphs": Json,
-    "selectors": Json,
-    "result_id": Uuid,
+    "optimization_id": fields.String,
+    "graphs": fields.Raw,
+    "selectors": fields.Raw,
+    "result_id": fields.String,
 }
 
 

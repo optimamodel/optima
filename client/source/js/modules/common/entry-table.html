@@ -1,6 +1,6 @@
 <table class="table table-bordered">
   <tr>
-    <th ng-repeat="title in table.titles">
+    <th ng-repeat="title in table.titles track by $index">
       {{title}}
     </th>
     <th>Manage</th>
@@ -10,7 +10,9 @@
     <!-- Normal cell values -->
     <td ng-if="$parent.$index != table.iEditRow"
         ng-repeat="cell in getDisplayRow($index) track by $index">
-      <span ng-if='table.types[$index] == "number"'>
+      <span
+          style="width:{{table.widths[$index]}}px"
+          ng-if='table.types[$index] == "number"'>
         {{cell}}
       </span>
       <span ng-if='table.types[$index] == "display"'>
@@ -26,18 +28,19 @@
         ng-repeat="cell in getDisplayRow($index) track by $index">
       <input
           ng-if='table.types[$index] == "number"'
+          style="width:{{table.widths[$index]}}px"
           type="number"
         ng-model="row[$index]">
       <span
          ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
-      <div ng-init="options=getOptions($parent.$index, $index)">
+      <div>
         <select
             ng-if='table.types[$index] == "selector"'
             ng-model="row[$index]"
-            ng-options="o.value as o.label for o in options">
-          </option>
+            ng-change="update()"
+            ng-options="o.value as o.label for o in table.options[$index]">
         </select>
       </div>
     </td>
