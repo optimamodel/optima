@@ -256,10 +256,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           + '/graph',
           {params: data})
         .success(function (response) {
-          if (response.optimization.graphs) {
-            $scope.optimizationCharts = response.optimization.graphs;
-            $scope.selectors = response.optimization.selectors;
-          }
+          $scope.graphs = response.graphs;
         });
       }
     };

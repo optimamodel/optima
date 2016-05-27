@@ -14,13 +14,9 @@ from server.webapp.utils import normalize_obj
 class Scenarios(Resource):
     """
     /api/project/<uuid:project_id>/scenarios
-
-    Used in the scenario pages
-
     - GET: get scenarios for a project
     - PUT: update scenarios; returns scenarios so client-side can check
     """
-
     method_decorators = [report_exception, login_required]
 
     @swagger.operation()
@@ -40,10 +36,8 @@ class Scenarios(Resource):
 class ScenarioSimulationGraphs(Resource):
     """
     /api/project/<project-id>/scenarios/results
-
     - GET: Run scenarios and returns the graphs
     """
-
     method_decorators = [report_exception, login_required]
 
     @swagger.operation()

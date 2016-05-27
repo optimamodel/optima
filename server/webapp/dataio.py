@@ -1,3 +1,5 @@
+from flask.ext.restful import marshal
+
 __doc__ = """
 
 dataio.py contains all the functions that fetch and saves optima objects to/from database
@@ -23,7 +25,7 @@ from flask.ext.login import current_user
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import (
     ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb,
-    ScenariosDb)
+    ScenariosDb, OptimizationsDb)
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
@@ -611,3 +613,69 @@ def update_or_create_optimization_record(project_id, project, name):
     return optimization_record
 
 
+def get_optimization_summaries(project_id):
+    optimization_records = db.session.query(OptimizationsDb) \
+        .filter_by(project_id=project_id).all()
+    result = marshal(optimization_records, OptimizationsDb.resource_fields)
+    return normalize_obj(result)
+
+
+def save_optimization_summaries(project_id, optimization_summaries):
+
+    existing_ids = [
+        summary['id']
+        for summary in optimization_summaries
+        if summary.get('id', False)
+    ]
+
+    db.session.query(OptimizationsDb) \
+        .filter_by(project_id=project_id) \
+        .filter(~OptimizationsDb.id.in_(existing_ids)) \
+        .delete(synchronize_session='fetch')
+    db.session.flush()
+
+    for summary in optimization_summaries:
+        id = summary.get('id', None)
+
+        if id is None:
+            record = OptimizationsDb(
+                project_id=project_id,
+                parset_id=summary['parset_id'],
+                progset_id=summary['progset_id'],
+                name=summary['name'],
+                which=summary['which'])
+        else:
+            record = db.session.query(OptimizationsDb).get(id)
+
+        record.update(
+            constraints=summary['constraints'],
+            objectives=summary['objectives'])
+
+        verb = "Creating" if id is None else "Updating"
+        print ">>>", verb, " optimizaton", summary['name']
+        pprint(summary)
+
+        db.session.add(record)
+        db.session.flush()
+
+    db.session.commit()
+
+
+def get_default_optimization_summaries(project_id):
+    project = load_project(project_id)
+    progset_records = ProgsetsDb.query.filter_by(project_id=project_id).all()
+
+    defaults_by_progset_id = {}
+    for progset_record in progset_records:
+        progset = progset_record.hydrate()
+        progset_id = progset_record.id
+        default = {
+            'constraints': op.defaultconstraints(project=project, progset=progset),
+            'objectives': {}
+        }
+        for which in ['outcomes', 'money']:
+            default['objectives'][which] = op.defaultobjectives(
+                project=project, progset=progset, which=which)
+        defaults_by_progset_id[progset_id] = default
+
+    return normalize_obj(defaults_by_progset_id)

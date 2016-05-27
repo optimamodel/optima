@@ -11,7 +11,7 @@ define(['./../module', 'underscore'], function (module, _) {
     vm.openProject = activeProject.data;
     console.log('vm.openProject', vm.openProject);
 
-    vm.activeTab = 'cost';
+    vm.activeTab = 'outcome';
     vm.tabs = [
       {
         name: 'Define cost functions',
@@ -65,6 +65,7 @@ define(['./../module', 'underscore'], function (module, _) {
           vm.parsets = response.parsets;
           console.log('vm.parsets', vm.parsets);
           vm.selectedParset = vm.parsets[0];
+          console.log('vm.selectedParset', vm.selectedParset);
           changeProgsetAndParset();
         });
       });
@@ -85,8 +86,8 @@ define(['./../module', 'underscore'], function (module, _) {
         + '/progsets/' + vm.selectedProgset.id
         + '/effects')
       .success(function (response) {
-        console.log('loading progset outcome sets =', response);
         vm.outcomeSets = response.effects;
+        console.log('outcome sets =', vm.outcomeSets);
         changeParset();
       })
     }
@@ -124,7 +125,7 @@ define(['./../module', 'underscore'], function (module, _) {
 
     function changeParset() {
       console.log('selected parset =', vm.selectedParset);
-      if (vm.selectedProgset && vm.selectedProgset.targetpartypes && vm.selectedParset) {
+      if (vm.selectedProgset && vm.selectedParset) {
         // fetch target parameters of this progset/parset combo
         // todo: parse the parsets directly here
         $http.get(
@@ -291,6 +292,7 @@ define(['./../module', 'underscore'], function (module, _) {
         titles: [
           "Population / Partnerships",
           "Year",
+          "Program Impact",
           "Lo",
           "Hi",
           "Program 1",
@@ -317,6 +319,7 @@ define(['./../module', 'underscore'], function (module, _) {
       };
 
       _.each(getOutcomesForSelectedParset(), function(outcome) {
+        consoleLogJson("outcome", outcome);
         if (outcome.name == vm.selectedParameter.short) {
           _.each(outcome.years, function (year) {
 

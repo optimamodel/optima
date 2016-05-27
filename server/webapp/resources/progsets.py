@@ -56,8 +56,6 @@ class Progsets(Resource):
         return get_progset_summaries(project_id)
 
 
-
-
 class Progset(Resource):
     """
     GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>

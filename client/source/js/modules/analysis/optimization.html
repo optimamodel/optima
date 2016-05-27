@@ -121,29 +121,37 @@
           </div>
         </form>
       </div>
-      <div class="chart_wrapper" style="height:calc(100vh - 280px)">
-        <div class="3" style="margin: 10px;text-align: right;width: 100%;">
-          <export-all-charts name="Optimization" ng-if="optimizationCharts.length > 0"></export-all-charts>
-          <!--<export-all-data charts="calibrationChart" name="Optimization analyses" ng-if="calibrationChart.length > 0"></export-all-data>-->
-        </div>
-        <div>
-          <div ng-repeat="chart in optimizationCharts" class="chart-container __small">
-            <div mpld3-chart="chart" chart-id="{{ chart.id }}"></div>
-          </div>
-        </div>
+
+      <div style="flex: 1 1 auto; width: 100%; overflow:auto">
+
+        <optima-graphs graphs="graphs"></optima-graphs>
+
       </div>
-      <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
-        <div class="option_list" style="height:62vh">
-          <div class="label">Select graphs</div>
-          <div ng-repeat="selector in selectors" class="option">
-            <span><input type="checkbox" ng-model="selector.checked"/></span>
-            <span style="margin-left: 10px">{{selector.name}}</span>
-          </div>
-        </div>
-        <div style="display: flex;justify-content: center; margin-top: 25px">
-          <input type="button" value="Update" class="updateGraph btn" ng-click="getOptimizationGraphs()"/>
-        </div>
-      </div>
+
+      <!--<div class="chart_wrapper" style="height:calc(100vh - 280px)">-->
+        <!--<div class="3" style="margin: 10px;text-align: right;width: 100%;">-->
+          <!--<export-all-charts name="Optimization" ng-if="optimizationCharts.length > 0"></export-all-charts>-->
+          <!--&lt;!&ndash;<export-all-data charts="calibrationChart" name="Optimization analyses" ng-if="calibrationChart.length > 0"></export-all-data>&ndash;&gt;-->
+        <!--</div>-->
+        <!--<div>-->
+          <!--<div ng-repeat="chart in optimizationCharts" class="chart-container __small">-->
+            <!--<div mpld3-chart="chart" chart-id="{{ chart.id }}"></div>-->
+          <!--</div>-->
+        <!--</div>-->
+      <!--</div>-->
+
+      <!--<div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">-->
+        <!--<div class="option_list" style="height:62vh">-->
+          <!--<div class="label">Select graphs</div>-->
+          <!--<div ng-repeat="selector in selectors" class="option">-->
+            <!--<span><input type="checkbox" ng-model="selector.checked"/></span>-->
+            <!--<span style="margin-left: 10px">{{selector.name}}</span>-->
+          <!--</div>-->
+        <!--</div>-->
+        <!--<div style="display: flex;justify-content: center; margin-top: 25px">-->
+          <!--<input type="button" value="Update" class="updateGraph btn" ng-click="getOptimizationGraphs()"/>-->
+        <!--</div>-->
+      <!--</div>-->
     </div>
   </div>
 </div>
