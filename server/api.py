@@ -58,7 +58,6 @@ def load_user_from_request(request):  # pylint: disable=redefined-outer-name
 def unauthorized_handler():
     abort(401)
 
-
 from server.webapp.utils import OptimaJSONEncoder
 from server.webapp.resources.user import (
     User, UserDetail, CurrentUser, UserLogin, UserLogout)

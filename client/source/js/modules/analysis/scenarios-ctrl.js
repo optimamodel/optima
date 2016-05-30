@@ -11,32 +11,58 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var parsets = parsetResponse.data.parsets;
     var progsets = progsetsResponse.data.progsets;
 
+    function initialize() {
+
+      $scope.scenarios = scenariosResponse.data.scenarios;
+      $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
+      consoleLogJson("loading scenarios", scenariosResponse.data);
+
+      $scope.isMissingModelData = !project.has_data;
+      $scope.isMissingProgramSet = progsets.length == 0;
+    }
+
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
     }
 
-    $scope.scenarios = scenariosResponse.data.scenarios;
-    $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
-    consoleLogJson("loading scenarios", scenariosResponse.data);
-
-    $scope.isMissingModelData = !project.has_data;
-    $scope.isMissingProgramSet = progsets.length == 0;
-
-    var saveScenarios = function (scenarios, msg) {
+    function saveScenarios (scenarios, msg) {
       consoleLogJson("saving scenarios", scenarios);
-      $http
-        .put('/api/project/' + project.id + '/scenarios', {'scenarios': scenarios })
-        .success(function (response) {
-          $scope.scenarios = response.scenarios;
-          consoleLogJson("returned scenarios", $scope.scenarios);
-          if (msg) {
-            toastr.success(msg)
-          }
-        });
+      $http.put(
+        '/api/project/' + project.id + '/scenarios',
+        {'scenarios': scenarios })
+      .success(function (response) {
+        $scope.scenarios = response.scenarios;
+        consoleLogJson("returned scenarios", $scope.scenarios);
+        if (msg) {
+          toastr.success(msg)
+        }
+      });
     };
 
-    var openScenarioModal = function (scenario) {
+    $scope.runScenarios = function () {
+      $http.get(
+        '/api/project/' + project.id + '/scenarios/results')
+      .success(function (data) {
+        $scope.graphs = data.graphs;
+      });
+    };
+
+    $scope.isRunnable = function () {
+      return _.some($scope.scenarios, function(s) { return s.active });
+    };
+
+    $scope.parsetName = function (scenario) {
+      var parset = _.findWhere(parsets, {id: scenario.parset_id});
+      return parset ? parset.name : '';
+    };
+
+    $scope.programSetName = function (scenario) {
+      var progset = _.findWhere(progsets, {id: scenario.progset_id});
+      return progset ? progset.name : '';
+    };
+
+    function openScenarioModal(scenario) {
       var templateUrl, controller;
       var scenario_type = scenario.scenario_type;
       if ((scenario_type === "budget" ) || (scenario_type === 'coverage')) {
@@ -58,27 +84,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           ykeys: function () { return $scope.ykeys; }
         }
       });
-
-    };
-
-    $scope.runScenarios = function () {
-      $http
-        .get('/api/project/' + project.id + '/scenarios/results')
-        .success(function (data) { $scope.graphs = data.graphs; });
-    };
-
-    $scope.isRunnable = function () {
-      return _.some($scope.scenarios, function(s) { return s.active });
-    };
-
-    $scope.parsetName = function (scenario) {
-      var parset = _.findWhere(parsets, {id: scenario.parset_id});
-      return parset ? parset.name : '';
-    };
-
-    $scope.programSetName = function (scenario) {
-      var progset = _.findWhere(progsets, {id: scenario.progset_id});
-      return progset ? progset.name : '';
     };
 
     $scope.modal = function (scenario, action, $event) {
@@ -127,6 +132,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       }
     };
+
+    initialize();
 
   });
 

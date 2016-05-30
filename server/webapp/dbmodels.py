@@ -794,24 +794,6 @@ class ProgsetsDb(db.Model):
         return db_model_as_file(self, loaddir, filename, 'name', 'prg')
 
 
-def parse_scenario_summary(scenario):
-    result = {
-        'id': None,
-        'active': True,
-        'progset_id': None,
-        'parset_id': None,
-        'scenario_type': None,
-        'name': scenario.name,
-        'blob': {}
-    }
-    if isinstance(scenario, op.Parscen):
-        result['scenario_type'] = 'parameter'
-    elif isinstance(scenario, op.Budgetscen):
-        result['scenario_type'] = 'budget'
-    elif isinstance(scenario, op.Coveragescen):
-        result['scenario_type'] = 'coverage'
-
-
 @swagger.model
 class ScenariosDb(db.Model):
 
