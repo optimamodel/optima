@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import dateutil
+from pprint import pprint
 
 from flask import current_app, helpers, request, Response
 from flask.ext.login import current_user, login_required
@@ -13,7 +14,7 @@ from werkzeug.utils import secure_filename
 import optima as op
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
+from server.webapp.dbmodels import ProgramsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
 from server.webapp.utils import (
     secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
     templatepath, upload_dir_user)
@@ -26,18 +27,38 @@ from server.webapp.dataio import (
     load_project_program_summaries)
 
 
+def get_project_summary_from_record(project_record):
+    project_id = project_record.id
+    program_records = ProgramsDb.query.filter_by(project_id=project_id).all()
+    program_records = filter(lambda r: r.active == True, program_records)
+    result = {
+        'id': project_record.id,
+        'name': project_record.name,
+        'user_id': project_record.user_id,
+        'dataStart': project_record.datastart,
+        'dataEnd': project_record.dataend,
+        'populations': project_record.populations,
+        'nProgram': len(program_records),
+        'creation_time': project_record.created,
+        'updated_time': project_record.updated,
+        'data_upload_time': project_record.data_upload_time,
+        'has_data': project_record.has_data(),
+        'has_econ': project_record.has_econ
+    }
+    return result
+
+
 class ProjectBase(Resource):
     method_decorators = [report_exception, login_required]
 
     def get_query(self):
         return ProjectDb.query
 
-    @marshal_with(ProjectDb.resource_fields, envelope='projects')
     def get(self):
-        projects = self.get_query().all()
-        for p in projects:
-            p.has_data_now = p.has_data()
-        return projects
+        project_records = self.get_query().all()
+        return {
+            'projects': map(get_project_summary_from_record, project_records)
+        }
 
 
 population_parser = RequestParser()
@@ -206,7 +227,9 @@ class Projects(ProjectBase):
 
 class Project(Resource):
     """
-    An individual project.
+    /api/project/<uuid:project_id>
+
+    - GET: get active project summary
     """
     method_decorators = [report_exception, login_required]
 
@@ -215,18 +238,14 @@ class Project(Resource):
         summary='Open a Project'
     )
     @report_exception
-    @marshal_with(ProjectDb.resource_fields)
     def get(self, project_id):
-        query = ProjectDb.query
-        project_entry = query.get(project_id)
+        project_entry = ProjectDb.query.get(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
         if not current_user.is_admin and \
                         str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
-        project_entry.has_data_now = project_entry.has_data()
-        # no other way to make it work for methods and not attributes?
-        return project_entry
+        return get_project_summary_from_record(project_entry)
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
