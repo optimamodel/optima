@@ -201,6 +201,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           if (response.status === 'started') {
             $scope.statusMessage = 'Optimization started.';
             $scope.errorMessage = '';
+            $scope.seconds = 0;
             pollOptimizations();
           } else if (response.status === 'running') {
             $scope.statusMessage = 'Optimization already running.'
@@ -210,7 +211,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var pollOptimizations = function() {
-      var that = this;
       $http.get(
         '/api/project/' + $scope.state.activeProject.id
         + '/optimizations/' + $scope.state.activeOptimization.id
@@ -219,10 +219,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(response.status === 'completed') {
           $scope.getOptimizationGraphs();
           $scope.statusMessage = 'Optimization successfully completed updating graphs.';
-          clearStatusMessage();
           $timeout.cancel($scope.pollTimer);
         } else if(response.status === 'started'){
-          $scope.pollTimer = $timeout(pollOptimizations, 5000);
+          $scope.pollTimer = $timeout(pollOptimizations, 2000);
+          $scope.seconds += 2;
+          $scope.statusMessage = "Optimization running for " + $scope.seconds + "s"
         }
       })
       .error(function() {
@@ -256,7 +257,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           + '/graph',
           {params: data})
         .success(function (response) {
+          clearStatusMessage();
           $scope.graphs = response.graphs;
+        })
+        .error(function() {
+          clearStatusMessage();
         });
       }
     };

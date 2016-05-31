@@ -106,6 +106,7 @@ api.add_resource(ProgsetData, '/api/project/<uuid:project_id>/progsets/<uuid:pro
 api.add_resource(ProgsetParameters,
      '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/parameters/<uuid:parset_id>')
 api.add_resource(ProgsetEffects, '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects')
+api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(DefaultPrograms, '/api/project/<uuid:project_id>/defaults')
 api.add_resource(DefaultPopulations, '/api/project/populations')
@@ -116,7 +117,6 @@ api.add_resource(ProgramPopSizes,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/program/<uuid:program_id>/parset/<uuid:parset_id>/popsizes')
 api.add_resource(ProgramCostcovGraph,
     '/api/project/<uuid:project_id>/progsets/<uuid:progset_id>/programs/<uuid:program_id>/costcoverage/graph')
-api.add_resource(Portfolio, '/api/project/portfolio')
 
 api.add_resource(Parsets, '/api/project/<uuid:project_id>/parsets')
 api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>')
