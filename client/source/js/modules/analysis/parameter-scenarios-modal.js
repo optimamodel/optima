@@ -86,7 +86,8 @@ define(['angular'], function (module) {
 
       $scope.cancel = function () { $modalInstance.dismiss("cancel"); };
 
-      $scope.save = function () { $modalInstance.close($scope.scenario); };
+      $scope.save = function () {
+        $modalInstance.close($scope.scenario); };
 
       // initialization
       if (_.isUndefined($scope.scenario.name)) {

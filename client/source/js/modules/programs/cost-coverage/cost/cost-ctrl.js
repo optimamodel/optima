@@ -2,7 +2,7 @@ define(['./../../module', 'underscore'], function (module, _) {
 
   'use strict';
 
-  module.controller('CostController', function ($scope, $http) {
+  module.controller('CostController', function ($scope, $http, toastr) {
 
     // $scope.vm is from the cost-coverage template controller
     $scope.selectedProgram = $scope.vm.programs[0];
@@ -12,25 +12,30 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.changeSelectedProgram()
     };
 
-    function consoleLogVar(name, val) {
+    function consoleLogJson(name, val) {
       console.log(name + ' = ');
       console.log(JSON.stringify(val, null, 2));
     }
 
     $scope.changeSelectedProgram = function() {
-      var url = '/api/project/' + $scope.vm.openProject.id
-            + '/progsets/' + $scope.vm.selectedProgramSet.id
-            + '/program/' + $scope.selectedProgram.id
-            + '/parset/' + $scope.vm.selectedParset.id
-            + '/popsizes';
-      consoleLogVar("url", url);
-      $http
-        .get(url)
-        .success(function (response) {
-          $scope.popsizes = response;
-          buildTables();
-          $scope.updateGraph();
+      $http.get(
+        '/api/project/' + $scope.vm.openProject.id
+          + '/progsets/' + $scope.vm.selectedProgset.id
+          + '/program/' + $scope.selectedProgram.id
+          + '/parset/' + $scope.vm.selectedParset.id
+          + '/popsizes')
+      .success(function (response) {
+        $scope.popsizes = response;
+
+        $scope.yearSelector = [];
+        var years = _.keys($scope.popsizes);
+        years.forEach(function(year) {
+          $scope.yearSelector.push({'value':year, 'label':year.toString()});
         });
+
+        buildTables();
+        $scope.updateGraph();
+      });
     };
 
     $scope.updateGraph = function() {
@@ -40,7 +45,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         return;
       }
       var url = '/api/project/' + $scope.vm.openProject.id
-          + '/progsets/' + $scope.vm.selectedProgramSet.id
+          + '/progsets/' + $scope.vm.selectedProgset.id
           + '/programs/' + $scope.selectedProgram.id
           + '/costcoverage/graph?t=' + years.join(',')
           + '&parset_id=' + $scope.vm.selectedParset.id;
@@ -54,18 +59,17 @@ define(['./../../module', 'underscore'], function (module, _) {
       if ($scope.dispCost) {
         url += '&perperson=1';
       }
-      $http
-        .get(url)
-        .success(
-          function (data) {
-            $scope.chartData = data;
-          }
-        );
+      $http.get(url)
+      .success(
+        function (data) {
+          $scope.chartData = data;
+        }
+      );
     };
 
     var saveSelectedProgram = function() {
       var payload = { 'program': $scope.selectedProgram };
-      // consoleLogVar("payload", payload);
+      // consoleLogJson("payload", payload);
       $http
         .post(
           '/api/project/' + $scope.vm.openProject.id
@@ -73,6 +77,7 @@ define(['./../../module', 'underscore'], function (module, _) {
             + '/program',
           payload)
         .success(function() {
+          toastr.success('Cost data were saved');
           $scope.updateGraph();
         });
     };
@@ -136,7 +141,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         types: ["selector", "display", "number", "number", "number", "number"],
         widths: [],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
-        selectors: [getYearSelectors, null, null, null, null, null],
+        options: [$scope.yearSelector],
         validateFn: validateCcoparsTable
       };
       var ccopars = angular.copy($scope.selectedProgram.ccopars);
@@ -153,7 +158,7 @@ define(['./../../module', 'underscore'], function (module, _) {
           ])
         }
       }
-      consoleLogVar('ccoparsTable', $scope.ccoparsTable);
+      console.log('ccoparsTable', $scope.ccoparsTable);
 
       $scope.costcovTable = {
         titles: ["Year", "Cost", "Coverage"],
@@ -162,13 +167,14 @@ define(['./../../module', 'underscore'], function (module, _) {
         widths: [],
         displayRowFns: [],
         selectors: [getYearSelectors],
+        options: [$scope.yearSelector],
         validateFn: validateCostcovTable,
       };
       var table = $scope.costcovTable;
       $scope.selectedProgram.costcov.forEach(function(val, i, list) {
         table.rows.push([val.year.toString(), val.cost, val.coverage]);
       });
-      consoleLogVar("costcovTable", $scope.costcovTable);
+      console.log("costcovTable", $scope.costcovTable);
 
     };
 

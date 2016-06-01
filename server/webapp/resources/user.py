@@ -9,9 +9,10 @@ from flask_restful_swagger import swagger
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 
-from server.webapp.inputs import email, hashed_password, nullable_email
+from server.webapp.utils import email, hashed_password, nullable_email, RequestParser
 from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist, InvalidCredentials
-from server.webapp.utils import verify_admin_request, RequestParser, report_exception
+from server.webapp.resources.common import report_exception, verify_admin_request
+
 
 
 user_parser = RequestParser()
@@ -33,7 +34,6 @@ user_update_parser.add_arguments({
 
 
 class UserDoesNotExist(RecordDoesNotExist):
-
     _model = 'user'
 
 

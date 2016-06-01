@@ -5,7 +5,7 @@ define(
   'use strict';
 
 
-  function consoleLogVar(name, val) {
+  function consoleLogJson(name, val) {
     console.log(name + ' = ');
     console.log(JSON.stringify(val, null, 2));
   }
@@ -116,17 +116,18 @@ define(
         //   }
         // };
         //
-        // /**
-        //  * Returns the mpld3 figure of this chart.
-        //  */
-        // /**
-        //  * Returns the zoomPlugin of the mpdl3 figure of this chart.
-        //  */
-        // function getZoomPlugin () {
-        //   return _(getFigure().plugins).find(function(plugin) {
-        //     return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
-        //   });
-        // }
+
+        /**
+         * Returns the mpld3 figure of this chart.
+         */
+        /**
+         * Returns the zoomPlugin of the mpdl3 figure of this chart.
+         */
+        function getZoomPlugin () {
+          return _(getFigure().plugins).find(function(plugin) {
+            return plugin.constructor.name === 'mpld3_BoxZoomPlugin';
+          });
+        }
 
         /**
          * Disable both the zoom and the pan button.
@@ -364,7 +365,7 @@ define(
         scope.onResize = function () {
           var parent = $(elem).parent();
           scope.height = parent.height();
-          console.log("resize", parent, scope.height);
+          // console.log("resize", parent, scope.height);
           scope.$apply();
         };
 
