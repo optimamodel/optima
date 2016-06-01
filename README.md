@@ -101,6 +101,10 @@ On mac, install the `postgres` software with:
 
     brew install postgres
 
+On Linux, use 
+
+    sudo apt-get install install postgres
+
 Then you create the default database store:
 
     initdb /usr/local/var/postgres -E utf8
