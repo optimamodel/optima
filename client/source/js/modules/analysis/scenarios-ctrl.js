@@ -14,8 +14,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function initialize() {
 
       $scope.scenarios = scenariosResponse.data.scenarios;
-      $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
       consoleLogJson("loading scenarios", scenariosResponse.data);
+
+      $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
+      console.log("loading ykeys", $scope.ykeys);
 
       $scope.isMissingModelData = !project.has_data;
       $scope.isMissingProgramSet = progsets.length == 0;
