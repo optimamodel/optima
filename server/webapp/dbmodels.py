@@ -234,7 +234,9 @@ class ProjectDb(db.Model):
             self.name = project.name
         else:
             db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
-            db.session.query(ParsetsDb).filter_by(project_id=str_project_id).delete()
+            parset_records = db.session.query(ParsetsDb).filter_by(project_id=str_project_id)
+            print "Deleting parsets", [p.id for p in parset_records]
+            parset_records.delete()
         db.session.flush()
 
         # BE projects are not always TZ aware
@@ -275,16 +277,20 @@ class ProjectDb(db.Model):
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}
 
+        parset_records_by_name = {}
         if project.parsets:
             from server.webapp.dataio import update_or_create_parset_record
             for name, parset in project.parsets.iteritems():
                 if not is_same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
-                update_or_create_parset_record(self.id, name, parset)
+                record = update_or_create_parset_record(self.id, name, parset)
+                parset_records_by_name[name] = record
+            db.session.flush()
             db.session.commit()
 
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
+        progset_records_by_name = {}
         if project.progsets:
             from server.webapp.dataio import update_or_create_progset_record
 
@@ -293,6 +299,8 @@ class ProjectDb(db.Model):
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset_record(self.id, name, progset)
                 progset_record.restore(progset, program_summaries)
+                progset_records_by_name[name] = progset_record
+            db.session.flush()
             db.session.commit()
 
         def revert_program_list(program_list):
@@ -305,30 +313,28 @@ class ProjectDb(db.Model):
             from server.webapp.dataio import update_or_create_scenario_record
             for name in project.scens:
                 scen = project.scens[name]
-                parset_id = ParsetsDb.query.filter_by(name=scen.parsetname).first().id
+                parset_record = parset_records_by_name[scen.parsetname]
                 scenario_summary = {
                     'id': None,
                     'scenario_type': '',
                     'active': True,
                     'name': scen.name,
-                    'parset_id': parset_id,
+                    'parset_id': str(parset_record.id),
                     'years': scen.t
                 }
                 if isinstance(scen, op.Parscen):
                     scenario_summary['scenario_type'] = 'parameter'
                     scenario_summary['pars'] = scen.pars
-                elif isinstance(scen, op.Budgetscen):
-                    scenario_summary['scenario_type'] = 'budget'
-                    scenario_summary['budget'] = revert_program_list(scen.budget)
-                    progset_id = ProgsetsDb.query.filter_by(name=scen.progsetname).first().id
+                else:
+                    progset_id = progset_records_by_name[scen.progsetname].id
                     scenario_summary['progset_id'] = str(progset_id)
-                elif isinstance(scen, op.Coveragescen):
-                    scenario_summary['scenario_type'] = 'coverage'
-                    scenario_summary['coverage'] = revert_program_list(scen.coverage)
-                    progset_id = ProgsetsDb.query.filter_by(name=scen.progsetname).first().id
-                    scenario_summary['progset_id'] = str(progset_id)
-                print "Restoring sceanrio"
-                pprint(scenario_summary)
+                    if isinstance(scen, op.Budgetscen):
+                        scenario_summary['scenario_type'] = 'budget'
+                        scenario_summary['budget'] = revert_program_list(scen.budget)
+                    elif isinstance(scen, op.Coveragescen):
+                        scenario_summary['scenario_type'] = 'coverage'
+                        scenario_summary['coverage'] = revert_program_list(scen.coverage)
+                print "Restoring scenario", scenario_summary["id"]
                 update_or_create_scenario_record(self.id, scenario_summary)
             db.session.commit()
 

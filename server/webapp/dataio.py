@@ -187,6 +187,7 @@ def update_or_create_parset_record(project_id, name, parset):
         parset_record.name = name
         parset_record.pars = saves(parset.pars)
         db.session.add(parset_record)
+    return parset_record
 
 
 def update_or_create_progset_record(project_id, name, progset):
@@ -421,12 +422,12 @@ def get_scenario_summary_from_record(scenario_record):
     }
     """
     result = {
-        'id': scenario_record.id,
-        'progset_id': scenario_record.progset_id,
+        'id': str(scenario_record.id),
+        'progset_id': str(scenario_record.progset_id),
         'scenario_type': scenario_record.scenario_type,
         'active': scenario_record.active,
         'name': scenario_record.name,
-        'parset_id': scenario_record.parset_id,
+        'parset_id': str(scenario_record.parset_id),
     }
     result.update(scenario_record.blob)
     return result
@@ -455,6 +456,9 @@ def update_or_create_scenario_record(project_id, scenario_summary):
 
     db.session.add(record)
     db.session.flush()
+    print("Saving scenario to database")
+    pprint(scenario_summary)
+    pprint(get_scenario_summary_from_record(record))
     return record
 
 

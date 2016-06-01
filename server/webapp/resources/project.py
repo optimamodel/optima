@@ -56,9 +56,7 @@ class ProjectBase(Resource):
 
     def get(self):
         project_records = self.get_query().all()
-        return {
-            'projects': map(get_project_summary_from_record, project_records)
-        }
+        return {'projects': map(get_project_summary_from_record, project_records)}
 
 
 population_parser = RequestParser()
@@ -118,7 +116,9 @@ bulk_project_parser.add_arguments({
 
 class Projects(ProjectBase):
     """
-    A collection of projects for the given user.
+    /api/project
+
+    - GET: used in open/manage page to get project lists
     """
 
     def get_query(self):
