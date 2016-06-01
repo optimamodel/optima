@@ -427,9 +427,9 @@ class ProjectSpreadsheet(Resource):
         current_app.logger.debug(
             "PUT /api/project/%s/spreadsheet" % project_id)
 
-        project_entry = load_project_record(project_id, raise_exception=True)
+        project_record = load_project_record(project_id, raise_exception=True)
 
-        project_name = project_entry.name
+        project_name = project_record.name
         user_id = current_user.id
         current_app.logger.debug(
             "uploadExcel(project id: %s user:%s)" % (project_id, user_id))
@@ -450,29 +450,42 @@ class ProjectSpreadsheet(Resource):
 
         # See if there is matching project
         current_app.logger.debug("project for user %s name %s: %s" % (
-            current_user.id, project_name, project_entry))
+            current_user.id, project_name, project_record))
+
         # from optima.utils import saves  # , loads
         # from optima.parameters import Parameterset
         from server.webapp.dbmodels import ParsetsDb
-        ParsetsDb.query.filter_by(project_id=project_id).delete('fetch')
+        parset_records = ParsetsDb.query.filter_by(project_id=project_id)
+        parset_names = [p.name for p in parset_records]
         db.session.flush()
-        project_entry = load_project_record(project_id)
-        project_instance = project_entry.hydrate()
-        project_instance.loadspreadsheet(server_filename)
-        project_instance.modified = datetime.now(dateutil.tz.tzutc())
-        current_app.logger.info(
-            "after spreadsheet uploading: %s" % project_instance)
 
-        result = project_instance.runsim()
+        project_record = load_project_record(project_id)
+        project = project_record.hydrate()
+
+        parset_name = "default"
+        print parset_name, parset_names
+        if parset_name in parset_names:
+            parset_name = "uploaded from " + uploaded_file.source_filename
+            i = 0
+            while parset_name in parset_names:
+                i += 1
+                parset_name = "uploaded_from_%s (%d)" % (uploaded_file.source_filename, i)
+        project.loadspreadsheet(server_filename, parset_name)
+
+        project.modified = datetime.now(dateutil.tz.tzutc())
+        current_app.logger.info(
+            "after spreadsheet uploading: %s" % project)
+
+        result = project.runsim()
         current_app.logger.info(
             "runsim result for project %s: %s" % (project_id, result))
 
         #   now, update relevant project_entry fields
         # this adds to db.session all dependent entries
-        project_entry.restore(project_instance)
-        db.session.add(project_entry)
+        project_record.restore(project)
+        db.session.add(project_record)
 
-        result_record = save_result_record(project_entry.id, result)
+        result_record = save_result_record(project_record.id, result)
         db.session.add(result_record)
 
         # save data upload timestamp
@@ -480,7 +493,7 @@ class ProjectSpreadsheet(Resource):
         # get file data
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project data
-        projdata = ProjectDataDb.query.get(project_entry.id)
+        projdata = ProjectDataDb.query.get(project_record.id)
 
         # update existing
         if projdata is not None:
@@ -489,7 +502,7 @@ class ProjectSpreadsheet(Resource):
         else:
             # create new project data
             projdata = ProjectDataDb(
-                project_id=project_entry.id,
+                project_id=project_record.id,
                 meta=filedata,
                 updated=data_upload_time)
 
