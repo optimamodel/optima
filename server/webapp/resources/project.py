@@ -453,6 +453,7 @@ class ProjectSpreadsheet(Resource):
             current_user.id, project_name, project_entry))
         # from optima.utils import saves  # , loads
         # from optima.parameters import Parameterset
+        from server.webapp.dbmodels import ParsetsDb
         ParsetsDb.query.filter_by(project_id=project_id).delete('fetch')
         db.session.flush()
         project_entry = load_project_record(project_id)
