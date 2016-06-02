@@ -2,10 +2,10 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramSetController', function ($scope, $http, programSetModalService,
-    modalService, currentProject, projectApiService, $upload) {
+    modalService, toastr, currentProject, projectApiService, $upload) {
 
     var openProject = currentProject.data;
-    var defaults;
+    var defaultPrograms;
     var parameters;
 
     // Do not allow user to proceed if spreadsheet has not yet been uploaded for the project
@@ -25,22 +25,22 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       .success(function (response) {
         if(response.progsets) {
           $scope.programSetList = response.progsets;
+          console.log("active_programs = ", $scope.programSetList);
           if (response.progsets && response.progsets.length > 0) {
             $scope.activeProgramSet = response.progsets[0];
-          console.log("active_programs = " + JSON.stringify($scope.activeProgramSet, null, 2));
           }
         }
       });
 
     $scope.getCategories = function() {
       return _.uniq(_.pluck($scope.activeProgramSet.programs, "category"));
-    }
+    };
 
     // Fetching default categories and programs for the open project
     projectApiService.getDefault(openProject.id)
       .success(function (response) {
-        defaults = response;
-        console.log("default_programs = " + JSON.stringify(defaults, null, 2));
+        defaultPrograms = response;
+        console.log("default_programs = ", defaultPrograms);
       });
 
     // Get the list of default parameters for the project
@@ -57,7 +57,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     // Open pop-up to add new programSet
     $scope.addProgramSet = function () {
       var add = function (name) {
-        var newProgramSet = {name:name, programs: angular.copy(defaults.programs)};
+        var newProgramSet = {name:name, programs: angular.copy(defaultPrograms.programs)};
         $scope.programSetList[$scope.programSetList ? $scope.programSetList.length : 0] = newProgramSet;
         $scope.activeProgramSet = newProgramSet;
       };
@@ -80,15 +80,16 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.downloadProgramSet = function() {
       if(!$scope.activeProgramSet.id) {
         modalService.inform(
-          function (){ },
+          _.noopt,
           'Okay',
           'Please save the program set to proceed.',
           'Cannot proceed'
         );
       } else {
-        $http.get('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
-          {headers: {'Content-type': 'application/octet-stream'},
-            responseType:'blob'})
+        $http
+          .get(
+            '/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id +'/data',
+            {headers: {'Content-type': 'application/octet-stream'}, responseType:'blob'})
           .success(function (response) {
             var blob = new Blob([response], { type: 'application/octet-stream' });
             saveAs(blob, ($scope.activeProgramSet.name + '.prj'));
@@ -126,19 +127,18 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       } else {
         var remove = function () {
           if ($scope.activeProgramSet.id) {
-            $http.delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id).
-              success(function() {
-                deleteProgramSetFromPage();
-              });
+            $http
+              .delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id)
+              .success(deleteProgramSetFromPage);
           } else {
             deleteProgramSetFromPage();
           }
         };
         modalService.confirm(
-          function () {
-            remove()
-          }, function () {
-          }, 'Yes, remove this program set', 'No',
+          remove,
+          function () { },
+          'Yes, remove this program set',
+          'No',
           'Are you sure you want to permanently remove program set "' + $scope.activeProgramSet.name + '"?',
           'Delete program set'
         );
@@ -166,7 +166,8 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.programSetList[$scope.programSetList.length] = copiedProgramSet;
           $scope.activeProgramSet = copiedProgramSet;
         };
-        programSetModalService.openProgramSetModal(copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
+        programSetModalService.openProgramSetModal(
+            copy, 'Copy program set', $scope.programSetList, $scope.activeProgramSet.name + ' copy', 'Copy');
       }
     };
 
@@ -185,19 +186,15 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
         );
       } else {
         $http({
-          url: '/api/project/' + openProject.id + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
+          url: '/api/project/' + openProject.id
+                + '/progsets' + ($scope.activeProgramSet.id ? '/' + $scope.activeProgramSet.id : ''),
           method: ($scope.activeProgramSet.id ? 'PUT' : 'POST'),
           data: $scope.activeProgramSet
         }).success(function (response) {
           if(response.id) {
             $scope.activeProgramSet.id = response.id;
           }
-          modalService.inform(
-            function (){},
-            'Okay',
-            'Program set saved successfully',
-            'Program set saved'
-          );
+          toastr.success('Program set was saved');
         });
       }
     };
@@ -206,11 +203,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.openEditProgramModal = function ($event, program) {
       var editProgram = angular.copy(program);
       editProgram.short = editProgram.short || editProgram.short;
-      return programSetModalService.openProgramModal(editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
-        function (newProgram) {
+      return programSetModalService
+        .openProgramModal(
+          editProgram, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+        .result
+        .then(function (newProgram) {
           $scope.activeProgramSet.programs[$scope.activeProgramSet.programs.indexOf(program)] = newProgram;
-        }
-      );
+        });
     };
 
     // Creates a new program and opens a modal for editing.
@@ -220,11 +219,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var program = {};
 
-      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
-        function (newProgram) {
+      return programSetModalService
+        .openProgramModal(
+            program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+        .result
+        .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
-        }
-      );
+        });
     };
 
     // Makes a copy of an existing program and opens a modal for editing.
@@ -237,11 +238,13 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       program.short = (program.short || program.short ) + ' copy';
       program.short = undefined;
 
-      return programSetModalService.openProgramModal(program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories()).result.then(
-        function (newProgram) {
+      return programSetModalService
+        .openProgramModal(
+          program, openProject, $scope.activeProgramSet.programs, parameters, $scope.getCategories())
+        .result
+        .then(function (newProgram) {
           $scope.activeProgramSet.programs.push(newProgram);
-        }
-      );
+        });
     };
 
   });

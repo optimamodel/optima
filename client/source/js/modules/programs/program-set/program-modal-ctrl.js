@@ -1,4 +1,4 @@
-define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
+ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProgramModalController', function ($scope, $modalInstance, program, populations, programList, modalService, parameters, categories, openProject) {

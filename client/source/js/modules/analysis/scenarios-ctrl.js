@@ -5,69 +5,49 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('AnalysisScenariosController', function (
       $scope, $http, $modal, meta, info, scenarioParametersResponse, progsetsResponse,
-      parsetResponse, scenariosResponse) {
+      parsetResponse, scenariosResponse, toastr) {
 
     var project = info.data;
     var parsets = parsetResponse.data.parsets;
     var progsets = progsetsResponse.data.progsets;
 
-    $scope.scenarios = scenariosResponse.data.scenarios;
-    $scope.isMissingModelData = !project.has_data;
-    $scope.isMissingProgramSet = progsets.length == 0;
+    function initialize() {
 
-    $scope.alerts = [];
+      $scope.scenarios = scenariosResponse.data.scenarios;
+      consoleLogJson("loading scenarios", scenariosResponse.data);
 
-    var killOldestAlert = function() {
-      if ($scope.alerts.length > 0) {
-        $scope.alerts.shift();
-        $scope.$apply();
-      }
+      $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
+      console.log("loading ykeys", $scope.ykeys);
+
+      $scope.isMissingModelData = !project.has_data;
+      $scope.isMissingProgramSet = progsets.length == 0;
     }
 
-    var addTimedAlert = function(msg) {
-      $scope.alerts.push({ msg: msg });
-      setTimeout(killOldestAlert, 3000);
-    };
+    function consoleLogJson(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
 
-    var saveScenarios = function (scenarios, msg) {
-      $http
-        .put('/api/project/' + project.id + '/scenarios', {'scenarios': scenarios })
-        .success(function (response) {
-          $scope.scenarios = response.scenarios;
-          if (msg) { addTimedAlert(msg) }
-        });
-    };
-
-    var openScenarioModal = function (scenario) {
-      var templateUrl, controller;
-      var scenario_type = scenario.scenario_type;
-      if ((scenario_type === "budget" ) || (scenario_type === 'coverage')) {
-        templateUrl = 'js/modules/analysis/program-scenarios-modal.html';
-        controller = 'ProgramScenariosModalController';
-      } else  {
-        templateUrl = 'js/modules/analysis/parameter-scenarios-modal.html';
-        controller = 'ParameterScenariosModalController';
-      }
-      var ykeys = $http.get('/api/project/' + project.id + '/parsets/ykeys');
-      return $modal.open({
-        templateUrl: templateUrl,
-        controller: controller,
-        windowClass: 'fat-modal',
-        resolve: {
-          scenarios: function () { return $scope.scenarios; },
-          scenario: function () { return angular.copy(scenario); },
-          parsets: function () { return parsets; },
-          progsets: function () { return progsets; },
-          ykeys: function () { return ykeys; },
+    function saveScenarios (scenarios, msg) {
+      consoleLogJson("saving scenarios", scenarios);
+      $http.put(
+        '/api/project/' + project.id + '/scenarios',
+        {'scenarios': scenarios })
+      .success(function (response) {
+        $scope.scenarios = response.scenarios;
+        consoleLogJson("returned scenarios", $scope.scenarios);
+        if (msg) {
+          toastr.success(msg)
         }
       });
-
     };
 
     $scope.runScenarios = function () {
-      $http
-        .get('/api/project/' + project.id + '/scenarios/results')
-        .success(function (data) { $scope.graphs = data.graphs; });
+      $http.get(
+        '/api/project/' + project.id + '/scenarios/results')
+      .success(function (data) {
+        $scope.graphs = data.graphs;
+      });
     };
 
     $scope.isRunnable = function () {
@@ -82,6 +62,30 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     $scope.programSetName = function (scenario) {
       var progset = _.findWhere(progsets, {id: scenario.progset_id});
       return progset ? progset.name : '';
+    };
+
+    function openScenarioModal(scenario) {
+      var templateUrl, controller;
+      var scenario_type = scenario.scenario_type;
+      if ((scenario_type === "budget" ) || (scenario_type === 'coverage')) {
+        templateUrl = 'js/modules/analysis/program-scenarios-modal.html';
+        controller = 'ProgramScenariosModalController';
+      } else  {
+        templateUrl = 'js/modules/analysis/parameter-scenarios-modal.html';
+        controller = 'ParameterScenariosModalController';
+      }
+      return $modal.open({
+        templateUrl: templateUrl,
+        controller: controller,
+        windowClass: 'fat-modal',
+        resolve: {
+          scenarios: function () { return $scope.scenarios; },
+          scenario: function () { return angular.copy(scenario); },
+          parsets: function () { return parsets; },
+          progsets: function () { return progsets; },
+          ykeys: function () { return $scope.ykeys; }
+        }
+      });
     };
 
     $scope.modal = function (scenario, action, $event) {
@@ -130,6 +134,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       }
     };
+
+    initialize();
 
   });
 
