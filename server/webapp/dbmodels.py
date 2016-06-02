@@ -228,6 +228,7 @@ class ProjectDb(db.Model):
 
         is_same_project = str(project.uid) == str(self.id)
         str_project_id = str(self.id)
+        db.session.query(ScenariosDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
         if is_same_project:

@@ -10,7 +10,7 @@ define(['angular'], function (module) {
       $scope.parsets = parsets;
       $scope.progsets = progsets;
       $scope.editPar = {};
-      var ykeys = ykeys.data.keys;
+      var ykeys = ykeys;
       var editKeys = ['startval', 'endval', 'startyear', 'endyear'];
 
       $scope.scenarioExists = function () {

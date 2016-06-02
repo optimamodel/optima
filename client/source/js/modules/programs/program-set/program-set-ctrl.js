@@ -125,7 +125,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
       if (!$scope.activeProgramSet) {
         modalService.informError([{message: 'No program set selected.'}]);
       } else {
-        function remove() {
+        var remove = function () {
           if ($scope.activeProgramSet.id) {
             $http
               .delete('/api/project/' + openProject.id +  '/progsets' + '/' + $scope.activeProgramSet.id)
@@ -133,7 +133,7 @@ define(['./../module', 'angular', 'underscore'], function (module, angular, _) {
           } else {
             deleteProgramSetFromPage();
           }
-        }
+        };
         modalService.confirm(
           remove,
           function () { },
