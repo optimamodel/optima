@@ -202,11 +202,6 @@ def constrainbudget(origbudget=None, budgetvec=None, totalbudget=None, budgetlim
     proginds = arange(len(origbudget)) # Array of all allowable indices
     fixedinds = array([p for p in proginds if p not in optiminds]) # WARNING, weird way of getting the complement of optiminds
     minfixed = 0.0
-    print "fixedinds", fixedinds
-    print "budgetvec", budgetvec
-    print "origbudget", origbudget
-    print "rescaledbudget", rescaledbudget
-    print "budgetlims['min']", budgetlims['min']
     for ind in fixedinds:
         rescaledminfixed[ind] = rescaledbudget[ind]*budgetlims['min'][ind]
         minfixed += rescaledminfixed[ind]
