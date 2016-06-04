@@ -6,7 +6,7 @@ This file defines everything needed for the Python GUI for geospatial analysis.
 Version: 2016jan29
 """
 
-from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults
+from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjectives, dcp, OptimaException, plotresults, runcommand
 from PyQt4 import QtGui
 from pylab import figure, close
 from time import time
@@ -259,6 +259,10 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
     ## 3. Get a destination folder
     if destination is None:
         destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
+    
+    # Create it if t doesn't exist
+    try: runcommand('mkdir -p destination')
+    except: pass
     
     ## 4. Read the spreadsheet
     poplist = []
