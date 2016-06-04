@@ -552,7 +552,7 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
 
 
 global plotparsbackbut, plotparsnextbut, plotparslider
-def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
+def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
@@ -580,7 +580,7 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
     allplotdata = []
     for pars in parslist:
         count = 0
-        simpars = makesimpars(pars)
+        simpars = makesimpars(pars, start=start, end=end)
         tvec = simpars['tvec']
         plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
         for i,key1 in enumerate(pars):
