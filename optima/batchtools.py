@@ -81,7 +81,7 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
     def batchfunc(project, ind, outputqueue):
         loadbalancer(index=ind)
         print('Running BOC generation...')
-        project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname, progsetname=parsetname, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname, progsetname=progsetname, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         outputqueue.put(project)
         print('...done.')
         return None
