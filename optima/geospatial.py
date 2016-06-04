@@ -261,8 +261,8 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
         destination = QtGui.QFileDialog.getExistingDirectory(caption='Choose output folder')
     
     # Create it if t doesn't exist
-    try: runcommand('mkdir -p destination')
-    except: pass
+    try: runcommand('mkdir -p %s' % destination)
+    except: print('Was unable to make target directory "%s"' % destination)
     
     ## 4. Read the spreadsheet
     poplist = []
