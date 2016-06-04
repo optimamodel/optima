@@ -72,7 +72,7 @@ def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None
 
 
 
-def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
     ''' Perform batch BOC calculation '''
     
     filelist = glob(folder+'/*.prj')
