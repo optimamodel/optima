@@ -10,6 +10,7 @@ from optima import Project, Portfolio, loadobj, saveobj, odict, defaultobjective
 from PyQt4 import QtGui
 from pylab import figure, close
 from time import time
+import os
 
 
 global geoguiwindow
@@ -415,7 +416,7 @@ def makeproj(projectpath=None, spreadsheetpath=None, destination=None):
         if checkplots:
             plotresults(subproject.parsets[-1].getresults(), toplot=['popsize-tot', 'popsize-pops'])
             plotresults(subproject.parsets[-1].getresults(), toplot=['prev-tot', 'prev-pops'])
-        saveobj(destination+subproject.name+'.prj', subproject)
+        saveobj(destination+os.sep+subproject.name+'.prj', subproject)
         
     return None
 
