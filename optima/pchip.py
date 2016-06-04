@@ -19,8 +19,9 @@ pchipeps = 1e-8
 #=========================================================
 def pchip(x, y, xnew, deriv = False, method='pchip'):
     
-    xs = [a for a,b in sorted(zip(x,y))]
-    ys = [b for a,b in sorted(zip(x,y))]
+    sortzip = dcp(sorted(zip(x,y)))
+    xs = [a for a,b in sortzip]
+    ys = [b for a,b in sortzip]
     x = dcp(xs)
     y = dcp(ys)
     
@@ -134,7 +135,11 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbudget = None):
 
-    xnew = linspace(x[0],x[-1],200)
+    sortzip = dcp(sorted(zip(x,y)))
+    xs = [a for a,b in sortzip]
+    ys = [b for a,b in sortzip]
+    x = dcp(xs)
+    y = dcp(ys)
 
     # Process inputs
     if isnumber(initbudget): initbudget = [initbudget] # Plotting expects this to be a list
