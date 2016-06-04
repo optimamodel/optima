@@ -13,8 +13,8 @@ from time import time
 import os
 
 
-global geoguiwindow
-geoguiwindow = None
+global geoguiwindow, guiportfolio
+if 1:  geoguiwindow, guiportfolio = [None]*2
 
     
     
@@ -521,22 +521,31 @@ def plotgeo():
     return None
     
 
-def export():
+def export(portfolio=None, filepath=None):
     ''' Save the current results to Excel file '''
     global guiportfolio
-    if type(guiportfolio)!=Portfolio: print('Warning, must load portfolio first!')
+    
+    if portfolio is not None: usegui = False
+    else:                     usegui = True
+    if portfolio is not None and filepath is None: filepath = portfolio.name+'.prt'
+    if type(guiportfolio)!=Portfolio and usegui: warning('Warning, must load portfolio first!')
     
     from xlsxwriter import Workbook
+    if not usegui: print('Saving portfolio...')
     
     # 1. Extract data needed from portfolio
     try:
-        outstr = guiportfolio.outputstring
+        if usegui: outstr = guiportfolio.outputstring
+        else:      outstr = portfolio.outputstring
     except:
-        warning('Warning, it does not seem that geospatial analysis has been run for this portfolio!')
+        errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
+        if usegui: warning(errormsg)
+        else:      raise Exception(errormsg)
         return None
     
     # 2. Create a new file dialog to save this spreadsheet
-    filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
+    if usegui:
+        filepath = QtGui.QFileDialog.getSaveFileName(caption='Save geospatial analysis results file', filter='*.xlsx')
     
     # 2. Generate spreadsheet according to David's template to store these data
     if filepath:
@@ -576,7 +585,10 @@ def export():
         worksheet.set_column(0, 3, colwidth) # Make wider
         workbook.close()
         
-        warning('Results saved to "%s".' % filepath)
+        if usegui: warning('Results saved to "%s".' % filepath)
+        else:      print('Results saved to "%s".' % filepath)
+    else:
+        print('Filepath not supplied: %s' % filepath)
     
     return None
     

@@ -646,7 +646,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
     return None
 
 
-def loadbalancer(maxload=0.5, index=None, refresh=0.5, maxtime=3600, verbose=True):
+def loadbalancer(maxload=0.5, index=None, refresh=1.0, maxtime=3600, verbose=True):
     ''' A little function to delay execution while CPU load is too high -- a poor man's load balancer '''
     from psutil import cpu_percent
     from time import sleep
