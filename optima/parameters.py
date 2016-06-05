@@ -1026,7 +1026,7 @@ class Parameterset(object):
         for parname,par in pars.items():
             if hasattr(par,'fittable'):
                 if par.fittable=='pop': 
-                    values = par.y[:]
+                    values = par.y[:].tolist()
                     prefix = "pars['%s'].y[:] = " % parname
                 elif par.fittable=='const': 
                     values = par.y
