@@ -456,7 +456,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -514,7 +514,8 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
     
     nstates = len(labels)
     colors = gridcolormap(nstates)
-    tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
+    if tvec is None:
+        tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl, supply as argument if so
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
