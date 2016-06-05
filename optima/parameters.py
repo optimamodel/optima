@@ -1017,7 +1017,13 @@ class Parameterset(object):
                 # parset.interp() and calculate results are supposed to be called from the outside
     
     def export(self, filename=None, ind=0):
-        ''' Little function to export code for the current parameter set '''
+        '''
+        Little function to export code for the current parameter set. To use, do something like:
+        
+        pars = P.parsets[0].pars[0]
+        
+        and then paste in the output of this function.
+        '''
         pars = self.pars[ind]
         
         def oneline(values): return str(values).replace('\n',' ') 
