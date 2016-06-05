@@ -506,17 +506,31 @@ def plotgeo():
         warning('Please load a portfolio first')
         return None
     gaoptim = guiportfolio.gaoptims[-1]
+
+    # Handles multithreading-based resorting. WARNING: Is based on simple sorting UIDs. Expect problems if there are mismatched UIDs...
+    projlist = [x.uid for x in guiportfolio.projects.values()]
+    pairlist = [x[0].project.uid for x in gaoptim.resultpairs.values()]
+    projids = [x[0] for x in sorted(enumerate(projlist), key=lambda pair: pair[1])]
+    pairids = [x[0] for x in sorted(enumerate(pairlist), key=lambda pair: pair[1])]
+    truecid = [x[1] for x in sorted(zip(pairids,projids))]      # Transforms from pair to project ordering.
     
-    extrax = []; extray = [];
+    
+    extrax = [None]*len(gaoptim.resultpairs); 
+    extray = [None]*len(gaoptim.resultpairs);
     for cid in xrange(len(gaoptim.resultpairs)):
-        extrax.append([]); extray.append([]);
+#        extrax.append([]); extray.append([]);
         rp = gaoptim.resultpairs[cid]
-        extrax[cid].append(rp['init'].budget['Current allocation'][:].sum())
-        extrax[cid].append(rp['opt'].budget['Optimal allocation'][:].sum())
-        extray[cid].append(rp['init'].improvement[-1][0])
-        extray[cid].append(rp['opt'].improvement[-1][-1])
+        extrax[truecid[cid]] = []
+        extray[truecid[cid]] = []
+        extrax[truecid[cid]].append(rp['init'].budget['Current allocation'][:].sum())
+        extrax[truecid[cid]].append(rp['opt'].budget['Optimal allocation'][:].sum())
+        extray[truecid[cid]].append(rp['init'].improvement[-1][0])
+        extray[truecid[cid]].append(rp['opt'].improvement[-1][-1])
     
-    guiportfolio.plotBOCs(objectives=gaoptim.objectives, initbudgets=gaoptim.getinitbudgets(), optbudgets=gaoptim.getoptbudgets(), deriv=False, extrax=extrax, extray=extray)
+    guiportfolio.plotBOCs(objectives=gaoptim.objectives, 
+                          initbudgets=[x[1] for x in sorted(zip(truecid,gaoptim.getinitbudgets()))], 
+                          optbudgets=[x[1] for x in sorted(zip(truecid,gaoptim.getoptbudgets()))], 
+                          deriv=False, extrax=extrax, extray=extray)
             
     return None
     
