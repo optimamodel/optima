@@ -4,7 +4,7 @@ from optima import __version__ # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
-from numpy import arange
+from numpy import arange, argsort
 
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
@@ -482,7 +482,6 @@ class GAOptim(object):
             overalloutcomesplit['num'+key]['init'] = 0
             overalloutcomesplit['num'+key]['opt'] = 0
         
-        nprojects = len(self.resultpairs.keys())
         projnames = []
         projbudgets = []
         projcov = []
@@ -550,7 +549,10 @@ class GAOptim(object):
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
         for key in self.objectives['keys']:
             output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
-        for prj in range(nprojects):
+        
+        ## Sort, then export
+        projindices = argsort(projnames)
+        for prj in projindices:
             output += '\n'
             output += '\n'
             output += '\n\t\tInitial\tOptimal'

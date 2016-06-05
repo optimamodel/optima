@@ -549,8 +549,8 @@ def export(portfolio=None, filepath=None):
     
     # 1. Extract data needed from portfolio
     try:
-        if usegui: outstr = guiportfolio.outputstring
-        else:      outstr = portfolio.outputstring
+        if usegui: outstr = guiportfolio.gaoptims[-1].printresults() # Stored, but regenerate
+        else:      outstr = portfolio.gaoptims[-1].printresults() # Stored, but regenerate
     except:
         errormsg = 'Warning, it does not seem that geospatial analysis has been run for this portfolio!'
         if usegui: warning(errormsg)
