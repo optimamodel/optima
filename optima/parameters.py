@@ -1014,4 +1014,38 @@ class Parameterset(object):
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
     
-                # parset.interp() and calculate results are supposed to be called from the outside   
+                # parset.interp() and calculate results are supposed to be called from the outside
+    
+    def export(self, filename=None, ind=0):
+        ''' Little function to export code for the current parameter set '''
+        pars = self.pars[ind]
+        
+        def oneline(values): return str(values).replace('\n',' ') 
+        
+        output = ''
+        for parname,par in pars.items():
+            if hasattr(par,'fittable'):
+                if par.fittable=='pop': 
+                    values = par.y[:]
+                    prefix = "pars['%s'].y[:] = " % parname
+                elif par.fittable=='const': 
+                    values = par.y
+                    prefix = "pars['%s'].y = " % parname
+                elif par.fittable=='meta':
+                    values = par.m
+                    prefix = "pars['%s'].m = " % parname
+                elif par.fittable=='no':
+                    values = None
+                else: 
+                    print('Parameter fittable type "%s" not implemented' % par.fittable)
+                    values = None
+                if values is not None:
+                    output += prefix+oneline(values)+'\n'
+        
+        if filename is not None:
+            with open(filename, 'w') as f:
+                f.write(output)
+        else:
+            return output
+            
+                
