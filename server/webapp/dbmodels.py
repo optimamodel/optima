@@ -278,20 +278,20 @@ class ProjectDb(db.Model):
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}
 
-        parset_records_by_name = {}
+        parset_id_by_name = {}
         if project.parsets:
             from server.webapp.dataio import update_or_create_parset_record
             for name, parset in project.parsets.iteritems():
                 if not is_same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
                 record = update_or_create_parset_record(self.id, name, parset)
-                parset_records_by_name[name] = record
+                parset_id_by_name[name] = str(record.id)
             db.session.flush()
             db.session.commit()
 
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
-        progset_records_by_name = {}
+        progset_id_by_name = {}
         if project.progsets:
             from server.webapp.dataio import update_or_create_progset_record
 
@@ -300,7 +300,7 @@ class ProjectDb(db.Model):
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset_record(self.id, name, progset)
                 progset_record.restore(progset, program_summaries)
-                progset_records_by_name[name] = progset_record
+                progset_id_by_name[name] = str(progset_record.id)
             db.session.flush()
             db.session.commit()
 
@@ -314,20 +314,20 @@ class ProjectDb(db.Model):
             from server.webapp.dataio import update_or_create_scenario_record
             for name in project.scens:
                 scen = project.scens[name]
-                parset_record = parset_records_by_name[scen.parsetname]
+                parset_id = parset_id_by_name[scen.parsetname]
                 scenario_summary = {
                     'id': None,
                     'scenario_type': '',
                     'active': True,
                     'name': scen.name,
-                    'parset_id': str(parset_record.id),
+                    'parset_id': parset_id,
                     'years': scen.t
                 }
                 if isinstance(scen, op.Parscen):
                     scenario_summary['scenario_type'] = 'parameter'
-                    scenario_summary['pars'] = scen.pars
+                    scenario_summary['pars'] = normalize_obj(scen.pars)
                 else:
-                    progset_id = progset_records_by_name[scen.progsetname].id
+                    progset_id = progset_id_by_name[scen.progsetname]
                     scenario_summary['progset_id'] = str(progset_id)
                     if isinstance(scen, op.Budgetscen):
                         scenario_summary['scenario_type'] = 'budget'
@@ -341,10 +341,23 @@ class ProjectDb(db.Model):
 
         if project.optims:
             print "Restoring optimizations"
-            from server.webapp.dataio import update_or_create_optimization_record
-            for name in project.optims:
-                update_or_create_optimization_record(self.id, project, name)
-            db.session.commit()
+            from server.webapp.dataio import update_or_create_optimization_record, save_optimization_summaries
+            optimization_summaries = []
+            for name, optim in project.optims.items():
+                optimization_summary = {
+                    'parset_id': parset_id_by_name[optim.parsetname],
+                    'progset_id': progset_id_by_name[optim.progsetname],
+                    'name': name,
+                    'which': optim.objectives["which"],
+                    'constraints': normalize_obj(optim.constraints),
+                    'objectives': normalize_obj(optim.objectives),
+                }
+                optimization_summaries.append(optimization_summary)
+                print "Restoring optimization", name
+                pprint(optimization_summary)
+                # update_or_create_optimization_record(self.id, project, name)
+            save_optimization_summaries(self.id, optimization_summaries)
+
 
         if project.results:
             # only save optimization ones for now...
