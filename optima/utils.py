@@ -315,13 +315,16 @@ def findinds(val1, val2=None, eps=1e-6):
         findinds(rand(10)<0.5) # e.g. array([2, 4, 5, 9])
         findinds([2,3,6,3], 6) # e.g. array([2])
     
-    Version: 2014nov27 by cliffk
+    Version: 2016jun06 by cliffk
     """
     from numpy import nonzero, array, ndim
     if val2==None: # Check for equality
         output = nonzero(val1) # If not, just check the truth condition
     else:
-        output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
+        if isinstance(val2, (str, unicode)):
+            output = nonzero(array(val1)==val2)
+        else:
+            output = nonzero(abs(array(val1)-val2)<eps) # If absolute difference between the two values is less than a certain amount
     if ndim(val1)==1: # Uni-dimensional
         output = output[0] # Return an array rather than a tuple of arrays if one-dimensional
     return output
