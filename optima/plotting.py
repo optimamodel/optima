@@ -33,11 +33,10 @@ globallegendsize = 8
 
 def SIticks(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
-    if x < 1e3:                output = str(x)
-    elif x >= 1e3 and x < 1e6: output = "%.1fK" % (x/1e3)
-    elif x >= 1e6 and x < 1e9: output = "%.1fM" % (x/1e6)
-    elif x >= 1e9:             output = "%.1fB" % (x/1e9)
-    if output[-3:-1] != ".0":  output = output[:-3] + output[-1]
+    if abs(x)>=1e9:     output = str(x/1e9)+'B'
+    elif abs(x)>=1e6:   output = str(x/1e6)+'M'
+    elif abs(x)>=1e3:   output = str(x/1e3)+'K'
+    else:               output = str(x)
     return output
 
 def SIyticks(figure):
@@ -398,9 +397,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
-                
-#                reformatfigure(epiplots[pk])
-
+                SIyticks(epiplots[pk])
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
@@ -549,8 +546,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
 
-#    reformatfigure(fig)
-
+    SIyticks(fig)
     close(fig)
     
     return fig
@@ -630,8 +626,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-#    reformatfigure(fig)
-
+    SIyticks(fig)
     close(fig)
     
     return fig
