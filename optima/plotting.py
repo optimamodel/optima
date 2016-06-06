@@ -8,12 +8,13 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2016jan24
+Version: 2016jun06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
 from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend
+from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -30,38 +31,19 @@ globalticksize = 8
 globallegendsize = 8
 
 
-# # CK: to be reinstated when they don't break things like zoom...
-# def humanizeyticks(ax):
-#     vals = list(ax.get_yticks())
-#     maxval = max([abs(v) for v in vals])
-#     if maxval < 1e3:
-#         return map(str, vals)
-#     if maxval >= 1e3 and maxval < 1e6:
-#         labels = ["%.1fK" % (v/1e3) for v in vals]
-#     elif maxval >= 1e6 and maxval < 1e9:
-#         labels = ["%.1fM" % (v/1e6) for v in vals]
-#     elif maxval >= 1e9:
-#         labels = ["%.1fB" % (v/1e9) for v in vals]
-#     isfraction = False
-#     for label in labels:
-#         if label[-3:-1] != ".0":
-#             isfraction = True
-#     if not isfraction:
-#         labels = [l[:-3] + l[-1] for l in labels]
-#     ax.set_yticklabels(labels)
+def SIticks(x, pos):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    if x < 1e3:                output = str(x)
+    elif x >= 1e3 and x < 1e6: output = "%.1fK" % (x/1e3)
+    elif x >= 1e6 and x < 1e9: output = "%.1fM" % (x/1e6)
+    elif x >= 1e9:             output = "%.1fB" % (x/1e9)
+    if output[-3:-1] != ".0":  output = output[:-3] + output[-1]
+    return output
 
-
-# def reformatfigure(figure):
-#     for axes in figure.axes:
-#         humanizeyticks(axes)
-#         box = axes.get_position()
-#         axes.set_position(
-#             [box.x0, box.y0, box.width * 0.6, box.height])
-#         # Put a legend to the right of the current axis
-#         legend = axes.get_legend()
-#         if legend is not None:
-#             legend._loc = 2
-#             legend.set_bbox_to_anchor((1, 1.02))
+def SIyticks(figure):
+    ''' Apply SI tick formatting to the y axis of a figure '''
+    for ax in figure.axes:
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(SIticks))
 
 
 def getplotselections(results):
