@@ -23,39 +23,45 @@ defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numde
 #defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
 defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
 
+# Define global font sizes
+globaltitlesize = 10
+globallabelsize = 10
+globalticksize = 8
+globallegendsize = 8
 
 
-def humanizeyticks(ax):
-    vals = list(ax.get_yticks())
-    maxval = max([abs(v) for v in vals])
-    if maxval < 1e3:
-        return map(str, vals)
-    if maxval >= 1e3 and maxval < 1e6:
-        labels = ["%.1fK" % (v/1e3) for v in vals]
-    elif maxval >= 1e6 and maxval < 1e9:
-        labels = ["%.1fM" % (v/1e6) for v in vals]
-    elif maxval >= 1e9:
-        labels = ["%.1fB" % (v/1e9) for v in vals]
-    isfraction = False
-    for label in labels:
-        if label[-3:-1] != ".0":
-            isfraction = True
-    if not isfraction:
-        labels = [l[:-3] + l[-1] for l in labels]
-    ax.set_yticklabels(labels)
+# # CK: to be reinstated when they don't break things like zoom...
+# def humanizeyticks(ax):
+#     vals = list(ax.get_yticks())
+#     maxval = max([abs(v) for v in vals])
+#     if maxval < 1e3:
+#         return map(str, vals)
+#     if maxval >= 1e3 and maxval < 1e6:
+#         labels = ["%.1fK" % (v/1e3) for v in vals]
+#     elif maxval >= 1e6 and maxval < 1e9:
+#         labels = ["%.1fM" % (v/1e6) for v in vals]
+#     elif maxval >= 1e9:
+#         labels = ["%.1fB" % (v/1e9) for v in vals]
+#     isfraction = False
+#     for label in labels:
+#         if label[-3:-1] != ".0":
+#             isfraction = True
+#     if not isfraction:
+#         labels = [l[:-3] + l[-1] for l in labels]
+#     ax.set_yticklabels(labels)
 
 
-def reformatfigure(figure):
-    for axes in figure.axes:
-        humanizeyticks(axes)
-        box = axes.get_position()
-        axes.set_position(
-            [box.x0, box.y0, box.width * 0.6, box.height])
-        # Put a legend to the right of the current axis
-        legend = axes.get_legend()
-        if legend is not None:
-            legend._loc = 2
-            legend.set_bbox_to_anchor((1, 1.02))
+# def reformatfigure(figure):
+#     for axes in figure.axes:
+#         humanizeyticks(axes)
+#         box = axes.get_position()
+#         axes.set_position(
+#             [box.x0, box.y0, box.width * 0.6, box.height])
+#         # Put a legend to the right of the current axis
+#         legend = axes.get_legend()
+#         if legend is not None:
+#             legend._loc = 2
+#             legend.set_bbox_to_anchor((1, 1.02))
 
 
 def getplotselections(results):
@@ -196,7 +202,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=11, labelsize=10, ticksize=8, legendsize=8, **kwargs):
+            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-per']
@@ -394,7 +400,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
     
                 # Configure plot specifics
                 currentylims = ylim()
-                legendsettings = {'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
+                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1,1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
                 ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
                 if isperpop:  
@@ -411,7 +417,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
                 
-                reformatfigure(epiplots[pk])
+#                reformatfigure(epiplots[pk])
 
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
@@ -424,7 +430,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
+def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -561,7 +567,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
 
-    reformatfigure(fig)
+#    reformatfigure(fig)
 
     close(fig)
     
@@ -574,7 +580,8 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
+def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+                ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -641,7 +648,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-    reformatfigure(fig)
+#    reformatfigure(fig)
 
     close(fig)
     
