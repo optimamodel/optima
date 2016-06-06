@@ -13,7 +13,7 @@ Version: 2016jan24
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -196,7 +196,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
+            titlesize=11, labelsize=10, ticksize=8, legendsize=8, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-per']
@@ -228,7 +228,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
         for pk,plotkey in enumerate(toplot):
             datatype, plotformat = None, None
             if type(plotkey) not in [str, list, tuple]: 
-                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numplhiv","tot"]' % str(plotkey)
                 raise OptimaException(errormsg)
             else:
                 try:
@@ -371,10 +371,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if not ismultisim and databest is not None:
-                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
 
 
 
@@ -395,20 +394,22 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
     
                 # Configure plot specifics
                 currentylims = ylim()
-                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
-                                  'frameon':False}
+                legendsettings = {'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
                 ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
-                if isperpop:  plottitle += ' -- ' + results.popkeys[i] # Add extra information to plot if by population
+                if isperpop:  
+                    plotylabel = plottitle
+                    plottitle  = results.popkeys[i] # Add extra information to plot if by population
+                    ax.set_ylabel(plotylabel)
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
                 if not ismultisim:
-                    if istotal:  ax.legend(['Total'], **legendsettings) # Single entry, "Total"
-                    if isperpop: ax.legend([results.popkeys[i]], **legendsettings) # Single entry, this population
-                    if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
+                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
+                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
+                    if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
-                    ax.legend(labels, **legendsettings) # Multiple simulations
+                    legend(labels, **legendsettings) # Multiple simulations
                 
                 reformatfigure(epiplots[pk])
 
