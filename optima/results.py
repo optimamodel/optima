@@ -4,10 +4,9 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016feb04 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
 from numpy import array, nan, zeros, arange, shape
-import matplotlib.pyplot as plt
-from optima import pchip, plotpchip
+from pylab import xlabel, ylabel, show
 from numbers import Number
 
 
@@ -417,12 +416,12 @@ class BOC(object):
     def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
         ''' Plot the budget-outcome curve '''
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
-        plt.xlabel('Budget')
-        if not deriv: plt.ylabel('Outcome')
-        else: plt.ylabel('Marginal outcome')
+        xlabel('Budget')
+        if not deriv: ylabel('Outcome')
+        else: ylabel('Marginal outcome')
         
         if returnplot: return ax
-        else: plt.show()
+        else: show()
         return None
 
 
