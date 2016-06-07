@@ -25,6 +25,8 @@ copy_parser.add_arguments({
     'parset_id': {'type': uuid.UUID}
 })
 
+
+
 class Parsets(Resource):
     """
     GET /api/project/<project_id>/parsets
@@ -45,14 +47,7 @@ class Parsets(Resource):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
         return load_parset_list(project_id)
 
-    @swagger.operation(
-        description='Create new parset with default settings or copy existing parset',
-        notes="""
-            If parset_id argument is given, copy from the existing parset.
-            Otherwise, create a parset with default settings
-            """
-    )
-    @report_exception
+    @swagger.operation(description='Create new parset with default settings or copy existing parset')
     def post(self, project_id):
         current_app.logger.debug("POST /api/project/{}/parsets".format(project_id))
         args = copy_parser.parse_args()
@@ -253,18 +248,25 @@ class ParsetsCalibration(Resource):
         which = args.get('which')
         autofit = args.get('autofit', False)
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        print "is autofit", autofit
+        print ">>>> Calculation type:", calculation_type
 
-        project = load_project(project_id, autofit)
-        parset = get_parset_from_project(project, parset_id)
+        parset_record = load_parset_record(project_id, parset_id)
+        parset = parset_record.hydrate()
         result = load_result(project_id, parset_id, calculation_type)
+        print ">>>> Result(%s) found: %s" % (calculation_type, result is not None)
         if result is None:
+            print ">>>> Runsim for new calibration results..."
+            project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
             save_result_record(project_id, result, parset.name, calculation_type)
+            # print "Checking calibration result save %s" % result
+        else:
+            print ">>>> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
 
         # generate graphs
         selectors = self._selectors_from_result(result, which)
+        print ">>>>> Generating calibration graphs with selectors", which
         which = which or self._which_from_selectors(selectors)
         graphs = self._result_to_jsons(result, which)
 

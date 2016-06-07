@@ -44,11 +44,11 @@ def load_project_record(project_id, all_data=False, raise_exception=False, db_se
     if not db_session:
         db_session = db.session
     cu = current_user
-    current_app.logger.debug("getting project {} for user {} (admin:{})".format(
-        project_id,
-        cu.id if not cu.is_anonymous() else None,
-        cu.is_admin if not cu.is_anonymous else False
-    ))
+    # current_app.logger.debug("getting project {} for user {} (admin:{})".format(
+    #     project_id,
+    #     cu.id if not cu.is_anonymous() else None,
+    #     cu.is_admin if not cu.is_anonymous else False
+    # ))
     if cu.is_anonymous():
         if raise_exception:
             abort(401)
@@ -81,7 +81,6 @@ def _load_project_child(
         project_id, record_id, record_class, exception_class, raise_exception=True):
     cu = current_user
 
-    print ">>> Fetching record", record_id, "of", repr(record_class)
     record = db.session.query(record_class).get(record_id)
     if record is None:
         if raise_exception:
@@ -97,6 +96,8 @@ def _load_project_child(
         if raise_exception:
             raise exception_class(id=record_id)
         return None
+
+    print ">>> Fetching record '%s' of '%s'" % (record.name, repr(record_class))
 
     return record
 
@@ -311,7 +312,7 @@ def save_result_record(
         db_session=db.session
 
     # find relevant parset for the result
-    print("save_result(%s, %s, %s" % (project_id, parset_name, calculation_type))
+    print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
     parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
     parset = [item for item in parsets if item.name == parset_name]
     if parset:
@@ -321,22 +322,23 @@ def save_result_record(
 
     # update results (after runsim is invoked)
     result_records = db_session.query(ResultsDb).filter_by(project_id=project_id)
-    result_record = [item for item in result_records
+    result_records = [item for item in result_records
                      if item.parset_id == parset.id
                         and item.calculation_type == calculation_type]
-    if result_record:
-        if len(result_record) > 1:
-            abort(500, "Found multiple records for result")
-        result_record = result_record[0]
-        result_record.blob = op.saves(result)
 
-    if not result_record:
+    blob = op.saves(result)
+    if result_records:
+        if len(result_records) > 1:
+            abort(500, "Found multiple records for result (%s) of parset '%s'" % calculation_type, parset.name)
+        result_record = result_records[0]
+        result_record.blob = blob
+
+    if not result_records:
         result_record = ResultsDb(
-            parset_id=parset.id,
+            parset_id=str(parset.id),
             project_id=project_id,
             calculation_type=calculation_type,
-            blob=op.saves(result)
-        )
+            blob=blob)
 
     return result_record
 
@@ -361,7 +363,7 @@ def get_target_popsizes(project_id, parset_id, progset_id, program_id):
 def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     progset_record = load_progset_record(project_id, progset_id)
     progset = progset_record.hydrate()
-    print ">>> Fetching target parameters from progset", progset_id
+    print ">>> Fetching target parameters from progset '%s'", progset.name
     progset.gettargetpops()
     progset.gettargetpars()
     progset.gettargetpartypes()
@@ -456,9 +458,9 @@ def update_or_create_scenario_record(project_id, scenario_summary):
 
     db.session.add(record)
     db.session.flush()
-    print("Saving scenario to database")
-    pprint(scenario_summary)
-    pprint(get_scenario_summary_from_record(record))
+    # print("Saving scenario to database")
+    # pprint(scenario_summary)
+    # pprint(get_scenario_summary_from_record(record))
     return record
 
 
@@ -564,59 +566,6 @@ def save_progset_summaries(project_id, progset_summaries):
        
 
 
-
-
-def update_or_create_optimization_record(project_id, project, name):
-
-    from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb, ParsetsDb
-
-    parset_id = None
-    progset_id = None
-
-    optim = project.optims[name]
-    if not optim:
-        raise Exception("optimization {} not present in project {}!".format(name, project_id))
-
-    parset_name = optim.parsetname
-    if parset_name:
-        parset_record = ParsetsDb.query \
-        .filter_by(project_id=project_id, name=parset_name) \
-        .first()
-        if parset_record:
-            parset_id = parset_record.id
-
-    progset_name = optim.progsetname
-    if progset_name:
-        progset_record = ProgsetsDb.query \
-        .filter_by(project_id=project_id, name=progset_name) \
-        .first()
-        if progset_record:
-            progset_id = progset_record.id
-
-    optimization_record = OptimizationsDb.query.filter_by(name=name, project_id=project_id).first()
-    if optimization_record is None:
-        optimization_record = OptimizationsDb(
-            project_id=project_id,
-            name=name,
-            which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome',
-            parset_id=parset_id,
-            progset_id=progset_id,
-            objectives=(optim.objectives or {}),
-            constraints=(optim.constraints or {})
-        )
-        db.session.add(optimization_record)
-        db.session.flush()
-    else:
-        optimization_record.which = optim.objectives.get('which', 'outcome') if optim.objectives else 'outcome'
-        optimization_record.parset_id = parset_id
-        optimization_record.progset_id = progset_id
-        optimization_record.objectives = (optim.objectives or {})
-        optimization_record.constraints = (optim.constraints or {})
-        db.session.add(optimization_record)
-
-    return optimization_record
-
-
 def get_optimization_summaries(project_id):
     optimization_records = db.session.query(OptimizationsDb) \
         .filter_by(project_id=project_id).all()
@@ -630,7 +579,7 @@ def save_optimization_summaries(project_id, optimization_summaries):
     algorithm for project.optims objects.
 
     Args:
-        project_id:
+        project_id: uuid_string
         optimization_summaries: a list of optimizations where each optimization is:
 
             {'constraints': {'max': {'ART': None,
@@ -694,9 +643,9 @@ def save_optimization_summaries(project_id, optimization_summaries):
             constraints=summary['constraints'],
             objectives=summary['objectives'])
 
-        verb = "Creating" if id is None else "Updating"
-        print ">>>", verb, " optimizaton", summary['name']
-        pprint(summary)
+        # verb = "Creating" if id is None else "Updating"
+        # print ">>>", verb, " optimizaton", summary['name']
+        # pprint(summary)
 
         db.session.add(record)
         db.session.flush()
