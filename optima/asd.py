@@ -54,7 +54,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     
     Example:
         from asd import asd
-        from pylab import norm
+        from numpy import norm
         x, fval, exitflag, output = asd(norm, [1, 2, 3])
     
     

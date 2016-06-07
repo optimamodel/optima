@@ -6,7 +6,6 @@ Version: 2016feb04 by cliffk
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
 from numpy import array, nan, zeros, arange, shape
-from pylab import xlabel, ylabel, show
 from numbers import Number
 
 
@@ -387,6 +386,7 @@ class Multiresultset(Resultset):
 
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
+    from matplotlib.pylab import xlabel, ylabel, show
     def __init__(self, name='unspecified', x=None, y=None, objectives=None):
         self.uid = uuid()
         self.created = today()
