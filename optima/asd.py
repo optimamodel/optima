@@ -62,7 +62,7 @@ def asd(function, x, args=None, stepsize=0.1, sinc=2, sdec=2, pinc=2, pdec=2,
     """
     
     from numpy import array, shape, reshape, ones, zeros, size, mean, cumsum, mod, hstack, floor, flatnonzero, isnan
-    from numpy.random import random, seed # Was pylab.rand
+    from numpy.random import random, seed
     from copy import deepcopy # For arrays, even y = x[:] doesn't copy properly
     from time import time
     seed(randseed)

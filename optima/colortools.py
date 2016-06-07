@@ -123,7 +123,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    Version: 2014aug06 by Cliff Kerr (cliff@thekerrlab.com)
    """
    from matplotlib.colors import LinearSegmentedColormap as makecolormap
-   from pylab import array
+   from numpy import array
    
    water = array([3,18,59])/256.
    desert = array([194,175,160*0.6])/256.
@@ -226,11 +226,11 @@ def vectocolor(vector,cmap=None):
 
    Version: 1.0 (2012sep13 by cliffk)
    """
-   from pylab import array, zeros
+   from numpy import array, zeros
+   from pylab import cm
 
    if cmap==None:
-      from pylab import cm
-      cmap=cm.jet;
+      cmap=cm.jet
 
    # The vector has elements
    if len(vector):
