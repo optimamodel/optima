@@ -202,7 +202,7 @@ def autofit(project=None, name=None, fitwhat=None, fitto=None, method='wape', ma
         
         if doplot: # Store global information for debugging -- WARNING, is this the best way of doing this?
             global autofitfig, autofitresults
-            from matplotlib.pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show, pause, ylim, bar, arange
+            from pylab import figure, ceil, sqrt, subplot, scatter, xlabel, ylabel, plot, show, pause, ylim, bar, arange
             if autofitfig is None: 
                 autofitfig = figure(figsize=(16,12), facecolor=(1,1,1))
                 autofitfig.subplots_adjust(left=0.05, right=0.95, bottom=0.1, top=0.95, wspace=0.3, hspace=0.4)

@@ -386,7 +386,7 @@ class Multiresultset(Resultset):
 
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
-    from matplotlib.pylab import xlabel, ylabel, show
+    from pylab import xlabel, ylabel, show
     def __init__(self, name='unspecified', x=None, y=None, objectives=None):
         self.uid = uuid()
         self.created = today()

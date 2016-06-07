@@ -13,7 +13,7 @@ Version: 2016jan24
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from matplotlib.pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])

@@ -547,7 +547,7 @@ class Project(object):
     
     def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
-        from matplotlib.pylab import title, show
+        from pylab import title, show
         if boc is None:
             try: boc = self.getBOC(objectives=objectives)
             except: raise OptimaException('Cannot plot a nonexistent BOC!')
