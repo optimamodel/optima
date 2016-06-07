@@ -259,7 +259,10 @@ class ParsetsCalibration(Resource):
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            save_result_record(project_id, result, parset.name, calculation_type)
+            record = save_result_record(project_id, result, parset.name, calculation_type)
+            db.session.add(record)
+            db.session.flush()
+            db.session.commit()
             # print "Checking calibration result save %s" % result
         else:
             print ">>>> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)

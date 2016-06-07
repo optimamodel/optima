@@ -464,11 +464,6 @@ class ProjectSpreadsheet(Resource):
         db.session.add(parset_record)
         db.session.flush()
 
-        result = project.results[-1]
-        result_record = save_result_record(project_id, result, parset_name, "calibration")
-        print ">>>> Store result(calibration) '%s'" % (result.name)
-        db.session.add(result_record)
-
         # save data upload timestamp
         data_upload_time = datetime.now(dateutil.tz.tzutc())
         file_data = open(server_filename, 'rb').read()
