@@ -8,7 +8,6 @@ Version: 2016feb04
 """
 
 from utils import isnumber
-import matplotlib.pyplot as plt
 from numpy import linspace, array, diff
 from copy import deepcopy as dcp
 import collections
@@ -19,8 +18,9 @@ pchipeps = 1e-8
 #=========================================================
 def pchip(x, y, xnew, deriv = False, method='pchip'):
     
-    xs = [a for a,b in sorted(zip(x,y))]
-    ys = [b for a,b in sorted(zip(x,y))]
+    sortzip = dcp(sorted(zip(x,y)))
+    xs = [a for a,b in sortzip]
+    ys = [b for a,b in sortzip]
     x = dcp(xs)
     y = dcp(ys)
     
@@ -134,7 +134,13 @@ def pchip_eval(x, y, m, xvec, deriv = False):
 
 def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbudget = None):
 
-    xnew = linspace(x[0],x[-1],200)
+    from pylab import figure, plot, show
+
+    sortzip = dcp(sorted(zip(x,y)))
+    xs = [a for a,b in sortzip]
+    ys = [b for a,b in sortzip]
+    x = dcp(xs)
+    y = dcp(ys)
 
     # Process inputs
     if isnumber(initbudget): initbudget = [initbudget] # Plotting expects this to be a list
@@ -151,26 +157,26 @@ def plotpchip(x, y, deriv = False, returnplot = False, initbudget = None, optbud
         xend = max(xend,optbudget[-1])
     xnew = linspace(xstart,xend,200)
     
-    fig = plt.figure(facecolor=(1,1,1))
+    fig = figure(facecolor=(1,1,1))
     ax = fig.add_subplot(111)
 #    print(xnew)
 #    print(pchip(x,y,xnew,deriv))
 #    print(optbudget)
 #    print(pchip(x,y,optbudget,deriv))
-    plt.plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
+    plot(xnew, pchip(x,y,xnew,deriv), linewidth=2)
     xs = [a+pchipeps for a in x]    # Shift the original points slightly when plotting them, otherwise derivatives become zero-like.
-    plt.plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=20, label='Budget-objective curve')
+    plot(xs, pchip(x,y,xs,deriv), 'k+', markeredgewidth=2, markersize=20, label='Budget-objective curve')
 #        print(x)
 #        print(pchip(x,y,x,deriv))
     if not initbudget == None:
-        plt.plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Initial')
+        plot(initbudget, pchip(x,y,initbudget,deriv), 'gs', label='Initial')
     if not optbudget == None:
-        plt.plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Optimized')
+        plot(optbudget, pchip(x,y,optbudget,deriv), 'ro', label='Optimized')
     ax.legend(loc='best')
     if returnplot:
         return ax
     else:
-        plt.show()
+        show()
 #    except:
 #        print('Plotting of PCHIP-interpolated data failed!')
     
