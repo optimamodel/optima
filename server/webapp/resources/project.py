@@ -411,11 +411,7 @@ class ProjectSpreadsheet(Resource):
             # deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
-    @swagger.operation(
-        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        summary='Upload the project workbook',
-        parameters=file_upload_form_parser.swagger_parameters()
-    )
+    @swagger.operation(summary='Upload the project workbook')
     @marshal_with(file_resource)
     def post(self, project_id):
 
@@ -449,8 +445,8 @@ class ProjectSpreadsheet(Resource):
                 i += 1
                 parset_name = "uploaded_from_%s (%d)" % (uploaded_file.source_filename, i)
 
-        # Hydrate project then load parset from spreadsheet and runsim
         project = project_record.hydrate()
+        # Load parset from spreadsheet, will also runsim and store result
         project.loadspreadsheet(server_filename, parset_name)
 
         project.modified = datetime.now(dateutil.tz.tzutc())

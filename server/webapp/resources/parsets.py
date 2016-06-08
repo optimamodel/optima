@@ -41,13 +41,13 @@ class Parsets(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(description='Download parsets for the project with the given id.')
+    @swagger.operation(description='Download all parsets for project')
     @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
         return load_parset_list(project_id)
 
-    @swagger.operation(description='Create new parset with default settings or copy existing parset')
+    @swagger.operation(description='Create new parset or copy existing parset')
     def post(self, project_id):
         current_app.logger.debug("POST /api/project/{}/parsets".format(project_id))
         args = copy_parser.parse_args()
@@ -79,14 +79,6 @@ class Parsets(Resource):
             project.copyparset(orig=parset_name, new=name)
             project_entry.restore(project)
             db.session.add(project_entry)
-
-            old_result_record = db.session.query(ResultsDb).filter_by(
-                parset_id=str(parset_id), project_id=str(project_id),
-                calculation_type=ResultsDb.CALIBRATION_TYPE).first()
-            old_result = old_result_record.hydrate()
-            new_result = op.dcp(old_result)
-            new_result_record = save_result_record(project_entry.id, new_result, name)
-            db.session.add(new_result_record)
 
         db.session.commit()
 
