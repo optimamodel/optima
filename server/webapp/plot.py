@@ -55,7 +55,7 @@ def make_mpld3_graph_dict(result, which=None):
 
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
-    which = keys
+    # which = keys
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []

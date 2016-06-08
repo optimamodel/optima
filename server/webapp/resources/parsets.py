@@ -18,6 +18,7 @@ from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, normalize_obj
+from server.webapp.plot import make_mpld3_graph_dict
 
 
 
@@ -28,7 +29,6 @@ copy_parser.add_arguments({
 })
 
 
-
 class Parsets(Resource):
     """
     GET /api/project/<project_id>/parsets
@@ -37,8 +37,7 @@ class Parsets(Resource):
 
     POST /api/project/<project_id>/parsets
 
-    Makes a copy of the parset that is passed in as an argument in the body as parset_id,
-    and or makes a new parset
+    Copy or make new parset that is passed in  body as parset_id
     """
 
     method_decorators = [report_exception, login_required]
@@ -62,6 +61,7 @@ class Parsets(Resource):
 
         if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
+
         if not parset_id:
             # create new parset with default settings
             project.makeparset(name, overwrite=False)
@@ -156,14 +156,6 @@ class ParsetsDetail(Resource):
 
 
 
-calibration_fields = {
-    "parset_id": fields.String,
-    "parameters": fields.Raw,
-    "graphs": fields.Raw,
-    "selectors": fields.Raw,
-    "result_id": fields.String,
-}
-
 calibration_parser = RequestParser()
 calibration_parser.add_argument('which', location='args', default=None, action='append')
 calibration_parser.add_argument('autofit', location='args', default=False, type=bool)
@@ -199,56 +191,20 @@ class ParsetsCalibration(Resource):
 
     method_decorators = [report_exception, login_required]
 
-    def _result_to_jsons(self, result, which):
-        import mpld3
-        import json
-        graphs = op.plotting.makeplots(result, figsize=(4, 3), toplot=[str(w) for w in which])  # TODO: store if that becomes an efficiency issue
-        jsons = []
-        for graph in graphs:
-            # Add necessary plugins here
-            mpld3.plugins.connect(graphs[graph], mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-            # a hack to get rid of NaNs, javascript JSON parser doesn't like them
-            json_string = json.dumps(mpld3.fig_to_dict(graphs[graph])).replace('NaN', 'null')
-            jsons.append(json.loads(json_string))
-        return jsons
-
-    def _selectors_from_result(self, result, which):
-        graph_selectors = op.getplotselections(result)
-        keys = graph_selectors['keys']
-        names = graph_selectors['names']
-        if which is None:
-            checks = graph_selectors['defaults']
-        else:
-            checks = [key in which for key in keys]
-        selectors = [{'key': key, 'name': name, 'checked': checked}
-                     for (key, name, checked) in zip(keys, names, checks)]
-        return selectors
-
-    def _which_from_selectors(self, graph_selectors):
-        return [item['key'] for item in graph_selectors if item['checked']]
-
-    @swagger.operation(
-        description='Provides calibration information for the given parset',
-        notes="""
-        Returns data suitable for manual calibration and the set of corresponding graphs.
-        """,
-        parameters=calibration_parser.swagger_parameters()
-    )
-    @report_exception
-    @marshal_with(calibration_fields, envelope="calibration")
+    @swagger.operation(description='Returns parameter summaries and graphs for a project/parset')
     def get(self, project_id, parset_id):
         current_app.logger.debug("/api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
         args = calibration_parser.parse_args()
         which = args.get('which')
         autofit = args.get('autofit', False)
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        print ">>>> Calculation type:", calculation_type
+        print "> Calculation type:", calculation_type
 
         parset_record = load_parset_record(project_id, parset_id)
         parset = parset_record.hydrate()
         result = load_result(project_id, parset_id, calculation_type)
         if result is None:
-            print ">>>> Runsim for new calibration results and store"
+            print "> Runsim for new calibration results and store"
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
@@ -257,24 +213,20 @@ class ParsetsCalibration(Resource):
             db.session.flush()
             db.session.commit()
         else:
-            print ">>>> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
+            print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
 
-        # generate graphs
-        selectors = self._selectors_from_result(result, which)
-        print ">>>>> Generating calibration graphs with selectors", which
-        which = which or self._which_from_selectors(selectors)
-        graphs = self._result_to_jsons(result, which)
+        print "> Generating graphs"
+        graphs = make_mpld3_graph_dict(result)['graphs']
 
         return {
-            "parset_id": parset_id,
-            "parameters": get_parset_parameters(parset),
-            "graphs": graphs,
-            "selectors": selectors,
-            "result_id": result.uid if result else None
+            "calibration": {
+                "parset_id": parset_id,
+                "parameters": get_parset_parameters(parset),
+                "graphs": graphs,
+            }
         }
 
     @report_exception
-    @marshal_with(calibration_fields, envelope="calibration")
     def put(self, project_id, parset_id):
         current_app.logger.debug("PUT /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
         args = calibration_update_parser.parse_args()
@@ -287,25 +239,25 @@ class ParsetsCalibration(Resource):
         if parset_record is None or parset_record.project_id!=project_id:
             raise ParsetDoesNotExist(id=parset_id)
 
-        # save parameters
+        # update parset with uploaded parameters
         parset = parset_record.hydrate()
         put_parameters_in_parset(parameters, parset)
 
-        # recalculate
+        # recalculate result for parset
         project_record = load_project_record(parset_record.project_id, raise_exception=True)
         project = project_record.hydrate()
         simparslist = parset.interp()
         result = project.runsim(simpars=simparslist)
-        result_record = None
 
         if doSave:  # save the updated results
             parset_record.pars = op.saves(parset.pars)
             parset_record.updated = datetime.now(dateutil.tz.tzutc())
             db.session.add(parset_record)
-            result_record = [item for item in project_record.results if
-                            item.parset_id == parset_id and item.calculation_type == ResultsDb.CALIBRATION_TYPE]
-            if result_record:
-                result_record = result_record[-1]
+            result_records = [
+                item for item in project_record.results
+                if item.parset_id == parset_id and item.calculation_type == "calibration"]
+            if result_records:
+                result_record = result_records[-1]
                 result_record.blob = op.saves(result)
             else:
                 result_record = ResultsDb(
@@ -317,17 +269,15 @@ class ParsetsCalibration(Resource):
             db.session.add(result_record)
             db.session.commit()
 
-        # generate graphs
-        selectors = self._selectors_from_result(result, which)
-        which = which or self._which_from_selectors(selectors)
-        graphs = self._result_to_jsons(result, which)
+        print "> Generating graphs"
+        graphs = make_mpld3_graph_dict(result)['graphs']
 
         return {
-            "parset_id": parset_id,
-            "parameters": get_parset_parameters(parset),
-            "graphs": graphs,
-            "selectors": selectors,
-            "result_id": result_record.id if result_record is not None else None
+            'calibration': {
+                "parset_id": parset_id,
+                "parameters": get_parset_parameters(parset),
+                "graphs": graphs
+            }
         }
 
     @report_exception
@@ -335,20 +285,19 @@ class ParsetsCalibration(Resource):
         current_app.logger.debug("POST /api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
         data = normalize_obj(request.get_json(force=True))
 
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_entry is None or parset_entry.project_id != project_id:
+        parset_record = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
+        if parset_record is None or parset_record.project_id != project_id:
             raise ParsetDoesNotExist(id=parset_id)
-        parset_instance = parset_entry.hydrate()
-        put_parameters_in_parset(data['parameters'], parset_instance)
+        parset = parset_record.hydrate()
+        put_parameters_in_parset(data['parameters'], parset)
 
-        parset_entry.pars = op.saves(parset_instance.pars)
-        parset_entry.updated = datetime.now(dateutil.tz.tzutc())
-        db.session.add(parset_entry)
+        parset_record.pars = op.saves(parset.pars)
+        parset_record.updated = datetime.now(dateutil.tz.tzutc())
+        db.session.add(parset_record)
 
         ResultsDb.query \
             .filter_by(
-                parset_id=parset_id, project_id=project_id,
-                calculation_type=ResultsDb.CALIBRATION_TYPE) \
+                parset_id=parset_id, project_id=project_id, calculation_type="calibration") \
             .delete()
 
         db.session.commit()

@@ -47,7 +47,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
         .success(function (response) {
           setCalibrationData(response.calibration);
-          console.log(JSON.stringify(response.calibration.parameters, null, 2))
+          // console.log(JSON.stringify(response.calibration.parameters, null, 2))
         });
     };
 
@@ -79,8 +79,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Set calibration data in scope
     var setCalibrationData = function(calibration) {
-      $scope.calibrationChart = calibration.graphs;
-      $scope.selectors = calibration.selectors;
+      console.log(calibration);
+      $scope.graphs = calibration.graphs;
+      // $scope.calibrationChart = calibration.graphs;
+      // $scope.selectors = calibration.selectors;
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
     };
@@ -93,9 +95,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // Add parameter set
     $scope.addParameterSet = function() {
       var add = function (name) {
-        $http.post('/api/project/' + activeProjectInfo.id + '/parsets', {
-          name: name
-        }).success(function(response) {
+        $http.post(
+            '/api/project/' + activeProjectInfo.id + '/parsets',
+            { name: name})
+        .success(function(response) {
           $scope.parsets = response;
           $scope.activeParset = response[response.length - 1];
         });
