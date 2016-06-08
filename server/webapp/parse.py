@@ -430,6 +430,9 @@ def force_tuple_list(item):
     if isinstance(item, str) or isinstance(item, unicode):
         return [str(item)]
     if isinstance(item, list):
+        if len(item) == 1:
+            # this is for the weird case of ['tot']
+            return str(item[0])
         return [tuple(map(str, tokens)) for tokens in item]
     else:
         return item

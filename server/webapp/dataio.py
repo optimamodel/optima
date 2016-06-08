@@ -424,8 +424,8 @@ def get_scenario_summary_from_record(scenario_record):
     }
     """
     result = {
-        'id': str(scenario_record.id),
-        'progset_id': str(scenario_record.progset_id),
+        'id': scenario_record.id,
+        'progset_id': scenario_record.progset_id, # could be None if parameter scenario
         'scenario_type': scenario_record.scenario_type,
         'active': scenario_record.active,
         'name': scenario_record.name,
@@ -484,6 +484,11 @@ def save_scenario_summaries(project_id, scenario_summaries):
     db.session.flush()
 
     for scenario_summary in scenario_summaries:
+        # this hack is needed for parameter scenarios that don't have progsets
+        if scenario_summary['progset_id'] == 'None':
+            scenario_summary['progset_id'] = None
+        print(">>> Saving scenario")
+        pprint(scenario_summary, indent=2)
         update_or_create_scenario_record(project_id, scenario_summary)
     db.session.commit()
 

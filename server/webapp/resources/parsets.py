@@ -19,6 +19,8 @@ from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import AllowedSafeFilenameStorage, RequestParser, normalize_obj
 
+
+
 copy_parser = RequestParser()
 copy_parser.add_arguments({
     'name': {'required': True},
@@ -47,7 +49,7 @@ class Parsets(Resource):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
         return load_parset_list(project_id)
 
-    @swagger.operation(description='Create new parset or copy existing parset')
+    @swagger.operation(description='Create parset or copy existing parset')
     def post(self, project_id):
         current_app.logger.debug("POST /api/project/{}/parsets".format(project_id))
         args = copy_parser.parse_args()
