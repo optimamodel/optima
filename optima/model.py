@@ -868,13 +868,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
                             errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
-                            if die: raise OptimaException(errormsg)
-                            else:
+                            if die:
+                                raise OptimaException(errormsg)
+                            else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset
                 
-    # Append final people array to sim output
-    if not (people>=0).all(): raise OptimaException('Non-positive people found!')
     
     raw               = odict()    # Sim output structure
     raw['tvec']       = tvec
@@ -908,6 +907,10 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
+        # Append final people array to sim output
+        if not (raw['people']>=0).all(): 
+            settings.dt /= 4
+            raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests

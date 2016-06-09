@@ -360,7 +360,11 @@ class Project(object):
         for ind in range(len(simparslist)):
             try:
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                if not (raw['people']>=0).all(): # Checkk for negative people
+                    self.settings.dt /= 4
+                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             except:
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 printv('Running model failed; running again with debugging...', 1, verbose)
                 raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
