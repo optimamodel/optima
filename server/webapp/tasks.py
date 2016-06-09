@@ -10,7 +10,7 @@ import optima as op
 from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result_record, load_project_record
+from server.webapp.dataio import save_result_record, load_project_record, update_or_create_parset_record
 
 from celery import Celery
 
@@ -172,24 +172,34 @@ def check_calculation_status(project_id):
     return result
 
 
+def get_parset_from_project(project, parset_name):
+    parsets = project.parsets;
+    if parset_name in parsets:
+        return parsets[parset_name]
+    else:
+        return None
+
+
 @celery_instance.task()
 def run_autofit(project_id, parset_name, maxtime=60):
     import traceback
     app.logger.debug("started autofit: {} {}".format(project_id, parset_name))
     error_text = ""
     status = 'completed'
+
     db_session = init_db_session()
-    wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    project_instance = op.loads(wp.project)
+    working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+    project = op.loads(working_project_record.project)
     close_db_session(db_session)
+
     result = None
     try:
-        project_instance.autofit(
+        project.autofit(
             name=str(parset_name),
             orig=str(parset_name),
             maxtime=maxtime
         )
-        result = project_instance.parsets[str(parset_name)].getresults()
+        result = project.parsets[str(parset_name)].getresults()
         print "result", result
     except Exception:
         var = traceback.format_exc()
@@ -198,23 +208,35 @@ def run_autofit(project_id, parset_name, maxtime=60):
         status='error'
 
     db_session = init_db_session()
-    wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    wp.project = op.saves(project_instance)
-    work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
+    working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+    working_project_record.project = op.saves(project)
+    working_project_record.is_working = False
+    working_project_record.work_type = None
+    db_session.add(working_project_record)
+
+    work_lob_id = working_project_record.work_log_id
+    work_log = db_session.query(WorkLogDb).get(work_lob_id)
     work_log.status = status
     work_log.error = error_text
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
+
     if result:
-        result_entry = save_result_record(project_id, result, parset_name, 'autofit', db_session=db_session)
-        db_session.add(result_entry)
+        print(">> Save autofitted parset '%s'" % parset_name)
+        parset = get_parset_from_project(project, parset_name)
+        update_or_create_parset_record(
+            project_id, parset_name, parset, db_session)
+
+        result_record = save_result_record(
+            project_id, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()
-        work_log.result_id = result_entry.id
+        db_session.add(result_record)
+        work_log.result_id = result_record.id
+
     db_session.add(work_log)
-    wp.is_working = False
-    wp.work_type = None
-    db_session.add(wp)
+
     db_session.commit()
     close_db_session(db_session)
+
     app.logger.debug("stopped autofit")
 
 

@@ -33,7 +33,7 @@ class Parsets(Resource):
     """
     GET /api/project/<project_id>/parsets
 
-    Returns the parsets of a projects that are marshalled from the parset records.
+    Returns all parsets of a project for display in dropdown menu in calibration
 
     POST /api/project/<project_id>/parsets
 
@@ -56,36 +56,35 @@ class Parsets(Resource):
         name = args['name']
         parset_id = args.get('parset_id')
 
-        project_entry = load_project_record(project_id)
-        project = project_entry.hydrate()
+        project_record = load_project_record(project_id)
+        project = project_record.hydrate()
 
         if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
 
         if not parset_id:
-            # create new parset with default settings
+            # CREATE parset with default settings
             project.makeparset(name, overwrite=False)
-            new_result = project.runsim(name)
-            project_entry.restore(project)
-            db.session.add(project_entry)
-
-            result_record = save_result_record(project_entry.id, new_result, name)
+            result = project.runsim(name)
+            project_record.restore(project)
+            db.session.add(project_record)
+            result_record = save_result_record(project_id, result, name)
             db.session.add(result_record)
         else:
-            # dealing with uid's directly might be messy...
-            original_parset = [item for item in project_entry.parsets if item.id == parset_id]
-            if not original_parset:
+            # COPY parset of parset_id to name
+            original_parsets = [item for item in project_record.parsets if item.id == parset_id]
+            if not original_parsets:
                 raise ParsetDoesNotExist(parset_id, project_id=project_id)
-            original_parset = original_parset[0]
+            original_parset = original_parsets[0]
             parset_name = original_parset.name
             project.copyparset(orig=parset_name, new=name)
-            project_entry.restore(project)
-            db.session.add(project_entry)
+            project_record.restore(project)
+            db.session.add(project_record)
 
         db.session.commit()
 
         rv = []
-        for item in project_entry.parsets:
+        for item in project_record.parsets:
             rv_item = item.hydrate().__dict__
             rv_item['id'] = item.id
             rv.append(rv_item)
