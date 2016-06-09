@@ -6,7 +6,7 @@
   <div class="3">
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
-  <div style="display: flex;justify-content: flex-start;">
+  <div style="display: flex; justify-content: flex-start;">
     <select id="programSet-selection"
             name="programSet-selection"
             class="updateGraph txbox"
@@ -23,7 +23,7 @@
     <button ng-click="deleteParameterSet()" type="button" class="btn" style="margin-left:2%">Delete parameter set</button>
   </div>
 
-  <div style="display: flex; margin-top: 20px;">  <!-- CK: maybe a more robust solution than 70vh -->
+  <div style="display: flex; margin-top: 10px; margin-bottom: 10px">  <!-- CK: maybe a more robust solution than 70vh -->
     <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
       <button class="btn __m" ng-click="processGraphs(true)">Save</button> <!-- WARNING, automatically saves! -->
       &nbsp;
@@ -45,9 +45,9 @@
     </div>
   </div>
 
-  <div style="display: flex; margin-top: 20px; justify-content: space-between; height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
-    <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
-      <div class="option_list" style="height: calc(100vh - 280px);">
+  <div style="display: flex; flex-direction: row; margin-top: 20px; justify-content: space-between; width:100%; height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
+    <div class="small_bordered_list" style="flex: 0 0  350px;" ng-if="parameters.length > 0">
+      <div class="option_list" style="height: 100%;">
         <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
           <span style="width: 45%">{{parameter.label}}</span>
           <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
