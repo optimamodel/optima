@@ -868,8 +868,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     for errpop in range(npops): # Loop over all populations
                         if not(people[errstate,errpop,t+1]>=0):
                             errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
-                            if die:
-                                raise OptimaException(errormsg)
+                            if die: raise OptimaException(errormsg)
                             else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset
