@@ -908,6 +908,7 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
         # Append final people array to sim output
         if not (raw['people']>=0).all(): 
+            printv('Negative people found with runmodel(); rerunning with a smaller timestep...')
             settings.dt /= 4
             raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
     except: 
