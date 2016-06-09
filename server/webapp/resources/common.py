@@ -26,13 +26,10 @@ def report_exception(api_call):
     @wraps(api_call)
     def _report_exception(*args, **kwargs):
         from werkzeug.exceptions import HTTPException
-        raise Exception('FUCKING DIE ALREADY')
         try:
             return api_call(*args, **kwargs)
         except Exception, e:
             exception = traceback.format_exc()
-            raise # CK TEMP
-            raise Exception('TEMP flask exception')
             # limiting the exception information to 10000 characters maximum
             # (to prevent monstrous sqlalchemy outputs)
             current_app.logger.error("Exception during request %s: %.10000s" % (request, exception))
