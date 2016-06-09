@@ -37,6 +37,8 @@ def report_exception(api_call):
                 raise
             code = 500
             reply = {'exception': exception}
+            raise # CK TEMP
+            raise Exception('TEMP flask exception')
             return make_response(jsonify(reply), code)
     return _report_exception
 
