@@ -277,18 +277,5 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
-    $scope.resetAutoCalibration = function() {
-      $scope.processGraphs();
-    };
-
-    $scope.saveAutoCalibration = function() {
-      $http.post('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {
-        parameters: $scope.parameters,
-        result_id: $scope.result_id
-      }).success(function(response) {
-        $scope.statusMessage = 'Result saved';
-      });
-    };
-
   });
 });

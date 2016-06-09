@@ -27,8 +27,6 @@
     <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
       <button class="btn __m" ng-click="processGraphs(true)">Save</button> <!-- WARNING, automatically saves! -->
       &nbsp;
-      <button class="btn __m" ng-click="processGraphs()">Update graphs</button> <!-- WARNING, automatically saves! -->
-      &nbsp;
       Run auto-fit for&nbsp;
       &nbsp;
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
@@ -42,12 +40,8 @@
       &nbsp;
       <button class="btn __m" ng-click="startAutoCalibration()">Autofit</button>
       &nbsp;
-      <span style="color: #00aeef; margin-top: 5px">
-        {{ statusMessage }}
-      </span>
-      <span style="color: #00aeef; margin-top: 5px">
-        {{ saveSuccessMessage }}
-      </span>
+      <span style="color: #00aeef;"> {{ statusMessage }} </span>
+      <span style="color: #00aeef;"> {{ saveSuccessMessage }} </span>
     </div>
   </div>
 
@@ -63,26 +57,5 @@
 
     <optima-graphs graphs="graphs"></optima-graphs>
 
-
-    <!--<div class="chart_wrapper" style="height:calc(100vh - 280px)">-->
-      <!--<div class="3" style="margin: 10px; width: 100%; text-align: right;">-->
-        <!--<export-all-charts name="Manual Calibration" ng-if="calibrationChart.length > 0"></export-all-charts>-->
-        <!--&lt;!&ndash;<export-all-data charts="calibrationChart" name="Optimization analyses" ng-if="calibrationChart.length > 0"></export-all-data>&ndash;&gt;-->
-      <!--</div>-->
-      <!--<div ng-repeat="chart in calibrationChart" class="chart-container __small">-->
-        <!--<div mpld3-chart="chart" chart-id="{{ chart.id }} "></div>-->
-      <!--</div>-->
-    <!--</div>-->
-    <!--<div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">-->
-      <!--<div class="option_list" style="height:calc(100vh - 280px)">-->
-        <!--<div ng-repeat="selector in selectors" class="option">-->
-          <!--<span><input type="checkbox" ng-model="selector.checked"/></span>-->
-          <!--<span style="margin-left: 10px">{{selector.name}}</span>-->
-        <!--</div>-->
-      <!--</div>-->
-      <!--<div style="display: flex;justify-content: center; margin-top: 25px">-->
-        <!--<input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>-->
-      <!--</div>-->
-    <!--</div>-->
   </div>
 </div>
