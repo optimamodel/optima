@@ -64,10 +64,10 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     Returns:
         A status update on the state of the async queue for the given project.
         {
-            'can_start': can_start,
-            'can_join': can_join,
-            'parset_id': wp_parset_id,
-            'work_type': work_type
+            'can_start': boolean,
+            'can_join': boolean,
+            'parset_id': uuid_string,
+            'work_type': "autofit" or "optimization"
         }
     """
     print "start_or_report_calculation(%s %s %s)" % (project_id, parset_id, work_type)
@@ -81,70 +81,65 @@ def start_or_report_calculation(project_id, parset_id, work_type):
         'work_type': work_type
     }
 
-    project_record = load_project_record(project_id, raise_exception=False, db_session=db_session)
+    project_record = load_project_record(
+        project_id, raise_exception=False, db_session=db_session)
     if not project_record:
         close_db_session(db_session)
         raise ProjectDoesNotExist(project_id)
 
-    project = project_record.hydrate()
-    project_pickled = op.saves(project)
+    working_project_record = db_session.query(WorkingProjectDb).filter_by(
+        id=project_id).first()
 
-    working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-
-    is_already_working = (working_project_record is not None
-                          and working_project_record.is_working
-                          and (working_project_record.parset_id != parset_id
-                               or working_project_record.work_type != work_type))
+    is_already_working = False
+    if working_project_record is not None:
+        if working_project_record.is_working:
+            work_log_record = db_session.query(WorkLogDb).filter_by(
+                project_id=project_id, status="started").first()
+            if work_log_record:
+                is_already_working = True
+            else:
+                # mismatch between work_log and working_project
+                working_project_record.is_working = False
+                db_session.add(working_project_record)
 
     if is_already_working:
-        print("A WorkingProjectRecord is present for %s with different job settings" % project_id)
-        result['work_type'] = working_project_record.work_type
+        print("> A job with this project already exists")
     else:
-        work_log = db_session.query(WorkLogDb).filter_by(
-            project_id=project_id, parset_id=parset_id, work_type=work_type).first()
-        if work_log is None:
-            # Log a new job
-            work_log = WorkLogDb(project_id=project_id, parset_id=parset_id, work_type=work_type)
-            work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
-        else:
-            if work_log.status != 'started':
-                working_project_record.is_working = False
-                work_log.start_time = datetime.datetime.now(dateutil.tz.tzutc())
-        db_session.add(work_log)
+        work_log_record = WorkLogDb(project_id=project_id, parset_id=parset_id, work_type=work_type)
+        if work_log_record is None:
+            work_log_record = WorkLogDb(project_id=project_id, parset_id=parset_id, work_type=work_type)
+
+        work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+        db_session.add(work_log_record)
         db_session.flush()
 
+        project = project_record.hydrate()
+        project_pickled = op.saves(project)
+
+        result['can_start'] = True
+
+        work_log_id = work_log_record.id
+
         if working_project_record is None:
-            print("No working project was found - creating new one")
+            print("> Creating new working project")
             db_session.add(
                 WorkingProjectDb(
                     project_record.id,
-                    parset_id = parset_id,
-                    project = project_pickled,
-                    is_working = True,
-                    work_type = work_type,
-                    work_log_id = work_log.id))
+                    parset_id=parset_id,
+                    project=project_pickled,
+                    is_working=True,
+                    work_type=work_type,
+                    work_log_id=work_log_id))
             result['can_start'] = True
-            result['can_join'] = True
-
         else:
-            is_same_parset_work_type = (working_project_record.parset_id == parset_id
-                                        and working_project_record.work_type == work_type)
-
             print("Found working project for %s: %s %s %s" % (working_project_record.id, working_project_record.work_type, working_project_record.parset_id, working_project_record.is_working))
-            result['can_start'] = not working_project_record.is_working
-            result['can_join'] = is_same_parset_work_type or not working_project_record.is_working
 
-            if result['can_start']:
-                working_project_record.work_type = work_type
-                working_project_record.parset_id = parset_id
-                working_project_record.is_working = True
-                working_project_record.project = project_pickled
-                working_project_record.work_log_id = work_log.id
-                db_session.add(working_project_record)
-
-            else:
-                result['parset_id'] = working_project_record.parset_id
-                result['work_type'] = working_project_record.work_type
+            working_project_record.work_type = work_type
+            working_project_record.parset_id = parset_id
+            working_project_record.is_working = True
+            working_project_record.project = project_pickled
+            working_project_record.work_log_id = work_log_id
+            db_session.add(working_project_record)
 
     db_session.commit()
     close_db_session(db_session)
@@ -154,8 +149,9 @@ def start_or_report_calculation(project_id, parset_id, work_type):
 
 def check_calculation_status(project_id):
     db_session = init_db_session()
-    wp = db_session.query(WorkingProjectDb).get(project_id)
-    work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
+    working_project_record = db_session.query(WorkingProjectDb).get(project_id)
+    work_log_id = working_project_record.work_log_id
+    work_log = db_session.query(WorkLogDb).get(work_log_id)
     close_db_session(db_session)
     if work_log is not None:
         result = {

@@ -216,7 +216,7 @@ class ParsetsCalibration(Resource):
             print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
 
         print "> Generating graphs"
-        graphs = make_mpld3_graph_dict(result)['graphs']
+        graphs = make_mpld3_graph_dict(result, which)['graphs']
 
         return {
             "calibration": {
@@ -270,7 +270,7 @@ class ParsetsCalibration(Resource):
             db.session.commit()
 
         print "> Generating graphs"
-        graphs = make_mpld3_graph_dict(result)['graphs']
+        graphs = make_mpld3_graph_dict(result, which)['graphs']
 
         return {
             'calibration': {
@@ -342,15 +342,15 @@ class ParsetsAutomaticCalibration(Resource):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         args = manual_calibration_parser.parse_args()
         parset_name = load_parset_record(project_id, parset_id).name
-        result = start_or_report_calculation(project_id, parset_id, 'autofit')
-        if not result['can_start'] or not result['can_join']:
-            result['status'] = 'running'
-            return result, 208
+        calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
+        if not calc_status['can_start']:
+            calc_status['status'] = 'running'
+            return calc_status, 208
         else:
             run_autofit.delay(project_id, parset_name, args['maxtime'])
-            result['status'] = 'started'
-            result['maxtime'] = args['maxtime']
-            return result, 201
+            calc_status['status'] = 'started'
+            calc_status['maxtime'] = args['maxtime']
+            return calc_status, 201
 
     @report_exception
     def get(self, project_id, parset_id):
