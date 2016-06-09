@@ -552,7 +552,7 @@ class Project(object):
         return None
     
     
-    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
+    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
         from pylab import title, show
         if boc is None:
@@ -563,7 +563,7 @@ class Project(object):
             print('Plotting BOC for "%s"...' % self.name)
         else:
             print('Plotting BOC derivative for "%s"...' % self.name)
-        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget=optbudget, baseline=baseline)
         title('Project: %s' % self.name)
         if returnplot: return ax
         else: show()
