@@ -32,26 +32,30 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
-    // Fetching graphs for active parset
-    $scope.getGraphs = function() {
-      var payload = {};
+    function getSelectors() {
       if ($scope.graphs) {
         var selectors = $scope.graphs.selectors;
         if (selectors) {
           var which = _.filter(selectors, function(selector) {
             return selector.checked;
           })
-              .map(function(selector) {
-                return selector.key;
-              });
+          .map(function(selector) {
+            return selector.key;
+          });
+          console.log('which', which)
           if (which.length > 0) {
-            payload.which = which;
+            return which;
           }
         }
       }
+      return null;
+    }
+
+    // Fetching graphs for active parset
+    $scope.getGraphs = function() {
       $http.get(
           '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration',
-          payload)
+          {which: getSelectors()})
       .success(function (response) {
         setCalibrationData(response.calibration);
         // console.log(JSON.stringify(response.calibration.parameters, null, 2))
@@ -64,20 +68,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if($scope.parameters) {
         payload.parameters = $scope.parameters;
       }
-      if ($scope.graphs) {
-        var selectors = $scope.graphs.selectors;
-        if (selectors) {
-          var which = _.filter(selectors, function(selector) {
-            return selector.checked;
-          })
-              .map(function(selector) {
-                return selector.key;
-              });
-          if (which.length > 0) {
-            payload.which = which;
-          }
-        }
-      }
+      payload.which = getSelectors();
       var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
@@ -93,8 +84,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var setCalibrationData = function(calibration) {
       console.log(calibration);
       $scope.graphs = calibration.graphs;
-      // $scope.calibrationChart = calibration.graphs;
-      // $scope.selectors = calibration.selectors;
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
     };
@@ -248,19 +237,20 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if ($scope.state.maxtime) {
         data.maxtime = Number($scope.state.maxtime);
       }
-      $http.post('/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/automatic_calibration',
+      $http.post(
+        '/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/automatic_calibration',
         data
       )
-        .success(function(response) {
-          if(response.status === 'started') {
-            $scope.statusMessage = 'Automatic calibration started.';
-            $scope.secondsRun = 0;
-            $scope.setMaxtime = data.maxtime;
-            pollAutoCalibration();
-          } else if(response.status === 'running') {
-            $scope.statusMessage = 'Automatic calibration already running.'
-          }
-        })
+      .success(function(response) {
+        if(response.status === 'started') {
+          $scope.statusMessage = 'Autofit started.';
+          $scope.secondsRun = 0;
+          $scope.setMaxtime = data.maxtime;
+          pollAutoCalibration();
+        } else if(response.status === 'running') {
+          $scope.statusMessage = 'Autofit already running.'
+        }
+      })
     };
 
     var pollAutoCalibration = function() {
@@ -268,7 +258,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         .success(function(response) {
           if(response.status === 'completed') {
             getAutoCalibratedGraphs();
-            $scope.statusMessage = 'Automatic calibration successfully completed.';
+            $scope.statusMessage = 'Autofit completed.';
             $timeout.cancel($scope.pollTimer);
           } else if(response.status === 'started'){
             $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
@@ -279,10 +269,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var getAutoCalibratedGraphs = function() {
-      $http.get(
+      var payload = {};
+      if($scope.parameters) {
+        payload.parameters = $scope.parameters;
+      }
+      payload.which = getSelectors();
+      $http.put(
         '/api/project/' + activeProjectInfo.id
-        + '/parsets' + '/' + $scope.activeParset.id
-        + '/calibration?autofit=true')
+          + '/parsets' + '/' + $scope.activeParset.id
+          + '/calibration?autofit=true',
+        payload)
       .success(function(response) {
         setCalibrationData(response.calibration);
       });

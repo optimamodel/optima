@@ -156,7 +156,7 @@ class ParsetsDetail(Resource):
 
 
 calibration_parser = RequestParser()
-calibration_parser.add_argument('which', location='args', default=None, action='append')
+calibration_parser.add_argument('which', default=None, action='append')
 calibration_parser.add_argument('autofit', location='args', default=False, type=bool)
 
 calibration_update_parser = RequestParser()
@@ -177,7 +177,8 @@ class ParsetsCalibration(Resource):
     """
     GET /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
 
-    Returns parameter summaries and graphs for a project/parset
+    Returns parameter summaries and graphs for a project/parset, called on page init
+    so doesn't really require a which
 
     PUT /api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration
 
