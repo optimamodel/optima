@@ -195,9 +195,11 @@ class ParsetsCalibration(Resource):
         current_app.logger.debug("/api/project/{}/parsets/{}/calibration".format(project_id, parset_id))
         args = calibration_parser.parse_args()
         which = args.get('which')
+        if which is not None:
+            which = map(str, which)
         autofit = args.get('autofit', False)
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
-        print "> Calculation type:", calculation_type
+        print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
 
         parset_record = load_parset_record(project_id, parset_id)
         parset = parset_record.hydrate()
@@ -231,8 +233,12 @@ class ParsetsCalibration(Resource):
         args = calibration_update_parser.parse_args()
         parameters = args.get('parameters', [])
         which = args.get('which')
+        if which is not None:
+            which = map(str, which)
         doSave = args.get('doSave')
         autofit = args.get('autofit', False)
+        calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
+        print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
 
         parset_record = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
         if parset_record is None or parset_record.project_id!=project_id:

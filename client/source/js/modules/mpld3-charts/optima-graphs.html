@@ -1,9 +1,24 @@
 
-<div style="flex: 1 1 auto; height:100%; overflow:auto">
+<div
+    style="
+       margin-left: 10px;
+       border: 1px solid #DDD;
+       flex: 1 1 auto;
+       height:100%;
+       overflow:auto">
 
-  <div style="border:1px solid #DDD; padding: 5px 20px 5px 20px; margin-left: 10px; position:absolute; width:300px; height:{{height}}px; overflow:auto;">
+  <div
+      style="
+         border-right: 1px solid #DDD;
+         padding: 5px 20px 5px 20px;
+         position:absolute;
+         width:300px;
+         height: {{height}}px;
+         overflow: auto;">
     <div ng-if="graphs.selectors.length > 0">
-      <div ng-repeat="selector in graphs.selectors" class="option">
+      <div
+          ng-repeat="selector in graphs.selectors"
+          class="option">
         <span><input type="checkbox" ng-model="selector.checked"/></span>
         <span style="margin-left:10px">{{selector.name}}</span>
       </div>
@@ -11,13 +26,22 @@
   </div>
 
   <div style="padding-left:350px">
-    <div style="">
-      <div>
-        <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
-        <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
-      </div>
-      <div ng-repeat="chart in graphs.mpld3_graphs" ng-show="chart.isChecked()" class="chart-container __small">
-        <div mpld3-chart="chart" chart-id="{{ chart.id }}"></div>
+    <div>
+      <export-all-charts
+          ng-if="graphs"
+          name="Analysis scenarios">
+      </export-all-charts>
+      <export-all-data
+          name="Analysis scenarios"
+          charts="graphs"
+          ng-if="graphs">
+      </export-all-data>
+    </div>
+    <div
+        ng-repeat="chart in graphs.mpld3_graphs"
+        ng-show="chart.isChecked()"
+        class="chart-container __small">
+      <div mpld3-chart="chart" chart-id="{{ chart.id }}">
       </div>
     </div>
   </div>

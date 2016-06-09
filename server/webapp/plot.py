@@ -55,11 +55,21 @@ def make_mpld3_graph_dict(result, which=None):
 
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
+    else:
+        for selector in selectors:
+            selector['checked'] = selector['key'] in which
+
+    for selector in selectors:
+        if not selector['checked']:
+            selector['name'] = '(unloaded) ' + selector['name']
+
+    print "> make graphs: ", which
     # which = keys
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []
     mpld3_graphs = []
+    print "> got graphs: ", graphs.keys()
     for graph_key in graphs:
         # Add necessary plugins here
         mpld3.plugins.connect(
@@ -68,12 +78,13 @@ def make_mpld3_graph_dict(result, which=None):
 
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
 
-        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+        # get rid of NaN
         mpld3_dict = normalize_obj(mpld3_dict)
 
         graph_selectors.append(extract_graph_selector(graph_key))
         mpld3_graphs.append(mpld3_dict)
 
+    print "> got graphs: ", graph_selectors
     return {
         'graphs': {
             "mpld3_graphs": mpld3_graphs,

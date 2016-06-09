@@ -34,45 +34,56 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Fetching graphs for active parset
     $scope.getGraphs = function() {
-      var data = {};
-      if($scope.selectors) {
-        var selectors = _.filter($scope.selectors, function(selector) {
-          return selector.checked;
-        }).map(function(selector) {
-          return selector.key;
-        });
-        if(selectors && selectors.length > 0) {
-          data.which = selectors;
+      var payload = {};
+      if ($scope.graphs) {
+        var selectors = $scope.graphs.selectors;
+        if (selectors) {
+          var which = _.filter(selectors, function(selector) {
+            return selector.checked;
+          })
+              .map(function(selector) {
+                return selector.key;
+              });
+          if (which.length > 0) {
+            payload.which = which;
+          }
         }
       }
-      $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
-        .success(function (response) {
-          setCalibrationData(response.calibration);
-          // console.log(JSON.stringify(response.calibration.parameters, null, 2))
-        });
+      $http.get(
+          '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration',
+          payload)
+      .success(function (response) {
+        setCalibrationData(response.calibration);
+        // console.log(JSON.stringify(response.calibration.parameters, null, 2))
+      });
     };
 
     // Sending parameters to re-process graphs for active parset
     $scope.processGraphs = function(shouldSave) {
-      var data = {};
+      var payload = {};
       if($scope.parameters) {
-        data.parameters = $scope.parameters;
+        payload.parameters = $scope.parameters;
       }
-      if($scope.selectors) {
-        var selectors = _.filter($scope.selectors, function(selector) {
-          return selector.checked;
-        }).map(function(selector) {
-          return selector.key;
-        });
-        if(selectors && selectors.length > 0) {
-          data.which = selectors;
+      if ($scope.graphs) {
+        var selectors = $scope.graphs.selectors;
+        if (selectors) {
+          var which = _.filter(selectors, function(selector) {
+            return selector.checked;
+          })
+              .map(function(selector) {
+                return selector.key;
+              });
+          if (which.length > 0) {
+            payload.which = which;
+          }
         }
       }
       var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
-      $http.put(url, data)
+      console.log('update pars', payload)
+      $http.put(url, payload)
       .success(function (response) {
         setCalibrationData(response.calibration);
       });

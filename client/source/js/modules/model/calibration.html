@@ -1,11 +1,14 @@
-<div class="rich" style="">
+
+<div class="rich">
 
   <div class="grid" style="margin: 0px 0px;">
-    <h1>Manual calibration</h1>
+    <h1>Calibration</h1>
   </div>
+
   <div class="3">
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
+
   <div style="display: flex; justify-content: flex-start;">
     <select id="programSet-selection"
             name="programSet-selection"
@@ -25,7 +28,7 @@
 
   <div style="display: flex; margin-top: 5px; margin-bottom: 5px">  <!-- CK: maybe a more robust solution than 70vh -->
     <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
-      <button class="btn __m" ng-click="processGraphs(true)">Save</button> <!-- WARNING, automatically saves! -->
+      <button class="btn __m" ng-click="processGraphs(true)">Save and Update Graphs</button>
       &nbsp;
       Run auto-fit for&nbsp;
       &nbsp;
@@ -45,12 +48,27 @@
     </div>
   </div>
 
-  <div style="display: flex; flex-direction: row; margin-top: 20px; justify-content: space-between; width:100%; height: calc(100vh - 320px)">  <!-- CK: maybe a more robust solution than 70vh -->
-    <div class="small_bordered_list" style="flex: 0 0  350px;" ng-if="parameters.length > 0">
+  <div style="
+        display: flex;
+        flex-direction: row;
+        margin-top: 20px;
+        justify-content: space-between;
+        width: 100%;
+        height: calc(100vh - 320px)">
+    <div class="small_bordered_list"
+         style="flex: 0 0  350px;"
+         ng-if="parameters.length > 0">
       <div class="option_list" style="height: 100%;">
-        <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
+        <div
+            ng-repeat="parameter in parameters"
+            style="justify-content: space-around"
+            class="option">
           <span style="width: 45%">{{parameter.label}}</span>
-          <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
+          <span style="width: 45%">
+            <input class="txbox __m"
+                   type="number"
+                   ng-model="parameter.value"/>
+          </span>
         </div>
       </div>
     </div>
