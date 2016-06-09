@@ -1,18 +1,16 @@
 
 <div style="flex: 1 1 auto; height:100%; overflow:auto">
 
-  <div style="border:1px solid #DDD; margin-left: 10px; position:absolute; width:300px; height:{{height}}px; overflow:auto;">
-    <div>
-      <div ng-if="graphs.selectors.length > 0">
-        <div ng-repeat="selector in graphs.selectors" class="option">
-          <span><input type="checkbox" ng-model="selector.checked"/></span>
-          <span style="margin-left:10px">{{selector.name}}</span>
-        </div>
+  <div style="border:1px solid #DDD; padding: 15px; margin-left: 10px; position:absolute; width:300px; height:{{height}}px; overflow:auto;">
+    <div ng-if="graphs.selectors.length > 0">
+      <div ng-repeat="selector in graphs.selectors" class="option">
+        <span><input type="checkbox" ng-model="selector.checked"/></span>
+        <span style="margin-left:10px">{{selector.name}}</span>
       </div>
     </div>
   </div>
 
-  <div style="padding-left:400px">
+  <div style="padding-left:350px">
     <div style="">
       <div>
         <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
