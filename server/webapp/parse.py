@@ -90,7 +90,7 @@ def revert_costcovdata(costcov):
             'cost': map(to_nan, pluck(costcov, 'cost')),
             'coverage': map(to_nan, pluck(costcov, 'coverage')),
         }
-    return normalize_obj(result)
+    return result
 
 
 def revert_ccopars(ccopars):
