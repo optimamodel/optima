@@ -274,6 +274,10 @@ class ParsetsCalibration(Resource):
                 )
             db.session.add(result_record)
             db.session.commit()
+        elif autofit:
+            result = load_result(project_id, parset_id, calculation_type)
+            if 'improvement' not in which:
+                which.insert(0, 'improvement')
 
         print "> Generating graphs"
         graphs = make_mpld3_graph_dict(result, which)['graphs']

@@ -3,6 +3,11 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   module.controller('ModelCalibrationController', function ($scope, $http, info, modalService, $upload, $modal, $timeout) {
 
+    function consoleLogJson(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
+
     var activeProjectInfo = info.data;
     var defaultParameters;
     $scope.parsets = [];
@@ -80,10 +85,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
     };
 
+    $scope.processGraphsAndSave = function() {
+      $scope.processGraphs(true);
+    }
+
     // Set calibration data in scope
     var setCalibrationData = function(calibration) {
-      console.log(calibration);
       $scope.graphs = calibration.graphs;
+      console.log("selectors", _.pluck($scope.graphs.selectors, 'key'));
+      console.log("graph_selectors", $scope.graphs.graph_selectors);
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
     };
