@@ -62,6 +62,8 @@ def parse_costcovdata(costcovdata):
     if costcovdata is None:
         return None
     result = []
+    print ">> parsing costcovdata"
+    pprint(costcovdata, indent=2)
     costcovdata = normalize_obj(costcovdata)
     n_year = len(costcovdata['t'])
     for i_year in range(n_year):
@@ -76,18 +78,20 @@ def parse_costcovdata(costcovdata):
     return result
 
 
-pluck = lambda l, k: [e[k] if e[k] is not None else nan for e in l]
+pluck = lambda l, k: [e[k] for e in l]
+to_nan = lambda v: v if v is not None and v != "" else nan
 
 
 def revert_costcovdata(costcov):
     result = {}
     if costcov:
+        costcov = normalize_obj(costcov)
         result = {
-            't': pluck(costcov, 'year'),
-            'cost': pluck(costcov, 'cost'),
-            'coverage': pluck(costcov, 'coverage'),
+            't': map(to_nan, pluck(costcov, 'year')),
+            'cost': map(to_nan, pluck(costcov, 'cost')),
+            'coverage': map(to_nan, pluck(costcov, 'coverage')),
         }
-    return normalize_obj(result)
+    return result
 
 
 def revert_ccopars(ccopars):
