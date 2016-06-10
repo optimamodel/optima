@@ -79,12 +79,13 @@ def parse_costcovdata(costcovdata):
 
 
 pluck = lambda l, k: [e[k] for e in l]
-to_nan = lambda v: v if v is not None or v != "" else nan
+to_nan = lambda v: v if v is not None and v != "" else nan
 
 
 def revert_costcovdata(costcov):
     result = {}
     if costcov:
+        costcov = normalize_obj(costcov)
         result = {
             't': map(to_nan, pluck(costcov, 'year')),
             'cost': map(to_nan, pluck(costcov, 'cost')),
