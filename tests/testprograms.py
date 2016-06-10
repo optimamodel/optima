@@ -202,8 +202,8 @@ if 'makeprograms' in tests:
                        'M 15+': array([ 0.3]),
                        'MSM': [ 0.15]}
     
-    HTC.getcoverage(x=[2e7],t=[2016],parset=P.parsets['default'],total=False)
-    HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
+    a = HTC.getcoverage(x=1e6,t=2016,parset=P.parsets['default'])
+    b = HTC.getbudget(x=a,t=2016,parset=P.parsets['default'])
 
     # NB, if you want to evaluate it for a particular population size, can also do...
     HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
