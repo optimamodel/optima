@@ -65,17 +65,11 @@ def make_mpld3_graph_dict(result, which=None):
         if not selector['checked']:
             selector['name'] = '(unloaded) ' + selector['name']
 
-    print "> which: ", which
-    print "> keys: ", keys
-    print "> names: ", names
-    print "> checks: ", checks
-    # which = keys
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []
     mpld3_graphs = []
-    print "> graph.type", type(graphs)
-    print "> graph-keys: ", graphs.keys()
+
     for graph_key in graphs:
         # Add necessary plugins here
         mpld3.plugins.connect(
@@ -90,7 +84,6 @@ def make_mpld3_graph_dict(result, which=None):
         graph_selectors.append(extract_graph_selector(graph_key))
         mpld3_graphs.append(mpld3_dict)
 
-    print "> graphs_selectors: ", graph_selectors
     return {
         'graphs': {
             "mpld3_graphs": mpld3_graphs,
