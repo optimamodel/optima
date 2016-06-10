@@ -639,7 +639,7 @@ def checkmem(origvariable, descend=0, order='n', plot=False, verbose=0):
         print('Variable %s is %s' % (printnames[v], printsizes[v]))
 
     if plot==True:
-        from matplotlib.pylab import pie, array, axes
+        from pylab import pie, array, axes
         axes(aspect=1)
         pie(array(printbytes)[inds], labels=array(printnames)[inds], autopct='%0.2f')
 
