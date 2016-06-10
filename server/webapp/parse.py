@@ -78,23 +78,17 @@ def parse_costcovdata(costcovdata):
     return result
 
 
-def extract_key_and_convert_to_nan(a_list, key):
-    result = []
-    for elem in a_list:
-        val = elem[key]
-        if val is None or val == "":
-            val = nan
-        result.append(val)
-    return result
+pluck = lambda l, k: [e[k] for e in l]
+to_nan = lambda v: v if v is not None or v != "" else nan
 
 
 def revert_costcovdata(costcov):
     result = {}
     if costcov:
         result = {
-            't': extract_key_and_convert_to_nan(costcov, 'year'),
-            'cost': extract_key_and_convert_to_nan(costcov, 'cost'),
-            'coverage': extract_key_and_convert_to_nan(costcov, 'coverage'),
+            't': map(to_nan, pluck(costcov, 'year')),
+            'cost': map(to_nan, pluck(costcov, 'cost')),
+            'coverage': map(to_nan, pluck(costcov, 'coverage')),
         }
     return normalize_obj(result)
 
