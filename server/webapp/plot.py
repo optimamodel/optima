@@ -7,12 +7,14 @@ from server.webapp.utils import normalize_obj
 
 
 def extract_graph_selector(graph_key):
-    s = repr(graph_key)
+    s = repr(str(graph_key))
     base = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
     if "'t'" in s:
         suffix = "-tot"
     elif "'p'" in s:
         suffix = "-per"
+    elif "'s'" in s:
+        suffix = "-sta"
     else:
         suffix = ""
     return base + suffix
@@ -63,13 +65,17 @@ def make_mpld3_graph_dict(result, which=None):
         if not selector['checked']:
             selector['name'] = '(unloaded) ' + selector['name']
 
-    print "> make graphs: ", which
+    print "> which: ", which
+    print "> keys: ", keys
+    print "> names: ", names
+    print "> checks: ", checks
     # which = keys
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []
     mpld3_graphs = []
-    print "> got graphs: ", graphs.keys()
+    print "> graph.type", type(graphs)
+    print "> graph-keys: ", graphs.keys()
     for graph_key in graphs:
         # Add necessary plugins here
         mpld3.plugins.connect(
@@ -84,7 +90,7 @@ def make_mpld3_graph_dict(result, which=None):
         graph_selectors.append(extract_graph_selector(graph_key))
         mpld3_graphs.append(mpld3_dict)
 
-    print "> got graphs: ", graph_selectors
+    print "> graphs_selectors: ", graph_selectors
     return {
         'graphs': {
             "mpld3_graphs": mpld3_graphs,

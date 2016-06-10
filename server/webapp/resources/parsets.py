@@ -454,34 +454,31 @@ class ParsetsData(Resource):
 
 
 
-class ResultsExportData(Resource):
+class ExportResultsDataAsCsv(Resource):
     """
     Export of data from an Optima Results object as a downloadable .csv file
 
     /api/results/<results_id>
 
-    - GET: returns a .csv file with the
+    - GET: returns a .csv file as blob
     """
+
     method_decorators = [report_exception, login_required]
 
-    @report_exception
     def get(self, result_id):
         current_app.logger.debug("GET /api/results/{0}".format(result_id))
         result_record = db.session.query(ResultsDb).get(result_id)
-
         if result_record is None:
             raise Exception("Results '%s' does not exist" % result_id)
-
-        loaddir = upload_dir_user(TEMPLATEDIR)
-        if not loaddir:
-            loaddir = TEMPLATEDIR
-
+        load_dir = upload_dir_user(TEMPLATEDIR)
+        if not load_dir:
+            load_dir = TEMPLATEDIR
         filestem = 'results'
         filename = filestem + '.csv'
         result = result_record.hydrate()
-        result.export(filestem=os.path.join(loaddir, filestem))
+        result.export(filestem=os.path.join(load_dir, filestem))
 
-        response = helpers.send_from_directory(loaddir, filename)
+        response = helpers.send_from_directory(load_dir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
 
         return response
