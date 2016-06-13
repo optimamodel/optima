@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
-from numpy import ones, prod, array, zeros, exp, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
 from random import uniform
 import abc
 
@@ -1184,9 +1184,13 @@ class Costcov(CCOF):
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-        else: raise OptimaException('coverage vector should be the same length as params.')
-
+        if nyrs==npts: return maximum(-0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x)),eps)
+        else:
+            y = zeros((nyrs,npts))
+            for yr in range(nyrs):
+                y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
+            return y
+            
 
 ########################################################
 # COVERAGE OUTCOME FUNCTIONS

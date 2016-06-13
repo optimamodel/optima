@@ -82,14 +82,29 @@ define(['./../../module', 'underscore'], function (module, _) {
         });
     };
 
+    function toNullIfEmpty(val) {
+      if (_.isUndefined(val)) {
+        return null;
+      }
+      if (val == "") {
+        return null;
+      }
+      return val;
+    }
+
     var validateCostcovTable = function(table) {
       var costcov = [];
       table.rows.forEach(function(row, iRow, rows) {
         if (iRow != table.iEditRow) {
-          costcov.push({year: parseInt(row[0]), cost: row[1], coverage: row[2]});
+          costcov.push({
+            year: parseInt(row[0]),
+            cost: toNullIfEmpty(row[1]),
+            coverage: toNullIfEmpty(row[2])
+          });
         }
       });
       $scope.selectedProgram.costcov = costcov;
+      consoleLogJson('save costcov', costcov);
       saveSelectedProgram();
     };
 
