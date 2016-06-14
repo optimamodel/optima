@@ -456,7 +456,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -514,7 +514,8 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
     
     nstates = len(labels)
     colors = gridcolormap(nstates)
-    tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
+    if tvec is None:
+        tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl, supply as argument if so
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
@@ -552,7 +553,7 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
 
 
 global plotparsbackbut, plotparsnextbut, plotparslider
-def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
+def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
@@ -580,7 +581,7 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
     allplotdata = []
     for pars in parslist:
         count = 0
-        simpars = makesimpars(pars)
+        simpars = makesimpars(pars, start=start, end=end)
         tvec = simpars['tvec']
         plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
         for i,key1 in enumerate(pars):

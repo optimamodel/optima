@@ -503,12 +503,12 @@ def makepars(data, label=None, verbose=2):
 
 
 
-def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
+def makesimpars(pars, inds=None, keys=None, start=None, end=None, dt=None, tvec=None, settings=None, smoothness=None, asarray=True, onlyvisible=False, verbose=2, name=None, uid=None):
     ''' 
     A function for taking a single set of parameters and returning the interpolated versions -- used
     very directly in Parameterset.
     
-    Version: 2016jan18 by cliffk
+    Version: 2016jun by cliffk
     '''
     
     # Handle inputs and initialization
@@ -517,6 +517,9 @@ def makesimpars(pars, inds=None, keys=None, start=2000, end=2030, dt=0.2, tvec=N
     simpars['parsetuid'] = uid
     generalkeys = ['male', 'female', 'injects', 'sexworker', 'popkeys']
     staticmatrixkeys = ['birthtransit','agetransit','risktransit']
+    if start is None: start=2000 # WARNING, should be a better way of declaring defaults...
+    if end is None: end=2030
+    if dt is None: dt=0.2
     if keys is None: keys = pars.keys() # Just get all keys
     if type(keys)==str: keys = [keys] # Listify if string
     if tvec is not None: simpars['tvec'] = tvec
@@ -1011,4 +1014,44 @@ class Parameterset(object):
             else:
                 print('Parameter type "%s" not implemented!' % ptype)
     
-                # parset.interp() and calculate results are supposed to be called from the outside   
+                # parset.interp() and calculate results are supposed to be called from the outside
+    
+    def export(self, filename=None, ind=0):
+        '''
+        Little function to export code for the current parameter set. To use, do something like:
+        
+        pars = P.parsets[0].pars[0]
+        
+        and then paste in the output of this function.
+        '''
+        pars = self.pars[ind]
+        
+        def oneline(values): return str(values).replace('\n',' ') 
+        
+        output = ''
+        for parname,par in pars.items():
+            if hasattr(par,'fittable'):
+                if par.fittable=='pop': 
+                    values = par.y[:].tolist()
+                    prefix = "pars['%s'].y[:] = " % parname
+                elif par.fittable=='const': 
+                    values = par.y
+                    prefix = "pars['%s'].y = " % parname
+                elif par.fittable=='meta':
+                    values = par.m
+                    prefix = "pars['%s'].m = " % parname
+                elif par.fittable=='no':
+                    values = None
+                else: 
+                    print('Parameter fittable type "%s" not implemented' % par.fittable)
+                    values = None
+                if values is not None:
+                    output += prefix+oneline(values)+'\n'
+        
+        if filename is not None:
+            with open(filename, 'w') as f:
+                f.write(output)
+        else:
+            return output
+            
+                

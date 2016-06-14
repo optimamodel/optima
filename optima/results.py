@@ -386,7 +386,7 @@ class Multiresultset(Resultset):
 
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
-    from pylab import xlabel, ylabel, show
+    
     def __init__(self, name='unspecified', x=None, y=None, objectives=None):
         self.uid = uuid()
         self.created = today()
@@ -413,12 +413,15 @@ class BOC(object):
         ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
         return pchip(self.x, self.y, budgets, deriv = True)
         
-    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None, baseline=0):
         ''' Plot the budget-outcome curve '''
+        from pylab import xlabel, ylabel, show
+        
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
         xlabel('Budget')
         if not deriv: ylabel('Outcome')
         else: ylabel('Marginal outcome')
+        if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
         
         if returnplot: return ax
         else: show()

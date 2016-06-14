@@ -41,7 +41,7 @@ def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
 
 
 
-def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=60, inds=None, verbose=2):
+def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None, maxiters=200, inds=None, verbose=2):
     ''' Perform batch autofitting '''
     
     filelist = glob(folder+'/*.prj')
@@ -72,7 +72,7 @@ def batchautofit(folder='.', name=None, fitwhat=None, fitto='prev', maxtime=None
 
 
 
-def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
+def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetname=None, inds=0, objectives=None, constraints=None, maxiters=200, maxtime=None, verbose=2, stoppingfunc=None, method='asd'):
     ''' Perform batch BOC calculation '''
     
     filelist = glob(folder+'/*.prj')
@@ -81,7 +81,7 @@ def batchBOC(folder='.', budgetlist=None, name=None, parsetname=None, progsetnam
     def batchfunc(project, ind, outputqueue):
         loadbalancer(index=ind)
         print('Running BOC generation...')
-        project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname, progsetname=parsetname, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
+        project.genBOC(budgetlist=budgetlist, name=name, parsetname=parsetname, progsetname=progsetname, inds=inds, objectives=objectives, constraints=constraints, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method)
         outputqueue.put(project)
         print('...done.')
         return None
