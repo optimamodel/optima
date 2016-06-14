@@ -371,7 +371,7 @@ class Project(object):
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+name if simpars is None else 'simpars'
+        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
