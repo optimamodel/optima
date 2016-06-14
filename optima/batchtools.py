@@ -15,7 +15,7 @@ from optima import loadobj, saveobj, loadbalancer
 
 def batchtest(nprocs=4, nrepeats=3e7, maxload=0.5):
     ''' A simple example of how to run a parallel computation -- use this as a template for making more complex functions'''
-    from pylab import rand
+    from numpy.random import random as rand
     
     def testfunc(obj, ind, outputqueue):
         loadbalancer(maxload=maxload, index=ind)
