@@ -433,11 +433,11 @@ def makepars(data, label=None, verbose=2):
     npopkeys = len(popkeys)
     birthtransit = zeros((npopkeys,npopkeys))
     c = 0
-    for pk,popkey in enumerate(popkeys):
-        if data['pops']['female'][pk]: # WARNING, really ugly
-            for cc,col in enumerate(data['birthtransit'][c]):
+    for pkno,popkey in enumerate(popkeys):
+        if data['pops']['female'][pkno]: # WARNING, really ugly
+            for colno,col in enumerate(data['birthtransit'][c]):
                 if sum(data['birthtransit'][c]):
-                    birthtransit[pk,cc] = col/sum(data['birthtransit'][c])
+                    birthtransit[pkno,colno] = col/sum(data['birthtransit'][c])
             c += 1
     pars['birthtransit'] = birthtransit 
 
@@ -447,7 +447,7 @@ def makepars(data, label=None, verbose=2):
     for rowno,row in enumerate(data['agetransit']):
         if sum(row):
             for colno,col in enumerate(row):
-                agetransit[row,col] = col/sum(row)/duration[rowno]
+                agetransit[rowno,colno] = col/sum(row)/duration[rowno]
     pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant transition rates
@@ -455,7 +455,7 @@ def makepars(data, label=None, verbose=2):
     for rowno,row in enumerate(data['risktransit']):
         for colno, col in enumerate(row):
             if col:
-                risktransit[row,col] = 1.0/col
+                risktransit[rowno,colno] = 1.0/col
     pars['risktransit'] = risktransit 
     
     # Circumcision
