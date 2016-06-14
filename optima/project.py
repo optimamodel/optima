@@ -418,11 +418,11 @@ class Project(object):
         return None
 
 
-    def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2): # orig=default or orig=0?
+    def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        manualfit(project=self, name=name, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 

@@ -89,7 +89,7 @@ def clearselections(event=None):
     return None
     
     
-def updateplots(event=None, tmpresults=None):
+def updateplots(event=None, tmpresults=None, **kwargs):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
     if tmpresults is not None: results = tmpresults
@@ -105,7 +105,7 @@ def updateplots(event=None, tmpresults=None):
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height))
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
     
     return None
 
@@ -302,7 +302,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, name='default', ind=0, verbose=2):
+def manualfit(project=None, name='default', ind=0, verbose=2, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -378,7 +378,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
         
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
-        updateplots(tmpresults=results)
+        updateplots(tmpresults=results, **kwargs)
         
     
     ## Keep the current parameters in the project; otherwise discard

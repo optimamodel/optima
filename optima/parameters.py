@@ -169,7 +169,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, uniformgrowth=True, doplot=False, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -222,6 +222,10 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
         largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
         par.p[key] = [largestpars[0]*thispopsize[key]/largestthatyear, largestpars[1]]
     par.p = par.p.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    
+    if uniformgrowth:
+        for key in keys:
+            par.p[key][1] = par.p[largestpopkey][1] # Reset to match the largest population
     
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
