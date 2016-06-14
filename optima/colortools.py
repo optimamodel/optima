@@ -123,7 +123,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
    Version: 2014aug06 by Cliff Kerr (cliff@thekerrlab.com)
    """
    from matplotlib.colors import LinearSegmentedColormap as makecolormap
-   from pylab import array
+   from numpy import array
    
    water = array([3,18,59])/256.
    desert = array([194,175,160*0.6])/256.
@@ -159,8 +159,7 @@ def alpinecolormap(gap=0.1,mingreen=0.2,redbluemix=0.5,epsilon=0.01):
 
 ## Show the staggering beauty of the color map's infinite possibilities
 def testalpinecolormap():
-    from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel
-    import matplotlib.pyplot as plt
+    from pylab import randn, show, convolve, array, seed, linspace, meshgrid, xlabel, ylabel, figure, pcolor
     from mpl_toolkits.mplot3d import Axes3D # analysis:ignore
     
     maxheight = 3
@@ -177,7 +176,7 @@ def testalpinecolormap():
     data /= data.max()
     data *= maxheight
     
-    fig = plt.figure(figsize=(18,8))
+    fig = figure(figsize=(18,8))
     ax = fig.gca(projection='3d')
     ax.view_init(elev=45, azim=30)
     X = linspace(0,horizontalsize,n)
@@ -189,10 +188,10 @@ def testalpinecolormap():
     ylabel('Position (km)')
     show()
 
-    fig = plt.figure(figsize=(8,6))
+    fig = figure(figsize=(8,6))
     ax = fig.gca()
     X = linspace(0,horizontalsize,n)
-    pcl = plt.pcolor(X, X, data, cmap=alpinecolormap(), linewidth=0, antialiased=False)
+    pcl = pcolor(X, X, data, cmap=alpinecolormap(), linewidth=0, antialiased=False)
     cb2 = fig.colorbar(pcl)
     cb2.set_label('Height (km)',horizontalalignment='right', labelpad=50)
     xlabel('Position (km)')
@@ -227,11 +226,11 @@ def vectocolor(vector,cmap=None):
 
    Version: 1.0 (2012sep13 by cliffk)
    """
-   from pylab import array, zeros
+   from numpy import array, zeros
+   from pylab import cm
 
    if cmap==None:
-      from pylab import cm
-      cmap=cm.jet;
+      cmap=cm.jet
 
    # The vector has elements
    if len(vector):

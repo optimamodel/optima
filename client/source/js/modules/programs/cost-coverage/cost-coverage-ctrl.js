@@ -17,7 +17,7 @@ define(['./../module', 'underscore'], function (module, _) {
       vm.openProject = activeProject.data;
       console.log('vm.openProject', vm.openProject);
 
-      vm.activeTab = 'outcome';
+      vm.activeTab = 'cost';
       vm.tabs = [
         {
           name: 'Define cost functions',
