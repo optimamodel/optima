@@ -93,7 +93,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
     if tmpresults is not None: results = tmpresults
-
+    
     # If figure exists, get size, then close it
     try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
     except: width,height = 14,12 # No figure: use defaults
@@ -124,11 +124,14 @@ def pygui(tmpresults, toplot=None):
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
         toplot = ['prev-tot', 'inci-per']
     
+    (see epiformatslist in plotting.py)
+    
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
     Version: 1.2 (2016feb04)
     '''
+    
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
     elif type(tmpresults) not in [Resultset, Multiresultset]:
@@ -338,7 +341,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2, **kwargs):
     
     nfull = len(fulllabellist) # The total number of boxes needed
     results = project.runsim(name)
-    pygui(results)
+    pygui(results, **kwargs)
     
     
     
