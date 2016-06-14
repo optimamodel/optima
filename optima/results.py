@@ -257,9 +257,7 @@ class Resultset(object):
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
-        output = sep.join(['Indicator','Year:'])
-        for t in range(npts):
-            output += ('%i'+sep) % self.tvec[t]
+        output = sep.join(['Indicator','Year:'] + ['%i'%t for t in self.tvec]) # Create header and years
         for key in keys:
             if bypop: output += '\n'
             if bypop: popkeys = self.popkeys
