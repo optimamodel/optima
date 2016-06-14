@@ -420,7 +420,7 @@ def makepars(data, label=None, verbose=2):
 
     ###############################################################################
     ## Tidy up -- things that can't be converted automatically
-    ###############################################################################    
+    ###############################################################################
     
     # Births rates. This parameter is coupled with the birth matrix defined below
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
@@ -430,22 +430,33 @@ def makepars(data, label=None, verbose=2):
     pars['birth'].t = pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
-    normalised_birthtransit = [[0.0]*len(popkeys)]*len(popkeys)
+    npopkeys = len(popkeys)
+    birthtransit = zeros((npopkeys,npopkeys))
     c = 0
     for pk,popkey in enumerate(popkeys):
-        if data['pops']['female'][pk]:
-            normalised_birthtransit[pk] = [col/sum(data['birthtransit'][c]) if sum(data['birthtransit'][c]) else 0 for col in data['birthtransit'][c]]
+        if data['pops']['female'][pk]: # WARNING, really ugly
+            for cc,col in enumerate(data['birthtransit'][c]):
+                if sum(data['birthtransit'][c]):
+                    birthtransit[pk,cc] = col/sum(data['birthtransit'][c])
             c += 1
-    pars['birthtransit'] = normalised_birthtransit 
+    pars['birthtransit'] = birthtransit 
 
     # Aging transitions - these are time-constant transition rates
-    duration = [age[1]-age[0]+1 for age in data['pops']['age']]
-    normalised_agetransit = [[col/sum(row)*1.0/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
-    pars['agetransit'] = normalised_agetransit
+    agetransit = zeros((npopkeys,npopkeys))
+    duration = array([age[1]-age[0]+1.0 for age in data['pops']['age']])
+    for rowno,row in enumerate(data['agetransit']):
+        if sum(row):
+            for colno,col in enumerate(row):
+                agetransit[row,col] = col/sum(row)/duration[rowno]
+    pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant transition rates
-    normalised_risktransit = [[1.0/col if col else 0 for col in row] for row in data['risktransit']]
-    pars['risktransit'] = normalised_risktransit 
+    risktransit = zeros((npopkeys,npopkeys))
+    for rowno,row in enumerate(data['risktransit']):
+        for colno, col in enumerate(row):
+            if col:
+                risktransit[row,col] = 1.0/col
+    pars['risktransit'] = risktransit 
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male
