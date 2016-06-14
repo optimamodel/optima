@@ -602,7 +602,7 @@ class GAOptim(object):
     
 #    def superplot(self):
 #        
-#        from matplotlib.pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
+#        from pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
 #        from gridcolormap import gridcolormap
 #        from matplotlib import gridspec
 #        import numpy

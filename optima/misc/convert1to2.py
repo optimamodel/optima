@@ -211,7 +211,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
     new.parsets[0].pars[0]['inhomo'].y[:]   = old['F'][0]['inhomo'][:]
 
     ## Run simulation
-    #new.runsim()
+    new.runsim()
 
 
 
