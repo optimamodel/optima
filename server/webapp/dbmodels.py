@@ -159,6 +159,7 @@ class ProjectDb(db.Model):
         # TODO: make it possible to uncomment the two lines of code below :)
         # if self.blob and len(self.blob):
         #     project_entry = op.loads(self.blob)
+        print ">>> Hydrate project '%s'" % self.name
         project = op.Project()
         project.uid = self.id
         project.name = self.name
@@ -186,34 +187,36 @@ class ProjectDb(db.Model):
                 if scenario_record.active:
                     scenario = scenario_record.hydrate()
                     project.addscen(scenario.name, scenario)
-        if self.optimizations:
-            for optimization_record in self.optimizations:
-                parset_name = None
-                progset_name = None
-                if optimization_record.parset_id:
-                    parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
-                    if parset_name:
-                        parset_name = parset_name[0]
-                if optimization_record.progset_id:
-                    progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
-                    if progset_name:
-                        progset_name = progset_name[0]
-                optim = op.Optim(
-                    project,
-                    name=optimization_record.name,
-                    objectives=optimization_record.objectives,
-                    constraints=optimization_record.constraints,
-                    parsetname=parset_name,
-                    progsetname=progset_name)
-                project.addoptim(optim)
-        if self.results:
-            for result_entry in self.results:
-                result = result_entry.hydrate()
-                project.addresult(result)
-                if result_entry.parset_id and result_entry.calculation_type == ResultsDb.CALIBRATION_TYPE:
-                    for parset in project.parsets.values():
-                        if parset.uid == result_entry.parset_id:
-                            parset.resultsref = result.uid
+        # if self.optimizations:
+        #     for optimization_record in self.optimizations:
+        #         print ">>>> Hydrate optimization '%s'" % optimization_record.name
+        #         parset_name = None
+        #         progset_name = None
+        #         if optimization_record.parset_id:
+        #             parset_name = [parset.name for parset in self.parsets if parset.id == optimization_record.parset_id]
+        #             if parset_name:
+        #                 parset_name = parset_name[0]
+        #         if optimization_record.progset_id:
+        #             progset_name = [progset.name for progset in self.progsets if progset.id == optimization_record.progset_id]
+        #             if progset_name:
+        #                 progset_name = progset_name[0]
+        #         optim = op.Optim(
+        #             project,
+        #             name=optimization_record.name,
+        #             objectives=optimization_record.objectives,
+        #             constraints=optimization_record.constraints,
+        #             parsetname=parset_name,
+        #             progsetname=progset_name)
+        #         project.addoptim(optim)
+        # if self.results:
+        #     for result_entry in self.results:
+        #         result = result_entry.hydrate()
+        #         project.addresult(result)
+        #         if result_entry.parset_id and result_entry.calculation_type == ResultsDb.CALIBRATION_TYPE:
+        #             for parset in project.parsets.values():
+        #                 if parset.uid == result_entry.parset_id:
+        #                     parset.resultsref = result.uid
+        print ">>> Hydrate end"
         return project
 
     def as_file(self, loaddir, filename=None):
@@ -228,7 +231,9 @@ class ProjectDb(db.Model):
 
         is_same_project = str(project.uid) == str(self.id)
         str_project_id = str(self.id)
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ScenariosDb).filter_by(project_id=str_project_id).delete()
+        db.session.query(OptimizationsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgramsDb).filter_by(project_id=str_project_id).delete()
         db.session.query(ProgsetsDb).filter_by(project_id=str_project_id).delete()
         if is_same_project:
@@ -236,7 +241,6 @@ class ProjectDb(db.Model):
         else:
             db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete()
             parset_records = db.session.query(ParsetsDb).filter_by(project_id=str_project_id)
-            print "Deleting parsets", [p.id for p in parset_records]
             parset_records.delete()
         db.session.flush()
 
@@ -258,7 +262,7 @@ class ProjectDb(db.Model):
             self.datastart = int(project.data['years'][0])
             self.dataend = int(project.data['years'][-1])
 
-            print(">>>> Gather populations in project")
+            print(">>>> Gather populations")
             self.populations = []
             project_pops = normalize_obj(project.data['pops'])
             # pprint(project_pops)
@@ -278,20 +282,21 @@ class ProjectDb(db.Model):
             self.dataend = self.dataend or op.default_dataend
             self.populations = self.populations or {}
 
-        parset_records_by_name = {}
+        parset_id_by_name = {}
         if project.parsets:
             from server.webapp.dataio import update_or_create_parset_record
             for name, parset in project.parsets.iteritems():
                 if not is_same_project:
                     parset.uid = op.uuid()  # so that we don't get same parset in two different projects
+                print ">>>>> Restore parset '%s'" % name
                 record = update_or_create_parset_record(self.id, name, parset)
-                parset_records_by_name[name] = record
+                parset_id_by_name[name] = str(record.id)
             db.session.flush()
             db.session.commit()
 
         # Expects that progsets or programs should not be deleted from restoring a project
         # This is the same behaviour as with parsets.
-        progset_records_by_name = {}
+        progset_id_by_name = {}
         if project.progsets:
             from server.webapp.dataio import update_or_create_progset_record
 
@@ -300,7 +305,7 @@ class ProjectDb(db.Model):
             for name, progset in project.progsets.iteritems():
                 progset_record = update_or_create_progset_record(self.id, name, progset)
                 progset_record.restore(progset, program_summaries)
-                progset_records_by_name[name] = progset_record
+                progset_id_by_name[name] = str(progset_record.id)
             db.session.flush()
             db.session.commit()
 
@@ -314,20 +319,20 @@ class ProjectDb(db.Model):
             from server.webapp.dataio import update_or_create_scenario_record
             for name in project.scens:
                 scen = project.scens[name]
-                parset_record = parset_records_by_name[scen.parsetname]
+                parset_id = parset_id_by_name[scen.parsetname]
                 scenario_summary = {
                     'id': None,
                     'scenario_type': '',
                     'active': True,
                     'name': scen.name,
-                    'parset_id': str(parset_record.id),
+                    'parset_id': parset_id,
                     'years': scen.t
                 }
                 if isinstance(scen, op.Parscen):
                     scenario_summary['scenario_type'] = 'parameter'
-                    scenario_summary['pars'] = scen.pars
+                    scenario_summary['pars'] = normalize_obj(scen.pars)
                 else:
-                    progset_id = progset_records_by_name[scen.progsetname].id
+                    progset_id = progset_id_by_name[scen.progsetname]
                     scenario_summary['progset_id'] = str(progset_id)
                     if isinstance(scen, op.Budgetscen):
                         scenario_summary['scenario_type'] = 'budget'
@@ -335,31 +340,57 @@ class ProjectDb(db.Model):
                     elif isinstance(scen, op.Coveragescen):
                         scenario_summary['scenario_type'] = 'coverage'
                         scenario_summary['coverage'] = revert_program_list(scen.coverage)
-                print "Restoring scenario", scenario_summary["id"]
+                print ">>>> Restore scenario '%s'" % (scenario_summary["name"])
                 update_or_create_scenario_record(self.id, scenario_summary)
             db.session.commit()
 
+        optimization_summary_by_result_name = {}
         if project.optims:
-            print "Restoring optimizations"
-            from server.webapp.dataio import update_or_create_optimization_record
-            for name in project.optims:
-                update_or_create_optimization_record(self.id, project, name)
-            db.session.commit()
+            from server.webapp.dataio import save_optimization_summaries
+            optimization_summaries = []
+            for name, optim in project.optims.items():
+                optimization_summary = {
+                    'parset_id': parset_id_by_name[optim.parsetname],
+                    'progset_id': progset_id_by_name[optim.progsetname],
+                    'name': name,
+                    'which': optim.objectives["which"],
+                    'constraints': normalize_obj(optim.constraints),
+                    'objectives': normalize_obj(optim.objectives),
+                    'result_name': optim.resultsref
+                }
+                optimization_summary_by_result_name[optim.resultsref] = optimization_summary
+                optimization_summaries.append(optimization_summary)
+                print ">>>> Restore optimization '%s'" % name
+            save_optimization_summaries(self.id, optimization_summaries)
 
+        parset_name_by_id = {v: k for k, v in parset_id_by_name.items()}
         if project.results:
-            # only save optimization ones for now...
             from server.webapp.dataio import save_result_record
-            for name in project.results:
-                if name.startswith('optim-') and isinstance(project.results[name], op.Multiresultset):  # bold assumption...
-                    result = project.results[name]
-                    # print "simpars", result.simpars[0], type(result.simpars[0])
-                    result_entry = save_result_record(self.id, result,
-                                                      project.parsets[0].name,  # TODO : will break if more than one parset
-                        'optimization')
-                    db.session.add(result_entry)
+            for name, result in project.results.items():
+                if name.startswith('optim-') and isinstance(result, op.Multiresultset):
+                    calculation_type = 'optimization'
+                    optimization_summary = optimization_summary_by_result_name[name]
+                    parset_name = parset_name_by_id[optimization_summary['parset_id']]
+                    result_record = save_result_record(self.id, result, parset_name, calculation_type)
+                    db.session.add(result_record)
+                    db.session.flush()
+                if name.startswith('parset-') and isinstance(result, op.Resultset):
+                    calculation_type = "calibration"
+                    parset_name = name.replace('parset-', '')
+                    result_record = save_result_record(self.id, result, parset_name, calculation_type)
+                    db.session.add(result_record)
+                    db.session.flush()
+                if name.startswith('scenarios') and isinstance(result, op.Multiresultset):
+                    calculation_type = 'scenarios'
+                    # really doesn't matter for scenarios
+                    parset_name = project.parsets[0].name
+                    result_record = save_result_record(self.id, result, parset_name, calculation_type)
+                    db.session.add(result_record)
                     db.session.flush()
 
             db.session.commit()
+
+        print ">> Restore project end"
 
     def recursive_delete(self, synchronize_session=False):
 
@@ -419,6 +450,7 @@ class ParsetsDb(db.Model):
             self.id = id
 
     def hydrate(self):
+        print ">>> Hydrate parset '%s'" % self.name
         parset_instance = op.Parameterset()
         parset_instance.name = self.name
         parset_instance.uid = self.id
@@ -440,7 +472,8 @@ class ParsetsDb(db.Model):
 
 class ResultsDb(db.Model):
 
-    CALIBRATION_TYPE = 'calibration'  # todo make enum when all types are known
+    CALIBRATION_TYPE = 'calibration'  # 'calibration' or 'optimization'
+    # todo make enum when all types are known
 
     __tablename__ = 'results'
 
@@ -460,7 +493,9 @@ class ResultsDb(db.Model):
             self.id = id
 
     def hydrate(self):
-        return op.loads(self.blob)
+        result = op.loads(self.blob)
+        print ">>>>>>> Hydrate result(%s) '%s'" % (self.calculation_type, result.name)
+        return result
 
 
 class WorkingProjectDb(db.Model):  # pylint: disable=R0903
@@ -623,6 +658,7 @@ class ProgramsDb(db.Model):
             ccopars=revert_ccopars(self.ccopars),
         )
         program.id = self.id
+        print ">>>>>> Hydrate program '%s'" % program.short
         return program
 
     def get_optimizable(self):
@@ -722,7 +758,7 @@ class ProgsetsDb(db.Model):
         from server.webapp.dataio import update_or_create_program_record
         from server.webapp.parse import parse_program_summary
 
-        print(">>>>>>>> Restore progset_record '%s'" % progset.name)
+        print(">>>>>>>> Restore progset '%s'" % progset.name)
         self.name = progset.name
 
         # store programs including default programs that are not progset
@@ -738,9 +774,9 @@ class ProgsetsDb(db.Model):
                         program_summary[replace_key] = loaded_program_summary[replace_key]
                 program_summary['active'] = True
             desc = "default active" if program_summary['active'] else "default inactive"
-            print '>>>> Parse %s program "%s" - "%s"' % (desc, short, program_summary['name'])
-            if program_summary['active']:
-                pprint(program_summary)
+            print '>>>> Restore %s program "%s" - "%s"' % (desc, short, program_summary['name'])
+            # if program_summary['active']:
+            #     pprint(program_summary)
             update_or_create_program_record(self.project.id, self.id, short, program_summary)
 
         # save programs that are not in defaults
@@ -748,13 +784,13 @@ class ProgsetsDb(db.Model):
             if short not in loaded_shorts:
                 print '>>>> Parse custom active "%s" - "%s"' % (short, program_summary['name'])
                 program_summary = parse_program_summary(program, True)
-                pprint(program_summary)
+                # pprint(program_summary)
                 update_or_create_program_record(self.project.id, self.id, short, program_summary)
 
-        print('>>> Restore outcomes/effects')
         parameters = parse_outcomes_from_progset(progset)
-        pprint(parameters, indent=2)
+        # pprint(parameters, indent=2)
         parset = ParsetsDb.query.filter_by(project_id=str(self.project.id)).first()
+        print ">>> Restore outcomes of parset '%s'" % parset.name
         self.effects = [
             {
                 'parset': str(parset.id) if parset else None,
@@ -836,14 +872,13 @@ class ScenariosDb(db.Model):
                 'parsetname': parset_record.name,
                 'pars': convert_pars_list(blob.get('pars', []))
             }
-            print ">>>> Hydrating parameter scenario"
-            pprint(kwargs, indent=2)
+            print ">>>> Hydrate parameter scenario '%s'" % kwargs['name']
+            # pprint(kwargs, indent=2)
             return op.Parscen(**kwargs)
 
         else:
             progset_record = load_progset_record(self.project_id, self.progset_id)
 
-            print ">> Hydrate scenario"
             # TODO: remove this hack (dummy values)
             if 'years' not in blob:
                 blob['years'] = 2030
@@ -856,8 +891,8 @@ class ScenariosDb(db.Model):
                     'budget': convert_program_list(blob.get('budget', [])),
                     't': blob['years']
                 }
-                print ">>>> Hydrating budget scenario"
-                pprint(kwargs, indent=2)
+                print ">>>> Hydrate budget scenario '%s'" % kwargs['name']
+                # pprint(kwargs, indent=2)
                 return op.Budgetscen(**normalize_obj(kwargs))
 
             if self.scenario_type == "coverage":
@@ -868,8 +903,8 @@ class ScenariosDb(db.Model):
                     'coverage': convert_program_list(blob.get('coverage', [])),
                     't': blob['years']
                 }
-                print ">>>> Hydrating coverage scenario"
-                pprint(kwargs, indent=2)
+                print ">>>> Hydrate coverage scenario '%s'" % kwargs['name']
+                # pprint(kwargs, indent=2)
                 return op.Coveragescen(**normalize_obj(kwargs))
 
         raise ValueError("Couldn't hydrate scenario record")
