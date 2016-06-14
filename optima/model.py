@@ -818,6 +818,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
+                if t==20:
+                    print 'DIUDFIDUIF'
+                    print([p1,p2,agetransit[p1,p2]])
                 peopleaving = people[:, p1, t] * agetransit[p1,p2]
                 peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
                 people[:, p1, t+1] -= peopleaving # Take away from pop1...
