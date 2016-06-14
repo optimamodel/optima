@@ -1,19 +1,27 @@
 """
 Test to see if the calculation of people has changed.
 
-Version: 2016feb06
+Version: 2016
 """
 
-from numpy import shape, array
+from numpy import shape, array, nan
 import optima as op
 import os
 
 
 refresh = 0 # Creates defaultpeople.ppl rather than copares
 eps = 1e-3 # Don't expect a totally exact match
-filename = 'defaultraw.npy'
+filename = 'proptxtestraw.npy'
 
 P = op.defaults.defaultproject('generalized')
+P.results = op.odict() # Clear
+
+# TEMP
+pars = P.parsets[0].pars[0]
+pars['proptx'].t[0] = [0, 2017.7, 2017.8, 2018.0, 2020.0, 2025.0]
+pars['proptx'].y[0] = [nan, nan, 0.6, 0.7, 0.8, 0.9]
+P.runsim()
+
 newraw = P.results[0].raw[0]
 
 if refresh or not(os.path.exists(filename)):
