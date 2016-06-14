@@ -252,7 +252,9 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
             objectives=objectives,
             constraints=constraints
         )
-        print "result", result
+        result.name = "optim-" + result.name
+        result.parsetname = parset_name
+        print "Creating result '%s'" % result.name
     except Exception:
         var = traceback.format_exc()
         print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, optimization_name, 'optimization', var))

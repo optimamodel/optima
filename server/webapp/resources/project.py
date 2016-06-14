@@ -23,7 +23,7 @@ from server.webapp.parse import get_default_populations
 from server.webapp.resources.common import (
     file_resource, file_upload_form_parser, report_exception, verify_admin_request)
 from server.webapp.dataio import (
-    load_project_record, save_result_record, delete_spreadsheet, get_project_parameters,
+    load_project_record, load_project, save_result_record, delete_spreadsheet, get_project_parameters,
     load_project_program_summaries)
 
 
@@ -411,103 +411,75 @@ class ProjectSpreadsheet(Resource):
             # deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
-    @swagger.operation(
-        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        summary='Upload the project workbook',
-        parameters=file_upload_form_parser.swagger_parameters()
-    )
-    @report_exception
+    @swagger.operation(summary='Upload the project workbook')
     @marshal_with(file_resource)
     def post(self, project_id):
 
-        # TODO replace this with app.config
-        DATADIR = current_app.config['UPLOAD_FOLDER']
-        CALIBRATION_TYPE = 'calibration'
-
-        current_app.logger.debug(
-            "PUT /api/project/%s/spreadsheet" % project_id)
+        print ">>>> Load spreadsheet"
 
         project_record = load_project_record(project_id, raise_exception=True)
-
         project_name = project_record.name
-        user_id = current_user.id
-        current_app.logger.debug(
-            "uploadExcel(project id: %s user:%s)" % (project_id, user_id))
 
         args = file_upload_form_parser.parse_args()
-        uploaded_file = args['file']
 
         # getting current user path
-        loaddir = upload_dir_user(DATADIR)
-        if not loaddir:
-            loaddir = DATADIR
-
+        # TODO replace this with app.config
+        uploaded_file = args['file']
+        data_dir = current_app.config['UPLOAD_FOLDER']
+        load_dir = upload_dir_user(data_dir)
+        if not load_dir:
+            load_dir = data_dir
         source_filename = uploaded_file.source_filename
-
         filename = secure_filename(project_name + '.xlsx')
-        server_filename = os.path.join(loaddir, filename)
+        server_filename = os.path.join(load_dir, filename)
         uploaded_file.save(server_filename)
 
-        # See if there is matching project
-        current_app.logger.debug("project for user %s name %s: %s" % (
-            current_user.id, project_name, project_record))
-
-        # from optima.utils import saves  # , loads
-        # from optima.parameters import Parameterset
+        parset_name = "default"
         from server.webapp.dbmodels import ParsetsDb
         parset_records = ParsetsDb.query.filter_by(project_id=project_id)
         parset_names = [p.name for p in parset_records]
-        db.session.flush()
-
-        project_record = load_project_record(project_id)
-        project = project_record.hydrate()
-
-        parset_name = "default"
-        print parset_name, parset_names
         if parset_name in parset_names:
             parset_name = "uploaded from " + uploaded_file.source_filename
             i = 0
             while parset_name in parset_names:
                 i += 1
                 parset_name = "uploaded_from_%s (%d)" % (uploaded_file.source_filename, i)
+
+        project = project_record.hydrate()
+        # Load parset from spreadsheet, will also runsim and store result
         project.loadspreadsheet(server_filename, parset_name)
 
         project.modified = datetime.now(dateutil.tz.tzutc())
-        current_app.logger.info(
-            "after spreadsheet uploading: %s" % project)
-
-        result = project.runsim()
-        current_app.logger.info(
-            "runsim result for project %s: %s" % (project_id, result))
-
-        #   now, update relevant project_entry fields
-        # this adds to db.session all dependent entries
         project_record.restore(project)
         db.session.add(project_record)
 
-        result_record = save_result_record(project_record.id, result)
+        from server.webapp.dataio import update_or_create_parset_record
+        parset = project.parsets[parset_name]
+        parset_record = update_or_create_parset_record(project_id, parset_name, parset)
+        print ">>>> Store uploaded parset '%s'" % (parset_name)
+        db.session.add(parset_record)
+        db.session.flush()
+
+        result = project.results[-1]
+        result_record = save_result_record(project_id, result, parset_name, "calibration")
+        print ">>>> Store result(calibration) '%s'" % (result.name)
         db.session.add(result_record)
 
         # save data upload timestamp
         data_upload_time = datetime.now(dateutil.tz.tzutc())
-        # get file data
-        filedata = open(server_filename, 'rb').read()
-        # See if there is matching project data
-        projdata = ProjectDataDb.query.get(project_record.id)
+        file_data = open(server_filename, 'rb').read()
 
-        # update existing
-        if projdata is not None:
-            projdata.meta = filedata
-            projdata.updated = data_upload_time
+        project_data_record = ProjectDataDb.query.get(project_id)
+        if project_data_record is not None:
+            # update existing
+            project_data_record.meta = file_data
+            project_data_record.updated = data_upload_time
         else:
             # create new project data
-            projdata = ProjectDataDb(
-                project_id=project_record.id,
-                meta=filedata,
-                updated=data_upload_time)
+            project_data_record = ProjectDataDb(
+                project_id=project_id, meta=file_data, updated=data_upload_time)
+        db.session.add(project_data_record)
 
-        # Save to db
-        db.session.add(projdata)
         db.session.commit()
 
         reply = {
@@ -792,6 +764,7 @@ class ProjectFromData(Resource):
         db.session.add(project_record)
         db.session.flush()
 
+        result = None
         if project.data:
             assert (project.parsets)
             result = project.runsim()
@@ -802,8 +775,8 @@ class ProjectFromData(Resource):
         db.session.add(project_record)
         db.session.flush()
 
-        if project.data:
-            result_record = save_result_record(project_record.id, result)
+        if result is not None:
+            result_record = save_result_record(str(project_record.id), result)
             db.session.add(result_record)
 
         db.session.commit()
