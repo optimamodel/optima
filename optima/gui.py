@@ -105,6 +105,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
+        for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
         plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
     
     return None
