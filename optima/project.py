@@ -3,6 +3,7 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, 
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
+from numpy import argmin, array
 import os
 
 #######################################################################################################
@@ -487,7 +488,7 @@ class Project(object):
         projectBOC = BOC(name='BOC')
         if objectives == None:
             printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
+            objectives = defaultobjectives(project=self, progset=progsetname)
         projectBOC.objectives = objectives
         
         if parsetname is None:
@@ -507,19 +508,25 @@ class Project(object):
                     printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
-            budgetlist = [x*baseline for x in [0.1,0.3,0.6,1.0,3.0,6.0,10.0]]
+            budgetlist = [x*baseline for x in [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0]] # Start from original, go down, then go up
                 
         results = None
         owbudget = None
-        for budget in budgetlist:
+        tmptotals = []
+        tmpallocs = []
+        for i,budget in enumerate(budgetlist):
+            print('Running budget %i/%i (%0.0f)' % (i+1, len(budgetlist), budget))
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
-            if results != None:
-                owbudget = dcp(results.budget['Optimal allocation'])
+            if len(tmptotals):
+                closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
+                owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
             results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            tmptotals.append(budget)
+            tmpallocs.append(dcp(results.budget['Optimal allocation']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
@@ -549,7 +556,7 @@ class Project(object):
         return None
     
     
-    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
+    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
         from pylab import title, show
         if boc is None:
@@ -560,7 +567,7 @@ class Project(object):
             print('Plotting BOC for "%s"...' % self.name)
         else:
             print('Plotting BOC derivative for "%s"...' % self.name)
-        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget=optbudget, baseline=baseline)
         title('Project: %s' % self.name)
         if returnplot: return ax
         else: show()
