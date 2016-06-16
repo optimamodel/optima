@@ -557,9 +557,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if not(isnan(proptx[t])): # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
-                totnewtreat =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
+                totnewtreat =  max(0,(proptx[t]*currcare - currtx).sum()) # this is not meant to be split by population -- WARNING, not sure about max
             else:
-                totnewtreat = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
+                totnewtreat = max(0,numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
                 
             for cd4 in reversed(range(ncd4)):  # Going backwards so that lower CD4 counts move onto treatment first
                 if cd4>0: 
@@ -712,7 +712,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if not(isnan(proptx[t])):
                 currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum()
-                totnewtreat =  proptx[t] * currdx - currtx 
+                totnewtreat =  max(0,proptx[t] * currdx - currtx)
             else:
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
             tmpnewtreat = totnewtreat # Copy for modification later
