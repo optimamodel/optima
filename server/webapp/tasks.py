@@ -225,7 +225,6 @@ def run_autofit(project_id, parset_name, maxtime=60):
         parset = get_parset_from_project(project, parset_name)
         update_or_create_parset_record(
             project_id, parset_name, parset, db_session)
-
         result_record = save_result_record(
             project_id, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()

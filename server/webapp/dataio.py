@@ -186,6 +186,7 @@ def update_or_create_parset_record(project_id, name, parset, db_session=None):
 
         db_session.add(parset_record)
     else:
+        db_session.query(ResultsDb).filter_by(project_id=project_id, parset_id=parset_record.id).delete()
         parset_record.updated = datetime.now(dateutil.tz.tzutc())
         parset_record.name = name
         parset_record.pars = saves(parset.pars)
