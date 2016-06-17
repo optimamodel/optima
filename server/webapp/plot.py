@@ -29,8 +29,9 @@ def reformat(figure):
             labels = legend.get_texts()
             n_label = len(labels)
             if n_label == 1:
-                axes.legend_.remove()
-                return 0
+                if 'Model' in labels[0].get_text():
+                    axes.legend_.remove()
+                    return 0
 
             # ensure every graph has a ylabel
             # this is needed to allow the hack that
