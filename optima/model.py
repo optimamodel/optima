@@ -220,7 +220,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         
         # Treatment & treatment failure
-        fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
+        if sum(allinfected): fractotal = popinfected / sum(allinfected) # Fractional total of infected people in this population
+        else:                fractotal = 0 # If there's no one infected, reset to 0
         treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
         if debug and treatment>popinfected: # More people on treatment than ever infected, uh oh!
             errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
@@ -804,7 +805,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
                 thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
                 mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT

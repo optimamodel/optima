@@ -104,7 +104,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -115,7 +115,7 @@ class Project(object):
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
-        if dorun: self.runsim(name, addresult=True)
+        if dorun: self.runsim(name, addresult=True, **kwargs)
         return None
 
 
@@ -356,18 +356,22 @@ class Project(object):
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
 
-        # Run the model!
+        # Run the model! -- wARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind in range(len(simparslist)):
-            try:
+            if debug: # Should this be die?
+                print('sdlfkdfdjfjdkfdkfdkdkjfkdjdf')
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-                if not (raw['people']>=0).all(): # Check for negative people
-                    printv('Negative people found with runsim(); rerunning with a smaller timestep...')
-                    self.settings.dt /= 4
+            else:
+                try:
                     raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            except:
-                printv('Running model failed; running again with debugging...', 1, verbose)
-                raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    if not (raw['people']>=0).all(): # Check for negative people
+                        printv('Negative people found with runsim(); rerunning with a smaller timestep...')
+                        self.settings.dt /= 4
+                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                except:
+                    printv('Running model failed; running again with debugging...', 1, verbose)
+                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
