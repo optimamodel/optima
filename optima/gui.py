@@ -179,6 +179,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
     for label in check.labels: # Loop over each checkbox
         thispos = label.get_position() # Get their current location
         label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
+    rearrangeboxes()
     updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
     clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
     closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
@@ -188,6 +189,12 @@ def pygui(tmpresults, toplot=None, verbose=2):
     updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
 
 
+def rearrangeboxes():
+    ''' Rearrange the check boxes so that total, stacked, and per population are in separate columns '''
+    global check
+    import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+    return None
+    
 
 
 
