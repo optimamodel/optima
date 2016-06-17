@@ -70,8 +70,10 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
 def closegui(event=None):
     ''' Close all GUI windows '''
     global plotfig, panelfig
-    close(plotfig)
-    close(panelfig)
+    try: close(plotfig)
+    except: pass
+    try: close(panelfig)
+    except: pass
 
 
 
@@ -397,11 +399,11 @@ def manualfit(project=None, name='default', ind=0, verbose=2, **kwargs):
     
     
     def resetpars():
-        ''' Reset the parameters to the last saved version '''
+        ''' Reset the parameters to the last saved version -- WARNING, doesn't work '''
         global origpars, tmppars, parset
         tmppars = dcp(origpars)
         parset.pars[0] = tmppars
-        populatelists()
+#        populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
