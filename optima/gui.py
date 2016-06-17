@@ -114,7 +114,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(tmpresults, toplot=None):
+def pygui(tmpresults, toplot=None, verbose=2):
     '''
     PYGUI
     
@@ -149,9 +149,21 @@ def pygui(tmpresults, toplot=None):
     checkboxnames = plotselections['names']
     if toplot is None or toplot=='default': isselected = plotselections['defaults']
     else:
+        if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+        tmptoplot = dcp(toplot) # Make a copy to compare arguments
         isselected = []
         for key in checkboxes:
-            isselected.append(True if key in toplot else False)
+            if key in toplot:
+                isselected.append(True)
+                tmptoplot.remove(key)
+            else:
+                isselected.append(False)
+    if len(tmptoplot)!=0:
+        errormsg = 'Not all keys were recognized; mismatched ones were:\n'
+        errormsg += '%s\n' % tmptoplot
+        errormsg += 'Available keys are:\n'
+        errormsg += '%s' % checkboxes
+        printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
     figwidth = 7
@@ -173,7 +185,7 @@ def pygui(tmpresults, toplot=None):
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
-    updateplots(None) # Plot initially
+    updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
 
 
 
