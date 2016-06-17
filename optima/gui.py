@@ -153,10 +153,12 @@ def pygui(tmpresults, toplot=None, verbose=2):
     checkboxnames = plotselections['names']
     if toplot is None or toplot=='default': isselected = plotselections['defaults']
     else:
+        if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
         isselected = []
         for key in checkboxes:
-            isselected.append(True if key in toplot else False)
-            toplot.pop(key)
+            if key in toplot:
+                isselected.append(key)
+                toplot.remove(key)
     if len(toplot)!=0:
         errormsg = 'Not all keys were recognized; mismatched ones were:\n%s' % toplot
         printv(errormsg, 1, verbose=verbose)
