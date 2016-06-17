@@ -195,9 +195,6 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
         Version: 2016jan21
         '''
         
-        print 'HI'
-        print toplot
-        
         # Figure out what kind of result it is
         if type(results)==Resultset: ismultisim = False
         elif type(results)==Multiresultset:
