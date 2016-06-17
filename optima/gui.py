@@ -176,21 +176,9 @@ def pygui(tmpresults, toplot=None, verbose=2):
     clearaxes    = axes([0.4, 0.05, 0.2, 0.03]) # Create close button location
     closeaxes    = axes([0.7, 0.05, 0.2, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
-    rearrangeboxes() # Change the layout of the boxes
-    updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
-    clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
-    closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
-    updatebutton.on_clicked(updateplots) # Update figure if button is clicked
-    clearbutton.on_clicked(clearselections) # Clear all checkboxes
-    closebutton.on_clicked(closegui) # Close figures
-    updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
-
-
-def rearrangeboxes():
-    ''' Rearrange the check boxes so that total, stacked, and per population are in separate columns '''
-    global check
     
-    totstr = ' -- total' # WARNING, these should not be explicit!!!!!
+    # Reformat the checkboxes
+    totstr = ' -- total' # analysis:ignore WARNING, these should not be explicit!!!!!
     perstr = ' -- per population'
     stastr = ' -- stacked'
     nboxes = len(check.rectangles)
@@ -199,14 +187,18 @@ def rearrangeboxes():
         labeltext = label.get_text()
         labelpos = label.get_position()
         label.set_position((labelpos[0]*0.5,labelpos[1])) # Not sure why by default the check boxes are so far away
-        if labeltext.endswith(totstr):
-            label.set_text(labeltext[:-len(totstr)])
-            label.set_weight('bold')
-        if labeltext.endswith(perstr):
-            label.set_text('Per population') # Clear label
-        if labeltext.endswith(stastr):
-            label.set_text('Stacked') # Clear label
-    return None
+        if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
+        elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
+        else:                             label.set_weight('bold')
+    
+    updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
+    clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
+    closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
+    updatebutton.on_clicked(updateplots) # Update figure if button is clicked
+    clearbutton.on_clicked(clearselections) # Clear all checkboxes
+    closebutton.on_clicked(closegui) # Close figures
+    updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
+
     
 
 
