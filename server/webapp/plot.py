@@ -20,6 +20,39 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
+def reformat(figure):
+    figure.set_size_inches(6, 3.2)
+    n_label = 0
+    for axes in figure.axes:
+        legend = axes.get_legend()
+        if legend is not None:
+            labels = legend.get_texts()
+            n_label = len(labels)
+            if n_label == 1:
+                axes.legend_.remove()
+                return 0
+
+            # ensure every graph has a ylabel
+            # this is needed to allow the hack that
+            # fixes the bug where legend lines are lost
+            # that hack assumes that the number of text
+            # labels in the axes - 3 (title, xlabel, ylabel)
+            # gives the number of legend lines
+            title = axes.get_title()
+            ylabel = axes.get_ylabel()
+            if not ylabel:
+                axes.set_ylabel(title)
+
+            # Put a legend to the right of the current axis
+            box = axes.get_position()
+            axes.set_position(
+                [box.x0, box.y0, box.width * 0.8, box.height])
+            legend._loc = 2
+            legend.set_bbox_to_anchor((1, 1.02))
+
+    return n_label
+
+
 def make_mpld3_graph_dict(result, which=None):
     """
     Converts an Optima sim Result into a dictionary containing
@@ -72,11 +105,14 @@ def make_mpld3_graph_dict(result, which=None):
 
     for graph_key in graphs:
         # Add necessary plugins here
-        mpld3.plugins.connect(
-            graphs[graph_key],
-            mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+        graph = graphs[graph_key]
 
+        plugin = mpld3.plugins.MousePosition(fontsize=14, fmt='.4r')
+        mpld3.plugins.connect(graph, plugin)
+
+        n_label = reformat(graph)
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
+        mpld3_dict['nLengendLabel'] = n_label
 
         # get rid of NaN
         mpld3_dict = normalize_obj(mpld3_dict)

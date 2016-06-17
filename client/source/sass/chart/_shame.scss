@@ -31,3 +31,13 @@
   shape-rendering: crispEdges;
   pointer-events: none;
 }
+
+.tick text {
+  font-size: 6px; !important;
+  font-family: Arial, sans-serif;
+}
+
+.mpld3-text {
+  font-size: 10px; !important;
+  font-family: Arial, sans-serif;
+}
