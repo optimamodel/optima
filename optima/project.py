@@ -360,7 +360,6 @@ class Project(object):
         rawlist = []
         for ind in range(len(simparslist)):
             if debug: # Should this be die?
-                print('sdlfkdfdjfjdkfdkfdkdkjfkdjdf')
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
             else:
                 try:
