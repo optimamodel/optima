@@ -33,9 +33,6 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
     Version: 1.3 (2016jan25) by cliffk
     '''
     
-    print "GASH"
-    print toplot
-    
     if 'figsize' not in kwargs: kwargs['figsize'] = (14,10) # Default figure size
     if fig is None: fig = figure(facecolor=(1,1,1), **kwargs) # Create a figure based on supplied kwargs, if any
     
@@ -115,7 +112,7 @@ def updateplots(event=None, tmpresults=None, **kwargs):
 
 
 
-def pygui(tmpresults, toplot=None, verbose=2):
+def pygui(tmpresults, toplot=None):
     '''
     PYGUI
     
@@ -136,9 +133,6 @@ def pygui(tmpresults, toplot=None, verbose=2):
     Version: 1.2 (2016feb04)
     '''
     
-    print "MOOOO"
-    print toplot
-    
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
     elif type(tmpresults) not in [Resultset, Multiresultset]:
@@ -153,15 +147,9 @@ def pygui(tmpresults, toplot=None, verbose=2):
     checkboxnames = plotselections['names']
     if toplot is None or toplot=='default': isselected = plotselections['defaults']
     else:
-        if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
         isselected = []
         for key in checkboxes:
-            if key in toplot:
-                isselected.append(key)
-                toplot.remove(key)
-    if len(toplot)!=0:
-        errormsg = 'Not all keys were recognized; mismatched ones were:\n%s' % toplot
-        printv(errormsg, 1, verbose=verbose)
+            isselected.append(True if key in toplot else False)
     
     ## Set up control panel
     figwidth = 7
@@ -183,7 +171,7 @@ def pygui(tmpresults, toplot=None, verbose=2):
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
-    updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
+    updateplots(None) # Plot initially
 
 
 
