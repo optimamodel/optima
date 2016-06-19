@@ -158,12 +158,12 @@ def pygui(tmpresults, toplot=None, verbose=2):
                 tmptoplot.remove(key)
             else:
                 isselected.append(False)
-    if len(tmptoplot)!=0:
-        errormsg = 'Not all keys were recognized; mismatched ones were:\n'
-        errormsg += '%s\n' % tmptoplot
-        errormsg += 'Available keys are:\n'
-        errormsg += '%s' % checkboxes
-        printv(errormsg, 1, verbose=verbose)
+        if len(tmptoplot)!=0:
+            errormsg = 'Not all keys were recognized; mismatched ones were:\n'
+            errormsg += '%s\n' % tmptoplot
+            errormsg += 'Available keys are:\n'
+            errormsg += '%s' % checkboxes
+            printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
     figwidth = 7
