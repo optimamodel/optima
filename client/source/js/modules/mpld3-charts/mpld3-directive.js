@@ -348,7 +348,7 @@ define(
           } else {
             result = false;
           }
-          console.log('graph ' + iGraph + ':' + graph_selector + ' is ' + result + '-' + selector);
+          // console.log('graph ' + iGraph + ':' + graph_selector + ' is ' + result + '-' + selector);
           return result;
         }
 

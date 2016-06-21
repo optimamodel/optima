@@ -96,7 +96,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       console.log("graph_selectors", $scope.graphs.graph_selectors);
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
+      $scope.resultId = calibration.resultId;
     };
+
+    $scope.exportData = function() {
+      console.log('resultId', $scope.resultId);
+      $http.get(
+        '/api/results/' + $scope.resultId,
+        {
+          headers: {'Content-type': 'application/octet-stream'},
+          responseType: 'blob'
+        })
+      .success(function (response) {
+        var blob = new Blob([response], { type: 'application/octet-stream' });
+        saveAs(blob, ('export_graphs.csv'));
+      });
+    }
 
     // Reset changes made in parameters
     $scope.resetParameters = function() {
