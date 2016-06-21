@@ -21,7 +21,7 @@ def extract_graph_selector(graph_key):
 
 
 def reformat(figure):
-    figure.set_size_inches(6, 3.2)
+    figure.set_size_inches(6, 3)
     n_label = 0
     for axes in figure.axes:
         legend = axes.get_legend()
@@ -29,21 +29,10 @@ def reformat(figure):
             labels = legend.get_texts()
             n_label = len(labels)
 
-            # ensure every graph has a ylabel
-            # this is needed to allow the hack that
-            # fixes the bug where legend lines are lost
-            # that hack assumes that the number of text
-            # labels in the axes - 3 (title, xlabel, ylabel)
-            # gives the number of legend lines
-            title = axes.get_title()
-            ylabel = axes.get_ylabel()
-            if not ylabel:
-                axes.set_ylabel(title)
-
             # Put a legend to the right of the current axis
             box = axes.get_position()
             axes.set_position(
-                [box.x0, box.y0, box.width * 0.8, box.height])
+                [box.x0, box.y0+box.height*0.1, box.width * 0.75, box.height*0.9])
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.02))
 
