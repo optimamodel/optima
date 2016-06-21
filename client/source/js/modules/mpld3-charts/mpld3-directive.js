@@ -342,10 +342,14 @@ define(
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
           var selector = _.findWhere(scope.graphs.selectors, { key: graph_selector });
+          var result;
           if (!_.isUndefined(selector) && (selector.checked)) {
-            return true;
-          };
-          return false;
+            result = true;
+          } else {
+            result = false;
+          }
+          console.log('graph ' + iGraph + ':' + graph_selector + ' is ' + result + '-' + selector);
+          return result;
         }
 
         scope.$watch(

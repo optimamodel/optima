@@ -170,8 +170,10 @@ def delete_spreadsheet(name, user_id=None):
             os.remove(spreadsheet_file)
 
 
-def update_or_create_parset_record(project_id, name, parset):
-    parset_record = ParsetsDb.query.filter_by(id=parset.uid, project_id=project_id).first()
+def update_or_create_parset_record(project_id, name, parset, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    parset_record = db_session.query(ParsetsDb).filter_by(id=parset.uid, project_id=project_id).first()
     if parset_record is None:
         parset_record = ParsetsDb(
             id=parset.uid,
@@ -182,12 +184,13 @@ def update_or_create_parset_record(project_id, name, parset):
             pars=saves(parset.pars)
         )
 
-        db.session.add(parset_record)
+        db_session.add(parset_record)
     else:
+        db_session.query(ResultsDb).filter_by(project_id=project_id, parset_id=parset_record.id).delete()
         parset_record.updated = datetime.now(dateutil.tz.tzutc())
         parset_record.name = name
         parset_record.pars = saves(parset.pars)
-        db.session.add(parset_record)
+        db_session.add(parset_record)
     return parset_record
 
 

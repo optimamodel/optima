@@ -7,12 +7,14 @@ from server.webapp.utils import normalize_obj
 
 
 def extract_graph_selector(graph_key):
-    s = repr(graph_key)
+    s = repr(str(graph_key))
     base = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
     if "'t'" in s:
         suffix = "-tot"
     elif "'p'" in s:
         suffix = "-per"
+    elif "'s'" in s:
+        suffix = "-sta"
     else:
         suffix = ""
     return base + suffix
@@ -55,11 +57,19 @@ def make_mpld3_graph_dict(result, which=None):
 
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
-    which = keys
+    else:
+        for selector in selectors:
+            selector['checked'] = selector['key'] in which
+
+    for selector in selectors:
+        if not selector['checked']:
+            selector['name'] = '(unloaded) ' + selector['name']
+
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []
     mpld3_graphs = []
+
     for graph_key in graphs:
         # Add necessary plugins here
         mpld3.plugins.connect(
@@ -68,7 +78,7 @@ def make_mpld3_graph_dict(result, which=None):
 
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
 
-        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+        # get rid of NaN
         mpld3_dict = normalize_obj(mpld3_dict)
 
         graph_selectors.append(extract_graph_selector(graph_key))
