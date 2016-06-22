@@ -2,7 +2,7 @@
 <div class="rich">
 
   <div class="grid" style="margin: 0px 0px;">
-    <h1>Calibration</h1>
+    <h1>Automatic Calibration</h1>
   </div>
 
   <div class="3">
@@ -43,9 +43,11 @@
         width: 100%;
         height: calc(100vh - 320px)">
 
-    <div class="small_bordered_list"
-         style="flex: 0 0 280px;"
-         ng-if="parameters.length > 0">
+    <div
+         style="
+             border: 1px solid #DDD;
+             padding: 10px;
+             flex: 0 0 280px;">
       Run auto-fit for&nbsp;
       &nbsp;
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
@@ -56,9 +58,11 @@
         <option value="600">10 minutes</option>
         <option value="1800">30 minutes</option>
       </select>
-      &nbsp;
+      <br>
+      <br>
       <button class="btn __m" ng-click="startAutoCalibration()">Autofit</button>
-      &nbsp;
+      <br>
+      <br>
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
       <span style="color: #00aeef;"> {{ saveSuccessMessage }} </span>
     </div>
