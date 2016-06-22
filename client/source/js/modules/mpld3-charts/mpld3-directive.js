@@ -379,21 +379,9 @@ define(
             _.each(scope.graphs.mpld3_graphs, function (g, i) {
               g.isChecked = function () { return isChecked(i); };
             });
-            var parent = $(elem).parent();
-            scope.height = parent.height();
           }
         );
 
-        scope.onResize = function () {
-          var parent = $(elem).parent();
-          scope.height = parent.height();
-          // console.log("resize", parent, scope.height);
-          scope.$apply();
-        };
-
-        $(window).bind('resize', function () {
-          scope.onResize();
-        })
       }
     };
   });
