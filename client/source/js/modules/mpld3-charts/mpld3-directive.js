@@ -24,24 +24,32 @@ define(
       text = val2str(val, 1E9, 'b')
     } else if (val >= 1E6) {
       text = val2str(val, 1E6, 'm')
-    } else if (val >= 1E3) {
+    } else if (val >= 3E3) {
       text = val2str(val, 1E3, 'k')
     }
     return text;
   }
 
 
-  function reformatFigure($figure) {
-    var $yaxis = $figure.find('.mpld3-yaxis');
-    var $labels = $yaxis.find('g.tick > text');
-    $labels.each(function () {
-      var $label = $(this);
-      var text = $label.text().replace(/,/g, '');
-      var newText = reformatValStr(text);
-      $label.text(newText);
-    });
+  function addLineToLegendLabel($svgFigure) {
+      // add lines in legend labels
+      var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
+      if ($textLabels) {
+        // the legend path is stored under .mpd3-axes, and needs
+        // to be moved into the .mpld3-baseaxes, it's presumably
+        // the last path under .mpld3-axes
+        // so need to work out how many entries in legend
+        // it is the the number of textlabels - title and axe labels
+        var nLegendLabels = $textLabels.length - 3;
+        var $paths = $svgFigure.find('.mpld3-axes > path');
+        var $pathsToCopy = $paths.slice($paths.length - nLegendLabels, $paths.length);
+        var $baseAxes = $svgFigure.find('.mpld3-baseaxes')
+        $baseAxes.append($pathsToCopy);
+      }
+  }
 
-    $figure.find('svg.mpld3-figure').each(function () {
+  function reformatAllFigures($allFigures) {
+    $allFigures.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
 
       // move mouse-over to bottom right corner
@@ -55,15 +63,26 @@ define(
         });
       });
 
-      // add lines in legend labels
-      var $axesLabels = $svgFigure.find('.mpld3-baseaxes > text');
-      if ($axesLabels) {
-        var nLegendLabels = $axesLabels.length - 2;
-        var $paths = $svgFigure.find('.mpld3-axes > path');
-        var $pathsToCopy = $paths.slice($paths.length - nLegendLabels, $paths.length);
-        $svgFigure.find('.mpld3-baseaxes').append($pathsToCopy);
-      }
-    })
+      addLineToLegendLabel($svgFigure);
+    });
+
+    var $yaxis = $allFigures.find('.mpld3-yaxis');
+    var $labels = $yaxis.find('g.tick > text');
+    $labels.each(function () {
+      var $label = $(this);
+      var text = $label.text().replace(/,/g, '');
+      var newText = reformatValStr(text);
+      $label.text(newText);
+    });
+
+    var $yaxis = $allFigures.find('.mpld3-xaxis');
+    var $labels = $yaxis.find('g.tick > text');
+    $labels.each(function () {
+      var $label = $(this);
+      var text = $label.text().replace(/,/g, '');
+      var newText = reformatValStr(text);
+      $label.text(newText);
+    });
   }
 
 
@@ -321,7 +340,7 @@ define(
             $element.html("");
             mpld3.draw_figure(attrs.chartId, figure);
 
-            reformatFigure($element);
+            reformatAllFigures($element);
           },
           true
         );
@@ -342,10 +361,13 @@ define(
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
           var selector = _.findWhere(scope.graphs.selectors, { key: graph_selector });
+          var result;
           if (!_.isUndefined(selector) && (selector.checked)) {
-            return true;
-          };
-          return false;
+            result = true;
+          } else {
+            result = false;
+          }
+          return result;
         }
 
         scope.$watch(
