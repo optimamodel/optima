@@ -159,7 +159,6 @@ class RequestParser(OrigReqParser):
 
 
 TEMPLATEDIR = "/tmp" # CK: hotfix to prevent ownership issues
-PROJECTDIR = "/tmp"
 
 
 def fullpath(filename, datadir=None):
