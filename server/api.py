@@ -10,12 +10,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask_restful_swagger import swagger
 
-new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-if new_path not in sys.path:
-    print "appending to sys.path: %s" % new_path
-    sys.path.append(new_path)
-
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
