@@ -169,7 +169,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, uniformgrowth=True, doplot=False, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -225,7 +225,10 @@ def data2popsize(data=None, keys=None, blh=0, uniformgrowth=True, doplot=False, 
     
     if uniformgrowth:
         for key in keys:
-            par.p[key][1] = par.p[largestpopkey][1] # Reset to match the largest population
+            par.p[key][1] = par.p[largestpopkey][1] # Reset exponent to match the largest population
+            meanpopulationsize = mean(sanitizedy[key]) # Calculate the mean of all the data
+            weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
+            par.p[key][0] = meanpopulationsize*(1+par.p[key][1])**(startyear-weightedyear) # Project backwards to starting population size
     
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
