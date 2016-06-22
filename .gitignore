@@ -6,6 +6,8 @@ server/p-env
 server/build
 server/static
 server/config.py
+*/node_modules/
+node_modules/
 *.log
 optima.egg-info/*
 optima.egg-info/
