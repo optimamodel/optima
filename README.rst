@@ -95,7 +95,7 @@ For usage examples, see the scripts in the `tests` folder. In particular, `testw
 
 *For further details, see server/db/README.md*
 
-## 3.1 Installing postgres 
+## 3.1 Installing PostgreSQL
 
 On mac, install the `postgres` software with:
 
@@ -224,9 +224,6 @@ _On Mac_:
     ln -sfv /usr/local/opt/redis/*.plist ~/Library/LaunchAgents
     lunchy start redis
 
-Copy the `config.py`:
-
-    cp src/config.example.py src/config.py
 
 Run the server in two separate terminals. These scripts will start Python in a `virtualenv` isolated Python environments. First in one terminal:
 
