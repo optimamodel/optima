@@ -20,3 +20,7 @@ optima.egg-info/
 *.db
 *.prj
 *.prt
+build/
+dist/
+*~
+.tox/

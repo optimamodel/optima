@@ -30,7 +30,7 @@ CLASSIFIERS = [
 
 setup(
     name='optima',
-    version=__version__,
+    version=version,
     author='Cliff Kerr, Robyn Stuart, David Kedziora, Romesh Abeysuriya, Madhura Killedar, Anna Nachesa',
     author_email='info@optimamodel.com',
     description='Software package for modeling HIV epidemics',
