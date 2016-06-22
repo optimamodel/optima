@@ -4,29 +4,42 @@ from uuid import UUID
 import optima
 import numpy
 import datetime
+import types
 from dateutil import parser, tz
 
 
 def default(o):
 
     if isinstance(o, (optima.Project, optima.settings.Settings)):
-        o = {"optima_obj": o.__class__.__name__, "val": o.__dict__}
+        o = {"optima_obj": o.__class__.__name__, "val": default(o.__dict__)}
 
-    if isinstance(o, optima.odict):
-        o = {"optima_obj": "odict", "val": list(o.iteritems())}
+    elif isinstance(o, optima.odict):
+        o = {"optima_obj": "odict", "val": [(x, default(y)) for x, y in o.iteritems()]}
 
-    if isinstance(o, UUID):
+    elif isinstance(o, UUID):
         o = {"optima_obj": "UUID", "val": str(o.hex)}
 
-    if isinstance(o, numpy.ndarray):
+    elif isinstance(o, numpy.ndarray):
         o = {"optima_obj": "numpy.ndarray", "val": list(o)}
 
-    if isinstance(o, datetime.datetime):
+    elif isinstance(o, datetime.datetime):
         o.replace(tzinfo=tz.tzlocal())
         o = {"optima_obj": "datetime.datetime", "val": o.isoformat(" ")}
 
-    if isinstance(o, tuple):
-        o = {"optima_obj": "tuple", "val": list(o)}
+    elif isinstance(o, tuple):
+        o = {"optima_obj": "tuple", "val": [default(x) for x in o]}
+
+    elif isinstance(o, (str, unicode, float, int, long, types.NoneType)):
+        pass
+
+    elif isinstance(o, list):
+        o = [default(x) for x in o]
+
+    elif isinstance(o, dict):
+        o = {x:default(y) for x,y in o.iteritems()}
+
+    else:
+        raise ValueError("Don't know this.")
 
     return o
 
@@ -73,21 +86,27 @@ def decode(o):
             elif optima_obj == "tuple":
                 o = tuple(val)
 
+
             else:
                 assert False, o
 
         return o
 
+def dump(obj):
+
+    return default(obj)
+
+
 
 if __name__ == "__main__":
 
     p = optima.Project()
-    js = json.dumps(p, default=default, tuple_as_array=False)
+
+    print(json.dumps(dump(p)))
+
+    js = json.dumps(dump(p))
     z = json.loads(js, object_hook=decode)
 
     from deepdiff import DeepDiff
-    from pprint import pprint
-
-    print(js)
 
     print(DeepDiff(p.__dict__, z.__dict__))
