@@ -167,70 +167,17 @@ psql -d optima -c "ALTER USER optima with SUPERUSER;"
 
 
 
-
 # 4. Client setup
 
 *For further details, see client/README.md*
 
 This has been made using seed project [ng-seed](https://github.com/StarterSquad/ngseed/wiki)
 
-
-## 4.1 Installing nginx
-
-0. Install nginx:
-
-   - on Mac, use brew:  `brew install nginx` 
-   - on Ubuntu:  `sudo apt-get install nginx`
-   - on CentOS:  `sudo yum install nginx`
-
-   After install, run:  
-
-        sudo nginx
-
-0. Copy `client/nginx.conf.example` to your own file, say `client/optima.nginx.conf`.
-
-0. Edit `client/optima.nginx.conf` and replace:
-
-     - line 3: `YOUR_USER_NAME` with your unix/mac username.
-     - line 3: `YOUR_GROUP` with your unix/mac user group.
-     - line 38: `ABSOLUTE_PATH_TO_PROJECT_SOURCE` with you local Optima path 
-     - line 106: `ABSOLUTE_PATH_TO_LOG_FILE` with the location for your nginx log file.
-
-0. Enable the new configuration:
-   - on Mac:
-      - Copy the file created in step 2 to `/usr/local/etc/nginx/servers`, or  
-      - Go to you local nginx configuration folder (usually: `/usr/local/etc/nginx`). And open `nginx.conf`, add a line there to include the nginx configuration file for Optima like:
-        ```
-        server {
-          ...
-          include {PATH_TO_CONFIG_FILE}/optima-nginx.conf;
-        }
-        ```
-        
-    - on Linux:
-      - copy the file created in step 2 to `/etc/nginx/sites-enabled/` (or copy it to `/etc/nginx/sites-available/` and create a symlink to it from `/etc/nginx/sites-enabled/`)
-
-0. *After any change to the configuration file*, restart `nginx`:
-    - on Mac, you can copy the `optima.nginx.conf` to the default locaition `/usr/local/etc/nginx/nginx.conf`, and then you run:
-
-          sudo nginx -s stop
-          sudo nginx
-
-       or you can run from your location:
-
-          sudo nginx -s stop
-          sudo nginx -c {YOUR_NGINX_CONF_LOC}
-    
-    - on Linux:  
-
-           sudo service nginx restart
-
-
-## 4.2 Installing the client
+## 4.1 Installing the client
 
 Run script:
 
-    client/clean_build.sh.
+    client/clean_build.sh
 
 In case you face issue in executing ./clean_build.sh you can alternatively execute commands:
 
@@ -245,8 +192,6 @@ In case you face issue in executing ./clean_build.sh you can alternatively execu
 
 
 
-
-
 # 5. Server setup
 
 *For further details, see server/README.md*
@@ -256,20 +201,21 @@ In case you face issue in executing ./clean_build.sh you can alternatively execu
 
 This component requires:
 
-- [pip](http://pip.readthedocs.org/en/latest/installing.html) - python packing manager
-- [PostgreSQL](http://www.postgresql.org/download/)  - relational database
+- [pip](http://pip.readthedocs.org/en/latest/installing.html) - python packaging manager
 - [VirtualEnv](http://virtualenv.readthedocs.org/en/latest/) - python environment manager
+- [tox](http://http://tox.readthedocs.org/) - virtualenv manager
+- [PostgreSQL](http://www.postgresql.org/download/)  - relational database
 - [Redis](http://redis.io/) - memory caching
 - [Celery](http://redis.io/) - distributed task queue
 
-Install virtual env:
+Install ``virtualenv`` and ``tox``:
 
-    pip install virtualenv
+    pip install virtualenv tox
 
-To install the Redis server.  
+To install the Redis server.
 _On Linux_:
 
-    sudo apt-get install redis-server  
+    sudo apt-get install redis-server
 
 _On Mac_:
 
@@ -278,25 +224,17 @@ _On Mac_:
     ln -sfv /usr/local/opt/redis/*.plist ~/Library/LaunchAgents
     lunchy start redis
 
-Install Celery:
-
-    pip install celery  
-
-The `run.sh` and `celery.sh` will automatically set up `config.py`, but you can do this manually:
+Copy the `config.py`:
 
     cp src/config.example.py src/config.py
 
 Run the server in two separate terminals. These scripts will start Python in a `virtualenv` isolated Python environments. First in one terminal:
 
-    ./celery.sh
+    tox -e celery
 
 Then in the other terminal:
 
-    ./run.sh
-
-To use pre-installed system-wide python libraries, you can also run the server using:  
-
-    ./run.sh --system
+    tox -e runserver
 
 ATTENTION: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
 
@@ -312,16 +250,17 @@ In order to run a single test file and activate logging you can use:
 
     test.sh /src/tests/project_test.py
 
-Same as with `run.sh`, you can use `--system` as first argument to `test.sh` in order to use pre-installed system-wide python libraries.
+You can use `--system` as first argument to `test.sh` in order to use pre-installed system-wide python libraries.
 
 Make sure you have user "test" with the password "test" and database "optima_test" in order to run the tests using database.
 
 
+
 # 6. Usage
 
-If all steps he been completed, run `run.sh` in the server directory, and then go to `http://optima.dev` in your browser (preferably Chrome). You should see the Optima login screen.
+If all steps have been completed, run ``tox -e runserver`` in the server directory, and then go to `http://optima.dev:8080` in your browser (preferably Chrome). You should see the Optima login screen.
 
-In order to use the application you need to login a registered user. In order to register a new user, visit <http://optima.dev/#/register>, and register using any details.
+In order to use the application you need to login a registered user. In order to register a new user, visit <http://optima.dev:8080/#/register>, and register using any details.
 
 Happy Optimaing!
 
