@@ -39,7 +39,7 @@ setup(
     keywords=['optima'],
     platforms=['OS Independent'],
     classifiers=CLASSIFIERS,
-    packages=find_packages(exclude=['optima']),
+    packages=find_packages(),
     include_package_data=True,
     install_requires=[
         'matplotlib>=1.4.2',
