@@ -1,8 +1,6 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath("../server/"))
-
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -36,7 +34,12 @@ base_resource.putChild('api', OptimaResource(wsgi_app))
 
 site = Site(base_resource)
 
-endpoint = serverFromString(reactor, "tcp:port=8080")
+try:
+    port = str(sys.argv[1])
+except IndexError:
+    port = "8080"
+
+endpoint = serverFromString(reactor, "tcp:port=" + port)
 endpoint.listen(site)
 
 reactor.run()
