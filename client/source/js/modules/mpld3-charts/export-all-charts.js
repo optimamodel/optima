@@ -10,7 +10,7 @@ function (angular, $, _, JsPdf) {
         name: '@',
         customTitles: '='
       },
-      template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export all figures</button>',
+      template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export Figures PDF</button>',
       link: function (scope, elem, attrs) {
 
         /**

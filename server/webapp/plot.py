@@ -109,6 +109,7 @@ def make_mpld3_graph_dict(result, which=None):
         'graphs': {
             "mpld3_graphs": mpld3_graphs,
             "selectors": selectors,
-            'graph_selectors': graph_selectors
+            'graph_selectors': graph_selectors,
+            'resultId': str(result.uid),
         }
     }

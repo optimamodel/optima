@@ -306,7 +306,7 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TY
     return result_record.hydrate()
 
 
-def save_result_record(
+def save_result(
         project_id, result, parset_name='default',
         calculation_type=ResultsDb.CALIBRATION_TYPE,
         db_session=None):
@@ -324,25 +324,18 @@ def save_result_record(
         raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
 
     # update results (after runsim is invoked)
-    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id)
-    result_records = [item for item in result_records
-                     if item.parset_id == parset.id
-                        and item.calculation_type == calculation_type]
-
+    result_id = str(result.uid)
+    result_record = db_session.query(ResultsDb).get(result_id)
     blob = op.saves(result)
-    if result_records:
-        if len(result_records) > 1:
-            abort(500, "Found multiple records for result (%s) of parset '%s'" % calculation_type, parset.name)
-        result_record = result_records[0]
-        result_record.blob = blob
-
-    if not result_records:
+    if not result_record:
         result_record = ResultsDb(
+            id = result_id,
             parset_id=str(parset.id),
             project_id=project_id,
             calculation_type=calculation_type,
             blob=blob)
-
+    else:
+        result_record.blob = blob
     return result_record
 
 

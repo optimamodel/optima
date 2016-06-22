@@ -352,11 +352,29 @@ define(
   });
 
 
-  module.directive('optimaGraphs', function () {
+  module.directive('optimaGraphs', function ($http) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
+
+        scope.exportAllData = function() {
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('resultId', resultId);
+          $http.get(
+            '/api/results/' + resultId,
+            {
+              headers: {'Content-type': 'application/octet-stream'},
+              responseType: 'blob'
+            })
+          .success(function (response) {
+            var blob = new Blob([response], { type: 'application/octet-stream' });
+            saveAs(blob, ('export_graphs.csv'));
+          });
+        };
 
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
