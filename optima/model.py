@@ -7,7 +7,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.4 (2016mar04)
+    Version: 1.5 (2016jun21)
     """
     
     ##################################################################################################################
@@ -35,6 +35,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     usecascade   = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
     eps          = settings.eps # Define another small number to avoid divide-by-zero errors
+    forcepopsize = settings.forcepopsize # Whether or not to force the population size to match the parameters
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
@@ -865,6 +866,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
+            
+            # If required, scale population sizes to exactly match the parameters
+            if forcepopsize:
+                maxmismatch = 0.1 # Set the maximum allowable mismatch before throwing a warning
+                actualpeople = people[:,:,t+1].sum()
+                wantedpeople = popsize[:,t+1].sum()
+                if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
+                ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
+                people[:,:,t+1] *= ratio # Scale to match
+                if abs(ratio-1)>maxmismatch:
+                    errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, ratio=%f, actual=%f)' % (t+1, ratio, actualpeople)
+                    if die: raise OptimaException(errormsg)
+                    else: printv(errormsg, 1, verbose=verbose)
             
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
