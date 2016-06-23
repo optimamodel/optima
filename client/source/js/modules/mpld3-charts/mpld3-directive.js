@@ -31,7 +31,7 @@ define(
   }
 
 
-  function addLineToLegendLabel($svgFigure) {
+  function addLineToLegendLabel($svgFigure, nLegend) {
       // add lines in legend labels
       var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
       if ($textLabels) {
@@ -40,16 +40,16 @@ define(
         // the last path under .mpld3-axes
         // so need to work out how many entries in legend
         // it is the the number of textlabels - title and axe labels
-        var nLegendLabels = $textLabels.length - 3;
+        // var nLegend = $textLabels.length - 3;
         var $paths = $svgFigure.find('.mpld3-axes > path');
-        var $pathsToCopy = $paths.slice($paths.length - nLegendLabels, $paths.length);
-        var $baseAxes = $svgFigure.find('.mpld3-baseaxes')
+        var $pathsToCopy = $paths.slice($paths.length - nLegend, $paths.length);
+        var $baseAxes = $svgFigure.find('.mpld3-baseaxes');
         $baseAxes.append($pathsToCopy);
       }
   }
 
-  function reformatAllFigures($allFigures) {
-    $allFigures.find('svg.mpld3-figure').each(function () {
+  function reformatMpld3FigsInElement($element, nLegend) {
+    $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
 
       // move mouse-over to bottom right corner
@@ -63,10 +63,10 @@ define(
         });
       });
 
-      addLineToLegendLabel($svgFigure);
+      addLineToLegendLabel($svgFigure, nLegend);
     });
 
-    var $yaxis = $allFigures.find('.mpld3-yaxis');
+    var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
     $labels.each(function () {
       var $label = $(this);
@@ -75,7 +75,7 @@ define(
       $label.text(newText);
     });
 
-    var $yaxis = $allFigures.find('.mpld3-xaxis');
+    var $yaxis = $element.find('.mpld3-xaxis');
     var $labels = $yaxis.find('g.tick > text');
     $labels.each(function () {
       var $label = $(this);
@@ -335,12 +335,29 @@ define(
             var figure = angular.copy(scope.chart);
             delete figure.isChecked;
 
+            // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
             $element.attr('id', attrs.chartId);
             $element.html("");
-            mpld3.draw_figure(attrs.chartId, figure);
 
-            reformatAllFigures($element);
+            // calculates the number of items in the legend
+            // to be used in the hack to fix the lines appearing
+            // in legend. this assumes that any text labels appearing
+            // in the right side of the figure (x > 0.7) is a legend
+            // label and thus gives the number of items in the
+            // legend. this will be used to transfer the paths
+            // for the legened into the right DOM element in
+            // addLineToLegendLabel
+            var nLegend = 0;
+            _.each(figure.axes[0].texts, function(text) {
+              var position = text.position;
+              if (parseFloat(position[0]) > 0.7) {
+                nLegend += 1;
+              }
+            });
+
+            mpld3.draw_figure(attrs.chartId, figure);
+            reformatMpld3FigsInElement($element, nLegend);
           },
           true
         );
@@ -371,7 +388,7 @@ define(
               responseType: 'blob'
             })
           .success(function (response) {
-            var blob = new Blob([response], { type: 'application/octet-stream' });
+            var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
             saveAs(blob, ('export_graphs.csv'));
           });
         };

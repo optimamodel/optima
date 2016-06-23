@@ -1,4 +1,5 @@
 import re
+from pprint import pprint
 
 import mpld3
 
@@ -98,6 +99,7 @@ def make_mpld3_graph_dict(result, which=None):
 
         n_label = reformat(graph)
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
+        pprint(mpld3_dict)
 
         # get rid of NaN
         mpld3_dict = normalize_obj(mpld3_dict)

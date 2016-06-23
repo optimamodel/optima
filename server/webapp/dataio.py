@@ -324,18 +324,30 @@ def save_result(
         raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
 
     # update results (after runsim is invoked)
-    result_id = str(result.uid)
-    result_record = db_session.query(ResultsDb).get(result_id)
+    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id)
+    result_records = [item for item in result_records
+                     if item.parset_id == parset.id
+                        and item.calculation_type == calculation_type]
+
     blob = op.saves(result)
-    if not result_record:
+    if result_records:
+        if len(result_records) > 1:
+            abort(500, "Found multiple records for result (%s) of parset '%s'" % calculation_type, parset.name)
+        result_record = result_records[0]
+        result_record.blob = blob
+        print "> Updating results", result.uid
+
+    if not result_records:
         result_record = ResultsDb(
-            id = result_id,
             parset_id=str(parset.id),
             project_id=project_id,
             calculation_type=calculation_type,
             blob=blob)
-    else:
-        result_record.blob = blob
+        print "> Creating results", result.uid
+
+    result_id = str(result.uid)
+    result_record.id = result_id
+
     return result_record
 
 
