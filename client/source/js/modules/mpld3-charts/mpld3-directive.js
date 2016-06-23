@@ -51,8 +51,19 @@ define(
   function reformatMpld3FigsInElement($element, nLegend) {
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
+      var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+      var width = 250;
+      var height = width / ratio;
+      // $svgFigure.css({'width': width, 'height': height});
+      $svgFigure.attr('version', '1.1');
+      $svgFigure.attr('width', width);
+      $svgFigure.attr('height', height);
+      $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
+      // $svgFigure.removeAttr('width');
+      // $svgFigure.removeAttr('height');
+      console.log("svg", ratio, $svgFigure[0]);
 
-      // move mouse-over to bottom right corner
+
       $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
         $svgFigure.find('.mpld3-coordinates').each(function () {
@@ -355,7 +366,14 @@ define(
                 nLegend += 1;
               }
             });
-
+            // figure.width = 300;
+            // figure.height = 150;
+            // _.each(figure.axes[0].axes, function(axes) {
+            //   axes.fontsize = 6;
+            // });
+            // _.each(figure.axes[0].texts, function(text) {
+            //   text.fontsize = 8;
+            // });
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
           },
