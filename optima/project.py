@@ -76,6 +76,11 @@ class Project(object):
 
         return None
 
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        d["spreadsheet"] = None
+        return d
+
 
     def __repr__(self):
         ''' Print out useful information when called '''
