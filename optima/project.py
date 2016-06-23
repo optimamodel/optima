@@ -77,8 +77,13 @@ class Project(object):
         return None
 
     def __getstate__(self):
+        """
+        Don't include the spreadsheet or the results when pickling/serialising;
+        these will be fetched and serialised explicitly.
+        """
         d = dict(self.__dict__)
         d["spreadsheet"] = None
+        d["results"] = odict()
         return d
 
 

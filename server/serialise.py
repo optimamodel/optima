@@ -8,6 +8,7 @@ import types
 from dateutil import parser, tz
 
 import uuid
+import zlib
 
 
 def dump(obj):
@@ -79,9 +80,11 @@ def dump(obj):
     schema = default(obj)
     new_registry = {x[0]:x[1] for x in obj_registry.values()}
 
-    return json.dumps({
+    dumped = json.dumps({
         "registry": new_registry,
         "schema": schema}, ensure_ascii=False)
+
+    return zlib.compress(dumped, 8)
 
 
 decode_structs = {
@@ -102,7 +105,9 @@ decode_structs = {
 }
 
 
-def loads(a):
+def loads(input):
+
+    a = json.loads(zlib.decompress(input))
 
     registry = a["registry"]
     schema = a["schema"]
@@ -123,13 +128,8 @@ def loads(a):
 
                 if optima_obj == "reference":
 
-
                     ref = o["ref"]
-
                     return decode(registry[ref])
-
-                    o = loaded[ref]
-
 
                 elif optima_obj in decode_structs:
 
@@ -182,14 +182,3 @@ def loads(a):
         return o
 
     return decode(schema)
-
-
-
-if __name__ == "__main__":
-
-    p = optima.Project()
-
-    with open("/tmp/test.json", "rb") as f:
-      z = json.loads(f.read())
-      k = loads(z)
-      print(k)
