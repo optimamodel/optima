@@ -1,43 +1,46 @@
 import simplejson as json
-from uuid import UUID
 
 import optima
 import numpy
 import datetime
 import types
-from dateutil import parser, tz
-
 import uuid
 import zlib
 
+from dateutil import parser, tz
 
-def dump(obj):
+
+def dumps(obj):
 
     obj_registry = {}
+    id_number = [0]
 
     def default(r):
 
         if isinstance(r, optima.odict):
-            o = {"optima_obj": "odict", "val": [(default(x), default(y)) for x, y in r.iteritems()]}
+            o = {
+                "obj": "odict",
+                "val": [(default(x), default(y)) for x, y in r.iteritems()]}
 
-        elif isinstance(r, UUID):
-            o = {"optima_obj": "UUID", "val": str(r.hex)}
+        elif isinstance(r, uuid.UUID):
+            o = {"obj": "UUID", "val": str(r.hex)}
 
         elif isinstance(r, numpy.ndarray):
-            o = {"optima_obj": "numpy.ndarray", "val": [default(x) for x in r]}
+            o = {"obj": "numpy.ndarray", "val": [default(x) for x in r]}
 
         elif isinstance(r, numpy.bool_):
-            o = {"optima_obj": "numpy.bool_", "val": bool(r)}
+            print("i am bool")
+            o = bool(r)
 
         elif r == numpy.nan:
-            o = {"optima_obj": "numpy.NaN"}
+            o = {"obj": "numpy.NaN"}
 
         elif isinstance(r, datetime.datetime):
             r.replace(tzinfo=tz.tzlocal())
-            o = {"optima_obj": "datetime.datetime", "val": r.isoformat(" ")}
+            o = {"obj": "datetime", "val": r.isoformat(" ")}
 
         elif isinstance(r, tuple):
-            o = {"optima_obj": "tuple", "val": [default(x) for x in r]}
+            o = {"obj": "tuple", "val": [default(x) for x in r]}
 
         elif isinstance(r, (str, unicode, float, int, long, types.NoneType, bool)):
             o = r
@@ -54,7 +57,8 @@ def dump(obj):
         else:
             if not r in obj_registry:
 
-                my_id = uuid.uuid4().hex
+                my_id = id_number[0]
+                id_number[0] += 1
 
                 obj_registry[r] = [my_id, None]
 
@@ -64,14 +68,14 @@ def dump(obj):
                     results = default(r.__dict__)
 
                 q = {
-                    "optima_obj": r.__class__.__name__,
+                    "obj": r.__class__.__name__,
                     "val": results,
                     "id": my_id
                 }
                 obj_registry[r][1] = q
 
             o = {
-                "optima_obj": "reference",
+                "obj": "ref",
                 "ref": obj_registry[r][0]
             }
 
@@ -82,9 +86,9 @@ def dump(obj):
 
     dumped = json.dumps({
         "registry": new_registry,
-        "schema": schema}, ensure_ascii=False)
+        "schema": schema}, ensure_ascii=False, separators=(',',':'))
 
-    return zlib.compress(dumped, 8)
+    return zlib.compress(dumped, 6)
 
 
 decode_structs = {
@@ -120,23 +124,22 @@ def loads(input):
 
         elif isinstance(o, dict):
 
-            if "optima_obj" in o:
+            if "obj" in o:
 
-                optima_obj = o["optima_obj"]
-
+                obj = o["obj"]
                 val = o.get("val")
 
-                if optima_obj == "reference":
+                if obj == "ref":
 
                     ref = o["ref"]
-                    return decode(registry[ref])
+                    return decode(registry[str(ref)])
 
-                elif optima_obj in decode_structs:
+                elif obj in decode_structs:
 
                     if o["id"] in loaded:
                         return loaded[o["id"]]
 
-                    new = object.__new__(decode_structs[optima_obj])
+                    new = object.__new__(decode_structs[obj])
 
                     loaded[o["id"]] = new
 
@@ -148,20 +151,19 @@ def loads(input):
 
                     return new
 
-                elif optima_obj == "datetime.datetime":
-
+                elif obj == "datetime":
                     o = parser.parse(val)
                     return o
 
-                elif optima_obj == "UUID":
-                    o = UUID(val)
+                elif obj == "UUID":
+                    o = uuid.UUID(val)
                     return o
 
-                elif optima_obj == "numpy.ndarray":
+                elif obj == "numpy.ndarray":
                     o = numpy.array(val)
                     return o
 
-                elif optima_obj == "odict":
+                elif obj == "odict":
 
                     o = optima.odict()
 
@@ -171,7 +173,7 @@ def loads(input):
 
                         o[key] = val
 
-                elif optima_obj == "tuple":
+                elif obj == "tuple":
                     o = tuple(val)
 
                 else:
@@ -181,4 +183,12 @@ def loads(input):
 
         return o
 
-    return decode(schema)
+    done = decode(schema)
+    return done
+
+
+if __name__ == "__main__":
+
+    with open("/tmp/test.json.gz", "rb") as f:
+        with open("/tmp/test2.json.gz", "wb") as f2:
+            f2.write(dumps(loads(f.read())))
