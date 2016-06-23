@@ -17,7 +17,7 @@ def dump(obj):
     def default(r):
 
         if isinstance(r, optima.odict):
-            o = {"optima_obj": "odict", "val": [(x, default(y)) for x, y in r.iteritems()]}
+            o = {"optima_obj": "odict", "val": [(default(x), default(y)) for x, y in r.iteritems()]}
 
         elif isinstance(r, UUID):
             o = {"optima_obj": "UUID", "val": str(r.hex)}
@@ -90,7 +90,15 @@ decode_structs = {
     "Parscen": optima.Parscen,
     "Budgetscen": optima.Budgetscen,
     "Programset": optima.Programset,
-    "Covout": optima.programs.Covout
+    "Covout": optima.programs.Covout,
+    "Resultset": optima.Resultset,
+    "Parameterset": optima.Parameterset,
+    "Constant": optima.Constant,
+    "Popsizepar": optima.Popsizepar,
+    "Timepar": optima.Timepar,
+    "Result": optima.Result,
+    "Program": optima.Program,
+    "Costcov": optima.programs.Costcov
 }
 
 
@@ -98,10 +106,14 @@ def loads(a):
 
     registry = a["registry"]
     schema = a["schema"]
+    loaded = {}
 
     def decode(o):
 
-        if isinstance(o, dict):
+        if isinstance(o, list):
+            return [decode(x) for x in o]
+
+        elif isinstance(o, dict):
 
             if "optima_obj" in o:
 
@@ -110,22 +122,31 @@ def loads(a):
                 val = o.get("val")
 
                 if optima_obj == "reference":
-                    print(o)
-                    item = registry[o["ref"]]
-                    print(item)
-                    o = decode(item)
+
+
+                    ref = o["ref"]
+
+                    return decode(registry[ref])
+
+                    o = loaded[ref]
+
 
                 elif optima_obj in decode_structs:
 
-                    o = object.__new__(decode_structs[optima_obj])
+                    if o["id"] in loaded:
+                        return loaded[o["id"]]
+
+                    new = object.__new__(decode_structs[optima_obj])
+
+                    loaded[o["id"]] = new
 
                     state = {x:decode(y) for x,y in val.items()}
                     try:
-                        o.__setstate__(state)
+                        new.__setstate__(state)
                     except AttributeError:
-                        o.__dict__ = state
+                        new.__dict__ = state
 
-                    return o
+                    return new
 
                 elif optima_obj == "datetime.datetime":
 
@@ -143,18 +164,18 @@ def loads(a):
                 elif optima_obj == "odict":
 
                     o = optima.odict()
+
                     for i in val:
-                        print(i)
-                        print(i[0])
-                        print(i[1])
-                        o[i[0]] = decode(i[1])
+                        key = decode(i[0])
+                        val = decode(i[1])
+
+                        o[key] = val
 
                 elif optima_obj == "tuple":
                     o = tuple(val)
 
-
                 else:
-                    assert False, o
+                    assert False, str(o)[0:1000]
 
             return o
 
@@ -172,8 +193,3 @@ if __name__ == "__main__":
       z = json.loads(f.read())
       k = loads(z)
       print(k)
-
-
-    from deepdiff import DeepDiff
-
-    print(DeepDiff(p.__dict__, z.__dict__))
