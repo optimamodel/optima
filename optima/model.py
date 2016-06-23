@@ -62,6 +62,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         biofailure    = simpars['biofailure']  # biological treatment failure rate (P/T)
         freqvlmon     = simpars['freqvlmon']     # Viral load monitoring frequency (N/T)
         restarttreat  = simpars['restarttreat']  # Rate of ART re-inititation (P/T)
+        # constants
         progusvl      = simpars['progusvl']      # Proportion of people who progress when on unsuppressive ART
         recovusvl     = simpars['recovusvl']     # Proportion of people who recover when on unsuppressive ART
         stoppropcare  = simpars['stoppropcare']  # Proportion of people lost-to-follow-up who are actually still in care (transferred)
@@ -78,10 +79,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     cd4trans /= cd4transnorm # Normalize CD4 transmission
     dxfactor = (1.0-simpars['effdx']) # Include diagnosis efficacy
     if usecascade:
-        efftxunsupp = (1-simpars['efftxunsupp']) * dxfactor # (~30%) reduction in transmission probability for usVL
-        efftxsupp  = (1-simpars['efftxsupp'])  * dxfactor # (~96%) reduction in transmission probability for sVL
+        efftxunsupp = (1-simpars['efftxunsupp']) # (~30%) reduction in transmission probability for usVL
+        efftxsupp  = (1-simpars['efftxsupp'])    # (~96%) reduction in transmission probability for sVL
     else:
-        txfactor = dxfactor * ((1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs)) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
+        txfactor = (1-simpars['efftxsupp'])*treatvs + (1-simpars['efftxunsupp'])*(1-treatvs) # Roughly calculate treatment efficacy based on ART success rate; should be 92%*90% = 80%, close to 70% we had been using
 
     # Disease state indices
     susreg   = settings.susreg      # Susceptible, regular
@@ -206,8 +207,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     # Set parameters
     durationpreaids = 8.0 # Assumed duration of undiagnosed HIV pre-AIDS...used for calculating ratio of diagnosed to undiagnosed. WARNING, KLUDGY
     efftreatmentrate = 0.1 # Inverse of average duration of treatment in years...I think
-    initpropcare = 0.8 # roughly estimating equilibrium proportion of diagnosed people in care
-    initproplost = 0.3 # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
 
     # Shorten key variables
     initpeople = zeros((nstates, npops)) 
@@ -251,8 +250,12 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         initpeople[progcirc, p] = 0.0 # This is just to make it explicit that the circ compartment only keeps track of people who are programmatically circumcised while the model is running
         initpeople[undx, p]     = undiagnosed
         if usecascade:
-            initpeople[dx,   p] = diagnosed*(1.-initpropcare)
-            initpeople[care, p] = diagnosed*initpropcare
+            initpropcare = immediatecare[p,0] # roughly estimating equilibrium proportion of diagnosed people in care
+            initproplost = 0.0
+            #durationtreat = 10. # estimated total number of years people stay on treatment
+            #initproplost = 0.5 * durationtreat * stoprate[p,0]      # roughly estimating equilibrium proportion of people on treatment who are lost to follow-up
+            initpeople[dx,   p] = diagnosed * (1.-initpropcare)
+            initpeople[care, p] = diagnosed * initpropcare
             initpeople[usvl, p] = treatment * (1.-treatvs[0]) * (1.-initproplost)
             initpeople[svl,  p] = treatment * treatvs[0]      * (1.-initproplost)
             initpeople[off,  p] = treatment * initproplost * stoppropcare
@@ -643,10 +646,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                     recovout = dt*recov[cd4-2]*people[svl[cd4],:,t]
                 else: 
                     recovout = 0 # Cannot recover out of gt500 stage (or acute stage)
-                hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]
+                hivdeaths          = dt * currentsupp[cd4,:] * death[cd4]*deathtx
                 otherdeaths        = dt * currentsupp[cd4,:] * background
                 failing[cd4]       = dt * currentsupp[cd4,:] * biofailure[t]
-                propdead           = dt * (death[cd4] + background)
+                propdead           = dt * (death[cd4]*deathtx + background)
                 stopSVLincare[cd4] = dt * currentsupp[cd4,:] * stoprate[:,t] * stoppropcare  # People stopping ART but still in care
                 stopSVLlost[cd4]   = dt * currentsupp[cd4,:] * stoprate[:,t] * (1.-stoppropcare-propdead) # People stopping ART and lost to followup
                 inflows = recovin + virallysupp[cd4] + newtreat[cd4]*treatvs[t]
