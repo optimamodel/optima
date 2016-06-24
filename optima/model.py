@@ -7,7 +7,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.4 (2016mar04)
+    Version: 1.5 (2016jun21)
     """
     
     ##################################################################################################################
@@ -35,6 +35,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     usecascade   = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
     eps          = settings.eps # Define another small number to avoid divide-by-zero errors
+    if not(hasattr(settings,'forcsepopsize')): settings.forcepopsize = True # WARNING TEMP, for legacy support
+    forcepopsize = settings.forcepopsize # Whether or not to force the population size to match the parameters
+		
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
@@ -220,7 +223,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         
         # Treatment & treatment failure
-        fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
+        if sum(allinfected): fractotal = popinfected / sum(allinfected) # Fractional total of infected people in this population
+        else:                fractotal = 0 # If there's no one infected, reset to 0
         treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
         if debug and treatment>popinfected: # More people on treatment than ever infected, uh oh!
             errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
@@ -804,7 +808,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
                 thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
                 mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
@@ -818,10 +822,13 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
-                peopleaving = people[:, p1, t] * agetransit[p1,p2]
-                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
-                people[:, p1, t+1] -= peopleaving # Take away from pop1...
-                people[:, p2, t+1] += peopleaving # ... then add to pop2
+                peopleleaving = people[:, p1, t] * agetransit[p1,p2]
+                peopleleaving = minimum(peopleleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
+                people[:, p1, t+1] -= peopleleaving # Take away from pop1...
+                people[:, p2, t+1] += peopleleaving # ... then add to pop2
+                if t==20:
+                    print 'DIUDFIDUIF'
+                    print([p1,p2,agetransit[p1,p2], sum(peopleleaving)])
                 
             
             ## Risk-related transitions
@@ -861,6 +868,19 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if debug and abs(actualpeople-wantedpeople)>1.0: # Nearest person is fiiiiine
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
+            
+            # If required, scale population sizes to exactly match the parameters
+            if forcepopsize:
+                maxmismatch = 0.1 # Set the maximum allowable mismatch before throwing a warning
+                actualpeople = people[:,:,t+1].sum()
+                wantedpeople = popsize[:,t+1].sum()
+                if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
+                ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
+                people[:,:,t+1] *= ratio # Scale to match
+                if abs(ratio-1)>maxmismatch:
+                    errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, ratio=%f, actual=%f)' % (t+1, ratio, actualpeople)
+                    if die: raise OptimaException(errormsg)
+                    else: printv(errormsg, 1, verbose=verbose)
             
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error

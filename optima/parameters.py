@@ -169,7 +169,7 @@ def data2prev(data=None, keys=None, index=0, blh=0, **defaultargs): # WARNING, "
 
 
 
-def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
+def data2popsize(data=None, keys=None, blh=0, uniformgrowth=False, doplot=False, **defaultargs):
     ''' Convert population size data into population size parameters '''
     par = Popsizepar(m=1, **defaultargs)
     
@@ -222,6 +222,13 @@ def data2popsize(data=None, keys=None, blh=0, doplot=False, **defaultargs):
         largestthatyear = popgrow(largestpars, thisyear[key]-startyear)
         par.p[key] = [largestpars[0]*thispopsize[key]/largestthatyear, largestpars[1]]
     par.p = par.p.sort(keys) # Sort to regain the original key order -- WARNING, causes horrendous problems later if this isn't done!
+    
+    if uniformgrowth:
+        for key in keys:
+            par.p[key][1] = par.p[largestpopkey][1] # Reset exponent to match the largest population
+            meanpopulationsize = mean(sanitizedy[key]) # Calculate the mean of all the data
+            weightedyear = mean(sanitizedy[key][:]*sanitizedt[key][:])/meanpopulationsize # Calculate the "mean year"
+            par.p[key][0] = meanpopulationsize*(1+par.p[key][1])**(startyear-weightedyear) # Project backwards to starting population size
     
     if doplot:
         from pylab import figure, subplot, plot, scatter, arange, show, title
@@ -416,7 +423,7 @@ def makepars(data, label=None, verbose=2):
 
     ###############################################################################
     ## Tidy up -- things that can't be converted automatically
-    ###############################################################################    
+    ###############################################################################
     
     # Births rates. This parameter is coupled with the birth matrix defined below
     for key in list(set(popkeys)-set(fpopkeys)): # Births are only female: add zeros
@@ -426,22 +433,33 @@ def makepars(data, label=None, verbose=2):
     pars['birth'].t = pars['birth'].t.sort(popkeys)
     
     # Birth transitions - these are stored as the proportion of transitions, which is constant, and is multiplied by time-varying birth rates in model.py
-    normalised_birthtransit = [[0.0]*len(popkeys)]*len(popkeys)
+    npopkeys = len(popkeys)
+    birthtransit = zeros((npopkeys,npopkeys))
     c = 0
-    for pk,popkey in enumerate(popkeys):
-        if data['pops']['female'][pk]:
-            normalised_birthtransit[pk] = [col/sum(data['birthtransit'][c]) if sum(data['birthtransit'][c]) else 0 for col in data['birthtransit'][c]]
+    for pkno,popkey in enumerate(popkeys):
+        if data['pops']['female'][pkno]: # WARNING, really ugly
+            for colno,col in enumerate(data['birthtransit'][c]):
+                if sum(data['birthtransit'][c]):
+                    birthtransit[pkno,colno] = col/sum(data['birthtransit'][c])
             c += 1
-    pars['birthtransit'] = normalised_birthtransit 
+    pars['birthtransit'] = birthtransit 
 
     # Aging transitions - these are time-constant transition rates
-    duration = [age[1]-age[0]+1 for age in data['pops']['age']]
-    normalised_agetransit = [[col/sum(row)*1.0/duration[rowno] if sum(row) else 0 for col in row] for rowno,row in enumerate(data['agetransit'])]
-    pars['agetransit'] = normalised_agetransit
+    agetransit = zeros((npopkeys,npopkeys))
+    duration = array([age[1]-age[0]+1.0 for age in data['pops']['age']])
+    for rowno,row in enumerate(data['agetransit']):
+        if sum(row):
+            for colno,col in enumerate(row):
+                agetransit[rowno,colno] = col/sum(row)/duration[rowno]
+    pars['agetransit'] = agetransit
 
     # Risk transitions - these are time-constant transition rates
-    normalised_risktransit = [[1.0/col if col else 0 for col in row] for row in data['risktransit']]
-    pars['risktransit'] = normalised_risktransit 
+    risktransit = zeros((npopkeys,npopkeys))
+    for rowno,row in enumerate(data['risktransit']):
+        for colno, col in enumerate(row):
+            if col:
+                risktransit[rowno,colno] = 1.0/col
+    pars['risktransit'] = risktransit 
     
     # Circumcision
     for key in list(set(popkeys)-set(mpopkeys)): # Circumcision is only male

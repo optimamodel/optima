@@ -104,7 +104,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -115,7 +115,7 @@ class Project(object):
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
-        if dorun: self.runsim(name, addresult=True)
+        if dorun: self.runsim(name, addresult=True, **kwargs)
         return None
 
 
@@ -316,17 +316,17 @@ class Project(object):
         return None
     
     
-    def save(self, filename=None, saveresults=False):
+    def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
         self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
-            saveobj(filename, self)
+            saveobj(filename, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.cleanresults() # Get rid of all results
-            saveobj(filename, tmpproject) # Save it to file
+            saveobj(filename, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         return None
 
@@ -356,22 +356,25 @@ class Project(object):
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
 
-        # Run the model!
+        # Run the model! -- wARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind in range(len(simparslist)):
-            try:
+            if debug: # Should this be die?
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-                if not (raw['people']>=0).all(): # Check for negative people
-                    printv('Negative people found with runsim(); rerunning with a smaller timestep...')
-                    self.settings.dt /= 4
+            else:
+                try:
                     raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            except:
-                printv('Running model failed; running again with debugging...', 1, verbose)
-                raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    if not (raw['people']>=0).all(): # Check for negative people
+                        printv('Negative people found with runsim(); rerunning with a smaller timestep...')
+                        self.settings.dt /= 4
+                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                except:
+                    printv('Running model failed; running again with debugging...', 1, verbose)
+                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+name if simpars is None else 'simpars'
+        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
@@ -418,11 +421,11 @@ class Project(object):
         return None
 
 
-    def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2): # orig=default or orig=0?
+    def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
         self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        manualfit(project=self, name=name, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 

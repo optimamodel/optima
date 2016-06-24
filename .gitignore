@@ -6,6 +6,7 @@ server/p-env
 server/build
 server/static
 server/config.py
+client/optima.nginx.conf
 *.log
 optima.egg-info/*
 optima.egg-info/

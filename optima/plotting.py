@@ -224,16 +224,16 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
                     if die: raise OptimaException(errormsg)
-                    else: printv(errormsg, 4, verbose)
+                    else: printv(errormsg, 2, verbose)
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
                 if die: raise OptimaException(errormsg)
-                else: printv(errormsg, 4, verbose)
+                else: printv(errormsg, 2, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
             if plotformat not in epiformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
                 if die: raise OptimaException(errormsg)
-                else: printv(errormsg, 4, verbose)
+                else: printv(errormsg, 2, verbose)
             toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
         
         # Remove failed ones
