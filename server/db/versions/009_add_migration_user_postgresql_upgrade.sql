@@ -1,1 +1,0 @@
-insert into users (name, email, password, is_admin) values ('migration','migration@example.com','40a0233e6b155cd08d8f8f4cd3ea85d854af454b334e80f896afff61', TRUE);
