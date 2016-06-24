@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
 from random import uniform
 import abc
@@ -33,7 +33,7 @@ class Programset(object):
 
     def __repr__(self):
         ''' Print out useful information'''
-        output = objrepr(self)
+        output = defaultrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
@@ -661,7 +661,7 @@ class Program(object):
 
     def __repr__(self):
         ''' Print out useful info'''
-        output = '\n'
+        output = defaultrepr(self)
         output += '          Program name: %s\n'    % self.short
         output += '  Targeted populations: %s\n'    % self.targetpops
         output += '   Targeted parameters: %s\n'    % self.targetpars
