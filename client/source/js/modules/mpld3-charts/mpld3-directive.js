@@ -5,6 +5,7 @@ define(
 
   'use strict';
 
+  var allcharts, scrollTop;
 
   function consoleLogJson(name, val) {
     console.log(name + ' = ');
@@ -52,12 +53,14 @@ define(
   function reformatMpld3FigsInElement($element, nLegend) {
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
-      var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+      var width = $svgFigure.attr('width');
+      var height = $svgFigure.attr('height');
+      var ratio = width / height;
+      $svgFigure[0].setAttribute('viewBox', '0 0 ' + width + ' ' + height);
       var width = $svgFigure.parent().width();
       var height = width / ratio;
       $svgFigure.attr('width', width);
       $svgFigure.attr('height', height);
-      $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
 
       $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
@@ -352,8 +355,8 @@ define(
 
             // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
+            // console.log("update graph", $element, $element.width(), $element.outerHeight());
             $element.attr('id', attrs.chartId);
-            $element.html("");
 
             // calculates the number of items in the legend
             // to be used in the hack to fix the lines appearing
@@ -372,6 +375,10 @@ define(
             });
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
+
+            if (!_.isUndefined(allcharts)) {
+              allcharts.scrollTop(scrollTop);
+            }
           },
           true
         );
@@ -398,6 +405,9 @@ define(
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
+
+        allcharts = $(elem).find('.allcharts');
+        scrollTop = allcharts.scrollTop();
 
         scope.exportAllData = function() {
           var resultId = scope.graphs.resultId;
@@ -450,6 +460,10 @@ define(
         $(window).bind('resize', function () {
           scope.onResize();
         })
+
+        allcharts.scroll(function() {
+          scrollTop = allcharts.scrollTop();
+        });
       }
     };
   });
