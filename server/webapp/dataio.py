@@ -35,7 +35,6 @@ from server.webapp.parse import (
 import optima as op
 from optima.utils import saves
 
-
 def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None):
     from sqlalchemy.orm import defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
@@ -99,52 +98,6 @@ def _load_project_child(
 
     return record
 
-
-def load_progset_record(project_id, progset_id, raise_exception=True):
-    return _load_project_child(
-        project_id, progset_id, ProgsetsDb, ProgsetDoesNotExist, raise_exception)
-
-
-
-def load_program_record(project_id, progset_id, program_id, raise_exception=True):
-    cu = current_user
-    current_app.logger.debug("getting project {} for user {}".format(progset_id, cu.id))
-
-    progset_record = load_progset_record(
-        project_id, progset_id, raise_exception=raise_exception)
-
-    program_record = db.session.query(ProgramsDb).get(program_id)
-
-    if program_record.progset_id != progset_record.id:
-        if raise_exception:
-            raise ProgramDoesNotExist(id=program_id)
-        return None
-
-    return program_record
-
-
-def load_scenario_record(project_id, scenario_id, raise_exception=True):
-    from server.webapp.dbmodels import ScenariosDb
-    from server.webapp.exceptions import ScenarioDoesNotExist
-
-    cu = current_user
-    current_app.logger.debug("getting scenario {} for user {}".format(scenario_id, cu.id))
-
-    scenario_record = db.session.query(ScenariosDb).get(scenario_id)
-
-    if scenario_record is None:
-        if raise_exception:
-            raise ScenarioDoesNotExist(id=scenario_id)
-        return None
-
-    if scenario_record.project_id != project_id:
-        if raise_exception:
-            raise ScenarioDoesNotExist(id=scenario_id)
-        return None
-
-    return scenario_record
-
-
 def save_data_spreadsheet(name, folder=None):
     if folder is None:
         folder = current_app.config['UPLOAD_FOLDER']
@@ -162,68 +115,6 @@ def delete_spreadsheet(name, user_id=None):
             spreadsheet_file = helpers.safe_join(user_dir, name + '.xlsx')
         if os.path.exists(spreadsheet_file):
             os.remove(spreadsheet_file)
-
-
-def update_or_create_parset_record(project_id, name, parset, db_session=None):
-    if db_session is None:
-        db_session = db.session
-    parset_record = db_session.query(ParsetsDb).filter_by(id=parset.uid, project_id=project_id).first()
-    if parset_record is None:
-        parset_record = ParsetsDb(
-            id=parset.uid,
-            project_id=project_id,
-            name=name,
-            created=parset.created or datetime.now(dateutil.tz.tzutc()),
-            updated=parset.modified or datetime.now(dateutil.tz.tzutc()),
-            pars=saves(parset.pars)
-        )
-
-        db_session.add(parset_record)
-    else:
-        db_session.query(ResultsDb).filter_by(project_id=project_id, parset_id=parset_record.id).delete()
-        parset_record.updated = datetime.now(dateutil.tz.tzutc())
-        parset_record.name = name
-        parset_record.pars = saves(parset.pars)
-        db_session.add(parset_record)
-    return parset_record
-
-
-def update_or_create_progset_record(project_id, name, progset):
-    progset_record = ProgsetsDb.query \
-        .filter_by(project_id=project_id, name=name) \
-        .first()
-
-    if progset_record is None:
-        progset_record = ProgsetsDb(
-            project_id=project_id,
-            name=name,
-            created=progset.created or datetime.now(dateutil.tz.tzutc()),
-            updated=datetime.now(dateutil.tz.tzutc())
-        )
-        db.session.add(progset_record)
-        db.session.flush()
-    else:
-        progset_record.updated = datetime.now(dateutil.tz.tzutc())
-        db.session.add(progset_record)
-
-    return progset_record
-
-
-def update_or_create_program_record(project_id, progset_id, short, program_summary):
-    program_record = ProgramsDb.query\
-        .filter_by(short=short, project_id=project_id, progset_id=progset_id)\
-        .first()
-    if program_record is None:
-        program_record = ProgramsDb(
-            project_id=project_id,
-            progset_id=progset_id,
-            short=short,
-            name=program_summary.get('name', ''),
-            created=datetime.now(dateutil.tz.tzutc()),
-        )
-    program_record.update_from_summary(program_summary)
-    db.session.add(program_record)
-    return program_record
 
 
 def load_project(project_id, autofit=False, raise_exception=True):

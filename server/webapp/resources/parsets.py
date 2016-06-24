@@ -350,7 +350,10 @@ class ParsetsAutomaticCalibration(Resource):
     def post(self, project_id, parset_id):
         from server.webapp.tasks import run_autofit, start_or_report_calculation
         args = manual_calibration_parser.parse_args()
-        parset_name = load_parset_record(project_id, parset_id).name
+
+        project = load_project(project_id)
+        parset = load_parset(project, parset_id)
+
         calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
         if not calc_status['can_start']:
             calc_status['status'] = 'running'
