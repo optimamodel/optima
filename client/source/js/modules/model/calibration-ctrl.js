@@ -92,6 +92,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // Set calibration data in scope
     var setCalibrationData = function(calibration) {
       $scope.graphs = calibration.graphs;
+      console.log($scope.graphs);
       console.log("selectors", _.pluck($scope.graphs.selectors, 'key'));
       console.log("graph_selectors", $scope.graphs.graph_selectors);
       defaultParameters = calibration.parameters;

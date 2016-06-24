@@ -61,6 +61,7 @@ define(
       var height = width / ratio;
       $svgFigure.attr('width', width);
       $svgFigure.attr('height', height);
+      $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
 
       $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
