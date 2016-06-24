@@ -120,7 +120,9 @@ class UserDetail(Resource):
         if user is None:
             raise UserDoesNotExist(user_id)
 
-        if current_user.is_anonymous() or (str(user_id) != str(current_user.id) and not current_user.is_admin):
+        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
+    	except: userisanonymous = current_user.is_anonymous
+        if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
             secret = request.args.get('secret', '')
             u = UserDb.query.filter_by(password=secret, is_admin=True).first()
             if u is None:
@@ -173,7 +175,9 @@ class UserLogin(Resource):
     def post(self):
         current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
 
-        if current_user.is_anonymous():
+        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
+    	except: userisanonymous = current_user.is_anonymous
+        if userisanonymous:
             current_app.logger.debug("current user anonymous, proceed with logging in")
 
             args = user_login_parser.parse_args()

@@ -823,23 +823,23 @@ class ProjectCopy(Resource):
         new_project_name = args['to']
 
         # Get project row for current user with project name
-        project_entry = load_project_record(
+        project_record = load_project_record(
             project_id, all_data=True, raise_exception=True)
-        project_user_id = project.user_id
+        project_user_id = project_record.user_id
 
-        be_project = project.load()
+        project = project.load()
 
         # force load the existing result
-        project_result_exists = project_entry.results
+        project_result_exists = project_record.results
 
-        db.session.expunge(project)
-        make_transient(project)
+        db.session.expunge(project_record)
+        make_transient(project_record)
 
         project.id = None
         db.session.add(project_entry)
         db.session.flush()  # this updates the project ID to the new value
 
-        project_entry.restore(be_project)
+        project_entry.restore(project)
         project.name = new_project_name
         db.session.add(project_entry)
         # change the creation and update time
@@ -850,29 +850,27 @@ class ProjectCopy(Resource):
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
-        new_project_id = project.id
+        new_project_id = project_record.id
 
         if project_result_exists:
             # copy each result
-            new_parsets = db.session.query(ParsetsDb).filter_by(
+            new_parset_records = db.session.query(ParsetsDb).filter_by(
                 project_id=str(new_project_id))
-            print "BE parsets", be_project.parsets
-            for result in project_entry.results:
-                if result.calculation_type != ResultsDb.CALIBRATION_TYPE:
+            for result_record in project_record.results:
+                if result_record.calculation_type != ResultsDb.CALIBRATION_TYPE:
                     continue
-                result_instance = op.loads(result.blob)
-                target_name = result_instance.parset.name
-                new_parset = [
-                    item for item in new_parsets if item.name == target_name]
+                result = op.loads(result_record.blob)
+                parset_name = result.parset.name
+                new_parset = [r for r in new_parset_records if r.name == parset_name]
                 if not new_parset:
                     raise Exception(
                         "Could not find copied parset for result in copied project {}".format(project_id))
-                result.parset_id = new_parset[0].id
-                db.session.expunge(result)
-                make_transient(result)
+                result_record.parset_id = new_parset[0].id
+                db.session.expunge(result_record)
+                make_transient(result_record)
                 # set the id to None to ensure no duplicate ID
-                result.id = None
-                db.session.add(result)
+                result_record.id = None
+                db.session.add(result_record)
         db.session.commit()
         # let's not copy working project, it should be either saved or
         # discarded

@@ -57,7 +57,7 @@ class OptimizationCalculation(Resource):
 
         calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
 
-        if not calc_state['can_start'] or not calc_state['can_join']:
+        if not calc_state['can_start']:
             calc_state['status'] = 'running'
             return calc_state, 208
 

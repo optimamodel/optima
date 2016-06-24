@@ -30,7 +30,9 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
       // in order to have styled graphs the css content used to render
       // graphs is retrieved & inject it into the svg as style tag
       var cssContentRequest = $http.get(chartCssUrl);
+      console.log('getting png css');
       cssContentRequest.success(function(chartStylesheetContent) {
+        console.log('got png css')
 
         // It is needed to fetch all as mpld3 injects multiple style tags into the DOM
         var $styleTagContentList = $('style').map(function(index, style) {
@@ -62,7 +64,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
         tmpImage.width = orginalWidth * scalingFactor;
         tmpImage.height = orginalHeight * scalingFactor;
         tmpImage.src = "data:image/svg+xml;charset=utf-8,"+ svgXML;
-
+        console.log(svgXML);
         tmpImage.onload = function() {
           // draw image into canvas in order to convert it to a blob
           var canvas = document.createElement("canvas");
