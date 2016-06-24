@@ -12,8 +12,8 @@ from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
     get_progset_summaries, save_progset_summaries,
-    load_project_record, load_progset_record, load_program, load_parset,
-    update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset,
+    load_project_record, load_program, load_parset,
+    get_target_popsizes, load_parameters_from_progset_parset,
     check_project_exists)
 from server.webapp.dbconn import db
 from server.webapp.exceptions import (ProgsetDoesNotExist)
@@ -39,16 +39,16 @@ class Progsets(Resource):
 
     @swagger.operation(description='Download progsets')
     def get(self, project_id):
-        
+
         check_project_exists(project_id)
         return get_progset_summaries(project_id)
-        
+
 
     @swagger.operation(description='Save progset')
     def post(self, project_id):
 
         check_project_exists(project_id)
-         
+
         data = normalize_obj(request.get_json(force=True))
         current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
         save_progset_summaries(project_id,data)
@@ -346,5 +346,3 @@ class ProgramCostcovGraph(Resource):
 
         mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
         return normalize_obj(mpld3.fig_to_dict(plot))
-
-

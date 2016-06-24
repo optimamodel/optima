@@ -29,7 +29,6 @@ def dumps(obj):
             o = {"obj": "numpy.ndarray", "val": [default(x) for x in r]}
 
         elif isinstance(r, numpy.bool_):
-            print("i am bool")
             o = bool(r)
 
         elif r == numpy.nan:

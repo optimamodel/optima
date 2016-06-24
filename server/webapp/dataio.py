@@ -35,26 +35,31 @@ from server.webapp.parse import (
 import optima as op
 from optima.utils import saves
 
-def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None):
+def load_project_record(project_id, all_data=False, raise_exception=False, db_session=None, authenticate=True):
     from sqlalchemy.orm import defaultload
     from server.webapp.exceptions import ProjectDoesNotExist
+
+
     if not db_session:
         db_session = db.session
-    cu = current_user
-    # current_app.logger.debug("getting project {} for user {} (admin:{})".format(
-    #     project_id,
-    #     cu.id if not cu.is_anonymous() else None,
-    #     cu.is_admin if not cu.is_anonymous else False
-    # ))
-    if cu.is_anonymous():
-        if raise_exception:
-            abort(401)
-        else:
-            return None
-    if cu.is_admin:
+
+    if authenticate:
+        cu = current_user
+        # current_app.logger.debug("getting project {} for user {} (admin:{})".format(
+        #     project_id,
+        #     cu.id if not cu.is_anonymous() else None,
+        #     cu.is_admin if not cu.is_anonymous else False
+        # ))
+        if cu.is_anonymous():
+            if raise_exception:
+                abort(401)
+            else:
+                return None
+    if authenticate is False or cu.is_admin:
         query = db_session.query(ProjectDb).filter_by(id=project_id)
     else:
         query = db_session.query(ProjectDb).filter_by(id=project_id, user_id=cu.id)
+
     if all_data:
         query = query.options(
             # undefer('model'),

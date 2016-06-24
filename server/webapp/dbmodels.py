@@ -93,17 +93,15 @@ class ProjectDb(db.Model):
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
-    blob = db.Column(db.LargeBinary)
+    results = db.relationship('ResultsDb', backref='project')
 
     _loaded = None
 
     def __init__(self, user_id):
         self.user_id = user_id
-        self.blob = None
         self._loaded = None
 
     def load(self):
-        print(redis)
         return serialise.loads(redis.get(self.id.hex))
 
     def save_obj(self, obj):
@@ -149,17 +147,22 @@ class WorkingProjectDb(db.Model):  # pylint: disable=R0903
     id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
     is_working = db.Column(db.Boolean, unique=False, default=False)
     work_type = db.Column(db.String(32), default=None)
-    project = db.Column(db.LargeBinary)
     parset_id = db.Column(UUID(True)) # not sure if we should make it foreign key here
     work_log_id = db.Column(UUID(True), default=None)
 
-    def __init__(self, project_id, parset_id, is_working=False, project=None, work_type=None, work_log_id=None):  # pylint: disable=R0913
+    def __init__(self, project_id, parset_id, is_working=False, work_type=None, work_log_id=None):  # pylint: disable=R0913
         self.id = project_id
         self.parset_id = parset_id
-        self.project = project
         self.is_working = is_working
         self.work_type = work_type
         self.work_log_id = work_log_id
+
+    def load(self):
+        return serialise.loads(redis.get("working-" + self.id.hex))
+
+    def save_obj(self, obj):
+        redis.set("working-" + self.id.hex, serialise.dumps(obj))
+        print("Saved working-" + self.id.hex)
 
 
 class WorkLogDb(db.Model):  # pylint: disable=R0903

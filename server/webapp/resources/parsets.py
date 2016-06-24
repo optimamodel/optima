@@ -240,24 +240,19 @@ class ParsetsCalibration(Resource):
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         print "> Calculation type: %s, autofit: %s, which: %s" % (calculation_type, autofit, which)
 
-        parset_record = db.session.query(ParsetsDb).filter_by(id=parset_id).first()
-        if parset_record is None or parset_record.project_id!=project_id:
-            raise ParsetDoesNotExist(id=parset_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
         # update parset with uploaded parameters
-        parset = parset_record.hydrate()
+        parset = get_parset_from_project(project, parset_id)
         put_parameters_in_parset(parameters, parset)
 
         # recalculate result for parset
-        project_record = load_project_record(parset_record.project_id, raise_exception=True)
-        project = project_record.hydrate()
         simparslist = parset.interp()
         result = project.runsim(simpars=simparslist)
 
         if doSave:  # save the updated results
-            parset_record.pars = op.saves(parset.pars)
-            parset_record.updated = datetime.now(dateutil.tz.tzutc())
-            db.session.add(parset_record)
             result_records = [
                 item for item in project_record.results
                 if item.parset_id == parset_id and item.calculation_type == "calibration"]
@@ -267,7 +262,7 @@ class ParsetsCalibration(Resource):
             else:
                 result_record = ResultsDb(
                     parset_id=parset_id,
-                    project_id=project_record.id,
+                    project_id=project_id,
                     calculation_type=ResultsDb.CALIBRATION_TYPE,
                     blob=op.saves(result)
                 )
@@ -277,6 +272,8 @@ class ParsetsCalibration(Resource):
             result = load_result(project_id, parset_id, calculation_type)
             if 'improvement' not in which:
                 which.insert(0, 'improvement')
+
+        project_record.save_obj(project)
 
         print "> Generating graphs"
         graphs = make_mpld3_graph_dict(result, which)['graphs']
@@ -359,7 +356,7 @@ class ParsetsAutomaticCalibration(Resource):
             calc_status['status'] = 'running'
             return calc_status, 208
         else:
-            run_autofit.delay(project_id, parset_name, args['maxtime'])
+            run_autofit.delay(project_id, parset.name, args['maxtime'])
             calc_status['status'] = 'started'
             calc_status['maxtime'] = args['maxtime']
             return calc_status, 201
