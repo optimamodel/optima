@@ -16,7 +16,6 @@ from server.webapp.dataio import (
     update_or_create_program_record, get_target_popsizes, load_parameters_from_progset_parset,
     check_project_exists)
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProgsetsDb, ProgramsDb
 from server.webapp.exceptions import (ProgsetDoesNotExist)
 from server.webapp.resources.common import file_resource, file_upload_form_parser, report_exception
 from server.webapp.utils import SubParser, Json, RequestParser, TEMPLATEDIR, upload_dir_user, normalize_obj
@@ -69,7 +68,6 @@ class Progset(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Download progset with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields)
     def get(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         progset_entry = load_progset_record(project_id, progset_id)
@@ -77,7 +75,6 @@ class Progset(Resource):
         return progset_entry
 
     @swagger.operation(description='Update progset with the given id.')
-    @marshal_with(ProgsetsDb.resource_fields)
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
         args = progset_parser.parse_args()

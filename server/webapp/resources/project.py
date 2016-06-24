@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 import optima as op
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ProgramsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
+from server.webapp.dbmodels import ProjectDb, ResultsDb
 from server.webapp.utils import (
     secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
     templatepath, upload_dir_user)

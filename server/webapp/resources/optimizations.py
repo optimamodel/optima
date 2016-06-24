@@ -9,7 +9,7 @@ import optima as op
 from server.webapp.dataio import (
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb
+from server.webapp.dbmodels import ResultsDb
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj

@@ -13,7 +13,7 @@ from server.webapp.dataio import (
     load_project_record, TEMPLATEDIR, upload_dir_user, save_result_record, load_result,
     load_project, load_parset_record, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
+from server.webapp.dbmodels import ResultsDb
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
 from server.webapp.parse import get_parset_parameters, put_parameters_in_parset
 from server.webapp.resources.common import report_exception
@@ -44,7 +44,6 @@ class Parsets(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Download all parsets for project')
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
         return load_parset_list(project_id)
@@ -133,7 +132,6 @@ class ParsetsDetail(Resource):
 
     @swagger.operation(description='Rename parset with parset_id')
     @report_exception
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def put(self, project_id, parset_id):
         """
         For consistency, let's always return the updated parsets for operations on parsets
@@ -453,7 +451,6 @@ class ParsetsData(Resource):
         if parset does not exist, returns an error"""
     )
     @report_exception
-    @marshal_with(ParsetsDb.resource_fields, envelope='parsets')
     def post(self, project_id, parset_id):
         # TODO replace this with app.config
         current_app.logger.debug("POST /api/project/{0}/parset/{1}/data".format(project_id, parset_id))

@@ -23,9 +23,7 @@ from flask import helpers, current_app, abort
 from flask.ext.login import current_user
 
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import (
-    ProjectDb, ResultsDb, ParsetsDb, ProgsetsDb, ProgramsDb, WorkingProjectDb,
-    ScenariosDb, OptimizationsDb)
+from server.webapp.dbmodels import ProjectDb, ResultsDb
 from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
