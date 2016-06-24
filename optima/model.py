@@ -826,9 +826,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 peopleleaving = minimum(peopleleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
                 people[:, p1, t+1] -= peopleleaving # Take away from pop1...
                 people[:, p2, t+1] += peopleleaving # ... then add to pop2
-                if t==20:
-                    print 'DIUDFIDUIF'
-                    print([p1,p2,agetransit[p1,p2], sum(peopleleaving)])
                 
             
             ## Risk-related transitions
