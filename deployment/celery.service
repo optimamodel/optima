@@ -1,0 +1,11 @@
+[Unit]
+Description=Optima Staging Celery
+
+[Service]
+ExecStart=/software/anaconda/bin/celery -A server.webapp.tasks.celery_instance worker -l info
+WorkingDirectory=/var/www/staging/optima/
+Restart=always
+User=optima
+
+[Install]
+WantedBy=multi-user.target

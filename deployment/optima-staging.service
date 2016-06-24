@@ -1,0 +1,11 @@
+[Unit]
+Description=Optima Staging
+
+[Service]
+ExecStart=/software/anaconda/bin/python server/api.py
+WorkingDirectory=/var/www/staging/optima/
+Restart=always
+User=optima
+
+[Install]
+WantedBy=multi-user.target
