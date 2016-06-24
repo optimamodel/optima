@@ -48,8 +48,20 @@ function (angular, $, _, JsPdf) {
             var graphDeferred = new $.Deferred();
             generateGraphPromises[index] = graphDeferred.promise();
 
-            var figureWidth = $(el).find('svg').outerWidth() * 1.4;
-            var figureHeight = $(el).find('svg').outerHeight() * 1.4;
+            var $svg = $(el).find('svg');
+            var viewBox = $svg[0].getAttribute('viewBox');
+            var figureWidth, figureHeight;
+            if (viewBox) {
+              // console.log('viewbox', viewBox);
+              var tokens = viewBox.split(" ");
+              figureWidth = parseFloat(tokens[2]);
+              figureHeight = parseFloat(tokens[3]);
+            } else {
+              figureWidth = $originalSvg.width();
+              figureHeight = $originalSvg.height();
+            }
+            var figureWidth = figureWidth * 1.4;
+            var figureHeight = figureHeight * 1.4;
             var graph = {
               imageData: undefined,
               figureWidth: figureWidth,
