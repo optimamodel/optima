@@ -386,8 +386,8 @@ class Project(object):
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
         if name is None and orig is None: # Nothing supplied, just use defaults
-            name = 'default'
-            orig = 'default'
+            name = -1
+            orig = -1
         if isnumber(name): name = self.parsets.keys()[name] # Convert from index to name if required
         if isnumber(orig): orig = self.parsets.keys()[orig]
         if name is not None and orig is not None and name!=orig:
@@ -400,7 +400,7 @@ class Project(object):
                 raise OptimaException(errormsg)
             else:
                 self.copyparset(orig=orig, new=name) # Store parameters
-        return None
+        return name, orig
 
 
     def pars(self):
@@ -415,15 +415,15 @@ class Project(object):
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
-        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.modified = today()
         return None
 
 
-    def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2, **kwargs): # orig=default or orig=0?
+    def manualfit(self, orig=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
-        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
         manualfit(project=self, name=name, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
@@ -432,7 +432,7 @@ class Project(object):
 
     def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
-        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
