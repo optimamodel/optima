@@ -14,6 +14,8 @@ globalLogBeginner.beginLoggingTo([
 
 import api
 
+api.init_db()
+
 wsgi_app = WSGIResource(reactor, reactor.getThreadPool(), api.app)
 
 class OptimaResource(Resource):

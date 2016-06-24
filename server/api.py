@@ -19,6 +19,7 @@ if os.environ.get('OPTIMA_TEST_CFG'):
 
 import server.webapp.dbconn
 server.webapp.dbconn.db = SQLAlchemy(app)
+server.webapp.dbconn.redis = redis.StrictRedis.from_url(app.config["REDIS_URL"])
 
 from server.webapp.dbmodels import UserDb
 
@@ -153,8 +154,10 @@ def root():
 
 
 def init_db():
-    server.webapp.dbconn.db.create_all()
+    print("Loading DB...")
 
+    server.webapp.dbconn.db.engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
+    server.webapp.dbconn.db.create_all()
 
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)
