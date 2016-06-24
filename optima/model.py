@@ -877,7 +877,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
                 ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
                 people[:,:,t+1] *= ratio # Scale to match
-                print('(t=%f, ratio=%f, actual=%f, wanted=%f)' % (t+1, ratio, actualpeople, wantedpeople))
                 if abs(ratio-1)>maxmismatch:
                     errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, ratio=%f, actual=%f)' % (t+1, ratio, actualpeople)
                     if die: raise OptimaException(errormsg)
