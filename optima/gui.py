@@ -599,7 +599,7 @@ def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, fig
     
     # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
     tmp = parslist
-    try:  parslist = tmp.parsets[0].pars[0] # If it's a project
+    try:  parslist = tmp.parsets[-1].pars[0] # If it's a project
     except:
         try: parslist = tmp.pars[0] # If it's a parset
         except: pass
