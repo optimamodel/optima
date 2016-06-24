@@ -23,8 +23,17 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
 
       var elementId = $(el).find('[mpld3-chart]').attr('id');
       var $originalSvg = el.find('svg');
-      var orginalWidth = $originalSvg.outerWidth();
-      var orginalHeight = $originalSvg.outerHeight();
+      var viewBox = $originalSvg[0].getAttribute('viewBox');
+      var orginalWidth, orginalHeight;
+      if (viewBox) {
+        // console.log('viewbox', viewBox);
+        var tokens = viewBox.split(" ");
+        orginalWidth = parseFloat(tokens[2]);
+        orginalHeight = parseFloat(tokens[3]);
+      } else {
+        orginalWidth = $originalSvg.width();
+        orginalHeight = $originalSvg.height();
+      }
       var originalStyle = $originalSvg.attr('style') || '';
       var scalingFactor = 4.2;
 

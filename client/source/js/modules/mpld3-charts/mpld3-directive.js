@@ -52,7 +52,7 @@ define(
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
       var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-      var width = 250;
+      var width = 200;
       var height = width / ratio;
       // $svgFigure.css({'width': width, 'height': height});
       $svgFigure.attr('version', '1.1');
@@ -61,7 +61,7 @@ define(
       $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
       // $svgFigure.removeAttr('width');
       // $svgFigure.removeAttr('height');
-      console.log("svg", ratio, $svgFigure[0]);
+      // console.log("svg", ratio, $svgFigure[0]);
 
 
       $svgFigure.on('mouseover', function () {
@@ -229,8 +229,17 @@ define(
           var isMpld3 = elementId && elementId.indexOf('mpld3') != -1;
 
           var $originalSvg = elem.parent().find('svg');
-          var orginalWidth = $originalSvg.width();
-          var orginalHeight = $originalSvg.height();
+          var viewBox = $originalSvg[0].getAttribute('viewBox');
+          var orginalWidth, orginalHeight;
+          if (viewBox) {
+            // console.log('viewbox', viewBox);
+            var tokens = viewBox.split(" ");
+            orginalWidth = parseFloat(tokens[2]);
+            orginalHeight = parseFloat(tokens[3]);
+          } else {
+            orginalWidth = $originalSvg.width();
+            orginalHeight = $originalSvg.height();
+          }
 
           originalStyle = 'padding: ' + $originalSvg.css('padding');
           // if (scope.chartType === 'mpld3') {
