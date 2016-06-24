@@ -5,6 +5,7 @@ define(
 
   'use strict';
 
+  var allcharts, scrollTop;
 
   function consoleLogJson(name, val) {
     console.log(name + ' = ');
@@ -352,8 +353,8 @@ define(
 
             // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
+            // console.log("update graph", $element, $element.width(), $element.outerHeight());
             $element.attr('id', attrs.chartId);
-            $element.html("");
 
             // calculates the number of items in the legend
             // to be used in the hack to fix the lines appearing
@@ -372,6 +373,8 @@ define(
             });
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
+
+            allcharts.scrollTop(scrollTop);
           },
           true
         );
@@ -398,6 +401,9 @@ define(
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
+
+        allcharts = $(elem).find('.allcharts');
+        scrollTop = allcharts.scrollTop();
 
         scope.exportAllData = function() {
           var resultId = scope.graphs.resultId;
@@ -450,6 +456,10 @@ define(
         $(window).bind('resize', function () {
           scope.onResize();
         })
+
+        allcharts.scroll(function() {
+          scrollTop = allcharts.scrollTop();
+        });
       }
     };
   });
