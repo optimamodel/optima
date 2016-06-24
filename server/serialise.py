@@ -178,6 +178,8 @@ def loads(input):
 
                 else:
                     assert False, str(o)[0:1000]
+            else:
+                return {decode(x):decode(y) for x,y in o.iteritems()}
 
             return o
 
