@@ -27,23 +27,74 @@ from server.webapp.dataio import (
     load_project_program_summaries)
 
 
+def get_populations_from_project(project):
+
+    project_pops = project.data.get("pops")
+
+    populations = []
+    for i in range(len(project_pops['short'])):
+        new_pop = {
+            'name': project_pops['long'][i],
+            'short': project_pops['short'][i],
+            'female': project_pops['female'][i],
+            'male': project_pops['male'][i],
+            'age_from': int(project_pops['age'][i][0]),
+            'age_to': int(project_pops['age'][i][1])
+            }
+        populations.append(new_pop)
+
+    return populations
+
+
+def set_populations_on_project(project, populations):
+
+    finished_populations = op.odict()
+
+    finished_populations['long'] = []
+    finished_populations['short'] = []
+    finished_populations['female'] = []
+    finished_populations['male'] = []
+    finished_populations['age'] = []
+
+    for pop in populations:
+        finished_populations['long'].append(pop['name'])
+        finished_populations['short'].append(pop['short'])
+        finished_populations['female'].append(pop['female'])
+        finished_populations['male'].append(pop['male'])
+        finished_populations['age'].append((pop['age_from'], pop['age_to']))
+
+    if project.data.get("pops") != finished_populations:
+        # We need to delete the data here off the project?
+        project.data = {}
+
+    project.data["pops"] = finished_populations
+    project.data["npops"] = len(populations)
+
+
+def set_values_on_project(project, args):
+
+    set_populations_on_project(project, args.get('populations', {}))
+    project.name = args["name"]
+
+
+
 def get_project_summary_from_record(project_record):
     project_id = project_record.id
-    program_records = ProgramsDb.query.filter_by(project_id=project_id).all()
-    program_records = filter(lambda r: r.active == True, program_records)
+    project = project_record.load()
+
     result = {
         'id': project_record.id,
-        'name': project_record.name,
+        'name': project.name,
         'user_id': project_record.user_id,
-        'dataStart': project_record.datastart,
-        'dataEnd': project_record.dataend,
-        'populations': project_record.populations,
-        'nProgram': len(program_records),
-        'creation_time': project_record.created,
-        'updated_time': project_record.updated,
-        'data_upload_time': project_record.data_upload_time,
-        'has_data': project_record.has_data(),
-        'has_econ': project_record.has_econ
+        'dataStart': project.data.get('years', ["<no data>"])[0],
+        'dataEnd': project.data.get('years', ["<no data>"])[-1],
+        'populations': get_populations_from_project(project),
+        'nProgram': 0,
+        'creation_time': project.created,
+        'updated_time': project.modified,
+        'data_upload_time': project.spreadsheetdate,
+        'has_data': project.data != {},
+        'has_econ': "econ" in project.data
     }
     return result
 
@@ -155,20 +206,27 @@ class Projects(ProjectBase):
         current_app.logger.debug("Creating new project %s by user %s:%s" % (
             args['name'], user_id, current_user.email))
         project_entry = ProjectDb(
-            user_id=user_id,
-            version=op.__version__,
-            created=datetime.utcnow(),
-            **args
+            user_id=user_id
         )
 
+        project = op.Project(
+            name = args["name"]
+        )
+        set_populations_on_project(project, args["populations"])
+
         current_app.logger.debug(
-            'Creating new project: %s' % project_entry.name)
+            'Creating new project: %s' % project.name)
 
         # Save to db
         current_app.logger.debug("About to persist project %s for user %s" % (
-            project_entry.name, project_entry.user_id))
+            project.name, project_entry.user_id))
+
         db.session.add(project_entry)
         db.session.commit()
+
+        project.uid = project_entry.id
+        project_entry.save_obj(project)
+
         new_project_template = secure_filename("{}.xlsx".format(args['name']))
         path = templatepath(new_project_template)
         op.makespreadsheet(
@@ -218,7 +276,7 @@ class Projects(ProjectBase):
             ]
 
         for project in projects:
-            project.recursive_delete()
+            project.delete()
 
         db.session.commit()
 
@@ -245,6 +303,7 @@ class Project(Resource):
         if not current_user.is_admin and \
                         str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
+
         return get_project_summary_from_record(project_entry)
 
     @swagger.operation(
@@ -278,43 +337,29 @@ class Project(Resource):
         if not project_entry:
             raise ProjectDoesNotExist(id=project_id)
 
-        current_populations = project_entry.populations
-        new_populations = args.get('populations', {})
-        can_update = (current_populations == new_populations)
-        current_app.logger.debug(
-            "can_update %s: %s" % (project_id, can_update))
-
-        for name, value in args.iteritems():
-            if value is not None:
-                setattr(project_entry, name, value)
+        project = project_entry.load()
+        set_values_on_project(project, args)
 
         current_app.logger.debug(
             "Editing project %s by user %s:%s" % (
-                project_entry.name, current_user.id, current_user.email))
-
-        # because programs no longer apply here, we don't seem to have to recalculate the results
-        # not sure what to do with startdate and enddate though... let's see
-        # how it goes )
-
-        if not can_update:
-            db.session.query(ProjectDataDb).filter_by(
-                id=project_entry.id).delete()
-            db.session.commit()
+                project.name, current_user.id, current_user.email))
 
         # Save to db
         current_app.logger.debug("About to persist project %s for user %s" % (
-            project_entry.name, project_entry.user_id))
+            project.name, project_entry.user_id))
         db.session.add(project_entry)
         db.session.commit()
-        secure_project_name = secure_filename(project_entry.name)
+        project_entry.save_obj(project)
+
+        secure_project_name = secure_filename(project.name)
         new_project_template = secure_project_name
 
         path = templatepath(secure_project_name)
         op.makespreadsheet(
             path,
             pops=args['populations'],
-            datastart=project_entry.datastart,
-            dataend=project_entry.dataend)
+            datastart=args["datastart"],
+            dataend=args["dataend"])
 
         current_app.logger.debug(
             "new_project_template: %s" % new_project_template)
@@ -339,11 +384,11 @@ class Project(Resource):
         project_entry = load_project_record(project_id)
         user_id = current_user.id
 
-        if project_entry is None:
+        if project is None:
             raise ProjectDoesNotExist(id=project_id)
 
-        user_id = project_entry.user_id
-        project_name = project_entry.name
+        user_id = project.user_id
+        project_name = project.name
 
         project_entry.recursive_delete()
 
@@ -377,13 +422,13 @@ class ProjectSpreadsheet(Resource):
         cu = current_user
         current_app.logger.debug("get ProjectSpreadsheet(%s %s)" % (cu.id, project_id))
         project_entry = load_project_record(project_id)
-        if project_entry is None:
+        if project is None:
             raise ProjectDoesNotExist(id=project_id)
 
         # See if there is matching project data
-        projdata = ProjectDataDb.query.get(project_entry.id)
+        projdata = ProjectDataDb.query.get(project.id)
 
-        wb_name = secure_filename('{}.xlsx'.format(project_entry.name))
+        wb_name = secure_filename('{}.xlsx'.format(project.name))
         if projdata is not None and len(projdata.meta) > 0:
             return Response(
                 projdata.meta,
@@ -394,18 +439,18 @@ class ProjectSpreadsheet(Resource):
         else:
             # if no project data found
             # TODO fix after v2
-            # makeworkbook(wb_name, project_entry.populations, project_entry.programs, \
-            #     project_entry.datastart, project_entry.dataend)
+            # makeworkbook(wb_name, project.populations, project.programs, \
+            #     project.datastart, project.dataend)
             path = templatepath(wb_name)
             op.makespreadsheet(
                 path,
-                pops=project_entry.populations,
-                datastart=project_entry.datastart,
-                dataend=project_entry.dataend)
+                pops=project.populations,
+                datastart=project.datastart,
+                dataend=project.dataend)
 
             current_app.logger.debug(
                 "project %s template created: %s" % (
-                    project_entry.name, wb_name)
+                    project.name, wb_name)
             )
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             # deliberately don't save the template as uploaded data
@@ -418,7 +463,9 @@ class ProjectSpreadsheet(Resource):
         print ">>>> Load spreadsheet"
 
         project_record = load_project_record(project_id, raise_exception=True)
-        project_name = project_record.name
+        project = project_record.load()
+
+        project_name = project.name
 
         args = file_upload_form_parser.parse_args()
 
@@ -434,53 +481,14 @@ class ProjectSpreadsheet(Resource):
         server_filename = os.path.join(load_dir, filename)
         uploaded_file.save(server_filename)
 
-        parset_name = "default"
-        from server.webapp.dbmodels import ParsetsDb
-        parset_records = ParsetsDb.query.filter_by(project_id=project_id)
-        parset_names = [p.name for p in parset_records]
-        if parset_name in parset_names:
-            parset_name = "uploaded from " + uploaded_file.source_filename
-            i = 0
-            while parset_name in parset_names:
-                i += 1
-                parset_name = "uploaded_from_%s (%d)" % (uploaded_file.source_filename, i)
+        parset_name = "uploaded from " + uploaded_file.source_filename
 
-        project = project_record.hydrate()
         # Load parset from spreadsheet, will also runsim and store result
         project.loadspreadsheet(server_filename, parset_name)
 
-        project.modified = datetime.now(dateutil.tz.tzutc())
-        project_record.restore(project)
         db.session.add(project_record)
-
-        from server.webapp.dataio import update_or_create_parset_record
-        parset = project.parsets[parset_name]
-        parset_record = update_or_create_parset_record(project_id, parset_name, parset)
-        print ">>>> Store uploaded parset '%s'" % (parset_name)
-        db.session.add(parset_record)
-        db.session.flush()
-
-        result = project.results[-1]
-        result_record = save_result_record(project_id, result, parset_name, "calibration")
-        print ">>>> Store result(calibration) '%s'" % (result.name)
-        db.session.add(result_record)
-
-        # save data upload timestamp
-        data_upload_time = datetime.now(dateutil.tz.tzutc())
-        file_data = open(server_filename, 'rb').read()
-
-        project_data_record = ProjectDataDb.query.get(project_id)
-        if project_data_record is not None:
-            # update existing
-            project_data_record.meta = file_data
-            project_data_record.updated = data_upload_time
-        else:
-            # create new project data
-            project_data_record = ProjectDataDb(
-                project_id=project_id, meta=file_data, updated=data_upload_time)
-        db.session.add(project_data_record)
-
         db.session.commit()
+        project_record.save_obj(project)
 
         reply = {
             'file': source_filename,
@@ -508,13 +516,13 @@ class ProjectEcon(Resource):
         cu = current_user
         current_app.logger.debug("get ProjectEcon(%s %s)" % (cu.id, project_id))
         project_entry = load_project_record(project_id)
-        if project_entry is None:
+        if project is None:
             raise ProjectDoesNotExist(id=project_id)
 
         # See if there is matching project econ data
-        projecon = ProjectEconDb.query.get(project_entry.id)
+        projecon = ProjectEconDb.query.get(project.id)
 
-        wb_name = secure_filename('{}_economics.xlsx'.format(project_entry.name))
+        wb_name = secure_filename('{}_economics.xlsx'.format(project.name))
         if projecon is not None and len(projecon.meta) > 0:
             return Response(
                 projecon.meta,
@@ -527,12 +535,12 @@ class ProjectEcon(Resource):
             path = templatepath(wb_name)
             op.makeeconspreadsheet(
                 path,
-                datastart=project_entry.datastart,
-                dataend=project_entry.dataend)
+                datastart=project.datastart,
+                dataend=project.dataend)
 
             current_app.logger.debug(
                 "project %s economics spreadsheet created: %s" % (
-                    project_entry.name, wb_name)
+                    project.name, wb_name)
             )
             (dirname, basename) = (upload_dir_user(TEMPLATEDIR), wb_name)
             # deliberately don't save the template as uploaded data
@@ -553,7 +561,7 @@ class ProjectEcon(Resource):
 
         project_entry = load_project_record(project_id, raise_exception=True)
 
-        project_name = project_entry.name
+        project_name = project.name
         user_id = current_user.id
 
         args = file_upload_form_parser.parse_args()
@@ -572,16 +580,16 @@ class ProjectEcon(Resource):
 
         # See if there is matching project
         current_app.logger.debug("project for user %s name %s: %s" % (
-            current_user.id, project_name, project_entry))
+            current_user.id, project_name, project))
         from optima.utils import saves  # , loads
         # from optima.parameters import Parameterset
-        project_instance = project_entry.hydrate()
+        project_instance = project.load()
         project_instance.loadeconomics(server_filename)
         project_instance.modified = datetime.now(dateutil.tz.tzutc())
         current_app.logger.info(
             "after economics uploading: %s" % project_instance)
 
-        #   now, update relevant project_entry fields
+        #   now, update relevant project fields
         # this adds to db.session all dependent entries
         project_entry.restore(project_instance)
         db.session.add(project_entry)
@@ -591,7 +599,7 @@ class ProjectEcon(Resource):
         # get file data
         filedata = open(server_filename, 'rb').read()
         # See if there is matching project econ data
-        projecon = ProjectEconDb.query.get(project_entry.id)
+        projecon = ProjectEconDb.query.get(project.id)
 
         # update existing
         if projecon is not None:
@@ -600,7 +608,7 @@ class ProjectEcon(Resource):
         else:
             # create new project data
             projecon = ProjectEconDb(
-                project_id=project_entry.id,
+                project_id=project.id,
                 meta=filedata,
                 updated=data_upload_time)
 
@@ -621,14 +629,14 @@ class ProjectEcon(Resource):
         cu = current_user
         current_app.logger.debug("user %s:POST /api/project/%s/economics" % (cu.id, project_id))
         project_entry = load_project_record(project_id)
-        if project_entry is None:
+        if project is None:
             raise ProjectDoesNotExist(id=project_id)
 
         # See if there is matching project econ data
-        projecon = ProjectEconDb.query.get(project_entry.id)
+        projecon = ProjectEconDb.query.get(project.id)
 
         if projecon is not None and len(projecon.meta) > 0:
-            project_instance = project_entry.hydrate()
+            project_instance = project.load()
             if 'econ' not in project_instance.data:
                 current_app.logger.warning("No economics data has been found in project {}".format(project_id))
             else:
@@ -707,7 +715,7 @@ class ProjectData(Resource):
                 "runsim result for project %s: %s" % (project_id, result))
 
         project_record.restore(project_instance)
-        db.session.add(project_record)
+        db.session.add(project_entry)
         db.session.flush()
 
         if project_instance.data:
@@ -755,13 +763,13 @@ class ProjectFromData(Resource):
         dataend = default_dataend
         pops = {}
 
-        print(">>>> Process projecct upload")
+        print(">>>> Process project upload")
 
         project_record = ProjectDb(
             project_name, user_id, datastart, dataend, pops, version=op.__version__)
 
         # New project ID needs to be generated before calling restore
-        db.session.add(project_record)
+        db.session.add(project_entry)
         db.session.flush()
 
         result = None
@@ -772,7 +780,7 @@ class ProjectFromData(Resource):
             print('>>>> Runsim for project: "%s"' % (project_record.name))
 
         project_record.restore(project)
-        db.session.add(project_record)
+        db.session.add(project_entry)
         db.session.flush()
 
         if result is not None:
@@ -817,32 +825,32 @@ class ProjectCopy(Resource):
         # Get project row for current user with project name
         project_entry = load_project_record(
             project_id, all_data=True, raise_exception=True)
-        project_user_id = project_entry.user_id
+        project_user_id = project.user_id
 
-        be_project = project_entry.hydrate()
+        be_project = project.load()
 
         # force load the existing result
         project_result_exists = project_entry.results
 
-        db.session.expunge(project_entry)
-        make_transient(project_entry)
+        db.session.expunge(project)
+        make_transient(project)
 
-        project_entry.id = None
+        project.id = None
         db.session.add(project_entry)
         db.session.flush()  # this updates the project ID to the new value
 
         project_entry.restore(be_project)
-        project_entry.name = new_project_name
+        project.name = new_project_name
         db.session.add(project_entry)
         # change the creation and update time
-        project_entry.created = datetime.now(dateutil.tz.tzutc())
-        project_entry.updated = datetime.now(dateutil.tz.tzutc())
+        project.created = datetime.now(dateutil.tz.tzutc())
+        project.updated = datetime.now(dateutil.tz.tzutc())
         db.session.flush()  # this updates the project ID to the new value
 
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
-        new_project_id = project_entry.id
+        new_project_id = project.id
 
         if project_result_exists:
             # copy each result

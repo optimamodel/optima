@@ -105,10 +105,6 @@ def load_progset_record(project_id, progset_id, raise_exception=True):
         project_id, progset_id, ProgsetsDb, ProgsetDoesNotExist, raise_exception)
 
 
-def load_parset_record(project_id, parset_id, raise_exception=True):
-    return _load_project_child(
-        project_id, parset_id, ParsetsDb, ParsetDoesNotExist, raise_exception)
-
 
 def load_program_record(project_id, progset_id, program_id, raise_exception=True):
     cu = current_user
@@ -232,7 +228,7 @@ def load_project(project_id, autofit=False, raise_exception=True):
         project_record = load_project_record(project_id, raise_exception=raise_exception)
         if project_record is None:
             raise ProjectDoesNotExist(id=project_id)
-        project = project_record.hydrate()
+        project = project_record.load()
     else:  # todo bail out if no working project
         working_project_record = db.session.query(WorkingProjectDb).filter_by(id=project_id).first()
         if working_project_record is None:
@@ -245,30 +241,34 @@ def load_program(project_id, progset_id, program_id):
     program_entry = load_program_record(project_id, progset_id, program_id)
     if program_entry is None:
         raise ProgramDoesNotExist(id=program_id, project_id=project_id)
-    return program_entry.hydrate()
+    return program_entry.load()
 
 
-def load_parset(project_id, parset_id):
-    from server.webapp.dbmodels import ParsetsDb
-    from server.webapp.exceptions import ParsetDoesNotExist
+def load_parset(project, parset_id):
 
-    parset_record = db.session.query(ParsetsDb).get(parset_id)
-    if parset_record is None:
-        if raise_exception:
-            raise ParsetDoesNotExist(id=parset_id)
-        return None
-
-    if parset_record.project_id != project_id:
-        if raise_exception:
-            raise ParsetDoesNotExist(id=parset_id)
-        return None
-
-    return parset_record.hydrate()
+    for parset in project.parsets.values():
+        if parset.uid == parset_id:
+            return parset
 
 
-def load_parset_list(project_id):
-    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
-    return [parset_record.hydrate() for parset_record in parset_records]
+
+def load_parset_list(project):
+    parsets = []
+
+    for parset in project.parsets.values():
+
+        print(parset)
+
+        parsets.append({
+            "id": parset.uid,
+            "project_id": project.uid,
+            "pars": parset.pars,
+            "updated": parset.modified,
+            "created": parset.created,
+            "name": parset.name
+        })
+
+    return parsets
 
 
 def get_project_parameters(project_id):
@@ -302,7 +302,7 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TY
 
 
 def save_result_record(
-        project_id, result, parset_name='default',
+        project, result, parset_name='default',
         calculation_type=ResultsDb.CALIBRATION_TYPE,
         db_session=None):
 
@@ -311,7 +311,7 @@ def save_result_record(
 
     # find relevant parset for the result
     print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
-    parsets = db_session.query(ParsetsDb).filter_by(project_id=project_id)
+    parsets = project.parsets.values()
     parset = [item for item in parsets if item.name == parset_name]
     if parset:
         parset = parset[0]
@@ -319,9 +319,9 @@ def save_result_record(
         raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
 
     # update results (after runsim is invoked)
-    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id)
+    result_records = db_session.query(ResultsDb).filter_by(project_id=project.uid)
     result_records = [item for item in result_records
-                     if item.parset_id == parset.id
+                     if item.parset_id == parset.uid
                         and item.calculation_type == calculation_type]
 
     blob = op.saves(result)
@@ -333,8 +333,8 @@ def save_result_record(
 
     if not result_records:
         result_record = ResultsDb(
-            parset_id=str(parset.id),
-            project_id=project_id,
+            parset_id=str(parset.uid),
+            project_id=project.uid,
             calculation_type=calculation_type,
             blob=blob)
 
@@ -494,9 +494,9 @@ def save_scenario_summaries(project_id, scenario_summaries):
 def get_program_summary_from_program_record(program_record):
     """
     Extract required fields from Program object
-    
+
     Field names taken to be consistent with dbModels.ProgramsDb resource fields
-    
+
     @TODO: optimizable field needs to be made consistent within ProgramDb
     """
     program_summary = {
@@ -539,34 +539,34 @@ def get_progset_summary_from_record(progset_record):
 
 def get_progset_summaries(project_id):
     """
-    
+
     """
-    progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_id).all()   
+    progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_id).all()
     progset_summaries = map(get_progset_summary_from_record, progset_records)
-  
+
     return { 'progsets': normalize_obj(progset_summaries)}
-  
+
 
 
 def save_progset_summaries(project_id, progset_summaries):
     """
 
-    """ 
+    """
 
     progset_name = progset_summaries['name']
     progset_programs = progset_summaries['programs']
-    
+
     current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
-   
+
     progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
     # need to flush first to force the generation of progset_record.id if new
     db.session.add(progset_record)
     db.session.flush()
-       
+
     progset_record.update_from_program_summaries(progset_programs, progset_record.id)
     progset_record.get_extra_data()
     db.session.commit()
-       
+
 
 
 def get_optimization_summaries(project_id):

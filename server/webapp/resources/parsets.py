@@ -11,7 +11,7 @@ from flask_restful_swagger import swagger
 import optima as op
 from server.webapp.dataio import (
     load_project_record, TEMPLATEDIR, upload_dir_user, save_result_record, load_result,
-    load_project, load_parset_record, load_parset_list, get_parset_from_project)
+    load_project, load_parset, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
@@ -46,7 +46,10 @@ class Parsets(Resource):
     @swagger.operation(description='Download all parsets for project')
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/parsets" % str(project_id))
-        return load_parset_list(project_id)
+        project_entry = load_project_record(project_id)
+        project = project_entry.load()
+
+        return {"parsets": load_parset_list(project)}
 
     @swagger.operation(description='Create parset or copy existing parset')
     def post(self, project_id):
@@ -57,7 +60,7 @@ class Parsets(Resource):
         parset_id = args.get('parset_id')
 
         project_entry = load_project_record(project_id)
-        project = project_entry.hydrate()
+        project = project_entry.load()
 
         if name in project.parsets:
             raise ParsetAlreadyExists(project_id, name)
@@ -65,20 +68,16 @@ class Parsets(Resource):
             # create new parset with default settings
             project.makeparset(name, overwrite=False)
             new_result = project.runsim(name)
-            project_entry.restore(project)
+            project_entry.save_obj(project)
             db.session.add(project_entry)
 
-            result_record = save_result_record(project_entry.id, new_result, name)
+            result_record = save_result_record(project, new_result, name)
             db.session.add(result_record)
         else:
-            # dealing with uid's directly might be messy...
-            original_parset = [item for item in project_entry.parsets if item.id == parset_id]
-            if not original_parset:
-                raise ParsetDoesNotExist(parset_id, project_id=project_id)
-            original_parset = original_parset[0]
+            original_parset = project.parsets[parset_id]
             parset_name = original_parset.name
             project.copyparset(orig=parset_name, new=name)
-            project_entry.restore(project)
+            project_entry.save_obj(project)
             db.session.add(project_entry)
 
         db.session.commit()
@@ -242,15 +241,16 @@ class ParsetsCalibration(Resource):
         calculation_type = 'autofit' if autofit else ResultsDb.CALIBRATION_TYPE
         print ">>>> Calculation type:", calculation_type
 
-        parset_record = load_parset_record(project_id, parset_id)
-        parset = parset_record.hydrate()
-        result = load_result(project_id, parset_id, calculation_type)
+        project = load_project(project_id)
+        parset = load_parset(project, parset_id)
+        result = load_result(project.uid, parset.uid, calculation_type)
+
         if result is None:
             print ">>>> Runsim for new calibration results and store"
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            record = save_result_record(project_id, result, parset.name, calculation_type)
+            record = save_result_record(project, result, parset.name, calculation_type)
             db.session.add(record)
             db.session.flush()
             db.session.commit()
@@ -264,7 +264,7 @@ class ParsetsCalibration(Resource):
         graphs = self._result_to_jsons(result, which)
 
         return {
-            "parset_id": parset_id,
+            "parset_id": parset.uid,
             "parameters": get_parset_parameters(parset),
             "graphs": graphs,
             "selectors": selectors,
@@ -469,14 +469,15 @@ class ParsetsData(Resource):
         db.session.flush()
 
         # recalculate data (TODO: verify with Robyn if it's needed )
-        project_instance = project_entry.hydrate()
+        project_instance = project_entry.load()
         result = project_instance.runsim(parset_entry.name)
         current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
 
         db.session.add(project_entry)  # todo: do we need to log that project was updated?
         db.session.flush()
 
-        result_record = save_result_record(project_entry.id, result, parset_entry.name)
+
+        result_record = save_result_record(project_instance, result, parset_entry.name)
         db.session.add(result_record)
 
         db.session.commit()
