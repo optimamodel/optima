@@ -53,7 +53,10 @@ define(
   function reformatMpld3FigsInElement($element, nLegend) {
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
-      var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+      var width = $svgFigure.attr('width');
+      var height = $svgFigure.attr('height');
+      var ratio = width / height;
+      $svgFigure[0].setAttribute('viewBox', '0 0 ' + width + ' ' + height);
       var width = $svgFigure.parent().width();
       var height = width / ratio;
       $svgFigure.attr('width', width);
@@ -374,7 +377,9 @@ define(
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
 
-            allcharts.scrollTop(scrollTop);
+            if (!_.isUndefined(allcharts)) {
+              allcharts.scrollTop(scrollTop);
+            }
           },
           true
         );
