@@ -316,17 +316,17 @@ class Project(object):
         return None
     
     
-    def save(self, filename=None, saveresults=False):
+    def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
         self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
-            saveobj(filename, self)
+            saveobj(filename, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.cleanresults() # Get rid of all results
-            saveobj(filename, tmpproject) # Save it to file
+            saveobj(filename, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         return None
 
