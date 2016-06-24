@@ -869,15 +869,16 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             # If required, scale population sizes to exactly match the parameters
             if forcepopsize:
                 maxmismatch = 0.1 # Set the maximum allowable mismatch before throwing a warning
-                actualpeople = people[:,:,t+1].sum()
-                wantedpeople = popsize[:,t+1].sum()
-                if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
-                ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
-                people[:,:,t+1] *= ratio # Scale to match
-                if abs(ratio-1)>maxmismatch:
-                    errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, ratio=%f, actual=%f)' % (t+1, ratio, actualpeople)
-                    if die: raise OptimaException(errormsg)
-                    else: printv(errormsg, 1, verbose=verbose)
+                for p in range(npops):
+                    actualpeople = people[:,p,t+1].sum()
+                    wantedpeople = popsize[p,t+1]
+                    if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
+                    ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
+                    people[:,p,t+1] *= ratio # Scale to match
+                    if abs(ratio-1)>maxmismatch:
+                        errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, ratio=%f, actual=%f)' % (t+1, ratio, actualpeople)
+                        if die: raise OptimaException(errormsg)
+                        else: printv(errormsg, 1, verbose=verbose)
             
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
