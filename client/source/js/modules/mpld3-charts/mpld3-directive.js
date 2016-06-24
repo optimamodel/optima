@@ -1,5 +1,6 @@
 define(
-    ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
+    ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF',
+      './svg-to-png', './export-helpers-service'],
     function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
 
   'use strict';
@@ -52,22 +53,16 @@ define(
     $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
       var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
-      var width = 200;
+      var width = $svgFigure.parent().width();
       var height = width / ratio;
-      // $svgFigure.css({'width': width, 'height': height});
-      $svgFigure.attr('version', '1.1');
       $svgFigure.attr('width', width);
       $svgFigure.attr('height', height);
       $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
-      // $svgFigure.removeAttr('width');
-      // $svgFigure.removeAttr('height');
-      // console.log("svg", ratio, $svgFigure[0]);
-
 
       $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
         $svgFigure.find('.mpld3-coordinates').each(function () {
-          $(this).attr('y', height + 7);
+          $(this).attr('top', height + 7);
         });
         $svgFigure.find('.mpld3-toolbar').each(function () {
           $(this).remove();
@@ -375,14 +370,6 @@ define(
                 nLegend += 1;
               }
             });
-            // figure.width = 300;
-            // figure.height = 150;
-            // _.each(figure.axes[0].axes, function(axes) {
-            //   axes.fontsize = 6;
-            // });
-            // _.each(figure.axes[0].texts, function(text) {
-            //   text.fontsize = 8;
-            // });
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
           },
@@ -395,6 +382,16 @@ define(
     };
   });
 
+  function setAllFiguresToWidth($element) {
+    $element.find('svg.mpld3-figure').each(function () {
+      var $svgFigure = $(this);
+      var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+      var width = $svgFigure.parent().width();
+      var height = width / ratio;
+      $svgFigure.attr('width', width);
+      $svgFigure.attr('height', height);
+    });
+  }
 
   module.directive('optimaGraphs', function ($http) {
     return {
@@ -441,9 +438,18 @@ define(
             _.each(scope.graphs.mpld3_graphs, function (g, i) {
               g.isChecked = function () { return isChecked(i); };
             });
+            setAllFiguresToWidth($(elem).find(".allcharts"));
           }
         );
 
+        scope.onResize = function () {
+          setAllFiguresToWidth($(elem).find(".allcharts"));
+          scope.$apply();
+        };
+
+        $(window).bind('resize', function () {
+          scope.onResize();
+        })
       }
     };
   });

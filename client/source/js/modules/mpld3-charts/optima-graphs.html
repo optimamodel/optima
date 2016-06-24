@@ -8,7 +8,9 @@
 
   <div style="
          flex: 1 1;
-         overflow: auto;">
+         overflow: auto;
+         padding: 0;"
+       class="allcharts">
 
     <div ng-if="graphs">
       <export-all-charts
@@ -25,7 +27,13 @@
     <div
         ng-repeat="chart in graphs.mpld3_graphs"
         ng-show="chart.isChecked()"
-        class="chart-container __small">
+        style="
+          width: 32.9%;
+          box-sizing: border-box;
+          padding: 15px 5px 5px 5px;
+          border-right: 1px solid #EEE;
+          border-bottom: 1px solid #EEE;
+          float: left;">
       <div
           mpld3-chart="chart"
           chart-id="{{ chart.id }}">
@@ -35,7 +43,7 @@
   </div>
 
   <div style="
-         flex: 0 0 280px;
+         flex: 0 0 230px;
          border-left: 1px solid #DDD;
          padding: 0px 20px 5px 20px;
          overflow: auto;">
