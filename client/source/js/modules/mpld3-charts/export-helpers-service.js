@@ -1,8 +1,9 @@
 define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $, svgToPng, _) {
   'use strict';
 
-  return angular.module('app.mpld3-charts.export-helpers',[])
-  .factory('exportHelpers', ['$http', function ($http) {
+  return angular
+      .module('app.mpld3-charts.export-helpers',[])
+      .factory('exportHelpers', ['$http', function ($http) {
 
     var chartCssUrl = '/assets/css/chart.css';
 
@@ -22,8 +23,17 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
 
       var elementId = $(el).find('[mpld3-chart]').attr('id');
       var $originalSvg = el.find('svg');
-      var orginalWidth = $originalSvg.outerWidth();
-      var orginalHeight = $originalSvg.outerHeight();
+      var viewBox = $originalSvg[0].getAttribute('viewBox');
+      var orginalWidth, orginalHeight;
+      if (viewBox) {
+        // console.log('viewbox', viewBox);
+        var tokens = viewBox.split(" ");
+        orginalWidth = parseFloat(tokens[2]);
+        orginalHeight = parseFloat(tokens[3]);
+      } else {
+        orginalWidth = $originalSvg.width();
+        orginalHeight = $originalSvg.height();
+      }
       var originalStyle = $originalSvg.attr('style') || '';
       var scalingFactor = 4.2;
 
@@ -62,7 +72,7 @@ define(['angular', 'jquery', './svg-to-png', 'underscore'], function (angular, $
         tmpImage.width = orginalWidth * scalingFactor;
         tmpImage.height = orginalHeight * scalingFactor;
         tmpImage.src = "data:image/svg+xml;charset=utf-8,"+ svgXML;
-
+        // console.log(svgXML);
         tmpImage.onload = function() {
           // draw image into canvas in order to convert it to a blob
           var canvas = document.createElement("canvas");

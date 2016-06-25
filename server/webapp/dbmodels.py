@@ -365,26 +365,26 @@ class ProjectDb(db.Model):
 
         parset_name_by_id = {v: k for k, v in parset_id_by_name.items()}
         if project.results:
-            from server.webapp.dataio import save_result_record
+            from server.webapp.dataio import save_result
             for name, result in project.results.items():
                 if name.startswith('optim-') and isinstance(result, op.Multiresultset):
                     calculation_type = 'optimization'
                     optimization_summary = optimization_summary_by_result_name[name]
                     parset_name = parset_name_by_id[optimization_summary['parset_id']]
-                    result_record = save_result_record(self.id, result, parset_name, calculation_type)
+                    result_record = save_result(self.id, result, parset_name, calculation_type)
                     db.session.add(result_record)
                     db.session.flush()
                 if name.startswith('parset-') and isinstance(result, op.Resultset):
                     calculation_type = "calibration"
                     parset_name = name.replace('parset-', '')
-                    result_record = save_result_record(self.id, result, parset_name, calculation_type)
+                    result_record = save_result(self.id, result, parset_name, calculation_type)
                     db.session.add(result_record)
                     db.session.flush()
                 if name.startswith('scenarios') and isinstance(result, op.Multiresultset):
                     calculation_type = 'scenarios'
                     # really doesn't matter for scenarios
                     parset_name = project.parsets[0].name
-                    result_record = save_result_record(self.id, result, parset_name, calculation_type)
+                    result_record = save_result(self.id, result, parset_name, calculation_type)
                     db.session.add(result_record)
                     db.session.flush()
 

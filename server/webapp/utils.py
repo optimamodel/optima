@@ -158,8 +158,7 @@ class RequestParser(OrigReqParser):
                 raise ValueError(e.data['message'])
 
 
-TEMPLATEDIR = "/tmp/templates"
-PROJECTDIR = "/tmp/projects"
+TEMPLATEDIR = "/tmp" # CK: hotfix to prevent ownership issues
 
 
 def fullpath(filename, datadir=None):

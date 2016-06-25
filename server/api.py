@@ -68,11 +68,19 @@ from server.webapp.resources.project import (
 from server.webapp.resources.progsets import (
     Progsets, Progset, ProgsetData, ProgsetParameters, ProgsetEffects, Program, ProgramPopSizes)
 from server.webapp.resources.parsets import (
-    Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration)
+    Parsets, ParsetsData, ParsetsDetail, ParsetsCalibration, ParsetsAutomaticCalibration,
+    ExportResultsDataAsCsv)
 from server.webapp.resources.progsets import ProgramCostcovGraph
 from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraphs
 from server.webapp.resources.optimizations import (
     Optimizations, OptimizationCalculation, OptimizationGraph)
+
+# clear dangling tasks from the last session
+from server.webapp.dbconn import db
+from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
+db.session.query(WorkLogDb).delete()
+db.session.query(WorkingProjectDb).delete()
+db.session.commit()
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
@@ -123,6 +131,7 @@ api.add_resource(ParsetsDetail, '/api/project/<uuid:project_id>/parsets/<uuid:pa
 api.add_resource(ParsetsCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/calibration')
 api.add_resource(ParsetsAutomaticCalibration, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/automatic_calibration')
 api.add_resource(ParsetsData, '/api/project/<uuid:project_id>/parsets/<uuid:parset_id>/data')
+api.add_resource(ExportResultsDataAsCsv, '/api/results/<uuid:result_id>')
 
 app.register_blueprint(api_blueprint, url_prefix='')
 

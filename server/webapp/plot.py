@@ -7,15 +7,36 @@ from server.webapp.utils import normalize_obj
 
 
 def extract_graph_selector(graph_key):
-    s = repr(graph_key)
+    s = repr(str(graph_key))
     base = "".join(re.findall("[a-zA-Z]+", s.split(",")[0]))
     if "'t'" in s:
         suffix = "-tot"
     elif "'p'" in s:
         suffix = "-per"
+    elif "'s'" in s:
+        suffix = "-sta"
     else:
         suffix = ""
     return base + suffix
+
+
+def reformat(figure):
+    figure.set_size_inches(6, 3)
+    n_label = 0
+    for axes in figure.axes:
+        legend = axes.get_legend()
+        if legend is not None:
+            labels = legend.get_texts()
+            n_label = len(labels)
+
+            # Put a legend to the right of the current axis
+            box = axes.get_position()
+            axes.set_position(
+                [box.x0, box.y0+box.height*0.1, box.width * 0.75, box.height*0.9])
+            legend._loc = 2
+            legend.set_bbox_to_anchor((1, 1.02))
+
+    return n_label
 
 
 def make_mpld3_graph_dict(result, which=None):
@@ -55,20 +76,30 @@ def make_mpld3_graph_dict(result, which=None):
 
     if which is None:
         which = [s["key"] for s in selectors if s["checked"]]
-    which = keys
+    else:
+        for selector in selectors:
+            selector['checked'] = selector['key'] in which
+
+    for selector in selectors:
+        if not selector['checked']:
+            selector['name'] = '(unloaded) ' + selector['name']
+
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []
     mpld3_graphs = []
+
     for graph_key in graphs:
         # Add necessary plugins here
-        mpld3.plugins.connect(
-            graphs[graph_key],
-            mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
+        graph = graphs[graph_key]
 
+        plugin = mpld3.plugins.MousePosition(fontsize=14, fmt='.4r')
+        mpld3.plugins.connect(graph, plugin)
+
+        n_label = reformat(graph)
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
 
-        # a hack to get rid of NaNs, javascript JSON parser doesn't like them
+        # get rid of NaN
         mpld3_dict = normalize_obj(mpld3_dict)
 
         graph_selectors.append(extract_graph_selector(graph_key))
@@ -78,6 +109,7 @@ def make_mpld3_graph_dict(result, which=None):
         'graphs': {
             "mpld3_graphs": mpld3_graphs,
             "selectors": selectors,
-            'graph_selectors': graph_selectors
+            'graph_selectors': graph_selectors,
+            'resultId': str(result.uid),
         }
     }
