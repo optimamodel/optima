@@ -16,6 +16,7 @@ globalLogBeginner.beginLoggingTo([
 import api
 
 threadpool = ThreadPool(maxthreads=30)
+threadpool.start()
 wsgi_app = WSGIResource(reactor, threadpool, api.app)
 
 class OptimaResource(Resource):
