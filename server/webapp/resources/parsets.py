@@ -75,7 +75,7 @@ class Parsets(Resource):
             result_record = save_result(project, new_result, name)
             db.session.add(result_record)
         else:
-            original_parset = project.parsets[parset_id]
+            original_parset = get_parset_from_project(project, parset_id)
             parset_name = original_parset.name
             project.copyparset(orig=parset_name, new=name)
             project_entry.save_obj(project)
@@ -83,13 +83,7 @@ class Parsets(Resource):
 
         db.session.commit()
 
-        rv = []
-        for item in project_record.parsets:
-            rv_item = item.hydrate().__dict__
-            rv_item['id'] = item.id
-            rv.append(rv_item)
-
-        return rv
+        return load_parset_list(project)
 
 
 rename_parser = RequestParser()
@@ -113,20 +107,11 @@ class ParsetsDetail(Resource):
 
         current_app.logger.debug("DELETE /api/project/{}/parsets/{}".format(project_id, parset_id))
         project_entry = load_project_record(project_id, raise_exception=True)
+        project = project_entry.load()
 
-        parset = db.session.query(ParsetsDb).filter_by(project_id=project_entry.id, id=parset_id).first()
-        if parset is None:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-
-        # TODO: also delete the corresponding calibration results
-        db.session.query(ResultsDb).filter_by(
-            project_id=project_id, id=parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE).delete()
-        db.session.query(ScenariosDb).filter_by(project_id=project_id,
-            parset_id=parset_id).delete()
-        db.session.query(OptimizationsDb).filter_by(project_id=project_id,
-            parset_id=parset_id).delete()
-        db.session.query(ParsetsDb).filter_by(project_id=project_id, id=parset_id).delete()
-        db.session.commit()
+        parset = load_parset(project, parset_id)
+        project.parsets.pop(parset.name)
+        project_entry.save_obj(project)
 
         return '', 204
 
@@ -137,20 +122,20 @@ class ParsetsDetail(Resource):
         For consistency, let's always return the updated parsets for operations on parsets
         (so that FE doesn't need to perform another GET call)
         """
-
         current_app.logger.debug("PUT /api/project/{}/parsets/{}".format(project_id, parset_id))
         args = rename_parser.parse_args()
         name = args['name']
 
         project_record = load_project_record(project_id, raise_exception=True)
-        parset_records = [record for record in project_record.parsets if record.id == parset_id]
-        if not parset_records:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
-        parset_record = parset_records[0]
-        parset_record.name = name
-        db.session.add(parset_record)
-        db.session.commit()
-        return [record.hydrate() for record in project_record.parsets]
+        project = project_record.load()
+
+        parset = load_parset(project, parset_id)
+        project.parsets.rename(parset.name, name)
+        parset.name = name
+
+        project_record.save_obj(project)
+
+        return load_parset_list(project)
 
 
 
