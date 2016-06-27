@@ -8,13 +8,15 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
+from twisted.python.threadpool import ThreadPool
 
 globalLogBeginner.beginLoggingTo([
     FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
 import api
 
-wsgi_app = WSGIResource(reactor, reactor.getThreadPool(), api.app)
+threadpool = ThreadPool(maxthreads=30)
+wsgi_app = WSGIResource(reactor, threadpool, api.app)
 
 class OptimaResource(Resource):
     isLeaf = True
@@ -39,7 +41,15 @@ try:
 except IndexError:
     port = "8080"
 
-endpoint = serverFromString(reactor, "tcp:port=" + port)
-endpoint.listen(site)
 
-reactor.run()
+def run():
+    """
+    Run the server.
+    """
+    endpoint = serverFromString(reactor, "tcp:port=" + port)
+    endpoint.listen(site)
+
+    reactor.run()
+
+if __name__ == "__main__":
+    run()
