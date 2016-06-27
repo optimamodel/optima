@@ -61,7 +61,6 @@ define(
       var height = width / ratio;
       $svgFigure.attr('width', width);
       $svgFigure.attr('height', height);
-      $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
 
       $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
@@ -354,10 +353,14 @@ define(
             var figure = angular.copy(scope.chart);
             delete figure.isChecked;
 
+            if (_.isUndefined(figure.axes)) {
+              return;
+            }
+
             // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
-            // console.log("update graph", $element, $element.width(), $element.outerHeight());
             $element.attr('id', attrs.chartId);
+            $element.html("");
 
             // calculates the number of items in the legend
             // to be used in the hack to fix the lines appearing
@@ -373,7 +376,13 @@ define(
               if (parseFloat(position[0]) > 0.7) {
                 nLegend += 1;
               }
+
+              // ensure y-axis label is not too far from axis
+              if (parseFloat(position[0]) < 0) {
+                position[0] = -0.2;
+              }
             });
+
             mpld3.draw_figure(attrs.chartId, figure);
             reformatMpld3FigsInElement($element, nLegend);
 
