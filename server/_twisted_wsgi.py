@@ -16,6 +16,7 @@ globalLogBeginner.beginLoggingTo([
     FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
 threadpool = ThreadPool(maxthreads=30)
+threadpool.start()
 wsgi_app = WSGIResource(reactor, threadpool, api.app)
 
 class OptimaResource(Resource):
