@@ -375,17 +375,22 @@ class ParsetsData(Resource):
     )
     @report_exception
     def get(self, project_id, parset_id):
+
         current_app.logger.debug("GET /api/project/{0}/parset/{1}/data".format(project_id, parset_id))
-        parset_entry = db.session.query(ParsetsDb).filter_by(id=parset_id, project_id=project_id).first()
-        if parset_entry is None:
-            raise ParsetDoesNotExist(id=parset_id, project_id=project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        parset = load_parset(project, parset_id)
+        parset.project = None
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
         if not loaddir:
             loaddir = TEMPLATEDIR
 
-        filename = parset_entry.as_file(loaddir)
+        filename = project.uid.hex + "-" + parset.uid.hex + ".prst"
+        op.saveobj(os.path.join(loaddir, filename), parset)
 
         response = helpers.send_from_directory(loaddir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
@@ -410,27 +415,23 @@ class ParsetsData(Resource):
         project_entry = load_project_record(project_id, raise_exception=True)
         project = project_entry.load()
 
-        parset_entry = project_entry.find_parset(parset_id)
-        parset_instance = op.loadobj(uploaded_file)
+        parset = op.loadobj(uploaded_file)
+        parset.project = project
+        project.parsets[parset.name] = parset
 
-        parset_entry.restore(parset_instance)
-        db.session.add(parset_entry)
-        db.session.flush()
 
-        # recalculate data (TODO: verify with Robyn if it's needed )
-        project_instance = project_entry.load()
-        result = project_instance.runsim(parset_entry.name)
+        # recalculate data (TODO: verify with Robyn if it's needed )]
+        result = project.runsim(parset.name)
         current_app.logger.info("runsim result for project %s: %s" % (project_id, result))
 
-        db.session.add(project_entry)  # todo: do we need to log that project was updated?
-        db.session.flush()
+        project_entry.save_obj(project)
 
-        result_record = save_result(project, result, parset_entry.name)
+        result_record = save_result(project, result, parset.name)
         db.session.add(result_record)
 
         db.session.commit()
 
-        return [item for item in project.parsets]
+        return load_parset_list(project)
 
 
 

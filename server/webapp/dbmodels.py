@@ -2,6 +2,7 @@ from datetime import datetime
 from pprint import pprint
 
 import dateutil
+import os
 from flask_restful import fields, marshal
 from flask_restful_swagger import swagger
 from sqlalchemy import text
@@ -23,21 +24,6 @@ from server import serialise
 
 def log_var(name, obj):
     current_app.logger.debug("%s = \n%s\n" % (name, pprint.pformat(obj, indent=2)))
-
-
-
-def db_model_as_file(model, loaddir, filename, name_field, extension):
-    import os
-    from optima.utils import saveobj
-
-    be_object = model.hydrate()
-    if filename is None:
-        filename = '{}.{}'.format(getattr(model, name_field), extension)
-    server_filename = os.path.join(loaddir, filename)
-
-    saveobj(server_filename, be_object)
-
-    return filename
 
 
 @swagger.model
@@ -107,7 +93,35 @@ class ProjectDb(db.Model):
         print("Saved " + self.id.hex)
 
     def as_file(self, loaddir, filename=None):
-        return redis.get(self.id.hex)
+        filename = os.path.join(loaddir, self.id.hex + ".prj")
+        op.saveobj(filename, self.load())
+        return self.id.hex + ".prj"
+
+    def recursive_delete(self, synchronize_session=False):
+
+        str_project_id = str(self.id)
+        # delete all relevant entries explicitly
+        db.session.query(WorkLogDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectDataDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectEconDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(WorkingProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.query(ResultsDb).filter_by(project_id=str_project_id).delete(synchronize_session)
+        db.session.query(ProjectDb).filter_by(id=str_project_id).delete(synchronize_session)
+        db.session.flush()
+
+
+class ProjectDataDb(db.Model):  # pylint: disable=R0903
+
+    __tablename__ = 'project_data'
+
+    id = db.Column(UUID(True), db.ForeignKey('projects.id'), primary_key=True)
+    meta = deferred(db.Column(db.LargeBinary))
+    updated = db.Column(db.DateTime(timezone=True), server_default=text('now()'))
+
+    def __init__(self, project_id, meta, updated=None):
+        self.id = project_id
+        self.meta = meta
+        self.updated = updated
 
 
 class ResultsDb(db.Model):

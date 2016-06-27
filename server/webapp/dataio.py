@@ -60,11 +60,6 @@ def load_project_record(project_id, all_data=False, raise_exception=False, db_se
     else:
         query = db_session.query(ProjectDb).filter_by(id=project_id, user_id=cu.id)
 
-    if all_data:
-        query = query.options(
-            # undefer('model'),
-            # defaultload(ProjectDb.working_project).undefer('model'),
-            defaultload(ProjectDb.project_data).undefer('meta'))
     project_record = query.first()
     if project_record is None:
         current_app.logger.warning("no such project found: %s for user %s %s" % (project_id, cu.id, cu.name))
