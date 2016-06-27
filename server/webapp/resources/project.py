@@ -92,7 +92,8 @@ def get_project_summary_from_record(project_record):
     project_id = project_record.id
     try:
         project = project_record.load()
-    except:
+    except Exception as e:
+        raise
         return {
             'id': project_record.id,
             'name': "Failed loading"
@@ -333,9 +334,7 @@ class Project(Resource):
         """
         Updates the project with the given id.
         This happens after users edit the project.
-
         """
-
         current_app.logger.debug(
             "updateProject %s for user %s" % (
                 project_id, current_user.email))
@@ -496,10 +495,17 @@ class ProjectSpreadsheet(Resource):
         server_filename = os.path.join(load_dir, filename)
         uploaded_file.save(server_filename)
 
-        parset_name = "uploaded from " + uploaded_file.source_filename
+        parset_name = "default"
+        parset_names = project.parsets.keys()
+        if parset_name in parset_names:
+            parset_name = "uploaded from " + uploaded_file.source_filename
+            i = 0
+            while parset_name in parset_names:
+                i += 1
+                parset_name = "uploaded_from_%s (%d)" % (uploaded_file.source_filename, i)
 
         # Load parset from spreadsheet, will also runsim and store result
-        project.loadspreadsheet(server_filename, parset_name)
+        project.loadspreadsheet(server_filename, parset_name, makedefaults=True)
 
         with open(server_filename, 'rb') as f:
             # Save the spreadsheet if they want to download it again
@@ -945,7 +951,9 @@ class DefaultParameters(Resource):
     @report_exception
     @login_required
     def get(self, project_id):
-        return {'parameters': get_project_parameters(project_id)}
+        project = load_project(project_id)
+
+        return {'parameters': get_project_parameters(project)}
 
 
 class DefaultPopulations(Resource):

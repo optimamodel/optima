@@ -151,8 +151,6 @@ def load_parset_list(project):
 
     for parset in project.parsets.values():
 
-        print(parset)
-
         parsets.append({
             "id": parset.uid,
             "project_id": project.uid,
@@ -165,8 +163,8 @@ def load_parset_list(project):
     return parsets
 
 
-def get_project_parameters(project_id):
-    return parse_parameters_of_parset_list(load_parset_list(project_id))
+def get_project_parameters(project):
+    return parse_parameters_of_parset_list(project.parsets.values())
 
 
 def get_parset_from_project(project, parset_id):
@@ -214,8 +212,8 @@ def save_result(
         raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
 
     # update results (after runsim is invoked)
-    result_records = db_session.query(ResultsDb).filter_by(project_id=project.uid)
-    result_records = [item for item in result_records
+    result_records_from_db = db_session.query(ResultsDb).filter_by(project_id=project.uid)
+    result_records = [item for item in result_records_from_db
                      if item.parset_id == parset.uid
                         and item.calculation_type == calculation_type]
 
@@ -391,7 +389,7 @@ def save_scenario_summaries(project_id, scenario_summaries):
     db.session.commit()
 
 
-def get_program_summary_from_program_record(program_record):
+def get_program_summary_from_program(program):
     """
     Extract required fields from Program object
 
@@ -400,25 +398,25 @@ def get_program_summary_from_program_record(program_record):
     @TODO: optimizable field needs to be made consistent within ProgramDb
     """
     program_summary = {
-        'id': program_record.id,
-        'progset_id': program_record.progset_id,
-        'project_id': program_record.project_id,
-        'category': program_record.category,
-        'short': program_record.short,
-        'name': program_record.name,
-        'targetpars': program_record.pars, #NOTE change in field name
-        'active': program_record.active,
-        'populations': program_record.targetpops, #NOTE change in field name
-        'criteria': program_record.criteria,
-        'created': program_record.created,
-        'updated': program_record.updated,
-        'ccopars': program_record.ccopars,
-        'costcov': program_record.costcov,
+        'id': program.uid,
+        'progset_id': program.progset.uid,
+        'project_id': program.progset.project.uid,
+        'category': program.category,
+        'short': program.short,
+        'name': program.name,
+        'targetpars': program.pars, #NOTE change in field name
+        'active': program.active,
+        'populations': program.targetpops, #NOTE change in field name
+        'criteria': program.criteria,
+        'created': program.created,
+        'updated': program.updated,
+        'ccopars': program.ccopars,
+        'costcov': program.costcov,
         #'optimizable': program_record.optimizable,
     }
     return program_summary
 
-def get_progset_summary_from_record(progset_record):
+def get_progset_summary(progset):
     """
 
     @TODO: targetpartypes and readytooptimize fields needs to be made consistent within ProgsetDb
@@ -426,25 +424,22 @@ def get_progset_summary_from_record(progset_record):
     """
 
     progset_summary = {
-        'id': progset_record.id,
-        'project_id': progset_record.project_id,
-        'name': progset_record.name,
-        'created': progset_record.created,
-        'updated': progset_record.updated,
-        'programs': map(get_program_summary_from_program_record,progset_record.programs),
+        'id': progset.uid,
+        'name': progset.name,
+        'created': progset.created,
+        'updated': progset.modified,
+        'programs': map(get_program_summary_from_program, progset.programs.values()),
         #'targetpartypes': progset_record.targetpartypes,
         #'readytooptimize': progset_record.readytooptimize
     }
     return progset_summary
 
-def get_progset_summaries(project_id):
+def get_progset_summaries(project):
     """
 
     """
-    progset_records = db.session.query(ProgsetsDb).filter_by(project_id=project_id).all()
-    progset_summaries = map(get_progset_summary_from_record, progset_records)
-
-    return { 'progsets': normalize_obj(progset_summaries)}
+    progset_summaries = map(get_progset_summary, project.progsets.values())
+    return {'progsets': normalize_obj(progset_summaries)}
 
 
 

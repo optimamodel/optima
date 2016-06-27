@@ -11,7 +11,7 @@ from flask_restful import Resource, marshal_with, marshal, fields
 from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
-    get_progset_summaries, save_progset_summaries,
+    get_progset_summaries, save_progset_summaries, load_project,
     load_project_record, load_program, load_parset,
     get_target_popsizes, load_parameters_from_progset_parset,
     check_project_exists)
@@ -41,7 +41,9 @@ class Progsets(Resource):
     def get(self, project_id):
 
         check_project_exists(project_id)
-        return get_progset_summaries(project_id)
+        project = load_project(project_id)
+
+        return get_progset_summaries(project)
 
 
     @swagger.operation(description='Save progset')
