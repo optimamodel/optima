@@ -15,7 +15,6 @@ from . import api
 globalLogBeginner.beginLoggingTo([
     FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
-api.init_db()
 threadpool = ThreadPool(maxthreads=30)
 wsgi_app = WSGIResource(reactor, threadpool, api.app)
 
@@ -47,8 +46,6 @@ def run():
     """
     Run the server.
     """
-    print("Starting server...")
-    print(api)
     endpoint = serverFromString(reactor, "tcp:port=" + port)
     endpoint.listen(site)
 

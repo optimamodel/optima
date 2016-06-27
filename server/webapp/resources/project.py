@@ -790,7 +790,7 @@ class ProjectFromData(Resource):
         db.session.flush()
 
         if result is not None:
-            result_record = save_result(project), result)
+            result_record = save_result(project, result)
             db.session.add(result_record)
 
         db.session.commit()

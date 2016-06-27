@@ -14,6 +14,9 @@ from flask_restful_swagger import swagger
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
+import matplotlib
+matplotlib.use(app.config["MATPLOTLIB_BACKEND"])
+
 if os.environ.get('OPTIMA_TEST_CFG'):
     app.config.from_envvar('OPTIMA_TEST_CFG')
 
