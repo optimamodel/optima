@@ -1,4 +1,5 @@
 import uuid
+import os
 from datetime import datetime
 from pprint import pprint
 
@@ -10,8 +11,8 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record, TEMPLATEDIR, upload_dir_user, save_result_record, load_result,
-    load_project, load_parset_record, load_parset_list, get_parset_from_project)
+    load_project_record, TEMPLATEDIR, upload_dir_user, save_result, load_result,
+    load_project, load_result_record, load_parset_record, load_parset_list, get_parset_from_project)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb, ScenariosDb,OptimizationsDb
 from server.webapp.exceptions import ParsetDoesNotExist, ParsetAlreadyExists
@@ -68,7 +69,7 @@ class Parsets(Resource):
             result = project.runsim(name)
             project_record.restore(project)
             db.session.add(project_record)
-            result_record = save_result_record(project_id, result, name)
+            result_record = save_result(project_id, result, name)
             db.session.add(result_record)
         else:
             # COPY parset of parset_id to name
@@ -204,17 +205,18 @@ class ParsetsCalibration(Resource):
 
         parset_record = load_parset_record(project_id, parset_id)
         parset = parset_record.hydrate()
-        result = load_result(project_id, parset_id, calculation_type)
-        if result is None:
+        result_record = load_result_record(project_id, parset_id, calculation_type)
+        if result_record is None:
             print "> Runsim for new calibration results and store"
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            record = save_result_record(project_id, result, parset.name, calculation_type)
-            db.session.add(record)
+            result_record = save_result(project_id, result, parset.name, calculation_type)
+            db.session.add(result_record)
             db.session.flush()
             db.session.commit()
         else:
+            result = result_record.hydrate()
             print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
 
         print "> Generating graphs"
@@ -225,6 +227,7 @@ class ParsetsCalibration(Resource):
                 "parset_id": parset_id,
                 "parameters": get_parset_parameters(parset),
                 "graphs": graphs,
+                "resultId": result_record.id,
             }
         }
 
@@ -256,28 +259,22 @@ class ParsetsCalibration(Resource):
         result = project.runsim(simpars=simparslist)
 
         if doSave:  # save the updated results
+            print "> Saving results", result.uid
             parset_record.pars = op.saves(parset.pars)
             parset_record.updated = datetime.now(dateutil.tz.tzutc())
             db.session.add(parset_record)
-            result_records = [
-                item for item in project_record.results
-                if item.parset_id == parset_id and item.calculation_type == "calibration"]
-            if result_records:
-                result_record = result_records[-1]
-                result_record.blob = op.saves(result)
-            else:
-                result_record = ResultsDb(
-                    parset_id=parset_id,
-                    project_id=project_record.id,
-                    calculation_type=ResultsDb.CALIBRATION_TYPE,
-                    blob=op.saves(result)
-                )
-            db.session.add(result_record)
-            db.session.commit()
+            result_record = save_result(project_id, result, parset.name, calculation_type)
         elif autofit:
-            result = load_result(project_id, parset_id, calculation_type)
+            result_record = load_result_record(project_id, parset_id, calculation_type)
+            result = result_record.hydrate()
+            print "> Loading autofit results", result.uid
             if 'improvement' not in which:
                 which.insert(0, 'improvement')
+        else:
+            print "> Saving temporary calibration graphs", result.uid
+            result_record = save_result(project_id, result, parset.name, "temp-" + calculation_type)
+        db.session.add(result_record)
+        db.session.commit()
 
         print "> Generating graphs"
         graphs = make_mpld3_graph_dict(result, which)['graphs']
@@ -286,7 +283,8 @@ class ParsetsCalibration(Resource):
             'calibration': {
                 "parset_id": parset_id,
                 "parameters": get_parset_parameters(parset),
-                "graphs": graphs
+                "graphs": graphs,
+                "resultId": str(result.uid),
             }
         }
 
@@ -368,6 +366,8 @@ class ParsetsAutomaticCalibration(Resource):
         return check_calculation_status(project_id)
 
 
+
+
 file_upload_form_parser = RequestParser()
 file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)
 
@@ -438,9 +438,41 @@ class ParsetsData(Resource):
         db.session.add(project_entry)  # todo: do we need to log that project was updated?
         db.session.flush()
 
-        result_record = save_result_record(project_entry.id, result, parset_entry.name)
+        result_record = save_result(project_entry.id, result, parset_entry.name)
         db.session.add(result_record)
 
         db.session.commit()
 
         return [item.hydrate() for item in project_entry.parsets]
+
+
+
+class ExportResultsDataAsCsv(Resource):
+    """
+    Export of data from an Optima Results object as a downloadable .csv file
+
+    /api/results/<results_id>
+
+    - GET: returns a .csv file as blob
+    """
+
+    method_decorators = [report_exception, login_required]
+
+    def get(self, result_id):
+        current_app.logger.debug("GET /api/results/{0}".format(result_id))
+        result_record = db.session.query(ResultsDb).get(result_id)
+        if result_record is None:
+            raise Exception("Results '%s' does not exist" % result_id)
+        load_dir = upload_dir_user(TEMPLATEDIR)
+        if not load_dir:
+            load_dir = TEMPLATEDIR
+        filestem = 'results'
+        filename = filestem + '.csv'
+        result = result_record.hydrate()
+        result.export(filestem=os.path.join(load_dir, filestem))
+
+        response = helpers.send_from_directory(load_dir, filename)
+        response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
+
+        return response
+

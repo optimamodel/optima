@@ -10,7 +10,7 @@ function (angular, $, _, JsPdf) {
         name: '@',
         customTitles: '='
       },
-      template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export all figures</button>',
+      template: '<button type="button" class="btn" ng-click="exportAllFigures()">Export Figures PDF</button>',
       link: function (scope, elem, attrs) {
 
         /**
@@ -48,8 +48,21 @@ function (angular, $, _, JsPdf) {
             var graphDeferred = new $.Deferred();
             generateGraphPromises[index] = graphDeferred.promise();
 
-            var figureWidth = $(el).find('svg').outerWidth() * 1.4;
-            var figureHeight = $(el).find('svg').outerHeight() * 1.4;
+            var $svg = $(el).find('svg');
+            console.log('got here');
+            var viewBox = $svg[0].getAttribute('viewBox');
+            var figureWidth, figureHeight;
+            if (viewBox) {
+              // console.log('viewbox', viewBox);
+              var tokens = viewBox.split(" ");
+              figureWidth = parseFloat(tokens[2]);
+              figureHeight = parseFloat(tokens[3]);
+            } else {
+              figureWidth = $svg.width();
+              figureHeight = $svg.height();
+            }
+            var figureWidth = figureWidth * 1.4;
+            var figureHeight = figureHeight * 1.4;
             var graph = {
               imageData: undefined,
               figureWidth: figureWidth,
