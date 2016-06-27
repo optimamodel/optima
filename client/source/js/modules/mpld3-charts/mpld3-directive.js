@@ -1,9 +1,11 @@
 define(
-    ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF', './svg-to-png', './export-helpers-service'],
+    ['./module', 'underscore', 'jquery', 'mpld3', 'saveAs', 'jsPDF',
+      './svg-to-png', './export-helpers-service'],
     function (module, _, $, mpld3, saveAs, jspdf, svgToPng) {
 
   'use strict';
 
+  var allcharts, scrollTop;
 
   function consoleLogJson(name, val) {
     console.log(name + ' = ');
@@ -31,7 +33,7 @@ define(
   }
 
 
-  function addLineToLegendLabel($svgFigure) {
+  function addLineToLegendLabel($svgFigure, nLegend) {
       // add lines in legend labels
       var $textLabels = $svgFigure.find('.mpld3-baseaxes > text');
       if ($textLabels) {
@@ -40,33 +42,41 @@ define(
         // the last path under .mpld3-axes
         // so need to work out how many entries in legend
         // it is the the number of textlabels - title and axe labels
-        var nLegendLabels = $textLabels.length - 3;
+        // var nLegend = $textLabels.length - 3;
         var $paths = $svgFigure.find('.mpld3-axes > path');
-        var $pathsToCopy = $paths.slice($paths.length - nLegendLabels, $paths.length);
-        var $baseAxes = $svgFigure.find('.mpld3-baseaxes')
+        var $pathsToCopy = $paths.slice($paths.length - nLegend, $paths.length);
+        var $baseAxes = $svgFigure.find('.mpld3-baseaxes');
         $baseAxes.append($pathsToCopy);
       }
   }
 
-  function reformatAllFigures($allFigures) {
-    $allFigures.find('svg.mpld3-figure').each(function () {
+  function reformatMpld3FigsInElement($element, nLegend) {
+    $element.find('svg.mpld3-figure').each(function () {
       var $svgFigure = $(this);
+      var width = $svgFigure.attr('width');
+      var height = $svgFigure.attr('height');
+      var ratio = width / height;
+      $svgFigure[0].setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+      var width = $svgFigure.parent().width();
+      var height = width / ratio;
+      $svgFigure.attr('width', width);
+      $svgFigure.attr('height', height);
+      $svgFigure[0].setAttribute('viewBox', '0 0 480 240');
 
-      // move mouse-over to bottom right corner
       $svgFigure.on('mouseover', function () {
         var height = parseInt($svgFigure.attr('height'));
         $svgFigure.find('.mpld3-coordinates').each(function () {
-          $(this).attr('y', height + 7);
+          $(this).attr('top', height + 7);
         });
         $svgFigure.find('.mpld3-toolbar').each(function () {
           $(this).remove();
         });
       });
 
-      addLineToLegendLabel($svgFigure);
+      addLineToLegendLabel($svgFigure, nLegend);
     });
 
-    var $yaxis = $allFigures.find('.mpld3-yaxis');
+    var $yaxis = $element.find('.mpld3-yaxis');
     var $labels = $yaxis.find('g.tick > text');
     $labels.each(function () {
       var $label = $(this);
@@ -75,7 +85,7 @@ define(
       $label.text(newText);
     });
 
-    var $yaxis = $allFigures.find('.mpld3-xaxis');
+    var $yaxis = $element.find('.mpld3-xaxis');
     var $labels = $yaxis.find('g.tick > text');
     $labels.each(function () {
       var $label = $(this);
@@ -218,8 +228,17 @@ define(
           var isMpld3 = elementId && elementId.indexOf('mpld3') != -1;
 
           var $originalSvg = elem.parent().find('svg');
-          var orginalWidth = $originalSvg.width();
-          var orginalHeight = $originalSvg.height();
+          var viewBox = $originalSvg[0].getAttribute('viewBox');
+          var orginalWidth, orginalHeight;
+          if (viewBox) {
+            // console.log('viewbox', viewBox);
+            var tokens = viewBox.split(" ");
+            orginalWidth = parseFloat(tokens[2]);
+            orginalHeight = parseFloat(tokens[3]);
+          } else {
+            orginalWidth = $originalSvg.width();
+            orginalHeight = $originalSvg.height();
+          }
 
           originalStyle = 'padding: ' + $originalSvg.css('padding');
           // if (scope.chartType === 'mpld3') {
@@ -335,12 +354,32 @@ define(
             var figure = angular.copy(scope.chart);
             delete figure.isChecked;
 
+            // clear element before stuffing a figure in there
             var $element = $(elem).find('.mpld3-chart').first();
+            // console.log("update graph", $element, $element.width(), $element.outerHeight());
             $element.attr('id', attrs.chartId);
-            $element.html("");
-            mpld3.draw_figure(attrs.chartId, figure);
 
-            reformatAllFigures($element);
+            // calculates the number of items in the legend
+            // to be used in the hack to fix the lines appearing
+            // in legend. this assumes that any text labels appearing
+            // in the right side of the figure (x > 0.7) is a legend
+            // label and thus gives the number of items in the
+            // legend. this will be used to transfer the paths
+            // for the legened into the right DOM element in
+            // addLineToLegendLabel
+            var nLegend = 0;
+            _.each(figure.axes[0].texts, function(text) {
+              var position = text.position;
+              if (parseFloat(position[0]) > 0.7) {
+                nLegend += 1;
+              }
+            });
+            mpld3.draw_figure(attrs.chartId, figure);
+            reformatMpld3FigsInElement($element, nLegend);
+
+            if (!_.isUndefined(allcharts)) {
+              allcharts.scrollTop(scrollTop);
+            }
           },
           true
         );
@@ -351,12 +390,43 @@ define(
     };
   });
 
+  function setAllFiguresToWidth($element) {
+    $element.find('svg.mpld3-figure').each(function () {
+      var $svgFigure = $(this);
+      var ratio = $svgFigure.attr('width') / $svgFigure.attr('height');
+      var width = $svgFigure.parent().width();
+      var height = width / ratio;
+      $svgFigure.attr('width', width);
+      $svgFigure.attr('height', height);
+    });
+  }
 
-  module.directive('optimaGraphs', function () {
+  module.directive('optimaGraphs', function ($http) {
     return {
       scope: { 'graphs':'=' },
       templateUrl: './js/modules/mpld3-charts/optima-graphs.html',
       link: function (scope, elem, attrs) {
+
+        allcharts = $(elem).find('.allcharts');
+        scrollTop = allcharts.scrollTop();
+
+        scope.exportAllData = function() {
+          var resultId = scope.graphs.resultId;
+          if (_.isUndefined(resultId)) {
+            return;
+          }
+          console.log('resultId', resultId);
+          $http.get(
+            '/api/results/' + resultId,
+            {
+              headers: {'Content-type': 'application/octet-stream'},
+              responseType: 'blob'
+            })
+          .success(function (response) {
+            var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
+            saveAs(blob, ('export_graphs.csv'));
+          });
+        };
 
         function isChecked(iGraph) {
           var graph_selector = scope.graphs.graph_selectors[iGraph];
@@ -379,21 +449,22 @@ define(
             _.each(scope.graphs.mpld3_graphs, function (g, i) {
               g.isChecked = function () { return isChecked(i); };
             });
-            var parent = $(elem).parent();
-            scope.height = parent.height();
+            setAllFiguresToWidth($(elem).find(".allcharts"));
           }
         );
 
         scope.onResize = function () {
-          var parent = $(elem).parent();
-          scope.height = parent.height();
-          // console.log("resize", parent, scope.height);
+          setAllFiguresToWidth($(elem).find(".allcharts"));
           scope.$apply();
         };
 
         $(window).bind('resize', function () {
           scope.onResize();
         })
+
+        allcharts.scroll(function() {
+          scrollTop = allcharts.scrollTop();
+        });
       }
     };
   });

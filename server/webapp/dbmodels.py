@@ -95,11 +95,9 @@ class ProjectDb(db.Model):
     user_id = db.Column(UUID(True), db.ForeignKey('users.id'))
     results = db.relationship('ResultsDb', backref='project')
 
-    _loaded = None
 
     def __init__(self, user_id):
         self.user_id = user_id
-        self._loaded = None
 
     def load(self):
         return serialise.loads(redis.get(self.id.hex))

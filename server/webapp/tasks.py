@@ -9,7 +9,7 @@ import optima as op
 from server.api import app, redis
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result_record, load_project_record
+from server.webapp.dataio import save_result, load_project_record
 
 from celery import Celery
 
@@ -213,7 +213,6 @@ def run_autofit(project_id, parset_name, maxtime=60):
 
 
         print(">> Save autofitted parset '%s'" % parset_name)
-
         parset = working_project.parsets[parset_name]
 
         project_record = load_project_record(project_id, authenticate=False, db_session=db_session)
@@ -221,7 +220,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
         project.parsets[parset_name] = parset
         project_record.save_obj(project)
 
-        result_record = save_result_record(
+        result_record = save_result(
             project, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()
         db_session.add(result_record)
@@ -283,7 +282,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        result_entry = save_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
+        result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id

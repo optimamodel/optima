@@ -257,18 +257,16 @@ class Resultset(object):
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
-        output = sep.join(['Indicator','Year:'])
-        for t in range(npts):
-            output += ('%i'+sep) % self.tvec[t]
+        output = sep.join(['Indicator','Year:'] + ['%i'%t for t in self.tvec]) # Create header and years
         for key in keys:
-            if bypop: output += '\n'
-            if bypop: popkeys = self.popkeys
+            if bypop: output += '\n' # Add a line break between different indicators
+            if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
             else:     popkeys = ['tot']
-            for pk in range(len(popkeys)):
+            for pk,popkey in enumerate(popkeys):
                 output += '\n'
-                if bypop: data = self.main[key].pops[ind][pk,:]
-                else:     data = self.main[key].tot[ind][:]
-                output += key+sep+popkeys[pk]+sep
+                if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                else:                       data = self.main[key].tot[ind][:]
+                output += key+sep+popkey+sep
                 for t in range(npts):
                     if self.main[key].isnumber: output += ('%i'+sep) % data[t]
                     else:                       output += ('%s'+sep) % sigfig(data[t])

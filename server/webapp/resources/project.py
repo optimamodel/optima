@@ -23,7 +23,7 @@ from server.webapp.parse import get_default_populations
 from server.webapp.resources.common import (
     file_resource, file_upload_form_parser, report_exception, verify_admin_request)
 from server.webapp.dataio import (
-    load_project_record, load_project, save_result_record, delete_spreadsheet, get_project_parameters,
+    load_project_record, load_project, save_result, delete_spreadsheet, get_project_parameters,
     load_project_program_summaries)
 
 
@@ -487,6 +487,12 @@ class ProjectSpreadsheet(Resource):
         project.loadspreadsheet(server_filename, parset_name)
 
         db.session.add(project_record)
+
+        result = project.results[-1]
+        result_record = save_result(project_id, result, parset_name, "calibration")
+        print ">>>> Store result(calibration) '%s'" % (result.name)
+        db.session.add(result_record)
+
         db.session.commit()
         project_record.save_obj(project)
 
@@ -720,7 +726,7 @@ class ProjectData(Resource):
 
         if project_instance.data:
             assert (project_instance.parsets)
-            result_record = save_result_record(project_record.id, result)
+            result_record = save_result(project_record.id, result)
             db.session.add(result_record)
 
         db.session.commit()
@@ -784,7 +790,7 @@ class ProjectFromData(Resource):
         db.session.flush()
 
         if result is not None:
-            result_record = save_result_record(str(project_record.id), result)
+            result_record = save_result(str(project_record.id), result)
             db.session.add(result_record)
 
         db.session.commit()

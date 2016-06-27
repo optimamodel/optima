@@ -8,6 +8,7 @@ server/static
 server/config.py
 */node_modules/
 node_modules/
+client/optima.nginx.conf
 *.log
 optima.egg-info/*
 optima.egg-info/

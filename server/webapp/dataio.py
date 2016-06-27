@@ -200,8 +200,9 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TY
     return result_record.hydrate()
 
 
-def save_result_record(
-        project, result, parset_name='default',
+
+def save_result(
+        project_id, result, parset_name='default',
         calculation_type=ResultsDb.CALIBRATION_TYPE,
         db_session=None):
 
@@ -229,6 +230,7 @@ def save_result_record(
             abort(500, "Found multiple records for result (%s) of parset '%s'" % calculation_type, parset.name)
         result_record = result_records[0]
         result_record.blob = blob
+        print "> Updating results", result.uid
 
     if not result_records:
         result_record = ResultsDb(
@@ -236,6 +238,10 @@ def save_result_record(
             project_id=project.uid,
             calculation_type=calculation_type,
             blob=blob)
+        print "> Creating results", result.uid
+
+    result_id = str(result.uid)
+    result_record.id = result_id
 
     return result_record
 

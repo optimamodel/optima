@@ -98,7 +98,6 @@ def make_mpld3_graph_dict(result, which=None):
 
         n_label = reformat(graph)
         mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
-        mpld3_dict['nLengendLabel'] = n_label
 
         # get rid of NaN
         mpld3_dict = normalize_obj(mpld3_dict)
@@ -110,6 +109,7 @@ def make_mpld3_graph_dict(result, which=None):
         'graphs': {
             "mpld3_graphs": mpld3_graphs,
             "selectors": selectors,
-            'graph_selectors': graph_selectors
+            'graph_selectors': graph_selectors,
+            'resultId': str(result.uid),
         }
     }
