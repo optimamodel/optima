@@ -178,7 +178,6 @@ def init_logger():
     app.logger.addHandler(stream_handler)
     app.logger.setLevel(logging.DEBUG)
 
-
 if __name__ == '__main__':
     init_logger()
     init_db()

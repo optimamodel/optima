@@ -10,10 +10,10 @@ from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
 from twisted.python.threadpool import ThreadPool
 
+from . import api
+
 globalLogBeginner.beginLoggingTo([
     FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
-
-import api
 
 api.init_db()
 threadpool = ThreadPool(maxthreads=30)
@@ -47,6 +47,8 @@ def run():
     """
     Run the server.
     """
+    print("Starting server...")
+    print(api)
     endpoint = serverFromString(reactor, "tcp:port=" + port)
     endpoint.listen(site)
 
