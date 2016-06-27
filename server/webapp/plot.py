@@ -25,15 +25,16 @@ def extract_graph_selector(graph_key):
 def convert_to_mpld3(figure):
     plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
+
     for ax in figure.axes:
         legend = ax.get_legend()
         if legend is not None:
             # Put a legend to the right of the current axis
             legend._loc = 2
-            legend.set_bbox_to_anchor((1, 1.02))
-            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.95]])))
+            legend.set_bbox_to_anchor((1, 1.1))
+            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.92]])))
         else:
-            ax.set_position(Bbox(array([[0.19, 0.55], [0.95, 0.95]])))
+            ax.set_position(Bbox(array([[0.19, 0.55], [0.95, 0.92]])))
 
     figure.set_size_inches(5, 4)
 
