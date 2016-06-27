@@ -72,7 +72,7 @@ class Parsets(Resource):
             project_entry.save_obj(project)
             db.session.add(project_entry)
 
-            result_record = save_result(project_entry, new_result, name)
+            result_record = save_result(project, new_result, name)
             db.session.add(result_record)
         else:
             original_parset = project.parsets[parset_id]
@@ -210,12 +210,11 @@ class ParsetsCalibration(Resource):
             project = load_project(project_id, autofit)
             simparslist = parset.interp()
             result = project.runsim(simpars=simparslist)
-            result_record = save_result(project_id, result, parset.name, calculation_type)
+            result_record = save_result(project, result, parset.name, calculation_type)
             db.session.add(result_record)
             db.session.flush()
             db.session.commit()
         else:
-            result = result_record.hydrate()
             print "> Fetch result(%s) '%s' for parset '%s'" % (calculation_type, result.name, parset.name)
 
         print "> Generating graphs"
@@ -226,7 +225,7 @@ class ParsetsCalibration(Resource):
                 "parset_id": parset_id,
                 "parameters": get_parset_parameters(parset),
                 "graphs": graphs,
-                "resultId": result_record.id,
+                "resultId": result.uid,
             }
         }
 
@@ -257,19 +256,20 @@ class ParsetsCalibration(Resource):
 
         if doSave:  # save the updated results
             print "> Saving results", result.uid
-            result_record = save_result(project_id, result, parset.name, calculation_type)
+            result_record = save_result(project, result, parset.name, calculation_type)
+            db.session.add(result_record)
+            db.session.commit()
         elif autofit:
-            result_record = load_result_record(project_id, parset_id, calculation_type)
-            result = result_record.hydrate()
+            result = load_result(project_id, parset_id, calculation_type)
             print "> Loading autofit results", result.uid
             if 'improvement' not in which:
                 which.insert(0, 'improvement')
         else:
             print "> Saving temporary calibration graphs", result.uid
-            result_record = save_result(project_id, result, parset.name, "temp-" + calculation_type)
+            result_record = save_result(project, result, parset.name, "temp-" + calculation_type)
 
-        db.session.add(result_record)
-        db.session.commit()
+            db.session.add(result_record)
+            db.session.commit()
 
         project.parsets[parset.name] = parset
 
@@ -423,6 +423,7 @@ class ParsetsData(Resource):
         uploaded_file = args['file']
 
         project_entry = load_project_record(project_id, raise_exception=True)
+        project = project_entry.load()
 
         parset_entry = project_entry.find_parset(parset_id)
         parset_instance = op.loadobj(uploaded_file)
@@ -439,12 +440,12 @@ class ParsetsData(Resource):
         db.session.add(project_entry)  # todo: do we need to log that project was updated?
         db.session.flush()
 
-        result_record = save_result(project_instance, result, parset_entry.name)
+        result_record = save_result(project, result, parset_entry.name)
         db.session.add(result_record)
 
         db.session.commit()
 
-        return [item.hydrate() for item in project_entry.parsets]
+        return [item for item in project.parsets]
 
 
 

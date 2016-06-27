@@ -134,9 +134,9 @@ def start_or_report_calculation(project_id, parset_id, work_type):
             working_project_record.work_type = work_type
             working_project_record.parset_id = parset_id
             working_project_record.is_working = True
-            working_project_record.project = project_pickled
             working_project_record.work_log_id = work_log_id
             db_session.add(working_project_record)
+            working_project_record.save_obj(project)
 
     db_session.commit()
     close_db_session(db_session)

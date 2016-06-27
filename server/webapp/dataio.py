@@ -202,7 +202,7 @@ def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TY
 
 
 def save_result(
-        project_id, result, parset_name='default',
+        project, result, parset_name='default',
         calculation_type=ResultsDb.CALIBRATION_TYPE,
         db_session=None):
 
