@@ -295,6 +295,7 @@ def convert1to2(old=None, infile=None, outfile=None, autofit=True, dosave=True, 
             if isnan(old['data']['costcov']['cov'][progno][thisind]): # No data
                 newcov = nan
             elif old['data']['costcov']['cov'][progno][thisind]<1: # Data entered as a proportion, need to convert to number
+#                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
                 newcov = old['data']['costcov']['cov'][progno][thisind]*newprog.gettargetpopsize(t=thisyear, parset=new.parsets[0])[0]
             else:  # Data entered as a number, can use directly
                 newcov = old['data']['costcov']['cov'][progno][thisind]
