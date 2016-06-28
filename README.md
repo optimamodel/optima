@@ -225,8 +225,7 @@ Copy over the setup:
 
     cp server/config.py.example server/config.py
 
-note::
-  config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
+NOTE: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
 
 Then to run the server, there are two options -- directly (self-managed environment like Anaconda) or through a virtualenv (if you are a developer).
 
