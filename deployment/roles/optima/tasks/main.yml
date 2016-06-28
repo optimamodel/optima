@@ -1,21 +1,17 @@
-- name: Install git
-  action: apt pkg=git state=latest
-
 - name: Copy over deploy key
   action: copy src=private/deploy.key dest=/home/{{ user }}/deploy.key
   become_user: "{{ user }}"
 
 - name: Clone down {{ service_name }} repo
-  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes depth=1 force=yes
+  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes force=yes
   become_user: "{{ user }}"
 
 - name: Copy over config
   action: copy src=config/{{ service_name }}.config.py dest=/home/{{ user }}/installations/{{ service_name }}/server/config.py
   become_user: "{{ user }}"
 
-# Do this to the real anaconda...
-#- name: Install {{ service_name }} dependencies
-#  action:
+- name: Install {{ service_name }} dependencies
+  action: shell /software/anaconda/bin/pip install -r /home/{{ user }}/installations/{{ service_name }}/server/localrequirements.txt
 
 - name: Set up celery systemd service
   action: template src=celery.service dest=/etc/systemd/system/{{ service_name }}celery.service

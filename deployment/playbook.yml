@@ -7,7 +7,7 @@
           domain: sandbox.optimamodel.com,
           port: 9001,
           repo: "github.com/optimamodel/optima.git",
-          branch: develop
+          branch: run-with-tox
         }
       ]
     - user: optima
@@ -17,6 +17,9 @@
     - {
         role: user
       }
+    - {
+        role: anaconda
+    }
     - {
         role: optima,
         app: "{{ apps.0 }}"

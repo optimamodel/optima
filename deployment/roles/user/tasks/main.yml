@@ -1,3 +1,5 @@
-
 - name: Set up {{ service_name }} user
   action: user name={{ user }}
+
+- name: Install some useful things
+  action: apt pkg=postgresql-server-dev-9.5,postgresql-9.5,git,redis-server state=latest
