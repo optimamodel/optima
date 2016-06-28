@@ -2,6 +2,8 @@ import re
 
 import mpld3
 
+from matplotlib.transforms import Bbox
+from numpy import array
 import optima as op
 from server.webapp.utils import normalize_obj
 
@@ -20,23 +22,38 @@ def extract_graph_selector(graph_key):
     return base + suffix
 
 
-def reformat(figure):
-    figure.set_size_inches(6, 3)
-    n_label = 0
-    for axes in figure.axes:
-        legend = axes.get_legend()
+def convert_to_mpld3(figure):
+    plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
+    mpld3.plugins.connect(figure, plugin)
+
+    for ax in figure.axes:
+        legend = ax.get_legend()
         if legend is not None:
-            labels = legend.get_texts()
-            n_label = len(labels)
-
             # Put a legend to the right of the current axis
-            box = axes.get_position()
-            axes.set_position(
-                [box.x0, box.y0+box.height*0.1, box.width * 0.75, box.height*0.9])
             legend._loc = 2
-            legend.set_bbox_to_anchor((1, 1.02))
+            legend.set_bbox_to_anchor((1, 1.1))
+            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.92]])))
+        else:
+            ax.set_position(Bbox(array([[0.19, 0.55], [0.95, 0.92]])))
 
-    return n_label
+    figure.set_size_inches(5, 4)
+
+    for ax in figure.axes:
+        ax.yaxis.label.set_size(14)
+        ax.xaxis.label.set_size(14)
+        ax.title.set_size(14)
+
+        ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
+        for ticklabel in ticklabels:
+            ticklabel.set_size(10)
+        legend = ax.get_legend()
+        if legend is not None:
+            texts = legend.get_texts()
+            for text in texts:
+                text.set_size(10)
+
+    mpld3_dict = mpld3.fig_to_dict(figure)
+    return normalize_obj(mpld3_dict)
 
 
 def make_mpld3_graph_dict(result, which=None):
@@ -88,22 +105,9 @@ def make_mpld3_graph_dict(result, which=None):
 
     graph_selectors = []
     mpld3_graphs = []
-
     for graph_key in graphs:
-        # Add necessary plugins here
-        graph = graphs[graph_key]
-
-        plugin = mpld3.plugins.MousePosition(fontsize=14, fmt='.4r')
-        mpld3.plugins.connect(graph, plugin)
-
-        n_label = reformat(graph)
-        mpld3_dict = mpld3.fig_to_dict(graphs[graph_key])
-
-        # get rid of NaN
-        mpld3_dict = normalize_obj(mpld3_dict)
-
         graph_selectors.append(extract_graph_selector(graph_key))
-        mpld3_graphs.append(mpld3_dict)
+        mpld3_graphs.append(convert_to_mpld3(graphs[graph_key]))
 
     return {
         'graphs': {
