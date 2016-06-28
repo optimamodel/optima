@@ -227,6 +227,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
         update_or_create_parset_record(
             project_id, parset_name, parset, db_session)
         delete_result(project_id, parset.uid, 'calibration', db_session=db_session)
+        delete_result(project_id, parset.uid, 'autofit', db_session=db_session)
         result_record = update_or_create_result_record(
             project_id, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()
