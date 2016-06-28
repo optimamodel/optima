@@ -104,7 +104,8 @@ decode_structs = {
     "Timepar": optima.Timepar,
     "Result": optima.Result,
     "Program": optima.Program,
-    "Costcov": optima.programs.Costcov
+    "Costcov": optima.programs.Costcov,
+    "Optim": optima.Optim,
 }
 
 
