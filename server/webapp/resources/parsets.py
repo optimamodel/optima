@@ -237,7 +237,6 @@ class ParsetCalibration(Resource):
             parameters: list of model parameters and their values
             which: list of graphs to generate
             autofit: boolean indicates to fetch the autofit version of the results
-            parsetId: parsetId
         Returns:
              {
                  "calibration": {
