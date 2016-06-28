@@ -28,7 +28,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       console.log(JSON.stringify(val, null, 2));
     }
 
-    function saveScenarios (scenarios, msg) {
+    $scope.saveScenarios = function(scenarios, msg) {
       consoleLogJson("saving scenarios", scenarios);
       $http.put(
         '/api/project/' + project.id + '/scenarios',
@@ -104,7 +104,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           .then(
             function (scenario) {
               newScenarios.push(scenario);
-              saveScenarios(newScenarios, "Created scenario");
+              $scope.saveScenarios(newScenarios, "Created scenario");
             });
 
       } else if (action === 'edit') {
@@ -116,7 +116,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               var i = newScenarios.indexOf(_.findWhere(newScenarios, { name: scenario.name }));
               newScenarios[i] = scenario;
               newScenarios[i].active = true;
-              saveScenarios(newScenarios, "Saved changes");
+              $scope.saveScenarios(newScenarios, "Saved changes");
             });
 
       } else if (action === 'copy') {
@@ -125,12 +125,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         newScenario.name = scenario.name + ' Copy';
         newScenario.id = null;
         newScenarios.push(newScenario);
-        saveScenarios(newScenarios, "Copied scenario");
+        $scope.saveScenarios(newScenarios, "Copied scenario");
 
       } else if (action === 'delete') {
 
         var scenario = _.findWhere(newScenarios, { name: scenario.name });
-        saveScenarios(_.without(newScenarios, scenario), "Deleted scenario");
+        $scope.saveScenarios(_.without(newScenarios, scenario), "Deleted scenario");
 
       }
     };
