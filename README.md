@@ -244,7 +244,7 @@ Then run the server in one terminal:
     celery -A server.webapp.tasks.celery_instance worker -l info
 
 
-_Using Virtualenvs_ (e.g. for development)_:
+_Using Virtualenvs (e.g. for development)_:
 
 Install ``virtualenv`` and ``tox``:
 
