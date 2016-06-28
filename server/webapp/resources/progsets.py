@@ -344,10 +344,8 @@ class ProgramCostcovGraph(Resource):
 
         program = load_program(project_id, progset_id, program_id)
         parset = load_parset(project_id, parset_id)
-
         plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
-
-        mpld3.plugins.connect(plot, mpld3.plugins.MousePosition(fontsize=14, fmt='.4r'))
-        return normalize_obj(mpld3.fig_to_dict(plot))
+        from server.webapp.plot import convert_to_mpld3
+        return convert_to_mpld3(plot)
 
 
