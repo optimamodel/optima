@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun 27 08:56:53 2016
-ADD COST DATA TO GM PROJECTS
+ADD COST DATA TO PROJECTS
 @author: robynstuart
 """
 
-
-from optima import odict
+from optima import loadobj, odict
+from glob import glob
+from os import sep
 import csv
 
 ################
@@ -34,13 +35,13 @@ def readcostdata(costdatafilename=None):
 ################
 # Add unit cost data to an existing 2.0 project
 ################
-def addcostdata(new=None, newinfile=None, outfile=None, costdatafilename=None, dosave=True):
+def addcostdata(project=None, newinfile=None, outfile=None, costdatafilename=None, dosave=True):
     
-    for prog in new.progsets[0].programs.values():
+    for prog in project.progsets[0].programs.values():
 
         # Figure out name of country
         allcostdata = readcostdata(costdatafilename=costdatafilename)
-        countryname = new.name.split('_')[0]
+        countryname = project.name.split('_')[0]
         
         progname = prog.name
         if prog.name == 'SBCC + Condom': progname = 'Condoms & SBCC'
@@ -50,16 +51,14 @@ def addcostdata(new=None, newinfile=None, outfile=None, costdatafilename=None, d
             unitcost = allcostdata[countryname][progname]
             prog.costcovfn.ccopars['unitcost'][0] = (unitcost, unitcost)
             
-    return new
+    return project
 
 
 ################
 # Loop over a set of projects and add unit cost data to each 
 ################
 
-from glob import glob
-from os import sep
-from optima import loadobj
+
 
 def addallcostdata(projectpath=None, costdatafilename=None):
 
@@ -81,7 +80,7 @@ def addallcostdata(projectpath=None, costdatafilename=None):
     
             # Update unit cost data
             print('Updating unit cost data...')
-            P = addcostdata(new=P, costdatafilename=costdatafilename, dosave=False)
+            P = addcostdata(project=P, costdatafilename=costdatafilename, dosave=False)
             
             # Save project
             P.save(filename=newfile) 
