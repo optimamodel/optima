@@ -31,4 +31,4 @@
   action: service name=rproxy state=started enabled=yes
 
 - name: Ensure rproxy microservice is (re)started
-  action: service name=rproxy state=restarted
+  action: service name=rproxy state=started
