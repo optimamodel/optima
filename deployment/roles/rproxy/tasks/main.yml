@@ -1,0 +1,34 @@
+- name: Install git
+  action: apt pkg=git state=latest
+
+- name: Install Python
+  action: apt pkg=python-pip,python-dev,python-virtualenv
+
+- name: Install Cryptography deps
+  action: apt pkg=libffi-dev,libssl-dev
+
+- name: Set up rproxy user
+  action: user name=rproxy
+
+- name: Set up rproxy virtualenv
+  action: pip name=rproxy version=16.4.0 virtualenv=/home/rproxy/venv
+
+- name: Install txacme
+  action: pip name=txacme virtualenv=/home/rproxy/venv
+
+- name: Make config dir
+  remote_user: rproxy
+  action: file path=/home/rproxy/config state=directory
+
+- name: Set up rproxy config
+  remote_user: rproxy
+  action: template src=rproxy.ini dest=/home/rproxy/config/rproxy.ini
+
+- name: Set up systemd service
+  action: template src=rproxy.service dest=/etc/systemd/system/rproxy.service
+
+- name: Enable systemd service
+  action: service name=rproxy state=started enabled=yes
+
+- name: Ensure rproxy microservice is (re)started
+  action: service name=rproxy state=restarted

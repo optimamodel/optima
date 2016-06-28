@@ -1,0 +1,10 @@
+[Unit]
+Description={{ user }}
+
+[Service]
+ExecStart={{ daemon }} {{daemon_opts}}
+Restart=always
+User={{ user }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,5 @@
+- name: Download Anaconda
+  action: get_url url=https://repo.continuum.io/archive/Anaconda2-4.0.0-Linux-x86_64.sh dest=/home/{{ user }}/anaconda.sh
+
+- name: Install Anaconda
+  action: sh /home/{{ user }}/anaconda.sh -b -p /home/{{ user }}/anaconda2.7

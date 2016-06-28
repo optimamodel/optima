@@ -1,0 +1,25 @@
+- name: Install git
+  action: apt pkg=git state=latest
+
+- name: Copy over deploy key
+  action: copy src=private/deploy.key dest=/home/{{ user }}/deploy.key
+  become_user: {{ user }}
+
+- name: Clone down {{ service_name }} repo
+  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }}  accept_hostkey=yes depth=1
+  become_user: {{ user }}
+
+#- name: Install {{ service_name }} dependencies
+#  action:
+
+- name: Set up systemd service
+  action: template src=web.service dest=/etc/systemd/system/{{ service_name }}.service
+
+- name: Enable systemd service
+  action: service name={{ service_name }} enabled=yes
+
+- name: Set up celery systemd service
+  action: template src=web.service dest=/etc/systemd/system/{{ service_name }}celery.service
+
+- name: Enable celery systemd service
+  action: service name={{ service_name }}celery enabled=yes
