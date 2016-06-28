@@ -69,17 +69,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     // Sending parameters to re-process graphs for active parset
     $scope.processGraphs = function(shouldSave) {
-      var payload = {};
-      if($scope.parameters) {
-        payload.parameters = $scope.parameters;
+      if(!$scope.parameters) {
+        return;
       }
-      payload.which = getSelectors();
-      var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
+      var url = '/api/project/' + activeProjectInfo.id
+                + '/parsets/' + $scope.activeParset.id
+                + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
-      console.log('update pars', payload)
-      $http.put(url, payload)
+      var payload = {
+        parameters: $scope.parameters,
+        which: getSelectors()
+      };
+      console.log('active parset', $scope.activeParset);
+      console.log('uploaded parameters', payload);
+      $http.post(url, payload)
       .success(function (response) {
         setCalibrationData(response.calibration);
       });
@@ -92,9 +97,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // Set calibration data in scope
     var setCalibrationData = function(calibration) {
       $scope.graphs = calibration.graphs;
-      console.log($scope.graphs);
-      console.log("selectors", _.pluck($scope.graphs.selectors, 'key'));
-      console.log("graph_selectors", $scope.graphs.graph_selectors);
+      console.log(calibration);
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
       $scope.resultId = calibration.resultId;
@@ -282,11 +285,14 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     var pollAutoCalibration = function() {
       $http.get('/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id +'/automatic_calibration')
         .success(function(response) {
-          if(response.status === 'completed') {
+          if (response.status === 'completed') {
             getAutoCalibratedGraphs();
             $scope.statusMessage = 'Autofit completed.';
             $timeout.cancel($scope.pollTimer);
-          } else if(response.status === 'started'){
+          } else if (response.status === 'error') {
+            $scope.statusMessage = 'Error in running autofit.';
+            $timeout.cancel($scope.pollTimer);
+          } else if (response.status === 'started') {
             $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
             $scope.statusMessage = "Running: " + $scope.secondsRun + " s.";
             $scope.secondsRun += 1;
@@ -295,16 +301,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var getAutoCalibratedGraphs = function() {
-      var payload = {};
-      if($scope.parameters) {
-        payload.parameters = $scope.parameters;
-      }
-      payload.which = getSelectors();
-      $http.put(
+      $http.post(
         '/api/project/' + activeProjectInfo.id
           + '/parsets' + '/' + $scope.activeParset.id
-          + '/calibration?autofit=true',
-        payload)
+          + '/calibration',
+        {
+          autofit: true,
+          which: getSelectors(),
+          parsetId: $scope.activeParset.id
+        })
       .success(function(response) {
         setCalibrationData(response.calibration);
       });
