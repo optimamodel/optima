@@ -3,23 +3,28 @@
 
 - name: Copy over deploy key
   action: copy src=private/deploy.key dest=/home/{{ user }}/deploy.key
-  become_user: {{ user }}
+  become_user: "{{ user }}"
 
 - name: Clone down {{ service_name }} repo
-  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }}  accept_hostkey=yes depth=1
-  become_user: {{ user }}
+  action: git repo="https://{{ lookup('file', 'private/httpskey') }}@{{ repo }}" dest=/home/{{ user }}/installations/{{ service_name }}/ version={{ branch }} accept_hostkey=yes depth=1 force=yes
+  become_user: "{{ user }}"
 
+- name: Copy over config
+  action: copy src=config/{{ service_name }}.config.py dest=/home/{{ user }}/installations/{{ service_name }}/server/config.py
+  become_user: "{{ user }}"
+
+# Do this to the real anaconda...
 #- name: Install {{ service_name }} dependencies
 #  action:
+
+- name: Set up celery systemd service
+  action: template src=celery.service dest=/etc/systemd/system/{{ service_name }}celery.service
+
+- name: Enable celery systemd service
+  action: service name="{{ service_name }}celery" enabled=yes
 
 - name: Set up systemd service
   action: template src=web.service dest=/etc/systemd/system/{{ service_name }}.service
 
 - name: Enable systemd service
   action: service name={{ service_name }} enabled=yes
-
-- name: Set up celery systemd service
-  action: template src=web.service dest=/etc/systemd/system/{{ service_name }}celery.service
-
-- name: Enable celery systemd service
-  action: service name={{ service_name }}celery enabled=yes

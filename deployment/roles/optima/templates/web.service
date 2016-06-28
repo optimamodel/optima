@@ -1,5 +1,6 @@
 [Unit]
-Description={{ user }}
+Description=Optima {{ service_name }}
+Wants={{ service_name }}celery.service
 
 [Service]
 ExecStart={{ daemon }} {{daemon_opts}}
