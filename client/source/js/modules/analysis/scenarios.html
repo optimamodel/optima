@@ -26,7 +26,10 @@
 
           <tr ng-repeat="scenario in scenarios">
             <td style="width: 50px" class="text-center" update-checkbox-on-click>
-              <input type="checkbox" ng-model="scenario.active">
+              <input
+                  type="checkbox"
+                  ng-model="scenario.active"
+                  ng-change="saveScenarios(scenarios, 'Saved changes')">
             </td>
             <td>{{ scenario.name }}</td>
             <td>{{ parsetName(scenario) }}</td>
