@@ -343,7 +343,17 @@ define(['./../module', 'underscore'], function (module, _) {
               label: 'Parameter values in the absence of any program',
               attr: {type: "string"}
             });
-            cells.push({value: year.interact, attr: {type: "string"}});
+            cells.push({
+              value: year.interact,
+              attr: {
+                type: "selector",
+                options: [
+                  {label: "random", value: "random"},
+                  {label: "nested", value: "nested"},
+                  {label: "additive", value: "additive"}
+                ]
+              }
+            });
             cells.push({value: year.intercept_lower, attr: {type: "input"}});
             cells.push({value: year.intercept_upper, attr: {type: "input"}});
 
