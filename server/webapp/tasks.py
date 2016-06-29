@@ -5,13 +5,12 @@ import dateutil.tz
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-import optima as op
-
 from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.dataio import save_result, load_project_record, update_or_create_parset_record
 
+import optima as op
 from celery import Celery
 
 
