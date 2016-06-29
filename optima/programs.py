@@ -6,8 +6,8 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, shape, reshape
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, reshape
 from random import uniform
 import abc
 
@@ -606,53 +606,45 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, tol=0.01, verbose=2, **kwargs):
+    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=200, verbose=2, **kwargs):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
-        # Initialise internal variables 
-        origpardict = dcp(self.cco2odict(t=year))
-        pardict = dcp(origpardict)
-        pararray = pardict[:] # Turn into array format
-        npars = shape(pararray)[0]
-        factors = ones((npars,1))
-        parlower = zeros(npars)
-        
+        # Try defaults if none supplied
         if parset is None:
             try: parset = self.project.parset()
             except: raise OptimaException('Could not find a usable parset')
         
+        # Initialise internal variables 
+        origpardict = dcp(self.cco2odict(t=year))
+        pardict = dcp(origpardict)
+        pararray = dcp(pardict[:]) # Turn into array format
+        parlower = dcp(pararray[:,0])
+        parupper = dcp(pararray[:,1])
+        parmeans = pararray.mean(axis=1)
+        
+        # Reset to means
+        pardict[:] = array([parmeans,parmeans])
+        self.odict2cco(dcp(pardict, t=year))
+        
         # Prepare inputs to optimization method
         args = odict([('pararray',pararray), ('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('origmismatch',-1), ('verbose',verbose)])
-        origmismatch = costfuncobjectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
+        origmismatch, allmismatches = costfuncobjectivecalc(parmeans, returnvector=True, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
         args['origmismatch'] = origmismatch
-        
-        # Run the optimization
-        count = 0
-        currentmismatch = costfuncobjectivecalc(origpardict, **args)
-        while count<maxiters and currentmismatch>tol:
-            currentmismatch = costfuncobjectivecalc(pardict, **args)
-            # ...insert useful code here
             
-#        if optmethod=='simplex':
-#            from scipy.optimize import minimize # TEMP
-#            optres = minimize(costfuncobjectivecalc, factors, args=tuple(args.values()), tol=0.1)
-#            factors = optres.x
-#        elif optmethod=='asd':
-#            from optima import asd
-#            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, xmin=parlower, MaxIter=maxiters, **kwargs)
-#        currentmismatch = costfuncobjectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
+        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, pinitial=list(allmismatches)*2, MaxIter=maxiters, **kwargs)
+        currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
-        pardict[:] = pararray * reshape(parvecnew, (len(parvecnew),1))
+        pardict[:] = array([parvecnew,parvecnew])
         self.odict2cco(pardict) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
 
-def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3):
+
+def costfuncobjectivecalc(parmeans=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3, returnvector=False):
     ''' Calculate the mismatch between the budget-derived cost function parameter values and the model parameter values for a given year '''
-    factors = reshape(factors, (len(factors),1)) # Get it the right shape
-    pardict[:] = dcp(pararray * factors)
+    pardict[:] = array([parmeans,parmeans])
     progset.odict2cco(dcp(pardict), t=year)
     comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind, doprint=(verbose>=4))
     allmismatches = []
@@ -660,20 +652,24 @@ def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=Non
     for budgetparpair in comparison:
         parval = budgetparpair[2]
         budgetval = budgetparpair[3]
-        if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps) if (parval and budgetval) else 0.0
-        elif objective=='mad':             thismismatch = abs(budgetval - parval)
-        elif objective=='mse':             thismismatch =    (budgetval - parval)**2
+        if parval and budgetval: # If either of these values are zero, probably hopeless trying to calculate mismatch
+            if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
+            elif objective=='mad':             thismismatch = abs(budgetval - parval)
+            elif objective=='mse':             thismismatch =    (budgetval - parval)**2
+            else:
+                errormsg = 'autofit(): "objective" not known; you entered "%s", but must be one of:\n' % objective
+                errormsg += '"wape"/"mape" = weighted/mean absolute percentage error (default)\n'
+                errormsg += '"mad"  = mean absolute difference\n'
+                errormsg += '"mse"  = mean squared error'
+                raise OptimaException(errormsg)
         else:
-            errormsg = 'autofit(): "objective" not known; you entered "%s", but must be one of:\n' % objective
-            errormsg += '"wape"/"mape" = weighted/mean absolute percentage error (default)\n'
-            errormsg += '"mad"  = mean absolute difference\n'
-            errormsg += '"mse"  = mean squared error'
-            raise OptimaException(errormsg)
+            thismismatch = 0.0 # Give up
         allmismatches.append(thismismatch)
         mismatch += thismismatch
         printv('%45s | %30s | mismatch: %s' % (budgetparpair[0],budgetparpair[1], sigfig(thismismatch,4)), 3, verbose)
     printv('orig: %s current: %s' % sigfig([origmismatch,mismatch],4), 3, verbose)
-    return mismatch
+    if returnvector: return mismatch,allmismatches
+    else:            return mismatch
 
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,bounds=None):
