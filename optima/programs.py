@@ -606,8 +606,16 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=200, verbose=2, **kwargs):
-        ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
+    def reconcile(self, parset=None, year=None, ind=0, objective='mape', maxiters=400, uselimits=True, verbose=2, **kwargs):
+        '''
+        A method for automatically reconciling coverage-outcome parameters with model parameters.
+        
+        Example code to test:
+        
+        import optima as op
+        P = op.defaults.defaultproject('best')
+        P.progset().reconcile(year=2016, uselimits=False, verbose=4)
+        '''
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
         # Try defaults if none supplied
@@ -619,9 +627,14 @@ class Programset(object):
         origpardict = dcp(self.cco2odict(t=year))
         pardict = dcp(origpardict)
         pararray = dcp(pardict[:]) # Turn into array format
-        parlower = dcp(pararray[:,0])
-        parupper = dcp(pararray[:,1])
         parmeans = pararray.mean(axis=1)
+        npars = len(parmeans)
+        if uselimits:
+            parlower = dcp(pararray[:,0])
+            parupper = dcp(pararray[:,1])
+        else:
+            parlower = zeros(npars)
+            parupper = zeros(npars)+1e9
         if any(parupper<parlower): 
             problemind = findinds(parupper<parlower)
             errormsg = 'At least one lower limit is higher than one upper limit:\n%s %s' % (pardict.keys()[problemind], pardict[problemind])
@@ -641,6 +654,7 @@ class Programset(object):
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
 
+
 def replicatevec(vec,n=2):
     ''' Tiny function to turn a vector into a form suitable for feeding into an odict '''
     output = []
@@ -652,7 +666,7 @@ def costfuncobjectivecalc(parmeans=None, pararray=None, pardict=None, progset=No
     ''' Calculate the mismatch between the budget-derived cost function parameter values and the model parameter values for a given year '''
     pardict[:] = replicatevec(parmeans)
     progset.odict2cco(dcp(pardict), t=year)
-    comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind, doprint=(verbose>=4))
+    comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
     allmismatches = []
     mismatch = 0
     for budgetparpair in comparison:
@@ -672,8 +686,7 @@ def costfuncobjectivecalc(parmeans=None, pararray=None, pardict=None, progset=No
             thismismatch = 0.0 # Give up
         allmismatches.append(thismismatch)
         mismatch += thismismatch
-        printv('%45s | %30s | mismatch: %s' % (budgetparpair[0],budgetparpair[1], sigfig(thismismatch,4)), 3, verbose)
-    printv('orig: %s current: %s' % sigfig([origmismatch,mismatch],4), 3, verbose)
+        printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
     if returnvector: return mismatch,allmismatches
     else:            return mismatch
 
