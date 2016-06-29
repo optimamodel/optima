@@ -835,8 +835,7 @@ class Program(object):
         
         # If we are ignoring eligibility, just sum the popsizes...
         if not useelig:
-            try: initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
-            except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
+            initpopsizes = parset.pars[0]['popsize'].interp(tvec=t)
 
 
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
