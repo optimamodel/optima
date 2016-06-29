@@ -581,7 +581,7 @@ class Programset(object):
         return comparison
     
 
-    def cco2odict(self, t=None):
+    def cco2odict(self, t=None, sample='best'):
         ''' Parse the cost-coverage-outcome tree and pull out parameter values into an odict '''
         if t is None: raise OptimaException('Please supply a year')
         modifiablepars = odict()
@@ -603,6 +603,8 @@ class Programset(object):
             self.covout[targetpartype][targetparpop].ccopars[thisprogkey] = [tuple(val)]
             if t: self.covout[targetpartype][targetparpop].ccopars['t'] = [t] # WARNING, reassigned multiple times, but shouldn't matter...
         return None
+    
+    
     
     def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, stepsize=0.1, verbose=2, **kwargs):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
@@ -645,13 +647,13 @@ def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=Non
     factors = reshape(factors, (len(factors),1)) # Get it the right shape
     pardict[:] = dcp(pararray * factors)
     progset.odict2cco(dcp(pardict), t=year)
-    comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind)
+    comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind, doprint=(verbose>=4))
     allmismatches = []
     mismatch = 0
     for budgetparpair in comparison:
         parval = budgetparpair[2]
         budgetval = budgetparpair[3]
-        if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps)
+        if   objective in ['wape','mape']: thismismatch = abs(budgetval - parval) / (parval+eps) if (parval and budgetval) else 0.0
         elif objective=='mad':             thismismatch = abs(budgetval - parval)
         elif objective=='mse':             thismismatch =    (budgetval - parval)**2
         else:
@@ -662,7 +664,8 @@ def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=Non
             raise OptimaException(errormsg)
         allmismatches.append(thismismatch)
         mismatch += thismismatch
-        printv('orig mismatch: %s current mismatch: %s' % sigfig([origmismatch,mismatch],4), 4, verbose)
+        printv('%45s | %30s | mismatch: %s' % (budgetparpair[0],budgetparpair[1], sigfig(thismismatch,4)), 3, verbose)
+    printv('orig: %s current: %s' % sigfig([origmismatch,mismatch],4), 3, verbose)
     return mismatch
 
 
