@@ -1,0 +1,10 @@
+[Unit]
+Description=rproxy
+
+[Service]
+Type=forking
+ExecStart=/home/rproxy/venv/bin/twistd -u nobody -g nogroup --pidfile=/home/rproxy/service.pid --logfile=/home/rproxy/service.log rproxy --config=/home/rproxy/config/rproxy.ini
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

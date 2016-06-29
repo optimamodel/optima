@@ -1,0 +1,11 @@
+- stat: path=/software/anaconda/bin/python
+  register: anaconda_python
+
+- name: Download Anaconda
+  action: get_url url=https://repo.continuum.io/archive/Anaconda2-4.0.0-Linux-x86_64.sh dest=/root/anaconda.sh
+  when: anaconda_python.stat.exists == False
+
+- name: Install Anaconda
+  shell: bash /root/anaconda.sh -b -p /software/anaconda
+  args:
+    creates: /software/anaconda/bin/python
