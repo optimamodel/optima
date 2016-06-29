@@ -300,7 +300,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
 def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
-    R = Programset(programs=programs)   
+    R = Programset(programs=programs, project=P)   
     return R
 
 
@@ -504,7 +504,7 @@ def defaultproject(which='simple', addprogset=True, verbose=2, **kwargs):
         R.covout['hivtest']['M 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.covout['hivtest']['F 15+'].addccopar({'intercept': (0.01,0.02), 't': 2016.0, 'HTC': (0.20,0.30)})
         R.covout['hivtest']['PWID'].addccopar({'intercept': (0.10,0.15), 't': 2016.0, 'HTC': (0.80,0.90)})
-        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.20,0.12), 't': 2016.0, 'HTC': (0.80,0.90)})
+        R.covout['hivtest']['MSM'].addccopar({'intercept': (0.12,0.20), 't': 2016.0, 'HTC': (0.80,0.90)})
     
         R.covout['numtx']['tot'].addccopar({'intercept': (10.0,15.0), 't': 2016.0})
         
