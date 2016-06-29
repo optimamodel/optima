@@ -38,7 +38,7 @@ print(optimalicense)
 
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
-__version__ = 2.0
+from ._version import __version__
 
 # Create an empty list to stored failed imports
 _failed = [] 
