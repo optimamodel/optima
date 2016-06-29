@@ -18,6 +18,7 @@ import os
 from datetime import datetime
 import dateutil
 from pprint import pprint
+from functools import partial
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
@@ -29,7 +30,9 @@ from server.webapp.exceptions import (
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
     parse_default_program_summaries, parse_parameters_of_parset_list,
-    parse_parameters_from_progset_parset)
+    parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
+    revert_costcovdata
+)
 
 
 import optima as op
@@ -176,6 +179,17 @@ def get_parset_from_project(project, parset_id):
     if not parsets:
         raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
     return parsets[0]
+
+
+def get_progset_from_project(project, progset_id):
+    progsets = [
+        project.progsets[key]
+        for key in project.progsets
+        if project.progsets[key].uid == progset_id
+    ]
+    if not progsets:
+        raise ProgsetDoesNotExist(project_id=project_id, id=progset_id)
+    return progsets[0]
 
 
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
@@ -389,33 +403,6 @@ def save_scenario_summaries(project_id, scenario_summaries):
     db.session.commit()
 
 
-def get_program_summary_from_program(program):
-    """
-    Extract required fields from Program object
-
-    Field names taken to be consistent with dbModels.ProgramsDb resource fields
-
-    @TODO: optimizable field needs to be made consistent within ProgramDb
-    """
-    program_summary = {
-        'id': program.uid,
-        'progset_id': program.progset.uid,
-        'project_id': program.progset.project.uid,
-        'category': program.category,
-        'short': program.short,
-        'name': program.name,
-        'targetpars': program.pars, #NOTE change in field name
-        'active': program.active,
-        'populations': program.targetpops, #NOTE change in field name
-        'criteria': program.criteria,
-        'created': program.created,
-        'updated': program.updated,
-        'ccopars': program.ccopars,
-        'costcov': program.costcov,
-        #'optimizable': program_record.optimizable,
-    }
-    return program_summary
-
 def get_progset_summary(progset):
     """
 
@@ -423,12 +410,19 @@ def get_progset_summary(progset):
 
     """
 
+    active_programs = map(partial(parse_program_summary, active=True), progset.programs.values()),
+
+    inactive_programs_list = getattr(progset, "inactive_programs", {})
+    inactive_programs = map(partial(parse_program_summary, active=False), inactive_programs_list.values()),
+
+    print(active_programs)
+
     progset_summary = {
         'id': progset.uid,
         'name': progset.name,
         'created': progset.created,
         'updated': progset.modified,
-        'programs': map(get_program_summary_from_program, progset.programs.values()),
+        'programs': list(active_programs[0]) + list(inactive_programs[0]),
         #'targetpartypes': progset_record.targetpartypes,
         #'readytooptimize': progset_record.readytooptimize
     }
@@ -442,25 +436,54 @@ def get_progset_summaries(project):
     return {'progsets': normalize_obj(progset_summaries)}
 
 
-
-def save_progset_summaries(project_id, progset_summaries):
+def save_progset_summaries(project, progset_summaries, progset_id=None):
     """
 
     """
-
     progset_name = progset_summaries['name']
     progset_programs = progset_summaries['programs']
 
+    if progset_name not in project.progsets:
+        if progset_id:
+            # It may have changed, so try getting via ID if we have it...
+            progset = get_progset_from_project(project, progset_id)
+            project.progsets.pop(progset.name)
+
+            # Update the name and its reflection in the project.
+            progset.name = progset_name
+            project.progsets[progset_name] = progset
+        else:
+            # Probably a new one.
+            project.progsets[progset_name] = op.Programset(name=progset_name)
+    progset = project.progsets[progset_name]
+
+    # Clear the current programs...
+    progset.programs = op.odict()
+    progset.inactive_programs = op.odict()
+
+    for p in progset_programs:
+
+        costcov = {'t': [], 'cost': [], 'coverage': []}
+        targetpars = []
+
+        program = op.Program(
+            short=p["short"],
+            name=p["name"],
+            category=p["category"],
+            targetpars=revert_targetpars(p["targetpars"]),
+            targetpops=p["populations"],
+            criteria=p["criteria"],
+            costcovdata=revert_costcovdata(p["costcov"]))
+
+        if p["active"]:
+            progset.addprograms(program)
+        else:
+            progset.inactive_programs[program.short] = program
+
+    progset.updateprogset()
+
     current_app.logger.debug("!!! name and programs data : %s, \n\t %s "%(progset_name, progset_programs))
 
-    progset_record = ProgsetsDb(project_id=project_id, name=progset_name)
-    # need to flush first to force the generation of progset_record.id if new
-    db.session.add(progset_record)
-    db.session.flush()
-
-    progset_record.update_from_program_summaries(progset_programs, progset_record.id)
-    progset_record.get_extra_data()
-    db.session.commit()
 
 
 

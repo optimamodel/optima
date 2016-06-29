@@ -12,8 +12,9 @@ from flask_restful_swagger import swagger
 
 from server.webapp.dataio import (
     get_progset_summaries, save_progset_summaries, load_project,
-    load_project_record, load_program, load_parset,
+    load_project_record, load_program, load_parset, get_progset_summary,
     get_target_popsizes, load_parameters_from_progset_parset,
+    get_progset_from_project, get_progset_summary,
     check_project_exists)
 from server.webapp.dbconn import db
 from server.webapp.exceptions import (ProgsetDoesNotExist)
@@ -53,8 +54,14 @@ class Progsets(Resource):
 
         data = normalize_obj(request.get_json(force=True))
         current_app.logger.debug("DATA progsets for project_id %s is :/n %s" % (project_id, pprint(data)))
-        save_progset_summaries(project_id,data)
-        return get_progset_summaries(project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        save_progset_summaries(project, data)
+        project_record.save_obj(project)
+
+        return get_progset_summaries(project)
 
 
 class Progset(Resource):
@@ -79,31 +86,27 @@ class Progset(Resource):
     @swagger.operation(description='Update progset with the given id.')
     def put(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        args = progset_parser.parse_args()
+        data = normalize_obj(request.get_json(force=True))
 
-        progset_record = load_progset_record(project_id, progset_id)
-        progset_record.name = args['name']
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        program_summaries = normalize_obj(args.get('programs', []))
-        progset_record.update_from_program_summaries(program_summaries, progset_id)
-        progset_record.get_extra_data()
+        save_progset_summaries(project, data, progset_id=progset_id)
+        project_record.save_obj(project)
 
-        db.session.commit()
-        return progset_record
+        return get_progset_summary(project.progsets[data["name"]])
 
     @swagger.operation(description='Delete progset with the given id.')
     def delete(self, project_id, progset_id):
         current_app.logger.debug("/api/project/%s/progsets/%s" % (project_id, progset_id))
-        progset_entry = db.session.query(ProgsetsDb).get(progset_id)
-        if progset_entry is None:
-            raise ProgsetDoesNotExist(id=progset_id)
 
-        if progset_entry.project_id != project_id:
-            raise ProgsetDoesNotExist(id=progset_id)
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        db.session.query(ProgramsDb).filter_by(progset_id=progset_entry.id).delete()
-        db.session.delete(progset_entry)
-        db.session.commit()
+        progset = get_progset_from_project(project, progset_id)
+        project.progsets.pop(progset.name)
+
+        project_record.save_obj(project)
         return '', 204
 
 
