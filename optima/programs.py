@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, reshape
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
 
@@ -622,29 +622,35 @@ class Programset(object):
         parlower = dcp(pararray[:,0])
         parupper = dcp(pararray[:,1])
         parmeans = pararray.mean(axis=1)
-        
-        # Reset to means
-        pardict[:] = array([parmeans,parmeans])
-        self.odict2cco(dcp(pardict, t=year))
+        if any(parupper<parlower): 
+            problemind = findinds(parupper<parlower)
+            errormsg = 'At least one lower limit is higher than one upper limit:\n%s %s' % (pardict.keys()[problemind], pardict[problemind])
+            raise OptimaException(errormsg)
         
         # Prepare inputs to optimization method
         args = odict([('pararray',pararray), ('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('origmismatch',-1), ('verbose',verbose)])
         origmismatch, allmismatches = costfuncobjectivecalc(parmeans, returnvector=True, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
         args['origmismatch'] = origmismatch
             
-        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, pinitial=list(allmismatches)*2, MaxIter=maxiters, **kwargs)
+        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, pinitial=list(allmismatches)*2, MaxIter=maxiters, verbose=verbose, **kwargs)
         currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
-        pardict[:] = array([parvecnew,parvecnew])
+        pardict[:] = replicatevec(parvecnew)
         self.odict2cco(pardict) # Copy best values
         printv('Reconciliation reduced mismatch from %f to %f' % (origmismatch, currentmismatch), 2, verbose)
         return None
 
+def replicatevec(vec,n=2):
+    ''' Tiny function to turn a vector into a form suitable for feeding into an odict '''
+    output = []
+    for i in vec: output.append([i]*n) # Make a list of lists, with the sublists having length n
+    return output
+    
 
 def costfuncobjectivecalc(parmeans=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3, returnvector=False):
     ''' Calculate the mismatch between the budget-derived cost function parameter values and the model parameter values for a given year '''
-    pardict[:] = array([parmeans,parmeans])
+    pardict[:] = replicatevec(parmeans)
     progset.odict2cco(dcp(pardict), t=year)
     comparison = progset.compareoutcomes(parset=parset, year=year, ind=ind, doprint=(verbose>=4))
     allmismatches = []
@@ -1110,12 +1116,12 @@ class CCOF(object):
         if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
-                    ccopars_no_t[parname][j] = (parvalue[j][0]+parvalue[j][1])/2
-        elif sample in ['upper','u','up','high','h']:
+                    ccopars_no_t[parname][j] = mean(array(parvalue[j][:]))
+        elif sample in ['lower','l','low']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
                     ccopars_no_t[parname][j] = parvalue[j][0]
-        elif sample in ['lower','l','low']:
+        elif sample in ['upper','u','up','high','h']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
                     ccopars_no_t[parname][j] = parvalue[j][1]
