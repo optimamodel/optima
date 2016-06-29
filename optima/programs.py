@@ -6,7 +6,7 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel, asd, convertlimits
 from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, mean
 from random import uniform
 import abc
@@ -628,13 +628,18 @@ class Programset(object):
         pardict = dcp(origpardict)
         pararray = dcp(pardict[:]) # Turn into array format
         parmeans = pararray.mean(axis=1)
-        npars = len(parmeans)
-        if uselimits:
+        if uselimits: # Use user-specified limits
             parlower = dcp(pararray[:,0])
             parupper = dcp(pararray[:,1])
-        else:
+        else: # Just use parameter limits
+            npars = len(parmeans)            
             parlower = zeros(npars)
-            parupper = zeros(npars)+1e9
+            parupper = zeros(npars)
+            for k,tmp in enumerate(pardict.keys()):
+                parname = tmp[0] # First entry is parameter name
+                limits = convertlimits(parset.pars[0][parname].limits, dt=self.project.settings.dt)
+                parlower[k] = limits[0]
+                parupper[k] = limits[1]
         if any(parupper<parlower): 
             problemind = findinds(parupper<parlower)
             errormsg = 'At least one lower limit is higher than one upper limit:\n%s %s' % (pardict.keys()[problemind], pardict[problemind])
