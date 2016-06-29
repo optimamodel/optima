@@ -136,7 +136,7 @@ class Project(object):
         ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
         scenname = 'Current conditions'
         if overwrite or name not in self.progsets:
-            progset = Programset(name=name)
+            progset = Programset(name=name, project=self)
             self.addprogset(progset)
         if overwrite or scenname not in self.scens:
             scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])

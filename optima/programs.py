@@ -7,7 +7,7 @@ Version: 2016feb06
 """
 
 from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
-from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, shape, reshape
 from random import uniform
 import abc
 
@@ -19,7 +19,7 @@ coveragepars=['numtx','numpmtct','numost','numcirc']
 
 class Programset(object):
 
-    def __init__(self, name='default', programs=None, default_interaction='random'):
+    def __init__(self, name='default', programs=None, default_interaction='random', project=None):
         ''' Initialize '''
         self.name = name
         self.uid = uuid()
@@ -30,6 +30,7 @@ class Programset(object):
         self.defaultbudget = odict()
         self.created = today()
         self.modified = today()
+        self.project = project # Store pointer for the project, if available
 
     def __repr__(self):
         ''' Print out useful information'''
@@ -583,9 +584,9 @@ class Programset(object):
         modifiablepars = odict()
         for targetpartype in self.covout.keys():
             for targetparpop in self.covout[targetpartype].keys():
-                modifiablepars[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='l')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='u')['intercept'][0]]
+                modifiablepars[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')['intercept'][0]]
                 for thisprog in self.progs_by_targetpar(targetpartype)[targetparpop]:
-                    try: modifiablepars[(targetpartype,targetparpop,thisprog.short)] = [self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='lower')[thisprog.short][0], self.covout[targetpartype][targetparpop].getccopar(t=t,bounds='upper')[thisprog.short][0]]
+                    try: modifiablepars[(targetpartype,targetparpop,thisprog.short)] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')[thisprog.short][0], self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')[thisprog.short][0]]
                     except: pass # Must be something like ART, which does not have adjustable parameters -- WARNING, could test explicitly!
         return modifiablepars
 

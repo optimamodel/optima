@@ -300,7 +300,7 @@ def defaultprograms(project, addpars=False, addcostcov=False, filterprograms=Non
 def defaultprogset(P, addpars=False, addcostcov=False, filterprograms=None):
     ''' Make a default programset (for testing optimisations)'''
     programs = defaultprograms(P, addpars=addpars, addcostcov=addcostcov, filterprograms=filterprograms)
-    R = Programset(programs=programs)   
+    R = Programset(programs=programs, project=P)   
     return R
 
 
