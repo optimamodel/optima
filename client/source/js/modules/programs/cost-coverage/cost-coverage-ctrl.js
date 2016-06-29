@@ -316,16 +316,17 @@ define(['./../module', 'underscore'], function (module, _) {
         rows: []
       };
 
-      vm.table.rows.push(makeBlankRow());
+      var cells;
 
-      var cells = [
-        {}, {},
-        {attr: {type: "string"}, value: 'Absolute limits of parameter values'},
-        {},
-        {attr: {type: "string"}, value: vm.selectedParameter.limits[0]},
-        {attr: {type: "string"}, value: vm.selectedParameter.limits[1]}];
+      // vm.table.rows.push(makeBlankRow());
 
-      vm.table.rows.push({attr: {isSkip: true}, cells: cells});
+      // cells = [
+      //   {}, {},
+      //   {attr: {type: "string"}, value: 'Absolute limits of parameter values'},
+      //   {},
+      //   {attr: {type: "string"}, value: vm.selectedParameter.limits[0]},
+      //   {attr: {type: "string"}, value: vm.selectedParameter.limits[1]}];
+      // vm.table.rows.push({attr: {isSkip: true}, cells: cells});
 
       _.each(getOutcomesForSelectedParset(), function (outcome) {
         if (outcome.name == vm.selectedParameter.short) {
