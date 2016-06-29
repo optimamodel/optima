@@ -34,7 +34,7 @@ setup(
     author='Cliff Kerr, Robyn Stuart, David Kedziora, Romesh Abeysuriya, Madhura Killedar, Anna Nachesa',
     author_email='info@optimamodel.com',
     description='Software package for modeling HIV epidemics',
-    long_description=convert('README.rst', 'rst'),
+    long_description=convert('README.md', 'md'),
     url='http://github.com/optimamodel/Optima',
     keywords=['optima'],
     platforms=['OS Independent'],
@@ -46,4 +46,3 @@ setup(
         'numpy>=1.10.1',
     ],
 )
-

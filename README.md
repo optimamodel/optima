@@ -208,11 +208,8 @@ This component requires:
 - [Redis](http://redis.io/) - memory caching
 - [Celery](http://redis.io/) - distributed task queue
 
-Install ``virtualenv`` and ``tox``:
+To install the Redis server:
 
-    pip install virtualenv tox
-
-To install the Redis server.
 _On Linux_:
 
     sudo apt-get install redis-server
@@ -224,6 +221,34 @@ _On Mac_:
     ln -sfv /usr/local/opt/redis/*.plist ~/Library/LaunchAgents
     lunchy start redis
 
+Copy over the setup:
+
+    cp server/config.py.example server/config.py
+
+NOTE: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
+
+Then to run the server, there are two options -- directly (self-managed environment like Anaconda) or through a virtualenv (if you are a developer).
+
+_Using the scripts directly (e.g. prod/Anaconda)_:
+
+Make sure you have the requirements:
+
+    pip install server/requirements.txt
+
+Then run the server in one terminal:
+
+    python bin/run_server.py 8080 # to start on port 8080
+
+...and celery in the other:
+
+    celery -A server.webapp.tasks.celery_instance worker -l info
+
+
+_Using Virtualenvs (e.g. for development)_:
+
+Install ``virtualenv`` and ``tox``:
+
+    pip install virtualenv tox
 
 Run the server in two separate terminals. These scripts will start Python in a `virtualenv` isolated Python environments.
 If you wish to use system installed packages, append `--sitepackages` and it will not reinstall things that are already installed in the Python site packages.
@@ -234,8 +259,6 @@ First in one terminal:
 Then in the other terminal:
 
     tox -e runserver
-
-ATTENTION: config.example.py (the reference config) can be changed (e.g. new settings added or old settings removed). If you have problems with running Optima locally, look at the reference config file and compare it with your version.
 
 
 
