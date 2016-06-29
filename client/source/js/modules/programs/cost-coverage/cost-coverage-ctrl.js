@@ -145,7 +145,13 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function makePopKeyLabel(popKey) {
-      return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
+      if (typeof popKey === 'string') {
+        if (popKey == "tot") {
+          return "Total Population";
+        }
+        return popKey;
+      }
+      return popKey.join(' <-> ');
     }
 
     function makePopulationLabel(population) {
