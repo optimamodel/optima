@@ -286,9 +286,8 @@ def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
     return parse_parameters_from_progset_parset(settings, progset, parset)
 
 
-def get_parset_keys_with_y_values(project_id):
-    parset_records = db.session.query(ParsetsDb).filter_by(project_id=project_id).all()
-    parsets = {str(record.id): record.hydrate() for record in parset_records}
+def get_parset_keys_with_y_values(project):
+
     y_keys = {
         id: {
             par.short: [
@@ -301,7 +300,7 @@ def get_parset_keys_with_y_values(project_id):
             for par in parset.pars[0].values()
             if hasattr(par, 'y') and par.visible
             }
-        for id, parset in parsets.iteritems()
+        for id, parset in project.parsets.iteritems()
         }
     return y_keys
 
@@ -353,11 +352,11 @@ def get_scenario_summary(project, scenario):
 
     result = {
         'id': scenario.uid,
-        'progset_id': scenario.progset_id, # could be None if parameter scenario
+        'progset_id': progset_id, # could be None if parameter scenario
         'scenario_type': scenario_type,
         'active': scenario.active,
         'name': scenario.name,
-        'parset_id': scenario.parsets[scenario.parset_name].uid,
+        'parset_id': project.parsets[scenario.parsetname].uid,
     }
     result.update(extra_data)
     return result
@@ -398,27 +397,17 @@ def get_scenario_summaries(project):
     return normalize_obj(scenario_summaries)
 
 
-def save_scenario_summaries(project_id, scenario_summaries):
+def save_scenario_summaries(project, scenario_summaries):
     # delete any records with id's that aren't in summaries
-    existing_scenario_ids = [
-        scenario_summary['id']
-        for scenario_summary in scenario_summaries
-        if scenario_summary.get('id', False)
-    ]
-    db.session.query(ScenariosDb) \
-        .filter_by(project_id=project_id) \
-        .filter(~ScenariosDb.id.in_(existing_scenario_ids)) \
-        .delete(synchronize_session='fetch')
-    db.session.flush()
 
-    for scenario_summary in scenario_summaries:
-        # this hack is needed for parameter scenarios that don't have progsets
-        if scenario_summary['progset_id'] == 'None':
-            scenario_summary['progset_id'] = None
-        print(">>> Saving scenario")
-        pprint(scenario_summary, indent=2)
-        update_or_create_scenario_record(project_id, scenario_summary)
-    db.session.commit()
+    print(scenario_summaries)
+
+    project.scens = op.odict()
+
+    for s in scenario_summaries:
+
+        if s["scenario_type
+
 
 
 def get_progset_summary(progset):
