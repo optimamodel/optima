@@ -364,8 +364,11 @@ class Programset(object):
         # Validate inputs
         if isnumber(t): t = [t]
         if parset is None:
-            if results and results.parset: parset = results.parset
-            else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
+            if results and results.parset: 
+                parset = results.parset
+            else: 
+                try:    parset = self.project.parset() # Get default parset
+                except: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
             coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample)
         for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
@@ -612,6 +615,10 @@ class Programset(object):
         npars = shape(pararray)[0]
         factors = ones((npars,1))
         parlower = zeros(npars)
+        
+        if parset is None:
+            try: parset = self.project.parset()
+            except: raise OptimaException('Could not find a usable parset')
         
         # Prepare inputs to optimization method
         args = odict([('pararray',pararray), ('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('origmismatch',-1), ('verbose',verbose)])
