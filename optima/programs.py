@@ -619,6 +619,10 @@ class Programset(object):
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
         # Try defaults if none supplied
+        if not hasattr(self,'project'):
+            try: self.project = parset.project
+            except: raise OptimaException('Could not find a usable project')
+                
         if parset is None:
             try: parset = self.project.parset()
             except: raise OptimaException('Could not find a usable parset')
