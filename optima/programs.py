@@ -584,14 +584,14 @@ class Programset(object):
     def cco2odict(self, t=None, sample='best'):
         ''' Parse the cost-coverage-outcome tree and pull out parameter values into an odict '''
         if t is None: raise OptimaException('Please supply a year')
-        modifiablepars = odict()
+        pardict = odict()
         for targetpartype in self.covout.keys():
             for targetparpop in self.covout[targetpartype].keys():
-                modifiablepars[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')['intercept'][0]]
+                pardict[(targetpartype,targetparpop,'intercept')] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')['intercept'][0],self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')['intercept'][0]]
                 for thisprog in self.progs_by_targetpar(targetpartype)[targetparpop]:
-                    try: modifiablepars[(targetpartype,targetparpop,thisprog.short)] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')[thisprog.short][0], self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')[thisprog.short][0]]
+                    try: pardict[(targetpartype,targetparpop,thisprog.short)] = [self.covout[targetpartype][targetparpop].getccopar(t=t,sample='lower')[thisprog.short][0], self.covout[targetpartype][targetparpop].getccopar(t=t,sample='upper')[thisprog.short][0]]
                     except: pass # Must be something like ART, which does not have adjustable parameters -- WARNING, could test explicitly!
-        return modifiablepars
+        return pardict
 
 
 
@@ -606,14 +606,14 @@ class Programset(object):
     
     
     
-    def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, stepsize=0.1, verbose=2, **kwargs):
+    def reconcile(self, parset=None, year=None, ind=0, optmethod='asd', objective='mape', maxiters=200, tol=0.01, verbose=2, **kwargs):
         ''' A method for automatically reconciling coverage-outcome parameters with model parameters '''
         printv('Reconciling cost-coverage outcomes with model parameters....', 1, verbose)
         
         # Initialise internal variables 
-        origvals = dcp(self.cco2odict(t=year))
-        pardict = dcp(origvals)
-        pararray = origvals[:] # Turn into array format
+        origpardict = dcp(self.cco2odict(t=year))
+        pardict = dcp(origpardict)
+        pararray = pardict[:] # Turn into array format
         npars = shape(pararray)[0]
         factors = ones((npars,1))
         parlower = zeros(npars)
@@ -627,14 +627,21 @@ class Programset(object):
         origmismatch = costfuncobjectivecalc(factors=factors, **args) # Calculate initial mismatch, just, because
         args['origmismatch'] = origmismatch
         
-        if optmethod=='simplex':
-            from scipy.optimize import minimize # TEMP
-            optres = minimize(costfuncobjectivecalc, factors, args=tuple(args.values()), tol=0.1)
-            factors = optres.x
-        elif optmethod=='asd':
-            from optima import asd
-            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, xmin=parlower, MaxIter=maxiters, **kwargs)
-        currentmismatch = costfuncobjectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
+        # Run the optimization
+        count = 0
+        currentmismatch = costfuncobjectivecalc(origpardict, **args)
+        while count<maxiters and currentmismatch>tol:
+            currentmismatch = costfuncobjectivecalc(pardict, **args)
+            # ...insert useful code here
+            
+#        if optmethod=='simplex':
+#            from scipy.optimize import minimize # TEMP
+#            optres = minimize(costfuncobjectivecalc, factors, args=tuple(args.values()), tol=0.1)
+#            factors = optres.x
+#        elif optmethod=='asd':
+#            from optima import asd
+#            parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, factors, args=args, xmin=parlower, MaxIter=maxiters, **kwargs)
+#        currentmismatch = costfuncobjectivecalc(factors=parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
         pardict[:] = pararray * reshape(parvecnew, (len(parvecnew),1))
