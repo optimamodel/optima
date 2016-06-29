@@ -646,11 +646,10 @@ class Programset(object):
             raise OptimaException(errormsg)
         
         # Prepare inputs to optimization method
-        args = odict([('pararray',pararray), ('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('origmismatch',-1), ('verbose',verbose)])
-        origmismatch, allmismatches = costfuncobjectivecalc(parmeans, returnvector=True, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
-        args['origmismatch'] = origmismatch
+        args = odict([('pardict',pardict), ('progset',self), ('parset',parset), ('year',year), ('ind',ind), ('objective',objective), ('verbose',verbose)])
+        origmismatch = costfuncobjectivecalc(parmeans, **args) # Calculate initial mismatch too get initial probabilities (pinitial)
             
-        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, pinitial=list(allmismatches)*2, MaxIter=maxiters, verbose=verbose, **kwargs)
+        parvecnew, fval, exitflag, output = asd(costfuncobjectivecalc, parmeans, args=args, xmin=parlower, xmax=parupper, MaxIter=maxiters, verbose=verbose, **kwargs)
         currentmismatch = costfuncobjectivecalc(parvecnew, **args) # Calculate initial mismatch, just, because
         
         # Wrap up
@@ -667,7 +666,7 @@ def replicatevec(vec,n=2):
     return output
     
 
-def costfuncobjectivecalc(parmeans=None, pararray=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, origmismatch=None, verbose=2, eps=1e-3, returnvector=False):
+def costfuncobjectivecalc(parmeans=None, pardict=None, progset=None, parset=None, year=None, ind=None, objective=None, verbose=2, eps=1e-3):
     ''' Calculate the mismatch between the budget-derived cost function parameter values and the model parameter values for a given year '''
     pardict[:] = replicatevec(parmeans)
     progset.odict2cco(dcp(pardict), t=year)
@@ -692,8 +691,7 @@ def costfuncobjectivecalc(parmeans=None, pararray=None, pardict=None, progset=No
         allmismatches.append(thismismatch)
         mismatch += thismismatch
         printv('%45s | %30s | par: %s | budget: %s | mismatch: %s' % ((budgetparpair[0],budgetparpair[1])+sigfig([parval,budgetval,thismismatch],4)), 3, verbose)
-    if returnvector: return mismatch,allmismatches
-    else:            return mismatch
+    return mismatch
 
 
     def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,bounds=None):
