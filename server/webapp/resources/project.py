@@ -1,28 +1,51 @@
 import os
 from datetime import datetime
 import dateutil
+from pprint import pprint
 
 from flask import current_app, helpers, request, Response
+from flask.ext.login import current_user, login_required
+from flask_restful import Resource, marshal_with, fields, marshal
+from flask_restful_swagger import swagger
+
 from werkzeug.exceptions import Unauthorized
 from werkzeug.utils import secure_filename
 
-from flask.ext.login import current_user, login_required
-from flask_restful import Resource, marshal_with, fields
-from flask_restful_swagger import swagger
-
 import optima as op
 
-from server.webapp.dataio import TEMPLATEDIR, templatepath, upload_dir_user
 from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb
-
-from server.webapp.inputs import secure_filename_input, AllowedSafeFilenameStorage
+from server.webapp.dbmodels import ProgramsDb, ProjectDataDb, ProjectDb, ResultsDb, ProjectEconDb, ParsetsDb
+from server.webapp.utils import (
+    secure_filename_input, AllowedSafeFilenameStorage, RequestParser, TEMPLATEDIR,
+    templatepath, upload_dir_user)
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.fields import Uuid, Json
+from server.webapp.parse import get_default_populations
+from server.webapp.resources.common import (
+    file_resource, file_upload_form_parser, report_exception, verify_admin_request)
+from server.webapp.dataio import (
+    load_project_record, load_project, save_result, delete_spreadsheet, get_project_parameters,
+    load_project_program_summaries)
 
-from server.webapp.resources.common import file_resource, file_upload_form_parser
-from server.webapp.utils import (load_project, verify_admin_request, report_exception,
-                                 save_result, delete_spreadsheet, RequestParser)
+
+def get_project_summary_from_record(project_record):
+    project_id = project_record.id
+    program_records = ProgramsDb.query.filter_by(project_id=project_id).all()
+    program_records = filter(lambda r: r.active == True, program_records)
+    result = {
+        'id': project_record.id,
+        'name': project_record.name,
+        'user_id': project_record.user_id,
+        'dataStart': project_record.datastart,
+        'dataEnd': project_record.dataend,
+        'populations': project_record.populations,
+        'nProgram': len(program_records),
+        'creation_time': project_record.created,
+        'updated_time': project_record.updated,
+        'data_upload_time': project_record.data_upload_time,
+        'has_data': project_record.has_data(),
+        'has_econ': project_record.has_econ
+    }
+    return result
 
 
 class ProjectBase(Resource):
@@ -31,26 +54,22 @@ class ProjectBase(Resource):
     def get_query(self):
         return ProjectDb.query
 
-    @marshal_with(ProjectDb.resource_fields, envelope='projects')
     def get(self):
-        projects = self.get_query().all()
-        for p in projects:
-            p.has_data_now = p.has_data()
-        return projects
+        project_records = self.get_query().all()
+        return {'projects': map(get_project_summary_from_record, project_records)}
 
 
 population_parser = RequestParser()
 population_parser.add_arguments({
-    'short_name': {'required': True, 'location': 'json'},
-    'name':       {'required': True, 'location': 'json'},
-    'female':     {'type': bool, 'required': True, 'location': 'json'},
-    'male':       {'type': bool, 'required': True, 'location': 'json'},
-    'injects':    {'type': bool, 'required': True, 'location': 'json'},
-    'sexworker':  {'type': bool, 'required': True, 'location': 'json'},
-    'age_from':   {'location': 'json'},
-    'age_to':     {'location': 'json'},
+    'short': {'required': True, 'location': 'json'},
+    'name': {'required': True, 'location': 'json'},
+    'female': {'type': bool, 'required': True, 'location': 'json'},
+    'male': {'type': bool, 'required': True, 'location': 'json'},
+    'injects': {'type': bool, 'required': True, 'location': 'json'},
+    'sexworker': {'type': bool, 'required': True, 'location': 'json'},
+    'age_from': {'location': 'json'},
+    'age_to': {'location': 'json'},
 })
-
 
 project_parser = RequestParser()
 project_parser.add_arguments({
@@ -61,7 +80,6 @@ project_parser.add_arguments({
     # 'populations': {'type': (population_parser), 'required': True},
     'populations': {'type': dict, 'required': True, 'action': 'append'},
 })
-
 
 # editing datastart & dataend currently is not allowed
 project_update_parser = RequestParser()
@@ -98,7 +116,9 @@ bulk_project_parser.add_arguments({
 
 class Projects(ProjectBase):
     """
-    A collection of projects for the given user.
+    /api/project
+
+    - GET: used in open/manage page to get project lists
     """
 
     def get_query(self):
@@ -193,9 +213,9 @@ class Projects(ProjectBase):
         args = bulk_project_parser.parse_args(req=req)
 
         projects = [
-            load_project(id, raise_exception=True)
+            load_project_record(id, raise_exception=True)
             for id in args['projects']
-        ]
+            ]
 
         for project in projects:
             project.recursive_delete()
@@ -207,7 +227,9 @@ class Projects(ProjectBase):
 
 class Project(Resource):
     """
-    An individual project.
+    /api/project/<uuid:project_id>
+
+    - GET: get active project summary
     """
     method_decorators = [report_exception, login_required]
 
@@ -216,18 +238,14 @@ class Project(Resource):
         summary='Open a Project'
     )
     @report_exception
-    @marshal_with(ProjectDb.resource_fields)
     def get(self, project_id):
-        query = ProjectDb.query
-        project_entry = query.get(project_id)
+        project_entry = ProjectDb.query.get(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
         if not current_user.is_admin and \
-                str(project_entry.user_id) != str(current_user.id):
+                        str(project_entry.user_id) != str(current_user.id):
             raise Unauthorized
-        project_entry.has_data_now = project_entry.has_data()
-        # no other way to make it work for methods and not attributes?
-        return project_entry
+        return get_project_summary_from_record(project_entry)
 
     @swagger.operation(
         produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -251,12 +269,12 @@ class Project(Resource):
             "project %s is in edit mode" % project_id)
         current_app.logger.debug(args)
 
-# can_update = args.pop('canUpdate', False) we'll calculate it based on DB
-# info + request info
+        # can_update = args.pop('canUpdate', False) we'll calculate it based on DB
+        # info + request info
         current_app.logger.debug("updateProject data: %s" % args)
 
         # Check whether we are editing a project
-        project_entry = load_project(project_id) if project_id else None
+        project_entry = load_project_record(project_id) if project_id else None
         if not project_entry:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -318,7 +336,7 @@ class Project(Resource):
     def delete(self, project_id):
         current_app.logger.debug("deleteProject %s" % project_id)
         # only loads the project if current user is either owner or admin
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         user_id = current_user.id
 
         if project_entry is None:
@@ -341,7 +359,6 @@ class Project(Resource):
 
 
 class ProjectSpreadsheet(Resource):
-
     """
     Spreadsheet upload and download for the given project.
     """
@@ -359,7 +376,7 @@ class ProjectSpreadsheet(Resource):
     def get(self, project_id):
         cu = current_user
         current_app.logger.debug("get ProjectSpreadsheet(%s %s)" % (cu.id, project_id))
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -394,89 +411,75 @@ class ProjectSpreadsheet(Resource):
             # deliberately don't save the template as uploaded data
             return helpers.send_from_directory(dirname, basename, as_attachment=True)
 
-    @swagger.operation(
-        produces='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        summary='Upload the project workbook',
-        parameters=file_upload_form_parser.swagger_parameters()
-    )
-    @report_exception
+    @swagger.operation(summary='Upload the project workbook')
     @marshal_with(file_resource)
     def post(self, project_id):
 
-        # TODO replace this with app.config
-        DATADIR = current_app.config['UPLOAD_FOLDER']
-        CALIBRATION_TYPE = 'calibration'
+        print ">>>> Load spreadsheet"
 
-        current_app.logger.debug(
-            "PUT /api/project/%s/spreadsheet" % project_id)
-
-        project_entry = load_project(project_id, raise_exception=True)
-
-        project_name = project_entry.name
-        user_id = current_user.id
-        current_app.logger.debug(
-            "uploadExcel(project id: %s user:%s)" % (project_id, user_id))
+        project_record = load_project_record(project_id, raise_exception=True)
+        project_name = project_record.name
 
         args = file_upload_form_parser.parse_args()
-        uploaded_file = args['file']
 
         # getting current user path
-        loaddir = upload_dir_user(DATADIR)
-        if not loaddir:
-            loaddir = DATADIR
-
+        # TODO replace this with app.config
+        uploaded_file = args['file']
+        data_dir = current_app.config['UPLOAD_FOLDER']
+        load_dir = upload_dir_user(data_dir)
+        if not load_dir:
+            load_dir = data_dir
         source_filename = uploaded_file.source_filename
-
         filename = secure_filename(project_name + '.xlsx')
-        server_filename = os.path.join(loaddir, filename)
+        server_filename = os.path.join(load_dir, filename)
         uploaded_file.save(server_filename)
 
-        # See if there is matching project
-        current_app.logger.debug("project for user %s name %s: %s" % (
-            current_user.id, project_name, project_entry))
-        # from optima.utils import saves  # , loads
-        # from optima.parameters import Parameterset
-        ParsetsDb.query.filter_by(project_id=project_id).delete('fetch')
+        parset_name = "default"
+        from server.webapp.dbmodels import ParsetsDb
+        parset_records = ParsetsDb.query.filter_by(project_id=project_id)
+        parset_names = [p.name for p in parset_records]
+        if parset_name in parset_names:
+            parset_name = "uploaded from " + uploaded_file.source_filename
+            i = 0
+            while parset_name in parset_names:
+                i += 1
+                parset_name = "uploaded_from_%s (%d)" % (uploaded_file.source_filename, i)
+
+        project = project_record.hydrate()
+        # Load parset from spreadsheet, will also runsim and store result
+        project.loadspreadsheet(server_filename, parset_name)
+
+        project.modified = datetime.now(dateutil.tz.tzutc())
+        project_record.restore(project)
+        db.session.add(project_record)
+
+        from server.webapp.dataio import update_or_create_parset_record
+        parset = project.parsets[parset_name]
+        parset_record = update_or_create_parset_record(project_id, parset_name, parset)
+        print ">>>> Store uploaded parset '%s'" % (parset_name)
+        db.session.add(parset_record)
         db.session.flush()
-        project_entry = load_project(project_id)
-        project_instance = project_entry.hydrate()
-        project_instance.loadspreadsheet(server_filename)
-        project_instance.modified = datetime.now(dateutil.tz.tzutc())
-        current_app.logger.info(
-            "after spreadsheet uploading: %s" % project_instance)
 
-        result = project_instance.runsim()
-        current_app.logger.info(
-            "runsim result for project %s: %s" % (project_id, result))
-
-        #   now, update relevant project_entry fields
-        # this adds to db.session all dependent entries
-        project_entry.restore(project_instance)
-        db.session.add(project_entry)
-
-        result_record = save_result(project_entry.id, result)
+        result = project.results[-1]
+        result_record = save_result(project_id, result, parset_name, "calibration")
+        print ">>>> Store result(calibration) '%s'" % (result.name)
         db.session.add(result_record)
 
         # save data upload timestamp
         data_upload_time = datetime.now(dateutil.tz.tzutc())
-        # get file data
-        filedata = open(server_filename, 'rb').read()
-        # See if there is matching project data
-        projdata = ProjectDataDb.query.get(project_entry.id)
+        file_data = open(server_filename, 'rb').read()
 
-        # update existing
-        if projdata is not None:
-            projdata.meta = filedata
-            projdata.updated = data_upload_time
+        project_data_record = ProjectDataDb.query.get(project_id)
+        if project_data_record is not None:
+            # update existing
+            project_data_record.meta = file_data
+            project_data_record.updated = data_upload_time
         else:
             # create new project data
-            projdata = ProjectDataDb(
-                project_id=project_entry.id,
-                meta=filedata,
-                updated=data_upload_time)
+            project_data_record = ProjectDataDb(
+                project_id=project_id, meta=file_data, updated=data_upload_time)
+        db.session.add(project_data_record)
 
-        # Save to db
-        db.session.add(projdata)
         db.session.commit()
 
         reply = {
@@ -504,7 +507,7 @@ class ProjectEcon(Resource):
     def get(self, project_id):
         cu = current_user
         current_app.logger.debug("get ProjectEcon(%s %s)" % (cu.id, project_id))
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -548,7 +551,7 @@ class ProjectEcon(Resource):
         current_app.logger.debug(
             "POST /api/project/%s/economics" % project_id)
 
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         project_name = project_entry.name
         user_id = current_user.id
@@ -617,7 +620,7 @@ class ProjectEcon(Resource):
     def delete(self, project_id):
         cu = current_user
         current_app.logger.debug("user %s:POST /api/project/%s/economics" % (cu.id, project_id))
-        project_entry = load_project(project_id)
+        project_entry = load_project_record(project_id)
         if project_entry is None:
             raise ProjectDoesNotExist(id=project_id)
 
@@ -644,7 +647,6 @@ class ProjectEcon(Resource):
 
 
 class ProjectData(Resource):
-
     """
     Export and import of the existing project in / from pickled format.
     """
@@ -661,7 +663,7 @@ class ProjectData(Resource):
     @report_exception
     def get(self, project_id):
         current_app.logger.debug("/api/project/%s/data" % project_id)
-        project_entry = load_project(project_id, raise_exception=True)
+        project_entry = load_project_record(project_id, raise_exception=True)
 
         # return result as a file
         loaddir = upload_dir_user(TEMPLATEDIR)
@@ -692,32 +694,32 @@ class ProjectData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        project_entry = load_project(project_id)
-        if project_entry is None:
+        project_record = load_project_record(project_id)
+        if project_record is None:
             raise ProjectDoesNotExist(project_id)
 
         project_instance = op.loadobj(uploaded_file)
 
         if project_instance.data:
-            assert(project_instance.parsets)
+            assert (project_instance.parsets)
             result = project_instance.runsim()
             current_app.logger.info(
                 "runsim result for project %s: %s" % (project_id, result))
 
-        project_entry.restore(project_instance)
-        db.session.add(project_entry)
+        project_record.restore(project_instance)
+        db.session.add(project_record)
         db.session.flush()
 
         if project_instance.data:
-            assert(project_instance.parsets)
-            result_record = save_result(project_entry.id, result)
+            assert (project_instance.parsets)
+            result_record = save_result(project_record.id, result)
             db.session.add(result_record)
 
         db.session.commit()
 
         reply = {
             'file': source_filename,
-            'result': 'Project %s is updated' % project_entry.name,
+            'result': 'Project %s is updated' % project_record.name,
         }
         return reply
 
@@ -729,23 +731,13 @@ project_upload_form_parser.add_arguments({
 })
 
 
-project_upload_resource = file_resource.copy()
-project_upload_resource['id'] = Uuid
-
-
 class ProjectFromData(Resource):
-
     """
     Import of a new project from pickled format.
     """
     method_decorators = [report_exception, login_required]
 
-    @swagger.operation(
-        summary='Creates a project & uploads data to initialize it.',
-        parameters=project_upload_form_parser.swagger_parameters()
-    )
     @report_exception
-    @marshal_with(project_upload_resource)
     def post(self):
         user_id = current_user.id
 
@@ -755,52 +747,52 @@ class ProjectFromData(Resource):
 
         source_filename = uploaded_file.source_filename
 
-        project_instance = op.loadobj(uploaded_file)
-        project_instance.name = project_name
+        project = op.loadobj(uploaded_file)
+        project.name = project_name
 
         from optima.makespreadsheet import default_datastart, default_dataend
         datastart = default_datastart
         dataend = default_dataend
         pops = {}
 
-        project_entry = ProjectDb(
-            project_name, user_id, datastart,
-            dataend,
-            pops,
-            version=op.__version__)
+        print(">>>> Process projecct upload")
+
+        project_record = ProjectDb(
+            project_name, user_id, datastart, dataend, pops, version=op.__version__)
 
         # New project ID needs to be generated before calling restore
-        db.session.add(project_entry)
+        db.session.add(project_record)
         db.session.flush()
 
-        if project_instance.data:
-            assert(project_instance.parsets)
-            result = project_instance.runsim()
-            current_app.logger.info(
-                "runsim result for project %s: %s" % (project_entry.id, result))
+        result = None
+        if project.data:
+            assert (project.parsets)
+            result = project.runsim()
 
-        project_entry.restore(project_instance)
-        db.session.add(project_entry)
+            print('>>>> Runsim for project: "%s"' % (project_record.name))
+
+        project_record.restore(project)
+        db.session.add(project_record)
         db.session.flush()
 
-        if project_instance.data:
-            result_record = save_result(project_entry.id, result)
+        if result is not None:
+            result_record = save_result(str(project_record.id), result)
             db.session.add(result_record)
 
         db.session.commit()
 
-        reply = {
+        response = {
             'file': source_filename,
-            'result': 'Project %s is created' % project_name,
-            'id': str(project_entry.id)
+            'name': project_name,
+            'id': str(project_record.id)
         }
-        return reply
+        return response, 201
 
 
 project_copy_fields = {
-    'project': Uuid,
-    'user': Uuid,
-    'copy_id': Uuid
+    'project': fields.String,
+    'user': fields.String,
+    'copy_id': fields.String
 }
 project_copy_parser = RequestParser()
 project_copy_parser.add_arguments({
@@ -809,7 +801,6 @@ project_copy_parser.add_arguments({
 
 
 class ProjectCopy(Resource):
-
     @swagger.operation(
         summary='Copies the given project to a different name',
         parameters=project_copy_parser.swagger_parameters()
@@ -824,56 +815,54 @@ class ProjectCopy(Resource):
         new_project_name = args['to']
 
         # Get project row for current user with project name
-        project_entry = load_project(
+        project_record = load_project_record(
             project_id, all_data=True, raise_exception=True)
-        project_user_id = project_entry.user_id
+        project_user_id = project_record.user_id
 
-        be_project = project_entry.hydrate()
+        project = project_record.hydrate()
 
         # force load the existing result
-        project_result_exists = project_entry.results
+        project_result_exists = project_record.results
 
-        db.session.expunge(project_entry)
-        make_transient(project_entry)
+        db.session.expunge(project_record)
+        make_transient(project_record)
 
-        project_entry.id = None
-        db.session.add(project_entry)
+        project_record.id = None
+        db.session.add(project_record)
         db.session.flush()  # this updates the project ID to the new value
 
-        project_entry.restore(be_project)
-        project_entry.name = new_project_name
-        db.session.add(project_entry)
+        project_record.restore(project)
+        project_record.name = new_project_name
+        db.session.add(project_record)
         # change the creation and update time
-        project_entry.created = datetime.now(dateutil.tz.tzutc())
-        project_entry.updated = datetime.now(dateutil.tz.tzutc())
+        project_record.created = datetime.now(dateutil.tz.tzutc())
+        project_record.updated = datetime.now(dateutil.tz.tzutc())
         db.session.flush()  # this updates the project ID to the new value
 
         # Question, why not use datetime.utcnow() instead
         # of dateutil.tz.tzutc()?
         # it's the same, without the need to import more
-        new_project_id = project_entry.id
+        new_project_id = project_record.id
 
         if project_result_exists:
             # copy each result
-            new_parsets = db.session.query(ParsetsDb).filter_by(
+            new_parset_records = db.session.query(ParsetsDb).filter_by(
                 project_id=str(new_project_id))
-            print "BE parsets", be_project.parsets
-            for result in project_entry.results:
-                if result.calculation_type != ResultsDb.CALIBRATION_TYPE:
+            for result_record in project_record.results:
+                if result_record.calculation_type != ResultsDb.CALIBRATION_TYPE:
                     continue
-                result_instance = op.loads(result.blob)
-                target_name = result_instance.parset.name
-                new_parset = [
-                    item for item in new_parsets if item.name == target_name]
+                result = op.loads(result_record.blob)
+                parset_name = result.parset.name
+                new_parset = [r for r in new_parset_records if r.name == parset_name]
                 if not new_parset:
                     raise Exception(
                         "Could not find copied parset for result in copied project {}".format(project_id))
-                result.parset_id = new_parset[0].id
-                db.session.expunge(result)
-                make_transient(result)
+                result_record.parset_id = new_parset[0].id
+                db.session.expunge(result_record)
+                make_transient(result_record)
                 # set the id to None to ensure no duplicate ID
-                result.id = None
-                db.session.add(result)
+                result_record.id = None
+                db.session.add(result_record)
         db.session.commit()
         # let's not copy working project, it should be either saved or
         # discarded
@@ -886,6 +875,13 @@ class ProjectCopy(Resource):
 
 
 class Portfolio(Resource):
+    """
+    POST /api/project/portfolio
+
+    Accessed in project-api-services.js, used in open-ctrl.js to download
+    selected projects in one big ZIP package. Requires the name
+    of the projects that have to be collated.
+    """
 
     @swagger.operation(
         produces='application/x-zip',
@@ -911,9 +907,9 @@ class Portfolio(Resource):
             loaddir = TEMPLATEDIR
 
         projects = [
-            load_project(id, raise_exception=True).as_file(loaddir)
+            load_project_record(id, raise_exception=True).as_file(loaddir)
             for id in args['projects']
-        ]
+            ]
 
         zipfile_name = '{}.zip'.format(uuid4())
         zipfile_server_name = os.path.join(loaddir, zipfile_name)
@@ -924,56 +920,46 @@ class Portfolio(Resource):
 
         return helpers.send_from_directory(loaddir, zipfile_name)
 
-defaults_fields = {
-    "categories": Json,
-    "programs": Json
-}
 
+class DefaultPrograms(Resource):
+    """
+    GET /api/project/<uuid:project_id>/defaults
 
-class Defaults(Resource):
+    Packaged in api-service but used in program-set-ctrl to get the default set
+    of programs when creating a new program set.
+    """
 
-    @swagger.operation(
-        summary="""Gives default programs, program categories and program parameters
-                for the given program"""
-    )
+    @swagger.operation(summary="Returns default programs, their categories and parameters")
     @report_exception
-    @marshal_with(defaults_fields)
     @login_required
     def get(self, project_id):
-        from server.webapp.programs import get_default_programs, program_categories
-
-        project = load_project(project_id, raise_exception=True)
-        be_project = project.hydrate()
-        programs = get_default_programs(be_project, for_fe = True)
-        program_categories = program_categories(be_project)
-        for p in programs:
-            p['active'] = False
-        payload = {
-            "programs": programs,
-            "categories": program_categories
-        }
-        return payload
+        return {"programs": load_project_program_summaries(project_id)}
 
 
-# It's a pship but it's used somewhat interchangeably with populations
+class DefaultParameters(Resource):
+    """
+    GET /api/project/<project_id>/parameters
 
-pship_fields = {
-    "type": fields.String,
-    "populations": Json
-}
+    Returns all available parameters with their properties. Used by
+    program-set in the program modal.
+    """
 
-
-class Partnerships(Resource):
-    @swagger.operation(
-        summary="List partnerships for project"
-    )
+    @swagger.operation(summary="List default parameters")
     @report_exception
-    @marshal_with(pship_fields, envelope="populations")
     @login_required
     def get(self, project_id):
-        project = load_project(project_id, raise_exception=True)
-        be_project = project.hydrate()
-        return [{
-            'type': key,
-            'populations': value
-        } for key, value in be_project.data['pships'].iteritems()]
+        return {'parameters': get_project_parameters(project_id)}
+
+
+class DefaultPopulations(Resource):
+    """
+    GET /api/project/populations
+
+    Report populations in projects in the project management page
+    """
+
+    @swagger.operation(summary='Returns default populations')
+    @report_exception
+    @login_required
+    def get(self):
+        return {'populations': get_default_populations()}

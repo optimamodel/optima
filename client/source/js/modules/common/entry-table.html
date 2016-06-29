@@ -1,0 +1,66 @@
+<table class="table table-bordered">
+  <tr>
+    <th ng-repeat="title in table.titles track by $index">
+      {{title}}
+    </th>
+    <th>Manage</th>
+  </tr>
+  <tr ng-repeat="row in table.rows">
+
+    <!-- Normal cell values -->
+    <td ng-if="$parent.$index != table.iEditRow"
+        ng-repeat="cell in getDisplayRow($index) track by $index">
+      <span
+          style="width:{{table.widths[$index]}}px"
+          ng-if='table.types[$index] == "number"'>
+        {{cell}}
+      </span>
+      <span ng-if='table.types[$index] == "display"'>
+        {{cell}}
+      </span>
+      <span ng-if='table.types[$index] == "selector"'>
+        {{cell}}
+      </span>
+    </td>
+
+    <!-- Editable cell values -->
+    <td ng-if="$parent.$index == table.iEditRow"
+        ng-repeat="cell in getDisplayRow($index) track by $index">
+      <input
+          ng-if='table.types[$index] == "number"'
+          style="width:{{table.widths[$index]}}px"
+          type="number"
+        ng-model="row[$index]">
+      <span
+         ng-if='table.types[$index] == "display"'>
+        {{cell}}
+      </span>
+      <div>
+        <select
+            ng-if='table.types[$index] == "selector"'
+            ng-model="row[$index]"
+            ng-change="update()"
+            ng-options="o.value as o.label for o in table.options[$index]">
+        </select>
+      </div>
+    </td>
+
+    <!-- Control elements -->
+    <td>
+      <span ng-if="$index != table.iEditRow" >
+        <i class="fa fa-pencil"
+           ng-click="editRow($index)">
+        </i>
+        &nbsp;
+        <i class="fa fa-times"
+           ng-click="deleteRow($index)">
+        </i>
+      </span>
+      <span ng-if="$index == table.iEditRow">
+        <i class="fa fa-check"
+           ng-click="acceptEdit()">
+        </i>
+      </span>
+    </td>
+  </tr>
+</table>

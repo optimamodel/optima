@@ -7,7 +7,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.4 (2016mar04)
+    Version: 1.5 (2016jun21)
     """
     
     ##################################################################################################################
@@ -35,6 +35,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     usecascade   = settings.usecascade # Whether or not the full treatment cascade should be used
     safetymargin = settings.safetymargin # Maximum fraction of people to move on a single timestep
     eps          = settings.eps # Define another small number to avoid divide-by-zero errors
+    if not(hasattr(settings,'forcsepopsize')): settings.forcepopsize = True # WARNING TEMP, for legacy support
+    forcepopsize = settings.forcepopsize # Whether or not to force the population size to match the parameters
+		
     if verbose is None: verbose = settings.verbose # Verbosity of output
     
     # Would be at the top of the script, but need to figure out verbose first
@@ -220,7 +223,8 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         uninfected = simpars['popsize'][p,0] - popinfected # Set initial susceptible population -- easy peasy! -- should this have F['popsize'] involved?
         
         # Treatment & treatment failure
-        fractotal =  popinfected / sum(allinfected) # Fractional total of infected people in this population
+        if sum(allinfected): fractotal = popinfected / sum(allinfected) # Fractional total of infected people in this population
+        else:                fractotal = 0 # If there's no one infected, reset to 0
         treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
         if debug and treatment>popinfected: # More people on treatment than ever infected, uh oh!
             errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
@@ -557,9 +561,9 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if not(isnan(proptx[t])): # WARNING, newtreat should remove people not just from 'care' but also from 'off'
                 currcare = people[allcare,:,t].sum(axis=0) # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum(axis=0)
-                totnewtreat =  (proptx[t]*currcare - currtx).sum() # this is not meant to be split by population
+                totnewtreat =  max(0,(proptx[t]*currcare - currtx).sum()) # this is not meant to be split by population -- WARNING, not sure about max
             else:
-                totnewtreat = numtx[t] - people[alltx,:,t].sum() # Calculate difference between current people on treatment and people needed
+                totnewtreat = max(0,numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
                 
             for cd4 in reversed(range(ncd4)):  # Going backwards so that lower CD4 counts move onto treatment first
                 if cd4>0: 
@@ -712,7 +716,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             if not(isnan(proptx[t])):
                 currdx = people[alldx,:,t].sum() # This assumed proptx referes to the proportion of diagnosed who are to be on treatment 
                 currtx = people[alltx,:,t].sum()
-                totnewtreat =  proptx[t] * currdx - currtx 
+                totnewtreat =  max(0,proptx[t] * currdx - currtx)
             else:
                 totnewtreat = max(0, numtx[t] - people[alltx,:,t].sum()) # Calculate difference between current people on treatment and people needed
             tmpnewtreat = totnewtreat # Copy for modification later
@@ -804,7 +808,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 mtcttx         = thisbirthrate * people[alltx, p1, t].sum()  * pmtcteff[t] # Births to mothers on treatment
                 thiseligbirths = thisbirthrate * peopledx # Births to diagnosed mothers eligible for PMTCT
             
-                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
+                receivepmtct = min(numpmtct[t]*float(thiseligbirths)/(alleligbirthrate[t]*peopledx+eps), thiseligbirths) # Births protected by PMTCT -- constrained by number eligible 
                 
                 mtctdx = (thiseligbirths - receivepmtct) * effmtct[t] # MTCT from those diagnosed not receiving PMTCT
                 mtctpmtct = receivepmtct * pmtcteff[t] # MTCT from those receiving PMTCT
@@ -818,10 +822,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
             ## Age-related transitions
             for p1,p2 in agetransitlist:
-                peopleaving = people[:, p1, t] * agetransit[p1,p2]
-                peopleaving = minimum(peopleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
-                people[:, p1, t+1] -= peopleaving # Take away from pop1...
-                people[:, p2, t+1] += peopleaving # ... then add to pop2
+                peopleleaving = people[:, p1, t] * agetransit[p1,p2]
+                peopleleaving = minimum(peopleleaving, safetymargin*people[:, p1, t]) # Ensure positive                     
+                people[:, p1, t+1] -= peopleleaving # Take away from pop1...
+                people[:, p2, t+1] += peopleleaving # ... then add to pop2
                 
             
             ## Risk-related transitions
@@ -862,6 +866,20 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                 errormsg = 'model(): Population size inconsistent at time t=%f: %f vs. %f' % (tvec[t+1], actualpeople, wantedpeople)
                 raise OptimaException(errormsg)
             
+            # If required, scale population sizes to exactly match the parameters
+            if forcepopsize:
+                maxmismatch = 0.1 # Set the maximum allowable mismatch before throwing a warning
+                for p in range(npops):
+                    actualpeople = people[:,p,t+1].sum()
+                    wantedpeople = popsize[p,t+1]
+                    if actualpeople==0: raise Exception("Where are the people? On the roof? NO! They don't exist!")
+                    ratio = wantedpeople/actualpeople # Actual people should never be 0 or an integer so should be ok
+                    people[:,p,t+1] *= ratio # Scale to match
+                    if abs(ratio-1)>maxmismatch:
+                        errormsg = 'Warning, ratio of population sizes is nowhere near 1 (t=%f, ratio=%f, actual=%f)' % (t+1, ratio, actualpeople)
+                        if die: raise OptimaException(errormsg)
+                        else: printv(errormsg, 1, verbose=verbose)
+            
             # Check no negative people
             if debug and not((people[:,:,t+1]>=0).all()): # If not every element is a real number >0, throw an error
                 for errstate in range(nstates): # Loop over all heath states
@@ -869,12 +887,10 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
                         if not(people[errstate,errpop,t+1]>=0):
                             errormsg = 'WARNING, Non-positive people found!\npeople[%i, %i, %i] = people[%s, %s, %s] = %s' % (errstate, errpop, t+1, settings.statelabels[errstate], popkeys[errpop], tvec[t+1], people[errstate,errpop,t+1])
                             if die: raise OptimaException(errormsg)
-                            else:
+                            else: 
                                 printv(errormsg, 1, verbose=verbose)
                                 people[errstate,errpop,t+1] = 0.0 # Reset
                 
-    # Append final people array to sim output
-    if not (people>=0).all(): raise OptimaException('Non-positive people found!')
     
     raw               = odict()    # Sim output structure
     raw['tvec']       = tvec
@@ -908,6 +924,11 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
+        # Append final people array to sim output
+        if not (raw['people']>=0).all(): 
+            printv('Negative people found with runmodel(); rerunning with a smaller timestep...')
+            settings.dt /= 4
+            raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
     except: 
         printv('Running model failed; running again with debugging...', 1, verbose)
         raw = model(simpars=simpars, settings=settings, debug=True, verbose=verbose) # If it failed, run again, with tests

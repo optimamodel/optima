@@ -2,14 +2,31 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
   module.controller('ProjectUploadController',
-    function ($scope, projects, modalService, $upload, $state) {
-
-      $scope.onFileSelect = function(files) {
-        $scope.projectParams.file = files[0];
-      };
+    function ($scope, projects, modalService, $upload, $state, UserManager, activeProject) {
 
       // Initialize Params
       $scope.projectParams = { name: "", file: undefined };
+
+      $scope.onFileSelect = function(files) {
+        if (!files[0]) {
+          return;
+        }
+
+        $scope.projectParams.file = files[0];
+
+        // if no projectname given, automatically fill in name from file
+        if (!$scope.projectParams.name) {
+          var fileName = files[0].name.replace(/\.prj$/, "");
+
+          // if project name taken, try variants
+          var i = 0;
+          $scope.projectParams.name = fileName;
+          while ($scope.projectExists()) {
+            i += 1;
+            $scope.projectParams.name = fileName + " (" + i + ")";
+          }
+        }
+      };
 
       $scope.uploadProject = function() {
         if ($scope.UploadProjectForm.$invalid) {
@@ -28,16 +45,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
               fields: {name: $scope.projectParams.name},
               file: $scope.projectParams.file
             }).success(function (data, status, headers, config) {
-              $state.go('project.open');
+              var name = data['name'];
+              var projectId = data['id'];
+              console.log('upload', JSON.stringify(data));
+              activeProject.setActiveProjectFor(name, projectId, UserManager.data);
+              $state.go('home');
             });
           }
         }
       };
 
       $scope.projectExists = function() {
-        var projectNames = _(projects.projects).map(function(project) {
-          return project.name;
-        });
+        var projectNames = _.pluck(projects.data.projects, 'name');
         var exists = _(projectNames).contains($scope.projectParams.name);
         $scope.UploadProjectForm.ProjectName.$setValidity("projectExists", !exists);
         return exists;

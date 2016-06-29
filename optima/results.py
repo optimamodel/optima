@@ -4,10 +4,8 @@ This module defines the classes for stores the results of a single simulation ru
 Version: 2016feb04 by cliffk
 """
 
-from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig
+from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
 from numpy import array, nan, zeros, arange, shape
-import matplotlib.pyplot as plt
-from optima import pchip, plotpchip
 from numbers import Number
 
 
@@ -259,18 +257,16 @@ class Resultset(object):
         filename = filestem + '.csv'
         npts = len(self.tvec)
         keys = self.main.keys()
-        output = sep.join(['Indicator','Year:'])
-        for t in range(npts):
-            output += ('%i'+sep) % self.tvec[t]
+        output = sep.join(['Indicator','Year:'] + ['%i'%t for t in self.tvec]) # Create header and years
         for key in keys:
-            if bypop: output += '\n'
-            if bypop: popkeys = self.popkeys
+            if bypop: output += '\n' # Add a line break between different indicators
+            if bypop: popkeys = ['tot']+self.popkeys # include total even for bypop -- WARNING, don't try to change this!
             else:     popkeys = ['tot']
-            for pk in range(len(popkeys)):
+            for pk,popkey in enumerate(popkeys):
                 output += '\n'
-                if bypop: data = self.main[key].pops[ind][pk,:]
-                else:     data = self.main[key].tot[ind][:]
-                output += key+sep+popkeys[pk]+sep
+                if bypop and popkey!='tot': data = self.main[key].pops[ind][pk-1,:] # WARNING, assumes 'tot' is always the first entry
+                else:                       data = self.main[key].tot[ind][:]
+                output += key+sep+popkey+sep
                 for t in range(npts):
                     if self.main[key].isnumber: output += ('%i'+sep) % data[t]
                     else:                       output += ('%s'+sep) % sigfig(data[t])
@@ -388,6 +384,7 @@ class Multiresultset(Resultset):
 
 class BOC(object):
     ''' Structure to hold a budget and outcome array for geospatial analysis'''
+    
     def __init__(self, name='unspecified', x=None, y=None, objectives=None):
         self.uid = uuid()
         self.created = today()
@@ -414,15 +411,18 @@ class BOC(object):
         ''' Get interpolated outcome derivatives for a corresponding list of budgets '''
         return pchip(self.x, self.y, budgets, deriv = True)
         
-    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None):
+    def plot(self, deriv = False, returnplot = False, initbudget = None, optbudget = None, baseline=0):
         ''' Plot the budget-outcome curve '''
+        from pylab import xlabel, ylabel, show
+        
         ax = plotpchip(self.x, self.y, deriv = deriv, returnplot = True, initbudget = initbudget, optbudget = optbudget)                 # Plot interpolation
-        plt.xlabel('Budget')
-        if not deriv: plt.ylabel('Outcome')
-        else: plt.ylabel('Marginal outcome')
+        xlabel('Budget')
+        if not deriv: ylabel('Outcome')
+        else: ylabel('Marginal outcome')
+        if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
         
         if returnplot: return ax
-        else: plt.show()
+        else: show()
         return None
 
 

@@ -13,7 +13,7 @@ manualcalib = 0
 reconcile = 0
 runscenarios = 0 # Run scenarios
 optimize = 0
-dosave = 0
+dosave = 1
 filename = 'best.prj'
 ind = -1 # Default index
 

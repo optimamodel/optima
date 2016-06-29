@@ -4,7 +4,7 @@ from optima import __version__ # Get current version
 from multiprocessing import Process, Queue
 from optima import loadbalancer
 from optima import defaultobjectives, asd, Project
-from numpy import arange
+from numpy import arange, argsort
 
 #######################################################################################################
 ## Portfolio class -- this contains Projects and GA optimisations
@@ -186,7 +186,7 @@ class Portfolio(object):
                 printv('genBOCs(): Project %s contains a BOC, no need to generate... ' % p.name, 2, verbose)
                 
     # Note: Lists of lists extrax and extray allow for extra custom points to be plotted.
-    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax = None, extray = None):
+    def plotBOCs(self, objectives=None, initbudgets=None, optbudgets=None, deriv=False, verbose=2, extrax=None, extray=None, baseline=0):
         ''' Loop through stored projects and plot budget-outcome curves '''
         printv('Plotting BOCs...', 2, verbose)
         
@@ -202,10 +202,11 @@ class Portfolio(object):
         
         # Loop for BOCs and then BOC derivatives.
         for c,p in enumerate(self.projects.values()):
-            ax = p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot = True)
+            ax = p.plotBOC(objectives=objectives, deriv=deriv, initbudget=initbudgets[c], optbudget=optbudgets[c], returnplot=True, baseline=baseline)
             if extrax != None:            
                 for k in xrange(len(extrax[c])):
                     ax.plot(extrax[c][k], extray[c][k], 'bo')
+                    if baseline==0: ax.set_ylim((0,ax.get_ylim()[1])) # Reset baseline
             
     def minBOCoutcomes(self, objectives, progsetnames=None, parsetnames=None, seedbudgets=None, maxtime=None, verbose=2):
         ''' Loop through project BOCs corresponding to objectives and minimise net outcome '''
@@ -482,7 +483,6 @@ class GAOptim(object):
             overalloutcomesplit['num'+key]['init'] = 0
             overalloutcomesplit['num'+key]['opt'] = 0
         
-        nprojects = len(self.resultpairs.keys())
         projnames = []
         projbudgets = []
         projcov = []
@@ -550,7 +550,10 @@ class GAOptim(object):
         output += '\n\tOutcome:\t%0.0f\t%0.0f' % (overalloutcomeinit, overalloutcomeopt)
         for key in self.objectives['keys']:
             output += '\n\t' + self.objectives['keylabels'][key] + ':\t%0.0f\t%0.0f' % (overalloutcomesplit['num'+key]['init'], overalloutcomesplit['num'+key]['opt'])
-        for prj in range(nprojects):
+        
+        ## Sort, then export
+        projindices = argsort(projnames)
+        for prj in projindices:
             output += '\n'
             output += '\n'
             output += '\n\t\tInitial\tOptimal'
@@ -602,7 +605,7 @@ class GAOptim(object):
     
 #    def superplot(self):
 #        
-#        from matplotlib.pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
+#        from pylab import gca, xlabel, tick_params, xlim, figure, subplot, plot, pie, bar, title, legend, xticks, ylabel, show
 #        from gridcolormap import gridcolormap
 #        from matplotlib import gridspec
 #        import numpy

@@ -25,6 +25,7 @@ tests = [
 ##############################################################################
 
 from optima import tic, toc, blank, pd # analysis:ignore
+from numpy.testing import assert_allclose
 
 if 'doplot' not in locals(): doplot = True
 
@@ -39,6 +40,11 @@ for i,test in enumerate(tests): print(('%i.  '+test) % (i+1))
 blank()
 
 T = tic()
+
+# Set tolerance levels
+eps = 1e-2
+atol = 1e-2
+rtol = 1e-2
 
 ##############################################################################
 ## The tests
@@ -195,15 +201,18 @@ if 'makeprograms' in tests:
 
     # 11. Evaluate cost-coverage function to get coverage for a given year, spending amount and population size
     from numpy import linspace, array
-    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False,bounds=None)
+    HTC.getcoverage(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],total=False)
     HTC.targetcomposition = {'Clients': array([ 0.01]),
                        'F 15+': array([ 0.3]),
                        'FSW': array([ 0.24]),
                        'M 15+': array([ 0.3]),
                        'MSM': [ 0.15]}
     
-    HTC.getcoverage(x=[2e7],t=[2016],parset=P.parsets['default'],total=False)
-    HTC.getbudget(x=linspace(0,1e6,3),t=[2013,2015,2017],parset=P.parsets['default'],proportion=False)
+    # Make sure that getcoverage and getbudget are the reciprocal of each other.
+    a = HTC.getcoverage(x=1e6,t=2016,parset=P.parsets['default'])
+    b = HTC.getbudget(x=a,t=2016,parset=P.parsets['default'])
+    assert_allclose(1e6,b,rtol=rtol)
+    
 
     # NB, if you want to evaluate it for a particular population size, can also do...
     HTC.costcovfn.evaluate(x=[1e6],popsize=[1e5],t=[2015],toplot=False)
@@ -277,7 +286,7 @@ if 'makeprograms' in tests:
     coverage = coverage.sort([p.short for p in R.programs.values()])
 
     defaultbudget = R.getdefaultbudget()
-    defaultcoverage = R.getdefaultcoverage(t=2015, parset=P.parsets['default'])
+    defaultcoverage = R.getdefaultcoverage(t=2016, parset=P.parsets['default'])
 
     R.getprogcoverage(budget=budget,
                       t=[2015,2016,2020],

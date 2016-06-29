@@ -3,6 +3,7 @@ from optima import odict, getdate, today, uuid, dcp, objrepr, printv, isnumber, 
 from optima import loadspreadsheet, model, gitinfo, sensitivity, manualfit, autofit, runscenarios 
 from optima import defaultobjectives, defaultconstraints, loadeconomicsspreadsheet, runmodel # Import functions
 from optima import __version__ # Get current version
+from numpy import argmin, array
 import os
 
 #######################################################################################################
@@ -103,7 +104,7 @@ class Project(object):
     #######################################################################################################
 
 
-    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True):
+    def loadspreadsheet(self, filename, name='default', overwrite=True, makedefaults=False, dorun=True, **kwargs):
         ''' Load a data spreadsheet -- enormous, ugly function so located in its own file '''
 
         ## Load spreadsheet and update metadata
@@ -114,7 +115,7 @@ class Project(object):
         self.makeparset(name=name, overwrite=overwrite)
         if makedefaults: self.makedefaults(name)
         self.settings.start = self.data['years'][0] # Reset the default simulation start to initial year of data
-        if dorun: self.runsim(name, addresult=True)
+        if dorun: self.runsim(name, addresult=True, **kwargs)
         return None
 
 
@@ -315,17 +316,17 @@ class Project(object):
         return None
     
     
-    def save(self, filename=None, saveresults=False):
+    def save(self, filename=None, saveresults=False, verbose=2):
         ''' Save the current project, by default using its name, and without results '''
         if filename is None and self.filename and os.path.exists(self.filename): filename = self.filename
         if filename is None: filename = self.name+'.prj'
         self.filename = os.path.abspath(filename) # Store file path
         if saveresults:
-            saveobj(filename, self)
+            saveobj(filename, self, verbose=verbose)
         else:
             tmpproject = dcp(self) # Need to do this so we don't clobber the existing results
             tmpproject.cleanresults() # Get rid of all results
-            saveobj(filename, tmpproject) # Save it to file
+            saveobj(filename, tmpproject, verbose=verbose) # Save it to file
             del tmpproject # Don't need it hanging around any more
         return None
 
@@ -355,18 +356,25 @@ class Project(object):
             if type(simpars)==list: simparslist = simpars
             else: simparslist = [simpars]
 
-        # Run the model!
+        # Run the model! -- wARNING, the logic of this could be cleaned up a lot!
         rawlist = []
         for ind in range(len(simparslist)):
-            try:
+            if debug: # Should this be die?
                 raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
-            except:
-                printv('Running model failed; running again with debugging...', 1, verbose)
-                raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
+            else:
+                try:
+                    raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                    if not (raw['people']>=0).all(): # Check for negative people
+                        printv('Negative people found with runsim(); rerunning with a smaller timestep...')
+                        self.settings.dt /= 4
+                        raw = model(simparslist[ind], self.settings, die=die, debug=debug, verbose=verbose) # ACTUALLY RUN THE MODEL
+                except:
+                    printv('Running model failed; running again with debugging...', 1, verbose)
+                    raw = model(simparslist[ind], self.settings, die=die, debug=True, verbose=verbose) # ACTUALLY RUN THE MODEL
             rawlist.append(raw)
 
         # Store results -- WARNING, is this correct in all cases?
-        resultname = 'parset-'+name if simpars is None else 'simpars'
+        resultname = 'parset-'+self.parsets[name].name if simpars is None else 'simpars'
         results = Resultset(name=resultname, raw=rawlist, simpars=simparslist, project=self) # Create structure for storing results
         if addresult:
             keyname = self.addresult(result=results, overwrite=overwrite)
@@ -378,8 +386,8 @@ class Project(object):
     def reconcileparsets(self, name=None, orig=None):
         ''' Helper function to copy a parset if required -- used by sensitivity, manualfit, and autofit '''
         if name is None and orig is None: # Nothing supplied, just use defaults
-            name = 'default'
-            orig = 'default'
+            name = -1
+            orig = -1
         if isnumber(name): name = self.parsets.keys()[name] # Convert from index to name if required
         if isnumber(orig): orig = self.parsets.keys()[orig]
         if name is not None and orig is not None and name!=orig:
@@ -392,7 +400,7 @@ class Project(object):
                 raise OptimaException(errormsg)
             else:
                 self.copyparset(orig=orig, new=name) # Store parameters
-        return None
+        return name, orig
 
 
     def pars(self):
@@ -407,24 +415,24 @@ class Project(object):
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
         ''' Function to perform sensitivity analysis over the parameters as a proxy for "uncertainty"'''
-        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = sensitivity(project=self, orig=self.parsets[orig], ncopies=n, what='force', span=span, ind=ind)
         self.modified = today()
         return None
 
 
-    def manualfit(self, name='manualfit', orig='default', ind=0, verbose=2): # orig=default or orig=0?
+    def manualfit(self, orig=None, name=None, ind=0, verbose=2, **kwargs): # orig=default or orig=0?
         ''' Function to perform manual fitting '''
-        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name].pars = [self.parsets[name].pars[ind]] # Keep only the chosen index
-        manualfit(project=self, name=name, ind=ind, verbose=verbose) # Actually run manual fitting
+        manualfit(project=self, name=name, ind=ind, verbose=verbose, **kwargs) # Actually run manual fitting
         self.modified = today()
         return None
 
 
     def autofit(self, name=None, orig=None, fitwhat='force', fitto='prev', method='wape', maxtime=None, maxiters=1000, inds=None, verbose=2, doplot=False):
         ''' Function to perform automatic fitting '''
-        self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
+        name, orig = self.reconcileparsets(name, orig) # Ensure that parset with the right name exists
         self.parsets[name] = autofit(project=self, name=name, fitwhat=fitwhat, fitto=fitto, method=method, maxtime=maxtime, maxiters=maxiters, inds=inds, verbose=verbose, doplot=doplot)
         results = self.runsim(name=name, addresult=False)
         results.improvement = self.parsets[name].improvement # Store in a more accessible place, since plotting functions use results
@@ -461,10 +469,10 @@ class Project(object):
         return None
 
     
-    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None):
+    def optimize(self, name=None, parsetname=None, progsetname=None, objectives=None, constraints=None, inds=0, maxiters=1000, maxtime=None, verbose=2, stoppingfunc=None, method='asd', debug=False, saveprocess=True, overwritebudget=None, ccsample='best'):
         ''' Function to minimize outcomes or money '''
         optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
-        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget)
+        multires = optim.optimize(name=name, inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, debug=debug, overwritebudget=overwritebudget, ccsample=ccsample)
         optim.resultsref = multires.name
         if saveprocess:        
             self.addoptim(optim=optim)
@@ -483,7 +491,7 @@ class Project(object):
         projectBOC = BOC(name='BOC')
         if objectives == None:
             printv('WARNING, you have called genBOC for project "%s" without specifying obejctives. Using default objectives... ' % (self.name), 2, verbose)
-            objectives = defaultobjectives()
+            objectives = defaultobjectives(project=self, progset=progsetname)
         projectBOC.objectives = objectives
         
         if parsetname is None:
@@ -503,19 +511,25 @@ class Project(object):
                     printv('\nWARNING: no progsetname specified. Using first saved progset "%s" in project "%s".' % (self.progsets[0].name, self.name), 1, verbose)
                 except:
                     OptimaException('Error: No progsets associated with project for which BOC is being generated!')
-            budgetlist = [x*baseline for x in [0.1,0.3,0.6,1.0,3.0,6.0,10.0]]
+            budgetlist = [x*baseline for x in [1.0, 0.6, 0.3, 0.1, 3.0, 6.0, 10.0]] # Start from original, go down, then go up
                 
         results = None
         owbudget = None
-        for budget in budgetlist:
+        tmptotals = []
+        tmpallocs = []
+        for i,budget in enumerate(budgetlist):
+            print('Running budget %i/%i (%0.0f)' % (i+1, len(budgetlist), budget))
             objectives['budget'] = budget
             optim = Optim(project=self, name=name, objectives=objectives, constraints=constraints, parsetname=parsetname, progsetname=progsetname)
             
             # All subsequent genBOC steps use the allocation of the previous step as its initial budget, scaled up internally within optimization.py of course.
-            if results != None:
-                owbudget = dcp(results.budget['Optimal allocation'])
+            if len(tmptotals):
+                closest = argmin(abs(array(tmptotals)-budget)) # Find closest budget
+                owbudget = tmpallocs[closest]
                 print('Using old allocation as new starting point.')
             results = optim.optimize(inds=inds, maxiters=maxiters, maxtime=maxtime, verbose=verbose, stoppingfunc=stoppingfunc, method=method, overwritebudget=owbudget)
+            tmptotals.append(budget)
+            tmpallocs.append(dcp(results.budget['Optimal allocation']))
             projectBOC.x.append(budget)
             projectBOC.y.append(results.improvement[-1][-1])
         self.addresult(result=projectBOC)
@@ -545,7 +559,7 @@ class Project(object):
         return None
     
     
-    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None):
+    def plotBOC(self, boc=None, objectives=None, deriv=False, returnplot=False, initbudget=None, optbudget=None, baseline=0):
         ''' If a BOC result with the desired objectives exists, return an interpolated object '''
         from pylab import title, show
         if boc is None:
@@ -556,7 +570,7 @@ class Project(object):
             print('Plotting BOC for "%s"...' % self.name)
         else:
             print('Plotting BOC derivative for "%s"...' % self.name)
-        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget = optbudget)
+        ax = boc.plot(deriv = deriv, returnplot = returnplot, initbudget = initbudget, optbudget=optbudget, baseline=baseline)
         title('Project: %s' % self.name)
         if returnplot: return ax
         else: show()

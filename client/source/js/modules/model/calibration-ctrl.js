@@ -1,12 +1,18 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, info, modalService, $upload, $modal) {
+  module.controller('ModelCalibrationController', function ($scope, $http, info, modalService, $upload, $modal, $timeout) {
+
+    function consoleLogJson(name, val) {
+      console.log(name + ' = ');
+      console.log(JSON.stringify(val, null, 2));
+    }
 
     var activeProjectInfo = info.data;
     var defaultParameters;
     $scope.parsets = [];
     $scope.activeParset = undefined;
+    $scope.state = {maxtime: '10'};
 
     // Check if current active project has spreadsheet uploaded for it.
     if (!activeProjectInfo.has_data) {
@@ -31,58 +37,82 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         }
       });
 
-    // Fetching graphs for active parset
-    $scope.getGraphs = function() {
-      var data = {};
-      if($scope.selectors) {
-        var selectors = _.filter($scope.selectors, function(selector) {
-          return selector.checked;
-        }).map(function(selector) {
-          return selector.key;
-        });
-        if(selectors && selectors.length > 0) {
-          data.which = selectors;
+    function getSelectors() {
+      if ($scope.graphs) {
+        var selectors = $scope.graphs.selectors;
+        if (selectors) {
+          var which = _.filter(selectors, function(selector) {
+            return selector.checked;
+          })
+          .map(function(selector) {
+            return selector.key;
+          });
+          console.log('which', which)
+          if (which.length > 0) {
+            return which;
+          }
         }
       }
-      $http.get('/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration', {params: data})
-        .success(function (response) {
-          setCalibrationData(response.calibration);
-        });
+      return null;
+    }
+
+    // Fetching graphs for active parset
+    $scope.getGraphs = function() {
+      $http.get(
+          '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration',
+          {which: getSelectors()})
+      .success(function (response) {
+        setCalibrationData(response.calibration);
+        // console.log(JSON.stringify(response.calibration.parameters, null, 2))
+      });
     };
 
     // Sending parameters to re-process graphs for active parset
     $scope.processGraphs = function(shouldSave) {
-      var data = {};
+      var payload = {};
       if($scope.parameters) {
-        data.parameters = $scope.parameters;
+        payload.parameters = $scope.parameters;
       }
-      if($scope.selectors) {
-        var selectors = _.filter($scope.selectors, function(selector) {
-          return selector.checked;
-        }).map(function(selector) {
-          return selector.key;
-        });
-        if(selectors && selectors.length > 0) {
-          data.which = selectors;
-        }
-      }
+      payload.which = getSelectors();
       var url = '/api/project/' + activeProjectInfo.id + '/parsets/' + $scope.activeParset.id + '/calibration';
       if (shouldSave) {
         url = url + '?doSave=true';
       }
-      $http.put(url, data)
-        .success(function (response) {
-          setCalibrationData(response.calibration);
-        });
+      console.log('update pars', payload)
+      $http.put(url, payload)
+      .success(function (response) {
+        setCalibrationData(response.calibration);
+      });
     };
+
+    $scope.processGraphsAndSave = function() {
+      $scope.processGraphs(true);
+    }
 
     // Set calibration data in scope
     var setCalibrationData = function(calibration) {
-      $scope.calibrationChart = calibration.graphs;
-      $scope.selectors = calibration.selectors;
+      $scope.graphs = calibration.graphs;
+      console.log($scope.graphs);
+      console.log("selectors", _.pluck($scope.graphs.selectors, 'key'));
+      console.log("graph_selectors", $scope.graphs.graph_selectors);
       defaultParameters = calibration.parameters;
       $scope.parameters = angular.copy(calibration.parameters);
+      $scope.resultId = calibration.resultId;
     };
+
+    $scope.exportData = function() {
+      console.log('resultId', $scope.resultId);
+      $http.get(
+        '/api/results/' + $scope.resultId,
+        {
+          headers: {'Content-type': 'application/octet-stream'},
+          responseType: 'blob'
+        })
+      .success(function (response) {
+        var blob = new Blob([response], { type: 'application/octet-stream' });
+        saveAs(blob, ('export_graphs.csv'));
+      });
+    }
 
     // Reset changes made in parameters
     $scope.resetParameters = function() {
@@ -92,9 +122,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     // Add parameter set
     $scope.addParameterSet = function() {
       var add = function (name) {
-        $http.post('/api/project/' + activeProjectInfo.id + '/parsets', {
-          name: name
-        }).success(function(response) {
+        $http.post(
+            '/api/project/' + activeProjectInfo.id + '/parsets',
+            { name: name})
+        .success(function(response) {
           $scope.parsets = response;
           $scope.activeParset = response[response.length - 1];
         });
@@ -226,6 +257,58 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       });
       return modalInstance;
     }
+
+    $scope.startAutoCalibration = function() {
+      var data = {};
+      if ($scope.state.maxtime) {
+        data.maxtime = Number($scope.state.maxtime);
+      }
+      $http.post(
+        '/api/project/' + activeProjectInfo.id +  '/parsets' + '/' + $scope.activeParset.id +'/automatic_calibration',
+        data
+      )
+      .success(function(response) {
+        if(response.status === 'started') {
+          $scope.statusMessage = 'Autofit started.';
+          $scope.secondsRun = 0;
+          $scope.setMaxtime = data.maxtime;
+          pollAutoCalibration();
+        } else if(response.status === 'running') {
+          $scope.statusMessage = 'Autofit already running.'
+        }
+      })
+    };
+
+    var pollAutoCalibration = function() {
+      $http.get('/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id +'/automatic_calibration')
+        .success(function(response) {
+          if(response.status === 'completed') {
+            getAutoCalibratedGraphs();
+            $scope.statusMessage = 'Autofit completed.';
+            $timeout.cancel($scope.pollTimer);
+          } else if(response.status === 'started'){
+            $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
+            $scope.statusMessage = "Running: " + $scope.secondsRun + " s.";
+            $scope.secondsRun += 1;
+          }
+        });
+    };
+
+    var getAutoCalibratedGraphs = function() {
+      var payload = {};
+      if($scope.parameters) {
+        payload.parameters = $scope.parameters;
+      }
+      payload.which = getSelectors();
+      $http.put(
+        '/api/project/' + activeProjectInfo.id
+          + '/parsets' + '/' + $scope.activeParset.id
+          + '/calibration?autofit=true',
+        payload)
+      .success(function(response) {
+        setCalibrationData(response.calibration);
+      });
+    };
 
   });
 });

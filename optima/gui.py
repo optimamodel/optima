@@ -70,8 +70,10 @@ def plotresults(results, toplot=None, fig=None, **kwargs): # WARNING, should kwa
 def closegui(event=None):
     ''' Close all GUI windows '''
     global plotfig, panelfig
-    close(plotfig)
-    close(panelfig)
+    try: close(plotfig)
+    except: pass
+    try: close(panelfig)
+    except: pass
 
 
 
@@ -89,11 +91,11 @@ def clearselections(event=None):
     return None
     
     
-def updateplots(event=None, tmpresults=None):
+def updateplots(event=None, tmpresults=None, **kwargs):
     ''' Close current window if it exists and open a new one based on user selections '''
     global plotfig, check, checkboxes, results
     if tmpresults is not None: results = tmpresults
-
+    
     # If figure exists, get size, then close it
     try: width,height = plotfig.get_size_inches(); close(plotfig) # Get current figure dimensions
     except: width,height = 14,12 # No figure: use defaults
@@ -105,13 +107,14 @@ def updateplots(event=None, tmpresults=None):
     # Do plotting
     if sum(ischecked): # Don't do anything if no plots
         plotfig = figure('Optima results', figsize=(width, height), facecolor=(1,1,1)) # Create figure with correct number of plots
-        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height))
+        for key in ['toplot','fig','figsize']: kwargs.pop(key, None) # Remove duplicated arguments if they exist
+        plotresults(results, toplot=toplot, fig=plotfig, figsize=(width, height), **kwargs)
     
     return None
 
 
 
-def pygui(tmpresults, toplot=None):
+def pygui(tmpresults, toplot=None, verbose=2):
     '''
     PYGUI
     
@@ -124,11 +127,14 @@ def pygui(tmpresults, toplot=None):
     where results is the output of e.g. runsim() and toplot is an optional list of form e.g.
         toplot = ['prev-tot', 'inci-per']
     
+    (see epiformatslist in plotting.py)
+    
     Warning: the plots won't resize automatically if the figure is resized, but if you click
     "Update", then they will.    
     
     Version: 1.2 (2016feb04)
     '''
+    
     global check, checkboxes, updatebutton, clearbutton, clearbutton, closebutton, panelfig, results
     if type(tmpresults)==list: results = Multiresultset(results) # Convert to a multiresults set if it's a list of results
     elif type(tmpresults) not in [Resultset, Multiresultset]:
@@ -143,9 +149,21 @@ def pygui(tmpresults, toplot=None):
     checkboxnames = plotselections['names']
     if toplot is None or toplot=='default': isselected = plotselections['defaults']
     else:
+        if type(toplot)!=list: toplot = [toplot] # Ensure it's a list
+        tmptoplot = dcp(toplot) # Make a copy to compare arguments
         isselected = []
         for key in checkboxes:
-            isselected.append(True if key in toplot else False)
+            if key in toplot:
+                isselected.append(True)
+                tmptoplot.remove(key)
+            else:
+                isselected.append(False)
+        if len(tmptoplot)!=0:
+            errormsg = 'Not all keys were recognized; mismatched ones were:\n'
+            errormsg += '%s\n' % tmptoplot
+            errormsg += 'Available keys are:\n'
+            errormsg += '%s' % checkboxes
+            printv(errormsg, 1, verbose=verbose)
     
     ## Set up control panel
     figwidth = 7
@@ -158,18 +176,30 @@ def pygui(tmpresults, toplot=None):
     clearaxes    = axes([0.4, 0.05, 0.2, 0.03]) # Create close button location
     closeaxes    = axes([0.7, 0.05, 0.2, 0.03]) # Create close button location
     check = CheckButtons(checkboxaxes, checkboxnames, isselected) # Actually create checkboxes
-    for label in check.labels: # Loop over each checkbox
-        thispos = label.get_position() # Get their current location
-        label.set_position((thispos[0]*0.5,thispos[1])) # Not sure why by default the check boxes are so far away
+    
+    # Reformat the checkboxes
+    totstr = ' -- total' # analysis:ignore WARNING, these should not be explicit!!!!!
+    perstr = ' -- per population'
+    stastr = ' -- stacked'
+    nboxes = len(check.rectangles)
+    for b in range(nboxes):
+        label = check.labels[b]
+        labeltext = label.get_text()
+        labelpos = label.get_position()
+        label.set_position((labelpos[0]*0.5,labelpos[1])) # Not sure why by default the check boxes are so far away
+        if labeltext.endswith(perstr):    label.set_text('Per population') # Clear label
+        elif labeltext.endswith(stastr):  label.set_text('Stacked') # Clear label
+        else:                             label.set_weight('bold')
+    
     updatebutton   = Button(updateaxes,   'Update', color=fc) # Make button pretty and blue
     clearbutton    = Button(clearaxes, 'Clear',  color=fc) # Make button pretty and blue
     closebutton    = Button(closeaxes,    'Close', color=fc) # Make button pretty and blue
     updatebutton.on_clicked(updateplots) # Update figure if button is clicked
     clearbutton.on_clicked(clearselections) # Clear all checkboxes
     closebutton.on_clicked(closegui) # Close figures
-    updateplots(None) # Plot initially
+    updateplots(None) # Plot initially -- ACTUALLY GENERATES THE PLOTS
 
-
+    
 
 
 
@@ -302,7 +332,7 @@ def browser(results, toplot=None, doplot=True):
 
 
 
-def manualfit(project=None, name='default', ind=0, verbose=2):
+def manualfit(project=None, name=-1, ind=0, verbose=2, **kwargs):
     ''' 
     Create a GUI for doing manual fitting via the backend. Opens up three windows: 
     results, results selection, and edit boxes.
@@ -338,7 +368,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     
     nfull = len(fulllabellist) # The total number of boxes needed
     results = project.runsim(name)
-    pygui(results)
+    pygui(results, **kwargs)
     
     
     
@@ -378,7 +408,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
         
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
-        updateplots(tmpresults=results)
+        updateplots(tmpresults=results, **kwargs)
         
     
     ## Keep the current parameters in the project; otherwise discard
@@ -393,11 +423,11 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
     
     
     def resetpars():
-        ''' Reset the parameters to the last saved version '''
+        ''' Reset the parameters to the last saved version -- WARNING, doesn't work '''
         global origpars, tmppars, parset
         tmppars = dcp(origpars)
         parset.pars[0] = tmppars
-        populatelists()
+#        populatelists()
         for i in range(nfull): boxes[i].setText(sigfig(fullvallist[i], sigfigs=nsigfigs))
         simparslist = parset.interp(start=project.settings.start, end=project.settings.end, dt=project.settings.dt)
         results = project.runsim(simpars=simparslist)
@@ -456,7 +486,7 @@ def manualfit(project=None, name='default', ind=0, verbose=2):
 
 
 
-def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
+def plotpeople(project=None, people=None, tvec=None, ind=None, simind=None, start=2, end=None, pops=None, animate=False, skipempty=True, verbose=2, figsize=(16,10), **kwargs):
     '''
     A function to plot all people as a stacked plot
     
@@ -514,7 +544,8 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
     
     nstates = len(labels)
     colors = gridcolormap(nstates)
-    tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl
+    if tvec is None:
+        tvec = project.settings.maketvec() # WARNING, won't necessarily match this ppl, supply as argument if so
     bottom = 0*tvec
     figure(facecolor=(1,1,1), figsize=figsize, **kwargs)
     ax = subplot(111)
@@ -552,7 +583,7 @@ def plotpeople(project=None, people=None, ind=None, simind=None, start=2, end=No
 
 
 global plotparsbackbut, plotparsnextbut, plotparslider
-def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
+def plotpars(parslist=None, start=None, end=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize=8, **kwargs):
     '''
     A function to plot all parameters. 'pars' can be an odict or a list of pars odicts.
     
@@ -568,7 +599,7 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
     
     # In case the user tries to enter a project or parset -- WARNING, needs to be made more flexible!
     tmp = parslist
-    try:  parslist = tmp.parsets[0].pars[0] # If it's a project
+    try:  parslist = tmp.parsets[-1].pars[0] # If it's a project
     except:
         try: parslist = tmp.pars[0] # If it's a parset
         except: pass
@@ -580,7 +611,7 @@ def plotpars(parslist=None, verbose=2, rows=6, cols=5, figsize=(16,12), fontsize
     allplotdata = []
     for pars in parslist:
         count = 0
-        simpars = makesimpars(pars)
+        simpars = makesimpars(pars, start=start, end=end)
         tvec = simpars['tvec']
         plotdata = array([['name','simpar','par_t', 'par_y']], dtype=object) # Set up array for holding plotting results
         for i,key1 in enumerate(pars):

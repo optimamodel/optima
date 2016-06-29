@@ -8,12 +8,13 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2016jan24
+Version: 2016jun06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend
+from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
@@ -23,39 +24,25 @@ defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numde
 #defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
 defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
 
+# Define global font sizes
+globaltitlesize = 10
+globallabelsize = 10
+globalticksize = 8
+globallegendsize = 8
 
 
-def humanizeyticks(ax):
-    vals = list(ax.get_yticks())
-    maxval = max([abs(v) for v in vals])
-    if maxval < 1e3:
-        return map(str, vals)
-    if maxval >= 1e3 and maxval < 1e6:
-        labels = ["%.1fK" % (v/1e3) for v in vals]
-    elif maxval >= 1e6 and maxval < 1e9:
-        labels = ["%.1fM" % (v/1e6) for v in vals]
-    elif maxval >= 1e9:
-        labels = ["%.1fB" % (v/1e9) for v in vals]
-    isfraction = False
-    for label in labels:
-        if label[-3:-1] != ".0":
-            isfraction = True
-    if not isfraction:
-        labels = [l[:-3] + l[-1] for l in labels]
-    ax.set_yticklabels(labels)
+def SIticks(x, pos):  # formatter function takes tick label and tick position
+    ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
+    if abs(x)>=1e9:     output = str(x/1e9)+'B'
+    elif abs(x)>=1e6:   output = str(x/1e6)+'M'
+    elif abs(x)>=1e3:   output = str(x/1e3)+'K'
+    else:               output = str(x)
+    return output
 
-
-def reformatfigure(figure):
-    for axes in figure.axes:
-        humanizeyticks(axes)
-        box = axes.get_position()
-        axes.set_position(
-            [box.x0, box.y0, box.width * 0.6, box.height])
-        # Put a legend to the right of the current axis
-        legend = axes.get_legend()
-        if legend is not None:
-            legend._loc = 2
-            legend.set_bbox_to_anchor((1, 1.02))
+def SIyticks(figure):
+    ''' Apply SI tick formatting to the y axis of a figure '''
+    for ax in figure.axes:
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(SIticks))
 
 
 def getplotselections(results):
@@ -196,7 +183,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
 
 
 def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsize=(14,10), alpha=0.2, lw=2, dotsize=50,
-            titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
+            titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
         '''
         Render the plots requested and store them in a list. Argument "toplot" should be a list of form e.g.
         ['prev-tot', 'inci-per']
@@ -228,7 +215,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
         for pk,plotkey in enumerate(toplot):
             datatype, plotformat = None, None
             if type(plotkey) not in [str, list, tuple]: 
-                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numpliv","tot"]' % str(plotkey)
+                errormsg = 'Could not understand "%s": must a string, e.g. "numplhiv-tot", or a list/tuple, e.g. ["numplhiv","tot"]' % str(plotkey)
                 raise OptimaException(errormsg)
             else:
                 try:
@@ -237,16 +224,16 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                 except:
                     errormsg = 'Could not parse plot key "%s"; please ensure format is e.g. "numplhiv-tot"' % plotkey
                     if die: raise OptimaException(errormsg)
-                    else: printv(errormsg, 4, verbose)
+                    else: printv(errormsg, 2, verbose)
             if datatype not in results.main.keys():
                 errormsg = 'Could not understand data type "%s"; should be one of:\n%s' % (datatype, results.main.keys())
                 if die: raise OptimaException(errormsg)
-                else: printv(errormsg, 4, verbose)
+                else: printv(errormsg, 2, verbose)
             plotformat = plotformat[0] # Do this because only really care about the first letter of e.g. 'total' -- WARNING, flexible but could cause subtle bugs
             if plotformat not in epiformatslist.flatten():
                 errormsg = 'Could not understand type "%s"; should be one of:\n%s' % (plotformat, epiformatslist)
                 if die: raise OptimaException(errormsg)
-                else: printv(errormsg, 4, verbose)
+                else: printv(errormsg, 2, verbose)
             toplot[pk] = (datatype, plotformat) # Convert to tuple for this index
         
         # Remove failed ones
@@ -371,10 +358,9 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     
                 # Plot data points with uncertainty -- for total or perpop plots, but not if multisim
                 if not ismultisim and databest is not None:
-                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
                     for y in range(len(results.datayears)):
                         plot(results.datayears[y]*array([1,1]), factor*array([datalow[i][y], datahigh[i][y]]), c=datacolor, lw=1)
-
+                    scatter(results.datayears, factor*databest[i], c=datacolor, s=dotsize, lw=0)
 
 
 
@@ -395,23 +381,23 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
     
                 # Configure plot specifics
                 currentylims = ylim()
-                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1.05, 1), 'fontsize':legendsize, 'title':'',
-                                  'frameon':False}
+                legendsettings = {'loc':'upper left', 'bbox_to_anchor':(1,1), 'fontsize':legendsize, 'title':'', 'frameon':False, 'borderaxespad':2}
                 ax.set_xlabel('Year')
                 plottitle = results.main[datatype].name
-                if isperpop:  plottitle += ' -- ' + results.popkeys[i] # Add extra information to plot if by population
+                if isperpop:  
+                    plotylabel = plottitle
+                    plottitle  = results.popkeys[i] # Add extra information to plot if by population
+                    ax.set_ylabel(plotylabel)
                 ax.set_title(plottitle)
                 ax.set_ylim((0,currentylims[1]))
                 ax.set_xlim((results.tvec[0], results.tvec[-1]))
                 if not ismultisim:
-                    if istotal:  ax.legend(['Total'], **legendsettings) # Single entry, "Total"
-                    if isperpop: ax.legend([results.popkeys[i]], **legendsettings) # Single entry, this population
-                    if isstacked: ax.legend(results.popkeys, **legendsettings) # Multiple entries, all populations
+                    if istotal:  legend(['Model'], **legendsettings) # Single entry, "Total"
+                    if isperpop: legend(['Model'], **legendsettings) # Single entry, this population
+                    if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
-                    ax.legend(labels, **legendsettings) # Multiple simulations
-                
-                reformatfigure(epiplots[pk])
-
+                    legend(labels, **legendsettings) # Multiple simulations
+                SIyticks(epiplots[pk])
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
@@ -423,7 +409,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, **kwargs):
+def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, ticksize=globalticksize, **kwargs):
     ''' 
     Plot the result of an optimization or calibration -- WARNING, should not duplicate from plotepi()! 
     
@@ -560,8 +546,7 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
 
-    reformatfigure(fig)
-
+    SIyticks(fig)
     close(fig)
     
     return fig
@@ -573,7 +558,8 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
 ##################################################################
 ## Plot improvements
 ##################################################################
-def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12, ticksize=10, legendsize=10, **kwargs):
+def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, labelsize=globallabelsize, 
+                ticksize=globalticksize, legendsize=globallegendsize, **kwargs):
     ''' 
     Plot the treatment cascade.
     
@@ -640,8 +626,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=14, labelsize=12,
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-    reformatfigure(fig)
-
+    SIyticks(fig)
     close(fig)
     
     return fig

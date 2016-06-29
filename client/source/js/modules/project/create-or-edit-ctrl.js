@@ -65,7 +65,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     function findByName(arr,obj){
-        return _.findWhere(arr, {short_name: obj.short_name, name: obj.name});
+        return _.findWhere(arr, {short: obj.short, name: obj.name});
     }
 
     if (isEditMode()) {
@@ -83,7 +83,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.populations = $scope.populations.concat(_($scope.projectInfo.populations).filter(function (projectPopulation) {
         return !_.find($scope.populations, function(population) {
-          return projectPopulation.name === population.name && projectPopulation.short_name === population.short_name;
+          return projectPopulation.name === population.name && projectPopulation.short === population.short;
         });
       }));
 
@@ -159,7 +159,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }
       var population = angular.copy(existingPopulation);
       population.name = population.name + ' copy';
-      population.short_name = population.short_name + ' copy';
+      population.short = population.short + ' copy';
 
       return openPopulationModal(population).result.then(
         function (newPopulation) {

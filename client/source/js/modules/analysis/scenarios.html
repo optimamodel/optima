@@ -1,79 +1,95 @@
 <div class="rich">
 
-  <div ng-if="missingModelData">
+  <div ng-if="isMissingModelData">
     <spreadsheet-upload-hint></spreadsheet-upload-hint>
   </div>
 
-  <div ng-if="!missingModelData">
-    <div class="section grid">
-        <div class="cols-12">
-            <h1>Manage scenarios</h1>
+  <div ng-if="!isMissingModelData">
 
-            <table class="section table table-bordered">
-                <thead ng-show="scenarios.length">
-                <tr>
-                    <td><b>Active</b></td>
-                    <td><b>Name</b></td>
-                    <td><b>Parameter set</b></td>
-                    <td><b>Program set</b></td>
-                    <td><b>Type</b></td>
-                    <td width="15%"><b>Manage</b></td>
-                </tr>
-                </thead>
-                <tbody>
-                <tr ng-repeat="row in scenarios">
-                    <td class="text-center" style="width: 50px" update-checkbox-on-click>
-                        <input type="checkbox" ng-model="row.active">
-                    </td>
-                    <td>{{ row.name }}</td>
-                    <td> {{ parset_name(row.parset_id) }}</td>
-                    <td> {{ progset_name(row.progset_id,row) }}</td>
-                    <td> {{ row.scenario_type }}</td>
-                    <td style="white-space: nowrap;">
-                        <button type="button" class="btn" ng-click="openScenarioModal(row, 'edit', $event)">Edit</button>
-                        <button type="button" class="btn" ng-click="openScenarioModal(row, 'copy', $event)">Copy</button>
-                        <button type="button" class="btn" ng-click="openScenarioModal(row, 'delete', $event)">Delete</button>
-                    </td>
-                </tr>
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colspan="6" class="text-right">
-                      <p class="error-hint" style="float: left; margin: 0px;" ng-show="missingProgramSet">Please create a program set to add budget and coverage scenario. <a  ui-sref="project-set.manageProgramSet">Define/manage program set</a></p>
-                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'budget'}, 'add', $event)" ng-disabled="missingProgramSet">Add a budget scenario</button>
-                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'coverage'}, 'add', $event)" ng-disabled="missingProgramSet">Add a coverage scenario</button>
-                      <button type="button" class="btn" ng-click="openScenarioModal({'scenario_type': 'parameter'}, 'add', $event)">Add a parameter scenario</button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colspan="3">
-                      <button type="button" class="btn" ng-click="saveScenarios()" ng-disabled="!scenarios.length">Save scenarios</button>
-                    </td>
-                    <td colspan="3" class="text-right">
-                      <button type="button" class="btn" ng-click="runScenarios()" ng-disabled="!scenarios.length">Run scenarios</button>
-                    </td>
-                  </tr>
-                </tfoot>
-            </table>
+    <div style="display: flex; flex-direction: column; align-items: flex-start;
+                width: 100%; height: calc(100vh - 160px)">
 
+      <div style="flex: 0 0 auto; width: 100%">
 
-        </div>
-    </div>
+        <h1>Manage scenarios</h1>
 
-    <div class="grid">
-      <div class="12">
-        <export-all-charts ng-if="graphs" name="Analysis scenarios"></export-all-charts>
-        <export-all-data name="Analysis scenarios" charts="graphs" ng-if="graphs"></export-all-data>
+        <table class="section table table-bordered" style="width: 100%;">
+
+          <tr>
+            <th style="width: 50px">Active</th>
+            <th>Scenario Name</th>
+            <th>Model Parameter Set</th>
+            <th>Program Set</th>
+            <th>Scenario Type</th>
+            <th style="width:200px; max-width:200px">Manage</th>
+          </tr>
+
+          <tr ng-repeat="scenario in scenarios">
+            <td style="width: 50px" class="text-center" update-checkbox-on-click>
+              <input type="checkbox" ng-model="scenario.active">
+            </td>
+            <td>{{ scenario.name }}</td>
+            <td>{{ parsetName(scenario) }}</td>
+            <td>{{ programSetName(scenario) }}</td>
+            <td>{{ scenario.scenario_type }}</td>
+            <td style="white-space: nowrap; width:200px; max-width:200px">
+              <button class="btn" ng-click="modal(scenario, 'edit', $event)">Edit</button>
+              <button class="btn" ng-click="modal(scenario, 'copy', $event)">Copy</button>
+              &nbsp; &nbsp; &nbsp;
+              <span class="delete" ng-click="modal(scenario, 'delete', $event)">X</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td colspan="6" class="text-right">
+              <p class="error-hint" style="" ng-show="isMissingProgramSet">
+                Please create a program set to add budget and coverage scenario.
+                <a ui-sref="programs.manageProgramSet">Define/manage program set</a>
+              </p>
+              <button
+                  class="btn"
+                  ng-click="modal({'scenario_type': 'budget'}, 'add', $event)"
+                  ng-disabled="isMissingProgramSet">
+                Add a budget scenario
+              </button>
+              <button
+                  class="btn"
+                  ng-click="modal({'scenario_type': 'coverage'}, 'add', $event)"
+                  ng-disabled="isMissingProgramSet">
+                Add a coverage scenario
+              </button>
+              <button
+                  class="btn"
+                  ng-click="modal({'scenario_type': 'parameter'}, 'add', $event)">
+                Add a parameter scenario
+              </button>
+            </td>
+          </tr>
+
+          <tr>
+            <td colspan="7">
+              <div class="text-right">
+                <button class="btn" ng-click="runScenarios()" ng-disabled="!isRunnable()">
+                  Run scenarios
+                </button>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+
       </div>
-      <div class="flex_container">
-        <div ng-repeat="chart in graphs" class="chart-container __small">
-          <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-          <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
-        </div>
-      </div>
-    </div>
 
-    
+      <div
+        style="
+           margin-left: 10px;
+           border: 1px solid #DDD;
+           flex: 1 1 auto;
+           height:100%;
+           width: 100%;
+           overflow:auto">
+          <optima-graphs graphs="graphs"></optima-graphs>
+      </div>
 
   </div>
 

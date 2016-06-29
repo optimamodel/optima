@@ -9,9 +9,10 @@ from flask_restful_swagger import swagger
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import UserDb
 
-from server.webapp.inputs import email, hashed_password, nullable_email
+from server.webapp.utils import email, hashed_password, nullable_email, RequestParser
 from server.webapp.exceptions import UserAlreadyExists, RecordDoesNotExist, InvalidCredentials
-from server.webapp.utils import verify_admin_request, RequestParser, report_exception
+from server.webapp.resources.common import report_exception, verify_admin_request
+
 
 
 user_parser = RequestParser()
@@ -33,7 +34,6 @@ user_update_parser.add_arguments({
 
 
 class UserDoesNotExist(RecordDoesNotExist):
-
     _model = 'user'
 
 
@@ -120,7 +120,9 @@ class UserDetail(Resource):
         if user is None:
             raise UserDoesNotExist(user_id)
 
-        if current_user.is_anonymous() or (str(user_id) != str(current_user.id) and not current_user.is_admin):
+        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
+    	except: userisanonymous = current_user.is_anonymous
+        if userisanonymous or (str(user_id) != str(current_user.id) and not current_user.is_admin):
             secret = request.args.get('secret', '')
             u = UserDb.query.filter_by(password=secret, is_admin=True).first()
             if u is None:
@@ -173,7 +175,9 @@ class UserLogin(Resource):
     def post(self):
         current_app.logger.debug("/user/login {}".format(request.get_json(force=True)))
 
-        if current_user.is_anonymous():
+        try: userisanonymous = current_user.is_anonymous() # CK: WARNING, SUPER HACKY way of dealing with different Flask versions
+    	except: userisanonymous = current_user.is_anonymous
+        if userisanonymous:
             current_app.logger.debug("current user anonymous, proceed with logging in")
 
             args = user_login_parser.parse_args()

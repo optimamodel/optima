@@ -1,0 +1,107 @@
+<div class="page rich c-cost-coverage">
+
+  <div class="grid" style="margin:0">
+    <h1>Define cost and outcome functions </h1>
+  </div>
+
+  <div style="display: flex">
+
+      <span style="margin-right: 20px">
+        <label>
+          Select a program set: <br>
+          <select
+            class="txbox"
+            ng-options="progset as progset.name for progset in vm.progsets"
+            ng-change="vm.changeProgsetAndParset()"
+            ng-model="vm.selectedProgset">
+          </select>
+        </label>
+      </span>
+
+      <span>
+        <label>
+          Select a parameter set: <br>
+          <select
+            class="txbox"
+            ng-options="parset as parset.name for parset in vm.parsets"
+            ng-change="vm.changeProgsetAndParset()"
+            ng-model="vm.selectedParset">
+          </select>
+        </label>
+      </span>
+
+  </div>
+
+  <div ng-if="vm.selectedProgset && vm.selectedParset">
+
+    <div style="padding: 40px 0 0px;border-bottom: 1px solid gray;display: flex;">
+
+    <span
+      class="small_bordered_section" ng-repeat="tab in vm.tabs"
+      ng-class="{yellowBg: vm.activeTab === tab.slug}"
+      ng-click="vm.selectTab(tab.slug)">{{tab.name}}</span>
+    </div>
+
+    <!-- Cost functions tab -->
+    <div ng-if="vm.activeTab === 'cost'"
+         ng-include="'js/modules/programs/cost-coverage/cost/cost.html'">
+    </div>
+
+    <!-- Outcome functions tab -->
+    <div class="c-tab" ng-if="vm.activeTab === 'outcome'">
+
+      <div class="c-select">
+        <label class="c-select__label">
+          Select parameter:
+        </label>
+        <select
+          class="txbox c-select__input"
+          ng-options="parameter.name for parameter in vm.parameters"
+          ng-change="vm.changeParameter()"
+          ng-model="vm.selectedParameter">
+        </select>
+      </div>
+
+      <br>
+      <h2>Possible outcomes for the parameter "{{vm.selectedParameter.name}}"</h2>
+
+      <table class="table table-bordered" ng-model="vm.table">
+
+        <tr>
+          <th ng-repeat="title in vm.table.titles"> {{title}}</th>
+          <th>Manage</th>
+        </tr>
+
+        <tr style="{{row.attr.style}}" ng-repeat="row in vm.table.rows track by $index">
+          <td style="{{cell.attr.style}}" ng-repeat="cell in row.cells">
+            <span ng-if='!row.attr.isEdit || cell.attr.type==="string"'>
+              <span ng-if="cell.label">{{cell.label}}</span>
+              <span ng-if="!cell.label">{{cell.value}}</span>
+            </span>
+            <input
+                type="number"
+                ng-if='row.attr.isEdit && cell.attr.type==="input"'
+                ng-model="row.cells[$index].value">
+            </input>
+          </td>
+          <td>
+            <div ng-if="!row.attr.isSkip">
+              <span ng-if="!row.attr.isEdit" >
+                <i class="fa fa-pencil"
+                   ng-click="row.attr.startEdit()">
+                </i>
+              </span>
+              <span ng-if="row.attr.isEdit">
+                <i class="fa fa-check"
+                   ng-click="row.attr.acceptEdit()">
+                </i>
+              </span>
+            </div>
+          </td>
+        </tr>
+
+      </table>
+
+    </div>
+  </div>
+</div>

@@ -1,12 +1,15 @@
-<div class="rich" style="">
+
+<div class="rich">
 
   <div class="grid" style="margin: 0px 0px;">
-    <h1>Manual calibration</h1>
+    <h1>Manual Calibration</h1>
   </div>
+
   <div class="3">
     <label for="programSet-selection">Select a parameter set:</label>
   </div>
-  <div style="display: flex;justify-content: flex-start;">
+
+  <div style="display: flex; justify-content: flex-start;">
     <select id="programSet-selection"
             name="programSet-selection"
             class="updateGraph txbox"
@@ -23,40 +26,49 @@
     <button ng-click="deleteParameterSet()" type="button" class="btn" style="margin-left:2%">Delete parameter set</button>
   </div>
 
-  <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">  <!-- CK: maybe a more robust solution than 70vh -->
-    <div class="small_bordered_list" style="width: 22%;" ng-if="parameters.length > 0">
-      <div class="option_list" style="height: calc(100vh - 280px);">
-        <div ng-repeat="parameter in parameters" style="justify-content: space-around" class="option">
+  <div style="display: flex; margin-top: 5px; margin-bottom: 5px">  <!-- CK: maybe a more robust solution than 70vh -->
+    <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
+      <button class="btn __m" ng-click="processGraphsAndSave(true)">Save</button>
+      &nbsp;
+      <button class="btn __m" ng-click="processGraphs()">Update Figures</button>
+    </div>
+  </div>
+
+  <div style="
+          display: flex;
+          flex-direction: row;
+          margin-top: 20px;
+          justify-content: space-between;
+          width: 100%;
+          height: calc(100vh - 300px)">
+
+    <div class="small_bordered_list"
+         style="flex: 0 0 320px;"
+         ng-if="parameters.length > 0">
+      <div class="option_list" style="height: 100%;">
+        <div
+            ng-repeat="parameter in parameters"
+            style="justify-content: space-around"
+            class="option">
           <span style="width: 45%">{{parameter.label}}</span>
-          <span style="width: 45%"><input class="txbox __m" type="number" ng-model="parameter.value"/></span>
+          <span style="width: 45%">
+            <input class="txbox __m"
+                   type="number"
+                   ng-model="parameter.value"/>
+          </span>
         </div>
       </div>
-      <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
-        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/> <!-- WARNING, automatically saves! -->
-        <input type="button" value="Save" class="updateGraph btn" ng-click="processGraphs(true)"/>
-        <!-- input type="button" value="Reset" class="btn" ng-click="resetParameters()" Commented out at CK's request /-->
-      </div>
     </div>
-    <div class="chart_wrapper" style="height:calc(100vh - 280px)">
-      <div class="3" style="margin: 10px; width: 100%; text-align: right;">
-        <export-all-charts name="Manual Calibration" ng-if="calibrationChart.length > 0"></export-all-charts>
-        <!--<export-all-data charts="calibrationChart" name="Optimization analyses" ng-if="calibrationChart.length > 0"></export-all-data>-->
-      </div>
-      <div ng-repeat="chart in calibrationChart" class="chart-container __small">
-        <div mpld3-chart="chart" id="{{ chart.id }}"></div>
-        <chart-toolbar chart-type="mpld3" mpld3-chart-data="chart" chart-id="{{ chart.id }}"></chart-toolbar>
-      </div>
+
+    <div
+    style="
+       margin-left: 10px;
+       border: 1px solid #DDD;
+       flex: 1 1 auto;
+       height:100%;
+       width: 100%;">
+      <optima-graphs graphs="graphs"></optima-graphs>
     </div>
-    <div class="small_bordered_list" style="width: 18%;" ng-if="selectors.length > 0">
-      <div class="option_list" style="height:calc(100vh - 280px)">
-        <div ng-repeat="selector in selectors" class="option">
-          <span><input type="checkbox" ng-model="selector.checked"/></span>
-          <span style="margin-left: 10px">{{selector.name}}</span>
-        </div>
-      </div>
-      <div style="display: flex;justify-content: center; margin-top: 25px">
-        <input type="button" value="Update" class="updateGraph btn" ng-click="processGraphs()"/>
-      </div>
-    </div>
+
   </div>
 </div>

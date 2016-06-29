@@ -30,6 +30,8 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         return project;
       });
 
+      console.log('projects', $scope.projects);
+
       $scope.selectAll = function() {
         _.forEach($scope.projects, function(project) {
           project.selected = $scope.allSelected;

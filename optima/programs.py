@@ -6,8 +6,9 @@ set of programs, respectively.
 Version: 2016feb06
 """
 
-from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, objrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
-from numpy import ones, prod, array, zeros, exp, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose, reshape, shape
+from optima import OptimaException, printv, uuid, today, sigfig, getdate, dcp, smoothinterp, findinds, odict, Settings, sanitize, defaultrepr, gridcolormap, isnumber, promotetoarray, vec2obj, runmodel
+from numpy import ones, prod, array, zeros, exp, log, linspace, append, nan, isnan, maximum, minimum, sort, concatenate as cat, transpose
+from random import uniform
 import abc
 
 # WARNING, this should not be hard-coded!!! Available from
@@ -32,7 +33,7 @@ class Programset(object):
 
     def __repr__(self):
         ''' Print out useful information'''
-        output = objrepr(self)
+        output = defaultrepr(self)
         output += '    Program set name: %s\n'    % self.name
         output += '            Programs: %s\n'    % [prog for prog in self.programs]
         output += 'Targeted populations: %s\n'    % self.targetpops
@@ -267,15 +268,15 @@ class Programset(object):
         self.defaultbudget = lastbudget
         return selectbudget if t is not None else lastbudget
 
-    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2):
+    def getdefaultcoverage(self, t=None, parset=None, results=None, verbose=2, sample='best'):
         ''' Extract the coverage levels corresponding to the default budget'''
         defaultbudget = self.getdefaultbudget()
-        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results)
+        defaultcoverage = self.getprogcoverage(budget=defaultbudget, t=t, parset=parset, results=results, sample=sample)
         for progno in range(len(defaultcoverage)):
             defaultcoverage[progno] = defaultcoverage[progno][0] if defaultcoverage[progno] else nan    
         return defaultcoverage
 
-    def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
+    def getprogcoverage(self, budget, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Budget is currently assumed to be a DICTIONARY OF ARRAYS'''
 
         # Initialise output
@@ -296,13 +297,13 @@ class Programset(object):
                     coverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion)
+                    coverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
             else: coverage[thisprog] = None
 
         return coverage
 
 
-    def getprogbudget(self, coverage, t, parset=None, results=None, proportion=False, perturb=False, verbose=2):
+    def getprogbudget(self, coverage, t, parset=None, results=None, proportion=False, sample='best', verbose=2):
         '''Return budget associated with specified coverage levels'''
 
         # Initialise output
@@ -322,13 +323,13 @@ class Programset(object):
                     budget[thisprog] = None
                 else:
                     cov = coverage[thisprog] # Get the amount of money spent on this program
-                    budget[thisprog] = self.programs[thisprog].getbudget(x=cov, t=t, parset=parset, results=results, proportion=proportion)
+                    budget[thisprog] = self.programs[thisprog].getbudget(x=cov, t=t, parset=parset, results=results, proportion=proportion, sample=sample)
             else: budget[thisprog] = None
 
         return budget
 
 
-    def getpopcoverage(self, budget, t, parset=None, results=None, perturb=False, verbose=2):
+    def getpopcoverage(self, budget, t, parset=None, results=None, sample='best', verbose=2):
         '''Get the number of people from each population covered by each program.'''
 
         # Initialise output
@@ -347,13 +348,13 @@ class Programset(object):
                     popcoverage[thisprog] = None
                 else:
                     spending = budget[thisprog] # Get the amount of money spent on this program
-                    popcoverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, total=False)
+                    popcoverage[thisprog] = self.programs[thisprog].getcoverage(x=spending, t=t, parset=parset, results=results, total=False, sample=sample)
             else: popcoverage[thisprog] = None
 
         return popcoverage
 
 
-    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, perturb=False,coveragepars=coveragepars):
+    def getoutcomes(self, coverage=None, t=None, parset=None, results=None, sample='best', coveragepars=coveragepars):
         ''' Get the model parameters corresponding to dictionary of coverage values'''
 
         # Initialise output
@@ -365,7 +366,7 @@ class Programset(object):
             if results and results.parset: parset = results.parset
             else: raise OptimaException('Please provide either a parset or a resultset that contains a parset')
         if coverage is None:
-            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results)
+            coverage = self.getdefaultcoverage(t=t, parset=parset, results=results, sample=sample)
         for covkey, coventry in coverage.iteritems(): # Ensure coverage level values are lists
             if isnumber(coventry): coverage[covkey] = [coventry]
 
@@ -382,7 +383,7 @@ class Programset(object):
 
                 # If it's a coverage parameter, you are done
                 if thispartype in coveragepars:
-                    outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t)['intercept'])
+                    outcomes[thispartype][thispop] = array(self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept'])
                     for thisprog in self.progs_by_targetpar(thispartype)[thispop]: # Loop over the programs that target this parameter/population combo
                         if thispop == 'tot':
                             popcoverage = coverage[thisprog.short]
@@ -402,7 +403,7 @@ class Programset(object):
                             print('WARNING: no coverage-outcome function defined for optimizable program  "%s", skipping over... ' % (thisprog.short))
                             outcomes[thispartype][thispop] = None
                         else:
-                            outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t)['intercept']
+                            outcomes[thispartype][thispop] = self.covout[thispartype][thispop].getccopar(t=t, sample=sample)['intercept']
                             fullx = infbudget[thisprog.short]
                             if thiscovpop:
                                 part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thiscovpop]
@@ -412,7 +413,7 @@ class Programset(object):
                                 part1 = coverage[thisprog.short]*thisprog.gettargetcomposition(t=t, parset=parset, results=results)[thispop]
                                 part2 = thisprog.getcoverage(x=fullx,t=t, parset=parset, results=results, proportion=False,total=False)[thispop]
                                 thiscov[thisprog.short] = part1/part2
-                            delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
+                            delta[thisprog.short] = [self.covout[thispartype][thispop].getccopar(t=t, sample=sample)[thisprog.short][j] - outcomes[thispartype][thispop][j] for j in range(nyrs)]
                             
                     # ADDITIVE CALCULATION
                     # NB, if there's only one program targeting this parameter, just do simple additive calc
@@ -482,7 +483,7 @@ class Programset(object):
         
         
         
-    def getpars(self, coverage, t=None, parset=None, results=None, ind=0, perturb=False, die=False, verbose=2):
+    def getpars(self, coverage, t=None, parset=None, results=None, ind=0, sample='best', die=False, verbose=2):
         ''' Make pars'''
         
         years = t # WARNING, not renaming in the function definition for now so as to not break things
@@ -504,7 +505,7 @@ class Programset(object):
             settings = Settings()
 
         # Get outcome dictionary
-        outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, perturb=perturb)
+        outcomes = self.getoutcomes(coverage=coverage, t=years, parset=parset, results=results, sample=sample)
 
         # Create a parset and copy over parameter changes
         pars = dcp(parset.pars[ind])
@@ -657,7 +658,7 @@ def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=Non
     return mismatch
 
 
-    def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,randseed=None,bounds=None):
+    def plotallcoverage(self,t,parset,existingFigure=None,verbose=2,bounds=None):
         ''' Plot the cost-coverage curve for all programs'''
 
         cost_coverage_figures = odict()
@@ -666,7 +667,7 @@ def costfuncobjectivecalc(factors=None, pararray=None, pardict=None, progset=Non
                 if not self.programs[thisprog].costcovfn.ccopars:
                     printv('WARNING: no cost-coverage function defined for optimizable program', 1, verbose)
                 else:
-                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure,randseed=randseed,bounds=bounds)
+                    cost_coverage_figures[thisprog] = self.programs[thisprog].plotcoverage(t=t,parset=parset,existingFigure=existingFigure,bounds=bounds)
 
         return cost_coverage_figures
 
@@ -704,7 +705,7 @@ class Program(object):
 
     def __repr__(self):
         ''' Print out useful info'''
-        output = '\n'
+        output = defaultrepr(self)
         output += '          Program name: %s\n'    % self.short
         output += '  Targeted populations: %s\n'    % self.targetpops
         output += '   Targeted parameters: %s\n'    % self.targetpars
@@ -795,7 +796,7 @@ class Program(object):
         # If we are ignoring eligibility, just sum the popsizes...
         if not useelig:
             initpopsizes = parset.pars[ind]['popsize'].interp(tvec=t)
-            
+
         # ... otherwise, have to get the PLHIV pops from results. WARNING, this should be improved.
         else: 
 
@@ -849,8 +850,10 @@ class Program(object):
                 targetpopsize[targetpop] = sum(popsizes.values())
             else:
                 targetpopsize[targetpop] = popsizes[targetpop]
+                
+        finalpopsize = array([sum(targetpopsize.values())]) if isnumber(sum(targetpopsize.values())) else sum(targetpopsize.values())
                     
-        if total: return sum(targetpopsize.values())
+        if total: return finalpopsize
         else: return targetpopsize
 
 
@@ -866,7 +869,7 @@ class Program(object):
         return targetcomposition
 
 
-    def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, bounds=None):
+    def getcoverage(self, x, t, parset=None, results=None, total=True, proportion=False, toplot=False, sample='best'):
         '''Returns coverage for a time/spending vector'''
 
         # Validate inputs
@@ -874,8 +877,9 @@ class Program(object):
         t = promotetoarray(t)
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
+
         totaltargeted = sum(poptargeted.values())
-        totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, bounds=bounds)
+        totalreached = self.costcovfn.evaluate(x=x, popsize=totaltargeted, t=t, toplot=toplot, sample=sample)
 
         if total: return totalreached/totaltargeted if proportion else totalreached
         else:
@@ -888,18 +892,18 @@ class Program(object):
             return popreached
 
 
-    def getbudget(self, x, t, parset=None, results=None, proportion=False, toplot=False, bounds=None):
+    def getbudget(self, x, t, parset=None, results=None, proportion=False, toplot=False, sample='best'):
         '''Returns budget for a coverage vector'''
 
         poptargeted = self.gettargetpopsize(t=t, parset=parset, results=results, total=False)
         totaltargeted = sum(poptargeted.values())
-        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
-        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,bounds=bounds)
+        if not proportion: reqbudget = self.costcovfn.evaluate(x=x,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
+        else: reqbudget = self.costcovfn.evaluate(x=x*totaltargeted,popsize=totaltargeted,t=t,inverse=True,toplot=False,sample=sample)
         return reqbudget
 
 
     def plotcoverage(self, t, parset=None, results=None, plotoptions=None, existingFigure=None,
-        randseed=None, plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
+        plotbounds=True, npts=100, maxupperlim=1e8, doplot=False):
         ''' Plot the cost-coverage curve for a single program'''
         
         # Put plotting imports here so fails at the last possible moment
@@ -921,7 +925,7 @@ class Program(object):
         # Make x data... 
         if plotoptions and plotoptions.get('xupperlim') and ~isnan(plotoptions['xupperlim']):
             xupperlim = plotoptions['xupperlim']
-        else: 
+        else:
             if costdata: xupperlim = 1.5*max(costdata)
             else: xupperlim = maxupperlim
         xlinedata = linspace(0,xupperlim,npts)
@@ -931,9 +935,9 @@ class Program(object):
 
         # Create x line data and y line data
         try:
-            y_l = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False,toplot=True, bounds='l')
-            y_m = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False,toplot=True, bounds=None)
-            y_u = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False,toplot=True, bounds='u')
+            y_l = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='l')
+            y_m = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='best')
+            y_u = self.getcoverage(x=xlinedata, t=t, parset=parset, results=results, total=True, proportion=False, toplot=True, sample='u')
         except:
             y_l,y_m,y_u = None,None,None
         plotdata['ylinedata_l'] = y_l
@@ -1064,7 +1068,7 @@ class CCOF(object):
                 raise OptimaException(errormsg)
         return None
 
-    def getccopar(self, t, verbose=2, randseed=None, bounds=None):
+    def getccopar(self, t, verbose=2, sample='best'):
         '''
         Get a cost-coverage-outcome parameter set for any year in range 1900-2100
 
@@ -1074,14 +1078,12 @@ class CCOF(object):
             bounds: None - take middle of intervals,
                     'upper' - take top of intervals,
                     'lower' - take bottom if intervals
-            randseed: currently not implemented
+            randseed: takes a 
         '''
 
         # Error checks
         if not self.ccopars:
             raise OptimaException('Need parameters for at least one year before function can be evaluated.')
-        if randseed and bounds:
-            raise OptimaException('Either select bounds or specify randseed')
 
         # Set up necessary variables
         ccopar = odict()
@@ -1090,21 +1092,23 @@ class CCOF(object):
         ccopars_no_t = dcp(odict({k:v for k,v in self.ccopars.iteritems() if v}))
         del ccopars_no_t['t']
         
-        # Deal with bounds
-        if not bounds:
+        # Get the appropriate sample type
+        if sample in ['median', 'm', 'best', 'b', 'average', 'av', 'single']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
                     ccopars_no_t[parname][j] = (parvalue[j][0]+parvalue[j][1])/2
-        elif bounds in ['upper','u','up','high','h']:
+        elif sample in ['upper','u','up','high','h']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
-                    if parname=='saturation': ccopars_no_t[parname][j] = parvalue[j][0]
-                    else: ccopars_no_t[parname][j] = parvalue[j][1]
-        elif bounds in ['lower','l','low']:
+                    ccopars_no_t[parname][j] = parvalue[j][0]
+        elif sample in ['lower','l','low']:
             for parname, parvalue in ccopars_no_t.iteritems():
                 for j in range(len(parvalue)):
-                    if parname=='saturation': ccopars_no_t[parname][j] = parvalue[j][1]
-                    else: ccopars_no_t[parname][j] = parvalue[j][0]
+                    ccopars_no_t[parname][j] = parvalue[j][1]
+        elif sample in ['random','rand','r']:
+            for parname, parvalue in ccopars_no_t.iteritems():
+                for j in range(len(parvalue)):
+                    ccopars_no_t[parname][j] = uniform(parvalue[j][0],parvalue[j][1])
         else:
             raise OptimaException('Unrecognised bounds.')
             
@@ -1126,7 +1130,7 @@ class CCOF(object):
         printv('\nCalculated CCO parameters in year(s) %s to be %s' % (t, ccopar), 4, verbose)
         return ccopar
 
-    def evaluate(self, x, popsize, t, toplot, inverse=False, randseed=None, bounds=None, verbose=2):
+    def evaluate(self, x, popsize, t, toplot, inverse=False, sample='best', verbose=2):
         x = promotetoarray(x)
         t = promotetoarray(t)
         if (not toplot) and (not len(x)==len(t)):
@@ -1137,7 +1141,7 @@ class CCOF(object):
                 x = array([0]) # WARNING, this should maybe not be here, or should be handled with kwargs
                 t = array([2015])
             printv('x needs to be the same length as t, we assume one spending amount per time point.', 1, verbose)
-        ccopar = self.getccopar(t=t,randseed=randseed,bounds=bounds)
+        ccopar = self.getccopar(t=t,sample=sample)
         if not inverse: return self.function(x=x,ccopar=ccopar,popsize=popsize)
         else: return self.inversefunction(x=x,ccopar=ccopar,popsize=popsize)
 
@@ -1176,7 +1180,7 @@ class Costcov(CCOF):
                 overwrite: whether it should be added or replaced for
                            interpolation
 
-        getccopar(t, verbose=2, randseed=None, bounds=None)
+        getccopar(t, verbose=2, sample='best')
             Returns an odict of cost-coverage parameters
                 { 'saturation': [..], 'unitcost': [...], 't':[...] }
             used for self.evaulate.
@@ -1224,9 +1228,13 @@ class Costcov(CCOF):
 
         nyrs,npts = len(u),len(x)
         eps = array([eps]*npts)
-        if nyrs==npts: return maximum((2*s/(1+exp(-2*x/(popsize*s*u)))-s)*popsize,eps)
-        else: raise OptimaException('coverage vector should be the same length as params.')
-
+        if nyrs==npts: return maximum(-0.5*popsize*s*u*log(maximum(s*popsize-x,0)/(s*popsize+x)),eps)
+        else:
+            y = zeros((nyrs,npts))
+            for yr in range(nyrs):
+                y[yr,:] = maximum(-0.5*popsize[yr]*s[yr]*u[yr]*log(maximum(s[yr]*popsize[yr]-x,0)/(s[yr]*popsize[yr]+x)),eps)
+            return y
+            
 
 ########################################################
 # COVERAGE OUTCOME FUNCTIONS

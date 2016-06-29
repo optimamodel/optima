@@ -38,7 +38,7 @@ print(optimalicense)
 
 
 ## Specify the version, for the purposes of figuring out which version was used to create a project
-__version__ = 2.0
+from ._version import __version__
 
 # Create an empty list to stored failed imports
 _failed = [] 
@@ -102,8 +102,8 @@ from . import model as _model
 from .model import model, runmodel
 
 ## Define the programs and cost functions
-from . import programs as _programs 
-from .programs import Program, Programset 
+from . import programs as _programs
+from .programs import Program, Programset
 
 ## Economics functions -- WARNING, not functional yet
 from . import economics as _economics
