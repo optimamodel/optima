@@ -22,8 +22,12 @@ class Scenarios(Resource):
     @swagger.operation()
     def get(self, project_id):
         check_project_exists(project_id)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
         return {
-            'scenarios': get_scenario_summaries(project_id),
+            'scenarios': get_scenario_summaries(project),
             'ykeysByParsetId': get_parset_keys_with_y_values(project_id)
         }
 
@@ -46,5 +50,3 @@ class ScenarioSimulationGraphs(Resource):
         project = project_entry.hydrate()
         project.runscenarios()
         return make_mpld3_graph_dict(project.results[-1])
-
-

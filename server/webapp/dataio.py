@@ -306,7 +306,7 @@ def get_parset_keys_with_y_values(project_id):
     return y_keys
 
 
-def get_scenario_summary_from_record(scenario_record):
+def get_scenario_summary(project, scenario):
     """
 
     Args:
@@ -333,15 +333,33 @@ def get_scenario_summary_from_record(scenario_record):
           "years": [ 2020 ],
     }
     """
+    extra_data = {}
+
+    # budget, coverage, parameter, any others?
+    if isinstance(scenario, op.Parscen):
+        scenario_type = "parameter"
+        extra_data["pars"] = scenario.pars
+    elif isinstance(scenario, op.Coveragescen):
+        scenario_type = "coverage"
+        extra_data["coverage"] = scenario.coverage
+    elif isinstance(scenario, op.Budgetscen):
+        scenario_type = "budget"
+
+    if hasattr(scenario, "progsetname"):
+        progset_id = project.progsets[scenario.progsetname].uid
+    else:
+        progset_id = None
+
+
     result = {
-        'id': scenario_record.id,
-        'progset_id': scenario_record.progset_id, # could be None if parameter scenario
-        'scenario_type': scenario_record.scenario_type,
-        'active': scenario_record.active,
-        'name': scenario_record.name,
-        'parset_id': str(scenario_record.parset_id),
+        'id': scenario.uid,
+        'progset_id': scenario.progset_id, # could be None if parameter scenario
+        'scenario_type': scenario_type,
+        'active': scenario.active,
+        'name': scenario.name,
+        'parset_id': scenario.parsets[scenario.parset_name].uid,
     }
-    result.update(scenario_record.blob)
+    result.update(extra_data)
     return result
 
 
@@ -374,9 +392,9 @@ def update_or_create_scenario_record(project_id, scenario_summary):
     return record
 
 
-def get_scenario_summaries(project_id):
-    scenario_records = db.session.query(ScenariosDb).filter_by(project_id=project_id).all()
-    scenario_summaries = map(get_scenario_summary_from_record, scenario_records)
+def get_scenario_summaries(project):
+
+    scenario_summaries = map(partial(get_scenario_summary, project), project.scens.values())
     return normalize_obj(scenario_summaries)
 
 
