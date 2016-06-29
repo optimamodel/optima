@@ -403,14 +403,22 @@ class Project(object):
         return name, orig
 
 
-    def pars(self):
+    def pars(self, key=-1, ind=0):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
-        return self.parsets[-1].pars[0]
+        return self.parsets[key].pars[ind]
+    
+    def parset(self, key=-1)
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        return self.parsets[key]
     
     
-    def progs(self):
+    def progs(self, key=-1):
         ''' Shortcut for getting the latest active set of programs '''
-        return self.progsets[0].programs
+        return self.progsets[key].programs
+
+    def progset(self, key=-1)
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        return self.progsets[key]
 
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?
