@@ -14,7 +14,9 @@ from server.webapp.dataio import (
     get_progset_summaries, save_progset_summaries, load_project,
     load_project_record, load_program, load_parset, get_progset_summary,
     get_target_popsizes, load_parameters_from_progset_parset,
-    get_progset_from_project, get_progset_summary,
+    get_progset_from_project, get_progset_summary, get_parset_from_project,
+    parse_outcomes_from_progset, get_program_from_progset, save_program_summary,
+
     check_project_exists)
 from server.webapp.dbconn import db
 from server.webapp.exceptions import (ProgsetDoesNotExist)
@@ -186,13 +188,18 @@ class ProgsetParameters(Resource):
     """
     @swagger.operation(description='Get parameters sets for the selected progset')
     def get(self, project_id, progset_id, parset_id):
-        return load_parameters_from_progset_parset(project_id, progset_id, parset_id)
+
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+        parset = get_parset_from_project(project, parset_id)
+
+        return load_parameters_from_progset_parset(project, progset, parset)
 
 
 
 class ProgsetEffects(Resource):
     """
-    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
+    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects?parset_id=foo
 
     Fetch the effects of a given progset, given in the marshalled fields of
     a ProgsetsDB record, used in cost-coverage-ctrl.js
@@ -206,9 +213,14 @@ class ProgsetEffects(Resource):
 
     @swagger.operation(summary='Get List of existing Progset effects for the selected progset')
     def get(self, project_id, progset_id):
-        from server.webapp.dataio import load_progset_record
-        progset_record = load_progset_record(project_id, progset_id)
-        return { 'effects': progset_record.effects }
+
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+
+        return { 'effects': {
+            "parameters": parse_outcomes_from_progset(progset)
+
+        }}
 
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
@@ -280,12 +292,16 @@ class Program(Resource):
     def post(self, project_id, progset_id):
         args = query_program_parser.parse_args()
         program_summary = normalize_obj(args['program'])
-        program_record = update_or_create_program_record(
-            project_id, progset_id, program_summary['short'],
-            program_summary)
-        db.session.add(program_record)
-        db.session.flush()
-        db.session.commit()
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
+        progset = get_progset_from_project(project, progset_id)
+
+        save_program_summary(progset, program_summary)
+
+        project_record.save_obj(project)
+
         return 204
 
 
@@ -299,7 +315,13 @@ class ProgramPopSizes(Resource):
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id, progset_id, program_id, parset_id):
-        payload = get_target_popsizes(project_id, parset_id, progset_id, program_id)
+
+        project = load_project(project_id)
+        parset = get_parset_from_project(project, parset_id)
+        progset = get_progset_from_project(project, progset_id)
+        program = get_program_from_progset(progset, program_id)
+
+        payload = get_target_popsizes(project, parset, progset, program)
         return payload, 201
 
 
@@ -344,8 +366,13 @@ class ProgramCostcovGraph(Resource):
             if args.get(x):
                 plotoptions[x] = args[x]
 
-        program = load_program(project_id, progset_id, program_id)
-        parset = load_parset(project_id, parset_id)
+        project = load_project(project_id)
+        progset = get_progset_from_project(project, progset_id)
+
+        print(progset.programs)
+        program = get_program_from_progset(progset, program_id)
+        parset = get_parset_from_project(project, parset_id)
+
         plot = program.plotcoverage(t=t, parset=parset, plotoptions=plotoptions)
         from server.webapp.plot import convert_to_mpld3
         return convert_to_mpld3(plot)

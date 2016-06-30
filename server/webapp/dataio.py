@@ -31,7 +31,7 @@ from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
     parse_default_program_summaries, parse_parameters_of_parset_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
-    revert_costcovdata
+    revert_costcovdata, parse_outcomes_from_progset
 )
 
 
@@ -192,6 +192,26 @@ def get_progset_from_project(project, progset_id):
     return progsets[0]
 
 
+
+def get_program_from_progset(progset, program_id, include_inactive=False):
+    if include_inactive:
+        progset_programs = {}
+        progset_programs.update(progset.programs)
+        progset_programs.update(progset.inactive_programs)
+    else:
+        progset_programs = progset.programs
+
+    programs = [
+        progset_programs[key]
+        for key in progset_programs
+        if progset_programs[key].uid == program_id
+    ]
+    if not programs:
+        raise ProgramDoesNotExist(id=program_id)
+    return programs[0]
+
+
+
 def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
     result_record = db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
@@ -257,31 +277,26 @@ def load_project_program_summaries(project_id):
     return parse_default_program_summaries(load_project(project_id, raise_exception=True))
 
 
-def get_project_years(project_id):
-    settings = load_project(project_id).settings
+def get_project_years(project):
+    settings = project.settings
     return range(int(settings.start), int(settings.end) + 1)
 
 
-def get_target_popsizes(project_id, parset_id, progset_id, program_id):
-    program = load_program(project_id, progset_id, program_id)
-    parset = load_parset(project_id, parset_id)
-    years = get_project_years(project_id)
+def get_target_popsizes(project, parset, progset, program):
+
+    years = get_project_years(project)
     popsizes = program.gettargetpopsize(t=years, parset=parset)
     return normalize_obj(dict(zip(years, popsizes)))
 
 
-def load_parameters_from_progset_parset(project_id, progset_id, parset_id):
-    progset_record = load_progset_record(project_id, progset_id)
-    progset = progset_record.hydrate()
+def load_parameters_from_progset_parset(project, progset, parset):
+
     print ">>> Fetching target parameters from progset '%s'", progset.name
     progset.gettargetpops()
     progset.gettargetpars()
     progset.gettargetpartypes()
 
-    parset_record = load_parset_record(project_id, parset_id)
-    parset = parset_record.hydrate()
-
-    settings = load_project(project_id).settings
+    settings = project.settings
 
     return parse_parameters_from_progset_parset(settings, progset, parset)
 
@@ -406,7 +421,8 @@ def save_scenario_summaries(project, scenario_summaries):
 
     for s in scenario_summaries:
 
-        if s["scenario_type
+        if s["scenario_type"]:
+            pass
 
 
 
@@ -417,10 +433,10 @@ def get_progset_summary(progset):
 
     """
 
-    active_programs = map(partial(parse_program_summary, active=True), progset.programs.values()),
+    active_programs = map(partial(parse_program_summary, progset=progset, active=True), progset.programs.values()),
 
     inactive_programs_list = getattr(progset, "inactive_programs", {})
-    inactive_programs = map(partial(parse_program_summary, active=False), inactive_programs_list.values()),
+    inactive_programs = map(partial(parse_program_summary, progset=progset, active=False), inactive_programs_list.values()),
 
     print(active_programs)
 
@@ -441,6 +457,40 @@ def get_progset_summaries(project):
     """
     progset_summaries = map(get_progset_summary, project.progsets.values())
     return {'progsets': normalize_obj(progset_summaries)}
+
+
+def save_program_summary(progset, summary):
+
+    try:
+        program = get_program_from_progset(progset, summary["id"], include_inactive=True)
+
+        # It exists, so remove it first...
+        try:
+            progset.programs.pop(program.name)
+        except KeyError:
+            progset.inactive_programs.pop(program.name)
+
+        program_id = program.uid
+    except ProgramDoesNotExist:
+        program_id = None
+        pass
+
+    program = op.Program(
+        short=summary["short"],
+        name=summary["name"],
+        category=summary["category"],
+        targetpars=revert_targetpars(summary["targetpars"]),
+        targetpops=summary["populations"],
+        criteria=summary["criteria"],
+        costcovdata=revert_costcovdata(summary["costcov"]))
+
+    if program_id:
+        program.uid = program_id
+
+    if summary["active"]:
+        progset.addprograms(program)
+    else:
+        progset.inactive_programs[program.short] = program
 
 
 def save_progset_summaries(project, progset_summaries, progset_id=None):
@@ -469,23 +519,7 @@ def save_progset_summaries(project, progset_summaries, progset_id=None):
     progset.inactive_programs = op.odict()
 
     for p in progset_programs:
-
-        costcov = {'t': [], 'cost': [], 'coverage': []}
-        targetpars = []
-
-        program = op.Program(
-            short=p["short"],
-            name=p["name"],
-            category=p["category"],
-            targetpars=revert_targetpars(p["targetpars"]),
-            targetpops=p["populations"],
-            criteria=p["criteria"],
-            costcovdata=revert_costcovdata(p["costcov"]))
-
-        if p["active"]:
-            progset.addprograms(program)
-        else:
-            progset.inactive_programs[program.short] = program
+        save_program_summary(progset, p)
 
     progset.updateprogset()
 

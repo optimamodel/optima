@@ -105,8 +105,10 @@ def revert_ccopars(ccopars):
     return result
 
 
-def parse_program_summary(program, active):
+def parse_program_summary(program, progset, active):
     result = {
+        'id': program.uid,
+        'progset_id': progset.uid,
         'active': active,
         'name': program.name,
         'short': program.short,
@@ -466,5 +468,3 @@ def convert_program_list(program_list):
         vals = [v if v is not None else 0 for v in vals]
         result[key] = array(vals)
     return result
-
-
