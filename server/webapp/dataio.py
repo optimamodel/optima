@@ -323,6 +323,13 @@ def load_result_by_id(result_id):
     return result_record.hydrate()
 
 
+def get_parset_id(project_id, parset_name, db_session):
+    parset_record = db_session.query(ParsetsDb).filter_by(project_id=project_id, name=parset_name).first()
+    if parset_record is None:
+        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
+    return parset_record.id
+
+
 def update_or_create_result_record(
         project_id,
         result,
@@ -335,11 +342,8 @@ def update_or_create_result_record(
 
     # find relevant parset for the result
     print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
-    parset_record = db_session.query(ParsetsDb).filter_by(project_id=project_id, name=parset_name).first()
-    if parset_record is None:
-        raise Exception("parset '{}' not generated for the project {}!".format(parset_name, project_id))
-    parset_id = str(parset_record.id)
 
+    parset_id = get_parset_id(project_id, parset_name, db_session)
     blob = op.saves(result)
 
     result_record = db_session.query(ResultsDb)\
@@ -358,8 +362,7 @@ def update_or_create_result_record(
             blob=blob)
         print "> Creating results", result.uid
 
-    result_id = str(result.uid)
-    result_record.id = result_id
+    result_record.id = result.uid
 
     return result_record
 

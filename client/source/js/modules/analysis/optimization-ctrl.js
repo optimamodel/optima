@@ -40,7 +40,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             '/api/project/' + $scope.state.activeProject.id + '/optimizations')
           .success(function (response) {
 
-            console.log('loading optimizations', JSON.stringify(response, null, 2));
+            console.log('loading optimizations', response);
             $scope.state.optimizations = response.optimizations;
             $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
@@ -242,33 +242,43 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       }, 5000);
     };
 
-    $scope.getOptimizationGraphs = function() {
-      var data = {};
-      if($scope.state.activeOptimization.id) {
-        if ($scope.selectors) {
-          var selectors = _.filter($scope.selectors, function (selector) {
+    function getSelectors() {
+      if ($scope.graphs) {
+        var selectors = $scope.graphs.selectors;
+        if (selectors) {
+          var which = _.filter(selectors, function(selector) {
             return selector.checked;
-          }).map(function (selector) {
+          })
+          .map(function(selector) {
             return selector.key;
           });
-          if (selectors && selectors.length > 0) {
-            data.which = selectors;
+          if (which.length > 0) {
+            return which;
           }
         }
-        $http.get(
-          '/api/project/' + $scope.state.activeProject.id
+      }
+      return null;
+    }
+
+    $scope.getOptimizationGraphs = function() {
+      var which = getSelectors();
+      console.log('which', which);
+      $http.post(
+        '/api/project/' + $scope.state.activeProject.id
           + '/optimizations/' + $scope.state.activeOptimization.id
           + '/graph',
-          {params: data})
-        .success(function (response) {
-          clearStatusMessage();
-          $scope.graphs = response.graphs;
+        {
+          which: which,
+          parsetId: $scope.state.activeOptimization.parset_id
         })
-        .error(function() {
-          clearStatusMessage();
-        });
-      }
-    };
+      .success(function (response) {
+        clearStatusMessage();
+        $scope.graphs = response.graphs;
+      })
+      .error(function() {
+        clearStatusMessage();
+      });
+    }
 
     // Opens modal to add / rename / copy optimization
     var openOptimizationModal = function (callback, title, optimizationList, optimizationName, operation, isRename) {

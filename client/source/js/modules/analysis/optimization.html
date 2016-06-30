@@ -1,12 +1,15 @@
-<div class="rich" style="">
+<div class="rich">
+
   <div class="grid" style="margin: 0 -25px;">
     <h1>Analyses &#8594; Optimization</h1>
   </div>
 
-  <div class="rich" style="margin: 0 -25px;" ng-if="!missingData">
+  <div class="rich" style="padding: 10px; margin: 0 -25px;" ng-if="!missingData">
+
     <div class="3">
       <label for="optimization-selection">Select an optimization:</label>
     </div>
+
     <div style="display: flex;justify-content: flex-start;">
       <select id="optimization-selection"
               name="optimization-selection"
@@ -24,7 +27,40 @@
       <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
     </div>
 
-    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">
+    <div style="width: 100%; margin-top: 25px;">
+        <input
+            type="button"
+            value="Run"
+            class="updateGraph btn"
+            ng-click="runOptimizations()"
+            ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/>
+        &nbsp;
+        <!-- WARNING, automatically saves! -->
+        <input
+            type="button"
+            value="Save"
+            class="updateGraph btn"
+            ng-click="saveOptimizationForm(optimizationForm)"
+            ng-disabled="!state.activeOptimization"/>
+        <input
+            type="button"
+            value="Update Graphs"
+            class="updateGraph btn"
+            ng-click="getOptimizationGraphs()"
+            ng-disabled="!state.activeOptimization"/>
+        &nbsp;
+        <span style="color: ##00aeef; margin-top: 25px; margin-left: 35px">
+          {{ statusMessage }}
+        </span>
+        &nbsp;
+        <span style="color: red; margin-top: 5px; margin-left: 35px">
+          {{ errorMessage }}
+        </span>
+
+    </div>
+
+    <div style="display: flex; margin-top: 20px; justify-content: space-between; height: calc(100vh - 300px);">
+
       <div class="small_bordered_list" style="width: 30%;">
         <form name="optimizationForm">
           <div class="option_list" style="height:62vh">
@@ -104,30 +140,6 @@
                   <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
                 </span>
             </div>
-          </div>
-
-          <div style="color: ##00aeef; margin-top: 25px; margin-left: 35px">
-            {{ statusMessage }}
-          </div>
-
-          <div style="color: red; margin-top: 5px; margin-left: 35px">
-            {{ errorMessage }}
-          </div>
-
-          <div style="display: flex;justify-content: space-around; margin-top: 5px">
-            <input
-                type="button"
-                value="Run"
-                class="updateGraph btn"
-                ng-click="runOptimizations()"
-                ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/>
-            <!-- WARNING, automatically saves! -->
-            <input
-                type="button"
-                value="Save"
-                class="updateGraph btn"
-                ng-click="saveOptimizationForm(optimizationForm)"
-                ng-disabled="!state.activeOptimization"/>
           </div>
 
         </form>
