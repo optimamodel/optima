@@ -1,10 +1,10 @@
-<div class="rich">
+<div class="rich" style="padding: 10px;">
 
   <div class="grid" style="margin: 0 -25px;">
     <h1>Analyses &#8594; Optimization</h1>
   </div>
 
-  <div class="rich" style="padding: 10px; margin: 0 -25px;" ng-if="!missingData">
+  <div class="rich" style="margin: 0 -25px;" ng-if="!missingData">
 
     <div class="3">
       <label for="optimization-selection">Select an optimization:</label>
@@ -30,18 +30,18 @@
     <div style="width: 100%; margin-top: 25px;">
         <input
             type="button"
+            value="Save"
+            class="updateGraph btn"
+            ng-click="saveOptimizationForm(optimizationForm)"
+            ng-disabled="!state.activeOptimization"/>
+        &nbsp;
+        <input
+            type="button"
             value="Run"
             class="updateGraph btn"
             ng-click="runOptimizations()"
             ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/>
         &nbsp;
-        <!-- WARNING, automatically saves! -->
-        <input
-            type="button"
-            value="Save"
-            class="updateGraph btn"
-            ng-click="saveOptimizationForm(optimizationForm)"
-            ng-disabled="!state.activeOptimization"/>
         <input
             type="button"
             value="Update Graphs"
@@ -49,11 +49,11 @@
             ng-click="getOptimizationGraphs()"
             ng-disabled="!state.activeOptimization"/>
         &nbsp;
-        <span style="color: ##00aeef; margin-top: 25px; margin-left: 35px">
+        <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}
         </span>
         &nbsp;
-        <span style="color: red; margin-top: 5px; margin-left: 35px">
+        <span style="color: red; margin-top: 25px; margin-left: 15px">
           {{ errorMessage }}
         </span>
 
