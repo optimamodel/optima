@@ -94,7 +94,6 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     if working_project_record is not None:
         work_log_record = db_session.query(WorkLogDb).filter_by(
             project_id=project_id, parset_id=parset_id, work_type=work_type).first()
-
         if work_log_record is None:
             print "> Found no work logs"
         else:
@@ -188,30 +187,31 @@ def check_calculation_status(project_id):
             'result_id': uuid of Results
         }
     """
+    result = {
+        'status': 'unknown',
+        'error_text': None,
+        'start_time': None,
+        'stop_time': None,
+        'result_id': None
+    }
+
     db_session = init_db_session()
     working_project_record = db_session.query(WorkingProjectDb).get(project_id)
+    if working_project_record is not None:
+        # As only one job can run per project, whether it be "autofit" or "optimization",
+        # the project_id defines the only possible; work_log_records that are active.
+        work_log_id = working_project_record.work_log_id
+        work_log = db_session.query(WorkLogDb).get(work_log_id)
+        if work_log is not None:
+            result = {
+                'status': work_log.status,
+                'error_text': work_log.error,
+                'start_time': work_log.start_time,
+                'stop_time': work_log.stop_time,
+                'result_id': work_log.result_id
+            }
 
-    # As only one job can run per project, whether it be "autofit" or "optimization",
-    # the project_id defines the only possible; work_log_records that are active.
-    work_log_id = working_project_record.work_log_id
-    work_log = db_session.query(WorkLogDb).get(work_log_id)
     close_db_session(db_session)
-    if work_log is not None:
-        result = {
-            'status': work_log.status,
-            'error_text': work_log.error,
-            'start_time': work_log.start_time,
-            'stop_time': work_log.stop_time,
-            'result_id': work_log.result_id
-        }
-    else:
-        result = {
-            'status': 'unknown',
-            'error_text': None,
-            'start_time': None,
-            'stop_time': None,
-            'result_id': None
-        }
     return result
 
 

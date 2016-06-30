@@ -51,6 +51,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             }
 
             selectDefaultProgsetAndParset($scope.state.activeOptimization);
+
+            // run once just in case an optimization was running
+            $scope.seconds = 0;
+            pollOptimizations();
           });
         });
       });
@@ -216,7 +220,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         + '/optimizations/' + $scope.state.activeOptimization.id
         + '/results')
       .success(function(response) {
-        if(response.status === 'completed') {
+        if (response.status === 'unknown') {
+          $timeout.cancel($scope.pollTimer);
+        } else if (response.status === 'completed') {
           $scope.getOptimizationGraphs();
           $scope.statusMessage = 'Optimization successfully completed updating graphs.';
           $timeout.cancel($scope.pollTimer);
