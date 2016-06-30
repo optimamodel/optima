@@ -199,7 +199,7 @@ class ProgsetParameters(Resource):
 
 class ProgsetEffects(Resource):
     """
-    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects?parset_id=foo
+    GET /api/project/<uuid:project_id>/progsets/<uuid:progset_id>/effects
 
     Fetch the effects of a given progset, given in the marshalled fields of
     a ProgsetsDB record, used in cost-coverage-ctrl.js
@@ -217,10 +217,11 @@ class ProgsetEffects(Resource):
         project = load_project(project_id)
         progset = get_progset_from_project(project, progset_id)
 
-        return { 'effects': {
+        return { 'effects': [{
+            "parset": project.parsets[0].uid,
             "parameters": parse_outcomes_from_progset(progset)
 
-        }}
+        }]}
 
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
