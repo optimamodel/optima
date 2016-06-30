@@ -108,7 +108,7 @@ def revert_ccopars(ccopars):
 def parse_program_summary(program, progset, active):
     result = {
         'id': program.uid,
-        'progset_id': progset.uid,
+        'progset_id': progset.uid if progset else None,
         'active': active,
         'name': program.name,
         'short': program.short,
@@ -124,7 +124,7 @@ def parse_program_summary(program, progset, active):
 
 
 def parse_default_program_summaries(project):
-    return [parse_program_summary(p, False) for p in defaultprograms(project)]
+    return [parse_program_summary(p, None, False) for p in defaultprograms(project)]
 
 
 def get_parset_parameters(parset, ind=0):

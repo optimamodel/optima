@@ -507,9 +507,21 @@ class ProjectSpreadsheet(Resource):
         # Load parset from spreadsheet, will also runsim and store result
         project.loadspreadsheet(server_filename, parset_name, makedefaults=True)
 
+        # Add progset defaults... and move them to inactive
+        programs = op.defaults.defaultprograms(project)
+
+        progset = project.progsets[parset_name]
+        progset.inactive_programs = op.odict({x.name:x for x in programs})
+        progset.programs = op.odict()
+
         with open(server_filename, 'rb') as f:
             # Save the spreadsheet if they want to download it again
-            data_record = ProjectDataDb(project_id, f.read())
+
+            try:
+                data_record = ProjectDataDb.query.get(project_id)
+                data_record.meta = f.read()
+            except:
+                data_record = ProjectDataDb(project_id, f.read())
 
         db.session.add(data_record)
         db.session.add(project_record)

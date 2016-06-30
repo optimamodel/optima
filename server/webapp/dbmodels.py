@@ -86,7 +86,8 @@ class ProjectDb(db.Model):
         self.user_id = user_id
 
     def load(self):
-        return serialise.loads(redis.get(self.id.hex))
+        redis_entry = redis.get(self.id.hex)
+        return serialise.loads(redis_entry)
 
     def save_obj(self, obj):
         redis.set(self.id.hex, serialise.dumps(obj))
