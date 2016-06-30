@@ -472,7 +472,7 @@ class ParsetsDb(db.Model):
 
 class ResultsDb(db.Model):
 
-    DEFULT_CALCULATION_TYPE = 'calibration'  # 'calibration' or 'optimization'
+    DEFAULT_CALCULATION_TYPE = 'calibration'  # 'calibration' or 'optimization'
     # todo make enum when all types are known
 
     __tablename__ = 'results'

@@ -849,7 +849,7 @@ class ProjectCopy(Resource):
             new_parset_records = db.session.query(ParsetsDb).filter_by(
                 project_id=str(new_project_id))
             for result_record in project_record.results:
-                if result_record.calculation_type != ResultsDb.DEFULT_CALCULATION_TYPE:
+                if result_record.calculation_type != ResultsDb.DEFAULT_CALCULATION_TYPE:
                     continue
                 result = op.loads(result_record.blob)
                 parset_name = result.parset.name

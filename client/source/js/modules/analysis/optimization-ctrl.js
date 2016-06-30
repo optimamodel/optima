@@ -220,6 +220,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.getOptimizationGraphs();
           $scope.statusMessage = 'Optimization successfully completed updating graphs.';
           $timeout.cancel($scope.pollTimer);
+        } else if(response.status === 'error') {
+          $timeout.cancel($scope.pollTimer);
+          $scope.statusMessage = 'Optimization failed';
+          $scope.errorMessage = response.error_text;
         } else if(response.status === 'started'){
           $scope.pollTimer = $timeout(pollOptimizations, 2000);
           $scope.seconds += 2;

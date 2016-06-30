@@ -123,7 +123,7 @@ class ParsetRenameDelete(Resource):
 
         # TODO: also delete the corresponding calibration results
         db.session.query(ResultsDb).filter_by(
-            project_id=project_id, id=parset_id, calculation_type=ResultsDb.DEFULT_CALCULATION_TYPE).delete()
+            project_id=project_id, id=parset_id, calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE).delete()
         db.session.query(ScenariosDb).filter_by(project_id=project_id,
             parset_id=parset_id).delete()
         db.session.query(OptimizationsDb).filter_by(project_id=project_id,
@@ -355,8 +355,10 @@ class ParsetAutofit(Resource):
             parset_id:
         """
         from server.webapp.tasks import check_calculation_status
-        return check_calculation_status(project_id)
-
+        calc_state = check_calculation_status(project_id)
+        if calc_state['status'] == 'error':
+            raise Exception(calc_state['error_text'])
+        return calc_state
 
 file_upload_form_parser = RequestParser()
 file_upload_form_parser.add_argument('file', type=AllowedSafeFilenameStorage, location='files', required=True)

@@ -48,7 +48,7 @@ class OptimizationCalculation(Resource):
     @swagger.operation(summary='Launch optimization calculation')
     def post(self, project_id, optimization_id):
 
-        from server.webapp.tasks import run_optimization, start_or_report_calculation
+        from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
         from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
         optimization_record = OptimizationsDb.query.get(optimization_id)
@@ -58,7 +58,6 @@ class OptimizationCalculation(Resource):
         calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
 
         if not calc_state['can_start']:
-            calc_state['status'] = 'running'
             return calc_state, 208
 
         parset_entry = ParsetsDb.query.get(parset_id)
@@ -79,6 +78,7 @@ class OptimizationCalculation(Resource):
             if covout_errors:
                 error_msg += "Missing: coverage-outcome parameters of:\n"
                 error_msg += pformat(covout_errors, indent=2)
+            shut_down_calculation(project_id, parset_id, 'optimization')
             raise Exception(error_msg)
 
         objectives = normalize_obj(optimization_record.objectives)
