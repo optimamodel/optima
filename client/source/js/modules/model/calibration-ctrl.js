@@ -286,7 +286,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $http.get('/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id +'/automatic_calibration')
         .success(function(response) {
           if (response.status === 'completed') {
-            getAutoCalibratedGraphs();
+            $scope.getAutoCalibratedGraphs();
             $scope.statusMessage = 'Autofit completed.';
             $timeout.cancel($scope.pollTimer);
           } else if (response.status === 'error') {
@@ -294,13 +294,13 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             $timeout.cancel($scope.pollTimer);
           } else if (response.status === 'started') {
             $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-            $scope.statusMessage = "Running: " + $scope.secondsRun + " s.";
+            $scope.statusMessage = "Autofit running for " + $scope.secondsRun + " s";
             $scope.secondsRun += 1;
           }
         });
     };
 
-    var getAutoCalibratedGraphs = function() {
+    $scope.getAutoCalibratedGraphs = function() {
       $http.post(
         '/api/project/' + activeProjectInfo.id
           + '/parsets' + '/' + $scope.activeParset.id
