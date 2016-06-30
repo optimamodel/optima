@@ -1,4 +1,5 @@
 from pprint import pformat
+import json
 
 from flask import request
 from flask.ext.login import login_required
@@ -7,7 +8,8 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
+    get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries,
+    load_result)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ParsetsDb, ResultsDb
 from server.webapp.plot import make_mpld3_graph_dict
@@ -48,7 +50,7 @@ class OptimizationCalculation(Resource):
     @swagger.operation(summary='Launch optimization calculation')
     def post(self, project_id, optimization_id):
 
-        from server.webapp.tasks import run_optimization, start_or_report_calculation
+        from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
         from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
         optimization_record = OptimizationsDb.query.get(optimization_id)
@@ -58,7 +60,6 @@ class OptimizationCalculation(Resource):
         calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
 
         if not calc_state['can_start']:
-            calc_state['status'] = 'running'
             return calc_state, 208
 
         parset_entry = ParsetsDb.query.get(parset_id)
@@ -79,6 +80,7 @@ class OptimizationCalculation(Resource):
             if covout_errors:
                 error_msg += "Missing: coverage-outcome parameters of:\n"
                 error_msg += pformat(covout_errors, indent=2)
+            shut_down_calculation(project_id, parset_id, 'optimization')
             raise Exception(error_msg)
 
         objectives = normalize_obj(optimization_record.objectives)
@@ -112,11 +114,15 @@ class OptimizationGraph(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
-    def get(self, project_id, optimization_id):
-        result_entry = db.session.query(ResultsDb)\
-            .filter_by(project_id=project_id, calculation_type='optimization')\
-            .first()
-        if not result_entry:
+    def post(self, project_id, optimization_id):
+        args = normalize_obj(json.loads(request.data))
+        parset_id = args.get('parsetId')
+        which = args.get('which')
+        if which is not None:
+            which = map(str, which)
+
+        result = load_result(project_id, parset_id, "optimization")
+        if result is None:
             return {"result_id": None}
         else:
-            return make_mpld3_graph_dict(result_entry.hydrate())
+            return make_mpld3_graph_dict(result, which)

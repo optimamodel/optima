@@ -28,22 +28,24 @@
 
   <div style="display: flex; margin-top: 5px; margin-bottom: 5px">  <!-- CK: maybe a more robust solution than 70vh -->
     <div style="display: flex;justify-content: space-around; margin-top: 25px">{{test}}
+      <button class="btn __m" ng-click="getAutoCalibratedGraphs()">Update Figures</button>
     </div>
   </div>
 
-  <div style="
-        display: flex;
-        flex-direction: row;
-        margin-top: 20px;
-        justify-content: space-between;
-        width: 100%;
-        height: calc(100vh - 320px)">
+  <div
+    style="
+      display: flex;
+      flex-direction: row;
+      margin-top: 20px;
+      justify-content: space-between;
+      width: 100%;
+      height: calc(100vh - 320px)">
 
     <div
-         style="
-             border: 1px solid #DDD;
-             padding: 10px;
-             flex: 0 0 280px;">
+       style="
+         border: 1px solid #DDD;
+         padding: 10px;
+         flex: 0 0 280px;">
       Run auto-fit for&nbsp;
       &nbsp;
       <select ng-init="state.maxtime=10" ng-model="state.maxtime">
@@ -60,18 +62,19 @@
       <br>
       <br>
       <span style="color: #00aeef;"> {{ statusMessage }} </span>
-      <span style="color: #00aeef;"> {{ saveSuccessMessage }} </span>
     </div>
 
     <div
-    style="
-       margin-left: 10px;
-       border: 1px solid #DDD;
-       flex: 1 1 auto;
-       height:100%;
-       width: 100%;
-       overflow:auto">
+      style="
+         margin-left: 10px;
+         border: 1px solid #DDD;
+         flex: 1 1 auto;
+         height:100%;
+         width: 100%;
+         overflow:auto">
+
       <optima-graphs graphs="graphs"></optima-graphs>
+
     </div>
 
   </div>
