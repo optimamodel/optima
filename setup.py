@@ -3,7 +3,12 @@
 from __future__ import unicode_literals
 
 from setuptools import setup, find_packages
-from optima import __version__
+
+with open("optima/_version.py", "r") as f:
+    version_file = {}
+    exec(f.read(), version_file)
+    version = version_file["__version__"]
+
 try:
     from pypandoc import convert
 except ImportError:
@@ -25,20 +30,19 @@ CLASSIFIERS = [
 
 setup(
     name='optima',
-    version=__version__,
+    version=version,
     author='Cliff Kerr, Robyn Stuart, David Kedziora, Romesh Abeysuriya, Madhura Killedar, Anna Nachesa',
     author_email='info@optimamodel.com',
     description='Software package for modeling HIV epidemics',
-    long_description=convert('README.md', 'rst'),
+    long_description=convert('README.md', 'md'),
     url='http://github.com/optimamodel/Optima',
     keywords=['optima'],
     platforms=['OS Independent'],
     classifiers=CLASSIFIERS,
-    packages=find_packages(exclude=['optima']),
+    packages=find_packages(),
     include_package_data=True,
     install_requires=[
         'matplotlib>=1.4.2',
         'numpy>=1.10.1',
     ],
 )
-

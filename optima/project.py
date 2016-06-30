@@ -136,7 +136,7 @@ class Project(object):
         ''' When creating a project, create a default program set, scenario, and optimization to begin with '''
         scenname = 'Current conditions'
         if overwrite or name not in self.progsets:
-            progset = Programset(name=name)
+            progset = Programset(name=name, project=self)
             self.addprogset(progset)
         if overwrite or scenname not in self.scens:
             scen = Parscen(name=scenname, parsetname=self.parsets.keys()[0], pars=[])
@@ -403,14 +403,21 @@ class Project(object):
         return name, orig
 
 
-    def pars(self):
+    def pars(self, key=-1, ind=0):
         ''' Shortcut for getting the latest active set of parameters, i.e. self.parsets[-1].pars[0] '''
-        return self.parsets[-1].pars[0]
+        return self.parsets[key].pars[ind]
     
+    def parset(self, key=-1):
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        return self.parsets[key]
     
-    def progs(self):
+    def programs(self, key=-1):
         ''' Shortcut for getting the latest active set of programs '''
-        return self.progsets[0].programs
+        return self.progsets[key].programs
+
+    def progset(self, key=-1):
+        ''' Shortcut for getting the latest active parameters set, i.e. self.parsets[-1].pars[0] '''
+        return self.progsets[key]
 
 
     def sensitivity(self, name='perturb', orig='default', n=5, what='force', span=0.5, ind=0): # orig=default or orig=0?

@@ -1,8 +1,6 @@
 import sys
 import os
 
-sys.path.append(os.path.abspath("../server/"))
-
 from twisted.internet import reactor
 from twisted.internet.endpoints import serverFromString
 from twisted.logger import globalLogBeginner, FileLogObserver, formatEvent
@@ -10,13 +8,16 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site
 from twisted.web.static import File
 from twisted.web.wsgi import WSGIResource
+from twisted.python.threadpool import ThreadPool
 
 globalLogBeginner.beginLoggingTo([
     FileLogObserver(sys.stdout, lambda _: formatEvent(_) + "\n")])
 
 import api
 
-wsgi_app = WSGIResource(reactor, reactor.getThreadPool(), api.app)
+threadpool = ThreadPool(maxthreads=30)
+threadpool.start()
+wsgi_app = WSGIResource(reactor, threadpool, api.app)
 
 class OptimaResource(Resource):
     isLeaf = True
@@ -36,7 +37,20 @@ base_resource.putChild('api', OptimaResource(wsgi_app))
 
 site = Site(base_resource)
 
-endpoint = serverFromString(reactor, "tcp:port=8080")
-endpoint.listen(site)
+try:
+    port = str(sys.argv[1])
+except IndexError:
+    port = "8080"
 
-reactor.run()
+
+def run():
+    """
+    Run the server.
+    """
+    endpoint = serverFromString(reactor, "tcp:port=" + port)
+    endpoint.listen(site)
+
+    reactor.run()
+
+if __name__ == "__main__":
+    run()
