@@ -11,7 +11,7 @@
   action: user name=rproxy
 
 - name: Set up rproxy virtualenv
-  action: pip name=rproxy version=16.5.0 virtualenv=/home/rproxy/venv
+  action: pip name=rproxy version=16.6.0 virtualenv=/home/rproxy/venv
 
 - name: Install txacme
   action: pip name=txacme virtualenv=/home/rproxy/venv
