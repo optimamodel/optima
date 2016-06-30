@@ -8,7 +8,8 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
-from server.webapp.dataio import save_result, load_project_record, update_or_create_parset_record
+from server.webapp.dataio import (update_or_create_result_record, load_project_record, \
+    update_or_create_parset_record, delete_result)
 
 import optima as op
 from celery import Celery
@@ -224,7 +225,9 @@ def run_autofit(project_id, parset_name, maxtime=60):
         parset = get_parset_from_project(project, parset_name)
         update_or_create_parset_record(
             project_id, parset_name, parset, db_session)
-        result_record = save_result(
+        delete_result(project_id, parset.uid, 'calibration', db_session=db_session)
+        delete_result(project_id, parset.uid, 'autofit', db_session=db_session)
+        result_record = update_or_create_result_record(
             project_id, result, parset_name, 'autofit', db_session=db_session)
         db_session.flush()
         db_session.add(result_record)
@@ -286,7 +289,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
+        result_entry = update_or_create_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id

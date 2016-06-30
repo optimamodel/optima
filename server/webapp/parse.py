@@ -125,7 +125,7 @@ def parse_default_program_summaries(project):
     return [parse_program_summary(p, False) for p in defaultprograms(project)]
 
 
-def get_parset_parameters(parset, ind=0):
+def get_parameters_from_parset(parset, ind=0):
     """
 
     Args:

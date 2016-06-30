@@ -194,6 +194,16 @@ def update_or_create_parset_record(project_id, name, parset, db_session=None):
     return parset_record
 
 
+def save_parset(project_id, parset, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    parset_record = update_or_create_parset_record(
+        project_id, parset.name, parset, db_session)
+    db_session.add(parset_record)
+    db_session.flush()
+    db_session.commit()
+
+
 def update_or_create_progset_record(project_id, name, progset):
     progset_record = ProgsetsDb.query \
         .filter_by(project_id=project_id, name=name) \
@@ -291,7 +301,7 @@ def get_parset_from_project(project, parset_id):
     return parsets[0]
 
 
-def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+def load_result_record(project_id, parset_id, calculation_type=ResultsDb.DEFULT_CALCULATION_TYPE):
     result_record = db.session.query(ResultsDb).filter_by(
         project_id=project_id, parset_id=parset_id, calculation_type=calculation_type).first()
     if result_record is None:
@@ -299,20 +309,27 @@ def load_result_record(project_id, parset_id, calculation_type=ResultsDb.CALIBRA
     return result_record
 
 
-def load_result(project_id, parset_id, calculation_type=ResultsDb.CALIBRATION_TYPE):
+def load_result(project_id, parset_id, calculation_type=ResultsDb.DEFULT_CALCULATION_TYPE):
     result_record = load_result_record(project_id, parset_id, calculation_type)
     if result_record is None:
         return None
     return result_record.hydrate()
 
 
-def save_result(
+def load_result_by_id(result_id):
+    result_record = db.session.query(ResultsDb).get(result_id)
+    if result_record is None:
+        return None
+    return result_record.hydrate()
+
+
+def update_or_create_result_record(
         project_id, result, parset_name='default',
-        calculation_type=ResultsDb.CALIBRATION_TYPE,
+        calculation_type=ResultsDb.DEFULT_CALCULATION_TYPE,
         db_session=None):
 
-    if not db_session:
-        db_session=db.session
+    if db_session is None:
+        db_session = db.session
 
     # find relevant parset for the result
     print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
@@ -349,6 +366,33 @@ def save_result(
     result_record.id = result_id
 
     return result_record
+
+
+def delete_result(
+        project_id, parset_id, calculation_type, db_session=None):
+    if db_session is None:
+        db_session = db.session
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        parset_id=parset_id,
+        calculation_type=calculation_type
+    )
+    records.delete()
+    db_session.commit()
+
+
+def save_result(
+        project_id, result, parset_name='default',
+        calculation_type=ResultsDb.DEFULT_CALCULATION_TYPE,
+        db_session=None):
+    if db_session is None:
+        db_session = db.session
+    result_record = update_or_create_result_record(
+        project_id, result, parset_name=parset_name,
+        calculation_type=calculation_type, db_session=db_session)
+    db_session.add(result_record)
+    db_session.flush()
+    db_session.commit()
 
 
 def load_project_program_summaries(project_id):
