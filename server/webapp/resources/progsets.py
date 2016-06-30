@@ -298,7 +298,11 @@ class Program(Resource):
 
         progset = get_progset_from_project(project, progset_id)
 
+        print(program_summary)
+
         save_program_summary(progset, program_summary)
+
+        progset.updateprogset()
 
         project_record.save_obj(project)
 
@@ -369,7 +373,6 @@ class ProgramCostcovGraph(Resource):
         project = load_project(project_id)
         progset = get_progset_from_project(project, progset_id)
 
-        print(progset.programs)
         program = get_program_from_progset(progset, program_id)
         parset = get_parset_from_project(project, parset_id)
 

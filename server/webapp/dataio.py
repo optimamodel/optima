@@ -19,6 +19,7 @@ from datetime import datetime
 import dateutil
 from pprint import pprint
 from functools import partial
+from uuid import UUID
 
 from flask import helpers, current_app, abort
 from flask.ext.login import current_user
@@ -31,7 +32,7 @@ from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
     parse_default_program_summaries, parse_parameters_of_parset_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
-    revert_costcovdata, parse_outcomes_from_progset
+    revert_costcovdata, parse_outcomes_from_progset, revert_ccopars,
 )
 
 
@@ -194,6 +195,10 @@ def get_progset_from_project(project, progset_id):
 
 
 def get_program_from_progset(progset, program_id, include_inactive=False):
+
+    if not isinstance(program_id, UUID):
+        program_id = UUID(program_id)
+
     if include_inactive:
         progset_programs = {}
         progset_programs.update(progset.programs)
@@ -415,8 +420,6 @@ def get_scenario_summaries(project):
 def save_scenario_summaries(project, scenario_summaries):
     # delete any records with id's that aren't in summaries
 
-    print(scenario_summaries)
-
     project.scens = op.odict()
 
     for s in scenario_summaries:
@@ -438,7 +441,6 @@ def get_progset_summary(progset):
     inactive_programs_list = getattr(progset, "inactive_programs", {})
     inactive_programs = map(partial(parse_program_summary, progset=progset, active=False), inactive_programs_list.values()),
 
-    print(active_programs)
 
     progset_summary = {
         'id': progset.uid,
@@ -466,9 +468,9 @@ def save_program_summary(progset, summary):
 
         # It exists, so remove it first...
         try:
-            progset.programs.pop(program.name)
+            progset.programs.pop(program.short)
         except KeyError:
-            progset.inactive_programs.pop(program.name)
+            progset.inactive_programs.pop(program.short)
 
         program_id = program.uid
     except ProgramDoesNotExist:
@@ -482,6 +484,7 @@ def save_program_summary(progset, summary):
         targetpars=revert_targetpars(summary["targetpars"]),
         targetpops=summary["populations"],
         criteria=summary["criteria"],
+        ccopars=revert_ccopars(summary["ccopars"]),
         costcovdata=revert_costcovdata(summary["costcov"]))
 
     if program_id:
@@ -491,6 +494,10 @@ def save_program_summary(progset, summary):
         progset.addprograms(program)
     else:
         progset.inactive_programs[program.short] = program
+
+    print(program)
+
+    progset.updateprogset()
 
 
 def save_progset_summaries(project, progset_summaries, progset_id=None):

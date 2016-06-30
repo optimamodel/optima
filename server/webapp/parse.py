@@ -12,6 +12,8 @@ There should be no references to the database here!
 
 """
 
+import optima as op
+
 from collections import defaultdict
 from pprint import pprint
 from numpy import nan
@@ -62,8 +64,6 @@ def parse_costcovdata(costcovdata):
     if costcovdata is None:
         return None
     result = []
-    print ">> parsing costcovdata"
-    pprint(costcovdata, indent=2)
     costcovdata = normalize_obj(costcovdata)
     n_year = len(costcovdata['t'])
     for i_year in range(n_year):
@@ -97,11 +97,11 @@ def revert_costcovdata(costcov):
 def revert_ccopars(ccopars):
     result = None
     if ccopars:
-        result = {
+        result = op.odict({
             't': ccopars['t'],
             'saturation': map(tuple, ccopars['saturation']),
             'unitcost': map(tuple, ccopars['unitcost'])
-        }
+        })
     return result
 
 
