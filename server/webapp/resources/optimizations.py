@@ -109,7 +109,7 @@ class OptimizationCalculation(Resource):
 class OptimizationGraph(Resource):
     """
     /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph
-    - GET: gets the mpld3 graphs for the optimizations
+    - POST: gets the mpld3 graphs for the optimizations
     """
     method_decorators = [report_exception, login_required]
 

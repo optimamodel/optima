@@ -215,6 +215,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     var pollOptimizations = function() {
+      if (!$scope.state.activeOptimization.id) {
+        $scope.pollTimer = $timeout(pollOptimizations, 1000);
+      }
       $http.get(
         '/api/project/' + $scope.state.activeProject.id
         + '/optimizations/' + $scope.state.activeOptimization.id
@@ -267,6 +270,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     }
 
     $scope.getOptimizationGraphs = function() {
+      if (!$scope.state.activeOptimization.id) {
+        return;
+      }
       var which = getSelectors();
       console.log('which', which);
       $http.post(
@@ -284,7 +290,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       .error(function() {
         clearStatusMessage();
       });
-    }
+    };
 
     // Opens modal to add / rename / copy optimization
     var openOptimizationModal = function (callback, title, optimizationList, optimizationName, operation, isRename) {
@@ -323,15 +329,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
   });
 });
-
-//todo: add validations, comment code
-
-// this is to be replaced by an api
-var constraints = {
-  'max': {'MSM programs': null, 'HTC mobile': null, 'ART': null, 'VMMC': null, 'HTC workplace': null, 'Condoms': null, 'PMTCT': null, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': null, 'FSW programs': null},
-  'name': {'MSM programs': 'Programs for men who have sex with men', 'HTC mobile': 'HIV testing and counseling - mobile clinics', 'ART': 'Antiretroviral therapy', 'VMMC': 'Voluntary medical male circumcision', 'HTC workplace': 'HIV testing and counseling - workplace programs', 'Condoms': 'Condom promotion and distribution', 'PMTCT': 'Prevention of mother-to-child transmission', 'Other': 'Other', 'MGMT': 'Management', 'HTC medical': 'HIV testing and counseling - medical facilities', 'FSW programs': 'Programs for female sex workers and clients'},
-  'min': {'MSM programs': 0.0, 'HTC mobile': 0.0, 'ART': 1.0, 'VMMC': 0.0, 'HTC workplace': 0.0, 'Condoms': 0.0, 'PMTCT': 0.0, 'Other': 1.0, 'MGMT': 1.0, 'HTC medical': 0.0, 'FSW programs': 0.0}
-};
 
 // this is to be replaced by an api
 var objectives = {

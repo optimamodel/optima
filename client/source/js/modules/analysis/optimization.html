@@ -61,9 +61,18 @@
 
     <div style="display: flex; margin-top: 20px; justify-content: space-between; height: calc(100vh - 300px);">
 
-      <div class="small_bordered_list" style="width: 30%;">
+      <div class="small_bordered_list"
+           style="
+              margin-left: 10px;
+              border: 1px solid #DDD;
+              padding: 10px;
+              flex: 0 0 400px;
+              height: 100%;
+              width: 100%;
+              overflow:auto">
+
         <form name="optimizationForm">
-          <div class="option_list" style="height:62vh">
+          <div>
             <div class="section">
               <div class="label">Program set</div>
               <select class="txbox"
