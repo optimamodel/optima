@@ -26,31 +26,33 @@ def convert_to_mpld3(figure):
     plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
 
-    for ax in figure.axes:
-        legend = ax.get_legend()
-        if legend is not None:
-            # Put a legend to the right of the current axis
-            legend._loc = 2
-            legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.92]])))
-        else:
-            ax.set_position(Bbox(array([[0.19, 0.55], [0.95, 0.92]])))
+    if len(figure.axes) == 1:
+        for ax in figure.axes:
+            legend = ax.get_legend()
+            if legend is not None:
+                # Put a legend to the right of the current axis
+                legend._loc = 2
+                legend.set_bbox_to_anchor((1, 1.1))
+                ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.92]])))
+            else:
+                ax.set_position(Bbox(array([[0.19, 0.55], [0.95, 0.92]])))
+
+        for ax in figure.axes:
+            ax.yaxis.label.set_size(14)
+            ax.xaxis.label.set_size(14)
+            ax.title.set_size(14)
+
+            ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
+            for ticklabel in ticklabels:
+                ticklabel.set_size(10)
+            legend = ax.get_legend()
+            if legend is not None:
+                texts = legend.get_texts()
+                for text in texts:
+                    text.set_size(10)
 
     figure.set_size_inches(5, 4)
 
-    for ax in figure.axes:
-        ax.yaxis.label.set_size(14)
-        ax.xaxis.label.set_size(14)
-        ax.title.set_size(14)
-
-        ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
-        for ticklabel in ticklabels:
-            ticklabel.set_size(10)
-        legend = ax.get_legend()
-        if legend is not None:
-            texts = legend.get_texts()
-            for text in texts:
-                text.set_size(10)
 
     mpld3_dict = mpld3.fig_to_dict(figure)
     return normalize_obj(mpld3_dict)
