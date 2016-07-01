@@ -30,9 +30,10 @@ from server.webapp.exceptions import (
     ProjectDoesNotExist, ProgsetDoesNotExist, ParsetDoesNotExist, ProgramDoesNotExist)
 from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
-    parse_default_program_summaries, parse_parameters_of_parset_list,
+    parse_default_program_summaries, parse_parameters_of_parset_list, convert_pars_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
     revert_costcovdata, parse_outcomes_from_progset, revert_ccopars, put_outcomes_into_progset,
+    revert_pars_list,
 )
 
 
@@ -316,7 +317,7 @@ def load_parameters_from_progset_parset(project, progset, parset):
 def get_parset_keys_with_y_values(project):
 
     y_keys = {
-        id: {
+        str(parset.uid): {
             par.short: [
                 {
                     'val': k,
@@ -327,7 +328,7 @@ def get_parset_keys_with_y_values(project):
             for par in parset.pars[0].values()
             if hasattr(par, 'y') and par.visible
             }
-        for id, parset in project.parsets.iteritems()
+        for parset in project.parsets.values()
         }
     return y_keys
 
@@ -364,13 +365,13 @@ def get_scenario_summary(project, scenario):
     # budget, coverage, parameter, any others?
     if isinstance(scenario, op.Parscen):
         scenario_type = "parameter"
-        extra_data["pars"] = scenario.pars
+        extra_data["pars"] = revert_pars_list(scenario.pars)
     elif isinstance(scenario, op.Coveragescen):
         scenario_type = "coverage"
         extra_data["coverage"] = scenario.coverage
     elif isinstance(scenario, op.Budgetscen):
         scenario_type = "budget"
-        extra_data["budget"] = scenario.budget
+        extra_data["budget"] = [{"program": x, "values": y} for x, y in scenario.budget.iteritems()]
 
     if hasattr(scenario, "progsetname"):
         progset_id = project.progsets[scenario.progsetname].uid
@@ -383,6 +384,7 @@ def get_scenario_summary(project, scenario):
         'scenario_type': scenario_type,
         'active': scenario.active,
         'name': scenario.name,
+        'years': scenario.t,
         'parset_id': project.parsets[scenario.parsetname].uid,
     }
     result.update(extra_data)
@@ -402,8 +404,6 @@ def save_scenario_summaries(project, scenario_summaries):
 
     for s in scenario_summaries:
 
-        print(s)
-
         if s["parset_id"]:
             parset_name = get_parset_from_project(project, s["parset_id"]).name
         else:
@@ -413,6 +413,7 @@ def save_scenario_summaries(project, scenario_summaries):
             "name": s["name"],
             "active": s["active"],
             "parsetname": parset_name,
+            "t": s.get("years"),
 
         }
 
@@ -421,7 +422,7 @@ def save_scenario_summaries(project, scenario_summaries):
 
         if s["scenario_type"] == "parameter":
             par = op.Parscen(
-                pars=s["pars"],
+                pars=convert_pars_list(s["pars"]),
                 **kwargs)
 
         elif s["scenario_type"] == "coverage":
@@ -430,8 +431,10 @@ def save_scenario_summaries(project, scenario_summaries):
                 progsetname=progset_name,
                 **kwargs)
         elif s["scenario_type"] == "budget":
+            budget = op.odict({x["program"]:x["values"] for x in s["budget"]})
+
             par = op.Budgetscen(
-                budget=s["budget"],
+                budget=budget,
                 progsetname=progset_name,
                 **kwargs)
 

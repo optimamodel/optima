@@ -457,6 +457,19 @@ def convert_pars_list(pars):
         })
     return result
 
+def revert_pars_list(pars):
+    result = []
+    for par in pars:
+        result.append({
+            'name': par['name'],
+            'startyear': par['startyear'],
+            'endval': par['endval'],
+            'endyear': par['endyear'],
+            'startval': par['startval'],
+            'for': par['for'][0] if len(par['for']) == 1 else par['for']
+        })
+    return result
+
 
 def convert_program_list(program_list):
     result = {}
