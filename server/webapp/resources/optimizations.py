@@ -1,5 +1,5 @@
-from pprint import pformat
 import json
+from pprint import pformat
 
 from flask import request
 from flask.ext.login import login_required
@@ -9,9 +9,8 @@ from flask_restful_swagger import swagger
 import optima as op
 from server.webapp.dataio import (
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries,
-    load_result)
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import ParsetsDb, ResultsDb
+    load_result_by_optimization_id)
+from server.webapp.dbmodels import ParsetsDb
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
 from server.webapp.utils import normalize_obj
@@ -105,7 +104,6 @@ class OptimizationCalculation(Resource):
         return calc_state
 
 
-
 class OptimizationGraph(Resource):
     """
     /api/project/<uuid:project_id>/optimizations/<uuid:optimization_id>/graph
@@ -114,15 +112,14 @@ class OptimizationGraph(Resource):
     method_decorators = [report_exception, login_required]
 
     @swagger.operation(description='Provides optimization graph for the given project')
-    def post(self, project_id, optimization_id):
+    def post(self, optimization_id):
         args = normalize_obj(json.loads(request.data))
-        parset_id = args.get('parsetId')
         which = args.get('which')
         if which is not None:
             which = map(str, which)
 
-        result = load_result(project_id, parset_id, "optimization")
+        result = load_result_by_optimization_id(optimization_id)
         if result is None:
-            return {"result_id": None}
+            return {}
         else:
             return make_mpld3_graph_dict(result, which)

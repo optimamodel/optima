@@ -47,7 +47,7 @@
             value="Update Graphs"
             class="updateGraph btn"
             ng-click="getOptimizationGraphs()"
-            ng-disabled="!state.activeOptimization"/>
+            ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/>
         &nbsp;
         <span style="color: #00aeef; margin-top: 25px; margin-left: 15px">
           {{ statusMessage }}

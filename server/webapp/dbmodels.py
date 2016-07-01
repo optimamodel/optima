@@ -243,6 +243,7 @@ class ProjectDb(db.Model):
             parset_records = db.session.query(ParsetsDb).filter_by(project_id=str_project_id)
             parset_records.delete()
         db.session.flush()
+        db.session.commit()
 
         # BE projects are not always TZ aware
         project.uid = self.id

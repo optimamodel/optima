@@ -343,18 +343,21 @@ def update_or_create_result_record(
     # find relevant parset for the result
     print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
 
-    parset_id = get_parset_id(project_id, parset_name, db_session)
+    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id, calculation_type=calculation_type)
+
+    for result_record in result_records:
+        search_result = result_record.hydrate()
+        if search_result.name == result.name:
+            return result_record
+    else:
+        result_record = None
+
     blob = op.saves(result)
-
-    result_record = db_session.query(ResultsDb)\
-        .filter_by(project_id=project_id, parset_id=parset_id, calculation_type=calculation_type)\
-        .first()
-
     if result_record is not None:
-        assert str(result_record.id) == str(result.uid)
         result_record.blob = blob
         print "> Updating results", result.uid
     else:
+        parset_id = get_parset_id(project_id, parset_name, db_session)
         result_record = ResultsDb(
             parset_id=parset_id,
             project_id=project_id,
@@ -727,3 +730,23 @@ def get_default_optimization_summaries(project_id):
         defaults_by_progset_id[progset_id] = default
 
     return normalize_obj(defaults_by_progset_id)
+
+
+def load_result_by_optimization_id(optimization_id):
+    optimization_record = db.session.query(OptimizationsDb).get(optimization_id)
+    if optimization_record is None:
+        return None
+
+    result_name = "optim-" + optimization_record.name
+
+    result_records = db.session.query(ResultsDb).filter_by(
+        project_id=optimization_record.project_id,
+        parset_id=optimization_record.parset_id,
+        calculation_type="optimization")
+    for result_record in result_records:
+        result = result_record.hydrate()
+        print "> Matching optim result '%s' == '%s'" % (result.name, result_name)
+        if result.name == result_name:
+            return result
+
+    return None

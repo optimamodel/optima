@@ -107,6 +107,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.state.objectives = objectives[optimization.which];
       $scope.optimizationCharts = [];
       $scope.selectors = [];
+      $scope.graphs = {};
       $scope.getOptimizationGraphs();
     };
 
@@ -216,7 +217,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
     var pollOptimizations = function() {
       if (!$scope.state.activeOptimization.id) {
+        // this is the initial run to find if the activeOptimization
+        // is already running
         $scope.pollTimer = $timeout(pollOptimizations, 1000);
+        return;
       }
       $http.get(
         '/api/project/' + $scope.state.activeProject.id
@@ -226,16 +230,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if (response.status === 'unknown') {
           $timeout.cancel($scope.pollTimer);
         } else if (response.status === 'completed') {
+          $scope.statusMessage = '';
           $scope.getOptimizationGraphs();
-          $scope.statusMessage = 'Optimization successfully completed updating graphs.';
           $timeout.cancel($scope.pollTimer);
         } else if(response.status === 'error') {
           $timeout.cancel($scope.pollTimer);
           $scope.statusMessage = 'Optimization failed';
           $scope.errorMessage = response.error_text;
         } else if(response.status === 'started'){
-          $scope.pollTimer = $timeout(pollOptimizations, 2000);
-          $scope.seconds += 2;
+          $scope.pollTimer = $timeout(pollOptimizations, 1000);
+          $scope.seconds += 1;
           $scope.statusMessage = "Optimization running for " + $scope.seconds + "s"
         }
       })
@@ -243,12 +247,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         $scope.errorMessage = 'Optimization failed.';
         $scope.statusMessage = '';
       });
-    };
-
-    var clearStatusMessage = function() {
-      $timeout(function() {
-        $scope.statusMessage = '';
-      }, 5000);
     };
 
     function getSelectors() {
@@ -276,19 +274,18 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var which = getSelectors();
       console.log('which', which);
       $http.post(
-        '/api/project/' + $scope.state.activeProject.id
-          + '/optimizations/' + $scope.state.activeOptimization.id
+        '/api/optimizations/' + $scope.state.activeOptimization.id
           + '/graph',
-        {
-          which: which,
-          parsetId: $scope.state.activeOptimization.parset_id
-        })
+        { which: which})
       .success(function (response) {
-        clearStatusMessage();
-        $scope.graphs = response.graphs;
+        if (response.graphs) {
+          toastr.success('Graphs loaded');
+          console.log('response', response);
+          $scope.graphs = response.graphs;
+        }
       })
-      .error(function() {
-        clearStatusMessage();
+      .error(function(response) {
+        toastr.error('response');
       });
     };
 

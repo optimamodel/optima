@@ -306,15 +306,15 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
         objectives['budget'] = 1000000
 
     try:
-        # result = op.defaults.defaultproject('generalized').optimize()
         result = project.optimize(
             name=optimization_name,
             parsetname=parset_name,
             progsetname=progset_name,
             objectives=objectives,
-            constraints=constraints
+            constraints=constraints,
+            maxtime=10,
         )
-        result.name = "optim-" + result.name
+        # by default result.name = "optim-" + optimization_name
         result.parsetname = parset_name
         print "Creating result '%s'" % result.name
     except Exception:
