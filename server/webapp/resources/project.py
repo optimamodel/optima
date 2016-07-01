@@ -86,6 +86,11 @@ def set_values_on_project(project, args):
     set_populations_on_project(project, args.get('populations', {}))
     project.name = args["name"]
 
+    if not project.settings:
+        project.settings = op.Settings()
+
+    project.settings.start = args["datastart"]
+    project.settings.end = args["dataend"]
 
 
 def get_project_summary_from_record(project_record):
@@ -377,6 +382,7 @@ class Project(Resource):
             pops=args['populations'],
             datastart=args["datastart"],
             dataend=args["dataend"])
+
 
         current_app.logger.debug(
             "new_project_template: %s" % new_project_template)

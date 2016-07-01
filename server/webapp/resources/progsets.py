@@ -16,7 +16,7 @@ from server.webapp.dataio import (
     get_target_popsizes, load_parameters_from_progset_parset,
     get_progset_from_project, get_progset_summary, get_parset_from_project,
     parse_outcomes_from_progset, get_program_from_progset, save_program_summary,
-
+    put_outcomes_into_progset,
     check_project_exists)
 from server.webapp.dbconn import db
 from server.webapp.exceptions import (ProgsetDoesNotExist)
@@ -217,25 +217,39 @@ class ProgsetEffects(Resource):
         project = load_project(project_id)
         progset = get_progset_from_project(project, progset_id)
 
-        return { 'effects': [{
-            "parset": project.parsets[0].uid,
-            "parameters": parse_outcomes_from_progset(progset)
+        outcomes = parse_outcomes_from_progset(progset)
 
-        }]}
+        for outcome in outcomes:
+            if len(outcome.years) == 0:
+                return []
+
+        return { 'effects': [{
+            "parset": parset.uid,
+            "parameters": outcomes,
+
+        } for parset in project.parsets.values()]}
 
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
-        effects = request.get_json(force=True)
-        from server.webapp.dataio import load_progset_record
-        progset_record = load_progset_record(project_id, progset_id)
-        db.session.add(progset_record)
-        db.session.flush()
-        effects = normalize_obj(effects)
-        pprint(effects)
-        progset_record.effects = effects
-        db.session.commit()
-        progset_record = load_progset_record(project_id, progset_id)
-        return { 'effects': progset_record.effects }
+        effects = normalize_obj(request.get_json(force=True))
+
+        print(effects)
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+        progset = get_progset_from_project(project, progset_id)
+
+        put_outcomes_into_progset(effects[0]["parameters"], progset)
+
+        project_record.save_obj(project)
+
+        outcomes = parse_outcomes_from_progset(progset)
+
+        return { 'effects': [{
+            "parset": parset.uid,
+            "parameters": outcomes,
+
+        } for parset in project.parsets.values()]}
 
 
 
@@ -298,8 +312,6 @@ class Program(Resource):
         project = project_record.load()
 
         progset = get_progset_from_project(project, progset_id)
-
-        print(program_summary)
 
         save_program_summary(progset, program_summary)
 

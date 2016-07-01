@@ -32,7 +32,7 @@ from server.webapp.utils import TEMPLATEDIR, upload_dir_user, normalize_obj
 from server.webapp.parse import (
     parse_default_program_summaries, parse_parameters_of_parset_list,
     parse_parameters_from_progset_parset, revert_targetpars, parse_program_summary,
-    revert_costcovdata, parse_outcomes_from_progset, revert_ccopars,
+    revert_costcovdata, parse_outcomes_from_progset, revert_ccopars, put_outcomes_into_progset,
 )
 
 
@@ -494,8 +494,6 @@ def save_program_summary(progset, summary):
         progset.addprograms(program)
     else:
         progset.inactive_programs[program.short] = program
-
-    print(program)
 
     progset.updateprogset()
 
