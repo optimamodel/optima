@@ -849,8 +849,6 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
             
             # Reconcile population sizes for populations with no inflows
             thissusreg = people[susreg,noinflows,t+1] # WARNING, will break if susreg is not a scalar index!
-            if any(thissusreg<0) or any(thissusreg>1e8):
-                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             thisprogcirc = people[progcirc,noinflows,t+1]
             allsus = thissusreg+thisprogcirc
             newpeople = popsize[noinflows,t+1] - people[:,:,t+1][:,noinflows].sum(axis=0) # Number of people to add according to simpars['popsize'] (can be negative)
