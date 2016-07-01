@@ -15,6 +15,13 @@
           port: 9001,
           repo: "github.com/optimamodel/optima.git",
           branch: develop
+        },
+        {
+          name: cdc,
+          domain: cdc.optimamodel.com,
+          port: 9002,
+          repo: "github.com/optimamodel/optima.git",
+          branch: develop
         }
       ]
     - user: optima
@@ -34,6 +41,10 @@
     - {
         role: optima,
         app: "{{ apps.1 }}"
+      }
+    - {
+        role: optima,
+        app: "{{ apps.2 }}"
       }
     - {
         role: rproxy
