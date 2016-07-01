@@ -96,6 +96,7 @@ decode_structs = {
     "Parscen": optima.Parscen,
     "Budgetscen": optima.Budgetscen,
     "Programset": optima.Programset,
+    "Coveragescen": optima.Coveragescen,
     "Covout": optima.programs.Covout,
     "Resultset": optima.Resultset,
     "Parameterset": optima.Parameterset,

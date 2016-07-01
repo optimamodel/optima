@@ -172,24 +172,31 @@ def get_project_parameters(project):
 
 
 def get_parset_from_project(project, parset_id):
+    if not isinstance(parset_id, UUID):
+        parset_id = UUID(parset_id)
+
     parsets = [
         project.parsets[key]
         for key in project.parsets
         if project.parsets[key].uid == parset_id
     ]
     if not parsets:
-        raise ParsetDoesNotExist(project_id=project_id, id=parset_id)
+        raise ParsetDoesNotExist(project_id=project.uid, id=parset_id)
     return parsets[0]
 
 
 def get_progset_from_project(project, progset_id):
+    if not isinstance(progset_id, UUID):
+        print(progset_id)
+        progset_id = UUID(progset_id)
+
     progsets = [
         project.progsets[key]
         for key in project.progsets
         if project.progsets[key].uid == progset_id
     ]
     if not progsets:
-        raise ProgsetDoesNotExist(project_id=project_id, id=progset_id)
+        raise ProgsetDoesNotExist(project_id=project.uid, id=progset_id)
     return progsets[0]
 
 
@@ -363,12 +370,12 @@ def get_scenario_summary(project, scenario):
         extra_data["coverage"] = scenario.coverage
     elif isinstance(scenario, op.Budgetscen):
         scenario_type = "budget"
+        extra_data["budget"] = scenario.budget
 
     if hasattr(scenario, "progsetname"):
         progset_id = project.progsets[scenario.progsetname].uid
     else:
         progset_id = None
-
 
     result = {
         'id': scenario.uid,
@@ -380,35 +387,6 @@ def get_scenario_summary(project, scenario):
     }
     result.update(extra_data)
     return result
-
-
-def update_or_create_scenario_record(project_id, scenario_summary):
-    scenario_id = scenario_summary.pop("id", None)
-
-    # put scenario type specific keys in blob
-    blob = {}
-    for blob_key in ['pars', 'budget', 'coverage', 'years']:
-        value = scenario_summary.pop(blob_key, None)
-        if value is not None:
-            blob[blob_key] = value
-
-    if 'years' in blob:
-        blob['years'] = map(int, blob['years'])
-
-    if scenario_id is None:
-        record = ScenariosDb(project_id, blob=blob, **scenario_summary)
-    else:
-        record = ScenariosDb.query.filter_by(id=scenario_id).first()
-        record.blob = blob
-        for key, value in scenario_summary.items():
-            setattr(record, key, value)
-
-    db.session.add(record)
-    db.session.flush()
-    # print("Saving scenario to database")
-    # pprint(scenario_summary)
-    # pprint(get_scenario_summary_from_record(record))
-    return record
 
 
 def get_scenario_summaries(project):
@@ -424,8 +402,44 @@ def save_scenario_summaries(project, scenario_summaries):
 
     for s in scenario_summaries:
 
-        if s["scenario_type"]:
-            pass
+        print(s)
+
+        if s["parset_id"]:
+            parset_name = get_parset_from_project(project, s["parset_id"]).name
+        else:
+            parset_name = False
+
+        kwargs = {
+            "name": s["name"],
+            "active": s["active"],
+            "parsetname": parset_name,
+
+        }
+
+        if "progset_id" in s and s["progset_id"]:
+            progset_name = get_progset_from_project(project, s["progset_id"]).name
+
+        if s["scenario_type"] == "parameter":
+            par = op.Parscen(
+                pars=s["pars"],
+                **kwargs)
+
+        elif s["scenario_type"] == "coverage":
+            par = op.Coveragescen(
+                coverage=s["coverage"],
+                progsetname=progset_name,
+                **kwargs)
+        elif s["scenario_type"] == "budget":
+            par = op.Budgetscen(
+                budget=s["budget"],
+                progsetname=progset_name,
+                **kwargs)
+
+        if s.get("id"):
+            par.uid = UUID(s["id"])
+
+        project.scens[par.name] = par
+
 
 
 

@@ -27,6 +27,13 @@ class Scen(object):
         else:
             print('WARNING, no results associated with this scenario')
 
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+        # Make sure we have a UUID...
+        if not hasattr(self, "uid"):
+            self.uid = uuid()
+
 
 
 class Parscen(Scen):

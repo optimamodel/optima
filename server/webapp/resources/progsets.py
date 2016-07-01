@@ -219,9 +219,7 @@ class ProgsetEffects(Resource):
 
         outcomes = parse_outcomes_from_progset(progset)
 
-        for outcome in outcomes:
-            if len(outcome.years) == 0:
-                return []
+        # Bosco needs to fix this...
 
         return { 'effects': [{
             "parset": parset.uid,
@@ -232,8 +230,6 @@ class ProgsetEffects(Resource):
     @swagger.operation(summary='Saves a list of outcomes')
     def put(self, project_id, progset_id):
         effects = normalize_obj(request.get_json(force=True))
-
-        print(effects)
 
         project_record = load_project_record(project_id)
         project = project_record.load()
@@ -250,7 +246,6 @@ class ProgsetEffects(Resource):
             "parameters": outcomes,
 
         } for parset in project.parsets.values()]}
-
 
 
 query_program_parser = RequestParser()
