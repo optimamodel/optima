@@ -404,13 +404,39 @@ class GAOptim(object):
         output += '============================================================\n'
         output += objrepr(self)
         return output
+
+
+    def batchfunc(
+            self, p, pind, outputqueue, projects, initbudgets, optbudgets,
+            parsetnames, progsetnames, maxtime, parprogind, verbose):
+        loadbalancer(index=pind)
+        printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
+
+        tmp = odict()
+
+        # Crash if any project doesn't have progsets
+        if not p.progsets or not p.parsets:
+            errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
+            raise OptimaException(errormsg)
+
+        initobjectives = dcp(self.objectives)
+        initobjectives['budget'] = initbudgets[pind] + budgeteps
+        printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
+        tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
+
+        optobjectives = dcp(self.objectives)
+        optobjectives['budget'] = optbudgets[pind] + budgeteps
+        printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
+        tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
     
+        outputqueue.put(tmp)
+        return None
+
     
     def complete(self, projects, initbudgets, optbudgets, parsetnames=None, progsetnames=None, maxtime=None, parprogind=0, verbose=2):
         ''' Runs final optimisations for initbudgets and optbudgets so as to summarise GA optimisation '''
         printv('Finalizing geospatial analysis...', 1, verbose)
         printv('Warning, using default programset/programset!', 2, verbose)
-        
         
         # Validate inputs
         if not len(projects) == len(initbudgets) or not len(projects) == len(optbudgets):
@@ -431,41 +457,23 @@ class GAOptim(object):
 
         # Project optimisation processes (e.g. Optims and Multiresults) are not saved to Project, only GA Optim.
         # This avoids name conflicts for Optims/Multiresults from multiple GAOptims (via project add methods) that we really don't need.
-        def batchfunc(p, pind, outputqueue):
-            loadbalancer(index=pind)
-            printv('Running %i of %i...' % (pind+1, len(projects)), 2, verbose)
-            
-            tmp = odict()
-            
-            # Crash if any project doesn't have progsets
-            if not p.progsets or not p.parsets: 
-                errormsg = 'Project "%s" does not have a progset and/or a parset, can''t generate a BOC.'
-                raise OptimaException(errormsg)
-            
-            initobjectives = dcp(self.objectives)
-            initobjectives['budget'] = initbudgets[pind] + budgeteps
-            printv("Generating initial-budget optimization for project '%s'." % p.name, 2, verbose)
-            tmp['init'] = p.optimize(name=p.name+' GA initial', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=initobjectives, maxtime=0.0, saveprocess=False) # WARNING TEMP
-            
-            optobjectives = dcp(self.objectives)
-            optobjectives['budget'] = optbudgets[pind] + budgeteps
-            printv("Generating optimal-budget optimization for project '%s'." % p.name, 2, verbose)
-            tmp['opt'] = p.optimize(name=p.name+' GA optimal', parsetname=p.parsets[parsetnames[parprogind]].name, progsetname=p.progsets[progsetnames[parprogind]].name, objectives=optobjectives, maxtime=maxtime, saveprocess=False)
-
-            outputqueue.put(tmp)
-            return None
         
         outputqueue = Queue()
         processes = []
         for pind,p in enumerate(projects.values()):
-            prc = Process(target=batchfunc, args=(p, pind, outputqueue))
+            prc = Process(
+                target=self.batchfunc,
+                args=(p, pind, outputqueue, projects, initbudgets,
+                      optbudgets, parsetnames, progsetnames, maxtime,
+                      parprogind, verbose))
             prc.start()
             processes.append(prc)
         for pind,p in enumerate(projects.values()):
             self.resultpairs[str(p.uid)] = outputqueue.get()
     
         return None
-    
+
+
     # WARNING: We are comparing the un-optimised outcomes of the pre-GA allocation with the re-optimised outcomes of the post-GA allocation!
     # Be very wary of the indices being used...
     def printresults(self, verbose=2):
@@ -542,7 +550,7 @@ class GAOptim(object):
                  
         ## Actually create the output
         output = ''
-        output += 'Geospatial analysis results: minimize oucomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
+        output += 'Geospatial analysis results: minimize outcomes from %i to %i' % (self.objectives['start'], self.objectives['end'])
         output += '\n\n'
         output += '\n\t\tInitial\tOptimal'
         output += '\nOverall summary'
