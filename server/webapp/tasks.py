@@ -332,7 +332,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        # delete_result(project_id, parset.uid, 'optimization', db_session=db_session)
+        delete_optimization_result(project_id, result_name, db_session)
         result_record = update_or_create_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_record)
         db_session.flush()

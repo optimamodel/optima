@@ -343,14 +343,7 @@ def update_or_create_result_record(
     # find relevant parset for the result
     print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
 
-    result_records = db_session.query(ResultsDb).filter_by(project_id=project_id, calculation_type=calculation_type)
-
-    for result_record in result_records:
-        search_result = result_record.hydrate()
-        if search_result.name == result.name:
-            return result_record
-    else:
-        result_record = None
+    result_record = db_session.query(ResultsDb).get(result.uid)
 
     blob = op.saves(result)
     if result_record is not None:
@@ -383,6 +376,25 @@ def delete_result(
     db_session.commit()
 
 
+def delete_optimization_result(
+        project_id, result_name, db_session=None):
+    if db_session is None:
+        db_session = db.session
+
+    records = db_session.query(ResultsDb).filter_by(
+        project_id=project_id,
+        parset_id=parset_id,
+        calculation_type="optimization"
+    )
+    for record in records:
+        result = record.hydrate()
+        if result.name == result_name:
+            record.delete()
+    db_session.commit()
+
+
+
+
 def save_result(
         project_id, result, parset_name='default',
         calculation_type=ResultsDb.DEFAULT_CALCULATION_TYPE,
@@ -395,6 +407,26 @@ def save_result(
     db_session.add(result_record)
     db_session.flush()
     db_session.commit()
+
+
+def load_result_by_optimization_id(optimization_id):
+    optimization_record = db.session.query(OptimizationsDb).get(optimization_id)
+    if optimization_record is None:
+        return None
+
+    result_name = "optim-" + optimization_record.name
+
+    result_records = db.session.query(ResultsDb).filter_by(
+        project_id=optimization_record.project_id,
+        parset_id=optimization_record.parset_id,
+        calculation_type="optimization")
+    for result_record in result_records:
+        result = result_record.hydrate()
+        print "> Matching optim result '%s' == '%s'" % (result.name, result_name)
+        if result.name == result_name:
+            return result
+
+    return None
 
 
 def load_project_program_summaries(project_id):
@@ -732,21 +764,3 @@ def get_default_optimization_summaries(project_id):
     return normalize_obj(defaults_by_progset_id)
 
 
-def load_result_by_optimization_id(optimization_id):
-    optimization_record = db.session.query(OptimizationsDb).get(optimization_id)
-    if optimization_record is None:
-        return None
-
-    result_name = "optim-" + optimization_record.name
-
-    result_records = db.session.query(ResultsDb).filter_by(
-        project_id=optimization_record.project_id,
-        parset_id=optimization_record.parset_id,
-        calculation_type="optimization")
-    for result_record in result_records:
-        result = result_record.hydrate()
-        print "> Matching optim result '%s' == '%s'" % (result.name, result_name)
-        if result.name == result_name:
-            return result
-
-    return None
