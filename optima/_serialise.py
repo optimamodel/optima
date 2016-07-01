@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import simplejson as json
 
 import optima
@@ -8,12 +10,14 @@ import uuid
 import zlib
 
 from dateutil import parser, tz
+from twisted.python.reflect import qual, namedAny
 
 
 def dumps(obj):
 
     obj_registry = {}
     id_number = [0]
+    saved_types = set()
 
     def default(r):
 
@@ -67,11 +71,13 @@ def dumps(obj):
                     results = default(r.__dict__)
 
                 q = {
-                    "obj": r.__class__.__name__,
+                    "obj": "obj",
+                    "type": qual(r.__class__),
                     "val": results,
                     "id": my_id
                 }
                 obj_registry[r][1] = q
+                saved_types.add(qual(r.__class__))
 
             o = {
                 "obj": "ref",
@@ -87,27 +93,10 @@ def dumps(obj):
         "registry": new_registry,
         "schema": schema}, ensure_ascii=False, separators=(',',':'))
 
+    print("Serialised:", "\n".join(saved_types))
+
     return zlib.compress(dumped, 6)
 
-
-decode_structs = {
-    "Project": optima.Project,
-    "Settings": optima.Settings,
-    "Parscen": optima.Parscen,
-    "Budgetscen": optima.Budgetscen,
-    "Programset": optima.Programset,
-    "Coveragescen": optima.Coveragescen,
-    "Covout": optima.programs.Covout,
-    "Resultset": optima.Resultset,
-    "Parameterset": optima.Parameterset,
-    "Constant": optima.Constant,
-    "Popsizepar": optima.Popsizepar,
-    "Timepar": optima.Timepar,
-    "Result": optima.Result,
-    "Program": optima.Program,
-    "Costcov": optima.programs.Costcov,
-    "Optim": optima.Optim,
-}
 
 
 def loads(input):
@@ -135,12 +124,14 @@ def loads(input):
                     ref = o["ref"]
                     return decode(registry[str(ref)])
 
-                elif obj in decode_structs:
+                elif obj == "obj":
 
                     if o["id"] in loaded:
                         return loaded[o["id"]]
 
-                    new = object.__new__(decode_structs[obj])
+                    newClass = namedAny(o["type"])
+
+                    new = object.__new__(newClass)
 
                     loaded[o["id"]] = new
 
