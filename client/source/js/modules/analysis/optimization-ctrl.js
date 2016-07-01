@@ -20,6 +20,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
       $scope.state = {
         activeProject: activeProject.data,
+        maxtime: 10,
         optimizations: []
       };
 
@@ -200,8 +201,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       if($scope.state.activeOptimization.id) {
         $http.post(
           '/api/project/' + $scope.state.activeProject.id
-          + '/optimizations/' + $scope.state.activeOptimization.id
-          + '/results')
+            + '/optimizations/' + $scope.state.activeOptimization.id
+            + '/results',
+          { maxtime: $scope.state.maxtime })
         .success(function (response) {
           if (response.status === 'started') {
             $scope.statusMessage = 'Optimization started.';

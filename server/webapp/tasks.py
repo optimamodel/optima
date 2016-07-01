@@ -9,7 +9,7 @@ from server.api import app
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
 from server.webapp.exceptions import ProjectDoesNotExist
 from server.webapp.dataio import (update_or_create_result_record, load_project_record,
-    update_or_create_parset_record, delete_result)
+    update_or_create_parset_record, delete_result, delete_optimization_result)
 
 import optima as op
 from celery import Celery
@@ -285,13 +285,14 @@ def run_autofit(project_id, parset_name, maxtime=60):
 
 
 @celery_instance.task()
-def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints):
+def run_optimization(project_id, optimization_name, parset_name, progset_name, objectives, constraints, maxtime):
     import traceback
     import pprint
     app.logger.debug('started optimization: {} {} {} {}'.format(
         project_id, optimization_name, parset_name, progset_name, objectives, constraints))
     app.logger.debug(pprint.pformat(objectives, indent=2))
     app.logger.debug(pprint.pformat(constraints, indent=2))
+    app.logger.debug(pprint.pformat("maxtime %f" % maxtime))
 
     error_text = ""
     status = 'completed'
@@ -312,7 +313,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
             progsetname=progset_name,
             objectives=objectives,
             constraints=constraints,
-            maxtime=10,
+            maxtime=maxtime,
         )
         # by default result.name = "optim-" + optimization_name
         result.parsetname = parset_name
@@ -332,7 +333,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        delete_optimization_result(project_id, result_name, db_session)
+        delete_optimization_result(project_id, result.name, db_session)
         result_record = update_or_create_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_record)
         db_session.flush()

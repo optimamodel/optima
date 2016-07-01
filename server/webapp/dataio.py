@@ -383,16 +383,13 @@ def delete_optimization_result(
 
     records = db_session.query(ResultsDb).filter_by(
         project_id=project_id,
-        parset_id=parset_id,
         calculation_type="optimization"
     )
     for record in records:
         result = record.hydrate()
         if result.name == result_name:
-            record.delete()
+            db_session.delete(record)
     db_session.commit()
-
-
 
 
 def save_result(

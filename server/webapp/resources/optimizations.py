@@ -52,6 +52,8 @@ class OptimizationCalculation(Resource):
         from server.webapp.tasks import run_optimization, start_or_report_calculation, shut_down_calculation
         from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
+        maxtime = float(json.loads(request.data).get('maxtime'))
+
         optimization_record = OptimizationsDb.query.get(optimization_id)
         optimization_name = optimization_record.name
         parset_id = optimization_record.parset_id
@@ -89,7 +91,7 @@ class OptimizationCalculation(Resource):
         constraints["name"] = op.odict(constraints["name"])
 
         run_optimization.delay(
-            project_id, optimization_name, parset_name, progset_name, objectives, constraints)
+            project_id, optimization_name, parset_name, progset_name, objectives, constraints, maxtime)
 
         calc_state['status'] = 'started'
 
