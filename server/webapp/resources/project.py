@@ -750,6 +750,12 @@ class ProjectFromData(Resource):
         project = op.loadobj(uploaded_file)
         project.name = project_name
 
+        project.uid = op.uuid()
+        for parset in project.parsets.values():
+            parset.uid = op.uuid()
+        for result in project.results.values():
+            result.uid = op.uuid()
+
         from optima.makespreadsheet import default_datastart, default_dataend
         datastart = default_datastart
         dataend = default_dataend
