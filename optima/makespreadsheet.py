@@ -134,7 +134,6 @@ def make_populations_range(name, items):
         if type(item) is dict:
             item_name = item['name']
             short_name = item.get('short', abbreviate(item_name))
-#            short_name = item['short_name']
             male = item.get('male', False)
             female = item.get('female', False)
             age_from = item.get('age_from',15)
