@@ -161,12 +161,12 @@ def shut_down_calculation(project_id, parset_id, work_type):
         work_type: "autofit" or "optimization"
     """
     db_session = init_db_session()
-    working_project_record = db_session.query(WorkingProjectDb).filter_by(
-        id=project_id).first()
-    if working_project_record is not None:
-        work_log_records = db_session.query(WorkLogDb).filter_by(
-            project_id=project_id, parset_id=parset_id, work_type=work_type)
-        work_log_records.delete()
+    work_log_records = db_session.query(WorkLogDb).filter_by(
+        project_id=project_id, parset_id=parset_id, work_type=work_type)
+    work_log_records.delete()
+    working_project_records = db_session.query(WorkingProjectDb).filter_by(
+        id=project_id)
+    working_project_records.delete()
     db_session.commit()
     close_db_session(db_session)
 
@@ -194,8 +194,10 @@ def check_calculation_status(project_id, parset_id, work_type):
         project_id=project_id, parset_id=parset_id, work_type=work_type
         ).first()
     if work_log_record:
+        print "> Found job in project with work_type", work_type
         result = parse_work_log_record(work_log_record)
     else:
+        print "> No such job work_type", work_type
         result = {
             'status': 'unknown',
             'error_text': None,
@@ -311,13 +313,12 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
         # by default result.name = "optim-" + optimization_name
         result.parsetname = parset_name
         print "Creating result '%s'" % result.name
+        status = 'completed'
     except Exception:
         var = traceback.format_exc()
         print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, optimization_name, 'optimization', var))
         error_text = var
         status='error'
-
-    delete_optimization_result(project_id, result.name, db_session)
 
     db_session = init_db_session()
     working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
@@ -326,14 +327,13 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log_record.status = status
     work_log_record.error = error_text
     work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
-
     if result:
+        delete_optimization_result(project_id, result.name, db_session)
         result_record = update_or_create_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_record)
         db_session.flush()
         work_log_record.result_id = result_record.id
-
-    db_session.add(work_log_record)
+    db_session.delete(working_project_record)
 
     working_project_record.is_working = False
     working_project_record.work_type = None

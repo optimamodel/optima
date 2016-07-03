@@ -53,8 +53,6 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             selectDefaultProgsetAndParset($scope.state.activeOptimization);
 
-            // run once just in case an optimization was running
-            initPollOptimizations();
           });
         });
       });
@@ -108,6 +106,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       $scope.optimizationCharts = [];
       $scope.selectors = [];
       $scope.graphs = {};
+      // run once just in case an optimization was running
+      $scope.statusMessage = '';
+      initPollOptimizations();
       $scope.getOptimizationGraphs();
     };
 

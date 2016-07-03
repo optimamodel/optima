@@ -58,7 +58,8 @@ class OptimizationCalculation(Resource):
         optimization_name = optimization_record.name
         parset_id = optimization_record.parset_id
 
-        calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
+        calc_state = start_or_report_calculation(
+            project_id, parset_id, 'optim-' + optimization_name)
 
         if calc_state['status'] != 'started':
             return calc_state, 208
@@ -93,8 +94,6 @@ class OptimizationCalculation(Resource):
         run_optimization.delay(
             project_id, optimization_name, parset_name, progset_name, objectives, constraints, maxtime)
 
-        calc_state['status'] = 'started'
-
         return calc_state, 201
 
     @swagger.operation(summary='Poll optimization calculation for a project')
@@ -102,8 +101,9 @@ class OptimizationCalculation(Resource):
         from server.webapp.tasks import check_calculation_status
         optimization_record = load_optimization_record(optimization_id)
         calc_state = check_calculation_status(
-            optimization_record.project_id,
-            optimization_record.parset_id, 'optimization')
+            project_id,
+            optimization_record.parset_id,
+            'optim-' + optimization_record.name)
         print ">>> Checking calc state", calc_state
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
