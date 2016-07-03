@@ -49,6 +49,17 @@ def close_db_session(db_session):
     db_session.bind.dispose() # pylint: disable=E1101
 
 
+def parse_work_log_record(work_log):
+    return {
+        'status': work_log.status,
+        'error_text': work_log.error,
+        'start_time': work_log.start_time,
+        'stop_time': work_log.stop_time,
+        'result_id': work_log.result_id,
+        'work_type': work_log.work_type
+    }
+
+
 def start_or_report_calculation(project_id, parset_id, work_type):
     """
     Checks and sets up a WorkLog and WorkingProject for async calculation.
@@ -63,11 +74,14 @@ def start_or_report_calculation(project_id, parset_id, work_type):
 
     Returns:
         A status update on the state of the async queue for the given project.
+    Returns:
         {
-            'can_start': boolean,
-            'can_join': boolean,
-            'parset_id': uuid_string,
-            'work_type': "autofit" or "optimization"
+            'status': 'started', 'ready', 'completed', 'cancelled', 'error', 'blocked'
+            'error_text': str
+            'start_time': datetime
+            'stop_time': datetime
+            'result_id': uuid of Results
+            'work_type': 'autofit' or 'optim-*'
         }
     """
     print "start_or_report_calculation(%s %s %s)" % (project_id, parset_id, work_type)
@@ -75,73 +89,59 @@ def start_or_report_calculation(project_id, parset_id, work_type):
     db_session = init_db_session()
 
     calc_state = {
-        'can_start': False,
-        'can_join': False,
-        'parset_id': parset_id,
-        'work_type': work_type
+        'status': 'blocked',
+        'error_text': None,
+        'start_time': None,
+        'stop_time': None,
+        'result_id': None,
+        'work_type': ''
     }
+
+    work_log_records = db_session.query(WorkLogDb).filter_by(
+        project_id=project_id)
+
+    # a work_log exists for this project and it has started,
+    # then this calculation is blocked from starting
+    for work_log_record in work_log_records:
+        if work_log_record.status == 'started':
+            close_db_session(db_session)
+            return calc_state
+
+    calc_state['status'] = "started"
+
+    # clean up completed/error/cancelled records
+    work_log_records = db_session.query(WorkLogDb).filter_by(
+        project_id=project_id, parset_id=parset_id, work_type=work_type)
+    work_log_records.delete()
+    work_project_records = db_session.query(WorkingProjectDb).filter_by(
+        id=project_id)
+    work_project_records.delete()
+
+    # create a work_log status is 'started by default'
+    work_log_record = WorkLogDb(
+        project_id=project_id, parset_id=parset_id, work_type=work_type)
+    work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
+    db_session.add(work_log_record)
+    db_session.flush()
+    work_log_id = work_log_record.id
 
     project_record = load_project_record(
         project_id, raise_exception=False, db_session=db_session)
     if not project_record:
         close_db_session(db_session)
         raise ProjectDoesNotExist(project_id)
+    project = project_record.hydrate()
+    project_pickled = op.saves(project)
 
-    is_already_working = False
-
-    working_project_record = db_session.query(WorkingProjectDb).filter_by(
-        id=project_id).first()
-    if working_project_record is not None:
-        work_log_record = db_session.query(WorkLogDb).filter_by(
-            project_id=project_id, parset_id=parset_id, work_type=work_type).first()
-        if work_log_record is None:
-            print "> Found no work logs"
-        else:
-            print "> Checking work log", work_log_record.status
-            if work_log_record.status == "started":
-                is_already_working = True
-                if not working_project_record.is_working:
-                    # mismatch between work_log and working_project
-                    working_project_record.is_working = False
-                    db_session.add(working_project_record)
-
-    if is_already_working:
-        print("> A job with this project already exists")
-    else:
-        calc_state['can_start'] = True
-
-        work_log_records = db_session.query(WorkLogDb).filter_by(
-            project_id=project_id, parset_id=parset_id, work_type=work_type)
-        work_log_records.delete()
-
-        work_log_record = WorkLogDb(project_id=project_id, parset_id=parset_id, work_type=work_type)
-        work_log_record.start_time = datetime.datetime.now(dateutil.tz.tzutc())
-        db_session.add(work_log_record)
-        db_session.flush()
-
-        project = project_record.hydrate()
-        project_pickled = op.saves(project)
-
-        work_log_id = work_log_record.id
-
-        if working_project_record is None:
-            print("> Creating new working project")
-            db_session.add(
-                WorkingProjectDb(
-                    project_record.id,
-                    parset_id=parset_id,
-                    project=project_pickled,
-                    is_working=True,
-                    work_type=work_type,
-                    work_log_id=work_log_id))
-        else:
-            print("> Found eisting working project to reuse")
-            working_project_record.work_type = work_type
-            working_project_record.parset_id = parset_id
-            working_project_record.is_working = True
-            working_project_record.project = project_pickled
-            working_project_record.work_log_id = work_log_id
-            db_session.add(working_project_record)
+    print("> Creating new working project")
+    db_session.add(
+        WorkingProjectDb(
+            project_record.id,
+            parset_id=parset_id,
+            project=project_pickled,
+            is_working=True,
+            work_type=work_type,
+            work_log_id=work_log_id))
 
     db_session.commit()
     close_db_session(db_session)
@@ -171,7 +171,7 @@ def shut_down_calculation(project_id, parset_id, work_type):
     close_db_session(db_session)
 
 
-def check_calculation_status(project_id):
+def check_calculation_status(project_id, parset_id, work_type):
     """
     Checks the current calculation state of a project.
 
@@ -180,37 +180,30 @@ def check_calculation_status(project_id):
 
     Returns:
         {
-            'status': 'started', 'completed', 'cancelled', 'error'
+            'status': 'started', 'completed', 'cancelled', 'error', 'blocked'
             'error_text': str
             'start_time': datetime
             'stop_time': datetime
             'result_id': uuid of Results
+            'work_type': 'autofit' or 'optim-*'
         }
     """
-    result = {
-        'status': 'unknown',
-        'error_text': None,
-        'start_time': None,
-        'stop_time': None,
-        'result_id': None
-    }
 
     db_session = init_db_session()
-    working_project_record = db_session.query(WorkingProjectDb).get(project_id)
-    if working_project_record is not None:
-        # As only one job can run per project, whether it be "autofit" or "optimization",
-        # the project_id defines the only possible; work_log_records that are active.
-        work_log_id = working_project_record.work_log_id
-        work_log = db_session.query(WorkLogDb).get(work_log_id)
-        if work_log is not None:
-            result = {
-                'status': work_log.status,
-                'error_text': work_log.error,
-                'start_time': work_log.start_time,
-                'stop_time': work_log.stop_time,
-                'result_id': work_log.result_id
-            }
-
+    work_log_record = db_session.query(WorkLogDb).filter_by(
+        project_id=project_id, parset_id=parset_id, work_type=work_type
+        ).first()
+    if work_log_record:
+        result = parse_work_log_record(work_log_record)
+    else:
+        result = {
+            'status': 'unknown',
+            'error_text': None,
+            'start_time': None,
+            'stop_time': None,
+            'result_id': None,
+            'work_type': ''
+        }
     close_db_session(db_session)
     return result
 
@@ -324,6 +317,8 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
         error_text = var
         status='error'
 
+    delete_optimization_result(project_id, result.name, db_session)
+
     db_session = init_db_session()
     working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     working_project_record.project = op.saves(project)
@@ -333,7 +328,6 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        delete_optimization_result(project_id, result.name, db_session)
         result_record = update_or_create_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_record)
         db_session.flush()

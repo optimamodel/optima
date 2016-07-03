@@ -329,21 +329,16 @@ class ParsetAutofit(Resource):
 
         """
         from server.webapp.tasks import run_autofit, start_or_report_calculation
-        parser = RequestParser()
-        parser.add_argument('maxtime', required=False, type=int, default=60)
-        args = parser.parse_args()
-        maxtime = args['maxtime']
 
+        maxtime = json.loads(request.data).get('maxtime')
         calc_status = start_or_report_calculation(project_id, parset_id, 'autofit')
-        if not calc_status['can_start']:
-            calc_status['status'] = 'running'
-            return calc_status, 208
-        else:
+        if calc_status['status'] != "blocked":
             parset_name = load_parset_record(project_id, parset_id).name
+            print "> Starting autofit for %s s" % maxtime
             run_autofit.delay(project_id, parset_name, maxtime)
             calc_status['status'] = 'started'
             calc_status['maxtime'] = maxtime
-            return calc_status, 201
+        return calc_status
 
     @swagger.operation(summary='Poll autofit status')
     def get(self, project_id, parset_id):
@@ -355,7 +350,7 @@ class ParsetAutofit(Resource):
             parset_id:
         """
         from server.webapp.tasks import check_calculation_status
-        calc_state = check_calculation_status(project_id)
+        calc_state = check_calculation_status(project_id, parset_id, 'autofit')
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state

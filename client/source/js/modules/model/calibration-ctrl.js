@@ -1,7 +1,8 @@
 define(['./module', 'angular', 'underscore'], function (module, angular, _) {
   'use strict';
 
-  module.controller('ModelCalibrationController', function ($scope, $http, info, modalService, $upload, $modal, $timeout) {
+  module.controller('ModelCalibrationController', function (
+      $scope, $http, info, modalService, $upload, $modal, $timeout, toastr) {
 
     function consoleLogJson(name, val) {
       console.log(name + ' = ');
@@ -33,6 +34,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         if(parsets) {
           $scope.parsets = parsets;
           $scope.activeParset = parsets[0];
+          initPollAutoCalibration();
           $scope.getGraphs();
         }
       });
@@ -86,6 +88,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       console.log('uploaded parameters', payload);
       $http.post(url, payload)
       .success(function (response) {
+        toastr.success('Updated parameters and graphs')
         setCalibrationData(response.calibration);
       });
     };
@@ -276,28 +279,47 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           $scope.secondsRun = 0;
           $scope.setMaxtime = data.maxtime;
           pollAutoCalibration();
-        } else if(response.status === 'running') {
-          $scope.statusMessage = 'Autofit already running.'
+        } else if(response.status === 'blocked') {
+          $scope.statusMessage = 'Another calculation on this project is already running.'
         }
       })
     };
 
+    var initPollAutoCalibration = function() {
+      $http.get(
+        '/api/project/' + activeProjectInfo.id
+        +  '/parsets/' + $scope.activeParset.id
+        + '/automatic_calibration')
+      .success(function(response) {
+        if (response.status === 'started') {
+          pollAutoCalibration();
+        }
+      });
+    };
+
     var pollAutoCalibration = function() {
-      $http.get('/api/project/' + activeProjectInfo.id +  '/parsets/' + $scope.activeParset.id +'/automatic_calibration')
-        .success(function(response) {
-          if (response.status === 'completed') {
-            $scope.getAutoCalibratedGraphs();
-            $scope.statusMessage = 'Autofit completed.';
-            $timeout.cancel($scope.pollTimer);
-          } else if (response.status === 'error') {
-            $scope.statusMessage = 'Error in running autofit.';
-            $timeout.cancel($scope.pollTimer);
-          } else if (response.status === 'started') {
-            $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
-            $scope.statusMessage = "Autofit running for " + $scope.secondsRun + " s";
-            $scope.secondsRun += 1;
-          }
-        });
+      $http.get(
+          '/api/project/' + activeProjectInfo.id
+            + '/parsets/' + $scope.activeParset.id
+            + '/automatic_calibration')
+      .success(function(response) {
+        if (response.status === 'completed') {
+          $scope.getAutoCalibratedGraphs();
+          $scope.statusMessage = '';
+          toastr.success('Autofit completed');
+          $timeout.cancel($scope.pollTimer);
+        } else if (response.status === 'error') {
+          $scope.statusMessage = 'Error in running autofit.';
+          $timeout.cancel($scope.pollTimer);
+        } else if (response.status === 'started') {
+          var start = new Date(response.start_time);
+          var now = new Date();
+          var diff = now.getTime() - start.getTime();
+          var seconds = diff / 1000;
+          $scope.statusMessage = "Autofit running for " + parseInt(seconds) + " s";
+          $scope.pollTimer = $timeout(pollAutoCalibration, 1000);
+        }
+      });
     };
 
     $scope.getAutoCalibratedGraphs = function() {
@@ -311,6 +333,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
           parsetId: $scope.activeParset.id
         })
       .success(function(response) {
+        toastr.success('Autofitted graphs uploaded');
         setCalibrationData(response.calibration);
       });
     };

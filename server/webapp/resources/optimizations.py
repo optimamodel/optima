@@ -9,7 +9,7 @@ from flask_restful_swagger import swagger
 import optima as op
 from server.webapp.dataio import (
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries,
-    load_result_by_optimization_id)
+    load_result_by_optimization_id, load_optimization_record)
 from server.webapp.dbmodels import ParsetsDb
 from server.webapp.plot import make_mpld3_graph_dict
 from server.webapp.resources.common import report_exception
@@ -60,7 +60,7 @@ class OptimizationCalculation(Resource):
 
         calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
 
-        if not calc_state['can_start']:
+        if calc_state['status'] != 'started':
             return calc_state, 208
 
         parset_entry = ParsetsDb.query.get(parset_id)
@@ -100,7 +100,11 @@ class OptimizationCalculation(Resource):
     @swagger.operation(summary='Poll optimization calculation for a project')
     def get(self, project_id, optimization_id):
         from server.webapp.tasks import check_calculation_status
-        calc_state = check_calculation_status(project_id)
+        optimization_record = load_optimization_record(optimization_id)
+        calc_state = check_calculation_status(
+            optimization_record.project_id,
+            optimization_record.parset_id, 'optimization')
+        print ">>> Checking calc state", calc_state
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state

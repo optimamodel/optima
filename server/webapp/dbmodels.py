@@ -523,7 +523,7 @@ class WorkLogDb(db.Model):  # pylint: disable=R0903
 
     __tablename__ = "work_log"
 
-    work_status = db.Enum('started', 'completed', 'cancelled', 'error', name='work_status')
+    work_status = db.Enum('started', 'completed', 'cancelled', 'error', 'blocked', name='work_status')
 
     id = db.Column(UUID(True), server_default=text("uuid_generate_v1mc()"), primary_key=True)
     work_type = db.Column(db.String(32), default=None)

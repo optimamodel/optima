@@ -406,6 +406,10 @@ def save_result(
     db_session.commit()
 
 
+def load_optimization_record(optimization_id):
+    return db.session.query(OptimizationsDb).get(optimization_id)
+
+
 def load_result_by_optimization_id(optimization_id):
     optimization_record = db.session.query(OptimizationsDb).get(optimization_id)
     if optimization_record is None:

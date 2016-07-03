@@ -46,11 +46,11 @@
             type="button"
             value="Run"
             class="updateGraph btn"
-            ng-click="runOptimizations()"
+            ng-click="startOptimization()"
             ng-disabled="!state.activeOptimization || !state.activeOptimization.id"/>
         &nbsp;
         &nbsp;
-        Run optimization for
+        Run optimization for about
         &nbsp;
         <select ng-init="state.maxtime=10" ng-model="state.maxtime">
           <option value="10">10 seconds</option>
