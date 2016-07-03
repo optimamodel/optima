@@ -142,7 +142,7 @@ def make_populations_range(name, items):
             sexworker = item.get('sexworker',0)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            short_name = item
+            short_name = abbreviate(item)
             male = False
             female = False
             age_from = 15
