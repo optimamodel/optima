@@ -67,8 +67,8 @@ population_parser.add_arguments({
     'male': {'type': bool, 'required': True, 'location': 'json'},
     'injects': {'type': bool, 'required': True, 'location': 'json'},
     'sexworker': {'type': bool, 'required': True, 'location': 'json'},
-    'age_from': {'location': 'json'},
-    'age_to': {'location': 'json'},
+    'age_from': {'type': int, 'location': 'json'},
+    'age_to': {'type': int, 'location': 'json'},
 })
 
 project_parser = RequestParser()
