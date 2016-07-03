@@ -161,10 +161,12 @@ class Programset(object):
                     result = False
                     details.append((thispartype,thispop))
                 if thispartype not in coveragepars:
-                    for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
-                        if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
-                            result = False
-                            details.append((thispartype,thispop))
+                    try: 
+                        for thisprog in self.progs_by_targetpar(thispartype)[thispop]: 
+                            if not self.covout[thispartype][thispop].ccopars[thisprog.short]:
+                                result = False
+                                details.append((thispartype,thispop))
+                    except: import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
         if detail: return list(set(details))
         else: return result
 

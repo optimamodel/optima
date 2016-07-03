@@ -133,7 +133,8 @@ def make_populations_range(name, items):
     for item in items:
         if type(item) is dict:
             item_name = item['name']
-            short_name = item.get('short_name', abbreviate(item_name))
+            short_name = item.get('short', abbreviate(item_name))
+#            short_name = item['short_name']
             male = item.get('male', False)
             female = item.get('female', False)
             age_from = item.get('age_from',15)
@@ -142,7 +143,7 @@ def make_populations_range(name, items):
             sexworker = item.get('sexworker',0)
         else: # backward compatibility :) might raise exception which is ok
             item_name = item
-            short_name = abbreviate(item_name)
+            short_name = item
             male = False
             female = False
             age_from = 15
