@@ -18,13 +18,15 @@
     <div style="display: flex; margin-top: 2%">
       <div class="chart-container" style="">
 
-        <div mpld3-chart="chartData"
-             style="width: 600px; height: 300px"
-             chart-id="{{ chartData.id }}"
-             ng-if="chartData !== null">
-        </div>
-        <div class="c-caption" ng-if="displayCaption">
-          {{displayCaption}}
+        <div style="width: 600px; height:366px">
+          <div mpld3-chart="chartData"
+               style="width: 600px; height: 300px"
+               chart-id="{{ chartData.id }}"
+               ng-if="chartData !== null">
+          </div>
+          <div class="c-caption" ng-if="displayCaption">
+            {{displayCaption}}
+          </div>
         </div>
 
       </div>
