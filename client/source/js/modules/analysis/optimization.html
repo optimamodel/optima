@@ -24,10 +24,10 @@
       <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
     </div>
 
-    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">
-      <div class="small_bordered_list" style="width: 30%;">
+    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: calc(100vh - 300px)">
+      <div class="small_bordered_list" style="width: 520px;">
         <form name="optimizationForm">
-          <div class="option_list" style="height:62vh">
+          <div class="option_list" style="height: calc(100vh - 300px)">
             <div class="section">
               <div class="label">Program set</div>
               <select class="txbox"
@@ -109,8 +109,10 @@
 
 
             </div>
+
+
             <div ng-if="state.activeOptimization.constraints" class="section">
-              <div class="label">Constraints</div>
+              <div class="label">Constraints by year</div>
               <div style="justify-content: space-around; font-weight: bold" class="option">
                 <span style="width: 60%">Program Name</span>
                 <span style="width: 20%">Minimum</span>
@@ -126,6 +128,29 @@
                   <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
                 </span>
             </div>
+
+              <br>
+              <br>
+
+
+            <div ng-if="state.activeOptimization.constraints" class="section">
+              <div class="label">Constraints by funding period</div>
+              <div style="justify-content: space-around; font-weight: bold" class="option">
+                <span style="width: 60%">Program Name</span>
+                <span style="width: 20%">Minimum</span>
+                <span style="width: 20%">Maximum</span>
+              </div>
+            </div>
+            <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
+              <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
+                <span style="width: 20%">
+                  <input class="txbox __inline __m" type="number" ng-model="state.dummy[constraintKey]"/>
+                </span>
+                <span style="width: 20%">
+                  <input class="txbox __inline __m" type="number" ng-model="state.dummy2[constraintKey]"/>
+                </span>
+            </div>
+
           </div>
 
           <div style="color: ##00aeef; margin-top: 25px; margin-left: 35px">
