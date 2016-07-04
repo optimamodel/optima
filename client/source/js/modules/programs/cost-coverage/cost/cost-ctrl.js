@@ -161,7 +161,7 @@ define(['./../../module', 'underscore'], function (module, _) {
           "Unit Cost (low)", "Unit Cost (high)"],
         rows: [],
         types: ["selector", "display", "number", "number", "number", "number"],
-        widths: [],
+        widths: ["5em", "5em", "5em", "5em", "5em", "5em"],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
         options: [$scope.yearSelector],
         validateFn: validateCcoparsTable

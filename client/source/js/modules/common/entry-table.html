@@ -11,7 +11,7 @@
     <td ng-if="$parent.$index != table.iEditRow"
         ng-repeat="cell in getDisplayRow($index) track by $index">
       <span
-          style="width:{{table.widths[$index]}}px"
+          style="width:{{table.widths[$index]}}"
           ng-if='table.types[$index] == "number"'>
         {{cell}}
       </span>
@@ -32,10 +32,12 @@
           type="number"
         ng-model="row[$index]">
       <span
+         style="width:{{table.widths[$index]}}"
          ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
-      <div>
+      <div
+        style="width:{{table.widths[$index]}}">
         <select
             ng-if='table.types[$index] == "selector"'
             ng-model="row[$index]"
