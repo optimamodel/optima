@@ -145,7 +145,13 @@ define(['./../module', 'underscore'], function (module, _) {
     }
 
     function makePopKeyLabel(popKey) {
-      return typeof popKey === 'string' ? popKey : popKey.join(' <-> ');
+      if (typeof popKey === 'string') {
+        if (popKey == "tot") {
+          return "Total Population";
+        }
+        return popKey;
+      }
+      return popKey.join(' <-> ');
     }
 
     function makePopulationLabel(population) {
@@ -316,16 +322,17 @@ define(['./../module', 'underscore'], function (module, _) {
         rows: []
       };
 
-      vm.table.rows.push(makeBlankRow());
+      var cells;
 
-      var cells = [
-        {}, {},
-        {attr: {type: "string"}, value: 'Absolute limits of parameter values'},
-        {},
-        {attr: {type: "string"}, value: vm.selectedParameter.limits[0]},
-        {attr: {type: "string"}, value: vm.selectedParameter.limits[1]}];
+      // vm.table.rows.push(makeBlankRow());
 
-      vm.table.rows.push({attr: {isSkip: true}, cells: cells});
+      // cells = [
+      //   {}, {},
+      //   {attr: {type: "string"}, value: 'Absolute limits of parameter values'},
+      //   {},
+      //   {attr: {type: "string"}, value: vm.selectedParameter.limits[0]},
+      //   {attr: {type: "string"}, value: vm.selectedParameter.limits[1]}];
+      // vm.table.rows.push({attr: {isSkip: true}, cells: cells});
 
       _.each(getOutcomesForSelectedParset(), function (outcome) {
         if (outcome.name == vm.selectedParameter.short) {
@@ -342,7 +349,17 @@ define(['./../module', 'underscore'], function (module, _) {
               label: 'Parameter values in the absence of any program',
               attr: {type: "string"}
             });
-            cells.push({value: year.interact, attr: {type: "string"}});
+            cells.push({
+              value: year.interact,
+              attr: {
+                type: "selector",
+                options: [
+                  {label: "random", value: "random"},
+                  {label: "nested", value: "nested"},
+                  {label: "additive", value: "additive"}
+                ]
+              }
+            });
             cells.push({value: year.intercept_lower, attr: {type: "input"}});
             cells.push({value: year.intercept_upper, attr: {type: "input"}});
 
