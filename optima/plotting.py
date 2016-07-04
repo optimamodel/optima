@@ -20,9 +20,10 @@ from matplotlib import ticker
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta', 'popsize-sta'] # Default epidemiological plots
+defaultepiplots = ['numplhiv-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta', 'prev-per', 'popsize-sta'] # Default epidemiological plots
 #defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
-defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
+#defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
+defaultplots = ['budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
 
 # Define global font sizes
 globaltitlesize = 10
