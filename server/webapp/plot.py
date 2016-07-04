@@ -26,7 +26,7 @@ def convert_to_mpld3(figure):
     plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
 
-   is_stack_plot = False
+    is_stack_plot = False
     for ax in figure.axes:
         legend = ax.get_legend()
         if legend is not None:
