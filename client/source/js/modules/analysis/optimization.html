@@ -75,6 +75,7 @@
             </div>
             <div ng-if="state.activeOptimization.objectives" class="section">
               <div class="label">Objectives</div>
+
               <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
                 <span style="width: 70%">{{objective.label}}</span>
                   <span style="width: 30%">
@@ -86,6 +87,27 @@
                       ng-class="{'invalid': optimizationForm[objective.key].$invalid}"/>
                   </span>
               </div>
+
+                <div style="line-height: 1.7em;">
+                    <input type="checkbox" ng-init="cumulative_hiv=true" ng-model="cumulative_hiv">
+                    <label>Cumulative new HIV infections</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="cumulative_dalys">
+                    <label>Cumulative DALYs</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="cumulative_aids">
+                    <label>Cumulative AIDS-related death</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="total_hiv">
+                    <label>Total HIV-related costs</label>
+                    <br>
+                    <br>
+                </div>
+
+
             </div>
             <div ng-if="state.activeOptimization.constraints" class="section">
               <div class="label">Constraints</div>
