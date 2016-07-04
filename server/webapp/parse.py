@@ -319,7 +319,7 @@ Female PWID;Females who inject drugs;0;1;15;49;1;0;
 Children;Children;0;0;2;15;0;0;
 Infants;Infants;0;0;0;2;0;0;
 Males;Other males;1;0;15;49;0;0;
-Females;Other females;0;1;0;15;49;0;0;
+Females;Other females;0;1;15;49;0;0;
 Other males;Other males [enter age];1;0;0;0;0;0;
 Other females;Other females [enter age];0;1;0;0;0;0;
 """

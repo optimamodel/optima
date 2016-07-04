@@ -73,17 +73,29 @@
         </tr>
 
         <tr style="{{row.attr.style}}" ng-repeat="row in vm.table.rows track by $index">
+
           <td style="{{cell.attr.style}}" ng-repeat="cell in row.cells">
-            <span ng-if='!row.attr.isEdit || cell.attr.type==="string"'>
-              <span ng-if="cell.label">{{cell.label}}</span>
-              <span ng-if="!cell.label">{{cell.value}}</span>
-            </span>
-            <input
-                type="number"
-                ng-if='row.attr.isEdit && cell.attr.type==="input"'
-                ng-model="row.cells[$index].value">
-            </input>
+            <div ng-if="!row.attr.isSkip">
+              <span ng-if='cell.attr.type=="selector"'>
+                <span ng-if="row.attr.isEdit">
+                  <select
+                      ng-model="cell.value"
+                      ng-options="o.value as o.label for o in cell.attr.options">
+                  </select>
+                </span>
+              </span>
+              <span ng-if='!row.attr.isEdit || cell.attr.type=="string"'>
+                <span ng-if="cell.label">{{cell.label}}</span>
+                <span ng-if="!cell.label">{{cell.value}}</span>
+              </span>
+              <input
+                  type="number"
+                  ng-if='row.attr.isEdit && cell.attr.type=="input"'
+                  ng-model="row.cells[$index].value">
+              </input>
+            </div>
           </td>
+
           <td>
             <div ng-if="!row.attr.isSkip">
               <span ng-if="!row.attr.isEdit" >
@@ -98,6 +110,7 @@
               </span>
             </div>
           </td>
+
         </tr>
 
       </table>

@@ -7,7 +7,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     """
     Runs Optima's epidemiological model.
     
-    Version: 1.5 (2016jun21)
+    Version: 1.5 (2016jul01)
     """
     
     ##################################################################################################################
@@ -217,6 +217,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
     allinfected = simpars['popsize'][:,0] * simpars['initprev'][:] # Set initial infected population
     
     # Can calculate equilibrium for each population separately
+    initnumtx = minimum(simpars['numtx'][0], allinfected.sum()/(1+eps)) # Don't allow there to be more people on treatment than infected
     for p in range(npops):
         # Set up basic calculations
         popinfected = allinfected[p]
@@ -225,7 +226,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
         # Treatment & treatment failure
         if sum(allinfected): fractotal = popinfected / sum(allinfected) # Fractional total of infected people in this population
         else:                fractotal = 0 # If there's no one infected, reset to 0
-        treatment = simpars['numtx'][0] * fractotal # Number of people on 1st-line treatment
+        treatment = initnumtx * fractotal # Number of people on 1st-line treatment
         if debug and treatment>popinfected: # More people on treatment than ever infected, uh oh!
             errormsg = 'More people on treatment (%f) than infected (%f)!' % (treatment, popinfected)
             if die: raise OptimaException(errormsg)
