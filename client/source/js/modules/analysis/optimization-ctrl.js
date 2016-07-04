@@ -42,6 +42,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             console.log('loading optimizations', JSON.stringify(response, null, 2));
             $scope.state.optimizations = response.optimizations;
+            convert_to_percentages($scope.state.optimizations);
             $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
             if ($scope.state.optimizations.length > 0) {
@@ -97,31 +98,34 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       openOptimizationModal(addNewOptimization, 'Add optimization', $scope.state.optimizations, null, 'Add');
     };
 
-    function convert_to_percentages(constraints) {
-      _.each(["max", "min", "name"], function(prop) {
-        var constraintList = constraints[prop];
-        _.each(constraintList, function(val, key, list) {
-          if (_.isNumber(val)) {
-            list[key] = val * 100.0;
-          }
+    function convert_to_percentages(optimizations) {
+      _.each(optimizations, function(optimization) {
+        _.each(["max", "min", "name"], function(prop) {
+          var constraintList = optimization.constraints[prop];
+          _.each(constraintList, function(val, key, list) {
+            if (_.isNumber(val)) {
+              list[key] = val * 100.0;
+            }
+          });
         });
       });
     };
 
-    function convert_to_fractions(constraints) {
-      _.each(["max", "min", "name"], function(prop) {
-        var constraintList = constraints[prop];
-        _.each(constraintList, function(val, key, list) {
-          if (_.isNumber(val)) {
-            list[key] = val / 100.0;
-          }
+    function convert_to_fractions(optimizations) {
+      _.each(optimizations, function(optimization) {
+        _.each(["max", "min", "name"], function(prop) {
+          var constraintList = optimization.constraints[prop];
+          _.each(constraintList, function(val, key, list) {
+            if (_.isNumber(val)) {
+              list[key] = val / 100.0;
+            }
+          });
         });
       });
     }
 
     $scope.setActiveOptimization = function(optimization) {
       $scope.state.activeOptimization = optimization;
-      convert_to_percentages(optimization.constraints);
       $scope.state.constraintKeys = _.keys(optimization.constraints.name);
       $scope.state.objectives = objectives[optimization.which];
       $scope.optimizationCharts = [];
@@ -158,14 +162,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     function saveOptimizations() {
-      convert_to_fractions($scope.state.activeOptimization.constraints);
-      console.log('saving', $scope.state.optimizations);
+      var optimizations = angular.copy($scope.state.optimizations)
+      convert_to_fractions(optimizations);
+      console.log('saving', optimizations);
       $http.post(
         '/api/project/' + $scope.state.activeProject.id + '/optimizations',
-        $scope.state.optimizations)
+        optimizations)
       .success(function (response) {
         toastr.success('Saved optimization');
         $scope.state.optimizations = response.optimizations;
+        convert_to_percentages($scope.state.optimizations);
         console.log('returned saved optimizations', $scope.state.optimizations);
         if (!_.isUndefined($scope.state.activeOptimization)) {
           var name = $scope.state.activeOptimization.name;
