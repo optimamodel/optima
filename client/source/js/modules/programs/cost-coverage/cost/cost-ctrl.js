@@ -186,7 +186,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         titles: ["Year", "Cost", "Coverage"],
         rows: [],
         types: ["selector", "number", "number"],
-        widths: [],
+        widths: ["5em", "5em", "5em"],
         displayRowFns: [],
         selectors: [getYearSelectors],
         options: [$scope.yearSelector],

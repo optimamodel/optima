@@ -4,7 +4,9 @@
         ng-repeat="title in table.titles track by $index">
       {{title}}
     </th>
-    <th>Manage</th>
+    <th style="width: 50px">
+      Manage
+    </th>
   </tr>
   <tr ng-repeat="row in table.rows">
 
@@ -55,7 +57,7 @@
     </td>
 
     <!-- Control elements -->
-    <td>
+    <td style="width: 50px">
       <span ng-if="$index != table.iEditRow" >
         <i class="fa fa-pencil"
            ng-click="editRow($index)">
