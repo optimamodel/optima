@@ -29,26 +29,26 @@ def convert_to_mpld3(figure):
     is_stack_plot = False
     for ax in figure.axes:
         legend = ax.get_legend()
-        labels = legend.get_texts()
-        if len(labels) == 1:
-            label = labels[0]
-            if label.get_text() == "Model":
-                legend.remove()
-                legend = None
+        if legend is not None:
+            labels = legend.get_texts()
+            if len(labels) == 1:
+                label = labels[0]
+                if label.get_text() == "Model":
+                    legend.remove()
+                    legend = None
         if legend is not None:
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.92]])))
+            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.85]])))
             is_stack_plot = True
         else:
-            ax.set_position(Bbox(array([[0.19, 0.2], [0.95, 0.92]])))
+            ax.set_position(Bbox(array([[0.19, 0.2], [0.9, 0.85]])))
 
     if is_stack_plot:
         figure.set_size_inches(5, 4)
     else:
         figure.set_size_inches(5, 2.5)
-
 
     for ax in figure.axes:
         ax.yaxis.label.set_size(14)
