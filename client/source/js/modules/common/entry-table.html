@@ -28,7 +28,7 @@
         ng-repeat="cell in getDisplayRow($index) track by $index">
       <input
           ng-if='table.types[$index] == "number"'
-          style="width:{{table.widths[$index]}}px"
+          style="width:{{table.widths[$index]}}"
           type="number"
         ng-model="row[$index]">
       <span
