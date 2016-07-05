@@ -384,7 +384,7 @@ define(
 
               // ensure x-axis label is not too far from axis
               if ((parseFloat(position[1]) < 0) && (parseFloat(position[0]) < 0.7)) {
-                position[1] = -0.2;
+                position[1] = -0.3;
               }
             });
 

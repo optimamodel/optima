@@ -42,10 +42,10 @@ def convert_to_mpld3(figure):
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.2], [0.65, 0.9]])))
+            ax.set_position(Bbox(array([[0.19, 0.3], [0.65, 0.9]])))
             is_stack_plot = True
         else:
-            ax.set_position(Bbox(array([[0.19, 0.2], [0.85, 0.9]])))
+            ax.set_position(Bbox(array([[0.19, 0.3], [0.85, 0.9]])))
 
         # if is_stack_plot:
         #     figure.set_size_inches(5, 4)
