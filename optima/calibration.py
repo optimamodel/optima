@@ -4,8 +4,7 @@ CALIBRATION
 Functions to perform calibration.
 """
 
-from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, 
-, odict
+from optima import OptimaException, Parameterset, Par, dcp, perturb, runmodel, asd, printv, findinds, isnumber, odict
 from numpy import median, zeros, array, mean
 
 
