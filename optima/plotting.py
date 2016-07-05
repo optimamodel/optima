@@ -502,8 +502,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     budgets = multires.budgets # WARNING, will break with multiple years
     
-    proglabels = budgets[0].keys() 
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
+    proglabels = budgets[0].keys() 
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
@@ -513,6 +513,40 @@ def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     colors = gridcolormap(nprogs)
     ax = []
     ymax = 0
+    
+    nprogs = len(progs)
+    
+    fig = figure(figsize=(10,10))
+    fig.subplots_adjust(left=0.10) # Less space on left
+    fig.subplots_adjust(right=0.98) # Less space on right
+    fig.subplots_adjust(top=0.95) # Less space on bottom
+    fig.subplots_adjust(bottom=0.35) # Less space on bottom
+    fig.subplots_adjust(wspace=0.30) # More space between
+    fig.subplots_adjust(hspace=0.40) # More space between
+    
+    ax = []
+    xbardata = arange(nprogs)+0.5
+    ymax = 0
+    nplt = len(progdata)
+    for plt in range(nplt):
+        ax.append(subplot(len(progdata),1,plt+1))
+        ax[-1].hold(True)
+        for p in range(nprogs):
+            ax[-1].bar([xbardata[p]], [progdata[plt][p]/factor], color=colors[p], linewidth=0)
+            if plt==1 and compare:
+                ax[-1].bar([xbardata[p]], [progdata[0][p]/factor], color='None', linewidth=1)
+        ax[-1].set_xticks(arange(nprogs)+1)
+        if plt!=nplt: ax[-1].set_xticklabels('')
+        if plt==nplt-1: 
+            ax[-1].set_xticklabels(progs,rotation=90)
+            plot([0,nprogs+1],[0,0],c=(0,0,0))
+        ax[-1].set_xlim(0,nprogs+1)
+        
+        if factor==1: ax[-1].set_ylabel('Spending (US$)')
+        elif factor==1e3: ax[-1].set_ylabel("Spending (US$'000s)")
+        elif factor==1e6: ax[-1].set_ylabel('Spending (US$m)')
+        ax[-1].set_title(labels[plt])
+        ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
     for plt in range(nallocs):
         nbudgetyears = len(budgetyearstoplot[plt])
@@ -547,8 +581,8 @@ def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
         ax[-1].set_title(alloclabels[plt])
         ymax = maximum(ymax, ax[-1].get_ylim()[1])
     
-    for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
-
+    
+    
     SIyticks(fig)
     close(fig)
     
