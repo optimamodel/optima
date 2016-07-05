@@ -148,7 +148,17 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
         
     
-    ## Add budget and coverage plots
+    ## Add budget plot
+    if 'budget' in toplot:
+        toplot.remove('budget') # Because everything else is passed to plotepi()
+        try: 
+            if hasattr(results, 'budget') and results.budget: # WARNING, duplicated from getplotselections()
+                allplots['budget'] = plotbudget(results, die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot budget: "%s"' % (E.message), 1, verbose)
+    
+    ## Add coverage plot
     if 'coverage' in toplot:
         toplot.remove('coverage') # Because everything else is passed to plotepi()
         try: 
@@ -471,10 +481,96 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 
 
 
+##################################################################
+## Coverage plot
+##################################################################
+    
+    
+def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+    ''' 
+    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+
+    Results object must be of Multiresultset type.
+    
+    "which" should be either 'budget' or 'coverage'
+    
+    Version: 2016jan27
+    '''
+    
+    # Preliminaries: process inputs and extract needed data
+    which = 'budget'
+    print('Warning -- deprecated syntax') # WARNING need to fix properly when there's more time!!!!!!!!!!!!!!!!!!
+    try: 
+        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
+    except: 
+        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
+        if die: raise OptimaException(errormsg)
+        else: printv(errormsg, 1, verbose)
+    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
+    
+    proglabels = toplot[0].keys() 
+    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
+    nprogs = len(proglabels)
+    nallocs = len(alloclabels)
+    
+    fig = figure(figsize=figsize)
+    fig.subplots_adjust(bottom=0.30) # Less space on bottom
+    fig.subplots_adjust(hspace=0.50) # More space between
+    colors = gridcolormap(nprogs)
+    ax = []
+    ymax = 0
+    
+    for plt in range(nallocs):
+        nbudgetyears = len(budgetyearstoplot[plt])
+        ax.append(subplot(nallocs,1,plt+1))
+        ax[-1].hold(True)
+        barwidth = .5/nbudgetyears
+        for y in range(nbudgetyears):
+            progdata = zeros(len(toplot[plt]))
+            for i,x in enumerate(toplot[plt][:]):
+                if hasattr(x, '__len__'): 
+                    try: progdata[i] = x[y]
+                    except: 
+                        try: progdata[i] = x[-1] # If not enough data points, just use last -- WARNING, KLUDGY
+                        except: progdata[i] = 0. # If not enough data points, just use last -- WARNING, KLUDGY
+                else:                     progdata[i] = x
+            if which=='coverage': progdata *= 100 
+            xbardata = arange(nprogs)+.75+barwidth*y
+            for p in range(nprogs):
+                if nbudgetyears>1: barcolor = colors[y] # More than one year? Color by year
+                else: barcolor = colors[p] # Only one year? Color by program
+                if p==nprogs-1: yearlabel = budgetyearstoplot[plt][y]
+                else: yearlabel=None
+                ax[-1].bar([xbardata[p]], [progdata[p]], label=yearlabel, width=barwidth, color=barcolor)
+        if nbudgetyears>1: ax[-1].legend(frameon=False)
+        ax[-1].set_xticks(arange(nprogs)+1)
+        if plt<nprogs: ax[-1].set_xticklabels('')
+        if plt==nallocs-1: ax[-1].set_xticklabels(proglabels,rotation=90)
+        ax[-1].set_xlim(0,nprogs+1)
+        
+        ylabel = 'Spending' if which=='budget' else 'Coverage (% of targeted)'
+        ax[-1].set_ylabel(ylabel)
+        ax[-1].set_title(alloclabels[plt])
+        ymax = maximum(ymax, ax[-1].get_ylim()[1])
+    
+    for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
+
+    SIyticks(fig)
+    close(fig)
+    
+    return fig
+
+
+
+
+
+
+
+
 
 
 ##################################################################
-## Allocation plots
+## Coverage plot
 ##################################################################
     
     
@@ -551,6 +647,12 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     close(fig)
     
     return fig
+
+
+
+
+
+
 
 
 
