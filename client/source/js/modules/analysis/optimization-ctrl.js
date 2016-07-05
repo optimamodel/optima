@@ -93,29 +93,16 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
       newOptimization.constraints = angular.copy(defaultOptimization.constraints);
       newOptimization.objectives = angular.copy(defaultOptimization.objectives.outcomes);
+      newOptimization.objectives.yearobj = 2030;
 
       convert_to_fractions($scope.state.optimizations);
       $scope.state.optimizations.push(newOptimization);
       convert_to_percentages($scope.state.optimizations);
-      newOptimization.objectives.yearobj = 2030;
       $scope.setActiveOptimization(newOptimization);
     };
 
     $scope.addOptimization = function() {
       openOptimizationModal(addNewOptimization, 'Add optimization', $scope.state.optimizations, null, 'Add');
-    };
-
-    function convert_to_percentages(objectives) {
-      _.each(optimizations, function(optimization) {
-        _.each(["max", "min", "name"], function(prop) {
-          var constraintList = optimization.constraints[prop];
-          _.each(constraintList, function(val, key, list) {
-            if (_.isNumber(val)) {
-              list[key] = val * 100.0;
-            }
-          });
-        });
-      });
     };
 
     function convert_to_percentages(optimizations) {
@@ -376,7 +363,7 @@ var objectives = {
     { key: 'start', label: 'Analyses will consider program optimizations over period from' },
     { key: 'end', label: 'to' },
     { key: 'yearobj', label: 'in order to achieve the objectives by' },
-    { key: 'budget', label: 'Starting budget' },
+    { key: 'budget', label: 'Annual budget' },
     { key: 'deathweight', label: 'Relative weight per death' },
     { key: 'inciweight', label: 'Relative weight per new infection' }
   ],
@@ -385,7 +372,7 @@ var objectives = {
     { key: 'start', label: 'Year to begin optimization' },
     { key: 'end', label: 'Year by which to achieve objectives' },
     { key: 'yearobj', label: 'in order to achieve the objectives by' },
-    { key: 'budget', label: 'Starting budget' },
+    { key: 'budget', label: 'Annual budget' },
     { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
     { key: 'incifrac', label: 'Fraction of infections to be averted' }
   ]
