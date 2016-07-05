@@ -514,10 +514,10 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     fig = figure(figsize=figsize)
     ax = subplot(1,1,1)
     
-    fig.subplots_adjust(left=0.03) # Less space on left
-    fig.subplots_adjust(right=0.75) # Less space on right
-    fig.subplots_adjust(top=0.95) # Less space on bottom
-    fig.subplots_adjust(bottom=0.14) # Less space on bottom
+#    fig.subplots_adjust(left=0.03) # Less space on left
+#    fig.subplots_adjust(right=0.98) # Less space on right
+#    fig.subplots_adjust(top=0.95) # Less space on bottom
+    fig.subplots_adjust(bottom=0.50) # Less space on bottom
     
     for i in range(nprogs-1,-1,-1):
         xdata = arange(nallocs)+1
@@ -529,11 +529,11 @@ def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegend
     ax.set_xlabel('Spending')
     labels = proglabels
     labels.reverse()
-    legend(labels, ncol=4, fontsize=legendsize)
+#    legend(labels, ncol=4, fontsize=legendsize, loc=(0.0,-1))
     
-    ax.legend(frameon=False, ncol=4)
+#    ax.legend(frameon=False, ncol=4)
     ax.set_yticks(arange(nallocs)+1)
-    ax.set_yticklabels(alloclabels,rotation=90)
+    ax.set_yticklabels(alloclabels)
     ax.set_ylim(0,nallocs+1)
     
     SIticks(fig, axis='x')
