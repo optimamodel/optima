@@ -26,43 +26,43 @@ def convert_to_mpld3(figure):
     plugin = mpld3.plugins.MousePosition(fontsize=0, fmt='.4r')
     mpld3.plugins.connect(figure, plugin)
 
+    figure.set_size_inches(5.5, 2)
+
     is_stack_plot = False
-    for ax in figure.axes:
+    if len(figure.axes) == 1:
+        ax = figure.axes[0]
         legend = ax.get_legend()
-        labels = legend.get_texts()
-        if len(labels) == 1:
-            label = labels[0]
-            if label.get_text() == "Model":
-                legend.remove()
-                legend = None
+        if legend is not None:
+            labels = [t.get_text() for t in legend.get_texts()]
+            if len(labels) == 1:
+                if labels[0] == "Model":
+                    legend.remove()
+                    legend = None
         if legend is not None:
             # Put a legend to the right of the current axis
             legend._loc = 2
             legend.set_bbox_to_anchor((1, 1.1))
-            ax.set_position(Bbox(array([[0.19, 0.55], [0.7, 0.92]])))
+            ax.set_position(Bbox(array([[0.19, 0.2], [0.65, 0.9]])))
             is_stack_plot = True
         else:
-            ax.set_position(Bbox(array([[0.19, 0.2], [0.95, 0.92]])))
+            ax.set_position(Bbox(array([[0.19, 0.2], [0.85, 0.9]])))
 
-    if is_stack_plot:
-        figure.set_size_inches(5, 4)
-    else:
-        figure.set_size_inches(5, 2.5)
+        # if is_stack_plot:
+        #     figure.set_size_inches(5, 4)
 
+        for ax in figure.axes:
+            ax.yaxis.label.set_size(14)
+            ax.xaxis.label.set_size(14)
+            ax.title.set_size(14)
 
-    for ax in figure.axes:
-        ax.yaxis.label.set_size(14)
-        ax.xaxis.label.set_size(14)
-        ax.title.set_size(14)
-
-        ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
-        for ticklabel in ticklabels:
-            ticklabel.set_size(10)
-        legend = ax.get_legend()
-        if legend is not None:
-            texts = legend.get_texts()
-            for text in texts:
-                text.set_size(10)
+            ticklabels = ax.get_xticklabels() + ax.get_yticklabels()
+            for ticklabel in ticklabels:
+                ticklabel.set_size(10)
+            legend = ax.get_legend()
+            if legend is not None:
+                texts = legend.get_texts()
+                for text in texts:
+                    text.set_size(10)
 
     mpld3_dict = mpld3.fig_to_dict(figure)
     return normalize_obj(mpld3_dict)
