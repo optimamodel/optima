@@ -13,7 +13,7 @@ Version: 2016jun06
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
@@ -30,7 +30,7 @@ globalticksize = 8
 globallegendsize = 8
 
 
-def SIticks(x, pos):  # formatter function takes tick label and tick position
+def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
     if abs(x)>=1e9:     output = str(x/1e9)+'B'
     elif abs(x)>=1e6:   output = str(x/1e6)+'M'
@@ -38,10 +38,14 @@ def SIticks(x, pos):  # formatter function takes tick label and tick position
     else:               output = str(x)
     return output
 
-def SIyticks(figure):
+def SIticks(figure, axis='y'):
     ''' Apply SI tick formatting to the y axis of a figure '''
     for ax in figure.axes:
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(SIticks))
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
 
 
 def getplotselections(results):
@@ -406,7 +410,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
-                SIyticks(epiplots[pk])
+                SIticks(epiplots[pk])
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
@@ -486,7 +490,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 ##################################################################
     
     
-def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -499,8 +503,6 @@ def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     # Preliminaries: process inputs and extract needed data
     
-    from pylab import barh, ylabel
-    
     budgets = multires.budget # WARNING, will break with multiple years
     
     alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
@@ -512,25 +514,29 @@ def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     fig = figure(figsize=figsize)
     ax = subplot(1,1,1)
     
-    scalefactor = 1e6
     fig.subplots_adjust(left=0.03) # Less space on left
     fig.subplots_adjust(right=0.75) # Less space on right
     fig.subplots_adjust(top=0.95) # Less space on bottom
     fig.subplots_adjust(bottom=0.14) # Less space on bottom
     
     for i in range(nprogs-1,-1,-1):
-        xdata = array([1,2])
-        ydata = array([budgets[0][i],budgets[1][i]])/scalefactor
-        bottomdata = array([sum(budgets[0][:i]),sum(budgets[1][:i])])/scalefactor
+        xdata = arange(nallocs)+1
+        ydata = array([budget[i] for budget in budgets.values()])
+        bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
 #        bar(xdata, ydata, bottom=bottomdata, color=progcolors[i], linewidth=0)
         barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
     
-    ylabel('Spending (US$m)')
+    ax.set_xlabel('Spending')
     labels = proglabels
     labels.reverse()
-    legend(labels,loc=(1.01,0), ncol=4)
+    legend(labels, ncol=4, fontsize=legendsize)
     
-    SIyticks(fig)
+    ax.legend(frameon=False, ncol=4)
+    ax.set_yticks(arange(nallocs)+1)
+    ax.set_yticklabels(alloclabels,rotation=90)
+    ax.set_ylim(0,nallocs+1)
+    
+    SIticks(fig, axis='x')
     close(fig)
     
     return fig
@@ -618,7 +624,7 @@ def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
 
-    SIyticks(fig)
+    SIticks(fig)
     close(fig)
     
     return fig
@@ -704,7 +710,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-    SIyticks(fig)
+    SIticks(fig)
     close(fig)
     
     return fig
