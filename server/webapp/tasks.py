@@ -93,7 +93,7 @@ def start_or_report_calculation(project_id, parset_id, work_type):
             'work_type': 'autofit' or 'optim-*'
         }
     """
-    print "start_or_report_calculation(%s %s %s)" % (project_id, parset_id, work_type)
+    print ">>>>> start_or_report_calculation(%s %s %s)" % (project_id, parset_id, work_type)
 
     db_session = init_db_session()
 
@@ -209,10 +209,10 @@ def check_calculation_status(project_id, parset_id, work_type):
         ).first()
     if work_log_record:
 
-        print "> Found job in project with work_type", work_type
+        print ">>>>> Found job in project with work_type", work_type
         result = parse_work_log_record(work_log_record)
     else:
-        print "> No such job work_type", work_type
+        print ">>>>> No such job work_type", work_type
         result = {
             'status': 'unknown',
             'error_text': None,
@@ -227,7 +227,7 @@ def check_calculation_status(project_id, parset_id, work_type):
 
 def get_parset_from_project_by_id(project, parset_id):
     for key, parset in project.parsets.items():
-        print ">> Matching", key, str(parset_id), str(parset.uid)
+        print ">>>>> Matching", key, str(parset_id), str(parset.uid)
         if str(parset.uid) == str(parset_id):
             return parset
     else:
@@ -260,7 +260,6 @@ def run_autofit(project_id, parset_name, maxtime=60):
             maxtime=maxtime
         )
         result = project.parsets[str(parset_name)].getresults()
-        print "result", result
     except Exception:
         var = traceback.format_exc()
         print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, parset_name, 'autofit', var))
@@ -278,7 +277,7 @@ def run_autofit(project_id, parset_name, maxtime=60):
     db_session.add(work_log)
 
     if result:
-        print(">> Save autofitted parset '%s'" % parset_name)
+        print(">>>>> Save autofitted parset '%s'" % parset_name)
         update_or_create_parset_record(
             project_id, parset_name, parset, db_session)
         delete_result(project_id, parset.uid, 'calibration', db_session=db_session)
@@ -305,11 +304,11 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     app.logger.debug(pprint.pformat("maxtime %f" % maxtime))
 
     db_session = init_db_session()
+    print "> Loading working project", project_id
     working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     project = op.loads(working_project_record.project)
     work_log_id = working_project_record.work_log_id
     work_log = db_session.query(WorkLogDb).get(work_log_id)
-    parset = get_parset_from_project_by_id(project, work_log.parset_id)
     close_db_session(db_session)
 
     if not objectives['budget']:
@@ -320,6 +319,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     result = None
     try:
         # sanity check
+        parset = get_parset_from_project_by_id(project, work_log.parset_id)
         assert work_log.status == "started"
         assert parset_name == parset.name
         result = project.optimize(
@@ -332,7 +332,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
         )
         # by default result.name = "optim-" + optimization_name
         result.parsetname = parset_name
-        print "Creating result '%s'" % result.name
+        print ">>>>> Creating result '%s'" % result.name
     except Exception:
         var = traceback.format_exc()
         print("ERROR for project_id: %s, args: %s calculation: %s\n %s" % (project_id, optimization_name, 'optimization', var))
@@ -342,14 +342,19 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
     db_session = init_db_session()
     working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
     if working_project_record is not None:
+        print ">>>>> Deleting working project", project_id
         db_session.delete(working_project_record)
+    else:
+        print ">>>>> Weird: lost working project", project_id
     work_log_record = db_session.query(WorkLogDb).get(work_log_id)
     work_log_record.status = status
     work_log_record.error = error_text
     work_log_record.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
+        print ">>>>> Deleting old optimization result", result.name
         delete_optimization_result(project_id, result.name, db_session)
+        print ">>>>> Saving optimization result", result.name
         result_record = update_or_create_result_record(project_id, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_record)
         db_session.flush()
