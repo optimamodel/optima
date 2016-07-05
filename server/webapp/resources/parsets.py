@@ -467,10 +467,16 @@ class ExportResultsDataAsCsv(Resource):
         if not load_dir:
             load_dir = TEMPLATEDIR
         filestem = 'results'
-        filename = filestem + '.csv'
         result = result_record.hydrate()
-        result.export(filestem=os.path.join(load_dir, filestem))
+        full_filestem = os.path.join(load_dir, filestem)
+        result.export(filestem=full_filestem)
 
+        if os.path.isfile(full_filestem + '.zip'):
+            filename = filestem + '.zip'
+        elif os.path.isfile(full_filestem + '.csv'):
+            filename = filestem + '.csv'
+
+        print ">>> Fetching", filename
         response = helpers.send_from_directory(load_dir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
 

@@ -42,6 +42,10 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
 
             console.log('loading optimizations', JSON.stringify(response, null, 2));
             $scope.state.optimizations = response.optimizations;
+            convert_to_percentages($scope.state.optimizations);
+            _.each($scope.state.optimizations, function(optim) {
+              optim.objectives.yearobj = 2030;
+            });
             $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
             if ($scope.state.optimizations.length > 0) {
@@ -85,11 +89,15 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         objectives: {},
       };
       selectDefaultProgsetAndParset(newOptimization);
-      $scope.state.optimizations.push(newOptimization);
       var progset_id = newOptimization.progset_id;
       var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-      newOptimization.constraints = defaultOptimization.constraints;
-      newOptimization.objectives = defaultOptimization.objectives.outcomes;
+      newOptimization.constraints = angular.copy(defaultOptimization.constraints);
+      newOptimization.objectives = angular.copy(defaultOptimization.objectives.outcomes);
+      newOptimization.objectives.yearobj = 2030;
+
+      convert_to_fractions($scope.state.optimizations);
+      $scope.state.optimizations.push(newOptimization);
+      convert_to_percentages($scope.state.optimizations);
       $scope.setActiveOptimization(newOptimization);
     };
 
@@ -97,12 +105,39 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
       openOptimizationModal(addNewOptimization, 'Add optimization', $scope.state.optimizations, null, 'Add');
     };
 
+    function convert_to_percentages(optimizations) {
+      _.each(optimizations, function(optimization) {
+        _.each(["max", "min", "name"], function(prop) {
+          var constraintList = optimization.constraints[prop];
+          _.each(constraintList, function(val, key, list) {
+            if (_.isNumber(val)) {
+              list[key] = val * 100.0;
+            }
+          });
+        });
+      });
+    };
+
+    function convert_to_fractions(optimizations) {
+      _.each(optimizations, function(optimization) {
+        _.each(["max", "min", "name"], function(prop) {
+          var constraintList = optimization.constraints[prop];
+          _.each(constraintList, function(val, key, list) {
+            if (_.isNumber(val)) {
+              list[key] = val / 100.0;
+            }
+          });
+        });
+      });
+    }
+
     $scope.setActiveOptimization = function(optimization) {
       $scope.state.activeOptimization = optimization;
       $scope.state.constraintKeys = _.keys(optimization.constraints.name);
       $scope.state.objectives = objectives[optimization.which];
       $scope.optimizationCharts = [];
       $scope.selectors = [];
+      console.log('active optim', $scope.state.activeOptimization);
       $scope.getOptimizationGraphs();
     };
 
@@ -134,13 +169,22 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     };
 
     function saveOptimizations() {
-      console.log('saving', $scope.state.optimizations);
+      var optimizations = angular.copy($scope.state.optimizations)
+      convert_to_fractions(optimizations);
+      _.each(optimizations, function(optim) {
+        if (!_.isUndefined(optim.objectives.yearobj)) {
+          delete optim.objectives.yearobj;
+        }
+      });
+
+      console.log('saving', optimizations);
       $http.post(
         '/api/project/' + $scope.state.activeProject.id + '/optimizations',
-        $scope.state.optimizations)
+        optimizations)
       .success(function (response) {
         toastr.success('Saved optimization');
         $scope.state.optimizations = response.optimizations;
+        convert_to_percentages($scope.state.optimizations);
         console.log('returned saved optimizations', $scope.state.optimizations);
         if (!_.isUndefined($scope.state.activeOptimization)) {
           var name = $scope.state.activeOptimization.name;
@@ -316,9 +360,10 @@ var constraints = {
 // this is to be replaced by an api
 var objectives = {
   outcomes: [
-    { key: 'start', label: 'Year to begin optimization' },
-    { key: 'end', label: 'Year by which to achieve objectives' },
-    { key: 'budget', label: 'Starting budget' },
+    { key: 'start', label: 'Analyses will consider program optimizations over period from' },
+    { key: 'end', label: 'to' },
+    { key: 'yearobj', label: 'in order to achieve the objectives by' },
+    { key: 'budget', label: 'Annual budget' },
     { key: 'deathweight', label: 'Relative weight per death' },
     { key: 'inciweight', label: 'Relative weight per new infection' }
   ],
@@ -326,7 +371,8 @@ var objectives = {
     {key: 'base', label: 'Baseline year to compare outcomes to' },
     { key: 'start', label: 'Year to begin optimization' },
     { key: 'end', label: 'Year by which to achieve objectives' },
-    { key: 'budget', label: 'Starting budget' },
+    { key: 'yearobj', label: 'in order to achieve the objectives by' },
+    { key: 'budget', label: 'Annual budget' },
     { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
     { key: 'incifrac', label: 'Fraction of infections to be averted' }
   ]
@@ -337,6 +383,7 @@ var objectiveDefaults = {
     base: undefined,
     start: 2017,
     end: 2030,
+    yearobj: 2030,
     budget: 63500000.0,
     deathweight: 0,
     inciweight: 0
@@ -345,6 +392,7 @@ var objectiveDefaults = {
     base: 2015,
     start: 2017,
     end: 2030,
+    yearobj: 2030,
     budget: 63500000.0,
     deathfrac: 0,
     incifrac: 0

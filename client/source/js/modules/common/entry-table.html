@@ -1,41 +1,50 @@
 <table class="table table-bordered">
   <tr>
-    <th ng-repeat="title in table.titles track by $index">
+    <th style="width:{{table.widths[$index]}}"
+        ng-repeat="title in table.titles track by $index">
       {{title}}
     </th>
-    <th>Manage</th>
+    <th style="width: 50px;">Manage</th>
   </tr>
   <tr ng-repeat="row in table.rows">
 
     <!-- Normal cell values -->
-    <td ng-if="$parent.$index != table.iEditRow"
+    <td style="width:{{table.widths[$index]}}"
+        ng-if="$parent.$index != table.iEditRow"
         ng-repeat="cell in getDisplayRow($index) track by $index">
       <span
-          style="width:{{table.widths[$index]}}px"
+          style="width:{{table.widths[$index]}}"
           ng-if='table.types[$index] == "number"'>
         {{cell}}
       </span>
-      <span ng-if='table.types[$index] == "display"'>
+      <span
+          style="width:{{table.widths[$index]}}"
+          ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
-      <span ng-if='table.types[$index] == "selector"'>
+      <span
+          style="width:{{table.widths[$index]}}"
+          ng-if='table.types[$index] == "selector"'>
         {{cell}}
       </span>
     </td>
 
     <!-- Editable cell values -->
-    <td ng-if="$parent.$index == table.iEditRow"
+    <td style="width:{{table.widths[$index]}}"
+        ng-if="$parent.$index == table.iEditRow"
         ng-repeat="cell in getDisplayRow($index) track by $index">
       <input
           ng-if='table.types[$index] == "number"'
-          style="width:{{table.widths[$index]}}px"
+          style="width:{{table.widths[$index]}}"
           type="number"
         ng-model="row[$index]">
       <span
+         style="width:{{table.widths[$index]}}"
          ng-if='table.types[$index] == "display"'>
         {{cell}}
       </span>
-      <div>
+      <div
+        style="width:{{table.widths[$index]}}">
         <select
             ng-if='table.types[$index] == "selector"'
             ng-model="row[$index]"
@@ -46,7 +55,7 @@
     </td>
 
     <!-- Control elements -->
-    <td>
+    <td style="width: 50px">
       <span ng-if="$index != table.iEditRow" >
         <i class="fa fa-pencil"
            ng-click="editRow($index)">

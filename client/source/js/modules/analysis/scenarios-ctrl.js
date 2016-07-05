@@ -14,13 +14,21 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function initialize() {
 
       $scope.scenarios = scenariosResponse.data.scenarios;
-      consoleLogJson("loading scenarios", scenariosResponse.data);
+      sort_scenarios();
+      console.log("loading scenarios", scenariosResponse.data);
 
       $scope.ykeys = scenariosResponse.data.ykeysByParsetId;
       console.log("loading ykeys", $scope.ykeys);
 
       $scope.isMissingModelData = !project.has_data;
       $scope.isMissingProgramSet = progsets.length == 0;
+    }
+
+    function sort_scenarios() {
+      $scope.scenarios = _.sortBy($scope.scenarios, function(scenario) {
+        return scenario.name;
+      });
+      console.log('Sorting scenarios');
     }
 
     function consoleLogJson(name, val) {
@@ -35,6 +43,7 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         {'scenarios': scenarios })
       .success(function (response) {
         $scope.scenarios = response.scenarios;
+        sort_scenarios();
         consoleLogJson("returned scenarios", $scope.scenarios);
         if (msg) {
           toastr.success(msg)

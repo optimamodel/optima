@@ -8,8 +8,8 @@ from optima import OptimaException, Settings, uuid, today, getdate, quantile, pr
 from numpy import array, nan, zeros, arange, shape
 from numbers import Number
 
-
-
+import zipfile
+import os
 
 
 class Result(object):
@@ -372,9 +372,18 @@ class Multiresultset(Resultset):
         if filestem is None: # Filestem rather than filename since doesn't include extension
             if self.name is not None: filestem = self.name
             else: filestem = str(self.uid)
+        filenames = []
         for k,key in enumerate(self.keys):
+            # HACK: to make work for CDC demo
             thisfilestem = filestem+'-'+key
+            filenames.append(thisfilestem + '.csv')
             Resultset.export(self, filestem=thisfilestem, ind=k, **kwargs)
+        zipfname = os.path.join(os.path.dirname(thisfilestem), 'results.zip')
+        print "   Make zipfile", zipfname
+        zipf = zipfile.ZipFile(zipfname, 'w', zipfile.ZIP_DEFLATED)
+        for fname in filenames:
+            zipf.write(fname, os.path.basename(fname))
+        zipf.close()
         return None
 
 

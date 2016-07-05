@@ -381,6 +381,11 @@ define(
               if (parseFloat(position[0]) < 0) {
                 position[0] = -0.2;
               }
+
+              // ensure x-axis label is not too far from axis
+              if ((parseFloat(position[1]) < 0) && (parseFloat(position[0]) < 0.7)) {
+                position[1] = -0.3;
+              }
             });
 
             mpld3.draw_figure(attrs.chartId, figure);
@@ -431,9 +436,15 @@ define(
               headers: {'Content-type': 'application/octet-stream'},
               responseType: 'blob'
             })
-          .success(function (response) {
+          .success(function (response, status, headers) {
             var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, ('export_graphs.csv'));
+            var fname = 'export_graphs.csv';
+            var contentStr = headers()['content-disposition'];
+            if (contentStr.indexOf('.zip') >= 0) {
+              fname = 'export_graphs.zip';
+            }
+            console.log(contentStr, fname);
+            saveAs(blob, (fname));
           });
         };
 

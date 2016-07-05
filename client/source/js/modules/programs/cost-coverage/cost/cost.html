@@ -16,10 +16,10 @@
   <div ng-if="selectedProgram">
 
     <div style="display: flex; margin-top: 2%">
-      <div class="chart-container">
+      <div class="chart-container" style="width:30%">
 
         <div mpld3-chart="chartData"
-             style="width: 600px; height: 300px"
+             style="width: 100%"
              chart-id="{{ chartData.id }}"
              ng-if="chartData">
         </div>

@@ -24,10 +24,15 @@
       <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
     </div>
 
-    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">
-      <div class="small_bordered_list" style="width: 30%;">
+    <div style="display: flex;
+                margin-top: 20px;
+                margin-right: 10px;
+                justify-content:
+                space-between;height:
+                calc(100vh - 300px)">
+      <div class="small_bordered_list" style="width: 700px; height: 100%">
         <form name="optimizationForm">
-          <div class="option_list" style="height:62vh">
+          <div class="option_list" style="height: calc(100vh - 300px)">
             <div class="section">
               <div class="label">Program set</div>
               <select class="txbox"
@@ -75,10 +80,13 @@
             </div>
             <div ng-if="state.activeOptimization.objectives" class="section">
               <div class="label">Objectives</div>
+
               <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
-                <span style="width: 70%">{{objective.label}}</span>
-                  <span style="width: 30%">
-                    <input class="txbox __inline __m"
+                  <span style="width: 80%">{{objective.label}}</span>
+                  <span style="width: 20%">
+                    <input
+                      style="width:100%"
+                      class="txbox __inline __m"
                       type="number"
                       ng-model="state.activeOptimization.objectives[objective.key]"
                       name="{{objective.key}}"
@@ -86,24 +94,87 @@
                       ng-class="{'invalid': optimizationForm[objective.key].$invalid}"/>
                   </span>
               </div>
+
+                <div style="line-height: 1.7em;">
+                    <input type="checkbox" ng-init="cumulative_hiv=true" ng-model="cumulative_hiv">
+                    <label>Cumulative new HIV infections</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="cumulative_dalys">
+                    <label>Cumulative DALYs</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="cumulative_aids">
+                    <label>Cumulative AIDS-related death</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="total_hiv">
+                    <label>Total HIV-related costs</label>
+                    <br>
+
+                    <div class="label"
+                         style="font-weight: bold; margin-top:0.5em;">
+                        Assumptions
+                    </div>
+
+                    <input ng-disabled="true" type="checkbox" ng-model="time_vary_budget">
+                    <label>Time varying budget</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="no_art">
+                    <label>No one on ART comes off ART except through natural attrition</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="no_ost">
+                    <label>No one on OST comes off OST except through natural attrition</label>
+                    <br>
+                    <br>
+                </div>
+
+
             </div>
+
+
             <div ng-if="state.activeOptimization.constraints" class="section">
-              <div class="label">Constraints</div>
+              <div class="label">Constraints by year</div>
               <div style="justify-content: space-around; font-weight: bold" class="option">
                 <span style="width: 60%">Program Name</span>
-                <span style="width: 20%">Minimum</span>
-                <span style="width: 20%">Maximum</span>
+                <span style="width: 20%">Not less than</span>
+                <span style="width: 20%">Not more than</span>
               </div>
             </div>
             <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
               <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
                 <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
                 </span>
                 <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
                 </span>
             </div>
+
+              <br>
+              <br>
+
+
+            <div ng-if="state.activeOptimization.constraints" class="section">
+              <div class="label">Constraints by funding period</div>
+              <div style="justify-content: space-around; font-weight: bold" class="option">
+                <span style="width: 60%">Program Name</span>
+                <span style="width: 20%">Not less than</span>
+                <span style="width: 20%">Not more than</span>
+              </div>
+            </div>
+            <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
+              <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
+                <span style="width: 20%">
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.dummy[constraintKey]"/>
+                </span>
+                <span style="width: 20%">
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.dummy2[constraintKey]"/>
+                </span>
+            </div>
+
           </div>
 
           <div style="color: ##00aeef; margin-top: 25px; margin-left: 35px">

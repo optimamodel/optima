@@ -18,6 +18,7 @@ define(['./../../module', 'underscore'], function (module, _) {
     }
 
     $scope.changeSelectedProgram = function() {
+      console.log('ask server to change program');
       $http.get(
         '/api/project/' + $scope.vm.openProject.id
           + '/progsets/' + $scope.vm.selectedProgset.id
@@ -39,9 +40,10 @@ define(['./../../module', 'underscore'], function (module, _) {
     };
 
     $scope.updateGraph = function() {
-      $scope.chartData = [];
+      $scope.chartData = {};
       var years = $scope.selectedProgram.ccopars.t;
       if (years.length == 0) {
+        $scope.chartData = null;
         return;
       }
       var url = '/api/project/' + $scope.vm.openProject.id
@@ -62,7 +64,12 @@ define(['./../../module', 'underscore'], function (module, _) {
       $http.get(url)
       .success(
         function (data) {
+          console.log('draw graph', $scope.selectedProgram.short, data);
           $scope.chartData = data;
+        })
+      .error(
+        function() {
+          console.log('failed graph', $scope.selectedProgram.short);
         }
       );
     };
@@ -151,10 +158,10 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.ccoparsTable = {
         titles: [
           "Year", "Estimated Population", "Saturation % (low)", "Saturation % (high)",
-          "Unit Cost (low)", "Unit Cost (high)"],
+          "Unit cost (low)", "Unit cost (high)"],
         rows: [],
         types: ["selector", "display", "number", "number", "number", "number"],
-        widths: [],
+        widths: ["5em", "5em", "5em", "5em", "5em", "5em"],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
         options: [$scope.yearSelector],
         validateFn: validateCcoparsTable
@@ -179,7 +186,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         titles: ["Year", "Cost", "Coverage"],
         rows: [],
         types: ["selector", "number", "number"],
-        widths: [],
+        widths: ["5em", "5em", "5em"],
         displayRowFns: [],
         selectors: [getYearSelectors],
         options: [$scope.yearSelector],
