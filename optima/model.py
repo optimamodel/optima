@@ -910,7 +910,7 @@ def model(simpars=None, settings=None, verbose=None, die=False, debug=False):
 
 
 
-def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=2000, end=2030, dt=0.2, tvec=None, name=None, uid=None, data=None, debug=False, verbose=2):
+def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, budget=None, coverage=None, budgetyears=None, settings=None, start=None, end=None, dt=None, tvec=None, name=None, uid=None, data=None, debug=False, verbose=2):
     ''' 
     Convenience function for running the model. Requires input of either "simpars" or "pars"; and for including the data,
     requires input of either "project" or "data". All other inputs are optional.
@@ -923,6 +923,9 @@ def runmodel(project=None, simpars=None, pars=None, parset=None, progset=None, b
     if settings is None:
         try: settings = project.settings 
         except: raise OptimaException('Could not get settings from project "%s" supplied to runmodel()' % project)
+    if start is None: start = project.settings.start
+    if end is None: start = project.settings.end
+    if dt is None: start = project.settings.dt
     try:
         raw = model(simpars=simpars, settings=settings, debug=debug, verbose=verbose) # RUN OPTIMA!!
         # Append final people array to sim output
