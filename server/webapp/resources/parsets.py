@@ -267,9 +267,6 @@ class ParsetsCalibration(Resource):
         elif autofit:
             result_record = load_result_record(project_id, parset_id, calculation_type)
             result = result_record.hydrate()
-            print "> Loading autofit results", result.uid
-            if 'improvement' not in which:
-                which.insert(0, 'improvement')
         else:
             print "> Saving temporary calibration graphs", result.uid
             result_record = save_result(project_id, result, parset.name, "temp-" + calculation_type)
