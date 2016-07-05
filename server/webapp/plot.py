@@ -109,10 +109,6 @@ def make_mpld3_graph_dict(result, which=None):
         for selector in selectors:
             selector['checked'] = selector['key'] in which
 
-    for selector in selectors:
-        if not selector['checked']:
-            selector['name'] = '(unloaded) ' + selector['name']
-
     graphs = op.plotting.makeplots(result, toplot=which, figsize=(4, 3))
 
     graph_selectors = []
