@@ -174,6 +174,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
     
+    
     # Tidy up: turn interactivity back on
     if wasinteractive: ion() 
     

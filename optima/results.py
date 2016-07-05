@@ -74,15 +74,15 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
+        self.main['numplhiv']   = Result('Number of PLHIV')
+        self.main['numdiag']    = Result('Number of diagnosed PLHIV')
+        self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
         self.main['force']      = Result('Force-of-infection (%/year)', isnumber=False)
         self.main['numinci']    = Result('Number of new infections')
         self.main['nummtct']    = Result('Number of HIV+ births')
         self.main['numnewdiag'] = Result('Number of new diagnoses')
-        self.main['numdeath']   = Result('Number of HIV-related deaths')
-        self.main['numplhiv']   = Result('Number of PLHIV')
-        self.main['numdiag']    = Result('Number of diagnosed PLHIV')
-        self.main['numtreat']   = Result('Number of PLHIV on treatment')
         self.main['popsize']    = Result('Population size')
         if self.settings.usecascade:
             self.main['numincare']   = Result('Number of PLHIV in care')
