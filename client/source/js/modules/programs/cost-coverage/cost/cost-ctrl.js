@@ -158,7 +158,7 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.ccoparsTable = {
         titles: [
           "Year", "Estimated Population", "Saturation % (low)", "Saturation % (high)",
-          "Unit Cost (low)", "Unit Cost (high)"],
+          "Unit cost (low)", "Unit cost (high)"],
         rows: [],
         types: ["selector", "display", "number", "number", "number", "number"],
         widths: ["5em", "5em", "5em", "5em", "5em", "5em"],
