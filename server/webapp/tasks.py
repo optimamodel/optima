@@ -267,6 +267,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
             progsetname=progset_name,
             objectives=objectives,
             constraints=constraints,
+            maxtime=60,
         )
         result.name = "optim-" + result.name
         result.parsetname = parset_name
