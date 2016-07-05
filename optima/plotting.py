@@ -149,15 +149,14 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
         
     
     ## Add budget and coverage plots
-    for budcov in ['budget', 'coverage']:
-        if budcov in toplot:
-            toplot.remove(budcov) # Because everything else is passed to plotepi()
-            try: 
-                if hasattr(results, budcov) and getattr(results, budcov): # WARNING, duplicated from getplotselections()
-                    allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
-            except OptimaException as E: 
-                if die: raise E
-                else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
+    if 'coverage' in toplot:
+        toplot.remove('coverage') # Because everything else is passed to plotepi()
+        try: 
+            if hasattr(results, 'coverage') and results.coverage: # WARNING, duplicated from getplotselections()
+                allplots['coverage'] = plotcoverage(results, die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot coverage: "%s"' % (E.message), 1, verbose)
     
     ## Add cascade plot
     if 'cascade' in toplot:
@@ -479,7 +478,7 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 ##################################################################
     
     
-def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -491,6 +490,8 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     '''
     
     # Preliminaries: process inputs and extract needed data
+    which = 'coverage'
+    print('Warning -- deprecated syntax') # WARNING need to fix properly when there's more time!!!!!!!!!!!!!!!!!!
     try: 
         toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
     except: 
