@@ -58,6 +58,7 @@ define(['angular', 'underscore', 'jquery'], function (angular, _, $) {
             var val = "";
             if (scope.table.types[iCell] == "selector") {
               if (scope.table.options[iCell]) {
+                // HACK: to set default year - a bit hardcoded
                 var year = _.findWhere(scope.table.options[iCell], {value:'2016'});
                 if (year) {
                   row.push("2016");
