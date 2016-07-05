@@ -43,6 +43,9 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
             console.log('loading optimizations', JSON.stringify(response, null, 2));
             $scope.state.optimizations = response.optimizations;
             convert_to_percentages($scope.state.optimizations);
+            _.each($scope.state.optimizations, function(optim) {
+              optim.objectives.yearobj = 2030;
+            });
             $scope.defaultOptimizationsByProgsetId = response.defaultOptimizationsByProgsetId;
 
             if ($scope.state.optimizations.length > 0) {
@@ -86,16 +89,33 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
         objectives: {},
       };
       selectDefaultProgsetAndParset(newOptimization);
-      $scope.state.optimizations.push(newOptimization);
       var progset_id = newOptimization.progset_id;
       var defaultOptimization = $scope.defaultOptimizationsByProgsetId[progset_id];
-      newOptimization.constraints = defaultOptimization.constraints;
-      newOptimization.objectives = defaultOptimization.objectives.outcomes;
+      newOptimization.constraints = angular.copy(defaultOptimization.constraints);
+      newOptimization.objectives = angular.copy(defaultOptimization.objectives.outcomes);
+
+      convert_to_fractions($scope.state.optimizations);
+      $scope.state.optimizations.push(newOptimization);
+      convert_to_percentages($scope.state.optimizations);
+      newOptimization.objectives.yearobj = 2030;
       $scope.setActiveOptimization(newOptimization);
     };
 
     $scope.addOptimization = function() {
       openOptimizationModal(addNewOptimization, 'Add optimization', $scope.state.optimizations, null, 'Add');
+    };
+
+    function convert_to_percentages(objectives) {
+      _.each(optimizations, function(optimization) {
+        _.each(["max", "min", "name"], function(prop) {
+          var constraintList = optimization.constraints[prop];
+          _.each(constraintList, function(val, key, list) {
+            if (_.isNumber(val)) {
+              list[key] = val * 100.0;
+            }
+          });
+        });
+      });
     };
 
     function convert_to_percentages(optimizations) {
@@ -164,6 +184,12 @@ define(['./module', 'angular', 'underscore'], function (module, angular, _) {
     function saveOptimizations() {
       var optimizations = angular.copy($scope.state.optimizations)
       convert_to_fractions(optimizations);
+      _.each(optimizations, function(optim) {
+        if (!_.isUndefined(optim.objectives.yearobj)) {
+          delete optim.objectives.yearobj;
+        }
+      });
+
       console.log('saving', optimizations);
       $http.post(
         '/api/project/' + $scope.state.activeProject.id + '/optimizations',
@@ -347,8 +373,9 @@ var constraints = {
 // this is to be replaced by an api
 var objectives = {
   outcomes: [
-    { key: 'start', label: 'Year to begin optimization' },
-    { key: 'end', label: 'Year by which to achieve objectives' },
+    { key: 'start', label: 'Analyses will consider program optimizations over period from' },
+    { key: 'end', label: 'to' },
+    { key: 'yearobj', label: 'in order to achieve the objectives by' },
     { key: 'budget', label: 'Starting budget' },
     { key: 'deathweight', label: 'Relative weight per death' },
     { key: 'inciweight', label: 'Relative weight per new infection' }
@@ -357,6 +384,7 @@ var objectives = {
     {key: 'base', label: 'Baseline year to compare outcomes to' },
     { key: 'start', label: 'Year to begin optimization' },
     { key: 'end', label: 'Year by which to achieve objectives' },
+    { key: 'yearobj', label: 'in order to achieve the objectives by' },
     { key: 'budget', label: 'Starting budget' },
     { key: 'deathfrac', label: 'Fraction of deaths to be averted' },
     { key: 'incifrac', label: 'Fraction of infections to be averted' }
@@ -368,6 +396,7 @@ var objectiveDefaults = {
     base: undefined,
     start: 2017,
     end: 2030,
+    yearobj: 2030,
     budget: 63500000.0,
     deathweight: 0,
     inciweight: 0
@@ -376,6 +405,7 @@ var objectiveDefaults = {
     base: 2015,
     start: 2017,
     end: 2030,
+    yearobj: 2030,
     budget: 63500000.0,
     deathfrac: 0,
     incifrac: 0

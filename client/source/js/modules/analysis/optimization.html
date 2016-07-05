@@ -24,8 +24,13 @@
       <button ng-click="deleteOptimization()" type="button" class="btn" style="margin-left:2%">Delete optimization</button>
     </div>
 
-    <div style="display: flex;margin-top: 20px;justify-content: space-between;height: 62vh">
-      <div class="small_bordered_list" style="width: 700px;">
+    <div style="display: flex;
+                margin-top: 20px;
+                margin-right: 10px;
+                justify-content:
+                space-between;height:
+                calc(100vh - 300px)">
+      <div class="small_bordered_list" style="width: 700px; height: 100%">
         <form name="optimizationForm">
           <div class="option_list" style="height: calc(100vh - 300px)">
             <div class="section">
@@ -77,9 +82,11 @@
               <div class="label">Objectives</div>
 
               <div style="justify-content: space-around" class="option" ng-repeat="objective in state.objectives">
-                <span style="width: 70%">{{objective.label}}</span>
-                  <span style="width: 30%">
-                    <input class="txbox __inline __m"
+                  <span style="width: 80%">{{objective.label}}</span>
+                  <span style="width: 20%">
+                    <input
+                      style="width:100%"
+                      class="txbox __inline __m"
                       type="number"
                       ng-model="state.activeOptimization.objectives[objective.key]"
                       name="{{objective.key}}"
@@ -104,6 +111,23 @@
                     <input type="checkbox" ng-model="total_hiv">
                     <label>Total HIV-related costs</label>
                     <br>
+
+                    <div class="label"
+                         style="font-weight: bold; margin-top:0.5em;">
+                        Assumptions
+                    </div>
+
+                    <input ng-disabled="true" type="checkbox" ng-model="time_vary_budget">
+                    <label>Time varying budget</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="no_art">
+                    <label>No one on ART comes off ART except through natural attrition</label>
+                    <br>
+
+                    <input type="checkbox" ng-model="no_ost">
+                    <label>No one on OST comes off OST except through natural attrition</label>
+                    <br>
                     <br>
                 </div>
 
@@ -115,17 +139,17 @@
               <div class="label">Constraints by year</div>
               <div style="justify-content: space-around; font-weight: bold" class="option">
                 <span style="width: 60%">Program Name</span>
-                <span style="width: 20%">Minimum</span>
-                <span style="width: 20%">Maximum</span>
+                <span style="width: 20%">Not less than</span>
+                <span style="width: 20%">Not more than</span>
               </div>
             </div>
             <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
               <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
                 <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.min[constraintKey]"/>
                 </span>
                 <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.activeOptimization.constraints.max[constraintKey]"/>
                 </span>
             </div>
 
@@ -137,17 +161,17 @@
               <div class="label">Constraints by funding period</div>
               <div style="justify-content: space-around; font-weight: bold" class="option">
                 <span style="width: 60%">Program Name</span>
-                <span style="width: 20%">Minimum</span>
-                <span style="width: 20%">Maximum</span>
+                <span style="width: 20%">Not less than</span>
+                <span style="width: 20%">Not more than</span>
               </div>
             </div>
             <div style="justify-content: space-around" class="option" ng-repeat="constraintKey in state.constraintKeys">
               <span style="width: 60%">{{ state.activeOptimization.constraints.name[constraintKey] }}</span>
                 <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.dummy[constraintKey]"/>
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.dummy[constraintKey]"/>
                 </span>
                 <span style="width: 20%">
-                  <input class="txbox __inline __m" type="number" ng-model="state.dummy2[constraintKey]"/>
+                  <input style="width:6em" class="txbox __inline __m" type="number" ng-model="state.dummy2[constraintKey]"/>
                 </span>
             </div>
 
