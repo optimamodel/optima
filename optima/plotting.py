@@ -498,18 +498,12 @@ def plotbudget(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
     '''
     
     # Preliminaries: process inputs and extract needed data
-    which = 'budget'
-    print('Warning -- deprecated syntax') # WARNING need to fix properly when there's more time!!!!!!!!!!!!!!!!!!
-    try: 
-        toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
-    except: 
-        errormsg = 'Unable to plot allocations: no attribute "%s" found for this multiresults object:\n%s' % (which, multires)
-        if die: raise OptimaException(errormsg)
-        else: printv(errormsg, 1, verbose)
-    budgetyearstoplot = [budgetyears for budgetyears in multires.budgetyears.values() if budgetyears]
     
-    proglabels = toplot[0].keys() 
-    alloclabels = [key for k,key in enumerate(getattr(multires, which).keys()) if getattr(multires, which).values()[k]] # WARNING, will this actually work if some values are None?
+    
+    budgets = multires.budgets # WARNING, will break with multiple years
+    
+    proglabels = budgets[0].keys() 
+    alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
     nprogs = len(proglabels)
     nallocs = len(alloclabels)
     
