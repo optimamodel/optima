@@ -97,24 +97,29 @@ def start_or_report_calculation(project_id, parset_id, work_type):
 
     db_session = init_db_session()
 
+    # if any work_log exists for this project that has started,
+    # then this calculation is blocked from starting
+    work_log_records = db_session.query(WorkLogDb).filter_by(project_id=project_id)
+    if work_log_records:
+        for work_log_record in work_log_records:
+            if work_log_record.status == 'started':
+                # double check that there is a working record, if
+                # it doesn't match, we'll wipe the records later
+                working_project_record = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
+                if working_project_record and working_project_record.work_log_id == work_log_record.id:
+                    calc_state = parse_work_log_record(work_log_record)
+                    calc_state["status"] = "blocked"
+                    close_db_session(db_session)
+                    return calc_state
+
     calc_state = {
-        'status': 'blocked',
+        'status': 'started',
         'error_text': None,
         'start_time': None,
         'stop_time': None,
         'result_id': None,
         'work_type': ''
     }
-
-    # if any work_log exists for this project and it has started,
-    # then this calculation is blocked from starting
-    work_log_records = db_session.query(WorkLogDb).filter_by(project_id=project_id)
-    for work_log_record in work_log_records:
-        if work_log_record.status == 'started':
-            close_db_session(db_session)
-            return calc_state
-
-    calc_state['status'] = "started"
 
     # clean up completed/error/cancelled records
     work_log_records = db_session.query(WorkLogDb).filter_by(
@@ -203,6 +208,7 @@ def check_calculation_status(project_id, parset_id, work_type):
         project_id=project_id, parset_id=parset_id, work_type=work_type
         ).first()
     if work_log_record:
+
         print "> Found job in project with work_type", work_type
         result = parse_work_log_record(work_log_record)
     else:
@@ -349,7 +355,6 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
         db_session.flush()
         work_log_record.result_id = result_record.id
 
-    db_session.delete(working_project_record)
     db_session.commit()
     close_db_session(db_session)
 
