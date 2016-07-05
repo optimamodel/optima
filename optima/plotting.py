@@ -20,10 +20,8 @@ from matplotlib import ticker
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultepiplots = ['numplhiv-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta', 'prev-per', 'popsize-sta'] # Default epidemiological plots
-#defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
-#defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
-defaultplots = ['budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
+defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numtreat-sta', 'numdiag-sta', 'prev-per', 'popsize-sta'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -208,8 +206,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             raise OptimaException(errormsg)
 
         # Initialize
-        if toplot is None: toplot = defaultepiplots # If not specified, plot default plots
-        elif type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
+        if type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
         epiplots = odict()
 
 
