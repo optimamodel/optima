@@ -207,20 +207,26 @@ def check_calculation_status(project_id, parset_id, work_type):
     work_log_record = db_session.query(WorkLogDb).filter_by(
         project_id=project_id, parset_id=parset_id, work_type=work_type
         ).first()
+    result = {
+        'status': 'unknown',
+        'error_text': None,
+        'start_time': None,
+        'stop_time': None,
+        'result_id': None,
+        'work_type': ''
+    }
     if work_log_record:
-
-        print ">>>>> Found job in project with work_type", work_type
-        result = parse_work_log_record(work_log_record)
+        print ">>>>> Found work_log for project with work_type", work_type
+        working_project_record = db_session.query(WorkingProjectDb).get(project_id)
+        if working_project_record:
+            print ">>>>> Found working_project for work_log"
+            result = parse_work_log_record(work_log_record)
+        else:
+            print ">>>>> No working_project for work_log, orphaned"
+            db_session.delete(work_log_record)
+            db_session.commit()
     else:
-        print ">>>>> No such job work_type", work_type
-        result = {
-            'status': 'unknown',
-            'error_text': None,
-            'start_time': None,
-            'stop_time': None,
-            'result_id': None,
-            'work_type': ''
-        }
+        print ">>>>> No such job work_type existing", work_type
     close_db_session(db_session)
     return result
 
