@@ -75,8 +75,12 @@ from server.webapp.resources.optimizations import (
 # clear dangling tasks from the last session
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
-db.session.query(WorkLogDb).delete()
-db.session.query(WorkingProjectDb).delete()
+work_logs = db.session.query(WorkLogDb)
+print "> Deleting dangling work_logs", work_logs.count()
+work_logs.delete()
+work_projects = db.session.query(WorkingProjectDb)
+print "> Deleting dangling work_projects", work_projects.count()
+work_projects.delete()
 db.session.commit()
 
 api_blueprint = Blueprint('api', __name__, static_folder='static')

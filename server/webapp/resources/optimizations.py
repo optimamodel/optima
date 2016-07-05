@@ -104,7 +104,7 @@ class OptimizationCalculation(Resource):
             project_id,
             optimization_record.parset_id,
             'optim-' + optimization_record.name)
-        print ">>> Checking calc state", calc_state
+        print ">>> Checking calc state", pformat(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state
