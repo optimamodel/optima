@@ -74,13 +74,6 @@ from server.webapp.resources.scenarios import Scenarios, ScenarioSimulationGraph
 from server.webapp.resources.optimizations import (
     Optimizations, OptimizationCalculation, OptimizationGraph)
 
-# clear dangling tasks from the last session
-from server.webapp.dbconn import db
-from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
-db.session.query(WorkLogDb).delete()
-db.session.query(WorkingProjectDb).delete()
-db.session.commit()
-
 api_blueprint = Blueprint('api', __name__, static_folder='static')
 
 api = swagger.docs(Api(api_blueprint), apiVersion='2.0')
@@ -170,6 +163,13 @@ def init_db():
 
     server.webapp.dbconn.db.engine.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
     server.webapp.dbconn.db.create_all()
+
+    # clear dangling tasks from the last session
+    from server.webapp.dbconn import db
+    from server.webapp.dbmodels import WorkLogDb, WorkingProjectDb
+    db.session.query(WorkLogDb).delete()
+    db.session.query(WorkingProjectDb).delete()
+    db.session.commit()
 
 def init_logger():
     stream_handler = logging.StreamHandler(sys.stdout)
