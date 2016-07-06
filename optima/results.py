@@ -67,8 +67,8 @@ class Resultset(object):
         self.parset = dcp(parset) # Store parameters
         self.progset = dcp(progset) # Store programs
         self.data = dcp(data) # Store data
-        self.parset.project  = project # Replace copy of project with reference to project
-        self.progset.project = project # Replace copy of project with reference to project
+        if self.parset is not None:  self.parset.project  = project # Replace copy of project with reference to project
+        if self.progset is not None: self.progset.project = project # Replace copy of project with reference to project
         self.budget = budget if budget is not None else odict() # Store budget
         self.coverage = coverage if coverage is not None else odict()  # Store coverage
         self.budgetyears = budgetyears if budgetyears is not None else odict()  # Store budget
@@ -251,10 +251,10 @@ class Resultset(object):
         return None # make()
         
         
-    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, verbose=2):
+    def export(self, filestem=None, bypop=False, sep=',', ind=0, sigfigs=3, writetofile=True, verbose=2):
         ''' Method for exporting results to a CSV file '''
         if filestem is None:  # Doesn't include extension, hence filestem
-            if self.name is not None: filestem = self.name
+            if self.name is not None: filestem = self.project.name+'-'+self.name
             else: filestem = str(self.uid)
         filename = filestem + '.csv'
         npts = len(self.tvec)
@@ -285,9 +285,13 @@ class Resultset(object):
             output += sep.join(self.coverage[ind].keys()) + '\n'
             output += sep.join([str(val) for val in self.coverage[ind].values()]) + '\n' # WARNING, should have this val[0] but then dies with None entries
             
-        with open(filename, 'w') as f: f.write(output)
-        printv('Results exported to "%s"' % filename, 2, verbose)
-        return None
+        if writetofile: 
+            with open(filename, 'w') as f: f.write(output)
+            printv('Results exported to "%s"' % filename, 2, verbose)
+            return None
+        else:
+            return output
+        
                     
             
         
@@ -369,15 +373,25 @@ class Multiresultset(Resultset):
         return output
     
     
-    def export(self, filestem=None, ind=None, **kwargs):
+    def export(self, filestem=None, ind=None, writetofile=True, verbose=2, **kwargs):
         ''' A method to export each multiresult to a different file...not great, but not sure of what's better '''
         if filestem is None: # Filestem rather than filename since doesn't include extension
-            if self.name is not None: filestem = self.name
+            if self.name is not None: filestem = self.project.name+'-'+self.name
             else: filestem = str(self.uid)
+        output = ''
         for k,key in enumerate(self.keys):
             thisfilestem = filestem+'-'+key
-            Resultset.export(self, filestem=thisfilestem, ind=k, **kwargs)
-        return None
+            output += '%s\n\n' % key
+            output += Resultset.export(self, filestem=thisfilestem, ind=k, writetofile=False, **kwargs)
+            output += '\n'*5
+        
+        if writetofile: 
+            filename = filestem+'.csv'
+            with open(filename, 'w') as f: f.write(output)
+            printv('Results exported to "%s"' % filename, 2, verbose)
+            return None
+        else:
+            return output
 
 
 
