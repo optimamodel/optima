@@ -350,8 +350,9 @@ class ParsetAutofit(Resource):
             parset_id:
         """
         from server.webapp.tasks import check_calculation_status
+        print "> Checking calc state"
         calc_state = check_calculation_status(project_id, parset_id, 'autofit')
-        print ">>> Checking calc state", pprint.pformat(calc_state, indent=2)
+        pprint.pprint(calc_state, indent=2)
         if calc_state['status'] == 'error':
             raise Exception(calc_state['error_text'])
         return calc_state

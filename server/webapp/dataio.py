@@ -175,6 +175,7 @@ def update_or_create_parset_record(project_id, name, parset, db_session=None):
         db_session = db.session
     parset_record = db_session.query(ParsetsDb).filter_by(id=parset.uid, project_id=project_id).first()
     if parset_record is None:
+        print ">>> Create record for parset '%s'" % name
         parset_record = ParsetsDb(
             id=parset.uid,
             project_id=project_id,
@@ -186,7 +187,10 @@ def update_or_create_parset_record(project_id, name, parset, db_session=None):
 
         db_session.add(parset_record)
     else:
+        print ">>> Deleting outdated results associated with parset '%s'" % name
         db_session.query(ResultsDb).filter_by(project_id=project_id, parset_id=parset_record.id).delete()
+
+        print ">>> Updating record for parset '%s'" % name
         parset_record.updated = datetime.now(dateutil.tz.tzutc())
         parset_record.name = name
         parset_record.pars = saves(parset.pars)
@@ -340,15 +344,12 @@ def update_or_create_result_record(
     if db_session is None:
         db_session = db.session
 
-    # find relevant parset for the result
-    print ">>>> Saving result(%s) '%s' of parset '%s'" % (calculation_type, result.name, parset_name)
-
     result_record = db_session.query(ResultsDb).get(result.uid)
 
     blob = op.saves(result)
     if result_record is not None:
         result_record.blob = blob
-        print "> Updating results", result.uid
+        print ">>> Updating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
     else:
         parset_id = get_parset_id(project_id, parset_name, db_session)
         result_record = ResultsDb(
@@ -356,7 +357,7 @@ def update_or_create_result_record(
             project_id=project_id,
             calculation_type=calculation_type,
             blob=blob)
-        print "> Creating results", result.uid
+        print ">>> Creating record for result '%s' of parset '%s' from '%s'" % (result.name, parset_name, calculation_type)
 
     result_record.id = result.uid
 
@@ -380,6 +381,8 @@ def delete_optimization_result(
         project_id, result_name, db_session=None):
     if db_session is None:
         db_session = db.session
+
+    print ">>> Deleting result '%s' of an optimization" % result_name
 
     records = db_session.query(ResultsDb).filter_by(
         project_id=project_id,
@@ -423,7 +426,7 @@ def load_result_by_optimization_id(optimization_id):
         calculation_type="optimization")
     for result_record in result_records:
         result = result_record.hydrate()
-        print "> Matching optim result '%s' == '%s'" % (result.name, result_name)
+        print ">>> Matching optim result '%s' == '%s'" % (result.name, result_name)
         if result.name == result_name:
             return result
 

@@ -260,13 +260,13 @@ def parse_parameters_from_progset_parset(settings, progset, parset):
                             'short': program.short,
                         }
                         for program in programs
-                        ]
+                    ]
                 }
                 for popKey, programs in progset.progs_by_targetpar(par_short).items()
-                ],
+            ],
         }
         for par_short in target_par_shorts
-        ]
+    ]
 
     return parameters
 
