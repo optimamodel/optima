@@ -7,6 +7,7 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
+    load_project_record,
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
@@ -25,15 +26,26 @@ class Optimizations(Resource):
     method_decorators = [report_exception, login_required]
 
     def get(self, project_id):
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
         return {
-            'optimizations': get_optimization_summaries(project_id),
-            'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project_id)
+            'optimizations': get_optimization_summaries(project),
+            'defaultOptimizationsByProgsetId': get_default_optimization_summaries(project)
         }
 
     def post(self, project_id):
+
+        project_record = load_project_record(project_id)
+        project = project_record.load()
+
         optimization_summaries = normalize_obj(request.get_json(force=True))
-        save_optimization_summaries(project_id, optimization_summaries)
-        return {'optimizations': get_optimization_summaries(project_id)}
+        save_optimization_summaries(project, optimization_summaries)
+
+        project_record.save_obj(project)
+
+        return {'optimizations': get_optimization_summaries(project)}
 
 
 class OptimizationCalculation(Resource):
