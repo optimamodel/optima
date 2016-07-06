@@ -382,7 +382,7 @@ def delete_optimization_result(
     if db_session is None:
         db_session = db.session
 
-    print ">>> Deleting result '%s' of an optimization" % result_name
+    print ">>> Deleting outdated result '%s' of an optimization" % result_name
 
     records = db_session.query(ResultsDb).filter_by(
         project_id=project_id,
