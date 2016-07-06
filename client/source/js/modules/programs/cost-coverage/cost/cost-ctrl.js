@@ -151,10 +151,10 @@ define(['./../../module', 'underscore'], function (module, _) {
       $scope.ccoparsTable = {
         titles: [
           "Year", "Estimated Population", "Saturation % (low)", "Saturation % (high)",
-          "Unitcost (low)", "Unitcost (high)"],
+          "Unit cost (low)", "Unit cost (high)"],
         rows: [],
         types: ["selector", "display", "number", "number", "number", "number"],
-        widths: [],
+        widths: ["5em", "5em", "5em", "5em", "5em", "5em"],
         displayRowFns: [null, showEstPopFn, null, null, null, null],
         options: [$scope.yearSelector],
         validateFn: validateCcoparsTable
@@ -179,7 +179,7 @@ define(['./../../module', 'underscore'], function (module, _) {
         titles: ["Year", "Cost", "Coverage"],
         rows: [],
         types: ["selector", "number", "number"],
-        widths: [],
+        widths: ["5em", "5em", "5em"],
         displayRowFns: [],
         selectors: [getYearSelectors],
         options: [$scope.yearSelector],

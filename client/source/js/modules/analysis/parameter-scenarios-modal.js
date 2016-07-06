@@ -55,6 +55,10 @@ define(['angular'], function (module) {
           var ykeysOfParset = ykeys[$scope.scenario.parset_id];
           if (ykeysOfParset.hasOwnProperty(parName)) {
             var result = ykeysOfParset[parName];
+            var tot = _.findWhere(result, {'val': 'tot'});
+            if (tot) {
+              tot["label"] = "Total Population";
+            }
             return result;
           }
         }
@@ -62,8 +66,10 @@ define(['angular'], function (module) {
       };
 
       $scope.selectNewPar = function () {
-        var pops = $scope.getPopsOfPar()
-        $scope.editPar.for = pops[0].label;
+        var pops = $scope.getPopsOfPar();
+        console.log('pops', JSON.stringify(pops));
+        $scope.editPar.for = pops[0].val;
+        console.log($scope.editPar.for);
         console.log('new', $scope.editPar.name, '->', _.pluck(pops, 'val'))
       };
 
