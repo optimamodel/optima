@@ -7,9 +7,9 @@ Version: 2016feb07
 
 ## Define tests to run here!!!
 tests = [
-'standardscen',
+#'standardscen',
 #'maxcoverage',
-#'maxbudget',
+'maxbudget',
 #'90-90-90'
 #'VMMC'
 ]
