@@ -8,8 +8,8 @@ from optima import OptimaException, Settings, uuid, today, getdate, quantile, pr
 from numpy import array, nan, zeros, arange, shape
 from numbers import Number
 
-
-
+import zipfile
+import os
 
 
 class Result(object):
@@ -76,15 +76,15 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
-        self.main['force']      = Result('Force-of-infection (%/year)', isnumber=False)
-        self.main['numinci']    = Result('Number of new infections')
-        self.main['nummtct']    = Result('Number of HIV+ births')
-        self.main['numnewdiag'] = Result('Number of new diagnoses')
-        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['numplhiv']   = Result('Number of PLHIV')
+        self.main['numinci']    = Result('Number of new infections')
+        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['numdiag']    = Result('Number of diagnosed PLHIV')
         self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
+        self.main['force']      = Result('Incidence (per 100 p.y.)', isnumber=False)
+        self.main['numnewdiag'] = Result('Number of new diagnoses')
+        self.main['nummtct']    = Result('Number of HIV+ births')
         self.main['popsize']    = Result('Population size')
         if self.settings.usecascade:
             self.main['numincare']   = Result('Number of PLHIV in care')
@@ -374,9 +374,18 @@ class Multiresultset(Resultset):
         if filestem is None: # Filestem rather than filename since doesn't include extension
             if self.name is not None: filestem = self.name
             else: filestem = str(self.uid)
+        filenames = []
         for k,key in enumerate(self.keys):
+            # HACK: to make work for CDC demo
             thisfilestem = filestem+'-'+key
+            filenames.append(thisfilestem + '.csv')
             Resultset.export(self, filestem=thisfilestem, ind=k, **kwargs)
+        zipfname = os.path.join(os.path.dirname(thisfilestem), 'results.zip')
+        print "   Make zipfile", zipfname
+        zipf = zipfile.ZipFile(zipfname, 'w', zipfile.ZIP_DEFLATED)
+        for fname in filenames:
+            zipf.write(fname, os.path.basename(fname))
+        zipf.close()
         return None
 
 

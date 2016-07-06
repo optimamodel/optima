@@ -267,9 +267,6 @@ class ParsetsCalibration(Resource):
         elif autofit:
             result_record = load_result_record(project_id, parset_id, calculation_type)
             result = result_record.hydrate()
-            print "> Loading autofit results", result.uid
-            if 'improvement' not in which:
-                which.insert(0, 'improvement')
         else:
             print "> Saving temporary calibration graphs", result.uid
             result_record = save_result(project_id, result, parset.name, "temp-" + calculation_type)
@@ -467,10 +464,16 @@ class ExportResultsDataAsCsv(Resource):
         if not load_dir:
             load_dir = TEMPLATEDIR
         filestem = 'results'
-        filename = filestem + '.csv'
         result = result_record.hydrate()
-        result.export(filestem=os.path.join(load_dir, filestem))
+        full_filestem = os.path.join(load_dir, filestem)
+        result.export(filestem=full_filestem)
 
+        if os.path.isfile(full_filestem + '.zip'):
+            filename = filestem + '.zip'
+        elif os.path.isfile(full_filestem + '.csv'):
+            filename = filestem + '.csv'
+
+        print ">>> Fetching", filename
         response = helpers.send_from_directory(load_dir, filename)
         response.headers["Content-Disposition"] = "attachment; filename={}".format(filename)
 

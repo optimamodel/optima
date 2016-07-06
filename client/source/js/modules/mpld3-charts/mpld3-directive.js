@@ -436,9 +436,15 @@ define(
               headers: {'Content-type': 'application/octet-stream'},
               responseType: 'blob'
             })
-          .success(function (response) {
+          .success(function (response, status, headers) {
             var blob = new Blob([response], { type: 'text/csv;charset=utf-8' });
-            saveAs(blob, ('export_graphs.csv'));
+            var fname = 'export_graphs.csv';
+            var contentStr = headers()['content-disposition'];
+            if (contentStr.indexOf('.zip') >= 0) {
+              fname = 'export_graphs.zip';
+            }
+            console.log(contentStr, fname);
+            saveAs(blob, (fname));
           });
         };
 
