@@ -8,21 +8,20 @@ To add a new plot, you need to add it to getplotselections (in this file) so it 
 plotresults (in gui.py) so it will be sent to the right spot; and then add the actual function to do the
 plotting to this file.
 
-Version: 2016jun06
+Version: 2016jul06
 '''
 
 from optima import OptimaException, Resultset, Multiresultset, odict, printv, gridcolormap, sigfig, dcp
 from numpy import array, ndim, maximum, arange, zeros, mean, shape
-from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend
+from pylab import isinteractive, ioff, ion, figure, plot, close, ylim, fill_between, scatter, gca, subplot, legend, barh
 from matplotlib import ticker
 
 # Define allowable plot formats -- 3 kinds, but allow some flexibility for how they're specified
 epiformatslist = array([['t', 'tot', 'total'], ['p', 'per', 'per population'], ['s', 'sta', 'stacked']])
 epiformatsdict = odict([('tot',epiformatslist[0]), ('per',epiformatslist[1]), ('sta',epiformatslist[2])]) # WARNING, could be improved
 datacolor = (0,0,0) # Define color for data point -- WARNING, should this be in settings.py?
-defaultepiplots = ['prev-tot', 'prev-per', 'numplhiv-sta', 'numinci-sta', 'numdeath-sta', 'numdiag-sta', 'numtreat-sta', 'popsize-sta'] # Default epidemiological plots
-#defaultplots = ['improvement', 'budget', 'cascade'] + defaultepiplots # Define the default plots available
-defaultplots = ['improvement', 'budget'] + defaultepiplots # Define the default plots available # WARNING, TEMP
+defaultplots = ['budget', 'numplhiv-sta', 'numinci-sta', 'numdeath-tot', 'numtreat-tot', 'numdiag-sta', 'prev-per', 'popsize-sta'] # Default epidemiological plots
+defaultmultiplots = ['budget', 'numplhiv-tot', 'numinci-tot', 'numdeath-tot', 'numtreat-tot', 'numdiag-tot', 'prev-tot'] # Default epidemiological plots
 
 # Define global font sizes
 globaltitlesize = 10
@@ -31,7 +30,7 @@ globalticksize = 8
 globallegendsize = 8
 
 
-def SIticks(x, pos):  # formatter function takes tick label and tick position
+def SItickformatter(x, pos):  # formatter function takes tick label and tick position
     ''' Formats axis ticks so that e.g. 34,243 becomes 34K '''
     if abs(x)>=1e9:     output = str(x/1e9)+'B'
     elif abs(x)>=1e6:   output = str(x/1e6)+'M'
@@ -39,10 +38,14 @@ def SIticks(x, pos):  # formatter function takes tick label and tick position
     else:               output = str(x)
     return output
 
-def SIyticks(figure):
+def SIticks(figure, axis='y'):
     ''' Apply SI tick formatting to the y axis of a figure '''
     for ax in figure.axes:
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(SIticks))
+        if axis=='x':   thisaxis = ax.xaxis
+        elif axis=='y': thisaxis = ax.yaxis
+        elif axis=='z': thisaxis = ax.zaxis
+        else: raise OptimaException('Axis must be x, y, or z')
+        thisaxis.set_major_formatter(ticker.FuncFormatter(SItickformatter))
 
 
 def getplotselections(results):
@@ -108,7 +111,8 @@ def getplotselections(results):
     plotselections['keys'] += plotepikeys
     plotselections['names'] += plotepinames
     for key in plotselections['keys']: # Loop over each key
-        plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
+        if ismultisim: plotselections['defaults'].append(key in defaultmultiplots)
+        else:          plotselections['defaults'].append(key in defaultplots) # Append True if it's in the defaults; False otherwise
     
     return plotselections
 
@@ -148,16 +152,25 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
             else: printv('Could not plot improvement: "%s"' % E.message, 1, verbose)
         
     
-    ## Add budget and coverage plots
-    for budcov in ['budget', 'coverage']:
-        if budcov in toplot:
-            toplot.remove(budcov) # Because everything else is passed to plotepi()
-            try: 
-                if hasattr(results, budcov) and getattr(results, budcov): # WARNING, duplicated from getplotselections()
-                    allplots[budcov] = plotallocs(results, which=budcov, die=die, **kwargs)
-            except OptimaException as E: 
-                if die: raise E
-                else: printv('Could not plot "%s" allocation: "%s"' % (budcov, E.message), 1, verbose)
+    ## Add budget plot
+    if 'budget' in toplot:
+        toplot.remove('budget') # Because everything else is passed to plotepi()
+        try: 
+            if hasattr(results, 'budget') and results.budget: # WARNING, duplicated from getplotselections()
+                allplots['budget'] = plotbudget(results, die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot budget: "%s"' % (E.message), 1, verbose)
+    
+    ## Add coverage plot
+    if 'coverage' in toplot:
+        toplot.remove('coverage') # Because everything else is passed to plotepi()
+        try: 
+            if hasattr(results, 'coverage') and results.coverage: # WARNING, duplicated from getplotselections()
+                allplots['coverage'] = plotcoverage(results, die=die, **kwargs)
+        except OptimaException as E: 
+            if die: raise E
+            else: printv('Could not plot coverage: "%s"' % (E.message), 1, verbose)
     
     ## Add cascade plot
     if 'cascade' in toplot:
@@ -172,6 +185,7 @@ def makeplots(results=None, toplot=None, die=False, verbose=2, **kwargs):
     ## Add epi plots -- WARNING, I hope this preserves the order! ...It should...
     epiplots = plotepi(results, toplot=toplot, die=die, **kwargs)
     allplots.update(epiplots)
+    
     
     # Tidy up: turn interactivity back on
     if wasinteractive: ion() 
@@ -206,8 +220,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
             raise OptimaException(errormsg)
 
         # Initialize
-        if toplot is None: toplot = defaultepiplots # If not specified, plot default plots
-        elif type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
+        if type(toplot) in [str, tuple]: toplot = [toplot] # If single value, put inside list
         epiplots = odict()
 
 
@@ -397,7 +410,7 @@ def plotepi(results, toplot=None, uncertainty=False, die=True, verbose=2, figsiz
                     if isstacked: legend(results.popkeys, **legendsettings) # Multiple entries, all populations
                 else:
                     legend(labels, **legendsettings) # Multiple simulations
-                SIyticks(epiplots[pk])
+                SIticks(epiplots[pk])
                 close(epiplots[pk]) # Wouldn't want this guy hanging around like a bad smell
         
         return epiplots
@@ -472,14 +485,12 @@ def plotimprovement(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesi
 
 
 
-
-
 ##################################################################
-## Allocation plots
+## Coverage plot
 ##################################################################
     
     
-def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+def plotbudget(multires=None, die=True, figsize=(14,10), legendsize=globallegendsize, verbose=2, **kwargs):
     ''' 
     Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
 
@@ -491,6 +502,73 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     '''
     
     # Preliminaries: process inputs and extract needed data
+    
+    budgets = multires.budget # WARNING, will break with multiple years
+    
+    alloclabels = budgets.keys() # WARNING, will this actually work if some values are None?
+    proglabels = budgets[0].keys() 
+    nprogs = len(proglabels)
+    nallocs = len(alloclabels)
+    progcolors = gridcolormap(nprogs)
+    
+    fig = figure(figsize=figsize)
+    ax = subplot(1,1,1)
+    
+#    fig.subplots_adjust(left=0.03) # Less space on left
+#    fig.subplots_adjust(right=0.98) # Less space on right
+#    fig.subplots_adjust(top=0.95) # Less space on bottom
+    fig.subplots_adjust(bottom=0.50) # Less space on bottom
+    
+    for i in range(nprogs-1,-1,-1):
+        xdata = arange(nallocs)+1
+        ydata = array([budget[i] for budget in budgets.values()])
+        bottomdata = array([sum(budget[:i]) for budget in budgets.values()])
+#        bar(xdata, ydata, bottom=bottomdata, color=progcolors[i], linewidth=0)
+        barh(xdata, ydata, left=bottomdata, color=progcolors[i], linewidth=0)        
+    
+    ax.set_xlabel('Spending')
+    labels = proglabels
+    labels.reverse()
+#    legend(labels, ncol=4, fontsize=legendsize, loc=(0.0,-1))
+    
+#    ax.legend(frameon=False, ncol=4)
+    ax.set_yticks(arange(nallocs)+1)
+    ax.set_yticklabels(alloclabels)
+    ax.set_ylim(0,nallocs+1)
+    
+    SIticks(fig, axis='x')
+    close(fig)
+    
+    return fig
+
+
+
+
+
+
+
+
+
+
+##################################################################
+## Coverage plot
+##################################################################
+    
+    
+def plotcoverage(multires=None, die=True, figsize=(14,10), verbose=2, **kwargs):
+    ''' 
+    Plot multiple allocations on bar charts -- intended for scenarios and optimizations.
+
+    Results object must be of Multiresultset type.
+    
+    "which" should be either 'budget' or 'coverage'
+    
+    Version: 2016jan27
+    '''
+    
+    # Preliminaries: process inputs and extract needed data
+    which = 'coverage'
+    print('Warning -- deprecated syntax') # WARNING need to fix properly when there's more time!!!!!!!!!!!!!!!!!!
     try: 
         toplot = [item for item in getattr(multires, which).values() if item] # e.g. [budget for budget in multires.budget]
     except: 
@@ -546,10 +624,16 @@ def plotallocs(multires=None, which=None, die=True, figsize=(14,10), verbose=2, 
     
     for thisax in ax: thisax.set_ylim(0,ymax) # So they all have the same scale
 
-    SIyticks(fig)
+    SIticks(fig)
     close(fig)
     
     return fig
+
+
+
+
+
+
 
 
 
@@ -626,7 +710,7 @@ def plotcascade(results=None, figsize=(14,10), lw=2, titlesize=globaltitlesize, 
         ax.set_xlim((results.tvec[0], results.tvec[-1]))
         ax.legend(cascadenames, **legendsettings) # Multiple entries, all populations
         
-    SIyticks(fig)
+    SIticks(fig)
     close(fig)
     
     return fig

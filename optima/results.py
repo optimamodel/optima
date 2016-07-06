@@ -1,7 +1,7 @@
 """
 This module defines the classes for stores the results of a single simulation run.
 
-Version: 2016feb04 by cliffk
+Version: 2016jul06 by cliffk
 """
 
 from optima import OptimaException, Settings, uuid, today, getdate, quantile, printv, odict, dcp, objrepr, defaultrepr, sigfig, pchip, plotpchip
@@ -76,15 +76,15 @@ class Resultset(object):
         
         # Main results -- time series, by population
         self.main = odict() # For storing main results
-        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
-        self.main['force']      = Result('Force-of-infection (%/year)', isnumber=False)
-        self.main['numinci']    = Result('Number of new infections')
-        self.main['nummtct']    = Result('Number of HIV+ births')
-        self.main['numnewdiag'] = Result('Number of new diagnoses')
-        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['numplhiv']   = Result('Number of PLHIV')
+        self.main['numinci']    = Result('Number of new infections')
+        self.main['numdeath']   = Result('Number of HIV-related deaths')
         self.main['numdiag']    = Result('Number of diagnosed PLHIV')
         self.main['numtreat']   = Result('Number of PLHIV on treatment')
+        self.main['prev']       = Result('HIV prevalence (%)', isnumber=False)
+        self.main['force']      = Result('Incidence (per 100 p.y.)', isnumber=False)
+        self.main['numnewdiag'] = Result('Number of new diagnoses')
+        self.main['nummtct']    = Result('Number of HIV+ births')
         self.main['popsize']    = Result('Population size')
         if self.settings.usecascade:
             self.main['numincare']   = Result('Number of PLHIV in care')
