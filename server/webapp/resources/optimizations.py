@@ -7,7 +7,7 @@ from flask_restful_swagger import swagger
 
 import optima as op
 from server.webapp.dataio import (
-    load_project_record,
+    load_project_record, get_optimization_from_project, get_progset_from_project, get_parset_from_project,
     get_optimization_summaries, save_optimization_summaries, get_default_optimization_summaries)
 from server.webapp.dbconn import db
 from server.webapp.dbmodels import ResultsDb
@@ -61,25 +61,20 @@ class OptimizationCalculation(Resource):
     def post(self, project_id, optimization_id):
 
         from server.webapp.tasks import run_optimization, start_or_report_calculation
-        from server.webapp.dbmodels import OptimizationsDb, ProgsetsDb
 
-        optimization_record = OptimizationsDb.query.get(optimization_id)
-        optimization_name = optimization_record.name
-        parset_id = optimization_record.parset_id
+        project_record = load_project_record(project_id)
+        project = project_record.load()
 
-        calc_state = start_or_report_calculation(project_id, parset_id, 'optimization')
+        optim = get_optimization_from_project(project, optimization_id)
+        parset = project.parsets[optim.parsetname]
+
+        calc_state = start_or_report_calculation(project_id, parset.uid, 'optimization')
 
         if not calc_state['can_start']:
             calc_state['status'] = 'running'
             return calc_state, 208
 
-        parset_entry = ParsetsDb.query.get(parset_id)
-        parset_name = parset_entry.name
-
-        progset_id = optimization_record.progset_id
-        progset_entry = ProgsetsDb.query.get(progset_id)
-        progset = progset_entry.hydrate()
-        progset_name = progset_entry.name
+        progset = project.progsets[optim.progsetname]
 
         if not progset.readytooptimize():
             error_msg = "Not ready to optimize\n"
@@ -93,14 +88,14 @@ class OptimizationCalculation(Resource):
                 error_msg += pformat(covout_errors, indent=2)
             raise Exception(error_msg)
 
-        objectives = normalize_obj(optimization_record.objectives)
-        constraints = normalize_obj(optimization_record.constraints)
+        objectives = normalize_obj(optim.objectives)
+        constraints = normalize_obj(optim.constraints)
         constraints["max"] = op.odict(constraints["max"])
         constraints["min"] = op.odict(constraints["min"])
         constraints["name"] = op.odict(constraints["name"])
 
         run_optimization.delay(
-            project_id, optimization_name, parset_name, progset_name, objectives, constraints)
+            project_id, optim.name, parset.name, progset.name, objectives, constraints)
 
         calc_state['status'] = 'started'
 

@@ -211,7 +211,6 @@ def run_autofit(project_id, parset_name, maxtime=60):
 
     if result:
 
-
         print(">> Save autofitted parset '%s'" % parset_name)
         parset = working_project.parsets[parset_name]
 
@@ -248,7 +247,7 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
 
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    project_instance = op.loads(wp.project)
+    project_instance = wp.load()
     close_db_session(db_session)
 
     result = None
@@ -275,14 +274,15 @@ def run_optimization(project_id, optimization_name, parset_name, progset_name, o
 
     db_session = init_db_session()
     wp = db_session.query(WorkingProjectDb).filter_by(id=project_id).first()
-    wp.project = op.saves(project_instance)
+    wp.save_obj(project_instance)
     work_log = db_session.query(WorkLogDb).get(wp.work_log_id)
     work_log.status = status
     work_log.error = error_text
     work_log.stop_time = datetime.datetime.now(dateutil.tz.tzutc())
 
     if result:
-        result_entry = save_result(project_id, result, parset_name, 'optimization', db_session=db_session)
+
+        result_entry = save_result(project_instance, result, parset_name, 'optimization', db_session=db_session)
         db_session.add(result_entry)
         db_session.flush()
         work_log.result_id = result_entry.id

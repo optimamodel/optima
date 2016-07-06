@@ -633,10 +633,7 @@ def save_optimization_summaries(project, optimization_summaries):
              'progset_id': 'cfa49dcc-2b8b-11e6-8a08-57d606501764',
              'which': 'outcomes'}
     """
-    id_to_names = {
-        x.uid:x.name for x in project.optims.values()
-    }
-
+    new_optims = op.odict()
 
     for summary in optimization_summaries:
         id = summary.get('id', None)
@@ -644,12 +641,7 @@ def save_optimization_summaries(project, optimization_summaries):
         if id is None:
             optim = op.Optim(project=project)
         else:
-
-            optim = get_scenario_from_project(project, id)
-
-            if optim.name != summary["name"]:
-                project.optims.rename(optim.name, summary["name"])
-
+            optim = get_optimization_from_project(project, id)
 
         optim.name = summary["name"]
         optim.parsetname = get_parset_from_project(project, summary["parset_id"]).name
@@ -659,8 +651,9 @@ def save_optimization_summaries(project, optimization_summaries):
         if "constraints" in summary:
             optim.constraints = summary["constraints"]
 
-        project.optims[summary["name"]] = optim
+        new_optims[summary["name"]] = optim
 
+    project.optims = new_optims
 
 
 def get_default_optimization_summaries(project):
